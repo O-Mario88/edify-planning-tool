@@ -4,15 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('monthly_work_plan', '0003_countryannualbudget_rvpapprovaldecision_strategynote'),
+        (
+            "monthly_work_plan",
+            "0003_countryannualbudget_rvpapprovaldecision_strategynote",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='countryannualbudget',
-            name='country_id',
-            field=models.CharField(default='Uganda', max_length=64),
+            model_name="countryannualbudget",
+            name="country_id",
+            field=models.CharField(default="Uganda", max_length=64),
         ),
     ]

@@ -240,7 +240,7 @@ def create_cluster(data: dict, principal) -> dict:
 def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     """Update an existing cluster details and covered sub-counties."""
     from apps.core.exceptions import NotFoundError, BadRequest, Forbidden
-    
+
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found")
@@ -259,7 +259,11 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
         cluster.region_id = region_id
 
     scope = resolve_user_scope(principal)
-    if district_id and not scope.country_scope and district_id not in scope.district_ids:
+    if (
+        district_id
+        and not scope.country_scope
+        and district_id not in scope.district_ids
+    ):
         raise Forbidden("District outside your scope")
 
     if "name" in data:
@@ -280,7 +284,7 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
         for sc in subs:
             if sc.district_id != cluster.district_id:
                 raise BadRequest("sub-county does not belong to district")
-        
+
         with transaction.atomic():
             # Delete old joins
             ClusterSubCounty.objects.filter(cluster=cluster).delete()

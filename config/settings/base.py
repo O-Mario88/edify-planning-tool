@@ -229,9 +229,12 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
 ]
 
-# Custom auth: our JWT (access + rotating refresh). Not Django session login.
+# Custom auth: our JWT (access + rotating refresh) for the DRF API, Django
+# session login for the web app -- both, plus Django's own /admin/login/,
+# go through this ONE backend so AuthenticationLockoutService's policy is
+# enforced identically everywhere (Issue 3 of the audit).
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
+    "apps.accounts.auth_backend.LockoutEnforcingModelBackend",
 ]
 
 
@@ -305,6 +308,15 @@ EVIDENCE_STORAGE_DIR = os.environ.get("EVIDENCE_STORAGE_DIR") or str(
     BASE_DIR / "uploads" / "evidence"
 )
 
+# Evidence malware scanning (apps.evidence.services._scan_upload) — off by
+# default (EvidenceRecord.scan_status="skipped") until CLAMAV_HOST is set to
+# point at a reachable ClamAV daemon (clamd). Never required for the upload
+# pipeline to function; a scan failure/timeout/misconfiguration degrades to
+# "skipped", the same as leaving it unset.
+CLAMAV_HOST = os.environ.get("CLAMAV_HOST") or None
+CLAMAV_PORT = _as_int(os.environ.get("CLAMAV_PORT"), 3310)
+CLAMAV_TIMEOUT_SECONDS = _as_int(os.environ.get("CLAMAV_TIMEOUT_SECONDS"), 10)
+
 # JWT / token TTLs (match NestJS defaults).
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-only-insecure-secret-change-me")
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
@@ -315,9 +327,39 @@ PASSWORD_RESET_TOKEN_TTL_MINUTES = _as_int(
 )
 INVITE_TOKEN_TTL_DAYS = _as_int(os.environ.get("INVITE_TOKEN_TTL_DAYS"), 7)
 
-# Brute-force protection (login lockout).
+# ── Brute-force protection (login lockout) — apps.accounts.lockout_service
+# .AuthenticationLockoutService is the ONLY place these are read. Every
+# login path (web session, DRF API, Django admin) enforces this SAME policy
+# via apps.accounts.auth_backend.LockoutEnforcingModelBackend. See
+# docs/auth-lockout-policy.md.
 AUTH_MAX_FAILED_LOGINS = _as_int(os.environ.get("AUTH_MAX_FAILED_LOGINS"), 10)
+# AUTH_LOCK_MINUTES is a deprecated alias for AUTH_LOCKOUT_DURATION_MINUTES —
+# kept so any already-configured deployment env var keeps working.
 AUTH_LOCK_MINUTES = _as_int(os.environ.get("AUTH_LOCK_MINUTES"), 15)
+AUTH_LOCKOUT_DURATION_MINUTES = _as_int(
+    os.environ.get("AUTH_LOCKOUT_DURATION_MINUTES"), AUTH_LOCK_MINUTES
+)
+# How many separate temporary-lockout CYCLES (not failed attempts) within
+# the escalation window before the account requires an admin to unlock it,
+# instead of auto-expiring again. The "safer enterprise default": nobody is
+# ever permanently locked from a single burst of failed attempts, but
+# repeated lockout cycles (a sustained attack, or a compromised credential
+# being hammered) escalate to a human.
+AUTH_LOCKOUT_ESCALATION_COUNT = _as_int(
+    os.environ.get("AUTH_LOCKOUT_ESCALATION_COUNT"), 3
+)
+AUTH_LOCKOUT_ESCALATION_WINDOW_HOURS = _as_int(
+    os.environ.get("AUTH_LOCKOUT_ESCALATION_WINDOW_HOURS"), 24
+)
+AUTH_REQUIRE_ADMIN_UNLOCK_AFTER_ESCALATION = _truthy(
+    os.environ.get("AUTH_REQUIRE_ADMIN_UNLOCK_AFTER_ESCALATION"), fallback=True
+)
+# A failed-attempt streak older than this is stale and doesn't count toward
+# the threshold — matches the "successful login resets the counter" spirit
+# for someone who simply stopped trying rather than got locked out.
+AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES = _as_int(
+    os.environ.get("AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES"), 30
+)
 
 # Rate limits.
 RATE_LIMIT_LOGIN_PER_MIN = _as_int(os.environ.get("RATE_LIMIT_LOGIN_PER_MIN"), 10)

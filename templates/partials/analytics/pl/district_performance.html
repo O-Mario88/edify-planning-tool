@@ -6,9 +6,9 @@
   </div>
   <div class="space-y-3 pt-1">
     {% for d in district_performance.rows %}
-    <a href="#" hx-get="/analytics/program-lead/drilldown?drill=district&id={{ d.id }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
+    <button type="button" hx-get="/analytics/program-lead/drilldown?drill=district&id={{ d.id }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
        hx-target="#drawer-container" hx-swap="innerHTML"
-       class="block group">
+       class="block group w-full text-left">
       <div class="flex items-center justify-between text-[11.5px] mb-1">
         <span class="font-semibold text-slate-700 group-hover:text-blue-600 truncate">{{ d.name }}</span>
         <div class="flex items-center gap-2.5">
@@ -20,7 +20,7 @@
       <div class="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
         <div class="h-full rounded-full {{ d.bar_color }}" style="width: {{ d.pct }}%"></div>
       </div>
-    </a>
+    </button>
     {% empty %}
     <p class="text-[12px] text-slate-400 font-semibold text-center py-8">No districts in your portfolio yet.</p>
     {% endfor %}

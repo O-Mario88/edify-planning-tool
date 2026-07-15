@@ -4,15 +4,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0015_activity_daily_visit_batch_and_more'),
+        ("activities", "0015_activity_daily_visit_batch_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='activity',
-            name='payment_status',
-            field=models.CharField(choices=[('none', 'None'), ('disbursed', 'Disbursed'), ('pending_ia', 'Pending IA'), ('ia_confirmed', 'IA Confirmed'), ('pl_approval_required', 'PL Approval Required'), ('pl_approved', 'PL Approved'), ('accountant_cleared', 'Accountant Cleared'), ('paid', 'Paid'), ('netsuite_accountability', 'Netsuite Accountability'), ('closed', 'Closed'), ('rejected', 'Rejected')], default='none', max_length=32),
+            model_name="activity",
+            name="payment_status",
+            field=models.CharField(
+                choices=[
+                    ("none", "None"),
+                    ("disbursed", "Disbursed"),
+                    ("pending_ia", "Pending IA"),
+                    ("ia_confirmed", "IA Confirmed"),
+                    ("pl_approval_required", "PL Approval Required"),
+                    ("pl_approved", "PL Approved"),
+                    ("accountant_cleared", "Accountant Cleared"),
+                    ("paid", "Paid"),
+                    ("netsuite_accountability", "Netsuite Accountability"),
+                    ("closed", "Closed"),
+                    ("rejected", "Rejected"),
+                ],
+                default="none",
+                max_length=32,
+            ),
         ),
     ]

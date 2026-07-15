@@ -1,0 +1,15 @@
+<span class="tt-area-name__icon" aria-hidden="true">
+  {% if key == 'school_visits' %}
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 17V7l7-4 7 4v10M7 17v-5h6v5M6 8h1m6 0h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elif key == 'cluster_meetings' %}
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="5" r="2.3"/><circle cx="5" cy="14" r="2.3"/><circle cx="15" cy="14" r="2.3"/><path d="m8.7 7-2.2 4.6M11.3 7l2.2 4.6M7.3 14h5.4" stroke-linecap="round"/></svg>
+  {% elif key == 'cluster_trainings' %}
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 16h14M5 16v-5.5A2.5 2.5 0 0 1 7.5 8h5a2.5 2.5 0 0 1 2.5 2.5V16M7 8V5h6v3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="3.5" r="1.5"/></svg>
+  {% elif key == 'ssa_completed' %}
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m10 2.5 6 2.3v4.4c0 3.8-2.2 6.7-6 8.3-3.8-1.6-6-4.5-6-8.3V4.8l6-2.3Z" stroke-linejoin="round"/><path d="m7.2 9.8 1.8 1.8 3.8-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  {% elif key == 'mscs' %}
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="m8.2 7.2 5 2.8-5 2.8V7.2Z" stroke-linejoin="round"/></svg>
+  {% else %}
+  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3"/></svg>
+  {% endif %}
+</span>

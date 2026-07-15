@@ -3,8 +3,10 @@ GROUP 3 — Partner Views
 Partner directory, partner detail, partner portal pages
 """
 
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from apps.core.permissions import require_page_permission
+from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_partner_ids
 from django.db.models import Q
 from datetime import date
@@ -14,12 +16,22 @@ from apps.activities.models import Activity
 from apps.evidence.models import EvidenceRecord
 from apps.schools.models import School
 
+# Row-level scoping: a Partner-role login (no StaffProfile, no country/region
+# scope) must only ever see their OWN partner org — matching what the REST
+# endpoint already intends (PartnerListOnboardView/PartnerUpdateView require
+# PARTNER_VIEW/PARTNER_MANAGE, permissions Partner roles don't hold at all).
+# The browser routes are ALL_ROLES for every staff role, so the restriction
+# has to be applied here rather than at the page-permission layer.
+PARTNER_ROLES = (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.value)
+
 
 @require_page_permission("partners")
 def partners_list_view(request):
     """Partner organisations directory."""
     search = request.GET.get("q", "").strip()
     partners_qs = Partner.objects.filter(deleted_at__isnull=True).order_by("name")
+    if request.user.active_role in PARTNER_ROLES:
+        partners_qs = partners_qs.filter(id__in=resolve_partner_ids(request.user))
     if search:
         partners_qs = partners_qs.filter(
             Q(name__icontains=search) | Q(region_name__icontains=search)
@@ -37,6 +49,10 @@ def partners_list_view(request):
 @require_page_permission("partner_detail")
 def partner_detail_view(request, partner_id):
     """Partner detail — schools, activities, performance."""
+    if request.user.active_role in PARTNER_ROLES and str(
+        partner_id
+    ) not in resolve_partner_ids(request.user):
+        return HttpResponseForbidden("You may only view your own partner organization.")
     partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
 
     # Activities delivered by this partner (assigned_partner_id is the

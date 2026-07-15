@@ -21,9 +21,15 @@ Two distinct measurement concepts, kept separate on purpose:
   - EXECUTION / completion  → COMPLETED_STATUSES over the team activity set.
     Answers "did the field work happen?" (KPI Activities Completed, the
     completed bars, activity tracking, staff-vs-partner, donor counts).
-  - TARGET ACHIEVEMENT       → apps.targets.performance (the single canonical
-    engine): completed-vs-StaffTargetProfile-target. Answers "are we hitting
-    the plan?" (Team Target Achievement %, the achievement line, per-CCEO %).
+  - TEAM EXECUTION PROGRESS  → _cceo_target/_team_target below: completed
+    (COMPLETED_STATUSES) vs StaffTargetProfile target, unweighted. Answers
+    "how much of the raw field plan is done right now?" — deliberately NOT
+    IA-verified, so a PL sees same-day progress. This is a DIFFERENT number
+    from, and must never share a label with, the canonical weighted Team
+    Target Achievement % on the Team Targets page (TargetAchievementLedger +
+    TargetArea.weight — see apps.targets.my_targets.weighted_period_pct).
+    Rendered here as "Team Execution Progress %", never "Team Target
+    Achievement %".
 """
 
 from __future__ import annotations
@@ -115,8 +121,18 @@ SSA_INTERVENTIONS = [
 _INTERVENTION_LABELS = {v: (label, code) for v, label, code in SSA_INTERVENTIONS}
 
 MONTHS_SHORT = {
-    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
-    7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec",
+    1: "Jan",
+    2: "Feb",
+    3: "Mar",
+    4: "Apr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Aug",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dec",
 }
 
 
@@ -166,12 +182,14 @@ def _sparkline(values: list[float]) -> str:
 class PLScope:
     user: object
     pl_staff_id: str | None
-    cceos: list = field(default_factory=list)          # [{staff_id,user_id,name,initials,school_ids}]
+    cceos: list = field(
+        default_factory=list
+    )  # [{staff_id,user_id,name,initials,school_ids}]
     responsible_ids: set = field(default_factory=set)  # staff_ids ∪ user_ids
     school_ids: list = field(default_factory=list)
     district_ids: list = field(default_factory=list)
     cluster_ids: list = field(default_factory=list)
-    school_filtered: bool = False                       # a district/cluster/type filter narrowed schools
+    school_filtered: bool = False  # a district/cluster/type filter narrowed schools
 
 
 def _initials(name: str) -> str:
@@ -194,9 +212,7 @@ def resolve_pl_scope(user, filters: dict | None = None) -> PLScope:
     cceo_filter = (filters.get("cceo") or "").strip()
     if cceo_filter:
         cceo_sps = [
-            sp
-            for sp in cceo_sps
-            if sp.id == cceo_filter or sp.user_id == cceo_filter
+            sp for sp in cceo_sps if sp.id == cceo_filter or sp.user_id == cceo_filter
         ]
 
     from apps.accounts.models import StaffSchoolAssignment
@@ -242,7 +258,9 @@ def resolve_pl_scope(user, filters: dict | None = None) -> PLScope:
             school_ids |= c["school_ids"]
     else:
         school_ids = set(
-            School.objects.filter(id__in=set(scope.school_ids)).values_list("id", flat=True)
+            School.objects.filter(id__in=set(scope.school_ids)).values_list(
+                "id", flat=True
+            )
         )
 
     school_filtered = bool(cceo_filter)
@@ -304,8 +322,12 @@ class PLAnalyticsService:
     one cohesive service."""
 
     @staticmethod
-    def get_dashboard(user, fy: str | None = None, quarter: str | None = None,
-                      filters: dict | None = None) -> dict:
+    def get_dashboard(
+        user,
+        fy: str | None = None,
+        quarter: str | None = None,
+        filters: dict | None = None,
+    ) -> dict:
         fy = fy or get_operational_fy()
         filters = dict(filters or {})
         quarter = (quarter or filters.get("quarter") or "").strip() or None
@@ -317,18 +339,34 @@ class PLAnalyticsService:
             "quarter": quarter,
             "filters": filters,
             "kpi_strip_items": kpis["items"],
-            "team_performance": PLAnalyticsService.team_performance(pls, fy, quarter, filters),
+            "team_performance": PLAnalyticsService.team_performance(
+                pls, fy, quarter, filters
+            ),
             "ssa_interventions": PLAnalyticsService.ssa_interventions(pls, fy),
-            "district_performance": PLAnalyticsService.district_performance(pls, fy, quarter, filters),
-            "cluster_performance": PLAnalyticsService.cluster_performance(pls, fy, quarter, filters),
-            "impact_summary": PLAnalyticsService.impact_summary(pls, fy, quarter, filters),
-            "cceo_performance": PLAnalyticsService.cceo_performance(pls, fy, quarter, filters),
+            "district_performance": PLAnalyticsService.district_performance(
+                pls, fy, quarter, filters
+            ),
+            "cluster_performance": PLAnalyticsService.cluster_performance(
+                pls, fy, quarter, filters
+            ),
+            "impact_summary": PLAnalyticsService.impact_summary(
+                pls, fy, quarter, filters
+            ),
+            "cceo_performance": PLAnalyticsService.cceo_performance(
+                pls, fy, quarter, filters
+            ),
             "insights": PLAnalyticsService.insights(pls, fy, quarter, filters),
-            "activity_tracking": PLAnalyticsService.activity_tracking(pls, fy, quarter, filters),
-            "staff_partner": PLAnalyticsService.staff_partner_performance(pls, fy, quarter, filters),
+            "activity_tracking": PLAnalyticsService.activity_tracking(
+                pls, fy, quarter, filters
+            ),
+            "staff_partner": PLAnalyticsService.staff_partner_performance(
+                pls, fy, quarter, filters
+            ),
             "core_champion": PLAnalyticsService.core_champion(pls, fy),
             "risk_list": PLAnalyticsService.risk_list(pls, fy, quarter, filters),
-            "donor_snapshot": PLAnalyticsService.donor_snapshot(pls, fy, quarter, filters),
+            "donor_snapshot": PLAnalyticsService.donor_snapshot(
+                pls, fy, quarter, filters
+            ),
             "filter_options": PLAnalyticsService.filter_options(pls, user),
             "scope_meta": {
                 "cceo_count": len(pls.cceos),
@@ -347,20 +385,50 @@ class PLAnalyticsService:
         from apps.partners.models import PartnerAssignment
 
         schools = School.objects.filter(id__in=pls.school_ids)
-        district_ids = list(schools.exclude(district__isnull=True).order_by("district_id").values_list("district_id", flat=True).distinct())
-        cluster_ids = list(schools.exclude(cluster_id__isnull=True).exclude(cluster_id="").order_by("cluster_id").values_list("cluster_id", flat=True).distinct())
-        districts = list(District.objects.filter(id__in=district_ids).values("id", "name").order_by("name"))
-        clusters = list(Cluster.objects.filter(id__in=cluster_ids).values("id", "name").order_by("name"))
+        district_ids = list(
+            schools.exclude(district__isnull=True)
+            .order_by("district_id")
+            .values_list("district_id", flat=True)
+            .distinct()
+        )
+        cluster_ids = list(
+            schools.exclude(cluster_id__isnull=True)
+            .exclude(cluster_id="")
+            .order_by("cluster_id")
+            .values_list("cluster_id", flat=True)
+            .distinct()
+        )
+        districts = list(
+            District.objects.filter(id__in=district_ids)
+            .values("id", "name")
+            .order_by("name")
+        )
+        clusters = list(
+            Cluster.objects.filter(id__in=cluster_ids)
+            .values("id", "name")
+            .order_by("name")
+        )
         # Partners active in the portfolio (assigned to portfolio schools/clusters).
         partner_ids = list(
             PartnerAssignment.objects.filter(
                 Q(school_id__in=pls.school_ids) | Q(cluster_id__in=cluster_ids)
-            ).values_list("partner_id", flat=True).distinct()
+            )
+            .values_list("partner_id", flat=True)
+            .distinct()
         )
         from apps.partners.models import Partner
 
-        partners = list(Partner.objects.filter(id__in=partner_ids).values("id", "name").order_by("name"))
-        school_types = list(schools.exclude(school_type="").order_by("school_type").values_list("school_type", flat=True).distinct())
+        partners = list(
+            Partner.objects.filter(id__in=partner_ids)
+            .values("id", "name")
+            .order_by("name")
+        )
+        school_types = list(
+            schools.exclude(school_type="")
+            .order_by("school_type")
+            .values_list("school_type", flat=True)
+            .distinct()
+        )
         return {
             "fy_options": fy_options(),
             "quarters": ["Q1", "Q2", "Q3", "Q4"],
@@ -394,7 +462,9 @@ class PLAnalyticsService:
         completed = acts.filter(status__in=COMPLETED_STATUSES)
         schools = School.objects.filter(id__in=pls.school_ids)
 
-        team_target_pct, cceos_on_track = PLAnalyticsService._team_target(pls, fy, quarter, filters)
+        team_target_pct, cceos_on_track = PLAnalyticsService._team_target(
+            pls, fy, quarter, filters
+        )
         schools_total = schools.count()
         schools_without_ssa = schools.exclude(current_fy_ssa_status="done").count()
 
@@ -418,8 +488,12 @@ class PLAnalyticsService:
 
         ct_pct, _, _ = _rate(("cluster_training",))
         cm_pct, _, _ = _rate(CLUSTER_MEETING_TYPES)
-        pa_planned = acts.filter(Q(delivery_type="partner") | Q(activity_type__in=PARTNER_TYPES)).count()
-        pa_done = completed.filter(Q(delivery_type="partner") | Q(activity_type__in=PARTNER_TYPES)).count()
+        pa_planned = acts.filter(
+            Q(delivery_type="partner") | Q(activity_type__in=PARTNER_TYPES)
+        ).count()
+        pa_done = completed.filter(
+            Q(delivery_type="partner") | Q(activity_type__in=PARTNER_TYPES)
+        ).count()
         partner_pct = _pct(pa_done, pa_planned)
 
         budget_pct = PLAnalyticsService._budget_utilization(pls, fy)
@@ -430,63 +504,170 @@ class PLAnalyticsService:
         prevq = PLAnalyticsService._prev_quarter(quarter)
         prev = None
         if prevq:
-            prev = _team_activity_qs(pls, fy, prevq, filters).filter(status__in=COMPLETED_STATUSES).count()
+            prev = (
+                _team_activity_qs(pls, fy, prevq, filters)
+                .filter(status__in=COMPLETED_STATUSES)
+                .count()
+            )
 
         def trend_count(cur, prev_val):
             if prev_val is None:
                 return None, None, None
             delta = cur - prev_val
-            return delta, ("up" if delta >= 0 else "down"), f"{'+' if delta >= 0 else ''}{delta} vs {prevq}"
+            return (
+                delta,
+                ("up" if delta >= 0 else "down"),
+                f"{'+' if delta >= 0 else ''}{delta} vs {prevq}",
+            )
 
         act_delta, act_dir, act_help = trend_count(activities_completed, prev)
 
-        def card(icon, label, value, variant, helper="", direction="neutral",
-                 trend_val="", spark=None, link="", raw=None):
+        def card(
+            icon,
+            label,
+            value,
+            variant,
+            helper="",
+            direction="neutral",
+            trend_val="",
+            spark=None,
+            link="",
+            raw=None,
+        ):
             return {
-                "icon": icon, "label": label, "value": value, "variant": variant,
-                "trend": {"direction": direction, "value": trend_val}, "helper": helper,
+                "icon": icon,
+                "label": label,
+                "value": value,
+                "variant": variant,
+                "trend": {"direction": direction, "value": trend_val},
+                "helper": helper,
                 "sparkline": _sparkline(spark) if spark else "",
-                "link": link, "raw": raw,
+                "link": link,
+                "raw": raw,
             }
 
         items = [
-            card("target", "Team Target Achievement %", f"{team_target_pct}%",
-                 "primary", "vs annual team target", link="?drill=kpi&metric=target"),
-            card("users", "CCEOs On Track", f"{cceos_on_track} / {len(pls.cceos)}",
-                 "success", "at or above pace", link="?drill=kpi&metric=cceos_on_track"),
-            card("school", "Schools Assigned to Team", f"{schools_total}",
-                 "info", "in portfolio", link="?drill=kpi&metric=schools"),
-            card("warning", "Schools Without SSA", f"{schools_without_ssa}",
-                 "warning" if schools_without_ssa else "success", "no verified SSA", link="?drill=kpi&metric=no_ssa"),
-            card("map", "Schools Not Visited", f"{schools_not_visited}",
-                 "danger" if schools_not_visited else "success", "this period", link="?drill=kpi&metric=not_visited"),
-            card("book", "Schools Not Trained", f"{schools_not_trained}",
-                 "danger" if schools_not_trained else "success", "this period", link="?drill=kpi&metric=not_trained"),
-            card("graduation", "Cluster Trainings Completed", f"{ct_pct}%",
-                 "success", "completed / planned"),
-            card("users", "Cluster Meetings Completed", f"{cm_pct}%",
-                 "success", "completed / planned"),
-            card("handshake", "Partner Activities Completed", f"{partner_pct}%",
-                 "info", "completed / assigned"),
-            card("currency", "Team Budget Utilization", f"{budget_pct}%",
-                 "finance", "disbursed / approved"),
-            card("chart", "Average Team SSA Score", f"{avg_ssa_pct}%" if avg_ssa_pct is not None else "No SSA",
-                 "success" if (avg_ssa_pct or 0) >= 60 else "warning", "latest verified cycle"),
-            card("report", "Activities Completed", f"{activities_completed:,}",
-                 "primary", act_help or "this period",
-                 direction=act_dir or "neutral", trend_val=(f"{'+' if (act_delta or 0) >= 0 else ''}{act_delta}" if act_delta is not None else "")),
+            card(
+                "target",
+                "Team Execution Progress %",
+                f"{team_target_pct}%",
+                "primary",
+                "field completions vs target (not IA-verified)",
+                link="?drill=kpi&metric=target",
+            ),
+            card(
+                "users",
+                "CCEOs On Track",
+                f"{cceos_on_track} / {len(pls.cceos)}",
+                "success",
+                "at or above pace",
+                link="?drill=kpi&metric=cceos_on_track",
+            ),
+            card(
+                "school",
+                "Schools Assigned to Team",
+                f"{schools_total}",
+                "info",
+                "in portfolio",
+                link="?drill=kpi&metric=schools",
+            ),
+            card(
+                "warning",
+                "Schools Without SSA",
+                f"{schools_without_ssa}",
+                "warning" if schools_without_ssa else "success",
+                "no verified SSA",
+                link="?drill=kpi&metric=no_ssa",
+            ),
+            card(
+                "map",
+                "Schools Not Visited",
+                f"{schools_not_visited}",
+                "danger" if schools_not_visited else "success",
+                "this period",
+                link="?drill=kpi&metric=not_visited",
+            ),
+            card(
+                "book",
+                "Schools Not Trained",
+                f"{schools_not_trained}",
+                "danger" if schools_not_trained else "success",
+                "this period",
+                link="?drill=kpi&metric=not_trained",
+            ),
+            card(
+                "graduation",
+                "Cluster Trainings Completed",
+                f"{ct_pct}%",
+                "success",
+                "completed / planned",
+            ),
+            card(
+                "users",
+                "Cluster Meetings Completed",
+                f"{cm_pct}%",
+                "success",
+                "completed / planned",
+            ),
+            card(
+                "handshake",
+                "Partner Activities Completed",
+                f"{partner_pct}%",
+                "info",
+                "completed / assigned",
+            ),
+            card(
+                "currency",
+                "Team Budget Utilization",
+                f"{budget_pct}%",
+                "finance",
+                "disbursed / approved",
+            ),
+            card(
+                "chart",
+                "Average Team SSA Score",
+                f"{avg_ssa_pct}%" if avg_ssa_pct is not None else "No SSA",
+                "success" if (avg_ssa_pct or 0) >= 60 else "warning",
+                "latest verified cycle",
+            ),
+            card(
+                "report",
+                "Activities Completed",
+                f"{activities_completed:,}",
+                "primary",
+                act_help or "this period",
+                direction=act_dir or "neutral",
+                trend_val=(
+                    f"{'+' if (act_delta or 0) >= 0 else ''}{act_delta}"
+                    if act_delta is not None
+                    else ""
+                ),
+            ),
         ]
-        return {"items": items, "team_target_pct": team_target_pct, "cceos_on_track": cceos_on_track}
+        return {
+            "items": items,
+            "team_target_pct": team_target_pct,
+            "cceos_on_track": cceos_on_track,
+        }
 
     # ── Target achievement ───────────────────────────────────────────────────
-    # Per the spec: Team Target Achievement % = completed target items /
+    # Per the spec: Team Execution Progress % = completed target items /
     # assigned target items × 100. "Completed" here is the broad field-execution
     # completion (COMPLETED_STATUSES), NOT the stricter IA-verified engine used
-    # by the "My Targets" view — a PL execution cockpit tracks what got done.
+    # by the "My Targets" / "Team Targets" pages (TargetAchievementLedger,
+    # weighted by TargetArea.weight — see targets.my_targets.weighted_period_pct).
+    # A PL execution cockpit tracks what got done in the field right now, so it
+    # deliberately does not wait for IA validation. Because this is a genuinely
+    # different metric from the canonical weighted ledger %, it must NEVER reuse
+    # the "Team Target Achievement" label — that label is reserved for the
+    # canonical figure on the Team Targets page, so a PL never sees the same
+    # label mean two different numbers in one session.
     # Targets come from StaffTargetProfile (visits / trainings / cluster
     # meetings / SSA). No target set → 0 with a "set targets" note (honest).
     @staticmethod
-    def _cceo_target(cceo: dict, completed_qs, fy: str, quarter: str | None = None) -> tuple[int, int, int]:
+    def _cceo_target(
+        cceo: dict, completed_qs, fy: str, quarter: str | None = None
+    ) -> tuple[int, int, int]:
         """(achievement_pct, achieved_total, target_total) for one CCEO from
         real completed activities vs their StaffTargetProfile targets. A single
         quarter pro-rates the annual target to a quarter share (annual ÷ 4);
@@ -518,7 +699,9 @@ class PLAnalyticsService:
         return pct, achieved_total, target_total
 
     @staticmethod
-    def _team_target(pls: PLScope, fy: str, quarter=None, filters=None) -> tuple[int, int]:
+    def _team_target(
+        pls: PLScope, fy: str, quarter=None, filters=None
+    ) -> tuple[int, int]:
         """Team target achievement % + count of CCEOs at/above the pace
         threshold (design: 'CCEOs On Track')."""
         completed_qs = _team_activity_qs(pls, fy, quarter, filters or {}).filter(
@@ -528,7 +711,9 @@ class PLAnalyticsService:
         on_track = 0
         expected = PLAnalyticsService._expected_pace(fy)
         for c in pls.cceos:
-            pct, ach, tgt = PLAnalyticsService._cceo_target(c, completed_qs, fy, quarter)
+            pct, ach, tgt = PLAnalyticsService._cceo_target(
+                c, completed_qs, fy, quarter
+            )
             total_target += tgt
             total_achieved += ach
             if tgt and pct >= expected:
@@ -557,12 +742,18 @@ class PLAnalyticsService:
         if not user_ids:
             return 0
         qs = WeeklyFundRequest.objects.filter(fy=fy, responsible_user__in=user_ids)
-        approved = qs.filter(
-            status__in=["confirmed_for_advance", "disbursed", "accounted"]
-        ).aggregate(s=Sum("total_amount"))["s"] or 0
-        disbursed = qs.filter(status__in=["disbursed", "accounted"]).aggregate(
-            s=Sum("disbursed_amount")
-        )["s"] or 0
+        approved = (
+            qs.filter(
+                status__in=["confirmed_for_advance", "disbursed", "accounted"]
+            ).aggregate(s=Sum("total_amount"))["s"]
+            or 0
+        )
+        disbursed = (
+            qs.filter(status__in=["disbursed", "accounted"]).aggregate(
+                s=Sum("disbursed_amount")
+            )["s"]
+            or 0
+        )
         return _pct(int(disbursed), int(approved))
 
     # ── SSA annual-cycle helpers ─────────────────────────────────────────────
@@ -576,7 +767,9 @@ class PLAnalyticsService:
         # cycle comparison to latest==prev).
         fys = list(
             SsaRecord.objects.filter(
-                school_id__in=pls.school_ids, verification_status="confirmed", fy__lte=fy
+                school_id__in=pls.school_ids,
+                verification_status="confirmed",
+                fy__lte=fy,
             )
             .order_by("fy")
             .values_list("fy", flat=True)
@@ -606,13 +799,25 @@ class PLAnalyticsService:
         if not latest:
             for v, label, code in SSA_INTERVENTIONS:
                 band = ssa_band(None)
-                rows.append({"value": v, "label": label, "code": code, "pct": None,
-                             "delta": None, "band": band[0], "color": band[1], "tone": band[2]})
+                rows.append(
+                    {
+                        "value": v,
+                        "label": label,
+                        "code": code,
+                        "pct": None,
+                        "delta": None,
+                        "band": band[0],
+                        "color": band[1],
+                        "tone": band[2],
+                    }
+                )
             return {"rows": rows, "latest_fy": None, "prev_fy": None, "has_data": False}
 
         def _by_intervention(cycle_fy):
             record_ids = SsaRecord.objects.filter(
-                school_id__in=pls.school_ids, verification_status="confirmed", fy=cycle_fy
+                school_id__in=pls.school_ids,
+                verification_status="confirmed",
+                fy=cycle_fy,
             ).values_list("id", flat=True)
             data = {
                 r["intervention"]: r["a"]
@@ -627,21 +832,41 @@ class PLAnalyticsService:
         for v, label, code in SSA_INTERVENTIONS:
             cur_pct = _norm(cur.get(v))
             prev_pct = _norm(old.get(v)) if prev else None
-            delta = round(cur_pct - prev_pct, 1) if (cur_pct is not None and prev_pct is not None) else None
+            delta = (
+                round(cur_pct - prev_pct, 1)
+                if (cur_pct is not None and prev_pct is not None)
+                else None
+            )
             band = ssa_band(cur_pct)
-            rows.append({"value": v, "label": label, "code": code, "pct": cur_pct,
-                         "delta": delta, "band": band[0], "color": band[1], "tone": band[2]})
+            rows.append(
+                {
+                    "value": v,
+                    "label": label,
+                    "code": code,
+                    "pct": cur_pct,
+                    "delta": delta,
+                    "band": band[0],
+                    "color": band[1],
+                    "tone": band[2],
+                }
+            )
         rows.sort(key=lambda r: (r["pct"] is None, -(r["pct"] or 0)))
         return {"rows": rows, "latest_fy": latest, "prev_fy": prev, "has_data": True}
 
     # ── A. Team performance (monthly planned vs completed + achievement line) ─
     @staticmethod
-    def team_performance(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
+    def team_performance(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
         acts = _team_activity_qs(pls, fy, None, filters)  # full FY for the timeline
         labels, planned, completed = [], [], []
         # Annual team target for the cumulative achievement line.
-        _, _, team_target_total = PLAnalyticsService._team_target_totals(pls, fy, None, filters)
-        target_types = VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES + SSA_COLLECTION_TYPES
+        _, _, team_target_total = PLAnalyticsService._team_target_totals(
+            pls, fy, None, filters
+        )
+        target_types = (
+            VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES + SSA_COLLECTION_TYPES
+        )
         cumulative_done = 0
         pct_line = []
         # FY runs Oct(1) → Sep(12).
@@ -649,7 +874,9 @@ class PLAnalyticsService:
             start, end = get_month_date_range(fy, m_of_fy)
             cal_month = start.month
             labels.append(f"{MONTHS_SHORT[cal_month]}")
-            month_qs = acts.filter(planned_date__gte=start.date(), planned_date__lt=end.date())
+            month_qs = acts.filter(
+                planned_date__gte=start.date(), planned_date__lt=end.date()
+            )
             p = month_qs.filter(status__in=PLANNED_STATUSES).count()
             c = month_qs.filter(status__in=COMPLETED_STATUSES).count()
             planned.append(p)
@@ -659,7 +886,11 @@ class PLAnalyticsService:
             cumulative_done += month_qs.filter(
                 status__in=COMPLETED_STATUSES, activity_type__in=target_types
             ).count()
-            pct_line.append(round(cumulative_done / team_target_total * 100) if team_target_total else 0)
+            pct_line.append(
+                round(cumulative_done / team_target_total * 100)
+                if team_target_total
+                else 0
+            )
         return {
             "labels": labels,
             "planned": planned,
@@ -669,7 +900,9 @@ class PLAnalyticsService:
         }
 
     @staticmethod
-    def _team_target_totals(pls: PLScope, fy: str, quarter=None, filters=None) -> tuple[int, int, int]:
+    def _team_target_totals(
+        pls: PLScope, fy: str, quarter=None, filters=None
+    ) -> tuple[int, int, int]:
         completed_qs = _team_activity_qs(pls, fy, quarter, filters or {}).filter(
             status__in=COMPLETED_STATUSES
         )
@@ -683,11 +916,10 @@ class PLAnalyticsService:
 
     # ── C. District performance ──────────────────────────────────────────────
     @staticmethod
-    def district_performance(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
-        from apps.geography.models import District
-
+    def district_performance(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
         schools = School.objects.filter(id__in=pls.school_ids)
-        rows = []
         acts = _team_activity_qs(pls, fy, quarter, filters)
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
         by_district = (
@@ -696,36 +928,70 @@ class PLAnalyticsService:
             .annotate(n=Count("id"))
             .order_by("-n")
         )
+
+        # Batch-fetch once instead of ~4 queries per district (school-scoped
+        # activity completed/planned counts, SSA average, SSA critical-count).
+        # School->district map, all in-scope activities' (school_id, status),
+        # and all confirmed SSA records for the latest cycle, grouped in Python.
+        school_district = dict(
+            schools.exclude(district__isnull=True).values_list("id", "district_id")
+        )
+        district_completed: dict = {}
+        district_planned: dict = {}
+        for sid, status in acts.exclude(school_id__isnull=True).values_list(
+            "school_id", "status"
+        ):
+            did = school_district.get(sid)
+            if did is None:
+                continue
+            district_planned[did] = district_planned.get(did, 0) + 1
+            if status in COMPLETED_STATUSES:
+                district_completed[did] = district_completed.get(did, 0) + 1
+
+        district_scores: dict = {}  # district_id -> [average_score, ...]
+        district_critical_schools: dict = {}  # district_id -> {school_id, ...}
+        if latest_fy:
+            for sid, score in SsaRecord.objects.filter(
+                school_id__in=pls.school_ids,
+                verification_status="confirmed",
+                fy=latest_fy,
+            ).values_list("school_id", "average_score"):
+                did = school_district.get(sid)
+                if did is None:
+                    continue
+                district_scores.setdefault(did, []).append(score)
+                if score is not None and score < 5.0:
+                    district_critical_schools.setdefault(did, set()).add(sid)
+
+        def _mean(values):
+            values = [v for v in values if v is not None]
+            return (sum(values) / len(values)) if values else None
+
+        rows = []
         team_pcts = []
         for d in by_district:
-            d_school_ids = set(
-                schools.filter(district_id=d["district_id"]).values_list("id", flat=True)
-            )
-            d_acts = acts.filter(school_id__in=d_school_ids)
-            completed = d_acts.filter(status__in=COMPLETED_STATUSES).count()
-            planned_total = d_acts.count()
+            did = d["district_id"]
+            n_schools = d["n"]
+            completed = district_completed.get(did, 0)
+            planned_total = district_planned.get(did, 0)
             pct = _pct(completed, planned_total)
-            avg_ssa = None
-            critical = 0
-            if latest_fy:
-                avg_ssa = _norm(
-                    SsaRecord.objects.filter(
-                        school_id__in=d_school_ids, verification_status="confirmed", fy=latest_fy
-                    ).aggregate(a=Avg("average_score"))["a"]
-                )
-                critical = (
-                    SsaRecord.objects.filter(
-                        school_id__in=d_school_ids, verification_status="confirmed",
-                        fy=latest_fy, average_score__lt=5.0,
-                    ).values("school_id").distinct().count()
-                )
+            avg_ssa = _norm(_mean(district_scores.get(did, []))) if latest_fy else None
+            critical = len(district_critical_schools.get(did, set()))
             band = ssa_band(avg_ssa)
-            rows.append({
-                "id": d["district_id"], "name": d["district__name"], "pct": pct,
-                "schools": len(d_school_ids), "completed": completed, "critical": critical,
-                "avg_ssa": avg_ssa, "bar_color": PLAnalyticsService._bar_color(pct),
-                "band": band[0], "tone": band[2],
-            })
+            rows.append(
+                {
+                    "id": did,
+                    "name": d["district__name"],
+                    "pct": pct,
+                    "schools": n_schools,
+                    "completed": completed,
+                    "critical": critical,
+                    "avg_ssa": avg_ssa,
+                    "bar_color": PLAnalyticsService._bar_color(pct),
+                    "band": band[0],
+                    "tone": band[2],
+                }
+            )
             team_pcts.append(pct)
         rows.sort(key=lambda r: -r["pct"])
         team_avg = round(sum(team_pcts) / len(team_pcts)) if team_pcts else 0
@@ -743,56 +1009,150 @@ class PLAnalyticsService:
 
     # ── D. Cluster performance ───────────────────────────────────────────────
     @staticmethod
-    def cluster_performance(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
+    def cluster_performance(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
         from apps.clusters.models import Cluster
 
         schools = School.objects.filter(id__in=pls.school_ids)
         cluster_ids = list(
-            schools.exclude(cluster_id__isnull=True).exclude(cluster_id="")
-            .order_by("cluster_id").values_list("cluster_id", flat=True).distinct()
+            schools.exclude(cluster_id__isnull=True)
+            .exclude(cluster_id="")
+            .order_by("cluster_id")
+            .values_list("cluster_id", flat=True)
+            .distinct()
         )
         cluster_names = dict(
             Cluster.objects.filter(id__in=cluster_ids).values_list("id", "name")
         )
         acts = _team_activity_qs(pls, fy, quarter, filters)
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
+
+        # Batch-fetch once instead of ~7 queries per cluster (SSA record ids,
+        # SSA average, weakest-intervention average, and 4 activity counts).
+        # School->cluster map, all confirmed SSA records + their intervention
+        # scores, and all in-scope activities, grouped in Python.
+        school_cluster = dict(
+            schools.exclude(cluster_id__isnull=True)
+            .exclude(cluster_id="")
+            .values_list("id", "cluster_id")
+        )
+
+        def _mean(values):
+            values = [v for v in values if v is not None]
+            return (sum(values) / len(values)) if values else None
+
+        cluster_scores: dict = {}  # cluster_id -> [average_score, ...]
+        record_cluster: dict = {}  # ssa_record_id -> cluster_id
+        if latest_fy:
+            for rec_id, sid, score in SsaRecord.objects.filter(
+                school_id__in=pls.school_ids,
+                verification_status="confirmed",
+                fy=latest_fy,
+            ).values_list("id", "school_id", "average_score"):
+                cid_ = school_cluster.get(sid)
+                if cid_ is None:
+                    continue
+                record_cluster[rec_id] = cid_
+                cluster_scores.setdefault(cid_, []).append(score)
+
+        cluster_intervention_scores: dict = {}  # cluster_id -> {intervention: [score, ...]}
+        if record_cluster:
+            for rec_id, intervention, score in SsaScore.objects.filter(
+                ssa_record_id__in=list(record_cluster.keys()),
+            ).values_list("ssa_record_id", "intervention", "score"):
+                cid_ = record_cluster.get(rec_id)
+                if cid_ is None:
+                    continue
+                cluster_intervention_scores.setdefault(cid_, {}).setdefault(
+                    intervention, []
+                ).append(score)
+
+        cluster_counts: dict = {}  # cluster_id -> {"visits_done": n, "visits_planned": n, ...}
+        for sid, atype, status in acts.exclude(school_id__isnull=True).values_list(
+            "school_id", "activity_type", "status"
+        ):
+            cid_ = school_cluster.get(sid)
+            if cid_ is None:
+                continue
+            c = cluster_counts.setdefault(
+                cid_,
+                {
+                    "visits_done": 0,
+                    "visits_planned": 0,
+                    "trainings_done": 0,
+                    "trainings_planned": 0,
+                },
+            )
+            done = status in COMPLETED_STATUSES
+            if atype in VISIT_TYPES:
+                c["visits_planned"] += 1
+                if done:
+                    c["visits_done"] += 1
+            elif atype in TRAINING_TYPES:
+                c["trainings_planned"] += 1
+                if done:
+                    c["trainings_done"] += 1
+
         rows = []
         for idx, cid in enumerate(cluster_ids, start=1):
-            c_school_ids = set(schools.filter(cluster_id=cid).values_list("id", flat=True))
             avg_ssa = None
             weakest = ("—", None)
             if latest_fy:
-                record_ids = SsaRecord.objects.filter(
-                    school_id__in=c_school_ids, verification_status="confirmed", fy=latest_fy
-                ).values_list("id", flat=True)
-                avg = SsaRecord.objects.filter(id__in=record_ids).aggregate(a=Avg("average_score"))["a"]
-                avg_ssa = _norm(avg)
-                by_int = (
-                    SsaScore.objects.filter(ssa_record_id__in=record_ids)
-                    .values("intervention").annotate(a=Avg("score")).order_by("a")
+                avg_ssa = _norm(_mean(cluster_scores.get(cid, [])))
+                by_int = sorted(
+                    (
+                        (k, _mean(v))
+                        for k, v in cluster_intervention_scores.get(cid, {}).items()
+                    ),
+                    key=lambda kv: (kv[1] is None, kv[1]),
                 )
                 if by_int:
-                    w = by_int[0]
-                    label = _INTERVENTION_LABELS.get(w["intervention"], (w["intervention"], ""))[0]
-                    weakest = (label, _norm(w["a"]))
-            c_acts = acts.filter(school_id__in=c_school_ids)
-            visits_done = c_acts.filter(activity_type__in=VISIT_TYPES, status__in=COMPLETED_STATUSES).count()
-            visits_planned = c_acts.filter(activity_type__in=VISIT_TYPES).count()
-            trainings_done = c_acts.filter(activity_type__in=TRAINING_TYPES, status__in=COMPLETED_STATUSES).count()
-            trainings_planned = c_acts.filter(activity_type__in=TRAINING_TYPES).count()
+                    w_key, w_avg = by_int[0]
+                    label = _INTERVENTION_LABELS.get(w_key, (w_key, ""))[0]
+                    weakest = (label, _norm(w_avg))
+            counts = cluster_counts.get(
+                cid,
+                {
+                    "visits_done": 0,
+                    "visits_planned": 0,
+                    "trainings_done": 0,
+                    "trainings_planned": 0,
+                },
+            )
+            visits_done, visits_planned = (
+                counts["visits_done"],
+                counts["visits_planned"],
+            )
+            trainings_done, trainings_planned = (
+                counts["trainings_done"],
+                counts["trainings_planned"],
+            )
             band = ssa_band(avg_ssa)
-            rows.append({
-                "index": idx,
-                "id": cid,
-                "name": cluster_names.get(cid, "Cluster"),
-                "avg_ssa": avg_ssa,
-                "ssa_tone": band[2], "ssa_band": band[0],
-                "weakest_label": weakest[0], "weakest_pct": weakest[1],
-                "visits_done": visits_done, "visits_planned": visits_planned,
-                "trainings_done": trainings_done, "trainings_planned": trainings_planned,
-                "next_action": PLAnalyticsService._cluster_next_action(avg_ssa, visits_done, visits_planned, trainings_done, trainings_planned),
-                "status": band[0],
-            })
+            rows.append(
+                {
+                    "index": idx,
+                    "id": cid,
+                    "name": cluster_names.get(cid, "Cluster"),
+                    "avg_ssa": avg_ssa,
+                    "ssa_tone": band[2],
+                    "ssa_band": band[0],
+                    "weakest_label": weakest[0],
+                    "weakest_pct": weakest[1],
+                    "visits_done": visits_done,
+                    "visits_planned": visits_planned,
+                    "trainings_done": trainings_done,
+                    "trainings_planned": trainings_planned,
+                    "next_action": PLAnalyticsService._cluster_next_action(
+                        avg_ssa,
+                        visits_done,
+                        visits_planned,
+                        trainings_done,
+                        trainings_planned,
+                    ),
+                    "status": band[0],
+                }
+            )
         rows.sort(key=lambda r: (r["avg_ssa"] is None, -(r["avg_ssa"] or 0)))
         return {"rows": rows, "latest_fy": latest_fy}
 
@@ -810,14 +1170,35 @@ class PLAnalyticsService:
 
     # ── E. Impact summary ────────────────────────────────────────────────────
     @staticmethod
-    def impact_summary(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
-        completed = _team_activity_qs(pls, fy, quarter, filters).filter(status__in=COMPLETED_STATUSES)
-        teachers = completed.filter(activity_type__in=TRAINING_TYPES).aggregate(s=Sum("teachers_attended"))["s"] or 0
-        leaders = completed.filter(activity_type__in=TRAINING_TYPES).aggregate(s=Sum("leaders_attended"))["s"] or 0
-        reached_school_ids = set(
-            completed.exclude(school_id__isnull=True).values_list("school_id", flat=True)
+    def impact_summary(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
+        completed = _team_activity_qs(pls, fy, quarter, filters).filter(
+            status__in=COMPLETED_STATUSES
         )
-        students = School.objects.filter(id__in=reached_school_ids).aggregate(s=Sum("enrollment"))["s"] or 0
+        teachers = (
+            completed.filter(activity_type__in=TRAINING_TYPES).aggregate(
+                s=Sum("teachers_attended")
+            )["s"]
+            or 0
+        )
+        leaders = (
+            completed.filter(activity_type__in=TRAINING_TYPES).aggregate(
+                s=Sum("leaders_attended")
+            )["s"]
+            or 0
+        )
+        reached_school_ids = set(
+            completed.exclude(school_id__isnull=True).values_list(
+                "school_id", flat=True
+            )
+        )
+        students = (
+            School.objects.filter(id__in=reached_school_ids).aggregate(
+                s=Sum("enrollment")
+            )["s"]
+            or 0
+        )
         schools_improved = PLAnalyticsService._schools_improved(pls, fy)
         return {
             "teachers_trained": int(teachers),
@@ -844,13 +1225,20 @@ class PLAnalyticsService:
         )
         improved = 0
         for sid, score in cur.items():
-            if sid in old and score is not None and old[sid] is not None and score > old[sid]:
+            if (
+                sid in old
+                and score is not None
+                and old[sid] is not None
+                and score > old[sid]
+            ):
                 improved += 1
         return improved
 
     # ── F. CCEO performance ──────────────────────────────────────────────────
     @staticmethod
-    def cceo_performance(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
+    def cceo_performance(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
         acts = _team_activity_qs(pls, fy, quarter, filters)
         completed_all = acts.filter(status__in=COMPLETED_STATUSES)
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
@@ -864,40 +1252,64 @@ class PLAnalyticsService:
             )
             completed = c_acts.filter(status__in=COMPLETED_STATUSES).count()
             backlog = c_acts.filter(
-                status__in=("returned_by_pl", "returned_by_ia",
-                            "salesforce_id_required", "awaiting_ia_verification")
+                status__in=(
+                    "returned_by_pl",
+                    "returned_by_ia",
+                    "salesforce_id_required",
+                    "awaiting_ia_verification",
+                )
             ).count()
-            target_pct, _, target_total = PLAnalyticsService._cceo_target(c, completed_all, fy, quarter)
+            target_pct, _, target_total = PLAnalyticsService._cceo_target(
+                c, completed_all, fy, quarter
+            )
             avg_ssa = None
             if latest_fy and c["school_ids"]:
                 avg_ssa = _norm(
                     SsaRecord.objects.filter(
-                        school_id__in=c["school_ids"], verification_status="confirmed", fy=latest_fy
+                        school_id__in=c["school_ids"],
+                        verification_status="confirmed",
+                        fy=latest_fy,
                     ).aggregate(a=Avg("average_score"))["a"]
                 )
-            evidence_total = c_acts.filter(activity_type__in=VISIT_TYPES + TRAINING_TYPES).count()
+            evidence_total = c_acts.filter(
+                activity_type__in=VISIT_TYPES + TRAINING_TYPES
+            ).count()
             evidence_done = c_acts.filter(evidence_status="accepted").count()
             evidence_pct = _pct(evidence_done, evidence_total)
             risk = PLAnalyticsService._cceo_risk(
-                target_pct, target_total, backlog, avg_ssa, len(c["school_ids"]),
+                target_pct,
+                target_total,
+                backlog,
+                avg_ssa,
+                len(c["school_ids"]),
             )
             band = ssa_band(avg_ssa)
-            rows.append({
-                "staff_id": c["staff_id"], "name": c["name"], "initials": c["initials"],
-                "schools_managed": len(c["school_ids"]),
-                "completed": completed, "backlog": backlog,
-                "avg_ssa": avg_ssa, "ssa_tone": band[2],
-                "target_pct": target_pct, "has_target": target_total > 0,
-                "evidence_pct": evidence_pct,
-                "risk": risk[0], "risk_tone": risk[1],
-            })
+            rows.append(
+                {
+                    "staff_id": c["staff_id"],
+                    "name": c["name"],
+                    "initials": c["initials"],
+                    "schools_managed": len(c["school_ids"]),
+                    "completed": completed,
+                    "backlog": backlog,
+                    "avg_ssa": avg_ssa,
+                    "ssa_tone": band[2],
+                    "target_pct": target_pct,
+                    "has_target": target_total > 0,
+                    "evidence_pct": evidence_pct,
+                    "risk": risk[0],
+                    "risk_tone": risk[1],
+                }
+            )
         # Rank worst risk first, then lowest achievement.
         risk_order = {"Critical": 0, "High": 1, "Moderate": 2, "Low": 3}
         rows.sort(key=lambda r: (risk_order.get(r["risk"], 4), r["target_pct"]))
         return {"rows": rows}
 
     @staticmethod
-    def _cceo_risk(target_pct, target_total, backlog, avg_ssa, schools) -> tuple[str, str]:
+    def _cceo_risk(
+        target_pct, target_total, backlog, avg_ssa, schools
+    ) -> tuple[str, str]:
         score = 0
         expected = 50
         if target_total and target_pct < expected * 0.5:
@@ -926,39 +1338,85 @@ class PLAnalyticsService:
     @staticmethod
     def insights(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
         schools = School.objects.filter(id__in=pls.school_ids)
-        acts = _team_activity_qs(pls, fy, quarter, filters).filter(status__in=COMPLETED_STATUSES)
+        acts = _team_activity_qs(pls, fy, quarter, filters).filter(
+            status__in=COMPLETED_STATUSES
+        )
         no_ssa = schools.exclude(current_fy_ssa_status="done").count()
-        visited = set(acts.filter(activity_type__in=VISIT_TYPES).exclude(school_id__isnull=True).values_list("school_id", flat=True))
+        visited = set(
+            acts.filter(activity_type__in=VISIT_TYPES)
+            .exclude(school_id__isnull=True)
+            .values_list("school_id", flat=True)
+        )
         not_visited = max(0, schools.count() - len(visited))
-        trained = set(acts.filter(activity_type__in=TRAINING_TYPES).exclude(school_id__isnull=True).values_list("school_id", flat=True))
+        trained = set(
+            acts.filter(activity_type__in=TRAINING_TYPES)
+            .exclude(school_id__isnull=True)
+            .values_list("school_id", flat=True)
+        )
         not_trained = max(0, schools.count() - len(trained))
         weak_clusters = 0
-        cluster_data = PLAnalyticsService.cluster_performance(pls, fy, quarter, filters)["rows"]
-        weak_clusters = sum(1 for c in cluster_data if c["avg_ssa"] is not None and c["avg_ssa"] < 50)
+        cluster_data = PLAnalyticsService.cluster_performance(
+            pls, fy, quarter, filters
+        )["rows"]
+        weak_clusters = sum(
+            1 for c in cluster_data if c["avg_ssa"] is not None and c["avg_ssa"] < 50
+        )
 
         items = []
         if no_ssa:
-            items.append({"severity": "danger", "text": f"{no_ssa} schools are without SSA collection",
-                          "action": "Schedule SSA Collection", "link": "?drill=risk&issue=no_ssa"})
+            items.append(
+                {
+                    "severity": "danger",
+                    "text": f"{no_ssa} schools are without SSA collection",
+                    "action": "Schedule SSA Collection",
+                    "link": "?drill=risk&issue=no_ssa",
+                }
+            )
         if not_visited:
-            items.append({"severity": "warning", "text": f"{not_visited} schools not visited this period",
-                          "action": "Plan Visits", "link": "?drill=risk&issue=not_visited"})
+            items.append(
+                {
+                    "severity": "warning",
+                    "text": f"{not_visited} schools not visited this period",
+                    "action": "Plan Visits",
+                    "link": "?drill=risk&issue=not_visited",
+                }
+            )
         if not_trained:
-            items.append({"severity": "warning", "text": f"{not_trained} schools are behind on required trainings",
-                          "action": "Plan Training", "link": "?drill=risk&issue=not_trained"})
+            items.append(
+                {
+                    "severity": "warning",
+                    "text": f"{not_trained} schools are behind on required trainings",
+                    "action": "Plan Training",
+                    "link": "?drill=risk&issue=not_trained",
+                }
+            )
         if weak_clusters:
-            items.append({"severity": "danger", "text": f"{weak_clusters} clusters performing below 50% target",
-                          "action": "Review Cluster Support Plan", "link": "?drill=cluster"})
-        return {"items": items[:6], "cta": "Review At-Risk Schools", "cta_link": "?drill=risk"}
+            items.append(
+                {
+                    "severity": "danger",
+                    "text": f"{weak_clusters} clusters performing below 50% target",
+                    "action": "Review Cluster Support Plan",
+                    "link": "?drill=cluster",
+                }
+            )
+        return {
+            "items": items[:6],
+            "cta": "Review At-Risk Schools",
+            "cta_link": "?drill=risk",
+        }
 
     # ── H. Activity tracking ─────────────────────────────────────────────────
     @staticmethod
-    def activity_tracking(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
+    def activity_tracking(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
         acts = _team_activity_qs(pls, fy, quarter, filters)
 
         def card(label, types=None, partner=False, project=False):
             if partner:
-                qs = acts.filter(Q(delivery_type="partner") | Q(activity_type__in=PARTNER_TYPES))
+                qs = acts.filter(
+                    Q(delivery_type="partner") | Q(activity_type__in=PARTNER_TYPES)
+                )
             elif project:
                 qs = acts.filter(activity_type__in=PROJECT_TYPES)
             else:
@@ -966,8 +1424,13 @@ class PLAnalyticsService:
             planned = qs.count()
             done = qs.filter(status__in=COMPLETED_STATUSES).count()
             pct = _pct(done, planned)
-            return {"label": label, "done": done, "planned": planned, "pct": pct,
-                    "bar_color": PLAnalyticsService._bar_color(pct)}
+            return {
+                "label": label,
+                "done": done,
+                "planned": planned,
+                "pct": pct,
+                "bar_color": PLAnalyticsService._bar_color(pct),
+            }
 
         return {
             "cards": [
@@ -982,8 +1445,12 @@ class PLAnalyticsService:
 
     # ── I. Staff vs partner performance ──────────────────────────────────────
     @staticmethod
-    def staff_partner_performance(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
-        completed = _team_activity_qs(pls, fy, quarter, filters).filter(status__in=COMPLETED_STATUSES)
+    def staff_partner_performance(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
+        completed = _team_activity_qs(pls, fy, quarter, filters).filter(
+            status__in=COMPLETED_STATUSES
+        )
 
         def split(qs):
             staff = qs.exclude(delivery_type="partner").count()
@@ -1005,7 +1472,9 @@ class PLAnalyticsService:
     def core_champion(pls: PLScope, fy: str) -> dict:
         schools = School.objects.filter(id__in=pls.school_ids)
         core_ids = set(schools.filter(school_type="core").values_list("id", flat=True))
-        champ_ids = set(schools.filter(school_type="champion").values_list("id", flat=True))
+        champ_ids = set(
+            schools.filter(school_type="champion").values_list("id", flat=True)
+        )
 
         def trend(ids):
             if not ids:
@@ -1013,7 +1482,10 @@ class PLAnalyticsService:
             fys = sorted(
                 SsaRecord.objects.filter(
                     school_id__in=ids, verification_status="confirmed"
-                ).order_by("fy").values_list("fy", flat=True).distinct()
+                )
+                .order_by("fy")
+                .values_list("fy", flat=True)
+                .distinct()
             )
             labels, series = [], []
             for f in fys:
@@ -1028,25 +1500,41 @@ class PLAnalyticsService:
 
     # ── K. School risk & attention list ──────────────────────────────────────
     @staticmethod
-    def risk_list(pls: PLScope, fy: str, quarter: str | None, filters: dict, limit: int = 12) -> dict:
-        from apps.geography.models import District
-
-        acts = _team_activity_qs(pls, fy, quarter, filters).filter(status__in=COMPLETED_STATUSES)
+    def risk_list(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict, limit: int = 12
+    ) -> dict:
+        acts = _team_activity_qs(pls, fy, quarter, filters).filter(
+            status__in=COMPLETED_STATUSES
+        )
         visited = {}
-        for sid, d in acts.filter(activity_type__in=VISIT_TYPES).exclude(school_id__isnull=True).values_list("school_id", "planned_date"):
-            if sid and (sid not in visited or (d and (visited[sid] is None or d > visited[sid]))):
+        for sid, d in (
+            acts.filter(activity_type__in=VISIT_TYPES)
+            .exclude(school_id__isnull=True)
+            .values_list("school_id", "planned_date")
+        ):
+            if sid and (
+                sid not in visited or (d and (visited[sid] is None or d > visited[sid]))
+            ):
                 visited[sid] = d
         trained = {}
-        for sid, d in acts.filter(activity_type__in=TRAINING_TYPES).exclude(school_id__isnull=True).values_list("school_id", "planned_date"):
-            if sid and (sid not in trained or (d and (trained[sid] is None or d > trained[sid]))):
+        for sid, d in (
+            acts.filter(activity_type__in=TRAINING_TYPES)
+            .exclude(school_id__isnull=True)
+            .values_list("school_id", "planned_date")
+        ):
+            if sid and (
+                sid not in trained or (d and (trained[sid] is None or d > trained[sid]))
+            ):
                 trained[sid] = d
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
         low_ssa_ids = set()
         if latest_fy:
             low_ssa_ids = set(
                 SsaRecord.objects.filter(
-                    school_id__in=pls.school_ids, verification_status="confirmed",
-                    fy=latest_fy, average_score__lt=5.0,
+                    school_id__in=pls.school_ids,
+                    verification_status="confirmed",
+                    fy=latest_fy,
+                    average_score__lt=5.0,
                 ).values_list("school_id", flat=True)
             )
 
@@ -1065,42 +1553,84 @@ class PLAnalyticsService:
             low_ssa = s.id in low_ssa_ids
             severity = 0
             if no_ssa:
-                issues.append("No SSA"); actions.append("Schedule SSA & Visit"); severity += 2
+                issues.append("No SSA")
+                actions.append("Schedule SSA & Visit")
+                severity += 2
             if low_ssa:
-                issues.append("Low SSA"); actions.append("Provide SSA Support"); severity += 2
+                issues.append("Low SSA")
+                actions.append("Provide SSA Support")
+                severity += 2
             if not_visited:
-                issues.append("Not Visited"); actions.append("Schedule Visit"); severity += 1
+                issues.append("Not Visited")
+                actions.append("Schedule Visit")
+                severity += 1
             if not_trained:
-                issues.append("Not Trained"); actions.append("Plan Training"); severity += 1
+                issues.append("Not Trained")
+                actions.append("Plan Training")
+                severity += 1
             if not issues:
                 continue
             lv = visited.get(s.id)
             lt = trained.get(s.id)
-            rows.append({
-                "id": s.id, "school": s.name,
-                "district": s.district.name if s.district_id else "—",
-                "issue": " + ".join(issues[:2]),
-                "last_visit": f"{(today - lv).days} days ago" if lv else "—",
-                "last_training": f"{(today - lt).days} days ago" if lt else "—",
-                "next_action": actions[0] if actions else "Review",
-                "severity": severity,
-            })
+            rows.append(
+                {
+                    "id": s.id,
+                    "school": s.name,
+                    "district": s.district.name if s.district_id else "—",
+                    "issue": " + ".join(issues[:2]),
+                    "last_visit": f"{(today - lv).days} days ago" if lv else "—",
+                    "last_training": f"{(today - lt).days} days ago" if lt else "—",
+                    "next_action": actions[0] if actions else "Review",
+                    "severity": severity,
+                }
+            )
         rows.sort(key=lambda r: -r["severity"])
         return {"rows": rows[:limit], "total": len(rows)}
 
     # ── L. Donor / reporting snapshot ────────────────────────────────────────
     @staticmethod
-    def donor_snapshot(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
+    def donor_snapshot(
+        pls: PLScope, fy: str, quarter: str | None, filters: dict
+    ) -> dict:
         def snap(q):
-            completed = _team_activity_qs(pls, fy, q, filters).filter(status__in=COMPLETED_STATUSES)
-            teachers = completed.filter(activity_type__in=TRAINING_TYPES).aggregate(s=Sum("teachers_attended"))["s"] or 0
-            leaders = completed.filter(activity_type__in=TRAINING_TYPES).aggregate(s=Sum("leaders_attended"))["s"] or 0
-            reached = set(completed.exclude(school_id__isnull=True).values_list("school_id", flat=True))
-            students = School.objects.filter(id__in=reached).aggregate(s=Sum("enrollment"))["s"] or 0
-            districts = School.objects.filter(id__in=reached).exclude(district__isnull=True).values("district_id").distinct().count()
+            completed = _team_activity_qs(pls, fy, q, filters).filter(
+                status__in=COMPLETED_STATUSES
+            )
+            teachers = (
+                completed.filter(activity_type__in=TRAINING_TYPES).aggregate(
+                    s=Sum("teachers_attended")
+                )["s"]
+                or 0
+            )
+            leaders = (
+                completed.filter(activity_type__in=TRAINING_TYPES).aggregate(
+                    s=Sum("leaders_attended")
+                )["s"]
+                or 0
+            )
+            reached = set(
+                completed.exclude(school_id__isnull=True).values_list(
+                    "school_id", flat=True
+                )
+            )
+            students = (
+                School.objects.filter(id__in=reached).aggregate(s=Sum("enrollment"))[
+                    "s"
+                ]
+                or 0
+            )
+            districts = (
+                School.objects.filter(id__in=reached)
+                .exclude(district__isnull=True)
+                .values("district_id")
+                .distinct()
+                .count()
+            )
             return {
-                "teachers": int(teachers), "leaders": int(leaders),
-                "students": int(students), "districts": districts,
+                "teachers": int(teachers),
+                "leaders": int(leaders),
+                "students": int(students),
+                "districts": districts,
                 "schools": len(reached),
             }
 
@@ -1117,7 +1647,9 @@ class PLAnalyticsService:
             return {
                 "label": label,
                 "value": f"{c:,}" if fmt == "int" else str(c),
-                "prev": f"{p:,}" if (p is not None and fmt == "int") else (str(p) if p is not None else None),
+                "prev": f"{p:,}"
+                if (p is not None and fmt == "int")
+                else (str(p) if p is not None else None),
                 "prev_label": prevq,
                 "delta_pct": delta_pct,
                 "up": (delta_pct is not None and delta_pct >= 0),
@@ -1140,7 +1672,9 @@ class PLAnalyticsService:
         supervised portfolio. Never includes another PL's schools."""
         fy = fy or get_operational_fy()
         pls = resolve_pl_scope(user, filters or {})
-        return PLAnalyticsService.risk_list(pls, fy, quarter, filters or {}, limit=5000)["rows"]
+        return PLAnalyticsService.risk_list(
+            pls, fy, quarter, filters or {}, limit=5000
+        )["rows"]
 
     # ── Analytics-driven To-Dos (derive-from-state, not stored) ──────────────
     @staticmethod
@@ -1150,44 +1684,68 @@ class PLAnalyticsService:
         crossed (no risk → no To-Do). Consumed by command_center.todo_service."""
         fy = fy or get_operational_fy()
         pls = resolve_pl_scope(user, filters or {})
-        ins = PLAnalyticsService.insights(pls, fy, quarter, filters or {})
+        PLAnalyticsService.insights(pls, fy, quarter, filters or {})
         schools = School.objects.filter(id__in=pls.school_ids)
         no_ssa = schools.exclude(current_fy_ssa_status="done").count()
-        clusters = PLAnalyticsService.cluster_performance(pls, fy, quarter, filters or {})["rows"]
+        clusters = PLAnalyticsService.cluster_performance(
+            pls, fy, quarter, filters or {}
+        )["rows"]
         weak = [c for c in clusters if c["avg_ssa"] is not None and c["avg_ssa"] < 50]
-        cceos = PLAnalyticsService.cceo_performance(pls, fy, quarter, filters or {})["rows"]
+        cceos = PLAnalyticsService.cceo_performance(pls, fy, quarter, filters or {})[
+            "rows"
+        ]
         behind = [c for c in cceos if c["risk"] in ("High", "Critical")]
 
         todos = []
         if no_ssa:
-            todos.append({
-                "id": "pl-analytics-ssa", "title": "Schedule SSA Collection",
-                "description": f"{no_ssa} schools in your team have no verified SSA.",
-                "category": "Analytics", "priority": "high",
-                "action_label": "Review", "action_url": "/analytics/program-lead?drill=risk",
-                "actionable": True, "source": "PL Analytics",
-            })
+            todos.append(
+                {
+                    "id": "pl-analytics-ssa",
+                    "title": "Schedule SSA Collection",
+                    "description": f"{no_ssa} schools in your team have no verified SSA.",
+                    "category": "Analytics",
+                    "priority": "high",
+                    "action_label": "Review",
+                    "action_url": "/analytics/program-lead?drill=risk",
+                    "actionable": True,
+                    "source": "PL Analytics",
+                }
+            )
         for c in weak[:3]:
-            todos.append({
-                "id": f"pl-analytics-cluster-{c['id']}", "title": "Review Cluster Support Plan",
-                "description": f"{c['name']} is performing below 50% (avg SSA {c['avg_ssa']}%).",
-                "category": "Analytics", "priority": "high",
-                "action_label": "Review", "action_url": "/analytics/program-lead",
-                "actionable": True, "source": "PL Analytics",
-            })
+            todos.append(
+                {
+                    "id": f"pl-analytics-cluster-{c['id']}",
+                    "title": "Review Cluster Support Plan",
+                    "description": f"{c['name']} is performing below 50% (avg SSA {c['avg_ssa']}%).",
+                    "category": "Analytics",
+                    "priority": "high",
+                    "action_label": "Review",
+                    "action_url": "/analytics/program-lead",
+                    "actionable": True,
+                    "source": "PL Analytics",
+                }
+            )
         for c in behind[:3]:
-            todos.append({
-                "id": f"pl-analytics-cceo-{c['staff_id']}", "title": "Follow up CCEO",
-                "description": f"{c['name']} is behind target ({c['risk']} risk).",
-                "category": "Analytics", "priority": "medium",
-                "action_label": "Open", "action_url": "/analytics/program-lead",
-                "actionable": True, "source": "PL Analytics",
-            })
+            todos.append(
+                {
+                    "id": f"pl-analytics-cceo-{c['staff_id']}",
+                    "title": "Follow up CCEO",
+                    "description": f"{c['name']} is behind target ({c['risk']} risk).",
+                    "category": "Analytics",
+                    "priority": "medium",
+                    "action_label": "Open",
+                    "action_url": "/analytics/program-lead",
+                    "actionable": True,
+                    "source": "PL Analytics",
+                }
+            )
         return todos
 
     # ── Drill-downs (all role-scoped) ────────────────────────────────────────
     @staticmethod
-    def drilldown(user, drill: str, params, fy=None, quarter=None, filters=None) -> dict:
+    def drilldown(
+        user, drill: str, params, fy=None, quarter=None, filters=None
+    ) -> dict:
         """Return scoped drawer data for a drill-down. `params` is request.GET."""
         fy = fy or get_operational_fy()
         filters = dict(filters or {})
@@ -1197,34 +1755,54 @@ class PLAnalyticsService:
             filters["district"] = (params.get("id") or "").strip()
             scoped = resolve_pl_scope(user, filters)
             schools = list(
-                School.objects.filter(id__in=scoped.school_ids).select_related("district")
+                School.objects.filter(id__in=scoped.school_ids)
+                .select_related("district")
                 .only("id", "name", "school_type", "current_fy_ssa_status")[:200]
             )
             name = "District"
             if schools and schools[0].district_id:
                 name = schools[0].district.name
-            return {"title": f"{name} — School Detail", "subtitle": f"{len(scoped.school_ids)} schools in scope",
-                    "schools": schools, "kind": "district"}
+            return {
+                "title": f"{name} — School Detail",
+                "subtitle": f"{len(scoped.school_ids)} schools in scope",
+                "schools": schools,
+                "kind": "district",
+            }
 
         if drill == "cluster":
             filters["cluster"] = (params.get("id") or "").strip()
             data = PLAnalyticsService.cluster_performance(pls, fy, quarter, filters)
             row = next((r for r in data["rows"] if r["id"] == filters["cluster"]), None)
             scoped = resolve_pl_scope(user, filters)
-            schools = list(School.objects.filter(id__in=scoped.school_ids).only("id", "name", "current_fy_ssa_status")[:200])
-            return {"title": (row["name"] if row else "Cluster") + " — Detail",
-                    "subtitle": "Cluster performance & member schools", "cluster": row,
-                    "schools": schools, "kind": "cluster"}
+            schools = list(
+                School.objects.filter(id__in=scoped.school_ids).only(
+                    "id", "name", "current_fy_ssa_status"
+                )[:200]
+            )
+            return {
+                "title": (row["name"] if row else "Cluster") + " — Detail",
+                "subtitle": "Cluster performance & member schools",
+                "cluster": row,
+                "schools": schools,
+                "kind": "cluster",
+            }
 
         if drill == "cceo":
             cid = (params.get("id") or "").strip()
             filters["cceo"] = cid
-            data = PLAnalyticsService.cceo_performance(resolve_pl_scope(user, filters), fy, quarter, filters)
+            data = PLAnalyticsService.cceo_performance(
+                resolve_pl_scope(user, filters), fy, quarter, filters
+            )
             row = data["rows"][0] if data["rows"] else None
-            return {"title": (row["name"] if row else "CCEO") + " — Performance",
-                    "subtitle": "Supervised CCEO detail", "cceo": row,
-                    "risk_list": PLAnalyticsService.risk_list(resolve_pl_scope(user, filters), fy, quarter, filters, limit=20)["rows"],
-                    "kind": "cceo"}
+            return {
+                "title": (row["name"] if row else "CCEO") + " — Performance",
+                "subtitle": "Supervised CCEO detail",
+                "cceo": row,
+                "risk_list": PLAnalyticsService.risk_list(
+                    resolve_pl_scope(user, filters), fy, quarter, filters, limit=20
+                )["rows"],
+                "kind": "cceo",
+            }
 
         if drill == "risk":
             issue = (params.get("issue") or "").strip()
@@ -1236,19 +1814,42 @@ class PLAnalyticsService:
                 rows = [r for r in rows if "Not Visited" in r["issue"]]
             elif issue == "not_trained":
                 rows = [r for r in rows if "Not Trained" in r["issue"]]
-            return {"title": "At-Risk Schools", "subtitle": f"{len(rows)} schools need attention",
-                    "rows": rows, "kind": "risk"}
+            return {
+                "title": "At-Risk Schools",
+                "subtitle": f"{len(rows)} schools need attention",
+                "rows": rows,
+                "kind": "risk",
+            }
 
         # KPI drill-down (default): a scoped school/CCEO list behind a KPI.
         metric = (params.get("metric") or "").strip()
         schools = School.objects.filter(id__in=pls.school_ids)
         if metric == "no_ssa":
-            rows = list(schools.exclude(current_fy_ssa_status="done").select_related("district").only("id", "name", "district__name")[:200])
+            rows = list(
+                schools.exclude(current_fy_ssa_status="done")
+                .select_related("district")
+                .only("id", "name", "district__name")[:200]
+            )
             title = "Schools Without Verified SSA"
         elif metric == "cceos_on_track":
-            return {"title": "CCEOs On Track", "subtitle": "Target achievement by CCEO",
-                    "cceo_rows": PLAnalyticsService.cceo_performance(pls, fy, quarter, filters)["rows"], "kind": "cceo_list"}
+            return {
+                "title": "CCEOs On Track",
+                "subtitle": "Target achievement by CCEO",
+                "cceo_rows": PLAnalyticsService.cceo_performance(
+                    pls, fy, quarter, filters
+                )["rows"],
+                "kind": "cceo_list",
+            }
         else:
-            rows = list(schools.select_related("district").only("id", "name", "district__name", "school_type")[:200])
+            rows = list(
+                schools.select_related("district").only(
+                    "id", "name", "district__name", "school_type"
+                )[:200]
+            )
             title = "Portfolio Schools"
-        return {"title": title, "subtitle": f"{len(rows)} schools", "schools": rows, "kind": "kpi"}
+        return {
+            "title": title,
+            "subtitle": f"{len(rows)} schools",
+            "schools": rows,
+            "kind": "kpi",
+        }

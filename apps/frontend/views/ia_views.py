@@ -22,6 +22,8 @@ from apps.activities.ia_services import (
 )
 from apps.core.enums import ActivityStatus
 
+QUEUE_PAGE_SIZE = 50
+
 
 @require_page_permission("ia_verification_queue")
 def ia_verification_queue_view(request):
@@ -109,18 +111,46 @@ def ia_verification_queue_view(request):
 
     # Serialize for template table
     from apps.activities.services import _serialize
+    from django.core.paginator import Paginator
+
+    try:
+        page_number = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        page_number = 1
+    paginator = Paginator(
+        filtered_qs.select_related("school", "cluster"), QUEUE_PAGE_SIZE
+    )
+    page_obj = paginator.get_page(page_number)
+    page_activities = list(page_obj.object_list)
+
+    # Batch-fetch evidence/SSA existence for the CURRENT PAGE only, instead
+    # of one `.exists()` query per activity per field (was unbounded: 2
+    # queries x every row in the queue, not just the page being rendered).
+    from apps.evidence.models import EvidenceRecord
+    from apps.ssa.models import SsaRecord
+
+    page_activity_ids = [a.id for a in page_activities]
+    page_school_ids = [a.school_id for a in page_activities if a.school_id]
+    activities_with_evidence = set(
+        EvidenceRecord.objects.filter(
+            activity_id__in=page_activity_ids, quarantined=False
+        )
+        .values_list("activity_id", flat=True)
+        .distinct()
+    )
+    schools_with_ssa = set(
+        SsaRecord.objects.filter(school_id__in=page_school_ids, deleted_at__isnull=True)
+        .values_list("school_id", flat=True)
+        .distinct()
+    )
 
     serialized_queue = []
-    for a in filtered_qs.select_related("school", "cluster"):
+    for a in page_activities:
         data = _serialize(a)
         # Add quick checks recommendation
-        data["has_evidence"] = a.evidence.filter(quarantined=False).exists()
+        data["has_evidence"] = a.id in activities_with_evidence
         data["has_sf_id"] = bool(a.salesforce_activity_id)
-        data["has_ssa"] = (
-            a.school.ssa_records.filter(deleted_at__isnull=True).exists()
-            if a.school
-            else False
-        )
+        data["has_ssa"] = bool(a.school_id) and a.school_id in schools_with_ssa
         data["is_high_priority"] = a.activity_type in [
             "core_visit",
             "core_training",
@@ -182,6 +212,7 @@ def ia_verification_queue_view(request):
 
     context = {
         "queue": serialized_queue,
+        "page_obj": page_obj,
         "kpi_strip_items": kpi_items,
         "kpis": {
             "waiting": waiting_count,
@@ -487,7 +518,10 @@ def ia_dashboard_view(request):
     returned_open_qs = activities.filter(status="returned_by_ia")
     returned_open = returned_open_qs.count()
     returned_open_school_cnt = (
-        returned_open_qs.exclude(school_id__isnull=True).values("school_id").distinct().count()
+        returned_open_qs.exclude(school_id__isnull=True)
+        .values("school_id")
+        .distinct()
+        .count()
     )
     duplicate_risk_cnt = DuplicateActivity.objects.filter(status="potential").count()
 
@@ -509,9 +543,15 @@ def ia_dashboard_view(request):
             if row["decision"] == "RETURN":
                 pending_return_at = row["decided_at"]
             elif row["decision"] == "APPROVE" and pending_return_at:
-                resolution_days.append((row["decided_at"] - pending_return_at).total_seconds() / 86400)
+                resolution_days.append(
+                    (row["decided_at"] - pending_return_at).total_seconds() / 86400
+                )
                 pending_return_at = None
-    avg_resolution_days = round(sum(resolution_days) / len(resolution_days), 1) if resolution_days else None
+    avg_resolution_days = (
+        round(sum(resolution_days) / len(resolution_days), 1)
+        if resolution_days
+        else None
+    )
 
     # ── School-derived KPIs ─────────────────────────────────────────────────
     schools = School.objects.filter(deleted_at__isnull=True)
@@ -582,34 +622,6 @@ def ia_dashboard_view(request):
             "variant": "success",
         },
     ]
-
-    ssa_scheduled_cnt = schools.filter(
-        current_fy_ssa_status__in=["scheduled", "partner_assigned"]
-    ).count()
-    ssa_not_done_cnt = school_total - ssa_done_cnt - ssa_scheduled_cnt
-    ssa_coverage = round(ssa_done_cnt / school_total * 100, 1) if school_total else 0.0
-
-    quality_avg = schools.aggregate(avg=Avg("data_quality_score"))["avg"]
-    quality_pct = round(quality_avg) if quality_avg is not None else 0
-
-    # ── Header KPI strip counts ─────────────────────────────────────────────
-    missing_sf_id = (
-        activities.filter(status__in=ACHIEVED_STATUSES)
-        .filter(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
-        .count()
-    )
-    ssa_pending_review = SsaRecord.objects.filter(
-        deleted_at__isnull=True, verification_status="pending"
-    ).count()
-    evidence_pending = EvidenceRecord.objects.filter(
-        quarantined=False, status="uploaded"
-    ).count()
-    uploads_today = (
-        SsaRecord.objects.filter(
-            deleted_at__isnull=True, created_at__gte=today_start
-        ).count()
-        + EvidenceRecord.objects.filter(created_at__gte=today_start).count()
-    )
 
     # ── Verification work queue (5 most recent pending) ─────────────────────
     queue_activities = list(

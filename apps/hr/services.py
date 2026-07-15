@@ -88,19 +88,35 @@ def approved_leave_calendar(query: dict) -> list[dict]:
     return [_serialize_leave(leave) for leave in qs]
 
 
-def request_leave(data: dict, principal) -> dict:
-    if not principal.staff_profile_id:
-        from apps.core.exceptions import BadRequest
+def request_leave(data: dict, principal, attachment_file=None) -> dict:
+    from apps.core.exceptions import BadRequest
+    from apps.hr.leave_services import LeaveRequestService
 
+    if not principal.staff_profile_id:
         raise BadRequest("No staff profile linked to your account.")
-    days = int(data.get("days", 1))
-    leave = Leave.objects.create(
-        staff_id=principal.staff_profile_id,
-        type=data.get("type", "annual"),
-        start_date=data.get("startDate"),
-        end_date=data.get("endDate"),
-        days=days,
-        reason=data.get("reason"),
+    # Delegate to the canonical service — mirrors the review_leave fix below
+    # and the main UI path (apps/frontend/views/leave_views.py) — so this
+    # parallel /api/hr/leave endpoint enforces the same leave-balance
+    # sufficiency check, WorkingDayCalculator days_charged/hours_covered
+    # computation, LeaveTypePolicy.requires_attachment check, and coverage
+    # bookkeeping instead of writing an unvalidated Leave row directly.
+    # days_charged is computed server-side from start/end dates + policy; a
+    # client-supplied "days" is intentionally not trusted.
+    mapped = {
+        "type": data.get("type") or data.get("leaveType"),
+        "start_date": data.get("startDate") or data.get("start_date"),
+        "end_date": data.get("endDate") or data.get("end_date"),
+        "reason": data.get("reason"),
+        "covering_staff": data.get("coveringStaff") or data.get("covering_staff"),
+        "coverage_notes": data.get("coverageNotes") or data.get("coverage_notes"),
+        "emergency_contact": data.get("emergencyContact")
+        or data.get("emergency_contact"),
+        "handover_notes": data.get("handoverNotes") or data.get("handover_notes"),
+        "urgent_activities": data.get("urgentActivities")
+        or data.get("urgent_activities"),
+    }
+    leave = LeaveRequestService.request_leave(
+        principal.staff_profile, mapped, attachment_file
     )
     return _serialize_leave(leave)
 

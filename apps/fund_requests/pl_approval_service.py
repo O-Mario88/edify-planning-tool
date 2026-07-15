@@ -687,12 +687,33 @@ def _resolve_cceo(principal, cceo_user_id):
     return cceo
 
 
+# Once the Accountant queue has taken any action on a plan, PL "Approve" is no
+# longer a fresh decision — re-clicking it (stale tab, double-click) must not
+# silently flip a disbursed/held plan back to "sent_to_accountant" and reopen
+# it for a second payout.
+_LOCKED_AFTER_ACCOUNTANT_ACTION = {"sent_to_accountant", "disbursed", "held"}
+
+
 def approve(principal, cceo_user_id, fy, month):
     """PL approves a valid fund plan and routes it straight to the Accountant's
     disbursement queue → status ``sent_to_accountant`` (+ audit + notify the CCEO
     and the accountants who will disburse)."""
+    from .models import FundRequest
+
     _require_pl(principal)
     cceo = _resolve_cceo(principal, cceo_user_id)
+
+    existing = FundRequest.objects.filter(
+        submitted_by_user_id=cceo["user_id"],
+        period="monthly",
+        period_key=_period_key(fy, month),
+    ).first()
+    if existing and existing.status in _LOCKED_AFTER_ACCOUNTANT_ACTION:
+        raise BadRequest(
+            f"This plan is already {existing.get_status_display()} — it cannot "
+            "be approved again."
+        )
+
     fr, lines = _ensure_fund_request(principal, cceo, fy, month)
     issues = _validate(cceo, lines, month)
     if issues:

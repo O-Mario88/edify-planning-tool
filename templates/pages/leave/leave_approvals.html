@@ -35,7 +35,7 @@
         name="type" 
         class="px-3 py-1.5 text-xs rounded-lg border font-bold transition"
         style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
-        onchange="this.form.submit()"
+        @change="$el.form.requestSubmit()"
       >
         <option value="">All Leave Types</option>
         <option value="personal_time_off" {% if selected_type == 'personal_time_off' %}selected{% endif %}>Personal Time Off</option>
@@ -49,7 +49,7 @@
         name="status" 
         class="px-3 py-1.5 text-xs rounded-lg border font-bold transition"
         style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
-        onchange="this.form.submit()"
+        @change="$el.form.requestSubmit()"
       >
         <option value="pending" {% if selected_status == 'pending' or not selected_status %}selected{% endif %}>Pending Approval</option>
         <option value="approved" {% if selected_status == 'approved' %}selected{% endif %}>Approved</option>
@@ -173,12 +173,17 @@
       
       <div class="divide-y overflow-y-auto max-h-[700px]" style="divide-color:var(--edify-border);">
         {% for r in requests %}
-        <div 
+        <article
           class="p-4 hover:bg-slate-50/50 cursor-pointer transition relative group {% if r.id == selected_leave.id %}bg-blue-500/5{% endif %}"
+          data-leave-request
+          role="button"
+          tabindex="0"
           hx-get="{% url 'frontend:leave_impact_partial' r.id %}"
           hx-target="#impact-panel-placeholder"
           hx-trigger="click"
-          onclick="document.querySelectorAll('.group').forEach(el=>el.classList.remove('bg-blue-500/5')); this.classList.add('bg-blue-500/5');"
+          @click="document.querySelectorAll('[data-leave-request]').forEach((card) => card.classList.remove('bg-blue-500/5')); $el.classList.add('bg-blue-500/5')"
+          @keydown.enter="$el.click()"
+          @keydown.space.prevent="$el.click()"
         >
           <div class="flex items-start gap-3">
             <!-- User avatar stub -->
@@ -228,7 +233,7 @@
           
           <!-- Hover bar -->
           <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-500 opacity-0 group-hover:opacity-100 transition"></div>
-        </div>
+        </article>
         {% empty %}
         <div class="p-8 text-center text-slate-400">
           <div class="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400">
@@ -269,7 +274,7 @@
        style="background:var(--edify-surface); border-color:var(--edify-border);">
     <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--edify-border);">
       <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Approval Activity</h3>
-      <a href="#" class="text-xs font-bold text-blue-500 hover:text-blue-600">View all &rarr;</a>
+      <span class="text-[10px] font-medium text-slate-500">Latest 10 decisions</span>
     </div>
     
     <div class="overflow-x-auto">

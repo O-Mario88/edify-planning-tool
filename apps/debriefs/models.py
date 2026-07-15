@@ -137,9 +137,15 @@ class DailyDebrief(SoftDeleteModel):
     submitted_by_role = models.CharField(max_length=64)
     staff_id = models.CharField(max_length=30, null=True, blank=True)
     partner_id = models.CharField(max_length=30, null=True, blank=True)
-    debrief_type = models.CharField(max_length=16, choices=DebriefType.choices, default=DebriefType.STAFF)
-    kind = models.CharField(max_length=16, choices=DebriefKind.choices, default=DebriefKind.ACTIVITY)
-    status = models.CharField(max_length=32, choices=DebriefStatus.choices, default=DebriefStatus.SUBMITTED)
+    debrief_type = models.CharField(
+        max_length=16, choices=DebriefType.choices, default=DebriefType.STAFF
+    )
+    kind = models.CharField(
+        max_length=16, choices=DebriefKind.choices, default=DebriefKind.ACTIVITY
+    )
+    status = models.CharField(
+        max_length=32, choices=DebriefStatus.choices, default=DebriefStatus.SUBMITTED
+    )
 
     # Title — replaces "Key Challenge" as the Team & Partner Debriefs table's
     # link column into this debrief's detail page.
@@ -149,7 +155,9 @@ class DailyDebrief(SoftDeleteModel):
     what_happened = models.TextField(null=True, blank=True)
     what_went_well = models.TextField(null=True, blank=True)
     what_did_not_go_well = models.TextField(null=True, blank=True)
-    blockers = ArrayField(base_field=models.CharField(max_length=255), default=list, blank=True)
+    blockers = ArrayField(
+        base_field=models.CharField(max_length=255), default=list, blank=True
+    )
     blocker_other = models.CharField(max_length=512, null=True, blank=True)
     support_needed = models.TextField(null=True, blank=True)
     recommendations = models.TextField(null=True, blank=True)
@@ -158,11 +166,21 @@ class DailyDebrief(SoftDeleteModel):
     # Loose cross-app refs kept for the pre-existing DRF API's shape.
     # New code should prefer DailyDebriefActivityLink (real FK, supports
     # grouping several activities/schools under one debrief).
-    linked_school_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
-    linked_cluster_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
-    linked_partner_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
-    linked_project_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
-    linked_activity_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
+    linked_school_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
+    linked_cluster_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
+    linked_partner_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
+    linked_project_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
+    linked_activity_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
 
     parent_debrief_id = models.CharField(max_length=30, null=True, blank=True)
     merged_into_debrief_id = models.CharField(max_length=30, null=True, blank=True)
@@ -172,7 +190,9 @@ class DailyDebrief(SoftDeleteModel):
     submitted_at = models.DateTimeField()
 
     # B. Execution Summary (§7-B)
-    completion_status = models.CharField(max_length=24, choices=CompletionStatus.choices, null=True, blank=True)
+    completion_status = models.CharField(
+        max_length=24, choices=CompletionStatus.choices, null=True, blank=True
+    )
     incomplete_reason = models.TextField(null=True, blank=True)
     actual_start_time = models.TimeField(null=True, blank=True)
     actual_end_time = models.TimeField(null=True, blank=True)
@@ -188,7 +208,9 @@ class DailyDebrief(SoftDeleteModel):
     what_surprised = models.TextField(null=True, blank=True)
     support_needed_next = models.TextField(null=True, blank=True)
     intervention_tags = ArrayField(
-        base_field=models.CharField(max_length=64, choices=SsaIntervention.choices), default=list, blank=True
+        base_field=models.CharField(max_length=64, choices=SsaIntervention.choices),
+        default=list,
+        blank=True,
     )
 
     # D. Participant and Engagement Quality (§7-D)
@@ -197,7 +219,9 @@ class DailyDebrief(SoftDeleteModel):
     school_leaders_present = models.IntegerField(null=True, blank=True)
     teachers_present = models.IntegerField(null=True, blank=True)
     other_participants_present = models.IntegerField(null=True, blank=True)
-    engagement_level = models.CharField(max_length=16, choices=EngagementLevel.choices, null=True, blank=True)
+    engagement_level = models.CharField(
+        max_length=16, choices=EngagementLevel.choices, null=True, blank=True
+    )
     attendance_concerns = models.TextField(null=True, blank=True)
 
     # F. Route and Travel Debrief (§7-F) — feeds Route Intelligence.
@@ -209,7 +233,9 @@ class DailyDebrief(SoftDeleteModel):
     travel_end_time = models.TimeField(null=True, blank=True)
     estimated_travel_minutes = models.IntegerField(null=True, blank=True)
     actual_travel_minutes = models.IntegerField(null=True, blank=True)
-    route_quality = models.CharField(max_length=16, null=True, blank=True)  # excellent|good|fair|poor
+    route_quality = models.CharField(
+        max_length=16, null=True, blank=True
+    )  # excellent|good|fair|poor
     transport_issue = models.TextField(null=True, blank=True)
 
     # G. Outcomes and Commitments — recommendation half (§7-G). The actual
@@ -220,12 +246,20 @@ class DailyDebrief(SoftDeleteModel):
     recommended_next_activity_type = models.CharField(
         max_length=32, choices=RecommendedActivityType.choices, null=True, blank=True
     )
-    recommended_intervention = models.CharField(max_length=64, choices=SsaIntervention.choices, null=True, blank=True)
-    recommendation_status = models.CharField(
-        max_length=16, choices=RecommendationStatus.choices, default=RecommendationStatus.NONE
+    recommended_intervention = models.CharField(
+        max_length=64, choices=SsaIntervention.choices, null=True, blank=True
     )
-    recommendation_accepted_activity_id = models.CharField(max_length=30, null=True, blank=True)
-    recommendation_reviewed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    recommendation_status = models.CharField(
+        max_length=16,
+        choices=RecommendationStatus.choices,
+        default=RecommendationStatus.NONE,
+    )
+    recommendation_accepted_activity_id = models.CharField(
+        max_length=30, null=True, blank=True
+    )
+    recommendation_reviewed_by_user_id = models.CharField(
+        max_length=30, null=True, blank=True
+    )
     recommendation_reviewed_at = models.DateTimeField(null=True, blank=True)
 
     # I. Success and Learning (§7-I)
@@ -242,7 +276,9 @@ class DailyDebrief(SoftDeleteModel):
     potential_partner_success_flag = models.BooleanField(default=False)
 
     # J. Risk and Escalation (§7-J)
-    risk_level = models.CharField(max_length=24, choices=RiskLevel.choices, default=RiskLevel.NONE)
+    risk_level = models.CharField(
+        max_length=24, choices=RiskLevel.choices, default=RiskLevel.NONE
+    )
     is_restricted_incident = models.BooleanField(default=False)
     restricted_incident_category = models.CharField(
         max_length=24, choices=RestrictedIncidentCategory.choices, null=True, blank=True
@@ -268,7 +304,9 @@ class DailyDebriefRecipient(TimeStampedModel):
     """Routing of a debrief to its recipients (PL/CD/IA/HR/RVP)."""
 
     id = CuidField()
-    debrief = models.ForeignKey(DailyDebrief, on_delete=models.CASCADE, related_name="recipients")
+    debrief = models.ForeignKey(
+        DailyDebrief, on_delete=models.CASCADE, related_name="recipients"
+    )
     recipient_user_id = models.CharField(max_length=30)
     recipient_role = models.CharField(max_length=64)
     routing_reason = models.CharField(max_length=255, null=True, blank=True)
@@ -291,16 +329,25 @@ class DailyDebriefActivityLink(TimeStampedModel):
     render; it is not authoritative."""
 
     id = CuidField()
-    debrief = models.ForeignKey(DailyDebrief, on_delete=models.CASCADE, related_name="activity_links")
-    activity = models.ForeignKey("activities.Activity", on_delete=models.CASCADE, related_name="debrief_links")
+    debrief = models.ForeignKey(
+        DailyDebrief, on_delete=models.CASCADE, related_name="activity_links"
+    )
+    activity = models.ForeignKey(
+        "activities.Activity", on_delete=models.CASCADE, related_name="debrief_links"
+    )
     school_id = models.CharField(max_length=30, null=True, blank=True)
 
     class Meta:
         db_table = "daily_debrief_activity_link"
         constraints = [
-            models.UniqueConstraint(fields=["debrief", "activity"], name="uniq_debrief_activity_link")
+            models.UniqueConstraint(
+                fields=["debrief", "activity"], name="uniq_debrief_activity_link"
+            )
         ]
-        indexes = [models.Index(fields=["activity"]), models.Index(fields=["school_id"])]
+        indexes = [
+            models.Index(fields=["activity"]),
+            models.Index(fields=["school_id"]),
+        ]
 
 
 class DebriefChallengeType(models.TextChoices):
@@ -322,7 +369,10 @@ class DebriefChallengeType(models.TextChoices):
     TECHNOLOGY_PROBLEM = "technology_problem", "Technology Problem"
     DATA_QUALITY = "data_quality", "Data-Quality Problem"
     SSA_FORM_ISSUE = "ssa_form_issue", "SSA Form Issue"
-    LANGUAGE_COMMUNICATION = "language_communication", "Language or Communication Problem"
+    LANGUAGE_COMMUNICATION = (
+        "language_communication",
+        "Language or Communication Problem",
+    )
     SAFETY_CONCERN = "safety_concern", "Safety Concern"
     HEALTH_CONCERN = "health_concern", "Health Concern"
     COMMUNITY_RESISTANCE = "community_resistance", "Community Resistance"
@@ -335,11 +385,17 @@ class DailyDebriefChallenge(TimeStampedModel):
     each challenge carries its own severity, response, and resolution."""
 
     id = CuidField()
-    debrief = models.ForeignKey(DailyDebrief, on_delete=models.CASCADE, related_name="challenges")
-    challenge_type = models.CharField(max_length=32, choices=DebriefChallengeType.choices)
+    debrief = models.ForeignKey(
+        DailyDebrief, on_delete=models.CASCADE, related_name="challenges"
+    )
+    challenge_type = models.CharField(
+        max_length=32, choices=DebriefChallengeType.choices
+    )
     description = models.TextField(null=True, blank=True)
     severity = models.CharField(
-        max_length=8, choices=[("low", "Low"), ("medium", "Medium"), ("high", "High")], default="medium"
+        max_length=8,
+        choices=[("low", "Low"), ("medium", "Medium"), ("high", "High")],
+        default="medium",
     )
     immediate_response = models.TextField(null=True, blank=True)
     resolved = models.BooleanField(default=False)
@@ -347,7 +403,10 @@ class DailyDebriefChallenge(TimeStampedModel):
 
     class Meta:
         db_table = "daily_debrief_challenge"
-        indexes = [models.Index(fields=["challenge_type"]), models.Index(fields=["debrief"])]
+        indexes = [
+            models.Index(fields=["challenge_type"]),
+            models.Index(fields=["debrief"]),
+        ]
 
 
 class DebriefCommitmentParty(models.TextChoices):
@@ -360,13 +419,17 @@ class DailyDebriefCommitment(TimeStampedModel):
     """A commitment made by the school, Edify staff, or the Partner (§7-G)."""
 
     id = CuidField()
-    debrief = models.ForeignKey(DailyDebrief, on_delete=models.CASCADE, related_name="commitments")
+    debrief = models.ForeignKey(
+        DailyDebrief, on_delete=models.CASCADE, related_name="commitments"
+    )
     party = models.CharField(max_length=8, choices=DebriefCommitmentParty.choices)
     commitment_text = models.TextField()
     follow_up_date = models.DateField(null=True, blank=True)
     follow_up_owner_id = models.CharField(max_length=30, null=True, blank=True)
     status = models.CharField(
-        max_length=8, choices=[("open", "Open"), ("resolved", "Resolved")], default="open"
+        max_length=8,
+        choices=[("open", "Open"), ("resolved", "Resolved")],
+        default="open",
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
 
@@ -404,13 +467,21 @@ class DailyDebriefSupportRequest(TimeStampedModel):
     """A request for support routed to a specific role (§7-H)."""
 
     id = CuidField()
-    debrief = models.ForeignKey(DailyDebrief, on_delete=models.CASCADE, related_name="support_requests")
-    requested_from_role = models.CharField(max_length=32, choices=DebriefSupportRole.choices)
+    debrief = models.ForeignKey(
+        DailyDebrief, on_delete=models.CASCADE, related_name="support_requests"
+    )
+    requested_from_role = models.CharField(
+        max_length=32, choices=DebriefSupportRole.choices
+    )
     support_type = models.CharField(max_length=32, choices=DebriefSupportType.choices)
     note = models.TextField(null=True, blank=True)
     status = models.CharField(
         max_length=16,
-        choices=[("open", "Open"), ("in_progress", "In Progress"), ("resolved", "Resolved")],
+        choices=[
+            ("open", "Open"),
+            ("in_progress", "In Progress"),
+            ("resolved", "Resolved"),
+        ],
         default="open",
     )
     resolved_at = models.DateTimeField(null=True, blank=True)
@@ -418,7 +489,10 @@ class DailyDebriefSupportRequest(TimeStampedModel):
 
     class Meta:
         db_table = "daily_debrief_support_request"
-        indexes = [models.Index(fields=["requested_from_role", "status"]), models.Index(fields=["debrief"])]
+        indexes = [
+            models.Index(fields=["requested_from_role", "status"]),
+            models.Index(fields=["debrief"]),
+        ]
 
 
 class DebriefActionStatus(models.TextChoices):
@@ -446,15 +520,25 @@ class DailyDebriefAction(TimeStampedModel):
     debrief can stay "submitted" while several actions are still open."""
 
     id = CuidField()
-    debrief = models.ForeignKey(DailyDebrief, on_delete=models.CASCADE, related_name="actions")
+    debrief = models.ForeignKey(
+        DailyDebrief, on_delete=models.CASCADE, related_name="actions"
+    )
     issue = models.TextField()
     action = models.TextField()
     owner_user_id = models.CharField(max_length=30)
     owner_role = models.CharField(max_length=64, null=True, blank=True)
     assigned_by_user_id = models.CharField(max_length=30)
-    priority = models.CharField(max_length=8, choices=DebriefActionPriority.choices, default=DebriefActionPriority.MEDIUM)
+    priority = models.CharField(
+        max_length=8,
+        choices=DebriefActionPriority.choices,
+        default=DebriefActionPriority.MEDIUM,
+    )
     due_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=24, choices=DebriefActionStatus.choices, default=DebriefActionStatus.OPEN)
+    status = models.CharField(
+        max_length=24,
+        choices=DebriefActionStatus.choices,
+        default=DebriefActionStatus.OPEN,
+    )
     resolution = models.TextField(null=True, blank=True)
     resolved_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
@@ -490,21 +574,35 @@ class DailyDebriefPeerSolution(TimeStampedModel):
     """A peer-proposed solution attached to someone else's debrief (§16)."""
 
     id = CuidField()
-    debrief = models.ForeignKey(DailyDebrief, on_delete=models.CASCADE, related_name="peer_solutions")
+    debrief = models.ForeignKey(
+        DailyDebrief, on_delete=models.CASCADE, related_name="peer_solutions"
+    )
     author_user_id = models.CharField(max_length=30)
     suggestion = models.TextField()
     related_experience = models.TextField(null=True, blank=True)
-    status = models.CharField(max_length=16, choices=PeerSolutionStatus.choices, default=PeerSolutionStatus.PROPOSED)
-    endorsed_by_user_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=PeerSolutionStatus.choices,
+        default=PeerSolutionStatus.PROPOSED,
+    )
+    endorsed_by_user_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
     pl_classification = models.CharField(
-        max_length=20, choices=PeerSolutionPLClassification.choices, null=True, blank=True
+        max_length=20,
+        choices=PeerSolutionPLClassification.choices,
+        null=True,
+        blank=True,
     )
     pl_classified_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     pl_classified_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "daily_debrief_peer_solution"
-        indexes = [models.Index(fields=["debrief"]), models.Index(fields=["author_user_id"])]
+        indexes = [
+            models.Index(fields=["debrief"]),
+            models.Index(fields=["author_user_id"]),
+        ]
 
 
 class InsightScope(models.TextChoices):
@@ -538,16 +636,26 @@ class DailyDebriefInsight(TimeStampedModel):
     occurrence_count = models.IntegerField(default=1)
     window_start = models.DateField()
     window_end = models.DateField()
-    debrief_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
+    debrief_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
     escalation_level = models.CharField(
-        max_length=8, choices=InsightEscalationLevel.choices, default=InsightEscalationLevel.TEAM
+        max_length=8,
+        choices=InsightEscalationLevel.choices,
+        default=InsightEscalationLevel.TEAM,
     )
     status = models.CharField(
         max_length=16,
-        choices=[("open", "Open"), ("acknowledged", "Acknowledged"), ("dismissed", "Dismissed")],
+        choices=[
+            ("open", "Open"),
+            ("acknowledged", "Acknowledged"),
+            ("dismissed", "Dismissed"),
+        ],
         default="open",
     )
-    notified_user_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
+    notified_user_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
 
     class Meta:
         db_table = "daily_debrief_insight"

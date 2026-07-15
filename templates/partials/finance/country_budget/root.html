@@ -16,7 +16,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
   <p class="text-[11.5px] font-semibold text-slate-400">Finance <span class="mx-1 text-slate-300">&rsaquo;</span> <span class="text-slate-500">Country Monthly Budget</span></p>
 
   <!-- Header -->
-  <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+  <div class="platform-page-header">
     <div class="min-w-0">
       <h1 class="text-[22px] sm:text-[24px] font-semibold text-slate-800 tracking-tight flex items-center gap-2">
         Country Monthly Budget
@@ -24,10 +24,11 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
       </h1>
       <p class="text-[12px] text-slate-500 font-semibold mt-1">Monthly country budget generated from planned activities across all teams and approved for RVP submission.</p>
     </div>
+  </div>
 
-    <!-- Filters -->
-    <form id="cb-filters" hx-get="/country-budget" hx-target="#country-budget-root" hx-swap="innerHTML"
-          class="flex flex-wrap items-end gap-2">
+  <!-- Filters -->
+  <form id="cb-filters" hx-get="/country-budget" hx-target="#country-budget-root" hx-swap="innerHTML"
+        class="platform-filter-bar">
       <label class="block">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Month</span>
         <select name="month" class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-700 bg-white focus:outline-none">
@@ -63,16 +64,15 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
           <option>All Teams</option>
         </select>
       </label>
-      <label class="block">
+      <label class="block platform-filter-search">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">&nbsp;</span>
         <input type="search" name="q" value="{{ q|default:'' }}" hx-trigger="keyup changed delay:300ms" placeholder="Search staff, activity, school…"
                class="mt-1 h-9 w-56 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none">
       </label>
-    </form>
-  </div>
+  </form>
 
   <!-- Top actions -->
-  <div class="flex flex-wrap items-center justify-end gap-2 -mt-2">
+  <div class="platform-page-actions -mt-2">
     <a href="/country-budget?export=csv&fy={{ fy }}&month={{ month }}" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
       Export
@@ -106,7 +106,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
   </div>
 
   <!-- KPI strip -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
     {% for k in kpis %}
     <div class="card p-4">
       <div class="flex items-start justify-between">
@@ -156,6 +156,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
               <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">SSA</th>
               <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Cluster Training</th>
               <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Partner In-School Training</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Special Projects</th>
               <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Admin Budget</th>
               <th class="px-3 py-2 text-right border-l border-slate-100" rowspan="2">Total Monthly<br>Allocation</th>
               <th class="px-3 py-2 text-center border-l border-slate-100" rowspan="2">Plan Source<br>Status</th>
@@ -195,7 +196,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
             <!-- CD Admin Plan row — the only non-activity budget item -->
             <tr class="text-[11.5px] bg-violet-50/30">
               <td class="px-3 py-2 font-bold text-violet-800 sticky left-0 bg-violet-50/30 whitespace-nowrap">CD Admin Plan</td>
-              <td class="px-2 py-2 text-center text-slate-300 border-l border-slate-50" colspan="15">—</td>
+              <td class="px-2 py-2 text-center text-slate-300 border-l border-slate-50" colspan="18">—</td>
               <td class="px-2 py-2 text-center text-slate-300">—</td>
               <td class="px-2 py-2 text-center text-slate-300">—</td>
               <td class="px-2 py-2 text-right font-semibold text-violet-700 tabular-nums">{{ admin_row.total_fmt }}</td>
@@ -209,7 +210,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
           <tfoot>
             <tr class="border-t-2 border-slate-200 bg-slate-50/60 text-[12px] font-bold text-slate-800">
               <td class="px-3 py-2.5 sticky left-0 bg-slate-50/60">TOTAL</td>
-              <td class="px-2 py-2.5 text-center border-l border-slate-100" colspan="15">&nbsp;</td>
+              <td class="px-2 py-2.5 text-center border-l border-slate-100" colspan="18">&nbsp;</td>
               <td class="px-2 py-2.5 text-center">—</td>
               <td class="px-2 py-2.5 text-center">—</td>
               <td class="px-2 py-2.5 text-right">{{ admin_row.total_fmt }}</td>

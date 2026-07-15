@@ -57,7 +57,9 @@ class SchoolGeoPoint(TimeStampedModel):
     school_id = models.CharField(max_length=30, unique=True)  # schools.School.id
     latitude = models.FloatField()
     longitude = models.FloatField()
-    source = models.CharField(max_length=32, default="manual")  # manual | upload | geocoded
+    source = models.CharField(
+        max_length=32, default="manual"
+    )  # manual | upload | geocoded
     captured_by = models.CharField(max_length=30, null=True, blank=True)  # User.id
 
     class Meta:
@@ -80,7 +82,9 @@ class SchoolLocationConfidence(TimeStampedModel):
         max_length=32, choices=LocationSource.choices, default=LocationSource.NONE
     )
     confidence = models.CharField(
-        max_length=16, choices=LocationConfidence.choices, default=LocationConfidence.NEEDS_CLEANUP
+        max_length=16,
+        choices=LocationConfidence.choices,
+        default=LocationConfidence.NEEDS_CLEANUP,
     )
     # Meaningful location phrases (generic words already removed),
     # e.g. ["Goma", "Nakifuma Hill"].
@@ -107,16 +111,25 @@ class DailyVisitRouteBatch(TimeStampedModel):
         max_length=16, choices=DistrictType.choices, null=True, blank=True
     )
     district = models.ForeignKey(
-        "geography.District", on_delete=models.SET_NULL, null=True, blank=True,
+        "geography.District",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="route_batches",
     )
     secondary_district_group = models.ForeignKey(
-        "geography.SecondaryDistrictGroup", on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="route_batches",
+        "geography.SecondaryDistrictGroup",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="route_batches",
     )
     cost_batch = models.ForeignKey(
-        "daily_visit_batches.DailyVisitBatch", on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="route_batches",
+        "daily_visit_batches.DailyVisitBatch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="route_batches",
     )
 
     # The day's schools, in the best visit sequence the engine could find.
@@ -141,10 +154,14 @@ class DailyVisitRouteBatch(TimeStampedModel):
         max_length=16, choices=RouteStatus.choices, default=RouteStatus.GOOD
     )
     confidence = models.CharField(
-        max_length=16, choices=LocationConfidence.choices, default=LocationConfidence.MEDIUM
+        max_length=16,
+        choices=LocationConfidence.choices,
+        default=LocationConfidence.MEDIUM,
     )
     warnings = models.JSONField(default=list)
-    target_snapshot = models.IntegerField(null=True, blank=True)  # CD schools/day at build time
+    target_snapshot = models.IntegerField(
+        null=True, blank=True
+    )  # CD schools/day at build time
 
     class Meta:
         db_table = "daily_visit_route_batch"
@@ -172,7 +189,9 @@ class RouteValidationIssue(TimeStampedModel):
         DailyVisitRouteBatch, on_delete=models.CASCADE, related_name="issues"
     )
     code = models.CharField(max_length=64)  # e.g. mixed_district_types
-    severity = models.CharField(max_length=16, default="warning")  # info|warning|blocking
+    severity = models.CharField(
+        max_length=16, default="warning"
+    )  # info|warning|blocking
     message = models.CharField(max_length=512)
 
     class Meta:

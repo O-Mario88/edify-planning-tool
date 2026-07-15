@@ -1,6 +1,8 @@
 {% load frontend_filters %}
 
-<div class="grid grid-cols-1 lg:grid-cols-9 gap-6 items-start">
+<div class="grid grid-cols-1 lg:grid-cols-9 gap-6 items-start"
+     x-data="{ coverageModal: false, returnModal: false, rejectModal: false }"
+     @keydown.escape.window="coverageModal = false; returnModal = false; rejectModal = false">
   
   <!-- Middle Column: Detailed Request Card (6/9 cols) -->
   <div class="lg:col-span-6 rounded-lg border shadow-sm p-6 space-y-6"
@@ -56,7 +58,11 @@
       </div>
       <div class="space-y-1">
         <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Remaining Balance</span>
-        <p class="text-[11.5px] font-black text-slate-200">16 / 21 days</p>
+        {% if impact.balance_remaining is not None %}
+          <p class="text-[11.5px] font-black text-slate-200">{{ impact.balance_remaining }} / {{ impact.balance_entitlement }} days</p>
+        {% else %}
+          <p class="text-[11.5px] font-semibold text-slate-400">Not available</p>
+        {% endif %}
       </div>
     </div>
 
@@ -100,7 +106,7 @@
         
         {% if eligible_cover_staff %}
         <!-- Reassign Coverage dropdown trigger -->
-        <button onclick="document.getElementById('reassign-coverage-modal').classList.remove('hidden')"
+        <button type="button" @click="coverageModal = true"
                 class="mt-4 px-3 py-1.5 text-[10px] font-extrabold uppercase border rounded-lg hover:bg-slate-50/5 transition text-center tracking-wider"
                 style="border-color:var(--edify-border); color:var(--edify-text);">
           Change Assignee
@@ -182,39 +188,39 @@
     <div class="space-y-2.5">
       <div class="flex items-center justify-between">
         <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Affected Work Items</span>
-        <a href="#" class="text-[10.5px] font-bold text-blue-500 hover:underline">View all items</a>
+        <span class="text-[10px] font-medium text-slate-500">Live impact analysis</span>
       </div>
       
       <div class="grid grid-cols-3 sm:grid-cols-5 gap-3">
-        <!-- Visits -->
+        <!-- Scheduled activities -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="text-lg font-black text-slate-200">{{ impact.conflicts|length|default:"0" }}</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">School Visits</span>
+          <span class="text-lg font-black text-slate-200">{{ impact.activity_count|default:"0" }}</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Activities</span>
         </div>
-        <!-- Meetings -->
+        <!-- Planning items -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="text-lg font-black text-slate-200">2</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Meetings</span>
+          <span class="text-lg font-black text-slate-200">{{ impact.planning_count|default:"0" }}</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Plan Items</span>
         </div>
-        <!-- Trainings -->
+        <!-- Partner work -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="text-lg font-black text-slate-200">1</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Trainings</span>
+          <span class="text-lg font-black text-slate-200">{{ impact.partner_count|default:"0" }}</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Partner Work</span>
         </div>
-        <!-- Approvals -->
+        <!-- Fund requests -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="text-lg font-black text-slate-200">4</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Pending Appr.</span>
+          <span class="text-lg font-black text-slate-200">{{ impact.fund_count|default:"0" }}</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Fund Requests</span>
         </div>
         <!-- My Plan -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="text-lg font-black text-slate-200">{{ impact.my_plan_due_count|default:"8" }}</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">My Plan Items</span>
+          <span class="text-lg font-black text-slate-200">{{ impact.due_count|default:"0" }}</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">My Plan Due</span>
         </div>
       </div>
     </div>
@@ -229,7 +235,7 @@
           </button>
         </form>
         
-        <button onclick="document.getElementById('return-leave-modal').classList.remove('hidden')"
+        <button type="button" @click="returnModal = true"
                 class="px-4 py-2 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition"
                 style="border-color:var(--edify-border); color:var(--edify-text);">
           Return for Clarification
@@ -243,7 +249,7 @@
           </button>
         </form>
         
-        <button onclick="document.getElementById('reject-leave-modal').classList.remove('hidden')"
+        <button type="button" @click="rejectModal = true"
                 class="px-4 py-2 text-xs font-bold text-rose-500 border rounded-lg hover:bg-rose-50/5 transition"
                 style="border-color:var(--edify-border);">
           Reject
@@ -259,7 +265,7 @@
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
         <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Holiday & Blackout Dates</h4>
-        <a href="#" class="text-[9.5px] font-bold text-blue-500 hover:underline">View all</a>
+        <span class="text-[9.5px] font-medium text-slate-500">Next 5</span>
       </div>
       
       <div class="space-y-2.5">
@@ -282,7 +288,7 @@
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
         <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Auto-Blocked Conflicts</h4>
-        <a href="#" class="text-[9.5px] font-bold text-blue-500 hover:underline">View all</a>
+        <span class="text-[9.5px] font-medium text-slate-500">Live check</span>
       </div>
 
       <div class="space-y-2.5">
@@ -311,7 +317,7 @@
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
         <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Team Availability</h4>
-        <a href="#" class="text-[9.5px] font-bold text-blue-500 hover:underline text-right">Full report</a>
+        <a href="{% url 'frontend:team_availability' %}" class="text-[9.5px] font-bold text-blue-500 hover:underline text-right">Full report</a>
       </div>
 
       <div class="space-y-3 pt-1">
@@ -374,7 +380,7 @@
           <span class="h-2 w-2 rounded-full bg-blue-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Request Submitted</p>
-            <p class="text-[8px] text-slate-500 mt-0.5">Jun 5, 2025 at 09:14 AM by {{ leave.staff.user.name }}</p>
+            <p class="text-[8px] text-slate-500 mt-0.5">{{ leave.created_at|date:"M j, Y \a\t g:i A" }} by {{ leave.staff.user.name }}</p>
           </div>
         </div>
         
@@ -382,7 +388,7 @@
           <span class="h-2 w-2 rounded-full bg-amber-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Under Review</p>
-            <p class="text-[8px] text-slate-500 mt-0.5">Awaiting supervisor review</p>
+            <p class="text-[8px] text-slate-500 mt-0.5">{% if leave.status == 'pending' %}Awaiting authorized review{% else %}{{ leave.status|replace_underscore|title }}{% endif %}</p>
           </div>
         </div>
         
@@ -401,11 +407,13 @@
 
   <!-- Reassign Coverage Modal -->
   {% if eligible_cover_staff %}
-  <div id="reassign-coverage-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div id="reassign-coverage-modal" x-show="coverageModal" x-cloak @click.self="coverageModal = false"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+       role="dialog" aria-modal="true" aria-labelledby="coverage-modal-title">
     <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
-        <h3 class="text-sm font-black text-slate-100">Reassign Coverage Assignee</h3>
+        <h3 id="coverage-modal-title" class="text-sm font-black text-slate-100">Reassign Coverage Assignee</h3>
         <p class="text-[11px] text-slate-400 mt-0.5">Select a qualified team backup employee to cover during this leave.</p>
       </div>
 
@@ -424,7 +432,7 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
-          <button type="button" onclick="document.getElementById('reassign-coverage-modal').classList.add('hidden')"
+          <button type="button" @click="coverageModal = false"
                   class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
             Cancel
           </button>
@@ -438,11 +446,13 @@
   {% endif %}
 
   <!-- Return Leave Modal -->
-  <div id="return-leave-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div id="return-leave-modal" x-show="returnModal" x-cloak @click.self="returnModal = false"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+       role="dialog" aria-modal="true" aria-labelledby="return-modal-title">
     <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
-        <h3 class="text-sm font-black text-slate-100">Return Leave for Clarification</h3>
+        <h3 id="return-modal-title" class="text-sm font-black text-slate-100">Return Leave for Clarification</h3>
         <p class="text-[11px] text-slate-400 mt-0.5 font-semibold">Provide details/reasons on what corrections are needed.</p>
       </div>
 
@@ -455,7 +465,7 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
-          <button type="button" onclick="document.getElementById('return-leave-modal').classList.add('hidden')"
+          <button type="button" @click="returnModal = false"
                   class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
             Cancel
           </button>
@@ -468,11 +478,13 @@
   </div>
 
   <!-- Reject Leave Modal -->
-  <div id="reject-leave-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div id="reject-leave-modal" x-show="rejectModal" x-cloak @click.self="rejectModal = false"
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+       role="dialog" aria-modal="true" aria-labelledby="reject-modal-title">
     <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
-        <h3 class="text-sm font-black text-slate-100">Reject Leave Request</h3>
+        <h3 id="reject-modal-title" class="text-sm font-black text-slate-100">Reject Leave Request</h3>
         <p class="text-[11px] text-slate-400 mt-0.5 font-semibold">Please describe the reasons for rejecting this request.</p>
       </div>
 
@@ -485,7 +497,7 @@
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
-          <button type="button" onclick="document.getElementById('reject-leave-modal').classList.add('hidden')"
+          <button type="button" @click="rejectModal = false"
                   class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
             Cancel
           </button>

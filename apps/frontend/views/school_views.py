@@ -324,9 +324,19 @@ def school_directory_view(request):
     }
     active_projects_exist = Project.objects.filter(deleted_at__isnull=True).exists()
 
+    # Batch-compute SSA/visit/training progress for this page of schools in
+    # a handful of queries instead of ~5-7 per-row queries inside from_school
+    # (was a confirmed N+1 on the school directory list).
+    page_school_ids = [s.id for s in page_obj]
+    progress_by_school = SchoolDirectoryViewModel.bulk_progress(page_school_ids)
+
     view_models = [
         SchoolDirectoryViewModel.from_school(
-            s, user, clusters_dict, active_projects_exist
+            s,
+            user,
+            clusters_dict,
+            active_projects_exist,
+            progress=progress_by_school.get(s.id),
         )
         for s in page_obj
     ]
@@ -421,7 +431,7 @@ def add_to_cluster_drawer_view(request, school_id):
 
     from apps.accounts.models import StaffProfile
     from apps.geography.models import District, SubCounty
-    from apps.clusters.models import Cluster, ClusterSubCounty, SchoolClusterAssignment
+    from apps.clusters.models import Cluster, ClusterSubCounty
 
     # Helper to fetch sub-counties scoped to the school's district with unclustered school counts & covering cluster claims
     def get_scoped_sub_counties(sch):

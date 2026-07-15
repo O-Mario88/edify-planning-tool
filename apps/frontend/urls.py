@@ -552,49 +552,108 @@ urlpatterns = [
     path("evidence", staff_views.evidence_gallery_view, name="evidence_gallery"),
     # Targets (My Targets)
     path("my-targets", staff_views.my_targets_view, name="my_targets"),
-    path("my-targets/area-drawer", staff_views.my_targets_area_drawer_view, name="my_targets_area_drawer"),
-    path("my-targets/export", staff_views.my_targets_export_view, name="my_targets_export"),
+    path(
+        "my-targets/area-drawer",
+        staff_views.my_targets_area_drawer_view,
+        name="my_targets_area_drawer",
+    ),
+    path(
+        "my-targets/export",
+        staff_views.my_targets_export_view,
+        name="my_targets_export",
+    ),
     path("my-targets/mscs", staff_views.mscs_submit_view, name="my_targets_mscs"),
     # Professional Development (My Professional Development) — one shared
     # employee-owned workflow, same route for every eligible role.
-    path("my-professional-development", pd_views.my_professional_development_view,
-         name="my_professional_development"),
+    path(
+        "my-professional-development",
+        pd_views.my_professional_development_view,
+        name="my_professional_development",
+    ),
     path("my-professional-development/", pd_views.my_professional_development_view),
-    path("my-professional-development/request", pd_views.pd_request_view,
-         name="pd_request"),
-    path("my-professional-development/request/<str:request_id>/evidence",
-         pd_views.pd_evidence_upload_view, name="pd_evidence_upload"),
-    path("my-professional-development/request/<str:request_id>/certificate",
-         pd_views.pd_certificate_upload_view, name="pd_certificate_upload"),
-    path("my-professional-development/request/<str:request_id>/action",
-         pd_views.pd_action_view, name="pd_action"),
-    path("my-professional-development/fund/<str:fund_request_id>/action",
-         pd_views.pd_fund_action_view, name="pd_fund_action"),
-    path("my-professional-development/export", pd_views.pd_export_view,
-         name="pd_export"),
-    path("my-professional-development/allocation-history", pd_views.pd_allocation_history_view,
-         name="pd_allocation_history"),
-    path("my-professional-development/certificate/<str:file_id>", pd_views.pd_certificate_file_view,
-         name="pd_certificate_file"),
-    path("my-professional-development/evidence/<str:file_id>", pd_views.pd_evidence_file_view,
-         name="pd_evidence_file"),
+    path(
+        "my-professional-development/request",
+        pd_views.pd_request_view,
+        name="pd_request",
+    ),
+    path(
+        "my-professional-development/request/<str:request_id>/evidence",
+        pd_views.pd_evidence_upload_view,
+        name="pd_evidence_upload",
+    ),
+    path(
+        "my-professional-development/request/<str:request_id>/certificate",
+        pd_views.pd_certificate_upload_view,
+        name="pd_certificate_upload",
+    ),
+    path(
+        "my-professional-development/request/<str:request_id>/action",
+        pd_views.pd_action_view,
+        name="pd_action",
+    ),
+    path(
+        "my-professional-development/fund/<str:fund_request_id>/action",
+        pd_views.pd_fund_action_view,
+        name="pd_fund_action",
+    ),
+    path(
+        "my-professional-development/export", pd_views.pd_export_view, name="pd_export"
+    ),
+    path(
+        "my-professional-development/allocation-history",
+        pd_views.pd_allocation_history_view,
+        name="pd_allocation_history",
+    ),
+    path(
+        "my-professional-development/certificate/<str:file_id>",
+        pd_views.pd_certificate_file_view,
+        name="pd_certificate_file",
+    ),
+    path(
+        "my-professional-development/evidence/<str:file_id>",
+        pd_views.pd_evidence_file_view,
+        name="pd_evidence_file",
+    ),
     path("team-targets", staff_views.team_targets_view, name="team_targets"),
     path("team-targets/", staff_views.team_targets_view),
-    path("team-targets/staff-drawer", staff_views.team_targets_staff_drawer_view,
-         name="team_targets_staff_drawer"),
-    path("team-targets/matrix", staff_views.team_targets_matrix_view,
-         name="team_targets_matrix"),
-    path("team-targets/day", staff_views.team_targets_day_view, name="team_targets_day"),
-    path("team-targets/recovery", staff_views.team_targets_recovery_view,
-         name="team_targets_recovery"),
-    path("team-targets/sfid-backlog", staff_views.team_targets_sfid_backlog_view,
-         name="team_targets_sfid_backlog"),
-    path("team-targets/catchup", staff_views.team_targets_catchup_create_view,
-         name="team_targets_catchup_create"),
-    path("team-targets/catchup/<str:plan_id>/action",
-         staff_views.team_targets_catchup_action_view, name="team_targets_catchup_action"),
-    path("team-targets/export", staff_views.team_targets_export_view,
-         name="team_targets_export"),
+    path(
+        "team-targets/staff-drawer",
+        staff_views.team_targets_staff_drawer_view,
+        name="team_targets_staff_drawer",
+    ),
+    path(
+        "team-targets/matrix",
+        staff_views.team_targets_matrix_view,
+        name="team_targets_matrix",
+    ),
+    path(
+        "team-targets/day", staff_views.team_targets_day_view, name="team_targets_day"
+    ),
+    path(
+        "team-targets/recovery",
+        staff_views.team_targets_recovery_view,
+        name="team_targets_recovery",
+    ),
+    path(
+        "team-targets/sfid-backlog",
+        staff_views.team_targets_sfid_backlog_view,
+        name="team_targets_sfid_backlog",
+    ),
+    path(
+        "team-targets/catchup",
+        staff_views.team_targets_catchup_create_view,
+        name="team_targets_catchup_create",
+    ),
+    path(
+        "team-targets/catchup/<str:plan_id>/action",
+        staff_views.team_targets_catchup_action_view,
+        name="team_targets_catchup_action",
+    ),
+    path(
+        "team-targets/export",
+        staff_views.team_targets_export_view,
+        name="team_targets_export",
+    ),
     # Personal Time Off & Leave Workflow
     path(
         "personal-time-off",
@@ -680,11 +739,19 @@ urlpatterns = [
     ),
     path("leave/team-availability/", leave_views.team_availability_view),
     # Country Budget
-    path("rvp/annual/<str:budget_id>/action", rvp_views.rvp_annual_action_view,
-         name="rvp_annual_action"),
-    path("rvp/project/<str:project_id>/decision", rvp_views.rvp_project_decision_view,
-         name="rvp_project_decision"),
-    path("rvp/strategy-note", rvp_views.rvp_strategy_note_view, name="rvp_strategy_note"),
+    path(
+        "rvp/annual/<str:budget_id>/action",
+        rvp_views.rvp_annual_action_view,
+        name="rvp_annual_action",
+    ),
+    path(
+        "rvp/project/<str:project_id>/decision",
+        rvp_views.rvp_project_decision_view,
+        name="rvp_project_decision",
+    ),
+    path(
+        "rvp/strategy-note", rvp_views.rvp_strategy_note_view, name="rvp_strategy_note"
+    ),
     path("rvp/approvals", rvp_views.rvp_approvals_drawer_view, name="rvp_approvals"),
     path("country-budget", finance_views.country_budget_view, name="country_budget"),
     path("country-budget/", finance_views.country_budget_view),
@@ -1039,6 +1106,11 @@ urlpatterns = [
         extended_views.duplicate_review_view,
         name="duplicate_review",
     ),
+    path(
+        "data-quality/issue/<str:issue_id>/action",
+        extended_views.data_quality_issue_action_view,
+        name="data_quality_issue_action",
+    ),
     path("ssa/upload/", ssa_views.ssa_upload_center_view, name="ssa_upload_center"),
     path(
         "ssa/upload/template",
@@ -1229,8 +1301,16 @@ urlpatterns = [
         name="project_detail",
     ),
     path("debriefs", debrief_views.field_debrief_dashboard_view, name="debriefs_list"),
-    path("debriefs/submit", debrief_views.field_debrief_submit_view, name="debrief_submit"),
-    path("debriefs/action", debrief_views.field_debrief_action_view, name="debrief_action"),
+    path(
+        "debriefs/submit",
+        debrief_views.field_debrief_submit_view,
+        name="debrief_submit",
+    ),
+    path(
+        "debriefs/action",
+        debrief_views.field_debrief_action_view,
+        name="debrief_action",
+    ),
     path(
         "debriefs/activity-options",
         debrief_views.field_debrief_activity_options_view,
@@ -1261,9 +1341,17 @@ urlpatterns = [
     ),
     # HCOS routes
     path("org-structure", hr_views.org_structure_view, name="org_structure"),
-    path("workforce-planning", hr_views.workforce_planning_view, name="workforce_planning"),
+    path(
+        "workforce-planning",
+        hr_views.workforce_planning_view,
+        name="workforce_planning",
+    ),
     path("recruitment", hr_views.recruitment_view, name="recruitment"),
-    path("candidate-pipeline", hr_views.candidate_pipeline_view, name="candidate_pipeline"),
+    path(
+        "candidate-pipeline",
+        hr_views.candidate_pipeline_view,
+        name="candidate_pipeline",
+    ),
     path("onboarding", hr_views.onboarding_view, name="onboarding"),
     path("cpd-learning", hr_views.cpd_learning_view, name="cpd_learning"),
     path(
@@ -1271,16 +1359,46 @@ urlpatterns = [
         hr_views.pd_dashboard_adjust_allocation_view,
         name="pd_dashboard_adjust_allocation",
     ),
-    path("cpd-learning/action", hr_views.pd_dashboard_action_view, name="pd_dashboard_action"),
-    path("succession-planning", hr_views.succession_planning_view, name="succession_planning"),
-    path("performance-reviews", hr_views.performance_reviews_view, name="performance_reviews"),
+    path(
+        "cpd-learning/action",
+        hr_views.pd_dashboard_action_view,
+        name="pd_dashboard_action",
+    ),
+    path(
+        "succession-planning",
+        hr_views.succession_planning_view,
+        name="succession_planning",
+    ),
+    path(
+        "performance-reviews",
+        hr_views.performance_reviews_view,
+        name="performance_reviews",
+    ),
     path("recovery-plans", hr_views.recovery_plans_view, name="recovery_plans"),
-    path("culture-engagement", hr_views.culture_engagement_view, name="culture_engagement"),
-    path("employee-relations", hr_views.employee_relations_view, name="employee_relations"),
+    path(
+        "culture-engagement",
+        hr_views.culture_engagement_view,
+        name="culture_engagement",
+    ),
+    path(
+        "employee-relations",
+        hr_views.employee_relations_view,
+        name="employee_relations",
+    ),
     path("wellness", hr_views.wellness_view, name="wellness"),
-    path("compensation-benefits", hr_views.compensation_benefits_view, name="compensation_benefits"),
-    path("payroll-readiness", hr_views.payroll_readiness_view, name="payroll_readiness"),
-    path("compliance-register", hr_views.compliance_register_view, name="compliance_register"),
+    path(
+        "compensation-benefits",
+        hr_views.compensation_benefits_view,
+        name="compensation_benefits",
+    ),
+    path(
+        "payroll-readiness", hr_views.payroll_readiness_view, name="payroll_readiness"
+    ),
+    path(
+        "compliance-register",
+        hr_views.compliance_register_view,
+        name="compliance_register",
+    ),
     path("policies", hr_views.policies_view, name="policies"),
     path("offboarding", hr_views.offboarding_view, name="offboarding"),
     path("hr-analytics", hr_views.hr_analytics_view, name="hr_analytics"),

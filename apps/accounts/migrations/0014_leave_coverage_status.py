@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0013_staffprofile_country_staffprofile_department'),
+        ("accounts", "0013_staffprofile_country_staffprofile_department"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='leave',
-            name='coverage_status',
-            field=models.CharField(default='Proposed', max_length=32),
+            model_name="leave",
+            name="coverage_status",
+            field=models.CharField(default="Proposed", max_length=32),
         ),
     ]

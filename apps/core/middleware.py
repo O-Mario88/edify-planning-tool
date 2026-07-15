@@ -81,14 +81,25 @@ class AllExceptionsMiddleware:
                 request.path,
                 str(exception),
             )
-            return JsonResponse(
-                {
-                    "statusCode": 403,
-                    "correlationId": correlation_id,
-                    "message": str(exception),
-                },
-                status=403,
-            )
+            # `/api/*` is the DRF/JSON contract (mirrors NestJS) — keep the
+            # JSON envelope there. Everything else is a plain server-rendered
+            # page (e.g. get_scoped_object_or_404 raising inside a Django
+            # view) — render the same flash-and-redirect / 403 page contract
+            # require_page_permission() already uses, instead of surfacing a
+            # raw JSON blob on a security boundary.
+            if request.path.startswith("/api/"):
+                return JsonResponse(
+                    {
+                        "statusCode": 403,
+                        "correlationId": correlation_id,
+                        "message": str(exception),
+                    },
+                    status=403,
+                )
+
+            from apps.core.permissions import render_access_denied
+
+            return render_access_denied(request, str(exception))
 
         if isinstance(exception, DjangoHttp404):
             logger.debug(

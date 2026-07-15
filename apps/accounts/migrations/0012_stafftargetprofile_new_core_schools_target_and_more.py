@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0011_calendarblock'),
+        ("accounts", "0011_calendarblock"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='new_core_schools_target',
+            model_name="stafftargetprofile",
+            name="new_core_schools_target",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='new_schools_target',
+            model_name="stafftargetprofile",
+            name="new_schools_target",
             field=models.IntegerField(default=0),
         ),
     ]

@@ -3,11 +3,11 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 .app-sidebar {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  background: var(--edify-sidebar-bg) !important;
   width: 260px;
-  height: 100vh;
+  height: 100dvh;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid var(--edify-border);
   padding: 18px 14px;
   box-sizing: border-box;
   flex-shrink: 0;
@@ -17,8 +17,9 @@
 
 /* Desktop only. This unlayered rule would otherwise beat Tailwind's layered
    `hidden md:flex` utilities on the <aside>, forcing the sidebar open on
-   phones. The off-canvas menu (shell.html) owns the sidebar below 768px. */
-@media (min-width: 768px) {
+   smaller screens. The off-canvas menu (shell.html) owns the sidebar below
+   1024px, preserving useful workspace width on portrait tablets. */
+@media (min-width: 1024px) {
   .app-sidebar {
     display: flex;
   }
@@ -42,8 +43,41 @@
 
 /* Brand */
 .app-sidebar__brand {
-  margin-bottom: 4px;
-  padding-left: 8px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+}
+
+.app-sidebar__wordmark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+}
+
+.app-sidebar__brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #8fb1e8;
+  color: #132037;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
+  font-family: var(--edify-font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.app-sidebar__brand-name {
+  min-width: 0;
+  color: #edf0eb;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .app-sidebar__logo {
@@ -61,7 +95,7 @@
   font-family: var(--edify-font-sans);
   font-size: 11px;
   font-weight: 500;
-  color: rgba(148, 163, 184, 0.7);
+  color: rgba(189, 216, 233, 0.68);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   line-height: 1.4;
@@ -71,7 +105,7 @@
 
 /* Section groups */
 .app-sidebar__section {
-  margin-top: 18px;
+  margin-top: 10px;
 }
 
 .app-sidebar__section-title {
@@ -80,9 +114,41 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(148, 163, 184, 0.5);
-  margin-bottom: 6px;
-  padding-left: 12px;
+  color: rgba(189, 216, 233, 0.50);
+  margin: 0;
+  padding: 0;
+}
+
+.app-sidebar__section-toggle {
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 10px 4px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(189, 216, 233, 0.50);
+  cursor: pointer;
+}
+
+.app-sidebar__section-toggle:hover {
+  color: rgba(221, 237, 247, 0.82);
+  background: rgba(123, 189, 232, 0.055);
+}
+
+.app-sidebar__section-chevron {
+  width: 13px;
+  height: 13px;
+  transition: transform var(--edify-transition-fast);
+}
+
+.app-sidebar__section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 3px;
 }
 
 /* Nav list */
@@ -100,7 +166,7 @@
   gap: 12px;
   padding: 4px 10px;
   border-radius: 8px;
-  color: rgba(203, 213, 225, 0.75) !important;
+  color: rgba(221, 237, 247, 0.76) !important;
   text-decoration: none !important;
   font-size: 13px;
   font-weight: 500;
@@ -169,7 +235,7 @@
 
 /* Active item — subtle pill, no heavy border */
 .app-sidebar__item--active {
-  background-color: rgba(59, 130, 246, 0.12) !important;
+  background-color: rgba(123, 189, 232, 0.14) !important;
   color: #ffffff !important;
   font-weight: 600;
 }
@@ -182,11 +248,11 @@
   bottom: 8px;
   width: 3px;
   border-radius: 0 2px 2px 0;
-  background: #3b82f6;
+  background: #7bbde8;
 }
 
 .app-sidebar__item--active .app-sidebar__item-icon {
-  color: #60a5fa;
+  color: #7bbde8;
 }
 
 /* Divider between sections */
@@ -216,8 +282,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(59, 130, 246, 0.2);
-  color: #bfdbfe;
+  background: rgba(123, 189, 232, 0.18);
+  color: #bdd8e9;
   font-size: 11px;
   font-weight: 600;
   display: flex;
@@ -276,12 +342,45 @@
 }
 .app-sidebar--collapsed .app-sidebar__logo,
 .app-sidebar--collapsed .app-sidebar__subtitle,
+.app-sidebar--collapsed .app-sidebar__brand-name,
 .app-sidebar--collapsed .app-sidebar__section-title,
 .app-sidebar--collapsed .app-sidebar__item-label,
 .app-sidebar--collapsed .app-sidebar__item-badge,
 .app-sidebar--collapsed .app-sidebar__user-info,
 .app-sidebar--collapsed .app-sidebar__collapse-btn span {
   display: none;
+}
+
+.theme-dark .app-sidebar {
+  width: 272px;
+  padding: 22px 16px 18px;
+}
+
+.theme-dark .app-sidebar--collapsed {
+  width: 72px;
+  padding: 18px 8px;
+}
+
+.theme-dark .app-sidebar__section-title {
+  color: rgba(237, 240, 235, .84);
+  font-weight: 650;
+  letter-spacing: .1em;
+}
+
+.theme-dark .app-sidebar__item {
+  color: rgba(174, 184, 197, .92) !important;
+}
+
+.theme-dark .app-sidebar__item--active {
+  background: rgba(143, 177, 232, .12) !important;
+}
+
+.theme-dark .app-sidebar__item--active::before {
+  background: var(--edify-accent);
+}
+
+.theme-dark .app-sidebar__item--active .app-sidebar__item-icon {
+  color: var(--edify-accent);
 }
 .app-sidebar--collapsed .app-sidebar__item {
   justify-content: center;

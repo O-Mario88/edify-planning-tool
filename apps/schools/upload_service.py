@@ -15,6 +15,7 @@ import csv
 import io
 from datetime import date, datetime
 
+from django.db import transaction
 
 from apps.core.exceptions import BadRequest
 
@@ -492,152 +493,164 @@ def import_school_batch(batch, user) -> dict:
     cleanup_count = 0
     duplicate_count = 0
 
-    for r in rows:
-        district = None
-        if r.district_name:
-            district = District.objects.filter(name__iexact=r.district_name).first()
-            if not district:
-                district = District.objects.filter(
-                    name__icontains=r.district_name.strip()
-                ).first()
+    with transaction.atomic():
+        for r in rows:
+            district = None
+            if r.district_name:
+                district = District.objects.filter(name__iexact=r.district_name).first()
+                if not district:
+                    district = District.objects.filter(
+                        name__icontains=r.district_name.strip()
+                    ).first()
 
-        sub_county = None
-        if r.sub_county_name and district:
-            sub_county = SubCounty.objects.filter(
-                district=district, name__iexact=r.sub_county_name
-            ).first()
-            if not sub_county:
+            sub_county = None
+            if r.sub_county_name and district:
                 sub_county = SubCounty.objects.filter(
-                    district=district, name__icontains=r.sub_county_name
+                    district=district, name__iexact=r.sub_county_name
                 ).first()
+                if not sub_county:
+                    sub_county = SubCounty.objects.filter(
+                        district=district, name__icontains=r.sub_county_name
+                    ).first()
 
-        owner_id = None
-        owner_status = "pending"
-        if r.account_owner_name:
-            owner_id, owner_status = staff_match(r.account_owner_name)
-            if owner_status == "unmatched":
-                new_owner_id = _auto_create_user_from_upload(r.account_owner_name)
-                if new_owner_id:
-                    owner_id = new_owner_id
-                    owner_status = "matched"
+            owner_id = None
+            owner_status = "pending"
+            if r.account_owner_name:
+                owner_id, owner_status = staff_match(r.account_owner_name)
+                if owner_status == "unmatched":
+                    new_owner_id = _auto_create_user_from_upload(r.account_owner_name)
+                    if new_owner_id:
+                        owner_id = new_owner_id
+                        owner_status = "matched"
 
-        school_type, _recognized = M.map_school_type(r.school_type)
+            school_type, _recognized = M.map_school_type(r.school_type)
 
-        last_enroll_date = None
-        led_val = r.raw_data.get("last_enrollment_date")
-        if led_val:
-            try:
-                last_enroll_date = date.fromisoformat(led_val.strip())
-            except ValueError:
-                pass
+            last_enroll_date = None
+            led_val = r.raw_data.get("last_enrollment_date")
+            if led_val:
+                try:
+                    last_enroll_date = date.fromisoformat(led_val.strip())
+                except ValueError:
+                    pass
 
-        existing = School.objects.filter(
-            school_id=r.school_id, deleted_at__isnull=True
-        ).first()
+            existing = School.objects.filter(
+                school_id=r.school_id, deleted_at__isnull=True
+            ).first()
 
-        if existing:
-            # Upsert mode: do not overwrite good existing data with blanks!
-            # Keep history in SchoolChangeLog
-            fields_to_update = {
-                "name": r.name,
-                "school_type": school_type,
-                "district": district,
-                "region": district.region if district else existing.region,
-                "sub_county": sub_county,
-                "enrollment": r.enrollment,
-                "last_enrollment_date": last_enroll_date,
-                "school_phone": r.phone,
-                "primary_contact_name": r.contact_person,
-                "shipping_address": r.address,
-                "director_name": r.director_name,
-                "headteacher_name": r.headteacher_name,
-                "account_owner_name_raw": r.account_owner_name,
-                "account_owner_id": owner_id,
-                "account_owner_status": owner_status,
-            }
+            if existing:
+                # Upsert mode: do not overwrite good existing data with blanks!
+                # Keep history in SchoolChangeLog
+                fields_to_update = {
+                    "name": r.name,
+                    "school_type": school_type,
+                    "district": district,
+                    "region": district.region if district else existing.region,
+                    "sub_county": sub_county,
+                    "enrollment": r.enrollment,
+                    "last_enrollment_date": last_enroll_date,
+                    "school_phone": r.phone,
+                    "primary_contact_name": r.contact_person,
+                    "shipping_address": r.address,
+                    "director_name": r.director_name,
+                    "headteacher_name": r.headteacher_name,
+                    "account_owner_name_raw": r.account_owner_name,
+                    "account_owner_id": owner_id,
+                    "account_owner_status": owner_status,
+                }
 
-            changes = []
-            for field, val in fields_to_update.items():
-                if val is not None and val != "":
-                    old_val = getattr(existing, field)
-                    if val != old_val:
-                        changes.append(
-                            SchoolChangeLog(
-                                school=existing,
-                                field_name=field,
-                                old_value=str(old_val) if old_val is not None else None,
-                                new_value=str(val),
-                                changed_by=user.user_id
-                                if hasattr(user, "user_id")
-                                else str(user),
+                changes = []
+                for field, val in fields_to_update.items():
+                    if val is not None and val != "":
+                        old_val = getattr(existing, field)
+                        if val != old_val:
+                            changes.append(
+                                SchoolChangeLog(
+                                    school=existing,
+                                    field_name=field,
+                                    old_value=str(old_val)
+                                    if old_val is not None
+                                    else None,
+                                    new_value=str(val),
+                                    changed_by=user.user_id
+                                    if hasattr(user, "user_id")
+                                    else str(user),
+                                )
                             )
-                        )
-                        setattr(existing, field, val)
+                            setattr(existing, field, val)
 
-            if changes:
-                existing.save()
-                SchoolChangeLog.objects.bulk_create(changes)
+                if changes:
+                    existing.save()
+                    SchoolChangeLog.objects.bulk_create(changes)
+                else:
+                    existing.save()  # trigger save hook for readiness
+                updated_count += 1
+                saved_school = existing
             else:
-                existing.save()  # trigger save hook for readiness
-            updated_count += 1
-            saved_school = existing
-        else:
-            region = district.region if district else None
-            if not region:
-                from apps.geography.models import Region
+                region = district.region if district else None
+                if not region:
+                    from apps.geography.models import Region
 
-                region = Region.objects.first()
+                    region = Region.objects.first()
 
-            saved_school = School.objects.create(
-                school_id=r.school_id,
-                name=r.name,
-                school_type=school_type,
-                region=region,
-                district=district or District.objects.first(),
-                sub_county=sub_county,
-                enrollment=r.enrollment,
-                last_enrollment_date=last_enroll_date,
-                school_phone=r.phone,
-                primary_contact_name=r.contact_person,
-                shipping_address=r.address,
-                director_name=r.director_name,
-                headteacher_name=r.headteacher_name,
-                account_owner_name_raw=r.account_owner_name,
-                account_owner_id=owner_id,
-                account_owner_status=owner_status,
-            )
-            created_count += 1
+                saved_school = School.objects.create(
+                    school_id=r.school_id,
+                    name=r.name,
+                    school_type=school_type,
+                    region=region,
+                    district=district or District.objects.first(),
+                    sub_county=sub_county,
+                    enrollment=r.enrollment,
+                    last_enrollment_date=last_enroll_date,
+                    school_phone=r.phone,
+                    primary_contact_name=r.contact_person,
+                    shipping_address=r.address,
+                    director_name=r.director_name,
+                    headteacher_name=r.headteacher_name,
+                    account_owner_name_raw=r.account_owner_name,
+                    account_owner_id=owner_id,
+                    account_owner_status=owner_status,
+                )
+                created_count += 1
 
-        if owner_id and owner_status == "matched":
-            from apps.accounts.models import StaffSchoolAssignment
+            if owner_id and owner_status == "matched":
+                from apps.accounts.models import StaffSchoolAssignment
 
-            StaffSchoolAssignment.objects.get_or_create(
-                staff_id=owner_id, school_id=saved_school.id
-            )
-            from apps.accounts.models import StaffProfile
+                StaffSchoolAssignment.objects.get_or_create(
+                    staff_id=owner_id, school_id=saved_school.id
+                )
+                from apps.accounts.models import StaffProfile
 
-            sp = StaffProfile.objects.filter(id=owner_id).select_related("user").first()
-            if (
-                sp
-                and sp.user
-                and ("pending." in sp.user.email or sp.user.status == "pending_invited")
-            ):
+                sp = (
+                    StaffProfile.objects.filter(id=owner_id)
+                    .select_related("user")
+                    .first()
+                )
+                if (
+                    sp
+                    and sp.user
+                    and (
+                        "pending." in sp.user.email
+                        or sp.user.status == "pending_invited"
+                    )
+                ):
+                    _upsert_staff_candidate(
+                        r.account_owner_name, batch.id, saved_school.id
+                    )
+            elif owner_status in ("unmatched", "ambiguous") and r.account_owner_name:
                 _upsert_staff_candidate(r.account_owner_name, batch.id, saved_school.id)
-        elif owner_status in ("unmatched", "ambiguous") and r.account_owner_name:
-            _upsert_staff_candidate(r.account_owner_name, batch.id, saved_school.id)
 
-        q_status = saved_school.data_quality_status
-        if q_status == "Clean":
-            clean_count += 1
-        elif q_status == "Needs Review":
-            review_count += 1
-        elif q_status == "Needs Cleanup":
-            cleanup_count += 1
-        elif q_status == "Duplicate Risk":
-            duplicate_count += 1
+            q_status = saved_school.data_quality_status
+            if q_status == "Clean":
+                clean_count += 1
+            elif q_status == "Needs Review":
+                review_count += 1
+            elif q_status == "Needs Cleanup":
+                cleanup_count += 1
+            elif q_status == "Duplicate Risk":
+                duplicate_count += 1
 
-    batch.status = "imported"
-    batch.save()
+        batch.status = "imported"
+        batch.save()
 
     return {
         "created": created_count,

@@ -6,17 +6,17 @@
 <div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
+<div class="platform-hero">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="platform-hero__eyebrow inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-widest">
 System Monitor
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">System Health &amp; Integrity</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Autonomous scan of workflow break exception states, RBAC routes gating checks, and database data leakage audits.
+<p class="max-w-xl">
+Autonomous monitoring of workflow exceptions, role-based access controls, audit integrity, and data-leakage safeguards.
 </p>
 </div>
 </div>
@@ -68,6 +68,73 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 </div>
 </div>
 {% endif %}
+</div>
+
+<!-- Audit log tamper-evidence -->
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Audit Chain Integrity</h3>
+
+{% if health.auditChainIntegrity.clean %}
+<div class="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-[12px] font-semibold border border-emerald-150">
+&check; Hash chain re-verified end-to-end. No tampering detected.
+</div>
+{% elif health.auditChainIntegrity.clean is None %}
+<div class="p-4 bg-amber-50 text-amber-800 rounded-xl text-[12px] font-semibold border border-amber-150">
+Could not verify the audit chain: {{ health.auditChainIntegrity.error }}
+</div>
+{% else %}
+<div class="p-4 bg-rose-50 text-rose-700 rounded-xl text-[12px] font-semibold border border-rose-150">
+Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. Investigate immediately.
+</div>
+{% endif %}
+</div>
+
+<!-- Background Automation (scheduler + jobs) health -->
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Background Automation</h3>
+<div class="space-y-2">
+{% for c in health.backgroundAutomation.checks %}
+<div class="p-3 rounded-lg {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
+<div class="text-[11px] text-slate-500 mt-0.5">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="text-[11px] text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+</div>
+{% empty %}
+<div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Authentication Lockout unification health (Issue 3) -->
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Authentication Lockout</h3>
+<div class="space-y-2">
+{% for c in health.authLockout.checks %}
+<div class="p-3 rounded-lg {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
+<div class="text-[11px] text-slate-500 mt-0.5">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="text-[11px] text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+</div>
+{% empty %}
+<div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Unmatched SSA queue health (Issue 5) -->
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Unmatched SSA Queue</h3>
+<div class="space-y-2">
+{% for c in health.unmatchedSsa.checks %}
+<div class="p-3 rounded-lg {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
+<div class="text-[11px] text-slate-500 mt-0.5">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="text-[11px] text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+</div>
+{% empty %}
+<div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
+{% endfor %}
+</div>
 </div>
 
 </div>

@@ -109,16 +109,19 @@ class CountryAnnualBudget(TimeStampedModel):
     planned_partner_visits = models.IntegerField(default=0)
     core_package_schools = models.IntegerField(default=0)
     cluster_activities = models.IntegerField(default=0)
-    special_project_total = models.BigIntegerField(default=0)   # UGX
-    admin_total = models.BigIntegerField(default=0)             # UGX
-    program_total = models.BigIntegerField(default=0)           # UGX
-    total_amount = models.BigIntegerField(default=0)            # UGX
-    monthly_phasing = models.JSONField(default=list, blank=True)   # 12 amounts
+    special_project_total = models.BigIntegerField(default=0)  # UGX
+    admin_total = models.BigIntegerField(default=0)  # UGX
+    program_total = models.BigIntegerField(default=0)  # UGX
+    total_amount = models.BigIntegerField(default=0)  # UGX
+    monthly_phasing = models.JSONField(default=list, blank=True)  # 12 amounts
     quarterly_phasing = models.JSONField(default=list, blank=True)  # 4 amounts
     prior_year_total = models.BigIntegerField(default=0)
     expected_impact = models.TextField(null=True, blank=True)
-    status = models.CharField(max_length=32, choices=CountryAnnualBudgetStatus.choices,
-                              default=CountryAnnualBudgetStatus.DRAFT)
+    status = models.CharField(
+        max_length=32,
+        choices=CountryAnnualBudgetStatus.choices,
+        default=CountryAnnualBudgetStatus.DRAFT,
+    )
     submitted_at = models.DateTimeField(null=True, blank=True)
     submitted_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     rvp_reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -129,8 +132,9 @@ class CountryAnnualBudget(TimeStampedModel):
     class Meta:
         db_table = "country_annual_budget"
         constraints = [
-            models.UniqueConstraint(fields=["country_id", "fy"],
-                                    name="uniq_country_annual_fy")
+            models.UniqueConstraint(
+                fields=["country_id", "fy"], name="uniq_country_annual_fy"
+            )
         ]
         indexes = [models.Index(fields=["status"])]
 
@@ -140,10 +144,14 @@ class RVPApprovalDecision(TimeStampedModel):
     budgets, special-project strategy, partner strategy."""
 
     id = CuidField()
-    decision_type = models.CharField(max_length=32)   # monthly_budget | annual_budget | special_project | partner
-    subject_id = models.CharField(max_length=64)      # budget/project/partner id
+    decision_type = models.CharField(
+        max_length=32
+    )  # monthly_budget | annual_budget | special_project | partner
+    subject_id = models.CharField(max_length=64)  # budget/project/partner id
     subject_label = models.CharField(max_length=255)
-    action = models.CharField(max_length=32)          # approve | return | scale | pause | close | ...
+    action = models.CharField(
+        max_length=32
+    )  # approve | return | scale | pause | close | ...
     reason = models.CharField(max_length=512, null=True, blank=True)
     decided_by = models.CharField(max_length=30)
     amount = models.BigIntegerField(default=0)
@@ -167,7 +175,7 @@ class StrategyNote(TimeStampedModel):
     CD To-Do and a notification."""
 
     id = CuidField()
-    author_id = models.CharField(max_length=30)        # RVP user id
+    author_id = models.CharField(max_length=30)  # RVP user id
     priority_label = models.CharField(max_length=128)  # strategic priority category
     scope = models.CharField(max_length=128, default="Regional")
     instruction = models.TextField()
@@ -175,8 +183,11 @@ class StrategyNote(TimeStampedModel):
     responsible_cd_id = models.CharField(max_length=30, null=True, blank=True)
     deadline = models.DateField(null=True, blank=True)
     review_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=16, choices=StrategyNoteStatus.choices,
-                              default=StrategyNoteStatus.OPEN)
+    status = models.CharField(
+        max_length=16,
+        choices=StrategyNoteStatus.choices,
+        default=StrategyNoteStatus.OPEN,
+    )
 
     class Meta:
         db_table = "rvp_strategy_note"

@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#062847">
+  <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="{% static 'images/login-classroom-portrait.jpg' %}" fetchpriority="high">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260714i">
+  <script defer src="{% static 'js/login.js' %}?v=20260714a"></script>
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-brand" aria-label="About Edify Planning and Monitoring">
+      <img
+        class="login-brand__photo"
+        src="{% static 'images/login-classroom-portrait.jpg' %}"
+        alt=""
+        width="570"
+        height="800"
+        fetchpriority="high"
+      >
+      <div class="login-brand__shade" aria-hidden="true"></div>
+      <div class="login-brand__dots login-brand__dots--top" aria-hidden="true"></div>
+      <div class="login-brand__dots login-brand__dots--middle" aria-hidden="true"></div>
+
+      <div class="login-brand__content">
+        <header class="login-brand__header">
+          <img class="login-brand__logo" src="{% static 'images/logo.png' %}" alt="Edify">
+          <span class="login-brand__divider" aria-hidden="true"></span>
+          <span class="login-brand__product">Planning &amp;<br>Monitoring</span>
+        </header>
+
+        <div class="login-brand__story">
+          <p class="login-brand__eyebrow">Welcome back to</p>
+          <p class="login-brand__title">Edify Planning &amp;<br>Monitoring</p>
+          <span class="login-brand__rule" aria-hidden="true"></span>
+          <p class="login-brand__summary">
+            Plan smarter. Track field work. Drive accountability.<br>
+            Together, we’re building stronger schools<br>
+            and better futures.
+          </p>
+        </div>
+
+        <section class="impact-card" aria-labelledby="impact-card-title">
+          <h2 id="impact-card-title" class="impact-card__title">Built for impact. Designed for results.</h2>
+          <div class="impact-card__grid">
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path></svg>
+              </span>
+              <h3>Plan with clarity</h3>
+              <p>Align activities, budgets,<br>and targets with<br>confidence.</p>
+            </article>
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+              </span>
+              <h3>Track in real time</h3>
+              <p>Monitor visits, tasks,<br>and outcomes from<br>the field.</p>
+            </article>
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V14M16 20V7M22 20V4"></path><path d="m4 7 5-4 5 3 7-5M17 1h4v4"></path></svg>
+              </span>
+              <h3>Improve outcomes</h3>
+              <p>Use data insights to<br>drive decisions that<br>improve learning.</p>
+            </article>
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-3 8-9V5l-8-3-8 3v8c0 6 8 9 8 9Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+              </span>
+              <h3>Ensure accountability</h3>
+              <p>Promote transparency<br>and performance<br>at every level.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="login-stats" aria-label="Live Edify operational statistics">
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 21V9l4-3v15M9 21V3l6 4v14M17 21v-8h4v8M1 21h22M11 8h2M11 12h2M11 16h2"></path></svg>
+            <div>
+              <p class="login-stat__label">Schools reached</p>
+              <p class="login-stat__value">{{ stat_schools_reached|default:"0" }}</p>
+              <p class="login-stat__meta">↗ Live system data</p>
+            </div>
+          </article>
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <div>
+              <p class="login-stat__label">Field visits</p>
+              <p class="login-stat__value">{{ stat_field_visits|default:"0" }}</p>
+              <p class="login-stat__meta">↗ Current FY</p>
+            </div>
+          </article>
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></svg>
+            <div>
+              <p class="login-stat__label">Tasks completed</p>
+              <p class="login-stat__value">{{ stat_tasks_completed|default:"0%" }}</p>
+              <p class="login-stat__meta">↗ Current FY</p>
+            </div>
+          </article>
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle><path d="m15 9 5-5M17 4h3v3"></path></svg>
+            <div>
+              <p class="login-stat__label">Target progress</p>
+              <p class="login-stat__value">{{ stat_target_progress|default:"0%" }}</p>
+              <p class="login-stat__meta">↗ Validated results</p>
+            </div>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <section class="login-access" aria-label="Secure sign in">
+      <div class="login-card">
+        <div class="login-card__inner">
+          <img class="login-card__logo" src="{% static 'images/logo.png' %}" alt="Edify">
+          {% block auth_content %}{% endblock %}
+
+          <aside class="secure-card" aria-label="Security information">
+            <span class="secure-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-3 8-9V5l-8-3-8 3v8c0 6 8 9 8 9Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            </span>
+            <div>
+              <h2>Secure access</h2>
+              <p>Your data is encrypted and protected by<br class="secure-card__desktop-break"> enterprise-grade security.</p>
+            </div>
+          </aside>
+
+          <p class="login-card__footer">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22s8-3 8-9V5l-8-3-8 3v8c0 6 8 9 8 9Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            <span>Protected access for country teams, CCEOs, finance,<br class="login-card__desktop-break"> and leadership.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

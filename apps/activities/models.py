@@ -131,7 +131,11 @@ class Activity(SoftDeleteModel):
     reschedule_count = models.IntegerField(default=0)
     last_reason = models.CharField(max_length=512, null=True, blank=True)
 
-    # Auto-cost from the CD rate card at schedule time (cents).
+    # Auto-cost from the CD rate card at schedule time. Despite the field
+    # name, this holds plain integer UGX (whole shillings), not cents --
+    # apps.budget.costing_service is the sole writer and the CD rate card
+    # (apps.budget.models.CostSetting) is documented "1 unit = 1 UGX". Do
+    # not divide/multiply this value by 100.
     est_cost_cents = models.IntegerField(default=0)
     cost_missing = models.BooleanField(default=False)
 
@@ -157,6 +161,11 @@ class Activity(SoftDeleteModel):
             models.Index(fields=["cluster"]),
             models.Index(fields=["fy", "quarter"]),
             models.Index(fields=["responsible_staff_id"]),
+            # The exact filter TargetAchievementService.rebuild() runs once
+            # per user (CD/PL/RVP Analytics, My/Team Targets) — the
+            # responsible_staff_id-only index above still needs a full
+            # in-row filter on fy/activity_type for every matching row.
+            models.Index(fields=["responsible_staff_id", "fy", "activity_type"]),
             models.Index(fields=["status"]),
             models.Index(fields=["scheduled_date"]),
             models.Index(fields=["assigned_partner_id"]),
@@ -187,9 +196,7 @@ class Activity(SoftDeleteModel):
                     slot.status = self.status
                     if self.scheduled_date:
                         slot.scheduled_for = self.scheduled_date.date()
-                    slot.save(
-                        update_fields=["status", "scheduled_for", "updated_at"]
-                    )
+                    slot.save(update_fields=["status", "scheduled_for", "updated_at"])
                     # Keep the CorePlan's 4+4 package counters in lock-step
                     # with the slot's real, mirrored status (this is the real
                     # reachable path — see resync_plan_completion docstring).

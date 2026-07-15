@@ -165,6 +165,30 @@ def _weekly_status(w, has_pending_accountability=False):
     return "Pending Approval"
 
 
+def weekly_status_buckets(wfrs) -> dict:
+    """Canonical status bucket per WeeklyFundRequest (STATUS_OPTIONS labels).
+
+    Single source of truth for "what queue-stage is this weekly advance in" —
+    shared by the Disbursement Dashboard (_weekly_items) and the Accountant
+    home dashboard (finance_operating_views.accountant_dashboard_view) so
+    "current budget status" KPIs cannot diverge between the two surfaces.
+    Returns {wfr.id: bucket_label}.
+    """
+    from .models import WeeklyFundRequestLine
+
+    wfrs = list(wfrs)
+    pending_wfr_ids = set(
+        WeeklyFundRequestLine.objects.filter(
+            weekly_fund_request__in=wfrs,
+            activity_budget_line__advance_requests__status="accountability_pending",
+        ).values_list("weekly_fund_request_id", flat=True)
+    )
+    return {
+        w.id: _weekly_status(w, has_pending_accountability=w.id in pending_wfr_ids)
+        for w in wfrs
+    }
+
+
 def _chain(stages):
     """[(label, state)] → chain dicts. States: approved|pending|returned|held|
     done|not_started|not_required."""
@@ -263,7 +287,7 @@ def _monthly_items(fy, month, names_out):
 
 
 def _weekly_items(fy, month, names_out):
-    from .models import WeeklyFundRequest, WeeklyFundRequestLine
+    from .models import WeeklyFundRequest
 
     wfrs = list(
         WeeklyFundRequest.objects.filter(fy=fy, week_start_date__month=month).exclude(
@@ -272,17 +296,10 @@ def _weekly_items(fy, month, names_out):
     )
     names = _user_names([w.responsible_user for w in wfrs])
     names_out.update(names)
-    # One query: which of these requests have a child advance whose
-    # accountability was submitted and awaits the Accountant's review.
-    pending_wfr_ids = set(
-        WeeklyFundRequestLine.objects.filter(
-            weekly_fund_request__in=wfrs,
-            activity_budget_line__advance_requests__status="accountability_pending",
-        ).values_list("weekly_fund_request_id", flat=True)
-    )
+    buckets = weekly_status_buckets(wfrs)
     items = []
     for w in wfrs:
-        status = _weekly_status(w, has_pending_accountability=w.id in pending_wfr_ids)
+        status = buckets[w.id]
         items.append(
             {
                 "key": f"wfr:{w.id}",
@@ -1151,10 +1168,13 @@ def get_disbursement_dashboard(principal, filters=None):
 
 
 # ── Accountant actions (monthly fund plans) ───────────────────────────────────
-def _get_monthly_fr(fund_request_id, expected_statuses):
+def _get_monthly_fr(fund_request_id, expected_statuses, for_update=False):
     from .models import FundRequest
 
-    fr = FundRequest.objects.filter(id=fund_request_id, period="monthly").first()
+    qs = FundRequest.objects.filter(id=fund_request_id, period="monthly")
+    if for_update:
+        qs = qs.select_for_update()
+    fr = qs.first()
     if not fr:
         raise BadRequest("Fund plan not found.")
     if fr.status not in expected_statuses:
@@ -1169,16 +1189,6 @@ def disburse(principal, fund_request_id, data=None):
     and notifies the requester to confirm receipt."""
     _require_accountant(principal)
     data = data or {}
-    fr = _get_monthly_fr(fund_request_id, {"sent_to_accountant"})
-
-    try:
-        amount = int(data.get("amount") or fr.total_amount)
-    except (TypeError, ValueError):
-        amount = fr.total_amount
-    if amount <= 0 or amount > fr.total_amount:
-        raise BadRequest(
-            "Disbursed amount must be positive and within the approved total."
-        )
 
     now = timezone.now()
     method = (data.get("method") or "").strip() or None
@@ -1187,11 +1197,27 @@ def disburse(principal, fund_request_id, data=None):
     # Marking the plan "disbursed" and writing its per-activity Disbursement
     # audit rows must succeed or fail together — a crash between the two would
     # otherwise leave a FundRequest marked disbursed with zero Disbursement
-    # records backing it.
+    # records backing it. The status check + transition also happen inside
+    # this same atomic block under select_for_update() so a double-click (two
+    # near-simultaneous requests) can't both pass the "still sent_to_accountant"
+    # check before either commits — the second request blocks on the row lock,
+    # then sees status already "disbursed" and is rejected instead of writing
+    # a second set of Disbursement audit rows.
     from .finance_models import Disbursement
 
-    fraction = amount / fr.total_amount if fr.total_amount else 0
     with transaction.atomic():
+        fr = _get_monthly_fr(fund_request_id, {"sent_to_accountant"}, for_update=True)
+
+        try:
+            amount = int(data.get("amount") or fr.total_amount)
+        except (TypeError, ValueError):
+            amount = fr.total_amount
+        if amount <= 0 or amount > fr.total_amount:
+            raise BadRequest(
+                "Disbursed amount must be positive and within the approved total."
+            )
+        fraction = amount / fr.total_amount if fr.total_amount else 0
+
         fr.status = "disbursed"
         fr.disbursed_amount = amount
         fr.disbursed_at = now

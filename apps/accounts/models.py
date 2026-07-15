@@ -123,9 +123,21 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     last_login_at = models.DateTimeField(null=True, blank=True)
     # Set True when an admin creates/resets the password. The user must change it on next login.
     must_change_password = models.BooleanField(default=False)
-    # Brute-force protection (auth.service login gate).
+    # Brute-force protection — apps.accounts.lockout_service
+    # .AuthenticationLockoutService is the ONLY writer of these fields.
     failed_login_count = models.IntegerField(default=0)
+    # First failed attempt of the CURRENT streak (resets once it goes stale
+    # past AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES, or on success/lock).
+    failed_login_streak_started_at = models.DateTimeField(null=True, blank=True)
     locked_until = models.DateTimeField(null=True, blank=True)
+    # How many separate temporary-lockout cycles have fired within the
+    # current escalation window (apps.accounts.lockout_service).
+    lockout_cycle_count = models.IntegerField(default=0)
+    last_lockout_at = models.DateTimeField(null=True, blank=True)
+    # True once repeated lockout cycles escalate past
+    # AUTH_LOCKOUT_ESCALATION_COUNT -- the account stays locked regardless
+    # of locked_until until an admin explicitly unlocks it.
+    lockout_escalated = models.BooleanField(default=False)
     # MFA seam (Phase 8 design): secret stored encrypted when enrolment ships.
     mfa_enabled = models.BooleanField(default=False)
     mfa_secret = models.CharField(max_length=512, null=True, blank=True)

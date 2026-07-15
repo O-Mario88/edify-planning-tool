@@ -27,11 +27,46 @@ from apps.routes.models import (
 # Words that appear constantly in school names/addresses but prove nothing
 # about location. Never use these to group schools.
 GENERIC_WORDS = {
-    "school", "schools", "primary", "junior", "senior", "secondary", "nursery",
-    "academy", "college", "education", "centre", "center", "central", "trading",
-    "division", "road", "street", "village", "parish", "sub-county", "subcounty",
-    "county", "district", "town", "council", "city", "ward", "zone", "area",
-    "p/s", "p.s", "ps", "s.s", "ss", "uganda", "the", "and", "of", "st", "saint",
+    "school",
+    "schools",
+    "primary",
+    "junior",
+    "senior",
+    "secondary",
+    "nursery",
+    "academy",
+    "college",
+    "education",
+    "centre",
+    "center",
+    "central",
+    "trading",
+    "division",
+    "road",
+    "street",
+    "village",
+    "parish",
+    "sub-county",
+    "subcounty",
+    "county",
+    "district",
+    "town",
+    "council",
+    "city",
+    "ward",
+    "zone",
+    "area",
+    "p/s",
+    "p.s",
+    "ps",
+    "s.s",
+    "ss",
+    "uganda",
+    "the",
+    "and",
+    "of",
+    "st",
+    "saint",
 }
 
 AVG_SPEED_KMH = 30  # rural murram-road planning speed
@@ -91,11 +126,16 @@ class SchoolCoordinateService:
     def haversine_km(a: tuple[float, float], b: tuple[float, float]) -> float:
         lat1, lon1, lat2, lon2 = map(math.radians, [a[0], a[1], b[0], b[1]])
         dlat, dlon = lat2 - lat1, lon2 - lon1
-        h = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        h = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        )
         return 2 * 6371.0 * math.asin(math.sqrt(h))
 
     @staticmethod
-    def best_sequence(points: dict[str, tuple[float, float]]) -> tuple[list[str], float]:
+    def best_sequence(
+        points: dict[str, tuple[float, float]],
+    ) -> tuple[list[str], float]:
         """Nearest-neighbour ordering over {school_id: (lat, lng)} → (ordered
         ids, total leg distance km). Good enough for ≤ CD-target-sized days."""
         remaining = dict(points)
@@ -139,36 +179,55 @@ class SchoolLocationParserService:
             area = tokens[0] if tokens else district_name
         # 2. District + Sub-county (structured upload fields).
         elif school.district_id and school.sub_county_id:
-            source, confidence = LocationSource.DISTRICT_SUBCOUNTY, LocationConfidence.HIGH
+            source, confidence = (
+                LocationSource.DISTRICT_SUBCOUNTY,
+                LocationConfidence.HIGH,
+            )
             tokens = [school.sub_county.name]
             area = school.sub_county.name
         # 3. District + Parish.
         elif school.district_id and school.parish_id:
-            source, confidence = LocationSource.DISTRICT_PARISH, LocationConfidence.MEDIUM
+            source, confidence = (
+                LocationSource.DISTRICT_PARISH,
+                LocationConfidence.MEDIUM,
+            )
             tokens = [school.parish.name]
             area = school.parish.name
         # 4. Shipping-address / uploaded text parsing (careful, phrase-based).
         else:
-            text = school.shipping_address or school.uploaded_sub_county_text or school.uploaded_parish_text
+            text = (
+                school.shipping_address
+                or school.uploaded_sub_county_text
+                or school.uploaded_parish_text
+            )
             phrases = extract_location_phrases(text or "", district_name)
             if phrases:
                 source, confidence = LocationSource.ADDRESS_TEXT, LocationConfidence.LOW
                 tokens, area = phrases, phrases[0]
             else:
                 # 5. Manual review — flag, never reject the school.
-                source, confidence = LocationSource.NONE, LocationConfidence.NEEDS_CLEANUP
+                source, confidence = (
+                    LocationSource.NONE,
+                    LocationConfidence.NEEDS_CLEANUP,
+                )
                 tokens, area = [], None
 
         SchoolLocationConfidence.objects.update_or_create(
             school_id=school.id,
             defaults={
-                "source_used": source, "confidence": confidence,
-                "tokens": tokens, "area_label": area,
+                "source_used": source,
+                "confidence": confidence,
+                "tokens": tokens,
+                "area_label": area,
             },
         )
         return {
-            "school_id": school.id, "source": source, "confidence": confidence,
-            "tokens": tokens, "area_label": area, "coords": coords,
+            "school_id": school.id,
+            "source": source,
+            "confidence": confidence,
+            "tokens": tokens,
+            "area_label": area,
+            "coords": coords,
         }
 
 

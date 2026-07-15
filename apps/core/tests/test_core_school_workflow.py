@@ -11,7 +11,7 @@ from apps.schools.models import School
 from apps.schools.services import set_type
 from apps.activities.services import partner_schedule, ia_confirm, ia_return
 from apps.partners.models import Partner, PartnerAssignment
-from apps.ssa.models import SsaRecord
+from apps.ssa.models import SsaRecord, SsaScore
 from apps.geography.models import District, Region, SubCounty
 from apps.core.exceptions import BadRequest
 
@@ -84,8 +84,32 @@ class CoreSchoolWorkflowTest(TestCase):
         )
 
     def test_promote_to_core_and_partner_scheduling_and_ia_verification(self):
-        # 1. Promote school to Core -> verify self-healing (CorePlan and slots created)
+        # 1. Promote school to Core -> verify self-healing (CorePlan and slots
+        # created). The self-heal auto-onboard SSA gate
+        # (core_planning_services.py) only onboards a school it finds a real
+        # SsaRecord for -- without one it now correctly skips rather than
+        # fabricating a baseline, so seed one just for this step. It's
+        # removed again immediately after: ia_confirm()'s own core-strict SSA
+        # check (services.py:637-648) uses the identical "any non-deleted
+        # SsaRecord exists" query, and this test deliberately exercises that
+        # check failing further down before creating its own real baseline.
+        onboarding_ssa = SsaRecord.objects.create(
+            school=self.school,
+            date_of_ssa=date(2026, 6, 1),
+            fy="2026",
+            quarter="Q1",
+            verification_status="confirmed",
+        )
+        SsaScore.objects.bulk_create(
+            SsaScore(
+                ssa_record=onboarding_ssa,
+                intervention=s["intervention"],
+                score=s["score"],
+            )
+            for s in INTERVENTION_SCORES
+        )
         set_type(self.ia, self.school.school_id, "core")
+        onboarding_ssa.soft_delete()
 
         self.school.refresh_from_db()
         self.assertEqual(self.school.school_type, "core")
@@ -159,8 +183,6 @@ class CoreSchoolWorkflowTest(TestCase):
             ia_confirm(activity.id, principal=self.ia)
 
         # Create SSA Baseline record
-        from apps.ssa.models import SsaScore
-
         ssa = SsaRecord.objects.create(
             school=self.school,
             date_of_ssa="2026-07-01",

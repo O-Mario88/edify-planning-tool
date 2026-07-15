@@ -10,7 +10,8 @@ selectedSchools: [],
 bulkActionOpen: false,
 selectedSchoolId: null,
 activeView: 'list',
-showScheduleForm: false
+showScheduleForm: false,
+showAssignPartnerForm: false
 }"
 @select-school.window="selectedSchoolId = $event.detail.id;"
 class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;"
@@ -32,12 +33,11 @@ id="planning-main-container"
 </div>
 
 <!-- Header Actions -->
-<div class="flex items-center gap-2">
+<div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 <!-- Export button -->
 <a 
-href="#"
-onclick="this.href='/planning?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
+href="{% querystring export='csv' %}"
+class="edify-action-button secondary h-9 transition-all shadow-sm flex-1 sm:flex-none"
 >
 <svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Export
@@ -48,7 +48,7 @@ Export
 @click="bulkActionOpen = !bulkActionOpen"
 :disabled="selectedSchools.length === 0"
 :class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
+class="edify-action-button secondary h-9 transition-all shadow-sm flex-1 sm:flex-none"
 >
 <svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
 Bulk Assign
@@ -57,7 +57,7 @@ Bulk Assign
 <!-- Open My Plan -->
 <a 
 href="/my-plan"
-class="edify-action-button primary h-9 transition-all shadow-sm"
+class="edify-action-button primary h-9 transition-all shadow-sm flex-1 sm:flex-none"
 >
 <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
 Open My Plan
@@ -122,7 +122,7 @@ class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
 <!-- Clear Filters -->
 <button 
 type="button"
-onclick="document.getElementById('filters-form').reset(); document.querySelectorAll('select').forEach(s => s.value = 'All'); document.getElementsByName('q')[0].value = ''; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+@click="$el.form.reset(); document.querySelectorAll('#filters-form select').forEach(s => s.value = 'All'); $el.form.querySelector('[name=q]').value = ''; $el.form.dispatchEvent(new Event('change', { bubbles: true }))"
 class="text-blue-600 hover:text-blue-700 text-[11px] font-semibold tracking-wider uppercase ml-1 flex items-center gap-1"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -143,35 +143,35 @@ Clear Filters
 
 <nav class="edify-tab-container">
 <button 
-onclick="document.getElementsByName('tab')[0].value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+@click="document.querySelector('#filters-form [name=tab]').value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
 class="edify-tab-btn {% if active_tab == 'client' %}active{% endif %}"
 >
 Client Schools
 </button>
 
 <button 
-onclick="document.getElementsByName('tab')[0].value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+@click="document.querySelector('#filters-form [name=tab]').value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
 class="edify-tab-btn {% if active_tab == 'core' %}active{% endif %}"
 >
 Core Schools
 </button>
 
 <button 
-onclick="document.getElementsByName('tab')[0].value = 'clusters'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+@click="document.querySelector('#filters-form [name=tab]').value = 'clusters'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
 class="edify-tab-btn {% if active_tab == 'clusters' %}active{% endif %}"
 >
 Clusters
 </button>
 
 <button 
-onclick="document.getElementsByName('tab')[0].value = 'partner'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+@click="document.querySelector('#filters-form [name=tab]').value = 'partner'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
 class="edify-tab-btn {% if active_tab == 'partner' %}active{% endif %}"
 >
 Assigned to Partner
 </button>
 
 <button 
-onclick="document.getElementsByName('tab')[0].value = 'scheduled'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+@click="document.querySelector('#filters-form [name=tab]').value = 'scheduled'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
 class="edify-tab-btn {% if active_tab == 'scheduled' %}active{% endif %}"
 >
 Scheduled / In My Plan
@@ -302,10 +302,9 @@ class="flex items-center gap-2"
 </template>
 
 {% if can_assign_partner %}
-<button 
-type="submit"
-name="action"
-value="partner"
+<button
+type="button"
+@click="showAssignPartnerForm = true"
 class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all"
 >
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -387,6 +386,60 @@ any change (date, intervention, selection re-open). Advisory only. -->
 <div id="bulk-schedule-feedback"></div>
 <button type="submit" class="w-full h-9 rounded-lg btn-premium-primary text-white text-[12px] font-bold">
 Confirm Schedule
+</button>
+</form>
+</div>
+
+<!-- Bulk Assign Partner popover: collects the partner (required) and an
+optional target date before POSTing — the button used to submit straight
+away with no partner_id at all, which get_object_or_404 turned into an
+unhandled 404 that blanked the whole page. Date is optional by design: a
+partner assignment only becomes a costed, budgeted Activity once a date is
+set, by you now or by the partner later (apps/activities/services.py
+partner_schedule()). -->
+<div
+x-show="showAssignPartnerForm"
+x-transition
+@click.outside="showAssignPartnerForm = false"
+class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-white rounded-lg shadow-xl border border-slate-200 p-5 w-[360px] space-y-3"
+style="display: none;"
+>
+<div class="flex items-center justify-between">
+<h4 class="text-[13px] font-bold text-slate-800">Assign Partner</h4>
+<button type="button" @click="showAssignPartnerForm = false" class="text-slate-400 hover:text-slate-600">&times;</button>
+</div>
+<p class="text-[11px] text-slate-400">
+Handoff scheduling and monitoring to a partner for <span x-text="selectedSchools.length"></span> selected school(s).
+</p>
+<form
+hx-post="/planning/bulk-action"
+hx-target="#bulk-assign-partner-feedback"
+hx-swap="innerHTML"
+hx-disabled-elt="find button[type=submit]"
+class="space-y-3"
+>
+{% csrf_token %}
+<template x-for="sid in selectedSchools">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+<input type="hidden" name="action" value="partner">
+<div>
+<label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Partner</label>
+<select name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+<option value="">Select partner...</option>
+{% for p in partners %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
+<div>
+<label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Target Date (Optional)</label>
+<input type="date" name="scheduled_date" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+<p class="text-[10.5px] font-semibold text-slate-400 mt-1">Leave blank if the partner will confirm their own schedule.</p>
+</div>
+<div id="bulk-assign-partner-feedback"></div>
+<button type="submit" class="w-full h-9 rounded-lg btn-premium-primary text-white text-[12px] font-bold">
+Confirm Handoff
 </button>
 </form>
 </div>

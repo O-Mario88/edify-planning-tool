@@ -243,9 +243,7 @@ class ClusterSetupTest(APITestCase):
             password="x",
             is_active=True,
         )
-        profile2 = StaffProfile.objects.create(
-            user=user2, title="CCEO", id="STF-002"
-        )
+        profile2 = StaffProfile.objects.create(user=user2, title="CCEO", id="STF-002")
 
         school = School.objects.create(
             school_id="SCH-800",
@@ -279,8 +277,12 @@ class ClusterSetupTest(APITestCase):
         # principal's assigned schools for CCEO/PL — give this CCEO a school
         # in-district so the edit isn't rejected as "outside your scope".
         school = School.objects.create(
-            school_id="SCH-777", name="Scope School", region=self.region,
-            district=self.district, sub_county=self.sub_county1, school_type="client",
+            school_id="SCH-777",
+            name="Scope School",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county1,
+            school_type="client",
         )
         StaffSchoolAssignment.objects.create(staff=self.profile, school_id=school.id)
 
@@ -301,7 +303,7 @@ class ClusterSetupTest(APITestCase):
         # = "json" in REST_FRAMEWORK settings), which Django never parses into
         # request.POST. Force multipart so the view actually sees the fields.
         response = self.client.post(url, data, format="multipart")
-        self.assertEqual(response.status_code, 302) # Redirect to list
+        self.assertEqual(response.status_code, 302)  # Redirect to list
 
         self.cluster1.refresh_from_db()
         self.assertEqual(self.cluster1.name, "Updated Mukono Cluster")
@@ -309,9 +311,13 @@ class ClusterSetupTest(APITestCase):
         self.assertEqual(self.cluster1.cluster_leader_name, "New Leader Name")
         self.assertEqual(self.cluster1.cluster_leader_phone, "+256 772 111 222")
         self.assertEqual(self.cluster1.responsible_staff_id, self.user.id)
-        
+
         # Verify subcounties update
-        covered = list(ClusterSubCounty.objects.filter(cluster=self.cluster1).values_list("sub_county_id", flat=True))
+        covered = list(
+            ClusterSubCounty.objects.filter(cluster=self.cluster1).values_list(
+                "sub_county_id", flat=True
+            )
+        )
         self.assertEqual(covered, [self.sub_county2.id])
 
     def test_eligible_staff_options_view_htmx(self):
@@ -320,7 +326,10 @@ class ClusterSetupTest(APITestCase):
 
         # Same plain-Django-view caveat as test_edit_cluster_view_updates_fields.
         self.client.force_login(self.user)
-        url = reverse("frontend:eligible_staff_options") + f"?district_id={self.district.id}"
+        url = (
+            reverse("frontend:eligible_staff_options")
+            + f"?district_id={self.district.id}"
+        )
 
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -330,7 +339,7 @@ class ClusterSetupTest(APITestCase):
     # ── Regressions: planning_readiness dual vocabulary (HIGH finding §1) ──────
 
     def test_planning_ready_counters_recognize_production_vocabulary(self):
-        """"Planning Ready" counters must count production-vocabulary states
+        """ "Planning Ready" counters must count production-vocabulary states
         (ready_for_support_planning/ready_for_baseline_ssa), not just the
         legacy "ready" literal that recompute_quality_and_readiness() only
         ever writes under pytest — production never writes "ready", so

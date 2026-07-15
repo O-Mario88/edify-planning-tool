@@ -8,16 +8,18 @@ from .models import Notification
 
 class NotificationLinkResolver:
     @staticmethod
-    def resolve(event_type: str, context_type: str | None, context_id: str | None, role: str) -> tuple[str, str]:
+    def resolve(
+        event_type: str, context_type: str | None, context_id: str | None, role: str
+    ) -> tuple[str, str]:
         """
         Resolves target_route and action_label based on the event, context, and recipient's active role.
         This prevents role leakage by directing different roles to different pages for the same event.
         """
         route = "/dashboard"
         label = "View Dashboard"
-        
+
         role = (role or "Staff").lower()
-        
+
         if event_type == "critical_school_ssa":
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/planning"
@@ -34,7 +36,7 @@ class NotificationLinkResolver:
             elif role == "humanresources":
                 route = "/dashboard"
                 label = "View Performance Risks"
-                
+
         elif event_type == "partner_scheduled_activity":
             if role == "partnerfieldofficer":
                 route = "/my-plan"
@@ -45,7 +47,7 @@ class NotificationLinkResolver:
             elif role == "projectleader":
                 route = "/my-team"
                 label = "Monitoring Dashboard"
-                
+
         elif event_type == "evidence_returned":
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/my-plan"
@@ -56,7 +58,7 @@ class NotificationLinkResolver:
             elif role == "impactassessment":
                 route = "/ia/dashboard/"
                 label = "Evidence Verification"
-                
+
         elif event_type == "fund_request_approved":
             if role == "accountant":
                 route = "/fund-requests"
@@ -64,7 +66,7 @@ class NotificationLinkResolver:
             else:
                 route = "/fund-requests"
                 label = "View Fund Request"
-                
+
         elif event_type == "leave_requested":
             route = "/leave/approvals"
             label = "Review Leave Request"
@@ -80,15 +82,15 @@ class NotificationLinkResolver:
         elif event_type == "leave_returned":
             route = "/personal-time-off/"
             label = "Update Leave Request"
-            
+
         elif event_type == "account_lockout":
             route = f"/admin-panel/users/{context_id}"
             label = "Unlock Account"
-            
+
         elif event_type == "core_school_assigned":
             route = "/schools"
             label = "Open School"
-            
+
         elif event_type == "activity_closed":
             route = "/my-plan"
             label = "Open Activity"
@@ -130,7 +132,7 @@ class NotificationLinkResolver:
         elif context_type == "Message":
             route = f"/messages/{context_id}"
             label = "Open Chat"
-            
+
         return route, label
 
 
@@ -144,7 +146,7 @@ class WorkflowNotificationService:
         body: str,
         context_type: str | None = None,
         context_id: str | None = None,
-        recipients = None
+        recipients=None,
     ) -> list[Notification]:
         """
         Triggers a workflow event. For each recipient, it verifies access,
@@ -152,11 +154,11 @@ class WorkflowNotificationService:
         """
         from apps.accounts.models import User
         from apps.notifications.models import Notification
-        
+
         created_notifications = []
         if not recipients:
             return created_notifications
-            
+
         # Standardize querysets / IDs
         recipient_list = []
         if hasattr(recipients, "iterator"):
@@ -165,7 +167,7 @@ class WorkflowNotificationService:
             recipient_list = recipients
         else:
             recipient_list = [recipients]
-            
+
         for r in recipient_list:
             user_obj = None
             if isinstance(r, User):
@@ -174,15 +176,15 @@ class WorkflowNotificationService:
             else:
                 user_id = str(r)
                 user_obj = User.objects.filter(id=user_id).first()
-                
+
             if not user_obj:
                 continue
-                
+
             role = getattr(user_obj, "active_role", None) or "Staff"
             target_route, action_label = NotificationLinkResolver.resolve(
                 event_type, context_type, context_id, role
             )
-            
+
             notif = Notification.objects.create(
                 recipient_id=user_id,
                 recipient_role=role,
@@ -199,7 +201,7 @@ class WorkflowNotificationService:
                 action_required=priority in ("high", "urgent"),
             )
             created_notifications.append(notif)
-            
+
         return created_notifications
 
 

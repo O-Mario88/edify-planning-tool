@@ -17,7 +17,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <form method="get" class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500">
         <span class="uppercase tracking-wider text-[10px]">FY</span>
-        <select name="fy" onchange="this.form.submit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+        <select name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </form>
@@ -227,7 +227,7 @@
                 <td class="py-2.5 px-2 text-slate-600">{{ p.recommendation }}</td>
                 <td class="py-2.5 px-2 text-right">
                   <form method="post" action="/rvp/project/{{ p.id }}/decision" class="inline-flex items-center gap-1"
-                        onsubmit="return confirm('Record this strategic decision? It is audited and notifies the Country Director.');">
+                        @submit="if (!window.confirm('Record this strategic decision? It is audited and notifies the Country Director.')) $event.preventDefault()">
                     {% csrf_token %}
                     <select name="action" class="h-7 px-1.5 rounded-lg border border-slate-200 text-[10px] bg-white">
                       <option value="scale">Approve Scale</option>

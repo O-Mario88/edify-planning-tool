@@ -103,6 +103,97 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/special_projects.html")
 
+    def test_partner_roles_redirect_to_partner_scoped_dashboard(self):
+        """PartnerAdmin/PartnerFieldOfficer logins previously fell through to
+        the generic internal-staff dashboard (pages/dashboards/main.html) —
+        which shows school/cluster/team-target panels that make no sense for
+        a Partner org login with no StaffProfile or country/cluster scope.
+        /dashboard must send them to the existing partner-scoped landing page
+        instead."""
+        User = get_user_model()
+        for idx, role in enumerate(("PartnerAdmin", "PartnerFieldOfficer")):
+            with self.subTest(role=role):
+                partner_user = User.objects.create(
+                    id=f"partner-role-{idx}",
+                    email=f"{role.lower()}@edify.org",
+                    name=f"{role} User",
+                    roles=[role],
+                    active_role=role,
+                    is_active=True,
+                )
+                self.client.force_login(partner_user)
+                response = self.client.get("/dashboard")
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.url, "/partner/today")
+
+    def test_main_dashboard_recommended_action_is_honest(self):
+        """The fallback dashboard's 'Next Recommended Action' card must never
+        show a hardcoded suggestion — it should be None (honest empty state)
+        when there is nothing real to act on, and reflect a real pending
+        fund request when one exists, matching the same count already shown
+        in Attention Needed."""
+        from apps.fund_requests.models import WeeklyFundRequest
+        from apps.core.fy import get_operational_fy
+        from datetime import date, timedelta
+
+        User = get_user_model()
+        admin_user = User.objects.create(
+            id="admin-reco-1",
+            email="admin-reco@edify.org",
+            name="Admin User",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+        )
+        self.client.force_login(admin_user)
+
+        # setUp() creates self.school with current_fy_ssa_status="not_done",
+        # so with nothing else pending the honest recommendation is the real
+        # SSA gap -- not a hardcoded suggestion, and not silence either.
+        response = self.client.get("/dashboard")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "pages/dashboards/main.html")
+        reco = response.context["recommended_action"]
+        self.assertIsNotNone(reco)
+        self.assertEqual(reco["cta_href"], "/ssa")
+        self.assertIn("1 school", reco["detail"])
+        self.assertNotContains(response, "Confirm this week")
+
+        html = response.content.decode()
+        self.assertEqual(html.count('class="admin-kpi"'), 7)
+        for region in (
+            "admin-workspace",
+            "admin-grid--top",
+            "admin-grid--middle",
+            "admin-grid--lower",
+            "admin-rail",
+        ):
+            self.assertIn(region, html)
+
+        # Close the SSA gap -> genuinely nothing to act on -> honest empty
+        # state, never a fabricated fallback suggestion.
+        self.school.current_fy_ssa_status = "done"
+        self.school.save(update_fields=["current_fy_ssa_status"])
+        response = self.client.get("/dashboard")
+        self.assertIsNone(response.context["recommended_action"])
+        self.assertContains(response, "Nothing needs action right now.")
+
+        # A real pending fund request -> recommended_action reflects it.
+        week_start = date.today() - timedelta(days=date.today().weekday())
+        WeeklyFundRequest.objects.create(
+            fy=get_operational_fy(),
+            week_start_date=week_start,
+            week_end_date=week_start + timedelta(days=6),
+            responsible_user=admin_user.id,
+            status="submitted_to_pl",
+            total_amount=100000,
+        )
+        response = self.client.get("/dashboard")
+        reco = response.context["recommended_action"]
+        self.assertIsNotNone(reco)
+        self.assertEqual(reco["cta_href"], "/fund-requests/weekly")
+        self.assertIn("1 weekly fund request", reco["detail"])
+
     def test_schools_directory_view_renders(self):
         self.client.force_login(self.cceo_user)
         response = self.client.get("/schools")
@@ -132,6 +223,28 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/planning")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/planning/index.html")
+
+    def test_schedule_form_action_param_selects_training(self):
+        # Regression: templates/pages/trainings/index.html links to
+        # /planning/schedule?action=training (view reads "action", not
+        # "type") — must resolve to the training form, not silently fall
+        # back to the "visit" default.
+        self.client.force_login(self.cceo_user)
+        response = self.client.get("/planning/schedule?action=training")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["action"], "training")
+
+    def test_schedule_form_school_param_preselects_school(self):
+        # Regression: templates/partials/clusters/cluster_schools_table.html
+        # links to /planning/schedule?action=visit&school=<schoolId> (view
+        # reads "school", not "school_id") — must resolve selected_school.
+        self.client.force_login(self.cceo_user)
+        response = self.client.get(
+            f"/planning/schedule?action=visit&school={self.school.school_id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.context["selected_school"])
+        self.assertEqual(response.context["selected_school"].id, self.school.id)
 
     def test_monthly_budget_view_renders(self):
         self.client.force_login(self.cceo_user)
@@ -601,6 +714,49 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(pending_ids, {own_completed_no_evidence.id})
         self.assertNotIn(other_completed_no_evidence.id, pending_ids)
 
+    def test_partners_list_and_detail_scope_partner_role_to_own_org(self):
+        """/partners and /partners/<id> apply no row-level scoping in
+        navigation (ALL_ROLES), unlike the REST endpoint which requires
+        PARTNER_VIEW/PARTNER_MANAGE — permissions Partner roles don't hold.
+        A partner-org login must only ever see/browse into its OWN partner's
+        directory row and detail page, never another partner's."""
+        from apps.partners.models import Partner
+
+        User = get_user_model()
+        partner = Partner.objects.create(name="Own Partner Org", active_status=True)
+        partner_user = User.objects.create(
+            id="partner-scope-1",
+            email="partner-scope@edify.org",
+            name="Scoped Partner User",
+            roles=["PartnerFieldOfficer"],
+            active_role="PartnerFieldOfficer",
+            is_active=True,
+        )
+        partner.user = partner_user
+        partner.save()
+
+        other_partner = Partner.objects.create(
+            name="Other Partner Org", active_status=True
+        )
+
+        self.client.force_login(partner_user)
+
+        # Directory listing — only the partner's own org appears.
+        response = self.client.get("/partners")
+        self.assertEqual(response.status_code, 200)
+        listed_ids = {p.id for p in response.context["partners"]}
+        self.assertEqual(listed_ids, {partner.id})
+        self.assertNotIn(other_partner.id, listed_ids)
+
+        # Own detail page is reachable.
+        response = self.client.get(f"/partners/{partner.id}")
+        self.assertEqual(response.status_code, 200)
+
+        # Another partner's detail page must be blocked, not just hidden from
+        # the directory — this is the browser-route path the audit flagged.
+        response = self.client.get(f"/partners/{other_partner.id}")
+        self.assertEqual(response.status_code, 403)
+
     # ── assign_partner_action_view / bulk_action_view now converge on the
     # SAME validated + costed creation funnel (activities.services.create /
     # partner_schedule) instead of writing PartnerAssignment/Activity via raw
@@ -643,6 +799,47 @@ class FrontendViewsTestCase(TestCase):
         self.assertGreater(act.est_cost_cents, 0)
         self.assertFalse(act.cost_missing)
         self.assertTrue(ActivityScheduleCostLine.objects.filter(activity=act).exists())
+
+    def test_assign_partner_action_double_submit_does_not_duplicate(self):
+        """A double-click or a retried htmx POST for the same handoff must
+        not create a second PartnerAssignment or a second costed Activity —
+        the money only exists once."""
+        from apps.partners.models import Partner, PartnerAssignment
+        from apps.activities.models import Activity
+        from apps.budget.models import CostSetting
+
+        CostSetting.objects.create(
+            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
+        )
+        partner = Partner.objects.create(
+            name="Double Click Partner", active_status=True
+        )
+
+        self.client.force_login(self.cceo_user)
+        payload = {
+            "school_id": self.school.school_id,
+            "partner_id": partner.id,
+            "activity_type": "school_visit",
+            "purpose": "Follow-up on enrolment drive",
+            "expected_date": "2026-07-20",
+        }
+        r1 = self.client.post("/planning/assign-partner-action", payload)
+        r2 = self.client.post("/planning/assign-partner-action", payload)
+        self.assertEqual(r1.status_code, 200, r1.content)
+        self.assertEqual(r2.status_code, 200, r2.content)
+
+        self.assertEqual(
+            PartnerAssignment.objects.filter(
+                school=self.school, partner=partner
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Activity.objects.filter(
+                school=self.school, assigned_partner_id=partner.id
+            ).count(),
+            1,
+        )
 
     def test_assign_partner_action_without_date_defers_activity_creation(self):
         """No target date at assign time -> only the PartnerAssignment handoff
@@ -850,6 +1047,57 @@ class FrontendViewsTestCase(TestCase):
             ).exists()
         )
 
+    def test_bulk_assign_partner_without_partner_id_returns_clean_error(self):
+        """The bulk toolbar's 'Assign Partner' button used to submit with no
+        partner_id at all, which get_object_or_404 turned into an unhandled
+        404 that hx-target="body" swapped over the ENTIRE planning page.
+        Missing partner_id must now surface a clean, in-place 400 error."""
+        self.client.force_login(self.cceo_user)
+        response = self.client.post(
+            "/planning/bulk-action",
+            {"action": "partner", "school_ids": [self.school.school_id]},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Select a partner", response.content)
+
+    def test_bulk_assign_partner_double_submit_does_not_duplicate(self):
+        """A double-click on 'Confirm Handoff' must not create a second
+        PartnerAssignment/Activity per school."""
+        from apps.partners.models import Partner, PartnerAssignment
+        from apps.activities.models import Activity
+        from apps.budget.models import CostSetting
+
+        CostSetting.objects.create(
+            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
+        )
+        partner = Partner.objects.create(
+            name="Bulk Double Click Partner", active_status=True
+        )
+
+        self.client.force_login(self.cceo_user)
+        payload = {
+            "action": "partner",
+            "school_ids": [self.school.school_id],
+            "partner_id": partner.id,
+            "scheduled_date": "2026-07-21",
+        }
+        r1 = self.client.post("/planning/bulk-action", payload)
+        r2 = self.client.post("/planning/bulk-action", payload)
+        self.assertEqual(r1.status_code, 200, r1.content)
+        self.assertEqual(r2.status_code, 200, r2.content)
+        self.assertEqual(
+            PartnerAssignment.objects.filter(
+                school=self.school, partner=partner
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Activity.objects.filter(
+                school=self.school, assigned_partner_id=partner.id
+            ).count(),
+            1,
+        )
+
     def test_bulk_assign_partner_blocked_when_no_cost_rate_configured(self):
         """The cost-catalogue gate must apply to bulk assignment too: a
         shared date with no partner rate configured must reject cleanly
@@ -858,7 +1106,9 @@ class FrontendViewsTestCase(TestCase):
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity
 
-        partner = Partner.objects.create(name="Bulk Unpriced Partner", active_status=True)
+        partner = Partner.objects.create(
+            name="Bulk Unpriced Partner", active_status=True
+        )
 
         self.client.force_login(self.cceo_user)
         response = self.client.post(
@@ -903,7 +1153,9 @@ class FrontendViewsTestCase(TestCase):
         )
         self.school.cluster_id = self.cluster.id
         self.school.save()
-        partner = Partner.objects.create(name="Cluster Gate Partner", active_status=True)
+        partner = Partner.objects.create(
+            name="Cluster Gate Partner", active_status=True
+        )
 
         self.client.force_login(self.cceo_user)
         response = self.client.post(
@@ -1165,3 +1417,515 @@ class GlobalSearchAndMapScopingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scopetest Alpha School")
         self.assertNotContains(response, "Scopetest Beta School")
+
+
+class DataQualityCenterActionTests(TestCase):
+    """Data Quality Center used to be entirely read-only: DataQualityIssue.status
+    /resolved_at/assigned_to were defined on the model but nothing ever wrote
+    them. These tests cover the resolve/assign POST action added to close
+    that gap."""
+
+    def setUp(self):
+        from apps.schools.models import DataQualityIssue
+
+        User = get_user_model()
+        self.admin_user = User.objects.create(
+            id="dq-admin-1",
+            email="dq-admin@edify.org",
+            name="DQ Admin",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+        )
+
+        self.region = Region.objects.create(name="DQ Region")
+        self.district = District.objects.create(name="DQ District", region=self.region)
+        self.sub_county = SubCounty.objects.create(
+            name="DQ Subcounty", district=self.district
+        )
+        self.school = School.objects.create(
+            school_id="SCH-DQ-1",
+            name="DQ Test School",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            school_type="client",
+            current_fy_ssa_status="not_done",
+            planning_readiness="locked",
+        )
+        # School.save() auto-generates issues via create_data_quality_issues();
+        # grab the "missing_phone" one it produces (the school has no phone).
+        self.issue = DataQualityIssue.objects.filter(
+            school=self.school, issue_type="missing_phone", status="open"
+        ).first()
+        self.assertIsNotNone(
+            self.issue, "expected School.save() to auto-create a missing_phone issue"
+        )
+
+    def test_resolve_action_writes_status_and_resolved_at(self):
+        from apps.audit.models import AuditLog
+
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            f"/data-quality/issue/{self.issue.id}/action", {"action": "resolve"}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.issue.refresh_from_db()
+        self.assertEqual(self.issue.status, "resolved")
+        self.assertIsNotNone(self.issue.resolved_at)
+        self.assertEqual(self.issue.assigned_to, str(self.admin_user.id))
+        self.assertContains(response, "Resolved")
+
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="data_quality_issue.resolve", subject_id=self.issue.id
+            ).exists(),
+            "resolving a data quality issue must write an audit log entry",
+        )
+
+    def test_assign_action_writes_assigned_to_without_resolving(self):
+        from apps.audit.models import AuditLog
+
+        self.client.force_login(self.admin_user)
+        response = self.client.post(
+            f"/data-quality/issue/{self.issue.id}/action", {"action": "assign"}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.issue.refresh_from_db()
+        self.assertEqual(self.issue.status, "open")
+        self.assertEqual(self.issue.assigned_to, str(self.admin_user.id))
+        self.assertContains(response, "Assigned")
+
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="data_quality_issue.assign", subject_id=self.issue.id
+            ).exists(),
+            "assigning a data quality issue must write an audit log entry",
+        )
+
+    def test_data_quality_center_renders_open_issue_with_resolve_button(self):
+        """The page must actually surface open issues (it used to build the
+        querysets in the view but never render them)."""
+        self.client.force_login(self.admin_user)
+        response = self.client.get("/admin-panel/data-quality-center")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "DQ Test School")
+        self.assertContains(response, f"/data-quality/issue/{self.issue.id}/action")
+
+
+class SchoolDirectoryQueryCountTest(TestCase):
+    """Regression test for the school directory N+1 (Phase 3 perf audit).
+
+    SchoolDirectoryViewModel.from_school() used to run ~5-7 per-school
+    queries (SSA exists, visit exists/count, training exists/count, cluster
+    training count) for every row on the page. The query count therefore
+    scaled linearly with the number of schools on the page. It must now be
+    flat regardless of how many schools are on the page, because
+    school_directory_view batches those lookups once via
+    SchoolDirectoryViewModel.bulk_progress().
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin_user = User.objects.create(
+            id="admin-perf-1",
+            email="admin-perf@edify.org",
+            name="Admin Perf User",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+        )
+        self.admin_user.set_password("pass123")
+        self.admin_user.save()
+
+        self.region = Region.objects.create(name="Perf Region")
+        self.district = District.objects.create(
+            name="Perf District", region=self.region
+        )
+        self.sub_county = SubCounty.objects.create(
+            name="Perf Subcounty", district=self.district
+        )
+
+        from apps.activities.models import Activity
+        from apps.ssa.models import SsaRecord
+        from django.utils import timezone
+
+        self.schools = []
+        for i in range(12):
+            school = School.objects.create(
+                school_id=f"PERF-{i}",
+                name=f"Perf School {i}",
+                region=self.region,
+                district=self.district,
+                sub_county=self.sub_county,
+                school_type="core" if i % 2 == 0 else "client",
+                current_fy_ssa_status="not_done",
+                planning_readiness="locked",
+            )
+            self.schools.append(school)
+
+            # Give every other school some real progress data so the
+            # progress-computation path is actually exercised.
+            if i % 2 == 0:
+                SsaRecord.objects.create(
+                    school=school,
+                    date_of_ssa=timezone.now(),
+                    fy="2026",
+                    quarter="Q1",
+                    verification_status="confirmed",
+                    uploaded_by="tester",
+                )
+                Activity.objects.create(
+                    fy="2026",
+                    quarter="Q1",
+                    activity_type="school_visit",
+                    school=school,
+                    status="completed",
+                )
+                Activity.objects.create(
+                    fy="2026",
+                    quarter="Q1",
+                    activity_type="training",
+                    school=school,
+                    status="completed",
+                )
+
+    def test_school_directory_query_count_is_bounded_not_linear_in_school_count(self):
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+
+        self.client.force_login(self.admin_user)
+
+        with CaptureQueriesContext(connection) as small:
+            response = self.client.get("/schools", {"page": 1})
+        self.assertEqual(response.status_code, 200)
+        small_count = len(small.captured_queries)
+
+        # Add more schools with the same progress-data shape and confirm the
+        # query count for rendering a page does NOT grow with total schools
+        # in the system (pagination is fixed at 15/page) — this is the
+        # signature of a fixed N+1 rather than a real per-page cost.
+        from apps.activities.models import Activity
+        from apps.ssa.models import SsaRecord
+        from django.utils import timezone
+
+        for i in range(12, 40):
+            school = School.objects.create(
+                school_id=f"PERF-{i}",
+                name=f"Perf School {i}",
+                region=self.region,
+                district=self.district,
+                sub_county=self.sub_county,
+                school_type="core" if i % 2 == 0 else "client",
+                current_fy_ssa_status="not_done",
+                planning_readiness="locked",
+            )
+            if i % 2 == 0:
+                SsaRecord.objects.create(
+                    school=school,
+                    date_of_ssa=timezone.now(),
+                    fy="2026",
+                    quarter="Q1",
+                    verification_status="confirmed",
+                    uploaded_by="tester",
+                )
+                Activity.objects.create(
+                    fy="2026",
+                    quarter="Q1",
+                    activity_type="school_visit",
+                    school=school,
+                    status="completed",
+                )
+
+        with CaptureQueriesContext(connection) as large:
+            response = self.client.get("/schools", {"page": 1})
+        self.assertEqual(response.status_code, 200)
+        large_count = len(large.captured_queries)
+
+        # Page size is fixed (15) — a flat/bounded query plan must not grow
+        # meaningfully once the total school count nearly quadruples (12 -> 40).
+        self.assertLessEqual(
+            large_count,
+            small_count + 5,
+            f"Query count grew from {small_count} to {large_count} when total "
+            "schools grew from 12 to 40 with a fixed page size — this is the "
+            "signature of a per-row N+1 in the school directory.",
+        )
+
+
+class StaffDirectoryQueryCountTest(TestCase):
+    """Regression test for the staff directory N+1 + unbounded queryset
+    (Phase 3 perf audit). staff_directory_view used to iterate every active
+    User with no pagination and run 2 extra queries per row (school_count,
+    completed_visits). Both the row count on the page and the query count
+    must now be flat regardless of total headcount.
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin_user = User.objects.create(
+            id="admin-staffperf-1",
+            email="admin-staffperf@edify.org",
+            name="Admin Staff Perf",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+            status="active",
+        )
+        self.admin_user.set_password("pass123")
+        self.admin_user.save()
+
+        from apps.activities.models import Activity
+        from apps.schools.models import School
+        from apps.geography.models import Region, District, SubCounty
+
+        region = Region.objects.create(name="Staff Perf Region")
+        district = District.objects.create(name="Staff Perf District", region=region)
+        sub_county = SubCounty.objects.create(
+            name="Staff Perf Subcounty", district=district
+        )
+        self.school = School.objects.create(
+            school_id="STAFFPERF-1",
+            name="Staff Perf School",
+            region=region,
+            district=district,
+            sub_county=sub_county,
+            school_type="client",
+        )
+
+        self._make_staff_with_activity(User, Activity, count=12, prefix="sp")
+
+    def _make_staff_with_activity(self, User, Activity, count, prefix):
+        for i in range(count):
+            u = User.objects.create(
+                id=f"{prefix}-user-{i}",
+                email=f"{prefix}{i}@edify.org",
+                name=f"Staff {prefix.upper()} {i}",
+                roles=["CCEO"],
+                active_role="CCEO",
+                is_active=True,
+                status="active",
+            )
+            u.set_password("pass123")
+            u.save()
+            StaffProfile.objects.create(id=f"{prefix}-profile-{i}", user=u)
+            Activity.objects.create(
+                fy="2026",
+                quarter="Q1",
+                activity_type="school_visit",
+                school=self.school,
+                status="completed",
+                responsible_staff_id=u.id,
+            )
+
+    def test_staff_directory_is_paginated(self):
+        """The row count on a single page must not scale with total headcount."""
+        self.client.force_login(self.admin_user)
+        response = self.client.get("/staff", {"page": 1})
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(
+            len(response.context["staff"]),
+            20,
+            "staff directory page must be paginated (<=20 rows), not dump every "
+            "active user unbounded",
+        )
+
+    def test_staff_directory_query_count_is_bounded_not_linear_in_staff_count(self):
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+        from apps.accounts.models import User as AccountsUser
+        from apps.activities.models import Activity
+
+        self.client.force_login(self.admin_user)
+
+        with CaptureQueriesContext(connection) as small:
+            response = self.client.get("/staff", {"page": 1})
+        self.assertEqual(response.status_code, 200)
+        small_count = len(small.captured_queries)
+
+        # Nearly triple total headcount; page size is fixed so the query
+        # count for rendering a page should stay flat.
+        self._make_staff_with_activity(AccountsUser, Activity, count=28, prefix="sq")
+
+        with CaptureQueriesContext(connection) as large:
+            response = self.client.get("/staff", {"page": 1})
+        self.assertEqual(response.status_code, 200)
+        large_count = len(large.captured_queries)
+
+        self.assertLessEqual(
+            large_count,
+            small_count + 5,
+            f"Query count grew from {small_count} to {large_count} when total "
+            "staff grew from 12 to 40 with a fixed page size — this is the "
+            "signature of a per-row N+1 in the staff directory.",
+        )
+
+
+class LeaveTrackerQueryCountTest(TestCase):
+    """Regression test for the leave tracker N+1 (Phase 3 perf audit).
+
+    leave_tracker_view used to call LeaveBalanceService.initialize_
+    balances_for_staff() (up to ~7 queries) plus 4 more per-staff queries
+    for balances/leaves inside a Python loop over every staff profile in
+    scope — unbounded for HR/CD. The query count must now stay flat as
+    headcount grows.
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.hr_user = User.objects.create(
+            id="hr-perf-1",
+            email="hr-perf@edify.org",
+            name="HR Perf User",
+            roles=["HumanResources"],
+            active_role="HumanResources",
+            is_active=True,
+            status="active",
+        )
+        self.hr_user.set_password("pass123")
+        self.hr_user.save()
+
+        self._make_staff(count=6, prefix="lt")
+
+    def _make_staff(self, count, prefix):
+        User = get_user_model()
+        from apps.accounts.models import Leave
+
+        for i in range(count):
+            u = User.objects.create(
+                id=f"{prefix}-user-{i}",
+                email=f"{prefix}{i}@edify.org",
+                name=f"Leave Staff {prefix.upper()} {i}",
+                roles=["CCEO"],
+                active_role="CCEO",
+                is_active=True,
+                status="active",
+            )
+            u.set_password("pass123")
+            u.save()
+            sp = StaffProfile.objects.create(id=f"{prefix}-profile-{i}", user=u)
+            Leave.objects.create(
+                staff=sp,
+                type="personal_time_off",
+                start_date="2026-08-01",
+                end_date="2026-08-05",
+                days=5,
+                status="approved",
+            )
+
+    def test_leave_tracker_renders(self):
+        self.client.force_login(self.hr_user)
+        response = self.client.get("/leave/tracker")
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(response.context["team"]), 6)
+
+    def test_leave_tracker_query_count_is_bounded_not_linear_in_staff_count(self):
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+
+        self.client.force_login(self.hr_user)
+
+        with CaptureQueriesContext(connection) as small:
+            response = self.client.get("/leave/tracker")
+        self.assertEqual(response.status_code, 200)
+        small_count = len(small.captured_queries)
+
+        # Triple the team size and confirm the query count doesn't scale
+        # linearly with staff count.
+        self._make_staff(count=12, prefix="lu")
+
+        with CaptureQueriesContext(connection) as large:
+            response = self.client.get("/leave/tracker")
+        self.assertEqual(response.status_code, 200)
+        large_count = len(large.captured_queries)
+
+        self.assertLessEqual(
+            large_count,
+            small_count + 8,
+            f"Query count grew from {small_count} to {large_count} when team "
+            "size grew from 6 to 18 — this is the signature of a per-row N+1 "
+            "in the leave tracker.",
+        )
+
+
+class ChampionsListQueryCountTest(TestCase):
+    """Regression test for the champions list N+1 (Phase 3 perf audit).
+
+    champions_list_view used to run a CoreSchoolProfile query + an SsaRecord
+    query per champion school, plus unfetched district/region FKs. Query
+    count must now stay flat as the champion count grows.
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin_user = User.objects.create(
+            id="admin-champperf-1",
+            email="admin-champperf@edify.org",
+            name="Admin Champ Perf",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+            status="active",
+        )
+        self.admin_user.set_password("pass123")
+        self.admin_user.save()
+
+        self.region = Region.objects.create(name="Champ Region")
+        self.district = District.objects.create(
+            name="Champ District", region=self.region
+        )
+        self.sub_county = SubCounty.objects.create(
+            name="Champ Subcounty", district=self.district
+        )
+        self._make_champions(count=3, prefix="ch")
+
+    def _make_champions(self, count, prefix):
+        from apps.ssa.models import SsaRecord
+        from django.utils import timezone
+
+        for i in range(count):
+            school = School.objects.create(
+                school_id=f"{prefix.upper()}-{i}",
+                name=f"Champion School {prefix}{i}",
+                region=self.region,
+                district=self.district,
+                sub_county=self.sub_county,
+                school_type="champion",
+            )
+            SsaRecord.objects.create(
+                school=school,
+                date_of_ssa=timezone.now(),
+                fy="2026",
+                quarter="Q1",
+                verification_status="confirmed",
+                average_score=85.0,
+                uploaded_by="tester",
+            )
+
+    def test_champions_list_query_count_is_bounded_not_linear_in_champion_count(self):
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+
+        self.client.force_login(self.admin_user)
+
+        with CaptureQueriesContext(connection) as small:
+            response = self.client.get("/core-schools/champions")
+        self.assertEqual(response.status_code, 200)
+        small_count = len(small.captured_queries)
+
+        self._make_champions(count=9, prefix="cj")
+
+        with CaptureQueriesContext(connection) as large:
+            response = self.client.get("/core-schools/champions")
+        self.assertEqual(response.status_code, 200)
+        large_count = len(large.captured_queries)
+
+        self.assertLessEqual(
+            large_count,
+            small_count + 3,
+            f"Query count grew from {small_count} to {large_count} when "
+            "champion count grew from 3 to 12 — this is the signature of a "
+            "per-row N+1 in the champions list.",
+        )

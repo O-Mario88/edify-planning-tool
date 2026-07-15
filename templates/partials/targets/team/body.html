@@ -1,409 +1,428 @@
 {% load frontend_filters %}
-<div class="space-y-5">
-
-  {# ── KPI strip ──────────────────────────────────────────────────────────── #}
-  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-    {% for k in kpis %}
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 min-w-0">
-      <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</p>
-      <p class="text-[22px] font-bold tabular-nums mt-1.5 {% if k.tone == 'danger' %}text-rose-600{% else %}text-slate-800{% endif %}">{{ k.value }}</p>
-      <p class="text-[10px] font-semibold mt-0.5 {% if k.delta is not None and k.delta > 0 %}text-emerald-600{% elif k.delta is not None and k.delta < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">
-        {% if k.delta is not None %}{% if k.delta > 0 %}&uarr; +{{ k.delta }}{% elif k.delta < 0 %}&darr; {{ k.delta }}{% else %}&mdash; 0{% endif %} {% endif %}{{ k.delta_unit }}
-      </p>
-    </div>
+<div class="tt-dashboard">
+  <section class="tt-kpi-strip" aria-label="Team targets summary">
+    {% for kpi in summary_kpis %}
+    <article class="tt-kpi" data-tone="{{ kpi.tone }}">
+      <div class="tt-kpi__icon" aria-hidden="true">
+        {% if kpi.key == 'achievement' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 8V4m4.2 3.8 2.6-2.6" stroke-linecap="round"/></svg>
+        {% elif kpi.key == 'on_track' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9"/></svg>
+        {% elif kpi.key == 'risk' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 4 3.8 18h16.4L12 4Z"/><path d="M12 9v4m0 2.5v.1" stroke-linecap="round"/></svg>
+        {% elif kpi.key == 'quarter' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 19V9m7 10V5m7 14v-7" stroke-linecap="round"/><path d="m4 6 5-3 4 2 7-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        {% elif kpi.key == 'fy' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4h8v3a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5v1a4 4 0 0 0 4 4m7-5h3v1a4 4 0 0 1-4 4m-3 0v5m-4 3h8m-6-3h4" stroke-linecap="round"/></svg>
+        {% else %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h10a2 2 0 0 1 2 2v14H5V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6m-6 4h4m-4 4h3" stroke-linecap="round"/><circle cx="18" cy="17" r="3"/></svg>
+        {% endif %}
+      </div>
+      <div class="tt-kpi__copy">
+        <span>{{ kpi.label }}</span>
+        <strong>{{ kpi.value }}</strong>
+        <small>{{ kpi.meta }}</small>
+      </div>
+    </article>
     {% endfor %}
-  </div>
+  </section>
 
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-    <div class="lg:col-span-9 space-y-5 min-w-0">
+  <div class="tt-command-grid">
+    <section class="tt-panel tt-matrix-panel" id="staff-performance">
+      <header class="tt-panel__header">
+        <div>
+          <span class="tt-eyebrow">Validated performance</span>
+          <h2>Team targets performance</h2>
+          <p>{{ month_label }} · {{ selected_category_label }} · {{ team_size }} matching team member{{ team_size|pluralize }}</p>
+        </div>
+        <div class="tt-segmented" aria-label="Filter performance status">
+          <button type="button" @click="staffFilter='all'" :aria-pressed="staffFilter === 'all'" :class="staffFilter === 'all' && 'is-active'">All</button>
+          <button type="button" @click="staffFilter='behind'" :aria-pressed="staffFilter === 'behind'" :class="staffFilter === 'behind' && 'is-active'">Behind</button>
+          <button type="button" @click="staffFilter='risk'" :aria-pressed="staffFilter === 'risk'" :class="staffFilter === 'risk' && 'is-active'">High risk</button>
+        </div>
+      </header>
 
-      {# ── What Needs Attention ─────────────────────────────────────────── #}
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
-        <div class="flex items-center gap-2 mb-3">
-          <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">What Needs Attention</h2>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-slate-100 gap-y-3">
-          {% for a in attention %}
-          <div class="px-3 {% if not forloop.first %}lg:border-l lg:border-slate-100{% endif %}">
-            <p class="text-[10.5px] font-bold text-slate-500">{{ a.label }}</p>
-            <p class="text-[20px] font-bold tabular-nums mt-1 {% if a.tone == 'danger' %}text-rose-600{% elif a.tone == 'warning' %}text-amber-600{% else %}text-slate-800{% endif %}">{{ a.count }}</p>
-            <p class="text-[9.5px] font-semibold text-slate-400 truncate">{{ a.sub }}</p>
-            {% if a.drill == 'staff' %}
-            <button type="button" @click="staffFilter = 'behind'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</button>
-            {% elif a.drill == 'high_risk' %}
-            <button type="button" @click="staffFilter = 'risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</button>
-            {% elif a.drill == 'core' %}
-            <a href="/core-schools" class="inline-block text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</a>
-            {% else %}
-            <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</button>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
+      {% if members %}
+      <div class="tt-matrix-scroll-guide" aria-hidden="true">
+        <span>Period comparison</span>
+        <span>Scroll horizontally to compare Q3, Q4, and full-year performance&nbsp;→</span>
       </div>
-
-      {# ── Target performance by staff ──────────────────────────────────── #}
-      <div id="staff-performance" class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Target Performance by Staff <span class="text-slate-400 font-medium text-[11px]">({{ month_label }})</span></h2>
-          <div class="flex items-center gap-1 bg-slate-50 rounded-lg p-0.5 text-[10.5px] font-bold">
-            <button type="button" @click="staffFilter='all'" :class="staffFilter==='all' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">All</button>
-            <button type="button" @click="staffFilter='behind'" :class="staffFilter==='behind' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">Behind</button>
-            <button type="button" @click="staffFilter='risk'" :class="staffFilter==='risk' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">High Risk</button>
-          </div>
-        </div>
-        {% if members %}
-        <div class="overflow-x-auto -mx-4 px-4">
-          <table class="w-full min-w-[860px] text-[11.5px]">
-            <thead>
-              <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] text-left">
-                <th class="py-2 pr-3">Staff Name</th>
-                <th class="py-2 px-2">District</th>
-                <th class="py-2 px-2 text-center">Monthly Tgt</th>
-                <th class="py-2 px-2 text-center">Valid Done</th>
-                <th class="py-2 px-2 text-center">Remaining</th>
-                <th class="py-2 px-2 text-center">Quarter Tgt</th>
-                <th class="py-2 px-2">Achievement</th>
-                <th class="py-2 px-2">Pace Status</th>
-                <th class="py-2 px-2 text-center">SF ID</th>
-                <th class="py-2 px-2 text-center">Core Schools</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-              {% for m in members %}
-              <tr class="hover:bg-slate-50/50 cursor-pointer"
-                  data-bucket="{% if m.status == 'High Risk' or m.status == 'Critical' %}risk{% elif m.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
-                  x-show="staffFilter==='all' || (staffFilter==='behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter==='risk' && $el.dataset.bucket==='risk')"
-                  hx-get="/team-targets/staff-drawer?staff={{ m.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
-                  hx-target="#drawer-container" hx-swap="innerHTML">
-                <td class="py-2.5 pr-3">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <span class="h-6 w-6 rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold flex items-center justify-center shrink-0">{{ m.initials }}</span>
-                    <span class="truncate">{{ m.name }}</span>
-                  </div>
-                </td>
-                <td class="py-2.5 px-2 text-slate-500 truncate max-w-[120px]">{{ m.district_label }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums">{{ m.month_target }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ m.month_achieved }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums {% if m.remaining %}text-rose-500{% else %}text-slate-400{% endif %}">{{ m.remaining }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums text-slate-500">{{ m.quarter_target }}</td>
-                <td class="py-2.5 px-2 min-w-[110px]">
-                  <div class="flex items-center gap-1.5">
-                    <div class="h-[6px] w-14 bg-slate-100 rounded-full overflow-hidden shrink-0">
-                      <div class="h-full rounded-full {% if m.tone == 'success' %}bg-emerald-500{% elif m.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {% if m.month_pct %}{% if m.month_pct > 100 %}100{% else %}{{ m.month_pct }}{% endif %}{% else %}0{% endif %}%"></div>
-                    </div>
-                    <span class="tabular-nums text-[11px]">{% if m.month_pct is not None %}{{ m.month_pct }}%{% else %}—{% endif %}</span>
-                  </div>
-                </td>
-                <td class="py-2.5 px-2">
-                  <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if m.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif m.tone == 'warning' %}bg-amber-50 text-amber-700{% elif m.status == 'Not Assigned' or m.status == 'Not Started' %}bg-slate-50 text-slate-500{% else %}bg-rose-50 text-rose-700{% endif %}">{{ m.status }}</span>
-                </td>
-                <td class="py-2.5 px-2 text-center tabular-nums {% if m.sf_compliance < 90 %}text-amber-600{% else %}text-slate-600{% endif %}">{{ m.sf_compliance }}%</td>
-                <td class="py-2.5 px-2 text-center tabular-nums text-slate-500">{% if m.core_pct is not None %}{{ m.core_pct }}%{% else %}—{% endif %}</td>
-              </tr>
+      <div class="tt-matrix-scroll tt-desktop-matrix" tabindex="0" aria-label="Scrollable team performance table. Scroll horizontally to compare every quarter and the full fiscal year.">
+        <table class="tt-matrix">
+          <thead>
+            <tr>
+              <th scope="col">Team member</th>
+              {% for head in matrix_heads %}
+              <th scope="col"{% if forloop.first or head.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}><span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small></th>
               {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="mt-2 text-[10.5px] font-bold text-blue-600 hover:underline">View all staff performance &rarr;</button>
-        {% else %}
-        <div class="rounded-xl border border-slate-100 bg-slate-50 p-6 text-center">
-          <p class="text-[12px] font-semibold text-slate-500">No supervised staff found.</p>
-          <p class="text-[10.5px] text-slate-400 mt-1">Team Targets aggregates the CCEOs assigned to you as supervisor — ask HR/Admin to set your supervision assignments.</p>
-        </div>
-        {% endif %}
-      </div>
-
-      {# ── Partner contribution ─────────────────────────────────────────── #}
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Partner Contribution to Team Targets <span class="text-slate-400 font-medium text-[11px]">(FY {{ fy }})</span></h2>
-          <span class="text-[9.5px] font-bold uppercase tracking-wider text-slate-300">Never double-counted into CCEO credit</span>
-        </div>
-        {% if partners %}
-        <div class="overflow-x-auto -mx-4 px-4">
-          <table class="w-full min-w-[760px] text-[11.5px]">
-            <thead>
-              <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] text-left">
-                <th class="py-2 pr-3">Partner</th>
-                <th class="py-2 px-2">Region</th>
-                <th class="py-2 px-2 text-center">Assigned</th>
-                <th class="py-2 px-2 text-center">Scheduled</th>
-                <th class="py-2 px-2 text-center">Valid Done</th>
-                <th class="py-2 px-2 text-center">Valid Visits</th>
-                <th class="py-2 px-2">Achievement</th>
-                <th class="py-2 px-2 text-center">SF ID</th>
-                <th class="py-2 px-2 text-center">IA Rate</th>
-                <th class="py-2 px-2">Risk</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-              {% for p in partners %}
-              <tr class="hover:bg-slate-50/50">
-                <td class="py-2.5 pr-3 truncate max-w-[180px]">{{ p.name }}</td>
-                <td class="py-2.5 px-2 text-slate-500">{{ p.region }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.assigned }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums text-slate-500">{{ p.scheduled }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ p.valid }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.valid_visits }}</td>
-                <td class="py-2.5 px-2 min-w-[100px]">
-                  <div class="flex items-center gap-1.5">
-                    <div class="h-[6px] w-12 bg-slate-100 rounded-full overflow-hidden shrink-0">
-                      <div class="h-full rounded-full {% if p.tone == 'success' %}bg-emerald-500{% elif p.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {% if p.pct > 100 %}100{% else %}{{ p.pct }}{% endif %}%"></div>
-                    </div>
-                    <span class="tabular-nums text-[11px]">{{ p.pct }}%</span>
-                  </div>
-                </td>
-                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.sf }}%</td>
-                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.ia }}%</td>
-                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if p.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif p.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ p.risk }}</span></td>
-              </tr>
+              <th scope="col" class="tt-matrix__action-head"><span>Review</span><small>Details</small></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for member in members %}
+            <tr class="tt-member-row"
+                data-bucket="{% if member.status == 'High Risk' or member.status == 'Critical' %}risk{% elif member.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
+                @click="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
+                :class="expandedStaff === '{{ member.user_id }}' && 'is-expanded'"
+                x-show="staffFilter === 'all' || (staffFilter === 'behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter === 'risk' && $el.dataset.bucket === 'risk')">
+              <td>
+                <div class="tt-person">
+                  <button type="button" class="tt-expand" @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'" :aria-expanded="expandedStaff === '{{ member.user_id }}'" aria-controls="tt-desktop-areas-{{ member.user_id }}" aria-label="Show {{ member.name }} target areas">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'"><path d="m7 5 5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <span class="tt-avatar">{{ member.initials }}</span>
+                  <span class="tt-person__copy">
+                    <strong>{{ member.name }}</strong>
+                    <small>CCEO · {{ member.district_label }}</small>
+                  </span>
+                </div>
+              </td>
+              {% for cell in member.matrix_cells %}
+              <td{% if forloop.first or cell.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if cell.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                <div class="tt-period-cell">
+                  <strong class="tt-period-cell__value" data-tone="{{ cell.tone }}">{% if cell.display_pct is not None %}{{ cell.display_pct }}%{% else %}—{% endif %}</strong>
+                  <small>{{ cell.achieved }} of {{ cell.target }}</small>
+                  <span class="tt-status" data-tone="{{ cell.tone }}">{{ cell.status }}</span>
+                </div>
+              </td>
               {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <p class="text-[11.5px] text-slate-400 font-medium py-3">No partner-delivered activities assigned by your team this financial year.</p>
-        {% endif %}
+              <td class="tt-matrix__action-cell">
+                <button type="button" class="tt-row-action"
+                        @click.stop
+                        hx-get="/team-targets/staff-drawer?staff={{ member.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                        hx-target="#drawer-container" hx-swap="innerHTML"
+                        aria-label="Open {{ member.name }} validated achievement, pace, and blockers">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 6h8M5 11h6M5 16h4" stroke-linecap="round"/><path d="m14 13 3 3-3 3m3-3h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </td>
+            </tr>
+            <tr id="tt-desktop-areas-{{ member.user_id }}" class="tt-area-row" x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
+              <td colspan="8">
+                <div class="tt-area-matrix-shell">
+                  <table class="tt-area-matrix">
+                    <caption class="sr-only">{{ member.name }} target-area performance by reporting period</caption>
+                    <colgroup><col class="tt-area-matrix__name-column"><col span="6"></colgroup>
+                    <thead>
+                      <tr>
+                        <th scope="col"><span>Target area breakdown</span><small>Validated achievement</small></th>
+                        {% for head in matrix_heads %}
+                        <th scope="col"{% if forloop.first or head.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                          {% if forloop.first %}<span>Monthly</span><small>{{ head.label }} · selected month</small>{% else %}<span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small>{% endif %}
+                        </th>
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for area in member.area_matrix %}
+                      <tr>
+                        <th scope="row">
+                          <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<span>{{ area.label }}</span></span>
+                        </th>
+                        {% for period in area.periods %}
+                        <td{% if forloop.first or period.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if period.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                          <span class="tt-area-period">
+                            <span class="tt-area-period__dot" data-tone="{{ period.tone }}" aria-hidden="true"></span>
+                            <strong data-tone="{{ period.tone }}">{% if period.display_pct is not None %}{{ period.display_pct }}%{% else %}—{% endif %}</strong>
+                            <small>{{ period.achieved }} of {{ period.target }}</small>
+                            <span class="sr-only">{{ period.status }}</span>
+                          </span>
+                        </td>
+                        {% endfor %}
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
 
-      {# ── Key progress · distribution · districts ──────────────────────── #}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
-          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Key Target Progress <span class="text-slate-400 font-medium text-[10.5px]">(Monthly)</span></h2>
-          {% for k in key_progress %}
-          <div>
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="font-semibold text-slate-600">{{ k.label }}</span>
-              <span class="font-bold text-slate-700 tabular-nums">{{ k.achieved|intcomma }} / {{ k.target|intcomma }}{% if k.pct is not None %} &middot; {{ k.pct }}%{% endif %}</span>
+      <div class="tt-mobile-performance" aria-label="Team performance cards">
+        {% for member in members %}
+        <article class="tt-mobile-member"
+                 data-bucket="{% if member.status == 'High Risk' or member.status == 'Critical' %}risk{% elif member.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
+                 @click="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
+                 :class="expandedStaff === '{{ member.user_id }}' && 'is-expanded'"
+                 x-show="staffFilter === 'all' || (staffFilter === 'behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter === 'risk' && $el.dataset.bucket === 'risk')">
+          <div class="tt-mobile-member__header">
+            <div class="tt-mobile-member__identity">
+              <span class="tt-avatar">{{ member.initials }}</span>
+              <span class="tt-person__copy">
+                <strong>{{ member.name }}</strong>
+                <small>CCEO · {{ member.district_label }}</small>
+              </span>
             </div>
-            <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
-              <div class="h-full rounded-full {% if k.tone == 'success' %}bg-emerald-500{% elif k.tone == 'warning' %}bg-amber-500{% elif k.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ k.bar }}%"></div>
-            </div>
+            <span class="tt-status" data-tone="{{ member.display_tone }}">{{ member.display_status }}</span>
+            <button type="button" class="tt-row-action"
+                    @click.stop
+                    hx-get="/team-targets/staff-drawer?staff={{ member.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                    hx-target="#drawer-container" hx-swap="innerHTML"
+                    aria-label="Open {{ member.name }} validated achievement, pace, and blockers">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 6h8M5 11h6M5 16h4" stroke-linecap="round"/><path d="m14 13 3 3-3 3m3-3h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
           </div>
-          {% endfor %}
-          <p class="text-[9.5px] text-slate-400 font-medium pt-1">Activity SF ID compliance is a compliance indicator, not a target area.</p>
-        </div>
 
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2"
-             x-data="{
-               chart: null,
-               initChart() {
-                 if (this.chart) { this.chart.destroy(); }
-                 const el = document.querySelector('#teamDist');
-                 if (!el) return;
-                 this.chart = new ApexCharts(el, {
-                   series: [{% for d in distribution %}{{ d.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
-                   labels: [{% for d in distribution %}'{{ d.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-                   chart: { height: 190, type: 'donut', fontFamily: 'Outfit, sans-serif' },
-                   colors: [{% for d in distribution %}{% if d.label == 'On Track' %}'#10b981'{% elif d.label == 'Slightly Behind' %}'#f59e0b'{% elif d.label == 'High Risk' %}'#fb7185'{% else %}'#e11d48'{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}],
-                   dataLabels: { enabled: false },
-                   plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
-                     total: { show: true, label: 'Staff', fontSize: '10px', color: '#94a3b8',
-                              formatter: () => '{{ team_size }}' } } } } },
-                   legend: { position: 'bottom', fontSize: '10.5px', fontWeight: 600, labels: { colors: '#64748b' } },
-                   stroke: { width: 0 },
-                   tooltip: { theme: 'dark' }
-                 });
-                 this.chart.render();
-               }
-             }" x-init="$nextTick(() => initChart())">
-          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Staff Target Status Distribution</h2>
-          {% if distribution %}
-          <div id="teamDist"></div>
-          {% else %}
-          <p class="text-[11.5px] text-slate-400 font-medium py-4">No staff with assigned targets this month.</p>
-          {% endif %}
-        </div>
-
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
-          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Districts Most Behind <span class="text-slate-400 font-medium text-[10.5px]">(Achievement %)</span></h2>
-          {% for d in districts_behind %}
-          <div>
-            <div class="flex items-center justify-between text-[11px]">
-              <span class="font-semibold text-slate-600 truncate">{{ d.district }}</span>
-              <span class="font-bold tabular-nums {% if d.pct < 50 %}text-rose-600{% elif d.pct < 80 %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ d.pct }}%</span>
+          <dl class="tt-mobile-member__metrics">
+            {% for cell in member.mobile_cells %}
+            <div{% if forloop.first or cell.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if cell.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+              <dt>{% if cell.key == 'month' %}{{ cell.label }}{% elif cell.key == 'fy' %}Full year{% else %}{{ cell.label }}{% endif %}</dt>
+              <dd data-tone="{{ cell.tone }}">{% if cell.display_pct is not None %}{{ cell.display_pct }}%{% else %}—{% endif %}</dd>
+              <small>{{ cell.achieved }} of {{ cell.target }}</small>
             </div>
-            <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
-              <div class="h-full rounded-full {% if d.pct < 50 %}bg-rose-400{% elif d.pct < 80 %}bg-amber-500{% else %}bg-emerald-500{% endif %}" style="width: {% if d.pct > 100 %}100{% else %}{{ d.pct }}{% endif %}%"></div>
-            </div>
-            <p class="text-[9.5px] font-semibold text-slate-400 mt-0.5">{{ d.staff }} staff &middot; gap {{ d.gap }} &middot; {{ d.schools }} schools</p>
-          </div>
-          {% empty %}
-          <p class="text-[11.5px] text-slate-400 font-medium py-3">No district data — supervised staff have no school assignments yet.</p>
-          {% endfor %}
-        </div>
-      </div>
+            {% endfor %}
+          </dl>
 
-      {# ── Target Recovery Focus ────────────────────────────────────────── #}
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Target Recovery Focus <span class="text-slate-400 font-medium text-[11px]">(Requires Immediate Action)</span></h2>
-          <button type="button" hx-get="/team-targets/recovery" hx-target="#drawer-container" hx-swap="innerHTML"
-                  class="h-7 px-2.5 inline-flex items-center gap-1 rounded-lg border border-slate-200 text-[10.5px] font-bold text-slate-600 hover:bg-slate-50">
-            Approval Queue{% if pending_catchups %} <span class="px-1.5 rounded-full bg-rose-100 text-rose-700 tabular-nums">{{ pending_catchups }}</span>{% endif %}
+          <button type="button" class="tt-mobile-member__area-toggle"
+                  @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
+                  :aria-expanded="expandedStaff === '{{ member.user_id }}'"
+                  aria-controls="tt-mobile-areas-{{ member.user_id }}">
+            <span>Target-area breakdown</span>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'" aria-hidden="true"><path d="m5 7 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-        </div>
-        {% if recovery %}
-        <div class="overflow-x-auto -mx-4 px-4">
-          <table class="w-full min-w-[860px] text-[11.5px]">
-            <thead>
-              <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] text-left">
-                <th class="py-2 pr-3">Staff / Target Area</th>
-                <th class="py-2 px-2">District</th>
-                <th class="py-2 px-2 text-center">Gap</th>
-                <th class="py-2 px-2 text-center">Achievement</th>
-                <th class="py-2 px-2">Recommended Action</th>
-                <th class="py-2 px-2">Deadline</th>
-                <th class="py-2 px-2">Risk</th>
-                <th class="py-2 px-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-              {% for r in recovery %}
-              <tr class="hover:bg-slate-50/50">
-                <td class="py-2.5 pr-3">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <span class="h-6 w-6 rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold flex items-center justify-center shrink-0">{{ r.initials }}</span>
-                    <div class="min-w-0"><p class="truncate">{{ r.staff }}</p><p class="text-[9.5px] text-slate-400 font-semibold">{{ r.area }} &middot; {{ r.reason }}</p></div>
-                  </div>
-                </td>
-                <td class="py-2.5 px-2 text-slate-500 truncate max-w-[110px]">{{ r.district }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums text-rose-600">-{{ r.gap }}</td>
-                <td class="py-2.5 px-2 text-center tabular-nums">{{ r.pct }}%</td>
-                <td class="py-2.5 px-2 text-slate-600">{{ r.recommendation }}</td>
-                <td class="py-2.5 px-2 text-slate-500 whitespace-nowrap">{{ r.deadline }}</td>
-                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if r.risk == 'Slightly Behind' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ r.risk }}</span></td>
-                <td class="py-2.5 px-2 text-right whitespace-nowrap">
-                  <button type="button" hx-get="/team-targets/staff-drawer?staff={{ r.staff_user_id }}&fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                          class="h-7 px-2 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-50">View Plan</button>
-                  {% if r.action_kind == 'catchup' or r.action_kind == 'view_plan' %}
-                  <button type="button" @click="showCatchup = true; catchupStaff = '{{ r.staff_user_id }}'; catchupArea = '{{ r.area_key }}'"
-                          class="h-7 px-2 rounded-lg bg-slate-800 text-white text-[10px] font-bold hover:bg-slate-700">Catch-Up Plan</button>
-                  {% elif r.action_kind == 'sfid' %}
-                  <button type="button" hx-get="/team-targets/sfid-backlog?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                          class="h-7 px-2 rounded-lg bg-slate-800 text-white text-[10px] font-bold hover:bg-slate-700">SF ID Backlog</button>
-                  {% else %}
-                  <a href="/planning" class="inline-flex items-center h-7 px-2 rounded-lg bg-slate-800 text-white text-[10px] font-bold hover:bg-slate-700">Rebalance</a>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <div class="rounded-xl border border-slate-100 bg-emerald-50/40 p-4 text-center">
-          <p class="text-[12px] font-semibold text-emerald-700">No staff currently need recovery action.</p>
-          <p class="text-[10.5px] text-slate-400 mt-1">Rows appear here automatically when a supervised CCEO falls behind pace.</p>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-
-    {# ── Right rail ─────────────────────────────────────────────────────── #}
-    <div class="lg:col-span-3 space-y-5 min-w-0">
-
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2">
-        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
-          <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          Quick Actions
-        </h2>
-        <button type="button" @click="staffFilter = 'risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})"
-                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-          Review High-Risk Staff <span class="text-slate-300">&rsaquo;</span>
-        </button>
-        <a href="/planning" class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-          Rebalance Workload <span class="text-slate-300">&rsaquo;</span>
-        </a>
-        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-          View Team Targets <span class="text-slate-300">&rsaquo;</span>
-        </button>
-        <button type="button" hx-get="/team-targets/recovery" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-          <span>Approve Catch-Up Plan{% if pending_catchups %} <span class="px-1.5 rounded-full bg-rose-100 text-rose-700 text-[9.5px] tabular-nums">{{ pending_catchups }}</span>{% endif %}</span> <span class="text-slate-300">&rsaquo;</span>
-        </button>
-        <button type="button" hx-get="/team-targets/sfid-backlog?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
-          Check Activity SF ID Backlog <span class="text-slate-300">&rsaquo;</span>
-        </button>
-      </div>
-
-      <a href="/debriefs?tab=team" class="block bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2 hover:border-slate-200 transition-colors">
-        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Field Debrief Intelligence <span class="text-slate-400 font-medium text-[11px]">(last {{ field_debrief_intel.days }} days)</span></h2>
-        <div class="grid grid-cols-2 gap-2 text-center">
-          <div class="rounded-lg bg-slate-50 py-2">
-            <p class="text-[16px] font-bold text-slate-800 tabular-nums">{{ field_debrief_intel.total }}</p>
-            <p class="text-[9.5px] font-semibold text-slate-400">Debriefs Filed</p>
+          <div id="tt-mobile-areas-{{ member.user_id }}" class="tt-mobile-member__areas" @click.stop x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
+            {% for area in member.area_matrix %}
+            <section class="tt-mobile-area">
+              <header class="tt-mobile-area__header">
+                <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<strong>{{ area.label }}</strong></span>
+              </header>
+              <div class="tt-mobile-area__periods" tabindex="0" aria-label="{{ area.label }} performance by reporting period">
+                {% for period in area.periods %}
+                <div{% if forloop.first or period.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if period.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                  <span>{{ period.label }}</span>
+                  <strong data-tone="{{ period.tone }}">{% if period.display_pct is not None %}{{ period.display_pct }}%{% else %}—{% endif %}</strong>
+                  <small>{{ period.achieved }} of {{ period.target }} · {{ period.status }}</small>
+                </div>
+                {% endfor %}
+              </div>
+            </section>
+            {% endfor %}
           </div>
-          <div class="rounded-lg py-2 {% if field_debrief_intel.action_required or field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
-            <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.action_required or field_debrief_intel.escalated %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.action_required|add:field_debrief_intel.escalated }}</p>
-            <p class="text-[9.5px] font-semibold text-slate-400">Need Action</p>
-          </div>
-        </div>
-        {% if field_debrief_intel.top_challenge %}
-        <p class="text-[9.5px] text-slate-400 font-medium">Top challenge: <span class="font-bold text-slate-600">{{ field_debrief_intel.top_challenge }}</span> ({{ field_debrief_intel.top_challenge_count }})</p>
-        {% else %}
-        <p class="text-[9.5px] text-slate-300 font-medium">No field debriefs filed in this window.</p>
-        {% endif %}
-      </a>
-
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
-        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Weekly Pacing <span class="block text-[9.5px] text-slate-400 font-semibold normal-case">{{ pacing.range_label }}</span></h2>
-        <div class="space-y-1 text-[11.5px] font-semibold text-slate-600">
-          <div class="flex justify-between"><span>Completed This Week</span><span class="tabular-nums font-bold text-slate-800">{{ pacing.completed|intcomma }}</span></div>
-          <div class="flex justify-between"><span>Weekly Target</span><span class="tabular-nums font-bold text-slate-800">{{ pacing.target|intcomma }}</span></div>
-          <div class="flex justify-between"><span>Status</span>
-            <span class="font-bold {% if pacing.tone == 'success' %}text-emerald-600{% elif pacing.tone == 'warning' %}text-amber-600{% elif pacing.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">{{ pacing.status }}</span></div>
-        </div>
-        <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden">
-          <div class="h-full rounded-full {% if pacing.tone == 'success' %}bg-emerald-500{% elif pacing.tone == 'warning' %}bg-amber-500{% elif pacing.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ pacing.pct }}%"></div>
-        </div>
-        <div class="grid grid-cols-7 gap-1 pt-1">
-          {% for d in pacing.days %}
-          <div class="text-center">
-            <p class="text-[8.5px] font-bold uppercase text-slate-300">{{ d.label|slice:":2" }}</p>
-            <div class="mx-auto mt-1 h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold
-                        {% if d.is_today %}bg-slate-800 text-white{% elif not d.in_month %}text-slate-200{% elif d.weekend %}bg-slate-50 text-slate-300{% elif d.done %}bg-emerald-100 text-emerald-700{% elif d.future %}border border-slate-200 text-slate-400{% else %}bg-amber-50 text-amber-600{% endif %}">
-              {{ d.num }}
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        <p class="text-[9.5px] text-slate-400 font-medium">Weekly target = remaining monthly target across remaining working weeks (holidays and approved leave excluded).</p>
-      </div>
-
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2">
-        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">{{ calendar.label }}</h2>
-        <div class="grid grid-cols-7 gap-1 text-center text-[8.5px] font-bold uppercase text-slate-300">
-          <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
-        </div>
-        {% for week in calendar.weeks %}
-        <div class="grid grid-cols-7 gap-1">
-          {% for d in week %}
-          {% if d %}
-          <button type="button" hx-get="/team-targets/day?date={{ d.iso }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                  class="h-7 w-full rounded-md text-[10px] font-bold tabular-nums transition-colors
-                         {% if d.today %}bg-slate-800 text-white{% elif d.tone == 'blocked' %}bg-slate-50 text-slate-300{% elif d.tone == 'future' %}text-slate-400 hover:bg-slate-50{% elif d.tone == 'good' %}bg-emerald-50 text-emerald-700 hover:bg-emerald-100{% else %}bg-amber-50 text-amber-600 hover:bg-amber-100{% endif %}">
-            {{ d.day }}
-          </button>
-          {% else %}
-          <span></span>
-          {% endif %}
-          {% endfor %}
-        </div>
+        </article>
         {% endfor %}
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[9px] font-semibold text-slate-400">
-          <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-400"></span> Validated work</span>
-          <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-400"></span> No valid credit</span>
-          <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-slate-300"></span> Weekend / holiday</span>
-        </div>
       </div>
-    </div>
+
+      <footer class="tt-panel__footer">
+        <span>Showing {{ team_size }} of {{ overall_team_size }} supervised team members</span>
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">Open detailed target-area matrix</button>
+      </footer>
+      {% else %}
+      <div class="tt-empty">
+        <span class="tt-empty__icon" aria-hidden="true">◎</span>
+        <h3>No team members match these filters</h3>
+        <p>Adjust the reporting scope to return to the full supervised team.</p>
+        <a href="/team-targets?fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear filters</a>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="tt-rail" aria-label="Team intervention summary">
+      <section class="tt-panel tt-rail-panel">
+        <header class="tt-panel__header tt-panel__header--compact">
+          <div>
+            <span class="tt-eyebrow">Intervention queue</span>
+            <h2>Staff requiring support</h2>
+          </div>
+          <button type="button" @click="staffFilter='risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="tt-link-button">View all</button>
+        </header>
+        <div class="tt-support-list">
+          {% for staff in support_staff %}
+          <button type="button" class="tt-support-item"
+                  hx-get="/team-targets/staff-drawer?staff={{ staff.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                  hx-target="#drawer-container" hx-swap="innerHTML">
+            <span class="tt-avatar">{{ staff.initials }}</span>
+            <span class="tt-support-item__copy"><strong>{{ staff.name }}</strong><small>{{ staff.reason }}</small></span>
+            <span class="tt-status" data-tone="{{ staff.tone }}">{{ staff.status }}</span>
+          </button>
+          {% empty %}
+          <div class="tt-rail-empty"><strong>No urgent interventions</strong><span>The selected team scope is at pace.</span></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="tt-panel tt-rail-panel">
+        <header class="tt-panel__header tt-panel__header--compact">
+          <div>
+            <span class="tt-eyebrow">Planning workflow</span>
+            <h2>Recovery plans</h2>
+          </div>
+          <button type="button" hx-get="/team-targets/recovery?fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">View all</button>
+        </header>
+        <div class="tt-plan-list">
+          {% for plan in recovery_plans %}
+          <button type="button" class="tt-plan-item" hx-get="/team-targets/recovery?fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML">
+            <span class="tt-plan-item__icon" aria-hidden="true">↗</span>
+            <span><strong>{{ plan.staff }}</strong><small>{{ plan.area }} · due {{ plan.due|date:"d M" }}</small></span>
+            <span class="tt-status" data-tone="{% if plan.status_key == 'submitted' %}warning{% else %}success{% endif %}">{{ plan.status }}</span>
+          </button>
+          {% empty %}
+          <div class="tt-rail-empty"><strong>No active recovery plans</strong><span>Create one when performance needs structured intervention.</span></div>
+          {% endfor %}
+        </div>
+        <button type="button" @click="catchupStaff=''; showCatchup=true" class="tt-button tt-button--soft tt-button--block">Create recovery plan</button>
+      </section>
+
+      <section class="tt-panel tt-rail-panel">
+        <header class="tt-panel__header tt-panel__header--compact">
+          <div><span class="tt-eyebrow">Data quality</span><h2>Validation issues</h2></div>
+        </header>
+        <div class="tt-validation-grid">
+          {% for issue in validation_issues %}
+          {% if 'sfid-backlog' in issue.href %}
+          <button type="button" hx-get="{{ issue.href }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-validation-card" data-tone="{{ issue.tone }}">
+          {% else %}
+          <a href="{{ issue.href }}" class="tt-validation-card" data-tone="{{ issue.tone }}">
+          {% endif %}
+            <strong>{{ issue.value }}</strong><span>{{ issue.label }}</span>
+          {% if 'sfid-backlog' in issue.href %}</button>{% else %}</a>{% endif %}
+          {% endfor %}
+        </div>
+      </section>
+    </aside>
   </div>
 
-  <p class="text-[9.5px] text-slate-300 font-semibold text-right">Aggregated from supervised CCEO My Targets ledgers &middot; validated work only &middot; refreshed {{ last_refreshed|date:"d M Y H:i" }}</p>
+  <section class="tt-signal-strip" aria-labelledby="tt-signals-heading">
+    <header>
+      <span class="tt-eyebrow">Operational signals</span>
+      <h2 id="tt-signals-heading">What needs attention</h2>
+    </header>
+    <div class="tt-signal-grid">
+      {% for signal in attention %}
+      <article class="tt-signal" data-tone="{{ signal.tone }}">
+        <span>{{ signal.label }}</span>
+        <strong>{{ signal.count }}</strong>
+        <small>{{ signal.sub }}</small>
+        {% if signal.drill == 'core' %}
+        <a href="/core-schools">{{ signal.action }} <span aria-hidden="true">→</span></a>
+        {% elif signal.drill == 'staff' or signal.drill == 'high_risk' %}
+        <button type="button" @click="staffFilter='{% if signal.drill == 'high_risk' %}risk{% else %}behind{% endif %}'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})">{{ signal.action }} <span aria-hidden="true">→</span></button>
+        {% else %}
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ signal.action }} <span aria-hidden="true">→</span></button>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="tt-insights-grid">
+    <section class="tt-panel tt-insight-panel">
+      <header class="tt-panel__header tt-panel__header--compact">
+        <div><span class="tt-eyebrow">Selected month</span><h2>Target-area progress</h2></div>
+      </header>
+      <div class="tt-progress-list">
+        {% for target in key_progress %}
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}&month={{ month_of_fy }}&area={{ target.key|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-progress-row" aria-label="View {{ target.label }} performance across the team">
+          <span class="tt-progress-row__top"><strong>{{ target.label }}</strong><span>{% if target.pct is not None %}{{ target.pct }}%{% else %}—{% endif %}</span></span>
+          <span class="tt-progress"><span data-tone="{{ target.tone }}" style="width:{{ target.bar }}%"></span></span>
+          <small>{{ target.achieved|intcomma }} validated of {{ target.target|intcomma }} target · {{ target.status }}</small>
+        </button>
+        {% empty %}
+        <div class="tt-rail-empty"><strong>No target data</strong><span>No target areas are assigned in this scope.</span></div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tt-panel tt-insight-panel">
+      <header class="tt-panel__header tt-panel__header--compact">
+        <div><span class="tt-eyebrow">{{ fy_label }}</span><h2>Team performance trend</h2></div>
+        <span class="tt-status" data-tone="{% if summary_kpis.0.value == '0%' %}danger{% else %}success{% endif %}">{{ summary_kpis.0.value }}</span>
+      </header>
+      <figure class="tt-line-chart" aria-labelledby="tt-trend-title tt-trend-description">
+        <div class="tt-line-chart__viewport">
+          <svg viewBox="0 0 1200 600" role="img" aria-labelledby="tt-trend-title tt-trend-description">
+            <title id="tt-trend-title">Monthly team performance trend for {{ fy_label }}</title>
+            <desc id="tt-trend-description">Validated weighted team achievement from October through September. Months without assigned targets are shown as gaps.</desc>
+            <defs aria-hidden="true">
+              <linearGradient id="tt-trend-line-gradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="var(--edify-teal-400)"/>
+                <stop offset="0.55" stop-color="var(--edify-accent)"/>
+                <stop offset="1" stop-color="var(--edify-success)"/>
+              </linearGradient>
+            </defs>
+
+            <g class="tt-line-chart__grid" aria-hidden="true">
+              <line x1="52" y1="45" x2="1148" y2="45"/><text x="16" y="50">100%</text>
+              <line x1="52" y1="161.25" x2="1148" y2="161.25"/><text x="22" y="166">75%</text>
+              <line x1="52" y1="277.5" x2="1148" y2="277.5"/><text x="22" y="282">50%</text>
+              <line x1="52" y1="393.75" x2="1148" y2="393.75"/><text x="22" y="399">25%</text>
+              <line x1="52" y1="510" x2="1148" y2="510"/><text x="29" y="515">0%</text>
+            </g>
+
+            <g aria-hidden="true">
+              {% for segment in team_trend_segments %}
+              <polyline class="tt-line-chart__glow" points="{{ segment.points }}"/>
+              <polyline class="tt-line-chart__series" points="{{ segment.points }}"/>
+              {% endfor %}
+            </g>
+
+            {% for point in team_trend %}
+            {% if point.pct is not None %}
+            <g class="tt-line-chart__point{% if point.selected %} is-selected{% endif %}" aria-hidden="true">
+              <circle class="tt-line-chart__halo" cx="{{ point.x }}" cy="{{ point.y }}" r="11"/>
+              <circle class="tt-line-chart__dot" cx="{{ point.x }}" cy="{{ point.y }}" r="5"/>
+              {% if point.selected %}<text class="tt-line-chart__selected-value" x="{{ point.x }}" y="{{ point.label_y }}">{{ point.pct }}%</text>{% endif %}
+            </g>
+            {% endif %}
+            <text class="tt-line-chart__month{% if point.selected %} is-selected{% endif %}" x="{{ point.x }}" y="566" aria-hidden="true">{{ point.month }}</text>
+            {% endfor %}
+          </svg>
+        </div>
+        <figcaption class="tt-insight-note">Weighted from the same validated ledger used by each team member’s My Targets page.</figcaption>
+        <table class="sr-only">
+          <caption>Monthly team performance values for {{ fy_label }}</caption>
+          <thead><tr><th scope="col">Month</th><th scope="col">Achievement</th></tr></thead>
+          <tbody>
+            {% for point in team_trend %}<tr><th scope="row">{{ point.month }}</th><td>{% if point.pct is not None %}{{ point.pct }}%{% else %}No assigned target{% endif %}</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </figure>
+    </section>
+  </div>
+
+  <div class="tt-lower-grid">
+    <section class="tt-panel tt-partner-panel">
+      <header class="tt-panel__header">
+        <div><span class="tt-eyebrow">Delivery assurance</span><h2>Partner contribution</h2><p>Partner-delivered work remains visible but is never double-counted into CCEO credit.</p></div>
+      </header>
+      {% if partners %}
+      <div class="tt-table-scroll">
+        <table class="tt-compact-table">
+          <thead><tr><th>Partner</th><th>Region</th><th>Assigned</th><th>Scheduled</th><th>Valid done</th><th>Achievement</th><th>SF ID</th><th>Risk</th></tr></thead>
+          <tbody>
+            {% for partner in partners %}
+            <tr><td><strong>{{ partner.name }}</strong></td><td>{{ partner.region }}</td><td>{{ partner.assigned }}</td><td>{{ partner.scheduled }}</td><td>{{ partner.valid }}</td><td>{{ partner.pct }}%</td><td>{{ partner.sf }}%</td><td><span class="tt-status" data-tone="{{ partner.tone }}">{{ partner.risk }}</span></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="tt-empty tt-empty--compact"><h3>No partner-delivered activities in this scope</h3><p>Assigned partner work will appear here without changing personal target credit.</p></div>
+      {% endif %}
+    </section>
+
+    <aside class="tt-lower-stack">
+      <section class="tt-panel tt-insight-panel">
+        <header class="tt-panel__header tt-panel__header--compact"><div><span class="tt-eyebrow">Portfolio risk</span><h2>Districts most behind</h2></div></header>
+        <div class="tt-district-list">
+          {% for district in districts_behind %}
+          <div><span><strong>{{ district.district }}</strong><small>{{ district.staff }} staff · {{ district.schools }} schools</small></span><span class="tt-district-list__score">{{ district.pct }}%</span></div>
+          {% empty %}<div class="tt-rail-empty"><strong>No district data</strong><span>Team members need school portfolio assignments.</span></div>{% endfor %}
+        </div>
+      </section>
+      <a href="/debriefs" class="tt-panel tt-debrief-card">
+        <span class="tt-eyebrow">Field intelligence</span>
+        <h2>Open team debriefs</h2>
+        <p>Connect target variance to field evidence, blockers, and follow-up actions.</p>
+        <span>Review debrief intelligence <span aria-hidden="true">→</span></span>
+      </a>
+    </aside>
+  </div>
+
+  <footer class="tt-data-note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.7 8.3 7 10 4.3-1.7 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span><strong>Validated system data.</strong> Achievement comes from the canonical My Targets ledger; partner delivery, SF ID compliance, and IA exceptions are reported separately.</span>
+    <span>Refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
+  </footer>
 </div>

@@ -1,0 +1,681 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   EDIFY PLATFORM PRESENTATION LAYER
+   The PTO workspace is the visual benchmark. This final cascade layer brings
+   legacy Django templates and HTMX partials into the same calm, premium system
+   without changing their workflow logic or role-based behavior.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --edify-page-max-size: 93.75rem;
+  --edify-control-block-size: 2.625rem;
+  --edify-panel-padding: clamp(1rem, 0.78rem + 0.7vw, 1.5rem);
+  --edify-panel-gap: clamp(0.875rem, 0.68rem + 0.62vw, 1.25rem);
+  --edify-focus-outline: 2px solid var(--edify-accent);
+}
+
+::selection {
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+}
+
+main {
+  min-inline-size: 0;
+  color: var(--edify-text);
+  scroll-padding-block-start: 4.5rem;
+}
+
+main > :where(div, section, article) {
+  min-inline-size: 0;
+}
+
+main .grid > * {
+  min-inline-size: 0;
+}
+
+/* Keep every authenticated page on one deliberate canvas and one gutter. */
+main > :where(div, section)[class*="px-"]:not([class*="drawer"]),
+main > :where(div, section)[class*="p-4"]:not([class*="drawer"]),
+main > :where(div, section)[class*="p-5"]:not([class*="drawer"]),
+main > :where(div, section)[class*="p-6"]:not([class*="drawer"]) {
+  inline-size: min(100%, var(--edify-page-max-size));
+  margin-inline: auto;
+  padding-inline: var(--edify-page-gutter) !important;
+}
+
+/* ── Typography: confident hierarchy, never indiscriminate heaviness. ───── */
+main h1 {
+  max-inline-size: 30ch;
+  text-wrap: balance;
+  font-weight: 700 !important;
+}
+
+main :where(h2, h3) {
+  text-transform: none !important;
+  letter-spacing: var(--edify-text-heading-tracking) !important;
+  text-wrap: balance;
+}
+
+main h2 {
+  font-weight: 600 !important;
+}
+
+main h3 {
+  font-weight: 600 !important;
+}
+
+main :where(p, li, dd) {
+  text-wrap: pretty;
+}
+
+main :where(.font-black, .font-extrabold) {
+  font-weight: 700 !important;
+}
+
+main .font-bold {
+  font-weight: 600 !important;
+}
+
+main :where(.font-semibold, strong, b) {
+  font-weight: 600;
+}
+
+main :where(.tracking-widest, .tracking-wider) {
+  letter-spacing: 0.055em !important;
+}
+
+main :where(.text-slate-400, .text-slate-500) {
+  color: var(--edify-text-muted) !important;
+}
+
+main :where(.text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900) {
+  color: var(--edify-text) !important;
+}
+
+main :where(.tabular-nums, [class*="text-[19px]"], [class*="text-[20px]"],
+  [class*="text-[21px]"], [class*="text-[22px]"], [class*="text-[24px]"]) {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── Surface hierarchy: one family, with quieter nested tiles. ──────────── */
+main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"]) {
+  border-color: var(--edify-border) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment);
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  section.bg-white[class*="rounded-xl"], article.bg-white[class*="rounded-xl"],
+  aside.bg-white[class*="rounded-xl"],
+  section[style*="--edify-surface"][class*="rounded-xl"],
+  article[style*="--edify-surface"][class*="rounded-xl"],
+  aside[style*="--edify-surface"][class*="rounded-xl"]) {
+  min-inline-size: 0;
+  container-type: inline-size;
+}
+
+main :where(section, article, aside, div)[class*="rounded-xl"][class*="border"] {
+  border-color: var(--edify-border) !important;
+  border-radius: var(--edify-radius-lg) !important;
+}
+
+main :where(section, article, aside, div)[class*="rounded-lg"][class*="border"] {
+  border-color: var(--edify-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+}
+
+/* Decorative cards remain still; only real controls communicate lift. */
+main :where(div, section, article, aside)[class*="hover:-translate"] {
+  transform: none !important;
+}
+
+main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
+  translate: 0 -1px;
+}
+
+/* Blue is image-backed glass. Dark is intentionally opaque and layered. */
+.theme-blue main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"],
+  section[class*="rounded-xl"][class*="border"],
+  article[class*="rounded-xl"][class*="border"],
+  div[class*="rounded-xl"][class*="border"]) {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md) !important;
+  -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+  backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+}
+
+.theme-dark main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .bg-white[class*="rounded"], [style*="--edify-surface"][class*="rounded"]) {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), var(--edify-shadow-sm) !important;
+}
+
+/* ── Page headers and breadcrumbs. ─────────────────────────────────────── */
+main :where(nav[aria-label="Breadcrumb"], nav[class*="uppercase"]:first-child) {
+  min-block-size: 1.5rem;
+  color: var(--edify-text-subtle) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 500 !important;
+}
+
+main > div > :where(header, div):has(h1):not([class*="rounded"]):not([class*="bg-"]) {
+  min-inline-size: 0;
+}
+
+main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+  flex-wrap: wrap;
+}
+
+/* ── Buttons: confident, quiet, consistent. ────────────────────────────── */
+main :where(.btn, .edify-action-button,
+  button[class*="bg-blue-"], a[class*="bg-blue-"],
+  button[class*="bg-indigo-"], a[class*="bg-indigo-"],
+  button[class*="bg-slate-8"], a[class*="bg-slate-8"]) {
+  min-block-size: 2.5rem;
+  padding-inline: 1rem;
+  border-radius: var(--edify-radius-md) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+main :where(button, a)[class*="border-slate-"][class*="rounded"] {
+  border-color: var(--edify-border-strong) !important;
+  background-color: var(--edify-surface) !important;
+  color: var(--edify-text) !important;
+}
+
+main :where(button, a)[class*="border-slate-"][class*="rounded"]:hover:not(:disabled) {
+  border-color: var(--edify-accent) !important;
+  background-color: var(--edify-accent-light) !important;
+  color: var(--edify-accent) !important;
+}
+
+main :where(button, input[type="button"], input[type="submit"]):disabled,
+main :where(.btn, .edify-action-button)[aria-disabled="true"] {
+  border-color: var(--edify-border) !important;
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text-subtle) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+  translate: none !important;
+}
+
+:where(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus-visible {
+  outline: var(--edify-focus-outline) !important;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* ── Forms and filters. ────────────────────────────────────────────────── */
+main :where(input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
+  input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+  min-block-size: var(--edify-control-block-size);
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+  background-color: var(--edify-surface-muted) !important;
+  color: var(--edify-text) !important;
+  font: var(--edify-font-body) !important;
+  padding: 0.625rem 0.75rem !important;
+}
+
+main textarea {
+  min-block-size: 6rem;
+  resize: vertical;
+}
+
+main :where(input, select, textarea):hover:not(:disabled) {
+  border-color: var(--edify-border-strong) !important;
+}
+
+main :where(input, select, textarea):focus-visible {
+  border-color: var(--edify-accent) !important;
+  outline: var(--edify-focus-outline) !important;
+  outline-offset: 1px;
+}
+
+main :where(input, select, textarea):user-invalid {
+  border-color: var(--edify-danger) !important;
+  outline-color: var(--edify-danger) !important;
+}
+
+main :where(input, select, textarea):disabled {
+  background-color: color-mix(in oklab, var(--edify-surface-muted) 78%, transparent) !important;
+  color: var(--edify-text-subtle) !important;
+  cursor: not-allowed;
+}
+
+main input[type="checkbox"],
+main input[type="radio"] {
+  accent-color: var(--edify-accent);
+}
+
+main input[type="file"]::file-selector-button {
+  min-block-size: 2.25rem;
+  margin-inline-end: 0.75rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  font-weight: 600;
+}
+
+main label {
+  color: var(--edify-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+main label > :where(span, small):first-child[class*="uppercase"] {
+  color: var(--edify-text-subtle) !important;
+  font-weight: 600 !important;
+}
+
+main form[hx-get][class*="grid"],
+main form[id*="filter"][class*="grid"],
+main form[id*="search"][class*="grid"] {
+  border-color: var(--edify-border) !important;
+  border-radius: var(--edify-radius-lg) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment);
+  box-shadow: var(--edify-shadow-sm);
+  padding: var(--edify-panel-padding) !important;
+}
+
+/* ── Tables: designed for hours of operational work. ───────────────────── */
+main :where(.overflow-x-auto, .overflow-auto):has(> table) {
+  border-radius: var(--edify-radius-md);
+  scrollbar-gutter: stable;
+  overscroll-behavior-inline: contain;
+}
+
+main table {
+  inline-size: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+main table th {
+  padding: 0.75rem 0.875rem !important;
+  border-block-end: 1px solid var(--edify-border) !important;
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text-subtle) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 600 !important;
+  letter-spacing: var(--edify-text-micro-tracking) !important;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+main table td {
+  padding: 0.75rem 0.875rem !important;
+  color: var(--edify-text-muted);
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+main table td :where(strong, .font-bold, .font-semibold),
+main table td[class*="font-"] {
+  color: var(--edify-text);
+  font-weight: 600 !important;
+}
+
+main table tbody tr {
+  transition: background-color var(--edify-transition-fast);
+}
+
+/* ── Tabs, pills and workflow state. ───────────────────────────────────── */
+main :where([role="tablist"], .edify-tab-container) {
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+main :where([role="tab"], .edify-tab-btn) {
+  min-block-size: 2.25rem;
+  border-radius: var(--edify-radius-sm) !important;
+  color: var(--edify-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
+  background: var(--edify-surface-raised) !important;
+  color: var(--edify-accent) !important;
+  box-shadow: var(--edify-shadow-sm);
+}
+
+main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notification-badge) {
+  min-block-size: 1.5rem;
+  padding: 0.25rem 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600 !important;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ── KPI and chart refinements. ────────────────────────────────────────── */
+main .kpi-strip__value,
+main :where([class*="text-[19px]"], [class*="text-[21px]"], [class*="text-[24px]"])[class*="tabular"] {
+  color: var(--edify-text) !important;
+  font-size: clamp(1.35rem, 1.22rem + 0.38vw, 1.625rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+}
+
+main .apexcharts-canvas,
+main .apexcharts-canvas :where(text, tspan) {
+  font-family: var(--edify-font-sans) !important;
+}
+
+main .apexcharts-gridline {
+  stroke: color-mix(in oklab, var(--edify-border) 62%, transparent);
+}
+
+main .apexcharts-legend-text,
+main .apexcharts-text {
+  color: var(--edify-text-muted) !important;
+  fill: var(--edify-text-muted) !important;
+}
+
+/* The existing empty-state component becomes a guided, quiet surface. */
+main .edify-empty-state {
+  min-block-size: 10rem;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.5rem;
+  border: 1px dashed var(--edify-border-strong);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+}
+
+/* ── Page command patterns. ────────────────────────────────────────────── */
+main .platform-page-header {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) auto;
+  align-items: end;
+  gap: 1.25rem 2rem;
+  padding-block-end: 0.25rem;
+}
+
+main .platform-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+main .platform-page-actions > :where(a, button) {
+  flex: 0 0 auto !important;
+  inline-size: max-content !important;
+  min-inline-size: max-content !important;
+  white-space: nowrap;
+}
+
+main .platform-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: clamp(0.875rem, 1.4vw, 1.125rem);
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface);
+  box-shadow: var(--edify-shadow-card);
+}
+
+main .platform-filter-bar > :where(label, div) {
+  grid-column: span 2;
+  min-inline-size: 0;
+}
+
+main .platform-filter-bar > .platform-filter-search {
+  grid-column: span 4;
+}
+
+.theme-blue main .platform-filter-bar {
+  border-color: var(--edify-glass-border);
+  background: var(--edify-glass-surface);
+  -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+  backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+  box-shadow: var(--edify-glass-shadow);
+}
+
+/* Intentional dark-blue hero for high-trust operational consoles. */
+main .platform-hero {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  padding: clamp(1.5rem, 1.1rem + 1.25vw, 2.25rem);
+  border: 1px solid rgba(123, 189, 232, 0.2) !important;
+  border-radius: var(--edify-radius-xl) !important;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(73, 118, 159, 0.34), transparent 44%),
+    linear-gradient(125deg, #001d39 0%, #0a4174 64%, #173251 100%) !important;
+  box-shadow: 0 18px 42px rgba(0, 29, 57, 0.18) !important;
+}
+
+main .platform-hero h1 {
+  max-inline-size: none;
+  color: #fff !important;
+  font-size: clamp(1.65rem, 1.45rem + 0.75vw, 2.125rem) !important;
+  font-weight: 650 !important;
+}
+
+main .platform-hero p {
+  max-inline-size: 68ch;
+  color: rgba(232, 244, 252, 0.76) !important;
+  font-size: var(--edify-text-body-size) !important;
+  font-weight: 400 !important;
+  line-height: 1.55;
+}
+
+main .platform-hero__eyebrow {
+  color: #9edcff !important;
+  background: rgba(123, 189, 232, 0.1) !important;
+  border-color: rgba(123, 189, 232, 0.26) !important;
+}
+
+/* HTMX feedback remains perceivable without shifting the surrounding page. */
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity var(--edify-transition-fast);
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request:not(form) {
+  cursor: progress;
+}
+
+/* ── Responsive composition. ───────────────────────────────────────────── */
+@media (max-width: 63.9375rem) {
+  main > :where(div, section)[class*="px-"] {
+    padding-inline: clamp(1rem, 2.5vw, 1.5rem) !important;
+  }
+
+  main [class*="grid-cols-8"],
+  main [class*="grid-cols-6"],
+  main [class*="grid-cols-5"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  main .platform-page-header {
+    grid-template-columns: 1fr;
+  }
+
+  main .platform-page-actions {
+    justify-content: flex-start;
+  }
+
+  main .platform-filter-bar > :where(label, div) {
+    grid-column: span 3;
+  }
+
+  main .platform-filter-bar > .platform-filter-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 47.5rem) {
+  main > :where(div, section)[class*="px-"],
+  main > :where(div, section)[class*="p-4"],
+  main > :where(div, section)[class*="p-5"],
+  main > :where(div, section)[class*="p-6"] {
+    padding-inline: 1rem !important;
+  }
+
+  main h1 {
+    max-inline-size: none;
+  }
+
+  main > div > :where(header, div):has(h1) {
+    align-items: stretch !important;
+  }
+
+  main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+    inline-size: 100%;
+  }
+
+  main [class*="grid-cols-8"],
+  main [class*="grid-cols-6"],
+  main [class*="grid-cols-5"],
+  main [class*="grid-cols-4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main [class*="grid-cols-3"] {
+    grid-template-columns: 1fr;
+  }
+
+  main form[hx-get][class*="grid"],
+  main form[id*="filter"][class*="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main .platform-filter-bar > :where(label, div),
+  main .platform-filter-bar > .platform-filter-search {
+    grid-column: span 6;
+  }
+
+  main :where(input[type="text"], input[type="email"], input[type="password"],
+    input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
+    input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+    font-size: 1rem !important;
+  }
+
+  main :where(button, [role="button"],
+    input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+    select, a[class*="rounded"]) {
+    min-block-size: 2.75rem !important;
+  }
+
+  main :where(button, [role="button"]) {
+    min-inline-size: 2.75rem;
+  }
+
+  main table th,
+  main table td {
+    padding: 0.6875rem 0.75rem !important;
+  }
+}
+
+@media (max-width: 30rem) {
+  main form[hx-get][class*="grid"],
+  main form[id*="filter"][class*="grid"],
+  main form[id*="search"][class*="grid"] {
+    grid-template-columns: 1fr;
+  }
+
+  main :where(.btn, .edify-action-button,
+    button[class*="bg-blue-"], a[class*="bg-blue-"],
+    button[class*="bg-indigo-"], a[class*="bg-indigo-"]) {
+    min-block-size: 2.75rem;
+  }
+
+  main .platform-page-actions > :where(a, button) {
+    flex: 1 1 100% !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    justify-content: center;
+  }
+
+  main .platform-filter-bar > :where(label, div),
+  main .platform-filter-bar > .platform-filter-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (pointer: coarse) {
+  main :where(button, [role="button"], input, select, textarea),
+  main a[class*="btn"],
+  main a[class*="button"],
+  main a[class*="bg-"] {
+    min-block-size: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main :where(a, button, input, select, textarea, .card, .panel) {
+    animation: none !important;
+    transition: none !important;
+    translate: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  main :where(.card, .panel, .bg-white[class*="rounded"],
+    [style*="--edify-surface"][class*="rounded"], .status, .badge) {
+    border: 1px solid CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  :where(a, button, input, select, textarea, summary, [role="button"]):focus-visible {
+    outline: 2px solid Highlight !important;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .theme-blue main :where(.card, .panel, .bg-white[class*="rounded"],
+    [style*="--edify-surface"][class*="rounded"]) {
+    background-color: rgba(4, 43, 79, 0.94) !important;
+  }
+}
+
+@media (min-width: 96rem) {
+  main .debrief-kpi-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}

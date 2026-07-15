@@ -175,13 +175,13 @@ def leadership_summary(principal, query: dict) -> dict:
         .count()
     )
 
-    disbursed_cents = (
+    # est_cost_cents holds plain UGX despite its name -- no /100 here.
+    disbursed_total_ugx = (
         acts.filter(
             status__in=["ia_verified", "closed", "accountant_confirmed"]
         ).aggregate(s=Sum("est_cost_cents"))["s"]
         or 0
     )
-    disbursed_total_ugx = disbursed_cents // 100
 
     return {
         "countryScope": scope.country_scope,

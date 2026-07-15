@@ -10,11 +10,90 @@ if TYPE_CHECKING:
 
 class SchoolDirectoryViewModel:
     @staticmethod
+    def bulk_progress(school_ids: list[str]) -> dict[str, dict]:
+        """Batch-compute the SSA/visit/training progress counters that
+        from_school() needs for a page of schools, in a handful of queries
+        instead of ~5-7 queries per school (avoids N+1 on the directory list).
+
+        Returns {school_id: {"has_ssa": bool, "visits_count": int,
+        "trainings_count": int}}. Pass the result as ``progress`` to
+        from_school() for each school on the page.
+        """
+        from django.db.models import Count
+        from apps.ssa.models import SsaRecord
+        from apps.activities.models import Activity
+
+        school_ids = list(school_ids)
+        if not school_ids:
+            return {}
+
+        ssa_school_ids = set(
+            SsaRecord.objects.filter(
+                school_id__in=school_ids,
+                verification_status="confirmed",
+                deleted_at__isnull=True,
+            )
+            .values_list("school_id", flat=True)
+            .distinct()
+        )
+
+        visits_by_school: dict[str, int] = dict(
+            Activity.objects.filter(
+                school_id__in=school_ids,
+                activity_type__in=["school_visit", "core_visit", "baseline_ssa_visit"],
+                status="completed",
+                deleted_at__isnull=True,
+            )
+            .values("school_id")
+            .annotate(c=Count("id"))
+            .values_list("school_id", "c")
+        )
+
+        trainings_by_school: dict[str, int] = dict(
+            Activity.objects.filter(
+                school_id__in=school_ids,
+                activity_type__in=["training", "core_training"],
+                status="completed",
+                deleted_at__isnull=True,
+            )
+            .values("school_id")
+            .annotate(c=Count("id"))
+            .values_list("school_id", "c")
+        )
+
+        # Cluster-wide trainings/meetings record attendance via a JSON array
+        # of school ids rather than a school FK, so they can't be grouped
+        # with a values().annotate() the way the two querysets above are.
+        # Fetch the (bounded) set of qualifying activities once and tally
+        # attendance in Python instead of re-querying per school.
+        wanted = set(school_ids)
+        cluster_attended = Activity.objects.filter(
+            activity_type__in=["cluster_training", "cluster_meeting"],
+            status="completed",
+            deleted_at__isnull=True,
+            attended_school_ids__overlap=list(wanted),
+        ).values_list("attended_school_ids", flat=True)
+        for attended in cluster_attended:
+            for sid in attended or []:
+                if sid in wanted:
+                    trainings_by_school[sid] = trainings_by_school.get(sid, 0) + 1
+
+        return {
+            sid: {
+                "has_ssa": sid in ssa_school_ids,
+                "visits_count": visits_by_school.get(sid, 0),
+                "trainings_count": trainings_by_school.get(sid, 0),
+            }
+            for sid in school_ids
+        }
+
+    @staticmethod
     def from_school(
         school: School,
         user: AuthPrincipal,
         clusters_dict: dict[str, str],
         active_projects_exist: bool,
+        progress: dict | None = None,
     ) -> dict:
         is_clustered = (
             school.cluster_id is not None or school.cluster_status == "clustered"
@@ -58,32 +137,23 @@ class SchoolDirectoryViewModel:
 
         is_core_school = school.school_type == "core"
 
-        # Calculate dynamic planning gaps for cards
-        from apps.ssa.models import SsaRecord
-        from apps.activities.models import Activity
+        # Calculate dynamic planning gaps for cards. Callers rendering a
+        # page of schools should batch-compute this once via
+        # SchoolDirectoryViewModel.bulk_progress(school_ids) and pass the
+        # per-school entry as `progress` — falling back here (single
+        # per-school query batch) keeps single-school callers (e.g. the
+        # school detail drawer, tests) working without a page-level
+        # precompute step.
+        if progress is None:
+            progress = SchoolDirectoryViewModel.bulk_progress([school.id]).get(
+                school.id, {"has_ssa": False, "visits_count": 0, "trainings_count": 0}
+            )
 
-        has_ssa = SsaRecord.objects.filter(
-            school=school, verification_status="confirmed", deleted_at__isnull=True
-        ).exists()
-        has_visit = Activity.objects.filter(
-            school=school,
-            activity_type__in=["school_visit", "core_visit", "baseline_ssa_visit"],
-            status="completed",
-            deleted_at__isnull=True,
-        ).exists()
-        has_training = Activity.objects.filter(
-            school=school,
-            activity_type__in=["training", "core_training"],
-            status="completed",
-            deleted_at__isnull=True,
-        ).exists()
-        if not has_training:
-            has_training = Activity.objects.filter(
-                activity_type__in=["cluster_training", "cluster_meeting"],
-                status="completed",
-                deleted_at__isnull=True,
-                attended_school_ids__contains=[str(school.id)],
-            ).exists()
+        has_ssa = progress["has_ssa"]
+        visits_count_raw = progress["visits_count"]
+        trainings_count_raw = progress["trainings_count"]
+        has_visit = visits_count_raw > 0
+        has_training = trainings_count_raw > 0
 
         # Core School Progressive Status Calculation
         visit_status_label = ""
@@ -104,13 +174,7 @@ class SchoolDirectoryViewModel:
                 assessment_status_type = "danger"
 
             # 2. Support Visits Count
-            visits_count = Activity.objects.filter(
-                school=school,
-                activity_type__in=["school_visit", "core_visit", "baseline_ssa_visit"],
-                status="completed",
-                deleted_at__isnull=True,
-            ).count()
-            visits_count = min(4, visits_count)
+            visits_count = min(4, visits_count_raw)
 
             if visits_count == 0:
                 visit_status_label = "No 1st Visit"
@@ -129,21 +193,7 @@ class SchoolDirectoryViewModel:
                 visit_status_type = "success"
 
             # 3. Trainings Count (Individual + Cluster Attendances)
-            trainings_count = Activity.objects.filter(
-                school=school,
-                activity_type__in=["training", "core_training"],
-                status="completed",
-                deleted_at__isnull=True,
-            ).count()
-
-            cluster_trainings_attended = Activity.objects.filter(
-                activity_type__in=["cluster_training", "cluster_meeting"],
-                status="completed",
-                deleted_at__isnull=True,
-                attended_school_ids__contains=[str(school.id)],
-            ).count()
-
-            trainings_count = min(4, trainings_count + cluster_trainings_attended)
+            trainings_count = min(4, trainings_count_raw)
 
             if trainings_count == 0:
                 training_status_label = "No 1st Training"

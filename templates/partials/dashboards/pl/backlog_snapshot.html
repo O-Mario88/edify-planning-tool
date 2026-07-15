@@ -9,11 +9,9 @@
     </thead>
     <tbody>
       {% for c in backlog_snapshot %}
-      <tr style="border-bottom:1px solid var(--edify-border);"
+      <tr class="edify-data-row" style="border-bottom:1px solid var(--edify-border);cursor:pointer;"
           hx-get="/dashboard/pl-drilldown{{ c.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-          onmouseover="this.style.background='var(--edify-surface-muted)'"
-          onmouseout="this.style.background='transparent'"
-          style="cursor:pointer;">
+          tabindex="0">
         <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ c.label }}</td>
         <td style="padding:7px 10px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:{% if c.tone == 'danger' %}var(--edify-danger){% elif c.tone == 'warning' %}var(--edify-warning){% else %}var(--edify-text){% endif %};">{{ c.value }}</td>
       </tr>

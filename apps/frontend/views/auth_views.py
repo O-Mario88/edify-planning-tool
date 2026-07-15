@@ -1,11 +1,75 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login as django_login, logout as django_logout
+from django.contrib.auth import (
+    authenticate,
+    login as django_login,
+    logout as django_logout,
+)
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Sum
 from django.utils import timezone
-from datetime import timedelta
+
+
+def _login_stats():
+    """Return coarse, real operational totals for the public sign-in hero.
+
+    The values contain no user- or school-level detail and are cached because
+    the login page is public. The page never substitutes demo/fabricated
+    figures when the database is empty.
+    """
+    from apps.schools.models import School
+    from apps.activities.models import Activity
+    from apps.analytics.pl_analytics_service import COMPLETED_STATUSES, VISIT_TYPES
+    from apps.core.fy import get_operational_fy
+    from apps.targets.models import MonthlyPersonalTarget, TargetAchievementLedger
+
+    fy = get_operational_fy()
+    cache_key = f"frontend:login-stats:{fy}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    current_fy_activities = Activity.objects.filter(
+        deleted_at__isnull=True,
+        fy=fy,
+    ).exclude(status__in=("cancelled", "rejected", "deferred"))
+    completed = current_fy_activities.filter(status__in=COMPLETED_STATUSES)
+
+    total_activity_count = current_fy_activities.count()
+    completed_activity_count = completed.count()
+    task_completion_pct = (
+        round((completed_activity_count / total_activity_count) * 100)
+        if total_activity_count
+        else 0
+    )
+
+    target_total = (
+        MonthlyPersonalTarget.objects.filter(fy=fy).aggregate(total=Sum("target"))[
+            "total"
+        ]
+        or 0
+    )
+    target_achieved = (
+        TargetAchievementLedger.objects.filter(
+            fy=fy,
+            validation_status="validated",
+        ).aggregate(total=Sum("quantity"))["total"]
+        or 0
+    )
+    target_progress_pct = (
+        min(100, round((target_achieved / target_total) * 100)) if target_total else 0
+    )
+
+    stats = {
+        "stat_schools_reached": f"{School.objects.filter(deleted_at__isnull=True).count():,}",
+        "stat_field_visits": f"{completed.filter(activity_type__in=VISIT_TYPES).count():,}",
+        "stat_tasks_completed": f"{task_completion_pct}%",
+        "stat_target_progress": f"{target_progress_pct}%",
+    }
+    cache.set(cache_key, stats, timeout=300)
+    return stats
 
 
 def login_view(request):
@@ -16,86 +80,71 @@ def login_view(request):
 
     if request.method == "POST":
         from apps.accounts.models import User
+        from apps.accounts.lockout_service import AuthenticationLockoutService
 
         email = request.POST.get("email", "").strip().lower()
         password = request.POST.get("password", "")
         remember_me = request.POST.get("remember_me") == "on"
 
-        # Look up user (including inactive, so we can track lockout state)
-        user = User.objects.filter(email=email, deleted_at__isnull=True).first()
+        # Pre-check purely for the user-facing message (locked vs. wrong
+        # credentials) — authenticate() below is still the actual gate and
+        # re-checks this itself, so there's no race/bypass between the two.
+        existing = User.objects.filter(email=email, deleted_at__isnull=True).first()
+        if existing:
+            state = AuthenticationLockoutService.check_lockout(existing)
+            if state.locked:
+                message = (
+                    "This account has been locked due to too many failed login "
+                    "attempts. Please contact your administrator."
+                    if state.escalated
+                    else "This account is temporarily locked due to repeated failed "
+                    "sign-ins. Try again later."
+                )
+                return render(
+                    request,
+                    "pages/auth/login.html",
+                    {
+                        "error": message,
+                        "email": email,
+                        "remember_me": remember_me,
+                        **_login_stats(),
+                    },
+                )
 
-        now = timezone.now()
+        # ONE authentication call — the LockoutEnforcingModelBackend
+        # (AUTHENTICATION_BACKENDS) enforces lockout, lifecycle status, and
+        # password verification, and records the failed/success outcome via
+        # AuthenticationLockoutService (which also fires the admin
+        # notification itself if this attempt just escalated the account —
+        # uniform across every login surface, not view-specific logic).
+        # Same call the DRF API login path makes
+        # (apps.accounts.auth_services.login).
+        user = authenticate(request, email=email, password=password)
 
-        # Check if account is permanently locked
-        if user and user.locked_until and user.locked_until > now:
-            return render(
-                request,
-                "pages/auth/login.html",
-                {
-                    "error": "This account has been locked due to too many failed login attempts. Please contact your administrator.",
-                    "email": email,
-                },
-            )
-
-        # Check lifecycle status
-        if user and user.status not in ("active",):
-            return render(
-                request,
-                "pages/auth/login.html",
-                {"error": "Invalid email or password.", "email": email},
-            )
-
-        # Verify password
-        password_ok = (
-            bool(user and user.password and user.check_password(password))
-            if user
-            else False
-        )
-
-        if not user or not password_ok or not user.is_active:
-            # Track failed attempt
-            if user:
-                # Same threshold source as the DRF login path
-                # (auth_services._max_failed) — the two previously used
-                # different hardcoded fallbacks (10 vs 5) for the same
-                # setting. Lockout *duration* policy intentionally differs
-                # per path and is not changed here.
-                from apps.accounts.auth_services import _max_failed
-
-                user.failed_login_count = (user.failed_login_count or 0) + 1
-                max_failed = _max_failed()
-
-                if user.failed_login_count >= max_failed:
-                    # Permanent lock — set locked_until to 100 years from now
-                    user.locked_until = now + timedelta(days=36500)
-                    user.failed_login_count = 0
-                    user.save(update_fields=["failed_login_count", "locked_until"])
-
-                    # Notify all ADMIN users
-                    _notify_admins_of_lockout(user)
-
+        if user is None:
+            if existing:
+                existing.refresh_from_db(fields=["lockout_escalated"])
+                if existing.lockout_escalated:
                     return render(
                         request,
                         "pages/auth/login.html",
                         {
                             "error": "This account has been locked due to too many failed login attempts. Please contact your administrator.",
                             "email": email,
+                            "remember_me": remember_me,
+                            **_login_stats(),
                         },
                     )
-                else:
-                    user.save(update_fields=["failed_login_count"])
-
             return render(
                 request,
                 "pages/auth/login.html",
-                {"error": "Invalid email or password.", "email": email},
+                {
+                    "error": "Invalid email or password.",
+                    "email": email,
+                    "remember_me": remember_me,
+                    **_login_stats(),
+                },
             )
-
-        # Success — clear failure counter + stamp last login
-        user.failed_login_count = 0
-        user.locked_until = None
-        user.last_login_at = now
-        user.save(update_fields=["failed_login_count", "locked_until", "last_login_at"])
 
         django_login(request, user)
 
@@ -111,37 +160,7 @@ def login_view(request):
         messages.success(request, f"Welcome back, {user.name}!")
         return redirect("/dashboard")
 
-    return render(request, "pages/auth/login.html")
-
-
-def _notify_admins_of_lockout(locked_user):
-    """Create a high-priority notification for all ADMIN-role users when an account is locked."""
-    try:
-        from apps.accounts.models import User
-        from apps.notifications.services import WorkflowNotificationService
-        from apps.core.rbac import EdifyRole
-
-        admin_users = User.objects.filter(
-            roles__contains=[EdifyRole.ADMIN.value],
-            is_active=True,
-            deleted_at__isnull=True,
-        )
-        WorkflowNotificationService.trigger(
-            event_type="account_lockout",
-            category="general",
-            priority="high",
-            title=f"Account Locked: {locked_user.name}",
-            body=f"{locked_user.email} has been locked after failed login attempts. Go to User Management to unlock.",
-            context_type="User",
-            context_id=locked_user.id,
-            recipients=admin_users
-        )
-    except Exception:
-        import logging
-
-        logging.getLogger("edify.auth").exception(
-            "Failed to notify admins of account lockout"
-        )
+    return render(request, "pages/auth/login.html", _login_stats())
 
 
 @require_POST

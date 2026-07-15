@@ -266,7 +266,7 @@ class ActivityReturnService:
                     body=f"Activity '{activity.activity_type}' at '{activity.school.name if activity.school else ''}' needs correction. Reason: {', '.join(reasons)}",
                     context_type="Activity",
                     context_id=activity.id,
-                    recipients=[recipient]
+                    recipients=[recipient],
                 )
 
             from apps.activities.services import _serialize

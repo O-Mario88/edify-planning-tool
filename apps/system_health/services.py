@@ -57,7 +57,57 @@ def report() -> dict:
     data["routeIntelligence"] = _route_intelligence()
     data["uiQuality"] = _ui_quality()
     data["professionalDevelopment"] = _professional_development()
+    data["auditChainIntegrity"] = _audit_chain_integrity()
+    data["backgroundAutomation"] = _background_automation()
+    data["authLockout"] = _auth_lockout()
+    data["unmatchedSsa"] = _unmatched_ssa()
     return data
+
+
+def _background_automation() -> dict:
+    """Scheduler + periodic-job health (audit Issue 2 / §9)."""
+    try:
+        from apps.realtime.health import background_automation_health
+
+        return background_automation_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _auth_lockout() -> dict:
+    """Authentication lockout unification checks (Issue 3 of the audit) —
+    backend drift, legacy lock record consistency, escalated-account
+    visibility."""
+    try:
+        from apps.accounts.health import auth_lockout_health
+
+        return auth_lockout_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _unmatched_ssa() -> dict:
+    """/ssa/unmatched queue size/staleness/suggestion-coverage checks
+    (Issue 5 of the audit)."""
+    try:
+        from apps.ssa.health import unmatched_ssa_health
+
+        return unmatched_ssa_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _audit_chain_integrity() -> dict:
+    """Re-verify the audit log's hash chain (apps.audit.services.verify_chain)
+    so the tamper-evidence claim is actually exercised on every System Health
+    scan rather than sitting unused."""
+    try:
+        from apps.audit.services import verify_chain
+
+        result = verify_chain()
+        return {"clean": result["ok"], "brokenAt": result["brokenAt"]}
+    except Exception as exc:  # noqa: BLE001 — the health page must render regardless
+        return {"clean": None, "brokenAt": None, "error": str(exc)}
 
 
 def _professional_development() -> dict:
@@ -862,7 +912,9 @@ def _workflow_issues() -> dict:
         .filter(Q(cluster_id__isnull=True) | Q(cluster_id=""))
         .count()
     )
-    _sched_slots = CoreActivitySlot.objects.filter(status__in=["Scheduled", "scheduled"])
+    _sched_slots = CoreActivitySlot.objects.filter(
+        status__in=["Scheduled", "scheduled"]
+    )
     core_slots_scheduled_missing_activity = _sched_slots.filter(
         Q(activity_id__isnull=True) | Q(activity_id="")
     ).count()
@@ -879,8 +931,13 @@ def _workflow_issues() -> dict:
     core_duplicate_slot_activities = (
         _linked.values("activity_id").annotate(_n=Count("id")).filter(_n__gt=1).count()
     )
-    _core_done = ["Completed", "Accountant Confirmed", "ia_verified", "iaVerify",
-                  "accountant_confirmed"]
+    _core_done = [
+        "Completed",
+        "Accountant Confirmed",
+        "ia_verified",
+        "iaVerify",
+        "accountant_confirmed",
+    ]
     core_package_complete_missing_slots = sum(
         1
         for plan in _core_active_plans.filter(

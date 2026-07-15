@@ -6,66 +6,73 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 max-w-[900px] mx-auto space-y-5">
 
-  <div>
-    <h1 class="text-[21px] font-extrabold tracking-tight">Settings</h1>
-    <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">Your account, security and appearance preferences.</p>
+  <div class="edify-page-header">
+    <h1>Settings</h1>
+    <p>Your account, security and appearance preferences.</p>
   </div>
 
   {# ── Account ───────────────────────────────────────────────────────────── #}
-  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
-    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Account</h2>
+  <section class="card p-5 space-y-3" aria-labelledby="settings-account-title">
+    <h2 id="settings-account-title" class="text-sm font-semibold">Account</h2>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div class="rounded-xl border border-slate-100 p-3">
-        <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Name</p>
-        <p class="text-[13px] font-bold text-slate-800 mt-0.5">{{ user.name }}</p>
+      <div class="settings-detail-tile">
+        <p class="settings-detail-tile__label">Name</p>
+        <p class="settings-detail-tile__value">{{ user.name }}</p>
       </div>
-      <div class="rounded-xl border border-slate-100 p-3">
-        <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Email</p>
-        <p class="text-[13px] font-bold text-slate-800 mt-0.5 truncate">{{ user.email }}</p>
+      <div class="settings-detail-tile">
+        <p class="settings-detail-tile__label">Email</p>
+        <p class="settings-detail-tile__value truncate">{{ user.email }}</p>
       </div>
-      <div class="rounded-xl border border-slate-100 p-3">
-        <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Role</p>
-        <p class="text-[13px] font-bold text-slate-800 mt-0.5">{{ user.active_role }}</p>
+      <div class="settings-detail-tile">
+        <p class="settings-detail-tile__label">Role</p>
+        <p class="settings-detail-tile__value">{{ user.active_role }}</p>
       </div>
     </div>
     <div class="flex flex-wrap gap-2 pt-1">
-      <a href="/profile" class="h-8 px-3 rounded-lg border border-slate-200 text-slate-600 text-[11.5px] font-bold inline-flex items-center hover:bg-slate-50 transition-colors">View Profile</a>
-      <a href="/change-password" class="h-8 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11.5px] font-bold inline-flex items-center transition-colors">Change Password</a>
+      <a href="/profile" class="btn h-9 inline-flex items-center">View profile</a>
+      <a href="/change-password" class="btn btn-primary h-9 inline-flex items-center">Change password</a>
     </div>
-  </div>
+  </section>
 
   {# ── Appearance (drives the real edify_theme preference in base.html) ──── #}
-  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
-       x-data="{ pref: localStorage.getItem('edify_theme') || 'system',
-                 setPref(v) { this.pref = v; localStorage.setItem('edify_theme', v);
-                   var h = new Date().getHours();
-                   var actual = v === 'system' ? ((h >= 19 || h < 6) ? 'dark' : 'light') : v;
-                   document.documentElement.classList.toggle('dark', actual === 'dark');
-                   document.documentElement.dataset.theme = actual;
-                   document.documentElement.dataset.themePref = v; } }">
-    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Appearance</h2>
-    <p class="text-[11.5px] text-slate-500">Theme preference is stored on this device.</p>
-    <div class="grid grid-cols-3 gap-2 max-w-md">
-      <button type="button" @click="setPref('light')"
-              :class="pref === 'light' ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'"
-              class="rounded-xl border p-3 text-left transition-all hover:border-slate-300">
-        <span class="block h-8 rounded-lg bg-slate-100 border border-slate-200 mb-2"></span>
-        <span class="text-[11.5px] font-bold">Light</span>
+  <section class="card p-5 space-y-3" aria-labelledby="settings-appearance-title">
+    <h2 id="settings-appearance-title" class="text-sm font-semibold">Appearance</h2>
+    <p class="text-sm text-[var(--edify-text-muted)]">Choose the workspace that best suits your environment. Your preference is stored on this device.</p>
+    <div class="appearance-theme-grid" role="group" aria-label="Workspace color theme">
+      <button type="button" @click="$store.theme.setTheme('system')"
+              :aria-pressed="$store.theme.preference === 'system'"
+              :class="$store.theme.preference === 'system' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--system" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">System</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">Light by day, dark after 19:00</span>
       </button>
-      <button type="button" @click="setPref('dark')"
-              :class="pref === 'dark' ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'"
-              class="rounded-xl border p-3 text-left transition-all hover:border-slate-300">
-        <span class="block h-8 rounded-lg bg-slate-800 border border-slate-700 mb-2"></span>
-        <span class="text-[11.5px] font-bold">Dark</span>
+      <button type="button" @click="$store.theme.setTheme('light')"
+              :aria-pressed="$store.theme.preference === 'light'"
+              :class="$store.theme.preference === 'light' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--light" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">Light</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">Clean and focused</span>
       </button>
-      <button type="button" @click="setPref('system')"
-              :class="pref === 'system' ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'"
-              class="rounded-xl border p-3 text-left transition-all hover:border-slate-300">
-        <span class="block h-8 rounded-lg bg-gradient-to-r from-slate-100 to-slate-800 border border-slate-300 mb-2"></span>
-        <span class="text-[11.5px] font-bold">Auto</span>
+      <button type="button" @click="$store.theme.setTheme('blue')"
+              :aria-pressed="$store.theme.preference === 'blue'"
+              :class="$store.theme.preference === 'blue' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--blue" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">Edify Blue</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">Image-backed glass workspace</span>
+      </button>
+      <button type="button" @click="$store.theme.setTheme('dark')"
+              :aria-pressed="$store.theme.preference === 'dark'"
+              :class="$store.theme.preference === 'dark' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--dark" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">Dark</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">Layered low-light workspace</span>
       </button>
     </div>
-  </div>
+  </section>
 
   {# ── Notifications & session ───────────────────────────────────────────── #}
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">

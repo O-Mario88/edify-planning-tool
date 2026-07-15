@@ -389,6 +389,37 @@ class RolePermissionService:
         return True
 
 
+def render_access_denied(request, message: str):
+    """Shared denial-response contract for security boundaries in
+    server-rendered pages: an HTMX request (or a testserver action-like
+    request, for test-client parity) gets a 403 fragment/response; a plain
+    page GET gets a flash message + redirect to the dashboard.
+
+    Used by both `require_page_permission` (page-level gating) and
+    `AllExceptionsMiddleware` (object-level `PermissionDenied` raised by
+    `get_scoped_object_or_404`) so both security boundaries behave
+    identically instead of one of them leaking a raw JSON blob on a
+    plain page load."""
+    is_htmx = (
+        request.headers.get("HX-Request") == "true"
+        or request.META.get("HTTP_HX_REQUEST") == "true"
+    )
+    is_action = request.method == "POST" or any(
+        p in request.path
+        for p in ("/rvp/", "/cd-", "action", "drawer", "confirm", "approve")
+    )
+    if is_htmx or (request.META.get("SERVER_NAME") == "testserver" and is_action):
+        if is_htmx:
+            return HttpResponseForbidden(
+                "<div class='p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12.5px] font-black'>"
+                "Security Warning: Your role is not authorized to access this action."
+                "</div>"
+            )
+        return HttpResponseForbidden("Access Denied")
+    messages.error(request, message)
+    return redirect("/dashboard")
+
+
 def require_page_permission(page_name: str):
     """Enforces page-level gating across routes and views."""
 
@@ -411,21 +442,10 @@ def require_page_permission(page_name: str):
                     success=False,
                     reason=f"Role '{getattr(request.user, 'active_role', None)}' attempted to access page: {page_name}",
                 )
-                is_htmx = request.headers.get("HX-Request") == "true" or request.META.get("HTTP_HX_REQUEST") == "true"
-                is_action = request.method == "POST" or any(p in request.path for p in ("/rvp/", "/cd-", "action", "drawer", "confirm", "approve"))
-                if is_htmx or (request.META.get("SERVER_NAME") == "testserver" and is_action):
-                    if is_htmx:
-                        return HttpResponseForbidden(
-                            "<div class='p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12.5px] font-black'>"
-                            "Security Warning: Your role is not authorized to access this action."
-                            "</div>"
-                        )
-                    return HttpResponseForbidden("Access Denied")
-                messages.error(
+                return render_access_denied(
                     request,
                     f"Access Denied: Your active role does not have permission to view {page_name.replace('_', ' ').title()}.",
                 )
-                return redirect("/dashboard")
             return view_func(request, *args, **kwargs)
 
         _wrapped_view.has_permission_guard = True
@@ -456,5 +476,6 @@ __all__ = [
     "is_admin",
     "RolePermissionService",
     "require_page_permission",
+    "render_access_denied",
     "get_scoped_object_or_404",
 ]

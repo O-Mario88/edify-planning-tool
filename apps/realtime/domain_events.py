@@ -150,7 +150,7 @@ def _create_notification(recipient_id, event_type, event_id, spec):
         body=spec.get("body"),
         context_type=spec.get("context_type"),
         context_id=spec.get("context_id") or event_id,
-        recipients=[recipient_id]
+        recipients=[recipient_id],
     )
 
 

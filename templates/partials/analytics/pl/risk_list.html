@@ -5,9 +5,9 @@
       <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">K. School Risk &amp; Attention List</h3>
       {% if risk_list.total %}<span class="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-rose-100 text-rose-600 text-[10px] font-bold">{{ risk_list.total }}</span>{% endif %}
     </div>
-    <a href="#" hx-get="/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
+    <button type="button" hx-get="/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
        hx-target="#drawer-container" hx-swap="innerHTML"
-       class="text-[10.5px] font-bold text-blue-600 hover:text-blue-700">View full risk list &rarr;</a>
+       class="text-[10.5px] font-bold text-blue-600 hover:text-blue-700">View full risk list &rarr;</button>
   </div>
   <div class="overflow-x-auto -mx-1">
     <table class="w-full text-left border-collapse min-w-[640px]">

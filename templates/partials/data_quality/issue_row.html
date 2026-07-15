@@ -1,0 +1,34 @@
+<tr id="dq-issue-{{ issue.id }}" class="hover:bg-slate-50/40">
+<td class="px-4 py-3 font-semibold text-slate-800">
+{{ issue.school.name }}
+{% if issue.current_value %}<span class="block text-[11px] text-slate-400 font-semibold mt-0.5">{{ issue.field_name }}: {{ issue.current_value }}</span>{% endif %}
+</td>
+<td class="px-4 py-3 text-slate-500 font-semibold">{{ issue.suggested_fix|default:"—" }}</td>
+<td class="px-4 py-3">
+{% if issue.status == "resolved" %}
+<span class="inline-flex items-center gap-1 text-emerald-600 font-bold text-[11px]">Resolved {{ issue.resolved_at|date:"d M Y" }}</span>
+{% elif issue.assigned_to %}
+<span class="inline-flex items-center gap-1 text-indigo-600 font-bold text-[11px]">Assigned{% if assignee_name %} · {{ assignee_name }}{% endif %}</span>
+{% else %}
+<span class="inline-flex items-center gap-1 text-slate-400 font-bold text-[11px]">Unassigned</span>
+{% endif %}
+</td>
+<td class="px-4 py-3 text-right">
+{% if issue.status == "open" %}
+<div class="flex items-center justify-end gap-2">
+<form hx-post="/data-quality/issue/{{ issue.id }}/action" hx-target="#dq-issue-{{ issue.id }}" hx-swap="outerHTML" class="inline m-0">
+{% csrf_token %}
+<input type="hidden" name="action" value="assign">
+<button type="submit" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-[11px] rounded transition-all">Assign to me</button>
+</form>
+<form hx-post="/data-quality/issue/{{ issue.id }}/action" hx-target="#dq-issue-{{ issue.id }}" hx-swap="outerHTML" class="inline m-0">
+{% csrf_token %}
+<input type="hidden" name="action" value="resolve">
+<button type="submit" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px] rounded transition-all">Resolve</button>
+</form>
+</div>
+{% else %}
+<span class="text-[11px] text-slate-300 font-semibold">—</span>
+{% endif %}
+</td>
+</tr>

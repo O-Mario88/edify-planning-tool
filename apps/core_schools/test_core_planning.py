@@ -46,9 +46,14 @@ FY = get_operational_fy()
 
 # Varied scores → deterministic 4 weakest: TE(2) < GR(3) < LE(4) < Lship(5).
 SCORE_MAP = {
-    "christlike_behaviour": 9.0, "word_of_god": 8.5, "financial_health": 7.0,
-    "leadership": 5.0, "learning_environment": 4.0, "government_requirement": 3.0,
-    "teaching_environment": 2.0, "enrollment": 6.0,
+    "christlike_behaviour": 9.0,
+    "word_of_god": 8.5,
+    "financial_health": 7.0,
+    "leadership": 5.0,
+    "learning_environment": 4.0,
+    "government_requirement": 3.0,
+    "teaching_environment": 2.0,
+    "enrollment": 6.0,
 }
 
 
@@ -56,85 +61,143 @@ class CoreSchoolsPlanningTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Core R")
         self.district = District.objects.create(
-            name="Core D", region=self.region, district_type="primary")
+            name="Core D", region=self.region, district_type="primary"
+        )
         self.cluster = Cluster.objects.create(
-            name="Core Cluster", region=self.region, district=self.district)
+            name="Core Cluster", region=self.region, district=self.district
+        )
 
-        self.cceo, self.cceo_sp = self._staff("cc@core.org", "Core Cceo", EdifyRole.CCEO.value)
-        self.other_cceo, self.other_sp = self._staff("oc@core.org", "Other Cceo", EdifyRole.CCEO.value)
-        self.pl, self.pl_sp = self._staff("pl@core.org", "Core PL",
-                                          EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.cceo, self.cceo_sp = self._staff(
+            "cc@core.org", "Core Cceo", EdifyRole.CCEO.value
+        )
+        self.other_cceo, self.other_sp = self._staff(
+            "oc@core.org", "Other Cceo", EdifyRole.CCEO.value
+        )
+        self.pl, self.pl_sp = self._staff(
+            "pl@core.org", "Core PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
         self.other_pl, self.other_pl_sp = self._staff(
-            "opl@core.org", "Other PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
-        self.ia, _ = self._staff("ia@core.org", "Core IA", EdifyRole.IMPACT_ASSESSMENT.value)
-        self.accountant, _ = self._staff("acc@core.org", "Core Acc",
-                                         EdifyRole.PROGRAM_ACCOUNTANT.value)
-        self.partner_user, _ = self._staff("pa@core.org", "Partner Admin",
-                                           EdifyRole.PARTNER_ADMIN.value)
-        StaffSupervisorAssignment.objects.create(supervisor=self.pl_sp, supervisee=self.cceo_sp)
+            "opl@core.org", "Other PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        self.ia, _ = self._staff(
+            "ia@core.org", "Core IA", EdifyRole.IMPACT_ASSESSMENT.value
+        )
+        self.accountant, _ = self._staff(
+            "acc@core.org", "Core Acc", EdifyRole.PROGRAM_ACCOUNTANT.value
+        )
+        self.partner_user, _ = self._staff(
+            "pa@core.org", "Partner Admin", EdifyRole.PARTNER_ADMIN.value
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=self.cceo_sp
+        )
 
         self.school = self._school("CORE-1", "Alpha Core School", self.cceo_sp)
         self.other_school = self._school("CORE-2", "Beta Core School", self.other_sp)
 
-        self.partner = Partner.objects.create(name="Core Helper Org", region_name="Core R")
+        self.partner = Partner.objects.create(
+            name="Core Helper Org", region_name="Core R"
+        )
 
         self.plan = self._plan(self.school)
         self._plan(self.other_school)
 
         # Verified annual SSA with all eight interventions.
         self.ssa = SsaRecord.objects.create(
-            school=self.school, fy=FY, quarter="Q1", average_score=5.6,
+            school=self.school,
+            fy=FY,
+            quarter="Q1",
+            average_score=5.6,
             verification_status="confirmed",
-            date_of_ssa=date(int(FY) - 1, 11, 5), uploaded_by="test")
+            date_of_ssa=date(int(FY) - 1, 11, 5),
+            uploaded_by="test",
+        )
         for code, score in SCORE_MAP.items():
             SsaScore.objects.create(ssa_record=self.ssa, intervention=code, score=score)
 
         # Costing so core visit scheduling can price.
         catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda", fy=FY, version=1,
-            defaults={"is_active": True, "label": "Core Test Catalogue"})
+            country="Uganda",
+            fy=FY,
+            version=1,
+            defaults={"is_active": True, "label": "Core Test Catalogue"},
+        )
         catalogue.is_active = True
         catalogue.save(update_fields=["is_active"])
-        for key, cost in (("staff_visit_transport_primary", 250000), ("lunch", 30000),
-                          ("primary_transport_per_day", 250000),
-                          ("primary_lunch_per_day", 30000),
-                          ("partner_visit_lump_sum", 40000),
-                          ("partner_training_lump_sum", 60000),
-                          ("training_session_fee", 50000), ("venue", 80000),
-                          ("meals_per_participant", 15000),
-                          ("mobilisation_per_participant", 10000)):
+        for key, cost in (
+            ("staff_visit_transport_primary", 250000),
+            ("lunch", 30000),
+            ("primary_transport_per_day", 250000),
+            ("primary_lunch_per_day", 30000),
+            ("partner_visit_lump_sum", 40000),
+            ("partner_training_lump_sum", 60000),
+            ("training_session_fee", 50000),
+            ("venue", 80000),
+            ("meals_per_participant", 15000),
+            ("mobilisation_per_participant", 10000),
+        ):
             CostSetting.objects.update_or_create(
-                key=key, defaults={"label": key, "unit_cost": cost, "fy": FY,
-                                   "catalogue": catalogue, "version": 1})
+                key=key,
+                defaults={
+                    "label": key,
+                    "unit_cost": cost,
+                    "fy": FY,
+                    "catalogue": catalogue,
+                    "version": 1,
+                },
+            )
 
     # ── fixtures ─────────────────────────────────────────────────────────────
     def _staff(self, email, name, role):
-        u = User.objects.create_user(email=email, name=name, roles=[role],
-                                     active_role=role, password="x", is_active=True)
+        u = User.objects.create_user(
+            email=email,
+            name=name,
+            roles=[role],
+            active_role=role,
+            password="x",
+            is_active=True,
+        )
         return u, StaffProfile.objects.create(user=u, title=role)
 
     def _school(self, sid, name, owner_sp):
         s = School.objects.create(
-            school_id=sid, name=name, region=self.region, district=self.district,
-            school_type="core", current_fy_ssa_status="done", enrollment=200,
-            account_owner_id=owner_sp.user_id)
+            school_id=sid,
+            name=name,
+            region=self.region,
+            district=self.district,
+            school_type="core",
+            current_fy_ssa_status="done",
+            enrollment=200,
+            account_owner_id=owner_sp.user_id,
+        )
         School.objects.filter(id=s.id).update(cluster_id=self.cluster.id)
         StaffSchoolAssignment.objects.create(staff=owner_sp, school_id=s.id)
         return School.objects.get(id=s.id)
 
     def _plan(self, school):
         plan = CorePlan.objects.create(
-            id=cplan_id(school.school_id), school_id=school.school_id, fy=FY,
-            status="Active")
+            id=cplan_id(school.school_id),
+            school_id=school.school_id,
+            fy=FY,
+            status="Active",
+        )
         CoreSchoolProfile.objects.create(
-            id=cprof_id(school.school_id), school_id=school.school_id,
-            core_plan=plan, core_start_fy=FY)
+            id=cprof_id(school.school_id),
+            school_id=school.school_id,
+            core_plan=plan,
+            core_start_fy=FY,
+        )
         for kind, prefix in (("visit", "v"), ("training", "t")):
             for seq in range(1, 5):
                 CoreActivitySlot.objects.create(
-                    id=cslot_id(school.school_id, prefix, seq), core_plan=plan,
-                    school_id=school.school_id, intervention="leadership",
-                    activity_type=kind, sequence_number=seq, status="Planned")
+                    id=cslot_id(school.school_id, prefix, seq),
+                    core_plan=plan,
+                    school_id=school.school_id,
+                    intervention="leadership",
+                    activity_type=kind,
+                    sequence_number=seq,
+                    status="Planned",
+                )
         return plan
 
     def _client(self, user):
@@ -144,30 +207,40 @@ class CoreSchoolsPlanningTest(TestCase):
 
     def _schedule_visit(self, client=None, school=None, seq="1", when="2026-07-21"):
         return (client or self._client(self.cceo)).post(
-            "/core-schools/schedule-visit/action", {
+            "/core-schools/schedule-visit/action",
+            {
                 "school_id": (school or self.school).school_id,
-                "visit_number": seq, "scheduled_date": when,
+                "visit_number": seq,
+                "scheduled_date": when,
                 "focus_intervention": "teaching_environment",
                 "visit_purpose": "Core package recovery visit",
                 "expected_outcome": "Slot fulfilled",
                 "responsible_staff_id": self.cceo_sp.id,
-            })
+            },
+        )
 
     # ── 1–6: sidebar + scope ─────────────────────────────────────────────────
     def test_core_schools_sidebar_visible_to_authorized_roles(self):
         for user in (self.cceo, self.pl, self.ia):
-            labels = [i["label"] for sec in build_sidebar_for_user(user, "/")
-                      for i in sec["items"]]
+            labels = [
+                i["label"]
+                for sec in build_sidebar_for_user(user, "/")
+                for i in sec["items"]
+            ]
             self.assertIn("Core Schools", labels, user.email)
 
     def test_core_schools_sidebar_hidden_from_unauthorized_roles(self):
         cd, _ = self._staff("cd@core.org", "Core CD", EdifyRole.COUNTRY_DIRECTOR.value)
         for user in (cd, self.accountant, self.partner_user):
-            labels = [i["label"] for sec in build_sidebar_for_user(user, "/")
-                      for i in sec["items"]]
+            labels = [
+                i["label"]
+                for sec in build_sidebar_for_user(user, "/")
+                for i in sec["items"]
+            ]
             self.assertNotIn("Core Schools", labels, user.email)
-            self.assertNotEqual(self._client(user).get("/core-schools").status_code,
-                                200, user.email)
+            self.assertNotEqual(
+                self._client(user).get("/core-schools").status_code, 200, user.email
+            )
 
     def test_cceo_sees_only_assigned_core_schools(self):
         html = self._client(self.cceo).get("/core-schools").content.decode()
@@ -176,7 +249,7 @@ class CoreSchoolsPlanningTest(TestCase):
 
     def test_pl_sees_own_and_supervised_core_portfolio(self):
         html = self._client(self.pl).get("/core-schools").content.decode()
-        self.assertIn("Alpha Core School", html)   # supervised CCEO's school
+        self.assertIn("Alpha Core School", html)  # supervised CCEO's school
 
     def test_pl_cannot_see_other_pl_core_schools(self):
         html = self._client(self.other_pl).get("/core-schools").content.decode()
@@ -185,13 +258,19 @@ class CoreSchoolsPlanningTest(TestCase):
     def test_partner_sees_only_assigned_core_work(self):
         other_partner = Partner.objects.create(name="Unrelated Org")
         PartnerAssignment.objects.create(
-            school=self.school, partner=self.partner,
-            assigning_staff_id=self.cceo_sp.id, status="assigned")
+            school=self.school,
+            partner=self.partner,
+            assigning_staff_id=self.cceo_sp.id,
+            status="assigned",
+        )
         mine = PartnerAssignment.objects.filter(partner=self.partner)
         self.assertEqual(mine.count(), 1)
-        self.assertEqual(PartnerAssignment.objects.filter(partner=other_partner).count(), 0)
+        self.assertEqual(
+            PartnerAssignment.objects.filter(partner=other_partner).count(), 0
+        )
         self.assertNotEqual(
-            self._client(self.partner_user).get("/core-schools").status_code, 200)
+            self._client(self.partner_user).get("/core-schools").status_code, 200
+        )
 
     # ── 7: the package definition ────────────────────────────────────────────
     def test_core_school_requires_assessment_four_visits_four_trainings(self):
@@ -210,7 +289,8 @@ class CoreSchoolsPlanningTest(TestCase):
         resp = self._schedule_visit()
         self.assertIn(resp.status_code, (200, 302), resp.content[:200])
         act = Activity.objects.filter(
-            school=self.school, activity_type="core_visit").first()
+            school=self.school, activity_type="core_visit"
+        ).first()
         self.assertIsNotNone(act)
         self.assertEqual(act.status, "scheduled")
         slot = CoreActivitySlot.objects.get(id=cslot_id(self.school.school_id, "v", 1))
@@ -220,7 +300,8 @@ class CoreSchoolsPlanningTest(TestCase):
     def test_scheduling_core_slot_creates_budget_line(self):
         self._schedule_visit()
         act = Activity.objects.filter(
-            school=self.school, activity_type="core_visit").first()
+            school=self.school, activity_type="core_visit"
+        ).first()
         self.assertIsNotNone(act)
         self.assertGreater(act.schedule_cost_lines.count(), 0)
         self.assertGreater(act.est_cost_cents, 0)
@@ -236,48 +317,67 @@ class CoreSchoolsPlanningTest(TestCase):
     def test_core_school_remains_on_page_after_activity_scheduled(self):
         self._schedule_visit()
         html = self._client(self.cceo).get("/core-schools").content.decode()
-        self.assertIn("Alpha Core School", html)   # package still open → stays
+        self.assertIn("Alpha Core School", html)  # package still open → stays
 
     # ── 12–14: partner two-step ──────────────────────────────────────────────
     def test_partner_assignment_does_not_create_final_budget_until_scheduled(self):
         acts_before = Activity.objects.count()
-        resp = self._client(self.cceo).post("/core-schools/assign-partner/action", {
-            "school_id": self.school.school_id, "support_type": "Visit",
-            "visit_training_number": "2", "partner_id": self.partner.id,
-            "focus_intervention": "teaching_environment", "notes": "core support",
-        })
+        resp = self._client(self.cceo).post(
+            "/core-schools/assign-partner/action",
+            {
+                "school_id": self.school.school_id,
+                "support_type": "Visit",
+                "visit_training_number": "2",
+                "partner_id": self.partner.id,
+                "focus_intervention": "teaching_environment",
+                "notes": "core support",
+            },
+        )
         self.assertIn(resp.status_code, (200, 302))
-        self.assertTrue(PartnerAssignment.objects.filter(
-            school=self.school, partner=self.partner).exists())
+        self.assertTrue(
+            PartnerAssignment.objects.filter(
+                school=self.school, partner=self.partner
+            ).exists()
+        )
         self.assertEqual(Activity.objects.count(), acts_before)  # no budget yet
 
     def test_partner_schedule_updates_partner_and_staff_my_plan(self):
         from apps.activities import services as asvc
 
-        result = asvc.create({
-            "activityType": "core_visit", "schoolId": self.school.school_id,
-            "deliveryType": "partner", "assignedPartnerId": self.partner.id,
-            "responsibleStaffId": self.cceo_sp.id,
-            "scheduledDate": "2026-07-22",
-            "activityPurposeText": "Partner core coaching",
-        }, principal=self.cceo)
+        result = asvc.create(
+            {
+                "activityType": "core_visit",
+                "schoolId": self.school.school_id,
+                "deliveryType": "partner",
+                "assignedPartnerId": self.partner.id,
+                "responsibleStaffId": self.cceo_sp.id,
+                "scheduledDate": "2026-07-22",
+                "activityPurposeText": "Partner core coaching",
+            },
+            principal=self.cceo,
+        )
         act = Activity.objects.get(id=result["id"])
         self.assertEqual(act.delivery_type, "partner")
         self.assertEqual(act.assigned_partner_id, self.partner.id)
-        self.assertTrue(act.monitored_by_staff_id)   # staff monitors read-only
+        self.assertTrue(act.monitored_by_staff_id)  # staff monitors read-only
 
     def test_staff_partner_activity_is_read_only_for_assigning_staff(self):
         from apps.my_plan.services import compute_next_action
 
         from apps.activities import services as asvc
 
-        result = asvc.create({
-            "activityType": "core_visit", "schoolId": self.school.school_id,
-            "deliveryType": "partner", "assignedPartnerId": self.partner.id,
-            "responsibleStaffId": self.cceo_sp.id,
-            "scheduledDate": "2026-07-23",
-            "activityPurposeText": "Partner core coaching",
-        }, principal=self.cceo)
+        result = asvc.create(
+            {
+                "activityType": "core_visit",
+                "schoolId": self.school.school_id,
+                "deliveryType": "partner",
+                "assignedPartnerId": self.partner.id,
+                "responsibleStaffId": self.cceo_sp.id,
+                "scheduledDate": "2026-07-23",
+                "activityPurposeText": "Partner core coaching",
+            },
+            principal=self.cceo,
+        )
         act = Activity.objects.get(id=result["id"])
         na = compute_next_action(act, date(2026, 7, 23))
         self.assertNotIn(na["action"], ("start", "complete", "evidence", "sf_id"))
@@ -288,9 +388,9 @@ class CoreSchoolsPlanningTest(TestCase):
         from apps.core_schools.services import slot_action
 
         slot_id = cslot_id(self.school.school_id, "v", 1)
-        with self.assertRaises(BadRequest):     # no SF ID
+        with self.assertRaises(BadRequest):  # no SF ID
             slot_action(slot_id, "complete", {}, self.cceo)
-        with self.assertRaises(BadRequest):     # SF ID but no evidence
+        with self.assertRaises(BadRequest):  # SF ID but no evidence
             slot_action(slot_id, "complete", {"salesforceId": "SF-C1"}, self.cceo)
         slot_action(slot_id, "evidence", {"evidenceUri": "core/v1.jpg"}, self.cceo)
         out = slot_action(slot_id, "complete", {"salesforceId": "SF-C1"}, self.cceo)
@@ -316,8 +416,15 @@ class CoreSchoolsPlanningTest(TestCase):
         reco = CoreInterventionRecommendationService.recommend(self.school)
         self.assertTrue(reco["available"])
         codes = [r["code"] for r in reco["rows"]]
-        self.assertEqual(codes, ["teaching_environment", "government_requirement",
-                                 "learning_environment", "leadership"])
+        self.assertEqual(
+            codes,
+            [
+                "teaching_environment",
+                "government_requirement",
+                "learning_environment",
+                "leadership",
+            ],
+        )
 
     def test_two_partner_and_two_staff_recommendations_created(self):
         from apps.core_schools.core_planning_services import (
@@ -336,12 +443,20 @@ class CoreSchoolsPlanningTest(TestCase):
     # ── 19–20: annual impact only ────────────────────────────────────────────
     def test_annual_ssa_used_for_core_impact(self):
         follow = SsaRecord.objects.create(
-            school=self.school, fy=str(int(FY) + 1), quarter="Q1",
-            average_score=7.1, verification_status="confirmed",
-            date_of_ssa=date(int(FY), 11, 5), uploaded_by="test")
+            school=self.school,
+            fy=str(int(FY) + 1),
+            quarter="Q1",
+            average_score=7.1,
+            verification_status="confirmed",
+            date_of_ssa=date(int(FY), 11, 5),
+            uploaded_by="test",
+        )
         CorePlan.objects.filter(id=self.plan.id).update(
-            baseline_average=5.6, baseline_ssa_record_id=self.ssa.id,
-            follow_up_average=7.1, follow_up_ssa_record_id=follow.id)
+            baseline_average=5.6,
+            baseline_ssa_record_id=self.ssa.id,
+            follow_up_average=7.1,
+            follow_up_ssa_record_id=follow.id,
+        )
         plan = CorePlan.objects.get(id=self.plan.id)
         self.assertEqual(round(plan.follow_up_average - plan.baseline_average, 1), 1.5)
 
@@ -349,8 +464,9 @@ class CoreSchoolsPlanningTest(TestCase):
         from apps.core_schools.core_planning_services import CoreAssessmentService
 
         trend = CoreAssessmentService.get_monthly_trend(
-            School.objects.filter(id=self.school.id))
-        self.assertEqual(trend, [])   # one month of data → no fake trend
+            School.objects.filter(id=self.school.id)
+        )
+        self.assertEqual(trend, [])  # one month of data → no fake trend
         html = self._client(self.cceo).get("/core-schools").content.decode()
         self.assertNotIn("monthly SSA improvement", html.lower())
 
@@ -362,7 +478,8 @@ class CoreSchoolsPlanningTest(TestCase):
         issues = _workflow_issues()
         self.assertGreaterEqual(issues["corePackageCompleteMissingSlots"], 1)
         CoreActivitySlot.objects.filter(core_plan=self.plan).update(
-            status="Completed", salesforce_id="SF-OK", evidence_uri="e.jpg")
+            status="Completed", salesforce_id="SF-OK", evidence_uri="e.jpg"
+        )
         issues = _workflow_issues()
         self.assertEqual(issues["corePackageCompleteMissingSlots"], 0)
 
@@ -371,7 +488,7 @@ class CoreSchoolsPlanningTest(TestCase):
 
         bare = self._school("CORE-4", "Delta Core School", self.cceo_sp)
         result = ChampionEligibilityService.calculate_score(bare)
-        self.assertFalse(result["eligible"])   # no plan / no SSA → never proposed
+        self.assertFalse(result["eligible"])  # no plan / no SSA → never proposed
         result2 = ChampionEligibilityService.calculate_score(self.school)
         self.assertIn("score", result2)
         self.assertLess(result2["score"], 80)  # weak interventions block champion
@@ -379,11 +496,13 @@ class CoreSchoolsPlanningTest(TestCase):
     # ── 23: HTMX scope ───────────────────────────────────────────────────────
     def test_core_htmx_endpoints_enforce_scope(self):
         resp = self._schedule_visit(client=self._client(self.other_cceo))
-        self.assertIn(resp.status_code, (403, 404))   # not their school
+        self.assertIn(resp.status_code, (403, 404))  # not their school
         self.assertNotEqual(
-            self._client(self.accountant).get(
-                f"/core-schools/schedule-visit?school_id={self.school.school_id}"
-            ).status_code, 200)
+            self._client(self.accountant)
+            .get(f"/core-schools/schedule-visit?school_id={self.school.school_id}")
+            .status_code,
+            200,
+        )
 
     # ── 24: real completion path advances the slot + package counters ───────
     def _complete_core_activity(self, act, sf_id, extra=None):
@@ -397,7 +516,8 @@ class CoreSchoolsPlanningTest(TestCase):
 
         start_completion(act.id, principal=self.cceo)
         EvidenceRecord.objects.create(
-            activity=act, kind="photo", uri="core/evidence.jpg", uploaded_by="test")
+            activity=act, kind="photo", uri="core/evidence.jpg", uploaded_by="test"
+        )
         payload = {"salesforceId": sf_id, **(extra or {})}
         complete_activity(act.id, payload, self.cceo)
         act.refresh_from_db()
@@ -414,30 +534,41 @@ class CoreSchoolsPlanningTest(TestCase):
         self._complete_core_activity(act, "SV-CORE1")
 
         slot = CoreActivitySlot.objects.get(id=cslot_id(self.school.school_id, "v", 1))
-        self.assertEqual(slot.status, "ia_verified")  # mirrored, not stuck at "Scheduled"
+        self.assertEqual(
+            slot.status, "ia_verified"
+        )  # mirrored, not stuck at "Scheduled"
 
         plan = CorePlan.objects.get(id=self.plan.id)
         self.assertEqual(plan.visits_completed, 1)
         self.assertEqual(plan.trainings_completed, 0)
 
     def test_completing_core_training_advances_plan_training_counter(self):
-        resp = self._client(self.cceo).post("/core-schools/schedule-training/action", {
-            "school_id": self.school.school_id, "training_number": "1",
-            "scheduled_date": "2026-07-21", "focus_intervention": "teaching_environment",
-            "training_purpose": "Core package recovery training",
-            "expected_participants": "15", "responsible_staff_id": self.cceo_sp.id,
-        })
+        resp = self._client(self.cceo).post(
+            "/core-schools/schedule-training/action",
+            {
+                "school_id": self.school.school_id,
+                "training_number": "1",
+                "scheduled_date": "2026-07-21",
+                "focus_intervention": "teaching_environment",
+                "training_purpose": "Core package recovery training",
+                "expected_participants": "15",
+                "responsible_staff_id": self.cceo_sp.id,
+            },
+        )
         self.assertIn(resp.status_code, (200, 302), resp.content[:200])
         act = Activity.objects.get(school=self.school, activity_type="core_training")
         self._complete_core_activity(
-            act, "TS-CORE1", extra={"teachersAttended": 5, "leadersAttended": 2})
+            act, "TS-CORE1", extra={"teachersAttended": 5, "leadersAttended": 2}
+        )
 
         slot = CoreActivitySlot.objects.get(id=cslot_id(self.school.school_id, "t", 1))
         self.assertEqual(slot.status, "ia_verified")
 
         plan = CorePlan.objects.get(id=self.plan.id)
         self.assertEqual(plan.trainings_completed, 1)
-        self.assertEqual(plan.visits_completed, 0)   # visits and trainings don't cross-count
+        self.assertEqual(
+            plan.visits_completed, 0
+        )  # visits and trainings don't cross-count
 
     def test_plan_counters_recompute_idempotently_on_repeat_saves(self):
         """Saving an already-verified Activity again must not double-count —
@@ -494,5 +625,47 @@ class CoreSchoolsPlanningTest(TestCase):
         CorePlan.objects.filter(id=self.plan.id).update(baseline_average=5.6)
 
         core = CDDashboardService._core_on_track(FY)
-        self.assertEqual(core["total"], 2)      # both core plans in this fixture
-        self.assertEqual(core["on_track"], 1)   # only the completed + baselined plan
+        self.assertEqual(core["total"], 2)  # both core plans in this fixture
+        self.assertEqual(core["on_track"], 1)  # only the completed + baselined plan
+
+    # ── 25: self-heal SSA gate + audit provenance ────────────────────────────
+    def test_self_heal_skips_core_school_without_ssa_record(self):
+        """The self-healing auto-onboard in CoreSchoolsService.get_core_schools
+        must not fabricate a CorePlan (with a fake 0.0 baseline) for a core
+        school that has no SSA record on file yet — that would silently skip
+        the same SSA gate the official onboard() path requires."""
+        from apps.core_schools.core_planning_services import CoreSchoolsService
+
+        bare = self._school("CORE-9", "No-SSA Core School", self.cceo_sp)
+        self.assertFalse(CorePlan.objects.filter(school_id=bare.school_id).exists())
+
+        CoreSchoolsService.get_core_schools(self.cceo, {"fy": FY})
+
+        self.assertFalse(CorePlan.objects.filter(school_id=bare.school_id).exists())
+
+    def test_self_heal_creates_audited_plan_when_ssa_exists(self):
+        """When a core school genuinely is missing its CorePlan for the FY but
+        does have a real SSA baseline, self-heal may create it — but must
+        record who/what created it (created_by_id/created_by_name), same as
+        the audited onboard() path, rather than leaving a provenance gap."""
+        from apps.core_schools.core_planning_services import CoreSchoolsService
+
+        healed = self._school("CORE-10", "Healable Core School", self.cceo_sp)
+        SsaRecord.objects.create(
+            school=healed,
+            fy=FY,
+            quarter="Q1",
+            average_score=6.2,
+            verification_status="confirmed",
+            date_of_ssa=date(int(FY) - 1, 11, 5),
+            uploaded_by="test",
+        )
+        self.assertFalse(CorePlan.objects.filter(school_id=healed.school_id).exists())
+
+        CoreSchoolsService.get_core_schools(self.cceo, {"fy": FY})
+
+        plan = CorePlan.objects.get(school_id=healed.school_id)
+        self.assertEqual(plan.baseline_average, 6.2)
+        self.assertEqual(plan.created_by_id, self.cceo.user_id)
+        self.assertTrue(plan.created_by_name)
+        self.assertEqual(CoreActivitySlot.objects.filter(core_plan=plan).count(), 8)

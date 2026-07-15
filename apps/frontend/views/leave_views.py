@@ -40,6 +40,7 @@ from apps.core.navigation import get_user_role_slug
 def personal_time_off_view(request):
     """Cockpit for requesting and managing personal leaves, matching the premium dashboard layout reference."""
     user = request.user
+    role = get_user_role_slug(user)
     sp = getattr(user, "staff_profile", None)
     if not sp:
         sp, _ = StaffProfile.objects.get_or_create(
@@ -59,6 +60,9 @@ def personal_time_off_view(request):
 
     balances_data = []
     pto_remaining = 21
+    pto_entitlement = 21
+    pto_used = 0
+    pto_usage_pct = 0
     for b in balances:
         balances_data.append(
             {
@@ -77,6 +81,25 @@ def personal_time_off_view(request):
         )
         if b.leave_type == "personal_time_off":
             pto_remaining = b.remaining
+            pto_entitlement = b.entitlement
+            pto_used = b.used
+            pto_usage_pct = (
+                round((b.used / max(b.entitlement, 1)) * 100) if b.entitlement else 0
+            )
+
+    balance_priority = {
+        "personal_time_off": 0,
+        "sick_leave": 1,
+        "maternity_leave": 2,
+        "paternity_leave": 3,
+        "bereavement_leave": 4,
+    }
+    balances_data.sort(
+        key=lambda balance: (
+            balance_priority.get(balance["type"], len(balance_priority)),
+            balance["label"],
+        )
+    )
 
     # Query user leaves history
     leaves = (
@@ -84,9 +107,9 @@ def personal_time_off_view(request):
         .order_by("-created_at")
         .select_related("covering_staff__user")
     )
-    reviewer_ids = [
+    reviewer_ids = {
         leave.reviewed_by_user_id for leave in leaves if leave.reviewed_by_user_id
-    ]
+    }
     reviewer_map = {u.id: u.name for u in User.objects.filter(id__in=reviewer_ids)}
 
     leaves_data = []
@@ -128,13 +151,30 @@ def personal_time_off_view(request):
             }
         )
 
-    # Coverage Assignments list
+    past_request_statuses = {"completed", "rejected"}
+    past_requests_count = sum(
+        leave["status"] in past_request_statuses for leave in leaves_data
+    )
+    upcoming_requests_count = len(leaves_data) - past_requests_count
+
+    # Coverage Assignments list. status="active" alone is not enough — an
+    # assignment whose window has closed keeps that status (nothing ever
+    # transitions it to "expired"), so the datetime bounds must be checked
+    # here too, matching the pattern already used for authorization in
+    # apps/core/permissions.py and apps/core/scoping.py.
+    now = timezone.now()
     my_coverages = TemporaryCoverageAssignment.objects.filter(
-        covering_staff=sp, status="active"
+        covering_staff=sp,
+        status="active",
+        start_datetime__lte=now,
+        end_datetime__gte=now,
     ).select_related("original_staff__user", "leave_request")
 
     delegations_for_me = TemporaryCoverageAssignment.objects.filter(
-        original_staff=sp, status="active"
+        original_staff=sp,
+        status="active",
+        start_datetime__lte=now,
+        end_datetime__gte=now,
     ).select_related("covering_staff__user", "leave_request")
 
     pending_coverages = Leave.objects.filter(
@@ -144,25 +184,31 @@ def personal_time_off_view(request):
     # Resolve supervisor scoping and team profiles
     from apps.accounts.models import StaffSupervisorAssignment
 
-    supervisee_ids = StaffSupervisorAssignment.objects.filter(
-        supervisor=sp
-    ).values_list("supervisee_id", flat=True)
-    supervisee_profiles = StaffProfile.objects.filter(
-        id__in=supervisee_ids
-    ).select_related("user")
+    supervisee_ids = list(
+        StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list(
+            "supervisee_id", flat=True
+        )
+    )
+    has_supervisees = bool(supervisee_ids)
 
     # Team Members on Leave This Week
     today_str = date.today().isoformat()
-    team_on_leave_count = Leave.objects.filter(
-        staff__in=supervisee_profiles,
-        status="approved",
-        start_date__lte=today_str,
-        end_date__gte=today_str,
-    ).count()
+    team_on_leave_count = (
+        Leave.objects.filter(
+            staff_id__in=supervisee_ids,
+            status="approved",
+            start_date__lte=today_str,
+            end_date__gte=today_str,
+        ).count()
+        if has_supervisees
+        else 0
+    )
 
     # Active Coverage Assignments in system (scoped)
     coverage_active_count = (
-        TemporaryCoverageAssignment.objects.filter(status="active")
+        TemporaryCoverageAssignment.objects.filter(
+            status="active", start_datetime__lte=now, end_datetime__gte=now
+        )
         .filter(Q(original_staff=sp) | Q(covering_staff=sp))
         .count()
     )
@@ -173,9 +219,13 @@ def personal_time_off_view(request):
     ).order_by("start_date")[:5]
 
     # 2. Auto-Blocked Conflicts (for the user's activities)
-    user_activities = Activity.objects.filter(
-        responsible_staff_id=user.id, scheduled_date__isnull=False
-    ).exclude(status__in=["cancelled", "completed"])
+    user_activities = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id, scheduled_date__isnull=False
+        )
+        .select_related("school", "cluster")
+        .exclude(status__in=["cancelled", "completed"])
+    )
     my_conflicts = []
     for act in user_activities:
         avail = PlanningAvailabilityService.check(user, act.scheduled_date)
@@ -193,10 +243,10 @@ def personal_time_off_view(request):
             )
 
     # Stats variables
-    pending_requests_count = Leave.objects.filter(staff=sp, status="pending").count()
+    pending_requests_count = sum(leave["status"] == "pending" for leave in leaves_data)
     upcoming_conflicts_count = len(my_conflicts)
 
-    total_team_count = supervisee_profiles.count() + 1
+    total_team_count = len(supervisee_ids) + 1
     team_available_count = total_team_count - team_on_leave_count
     avg_team_availability = round(
         (team_available_count / max(total_team_count, 1)) * 100
@@ -204,11 +254,11 @@ def personal_time_off_view(request):
 
     # 3. Team Availability Heatmap Preview (Next 4 weeks)
     availability_preview = TeamAvailabilityService.get_4week_heatmap(
-        sp, country_scope=False
-    )[:10]
+        sp, country_scope=False, limit=10
+    )
 
     # Leave Impact Preview for latest request
-    latest_leave = Leave.objects.filter(staff=sp).order_by("-created_at").first()
+    latest_leave = leaves[0] if leaves else None
     impact_preview = None
     if latest_leave:
         impact_preview = LeaveImpactPreviewService.preview_impact(
@@ -218,8 +268,12 @@ def personal_time_off_view(request):
         impact_preview["end_date"] = latest_leave.end_date
 
     # Team Leave Tracker table data
-    if supervisee_profiles.exists():
-        tracker_leaves_qs = Leave.objects.filter(staff__in=supervisee_profiles)
+    if role in {"ADMIN", "HR"}:
+        tracker_leaves_qs = Leave.objects.all()
+    elif role == "CD":
+        tracker_leaves_qs = Leave.objects.filter(staff__country=sp.country)
+    elif has_supervisees:
+        tracker_leaves_qs = Leave.objects.filter(staff_id__in=supervisee_ids)
     else:
         supervisor_assignment = StaffSupervisorAssignment.objects.filter(
             supervisee=sp
@@ -230,18 +284,40 @@ def personal_time_off_view(request):
             ).values_list("supervisee_id", flat=True)
             tracker_leaves_qs = Leave.objects.filter(staff_id__in=peer_ids)
         else:
-            tracker_leaves_qs = Leave.objects.all()
+            tracker_leaves_qs = Leave.objects.filter(staff=sp)
 
-    tracker_leaves = tracker_leaves_qs.select_related(
-        "staff__user", "covering_staff__user"
-    ).order_by("-created_at")[:15]
+    tracker_leaves = list(
+        tracker_leaves_qs.select_related(
+            "staff__user", "covering_staff__user"
+        ).order_by("-created_at")[:15]
+    )
+
+    tracker_reviewer_ids = {
+        leave.reviewed_by_user_id
+        for leave in tracker_leaves
+        if leave.reviewed_by_user_id and leave.reviewed_by_user_id not in reviewer_map
+    }
+    if tracker_reviewer_ids:
+        reviewer_map.update(
+            {
+                reviewer.id: reviewer.name
+                for reviewer in User.objects.filter(id__in=tracker_reviewer_ids)
+            }
+        )
+
+    tracker_balance_map = {
+        (balance.staff_id, balance.leave_type): balance.remaining
+        for balance in LeaveBalance.objects.filter(
+            staff_id__in={leave.staff_id for leave in tracker_leaves},
+            leave_type__in={leave.type for leave in tracker_leaves},
+            year=year,
+        )
+    }
 
     # Enrich tracker leaves with remaining balance
     tracker_leaves_data = []
     for tl in tracker_leaves:
-        bal = LeaveBalance.objects.filter(
-            staff=tl.staff, leave_type=tl.type, year=year
-        ).first()
+        balance_key = (tl.staff_id, tl.type)
         tracker_leaves_data.append(
             {
                 "id": tl.id,
@@ -258,7 +334,8 @@ def personal_time_off_view(request):
                 "days_charged": tl.days_charged
                 if tl.days_charged is not None
                 else tl.days,
-                "remaining_days": bal.remaining if bal else 21,
+                "remaining_days": tracker_balance_map.get(balance_key, 0),
+                "balance_available": balance_key in tracker_balance_map,
                 "covering_person": tl.covering_staff.user.name
                 if tl.covering_staff
                 else "None",
@@ -266,14 +343,11 @@ def personal_time_off_view(request):
             }
         )
 
-    # Calendar highlighted events map for the widget
-    calendar_events = []
-    for leave in Leave.objects.filter(status__in=["approved", "pending"]):
-        calendar_events.append({"date": leave.start_date, "status": leave.status})
-
     context = {
         "balances": balances_data,
         "leaves": leaves_data,
+        "upcoming_requests_count": upcoming_requests_count,
+        "past_requests_count": past_requests_count,
         "my_coverages": my_coverages,
         "delegations_for_me": delegations_for_me,
         "pending_coverages": pending_coverages,
@@ -281,16 +355,20 @@ def personal_time_off_view(request):
         "my_conflicts": my_conflicts,
         "availability_preview": availability_preview,
         "profile": sp,
-        "role": get_user_role_slug(user),
+        "role": role,
         "pto_remaining": pto_remaining,
+        "pto_entitlement": pto_entitlement,
+        "pto_used": pto_used,
+        "pto_usage_pct": pto_usage_pct,
         "pending_requests_count": pending_requests_count,
         "team_on_leave_count": team_on_leave_count,
+        "team_total_count": total_team_count,
+        "team_available_count": team_available_count,
         "coverage_active_count": coverage_active_count,
         "upcoming_conflicts_count": upcoming_conflicts_count,
         "avg_team_availability": avg_team_availability,
         "impact_preview": impact_preview,
         "tracker_leaves": tracker_leaves_data,
-        "calendar_events": calendar_events,
     }
     return render(request, "pages/leave/personal_time_off.html", context)
 
@@ -362,10 +440,12 @@ def eligible_cover_api(request):
 
         year = int(start_date[:4])
         leave_type = request.GET.get("type", "personal_time_off")
-        bal_qs = LeaveBalance.objects.filter(staff=sp, leave_type=leave_type, year=year)
-        remaining = 0
-        if bal_qs.exists():
-            remaining = bal_qs.first().remaining
+        remaining = (
+            LeaveBalance.objects.filter(staff=sp, leave_type=leave_type, year=year)
+            .values_list("remaining", flat=True)
+            .first()
+            or 0
+        )
 
         # Check policy blocks (e.g. if blackout dates block leave requests completely)
         has_blackout = metrics["blackout_dates_skipped"] > 0
@@ -426,25 +506,57 @@ def leave_tracker_view(request):
     year = timezone.now().year
     team_data = []
 
-    for sp in qs:
-        LeaveBalanceService.initialize_balances_for_staff(sp, year)
-        pto_bal = LeaveBalance.objects.filter(
-            staff=sp, leave_type="personal_time_off", year=year
-        ).first()
-        sick_bal = LeaveBalance.objects.filter(
-            staff=sp, leave_type="sick_leave", year=year
-        ).first()
+    # Was a severe N+1: initialize_balances_for_staff() alone ran up to ~7
+    # queries per staff member (LeaveTypePolicy lookup + a get_or_create per
+    # policy), plus 4 more queries per staff for balances/leaves — all
+    # unbounded (no pagination, org-wide for HR/CD). Batch every lookup once
+    # for the whole team instead.
+    staff_list = list(qs)
+    staff_ids = [sp.id for sp in staff_list]
 
-        now_str = date.today().isoformat()
-        active_leave = Leave.objects.filter(
-            staff=sp, status="approved", start_date__lte=now_str, end_date__gte=now_str
-        ).first()
+    LeaveBalanceService.bulk_initialize_balances_for_staff(staff_ids, year)
 
-        next_leave = (
-            Leave.objects.filter(staff=sp, status="approved", start_date__gt=now_str)
-            .order_by("start_date")
-            .first()
-        )
+    balances_by_staff: dict[str, dict[str, int]] = {}
+    if staff_ids:
+        for row in LeaveBalance.objects.filter(
+            staff_id__in=staff_ids,
+            year=year,
+            leave_type__in=["personal_time_off", "sick_leave"],
+        ).values("staff_id", "leave_type", "remaining"):
+            balances_by_staff.setdefault(row["staff_id"], {})[row["leave_type"]] = row[
+                "remaining"
+            ]
+
+    now_str = date.today().isoformat()
+    active_leave_by_staff: dict[str, Leave] = {}
+    next_leave_by_staff: dict[str, Leave] = {}
+    if staff_ids:
+        active_leave_by_staff = {
+            leave.staff_id: leave
+            for leave in Leave.objects.filter(
+                staff_id__in=staff_ids,
+                status="approved",
+                start_date__lte=now_str,
+                end_date__gte=now_str,
+            )
+            .select_related("covering_staff__user")
+            .order_by("staff_id", "start_date")
+            .distinct("staff_id")
+        }
+        next_leave_by_staff = {
+            leave.staff_id: leave
+            for leave in Leave.objects.filter(
+                staff_id__in=staff_ids, status="approved", start_date__gt=now_str
+            )
+            .order_by("staff_id", "start_date")
+            .distinct("staff_id")
+        }
+
+    for sp in staff_list:
+        pto_remaining = balances_by_staff.get(sp.id, {}).get("personal_time_off", 21)
+        sick_remaining = balances_by_staff.get(sp.id, {}).get("sick_leave", 14)
+        active_leave = active_leave_by_staff.get(sp.id)
+        next_leave = next_leave_by_staff.get(sp.id)
 
         team_data.append(
             {
@@ -452,8 +564,8 @@ def leave_tracker_view(request):
                 "name": sp.user.name,
                 "role": sp.user.active_role,
                 "title": sp.title or "Staff",
-                "pto_remaining": pto_bal.remaining if pto_bal else 21,
-                "sick_remaining": sick_bal.remaining if sick_bal else 14,
+                "pto_remaining": pto_remaining,
+                "sick_remaining": sick_remaining,
                 "status": "On Leave" if active_leave else "Active",
                 "active_leave": active_leave,
                 "next_leave": next_leave,
@@ -463,9 +575,16 @@ def leave_tracker_view(request):
             }
         )
 
-    # Current coverage assignments
+    # Current coverage assignments. status="active" alone doesn't mean the
+    # window is still open — nothing ever transitions the row to "expired" —
+    # so require the datetime bounds too, matching apps/core/permissions.py.
+    coverage_now = timezone.now()
     coverages = (
-        TemporaryCoverageAssignment.objects.filter(status="active")
+        TemporaryCoverageAssignment.objects.filter(
+            status="active",
+            start_datetime__lte=coverage_now,
+            end_datetime__gte=coverage_now,
+        )
         .select_related("original_staff__user", "covering_staff__user", "leave_request")
         .order_by("start_datetime")
     )
@@ -480,7 +599,8 @@ def leave_tracker_view(request):
     availability_preview = TeamAvailabilityService.get_4week_heatmap(
         getattr(user, "staff_profile", None),
         country_scope=(role in ["CD", "HR", "ADMIN"]),
-    )[:10]
+        limit=10,
+    )
 
     context = {
         "team": team_data,
@@ -519,10 +639,7 @@ def leave_approvals_view(request):
         qs = qs.filter(type=leave_type_filter)
 
     if q:
-        qs = qs.filter(
-            Q(staff__user__name__icontains=q) |
-            Q(reason__icontains=q)
-        )
+        qs = qs.filter(Q(staff__user__name__icontains=q) | Q(reason__icontains=q))
 
     # Filter strictly by authorized approver hierarchy
     authorized_leaves = []
@@ -531,7 +648,7 @@ def leave_approvals_view(request):
             authorized_leaves.append(lv)
 
     # 1. KPI Pending Approvals
-    pending_count = len([l for l in authorized_leaves if l.status == "pending"])
+    pending_count = len([lv for lv in authorized_leaves if lv.status == "pending"])
 
     # 2. Approved this week (last 7 days reviewed by reviewer or generally if Admin)
     seven_days_ago = timezone.now() - timedelta(days=7)
@@ -543,12 +660,18 @@ def leave_approvals_view(request):
     approved_this_week_count = approved_this_week.count()
 
     # 3. Coverage Assigned (in the authorized list)
-    coverage_assigned_count = sum(1 for lv in authorized_leaves if lv.covering_staff and lv.coverage_status == "Accepted")
+    coverage_assigned_count = sum(
+        1
+        for lv in authorized_leaves
+        if lv.covering_staff and lv.coverage_status == "Accepted"
+    )
 
     # 4. Conflicts Detected
     conflicts_detected_count = 0
     for lv in authorized_leaves:
-        conflicts = LeaveConflictDetectionService.detect(lv.staff, lv.start_date, lv.end_date, lv.covering_staff)
+        conflicts = LeaveConflictDetectionService.detect(
+            lv.staff, lv.start_date, lv.end_date, lv.covering_staff
+        )
         if any(c["severity"] == "Critical" for c in conflicts):
             conflicts_detected_count += 1
 
@@ -576,15 +699,17 @@ def leave_approvals_view(request):
             reviewer = User.objects.filter(id=ra.reviewed_by_user_id).first()
             if reviewer:
                 reviewer_name = reviewer.name
-        recent_activity_data.append({
-            "datetime": ra.reviewed_at,
-            "staff": ra.staff.user,
-            "action": ra.status.title(),
-            "leave_type": ra.type.replace("_", " ").title(),
-            "dates": f"{ra.start_date} → {ra.end_date}",
-            "duration": f"{ra.days_charged or ra.days} days",
-            "by": reviewer_name,
-        })
+        recent_activity_data.append(
+            {
+                "datetime": ra.reviewed_at,
+                "staff": ra.staff.user,
+                "action": ra.status.title(),
+                "leave_type": ra.type.replace("_", " ").title(),
+                "dates": f"{ra.start_date} → {ra.end_date}",
+                "duration": f"{ra.days_charged or ra.days} days",
+                "by": reviewer_name,
+            }
+        )
 
     # Find selected leave request details
     selected_leave = None
@@ -596,16 +721,22 @@ def leave_approvals_view(request):
         selected_leave = authorized_leaves[0]
         req_id = request.GET.get("id")
         if req_id:
-            match = next((l for l in authorized_leaves if l.id == req_id), None)
+            match = next((lv for lv in authorized_leaves if lv.id == req_id), None)
             if match:
                 selected_leave = match
-                
+
         # Fetch initial details
         selected_leave_impact = LeaveImpactAnalysisService.analyze_impact(
-            selected_leave.staff, selected_leave.start_date, selected_leave.end_date
+            selected_leave.staff,
+            selected_leave.start_date,
+            selected_leave.end_date,
+            selected_leave.type,
         )
         selected_leave_conflicts = LeaveConflictDetectionService.detect(
-            selected_leave.staff, selected_leave.start_date, selected_leave.end_date, selected_leave.covering_staff
+            selected_leave.staff,
+            selected_leave.start_date,
+            selected_leave.end_date,
+            selected_leave.covering_staff,
         )
         eligible_cover_staff = CoverageAssignmentService.get_eligible_coverage_staff(
             selected_leave.staff, selected_leave.start_date, selected_leave.end_date
@@ -624,7 +755,9 @@ def leave_approvals_view(request):
 
     # Upcoming holidays & blackouts
     holidays = PublicHoliday.objects.all().order_by("date")[:5]
-    blackouts = CalendarBlock.objects.filter(block_type="BLACKOUT_DATE", is_active=True).order_by("start_date")[:5]
+    blackouts = CalendarBlock.objects.filter(
+        block_type="BLACKOUT_DATE", is_active=True
+    ).order_by("start_date")[:5]
 
     context = {
         "requests": authorized_leaves,
@@ -657,7 +790,7 @@ def leave_impact_partial(request, leave_id):
     """Partial HTMX view showing leave impact metrics, overlaps, and conflicts."""
     leave = get_object_or_404(Leave, id=leave_id)
     impact = LeaveImpactAnalysisService.analyze_impact(
-        leave.staff, leave.start_date, leave.end_date
+        leave.staff, leave.start_date, leave.end_date, leave.type
     )
 
     # Run full conflict detection service
@@ -697,12 +830,15 @@ def leave_approve_action(request, leave_id):
         # HR/CD/RVP/ADMIN have org-wide authority.
         if request.user.active_role == "Program Lead":
             from apps.accounts.models import StaffSupervisorAssignment
+
             is_supervisor = StaffSupervisorAssignment.objects.filter(
                 supervisee=leave.staff,
                 supervisor=request.user.staff_profile,
             ).exists()
             if not is_supervisor:
-                messages.error(request, "You can only approve leave for your own team members.")
+                messages.error(
+                    request, "You can only approve leave for your own team members."
+                )
                 return redirect("frontend:leave_approvals")
 
         LeaveApprovalService.approve_request(leave_id, request.user)
@@ -746,7 +882,10 @@ def leave_return_action(request, leave_id):
         LeaveApprovalService.return_request(leave_id, request.user, reason)
         leave = Leave.objects.get(id=leave_id)
         LeaveNotificationService.notify_leave_returned(leave, request.user.name, reason)
-        messages.success(request, "Leave request returned to submitter for changes. Staff member notified.")
+        messages.success(
+            request,
+            "Leave request returned to submitter for changes. Staff member notified.",
+        )
     except Exception as e:
         messages.error(request, f"Failed to return request: {e}")
     return redirect("frontend:leave_approvals")
@@ -1092,7 +1231,10 @@ def leave_coverage_accept_action(request, leave_id):
     """Action for covering employee to accept coverage assignment."""
     try:
         LeaveApprovalService.accept_coverage(leave_id, request.user)
-        messages.success(request, "You have accepted the coverage assignment. The supervisor is notified.")
+        messages.success(
+            request,
+            "You have accepted the coverage assignment. The supervisor is notified.",
+        )
     except Exception as e:
         messages.error(request, f"Failed to accept coverage: {e}")
     return redirect("frontend:personal_time_off")
@@ -1104,7 +1246,10 @@ def leave_coverage_decline_action(request, leave_id):
     """Action for covering employee to decline coverage assignment."""
     try:
         LeaveApprovalService.decline_coverage(leave_id, request.user)
-        messages.warning(request, "You have declined the coverage assignment. The request has been updated.")
+        messages.warning(
+            request,
+            "You have declined the coverage assignment. The request has been updated.",
+        )
     except Exception as e:
         messages.error(request, f"Failed to decline coverage: {e}")
     return redirect("frontend:personal_time_off")
@@ -1116,7 +1261,7 @@ def leave_reassign_coverage_action(request, leave_id):
     """Supervisor action to override or reassign the coverage employee."""
     covering_staff_id = request.POST.get("covering_staff", "").strip()
     leave = get_object_or_404(Leave, id=leave_id)
-    
+
     # Verify reviewer is authorized to modify this leave request
     if not LeaveApprovalService.is_authorized_approver(request.user, leave):
         messages.error(request, "You are not authorized to modify this leave request.")
@@ -1126,19 +1271,24 @@ def leave_reassign_coverage_action(request, leave_id):
         covering_staff = None
         if covering_staff_id:
             covering_staff = get_object_or_404(StaffProfile, id=covering_staff_id)
-            
+
         leave.covering_staff = covering_staff
-        leave.coverage_status = "Awaiting Acceptance" if covering_staff else "Not Required"
+        leave.coverage_status = (
+            "Awaiting Acceptance" if covering_staff else "Not Required"
+        )
         leave.save(update_fields=["covering_staff", "coverage_status", "updated_at"])
-        
+
         # Trigger notification
         if covering_staff:
             LeaveNotificationService.notify_leave_coverage_assigned(leave)
-            
-        messages.success(request, f"Coverage reassigned to {covering_staff.user.name if covering_staff else 'None'}.")
+
+        messages.success(
+            request,
+            f"Coverage reassigned to {covering_staff.user.name if covering_staff else 'None'}.",
+        )
     except Exception as e:
         messages.error(request, f"Failed to reassign coverage: {e}")
-        
+
     return redirect(f"/leave/approvals?id={leave_id}")
 
 
@@ -1150,12 +1300,12 @@ def leave_escalate_action(request, leave_id):
     if not LeaveApprovalService.is_authorized_approver(request.user, leave):
         messages.error(request, "You are not authorized to modify this leave request.")
         return redirect("frontend:leave_approvals")
-        
+
     try:
         leave.status = "hr_review"
         leave.save(update_fields=["status", "updated_at"])
         messages.success(request, "Leave request escalated to HR.")
     except Exception as e:
         messages.error(request, f"Failed to escalate: {e}")
-        
+
     return redirect("frontend:leave_approvals")

@@ -66,24 +66,39 @@ class ClosureEligibilityService:
                         )["s"]
                         or 0
                     )
-                    accounts_cleared = disbursed > 0 or activity.advance_requests.filter(
-                        status__in=[
-                            "disbursed",
-                            "accountability_pending",
-                            "accounted",
-                            "reimbursed",
-                        ]
-                    ).exists()
+                    accounts_cleared = (
+                        disbursed > 0
+                        or activity.advance_requests.filter(
+                            status__in=[
+                                "disbursed",
+                                "accountability_pending",
+                                "accounted",
+                                "reimbursed",
+                            ]
+                        ).exists()
+                    )
 
             # Check 7: NetSuite Code — accountability proof, required whenever
-            # money moved. When advances were disbursed/reimbursed, EVERY such
-            # advance must carry the responsible user's accountability NetSuite
-            # Code (advance_service.submit_accountability). Otherwise fall back
-            # to the accountant-entered NetSuiteExpenseRecord (System A).
+            # money moved. Two independent, equally-valid completion signals:
+            # the accountant's own NetSuiteExpenseRecord entry (System A —
+            # apps.fund_requests.finance_services.NetSuiteExpenseService, the
+            # activity-level disburse+clear flow) OR, for advances that went
+            # through the responsible-user accountability chain (System B —
+            # apps.fund_requests.advance_service.submit_accountability), EVERY
+            # such advance carrying its own accountability NetSuite Code.
+            # These are an OR, not an either/or keyed off AdvanceRequest
+            # status: an activity disbursed via the System A queue still has
+            # its AdvanceRequest rows move to "disbursed" (so the money isn't
+            # silently double-payable through the System B queue too), but
+            # that must never by itself demand the System B accountability
+            # step System A's own flow was never designed to produce.
             netsuite_id_entered = True
             if finance_required:
                 from django.db.models import Q as _Q
 
+                has_netsuite_expense_record = NetSuiteExpenseRecord.objects.filter(
+                    activity=activity
+                ).exists()
                 money_moved_advances = activity.advance_requests.filter(
                     status__in=[
                         "disbursed",
@@ -93,15 +108,13 @@ class ClosureEligibilityService:
                         "reimbursed",
                     ]
                 )
-                if money_moved_advances.exists():
-                    netsuite_id_entered = not money_moved_advances.filter(
-                        _Q(accountability_netsuite_id__isnull=True)
-                        | _Q(accountability_netsuite_id="")
-                    ).exists()
-                else:
-                    netsuite_id_entered = NetSuiteExpenseRecord.objects.filter(
-                        activity=activity
-                    ).exists()
+                every_advance_accounted = not money_moved_advances.filter(
+                    _Q(accountability_netsuite_id__isnull=True)
+                    | _Q(accountability_netsuite_id="")
+                ).exists()
+                netsuite_id_entered = has_netsuite_expense_record or (
+                    money_moved_advances.exists() and every_advance_accounted
+                )
 
             # Check 8: Analytics Published
             pub_rec = AnalyticsPublishRecord.objects.filter(activity=activity).first()
@@ -290,7 +303,7 @@ class ActivityClosureService:
                     body=f"Activity #{activity.id[:8]} is now closed and archived under Completed Activities.",
                     context_type="Activity",
                     context_id=activity.id,
-                    recipients=[activity.responsible_staff_id]
+                    recipients=[activity.responsible_staff_id],
                 )
 
             return closure

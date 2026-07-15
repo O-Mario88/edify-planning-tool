@@ -37,7 +37,9 @@ def _monday(d: date) -> date:
 class WeeklyApprovalRoutingTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Routing Region")
-        self.district = District.objects.create(name="Routing District", region=self.region)
+        self.district = District.objects.create(
+            name="Routing District", region=self.region
+        )
         self.school = School.objects.create(
             school_id="RT-SCH",
             name="Routing School",
@@ -91,9 +93,7 @@ class WeeklyApprovalRoutingTest(TestCase):
             status="scheduled",
             responsible_staff_id=owner.id,
             fy="2026",
-            scheduled_date=timezone.make_aware(
-                timezone.datetime(2026, 7, 8, 9, 0)
-            ),
+            scheduled_date=timezone.make_aware(timezone.datetime(2026, 7, 8, 9, 0)),
         )
         ActivityScheduleCostLine.objects.create(
             activity=act,
@@ -187,7 +187,7 @@ class WeeklyApprovalRoutingTest(TestCase):
     # ── Child advances stay out of the accountant queue until approval ──────
     def test_child_advances_confirm_only_on_approval(self):
         from apps.fund_requests.advance_service import sync_for_activity
-        from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequestLine
+        from apps.fund_requests.models import AdvanceRequest
 
         act = self._costed_activity(self.cceo)
         sync_for_activity(act, responsible_user_id=self.cceo.id)

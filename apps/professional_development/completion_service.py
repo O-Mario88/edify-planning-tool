@@ -54,12 +54,19 @@ class PDCourseTrackingService:
     def can_signoff_review(req: ProfessionalDevelopmentRequest, principal) -> bool:
         if req.staff_id == (principal.staff_profile_id or ""):
             return False
-        if getattr(principal, "active_role", "") not in (HR_ROLE, "CountryDirector", "RegionalVicePresident", "Admin"):
+        if getattr(principal, "active_role", "") not in (
+            HR_ROLE,
+            "CountryDirector",
+            "RegionalVicePresident",
+            "Admin",
+        ):
             return False
         return req.status == PDStatus.AWAITING_HR_SIGNOFF
 
     @staticmethod
-    def sync_dates(req: ProfessionalDevelopmentRequest, today: date | None = None) -> ProfessionalDevelopmentRequest:
+    def sync_dates(
+        req: ProfessionalDevelopmentRequest, today: date | None = None
+    ) -> ProfessionalDevelopmentRequest:
         """Lazy status advance driven purely by today's date — called on every
         page read, no cron required. Never advances past what the employee/HR
         workflow has actually reached (e.g. never touches DRAFT or anything
@@ -87,10 +94,16 @@ class PDCourseTrackingService:
 
     # ── §17 Enrollment confirmation ──────────────────────────────────────────
     @staticmethod
-    def confirm_enrollment(req_id: str, principal, *, enrollment_date, reference: str = "") -> ProfessionalDevelopmentRequest:
+    def confirm_enrollment(
+        req_id: str, principal, *, enrollment_date, reference: str = ""
+    ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
-        if req.status not in (PDStatus.DISBURSED, PDStatus.APPROVED_UNFUNDED, PDStatus.ENROLLMENT_PENDING):
+        if req.status not in (
+            PDStatus.DISBURSED,
+            PDStatus.APPROVED_UNFUNDED,
+            PDStatus.ENROLLMENT_PENDING,
+        ):
             raise BadRequest("This request is not ready for enrollment confirmation.")
         req.enrollment_confirmed = True
         req.enrollment_confirmed_at = timezone.now()
@@ -103,13 +116,22 @@ class PDCourseTrackingService:
 
     # ── §20 Employee marks complete (does not close the record) ─────────────
     @staticmethod
-    def mark_complete(req_id: str, principal, *, actual_completion_date, course_outcome: str,
-                      skills_gained: str = "", application_plan: str = "") -> ProfessionalDevelopmentRequest:
+    def mark_complete(
+        req_id: str,
+        principal,
+        *,
+        actual_completion_date,
+        course_outcome: str,
+        skills_gained: str = "",
+        application_plan: str = "",
+    ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
         PDCourseTrackingService.sync_dates(req)
         if req.status != PDStatus.ENDED:
-            raise BadRequest("The course must reach its end date before it can be marked complete.")
+            raise BadRequest(
+                "The course must reach its end date before it can be marked complete."
+            )
         if not (course_outcome or "").strip():
             raise BadRequest("A course outcome summary is required.")
         req.actual_completion_date = actual_completion_date
@@ -122,7 +144,9 @@ class PDCourseTrackingService:
         return req
 
     @staticmethod
-    def mark_deferred_or_withdrawn(req_id: str, principal, *, outcome: str, reason: str) -> ProfessionalDevelopmentRequest:
+    def mark_deferred_or_withdrawn(
+        req_id: str, principal, *, outcome: str, reason: str
+    ) -> ProfessionalDevelopmentRequest:
         if outcome not in ("deferred", "withdrawn"):
             raise BadRequest("Unknown outcome.")
         if not (reason or "").strip():
@@ -130,8 +154,14 @@ class PDCourseTrackingService:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
         PDCourseTrackingService.sync_dates(req)
-        if req.status not in (PDStatus.ENDED, PDStatus.IN_PROGRESS, PDStatus.ENROLLMENT_CONFIRMED):
-            raise BadRequest("This course cannot be deferred or withdrawn from its current state.")
+        if req.status not in (
+            PDStatus.ENDED,
+            PDStatus.IN_PROGRESS,
+            PDStatus.ENROLLMENT_CONFIRMED,
+        ):
+            raise BadRequest(
+                "This course cannot be deferred or withdrawn from its current state."
+            )
         req.status = PDStatus.DEFERRED if outcome == "deferred" else PDStatus.WITHDRAWN
         req.deferred_withdrawn_reason = reason[:512]
         req.save()
@@ -139,20 +169,35 @@ class PDCourseTrackingService:
 
     # ── §21 Certificate upload ────────────────────────────────────────────────
     @staticmethod
-    def upload_certificate(req_id: str, principal, file_obj, *, certificate_name="",
-                           certificate_number="", issuing_institution="", issue_date=None,
-                           expiry_date=None, verification_link="") -> ProfessionalDevelopmentCertificate:
+    def upload_certificate(
+        req_id: str,
+        principal,
+        file_obj,
+        *,
+        certificate_name="",
+        certificate_number="",
+        issuing_institution="",
+        issue_date=None,
+        expiry_date=None,
+        verification_link="",
+    ) -> ProfessionalDevelopmentCertificate:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
         if req.status not in (PDStatus.MARKED_COMPLETE, PDStatus.CERTIFICATE_UPLOADED):
             raise BadRequest("Mark the course complete before uploading a certificate.")
         stored = store_pd_file(file_obj)
-        stored.pop("file_extension", None)  # not a field on Certificate (only Evidence has it)
+        stored.pop(
+            "file_extension", None
+        )  # not a field on Certificate (only Evidence has it)
         cert = ProfessionalDevelopmentCertificate.objects.create(
-            request=req, uploaded_by=principal.user_id,
+            request=req,
+            uploaded_by=principal.user_id,
             certificate_name=certificate_name or req.course_name,
-            certificate_number=certificate_number, issuing_institution=issuing_institution,
-            issue_date=issue_date, expiry_date=expiry_date, verification_link=verification_link,
+            certificate_number=certificate_number,
+            issuing_institution=issuing_institution,
+            issue_date=issue_date,
+            expiry_date=expiry_date,
+            verification_link=verification_link,
             **stored,
         )
         req.status = PDStatus.CERTIFICATE_UPLOADED
@@ -160,13 +205,21 @@ class PDCourseTrackingService:
         return cert
 
     @staticmethod
-    def upload_evidence(req_id: str, principal, file_obj, kind: str) -> ProfessionalDevelopmentEvidence:
+    def upload_evidence(
+        req_id: str, principal, file_obj, kind: str
+    ) -> ProfessionalDevelopmentEvidence:
         """§8 — conditional enrollment evidence, uploaded at request time or
         while a returned request is being fixed."""
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
-        if req.status not in (PDStatus.DRAFT, PDStatus.RETURNED_BY_SUPERVISOR, PDStatus.RETURNED_BY_HR):
-            raise BadRequest("Evidence can only be added while the request is a draft or returned for correction.")
+        if req.status not in (
+            PDStatus.DRAFT,
+            PDStatus.RETURNED_BY_SUPERVISOR,
+            PDStatus.RETURNED_BY_HR,
+        ):
+            raise BadRequest(
+                "Evidence can only be added while the request is a draft or returned for correction."
+            )
         stored = store_pd_file(file_obj)
         return ProfessionalDevelopmentEvidence.objects.create(
             request=req, kind=kind, uploaded_by=principal.user_id, **stored
@@ -174,18 +227,23 @@ class PDCourseTrackingService:
 
     # ── §22 BambooHR upload confirmation ─────────────────────────────────────
     @staticmethod
-    def confirm_bamboohr(req_id: str, principal, reference: str = "") -> ProfessionalDevelopmentRequest:
+    def confirm_bamboohr(
+        req_id: str, principal, reference: str = ""
+    ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
         if req.status != PDStatus.CERTIFICATE_UPLOADED:
-            raise BadRequest("Upload your certificate to Edify before confirming the BambooHR upload.")
+            raise BadRequest(
+                "Upload your certificate to Edify before confirming the BambooHR upload."
+            )
         req.bamboohr_uploaded = True
         req.bamboohr_uploaded_at = timezone.now()
         req.bamboohr_reference = (reference or "")[:255]
         # Unfunded courses skip accountability entirely and go straight to
         # the sign-off gate; funded courses still owe accountability.
         req.status = (
-            PDStatus.BAMBOOHR_CONFIRMED if req.funding_type in FUNDED_TYPES
+            PDStatus.BAMBOOHR_CONFIRMED
+            if req.funding_type in FUNDED_TYPES
             else PDStatus.AWAITING_HR_SIGNOFF
         )
         req.save()
@@ -202,23 +260,40 @@ class PDCourseTrackingService:
             raise Forbidden("Only HR may verify a BambooHR upload.")
         req.bamboohr_verified_by = principal.user_id
         req.bamboohr_verified_at = timezone.now()
-        req.save(update_fields=["bamboohr_verified_by", "bamboohr_verified_at", "updated_at"])
+        req.save(
+            update_fields=["bamboohr_verified_by", "bamboohr_verified_at", "updated_at"]
+        )
         return req
 
     # ── §23 Accountability + NetSuite Expense ID (funded courses only) ──────
     @staticmethod
-    def submit_accountability(req_id: str, principal, *, actual_spent: int, returned_amount: int,
-                              netsuite_expense_id: str, variance_note: str = "") -> ProfessionalDevelopmentRequest:
+    def submit_accountability(
+        req_id: str,
+        principal,
+        *,
+        actual_spent: int,
+        returned_amount: int,
+        netsuite_expense_id: str,
+        variance_note: str = "",
+    ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
-        if req.status != PDStatus.BAMBOOHR_CONFIRMED or req.funding_type not in FUNDED_TYPES:
+        if (
+            req.status != PDStatus.BAMBOOHR_CONFIRMED
+            or req.funding_type not in FUNDED_TYPES
+        ):
             raise BadRequest("Accountability is not due for this request.")
         if not (netsuite_expense_id or "").strip():
             # Non-negotiable (§23): no NetSuite Expense ID → accountability
             # remains incomplete. Never allow submission without it.
-            raise BadRequest("A NetSuite Expense ID is required to submit accountability.")
+            raise BadRequest(
+                "A NetSuite Expense ID is required to submit accountability."
+            )
         disbursed = req.requested_amount_cents
-        if actual_spent + returned_amount != disbursed and not (variance_note or "").strip():
+        if (
+            actual_spent + returned_amount != disbursed
+            and not (variance_note or "").strip()
+        ):
             raise BadRequest(
                 "Actual spent plus returned amount must equal the disbursed amount, "
                 "or a variance explanation is required."
@@ -238,8 +313,11 @@ class PDCourseTrackingService:
             approver = _pick_approver("Accountant", req.owner_user_id)
             if approver:
                 PDFundRequestService._notify(
-                    approver.id, "PD accountability submitted",
-                    f"{req.staff_name} submitted accountability for “{req.course_name}”.", req)
+                    approver.id,
+                    "PD accountability submitted",
+                    f"{req.staff_name} submitted accountability for “{req.course_name}”.",
+                    req,
+                )
         except Exception:  # noqa: BLE001
             pass
         return req
@@ -267,9 +345,13 @@ class PDCourseTrackingService:
         req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=req_id)
         role = getattr(principal, "active_role", "")
         if role not in (HR_ROLE, "CountryDirector", "RegionalVicePresident", "Admin"):
-            raise Forbidden("Only HR (or leadership, for HR's own course) may sign off.")
+            raise Forbidden(
+                "Only HR (or leadership, for HR's own course) may sign off."
+            )
         if req.staff_id == (principal.staff_profile_id or ""):
-            raise Forbidden("You cannot sign off your own Professional Development record.")
+            raise Forbidden(
+                "You cannot sign off your own Professional Development record."
+            )
         if req.status != PDStatus.AWAITING_HR_SIGNOFF:
             raise BadRequest("This record is not awaiting HR sign-off.")
         missing = PDCourseTrackingService._assert_signoff_eligible(req)
@@ -281,22 +363,32 @@ class PDCourseTrackingService:
         req.save()
         PDCourseTrackingService._update_cpd_and_skills(req)
         try:
-            from apps.professional_development.approval_service import PDApprovalRoutingService
+            from apps.professional_development.approval_service import (
+                PDApprovalRoutingService,
+            )
             from apps.professional_development.fund_service import PDFundRequestService
 
             PDFundRequestService._notify(
-                req.owner_user_id, "Professional Development closed",
-                f"“{req.course_name}” has been signed off and closed by HR.", req)
+                req.owner_user_id,
+                "Professional Development closed",
+                f"“{req.course_name}” has been signed off and closed by HR.",
+                req,
+            )
             PDApprovalRoutingService._message_from_hr(
-                req, principal, "Your Professional Development course is closed",
+                req,
+                principal,
+                "Your Professional Development course is closed",
                 f"“{req.course_name}” has been signed off and closed — congratulations "
-                "on completing your Professional Development.")
+                "on completing your Professional Development.",
+            )
         except Exception:  # noqa: BLE001
             pass
         return req
 
     @staticmethod
-    def hr_return_completion(req_id: str, principal, reason_category: str, note: str = "") -> ProfessionalDevelopmentRequest:
+    def hr_return_completion(
+        req_id: str, principal, reason_category: str, note: str = ""
+    ) -> ProfessionalDevelopmentRequest:
         target = RETURN_REASON_TARGETS.get(reason_category)
         if target is None:
             raise BadRequest("Unknown return reason.")
@@ -305,7 +397,9 @@ class PDCourseTrackingService:
         if role not in (HR_ROLE, "CountryDirector", "RegionalVicePresident", "Admin"):
             raise Forbidden("Only HR may return a completion for correction.")
         if req.staff_id == (principal.staff_profile_id or ""):
-            raise Forbidden("You cannot review your own Professional Development record.")
+            raise Forbidden(
+                "You cannot review your own Professional Development record."
+            )
         if req.status != PDStatus.AWAITING_HR_SIGNOFF:
             raise BadRequest("This record is not awaiting HR sign-off.")
         req.status = target
@@ -314,13 +408,17 @@ class PDCourseTrackingService:
         req.hr_reviewed_at = timezone.now()
         req.save()
         try:
-            from apps.professional_development.approval_service import PDApprovalRoutingService
+            from apps.professional_development.approval_service import (
+                PDApprovalRoutingService,
+            )
             from apps.professional_development.fund_service import PDFundRequestService
 
             PDFundRequestService._notify(
-                req.owner_user_id, "PD completion returned by HR", req.hr_note, req)
+                req.owner_user_id, "PD completion returned by HR", req.hr_note, req
+            )
             PDApprovalRoutingService._message_from_hr(
-                req, principal, "Your PD completion needs a fix", req.hr_note)
+                req, principal, "Your PD completion needs a fix", req.hr_note
+            )
         except Exception:  # noqa: BLE001
             pass
         return req
@@ -332,12 +430,16 @@ class PDCourseTrackingService:
             from apps.hr.models import CPDAssignment, EmployeeSkill, Skill
 
             CPDAssignment.objects.update_or_create(
-                staff_id=req.staff_id, course_name=req.course_name,
+                staff_id=req.staff_id,
+                course_name=req.course_name,
                 defaults={
-                    "category": req.course_category, "status": "Verified",
+                    "category": req.course_category,
+                    "status": "Verified",
                     "evidence_url": (
-                        req.certificates.filter(status="uploaded").order_by("-created_at")
-                        .values_list("uri", flat=True).first()
+                        req.certificates.filter(status="uploaded")
+                        .order_by("-created_at")
+                        .values_list("uri", flat=True)
+                        .first()
                     ),
                     "completed_at": req.signed_off_at,
                 },
@@ -347,11 +449,15 @@ class PDCourseTrackingService:
                 if not name:
                     continue
                 skill, _ = Skill.objects.get_or_create(name=name[:128])
-                existing = EmployeeSkill.objects.filter(staff_id=req.staff_id, skill=skill).first()
+                existing = EmployeeSkill.objects.filter(
+                    staff_id=req.staff_id, skill=skill
+                ).first()
                 if existing:
                     existing.level = min(5, existing.level + 1)
                     existing.save(update_fields=["level", "updated_at"])
                 else:
-                    EmployeeSkill.objects.create(staff_id=req.staff_id, skill=skill, level=2)
+                    EmployeeSkill.objects.create(
+                        staff_id=req.staff_id, skill=skill, level=2
+                    )
         except Exception:  # noqa: BLE001 — CPD/skills sync is a bonus, never blocking sign-off
             pass

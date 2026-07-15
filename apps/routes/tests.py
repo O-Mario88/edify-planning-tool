@@ -23,7 +23,6 @@ from apps.schools.models import School
 from apps.daily_visit_batches.services import remove_school, schedule_visits
 from apps.routes.engine import (
     PlanningRoutePreviewService,
-    RouteComputation,
 )
 from apps.routes.health import route_intelligence_checks
 from apps.routes.location import (
@@ -60,37 +59,61 @@ class RouteIntelligenceTestCase(TestCase):
         self.sc_goma = SubCounty.objects.create(name="Goma", district=self.primary)
         self.sc_kasawo = SubCounty.objects.create(name="Kasawo", district=self.primary)
         self.sc_nama = SubCounty.objects.create(name="Nama", district=self.primary)
-        self.sc_ntenjeru = SubCounty.objects.create(name="Ntenjeru", district=self.primary)
+        self.sc_ntenjeru = SubCounty.objects.create(
+            name="Ntenjeru", district=self.primary
+        )
 
         self.catalogue, _ = CostCatalogue.objects.get_or_create(
-            country="Uganda", fy="2026", version=1,
-            defaults={"is_active": True, "label": "Route Test Catalogue",
-                      "required_school_visits_per_day": 3},
+            country="Uganda",
+            fy="2026",
+            version=1,
+            defaults={
+                "is_active": True,
+                "label": "Route Test Catalogue",
+                "required_school_visits_per_day": 3,
+            },
         )
         self.catalogue.required_school_visits_per_day = 3
         self.catalogue.is_active = True
-        self.catalogue.save(update_fields=["required_school_visits_per_day", "is_active"])
+        self.catalogue.save(
+            update_fields=["required_school_visits_per_day", "is_active"]
+        )
         for key, cost in PRIMARY_RATES + SECONDARY_RATES:
             CostSetting.objects.update_or_create(
                 key=key,
-                defaults={"label": key, "unit_cost": cost, "fy": "2026",
-                          "catalogue": self.catalogue, "version": 1},
+                defaults={
+                    "label": key,
+                    "unit_cost": cost,
+                    "fy": "2026",
+                    "catalogue": self.catalogue,
+                    "version": 1,
+                },
             )
 
         self.staff = User.objects.create_user(
-            email="route@test.com", name="Route Staff",
-            roles=[EdifyRole.CCEO.value], active_role=EdifyRole.CCEO.value,
-            password="x", is_active=True,
+            email="route@test.com",
+            name="Route Staff",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x",
+            is_active=True,
         )
         self.staff_profile = StaffProfile.objects.create(user=self.staff, title="CCEO")
 
         def mk(school_id, name, district, sub_county, **extra):
             s = School.objects.create(
-                school_id=school_id, name=name, region=self.region, district=district,
-                sub_county=sub_county, current_fy_ssa_status="done",
-                planning_readiness="ready", **extra,
+                school_id=school_id,
+                name=name,
+                region=self.region,
+                district=district,
+                sub_county=sub_county,
+                current_fy_ssa_status="done",
+                planning_readiness="ready",
+                **extra,
             )
-            StaffSchoolAssignment.objects.create(staff=self.staff_profile, school_id=s.id)
+            StaffSchoolAssignment.objects.create(
+                staff=self.staff_profile, school_id=s.id
+            )
             return s
 
         # Goma cluster of schools (same sub-county).
@@ -106,18 +129,27 @@ class RouteIntelligenceTestCase(TestCase):
         self.sa = mk("RT-SA", "Sec A School", self.sec_a, None)
         self.sb = mk("RT-SB", "Sec B School", self.sec_b, None)
         # Weak-location school: no sub-county/parish/coords, only address text.
-        self.weak = mk("RT-WK", "Weak Location School", self.primary, None,
-                       shipping_address="Route Primary, Nakifuma Hill")
+        self.weak = mk(
+            "RT-WK",
+            "Weak Location School",
+            self.primary,
+            None,
+            shipping_address="Route Primary, Nakifuma Hill",
+        )
 
         self.base_fields = {
-            "activityType": "school_visit", "deliveryType": "staff",
-            "activityPurposeText": "Routine visit", "focusIntervention": "leadership",
+            "activityType": "school_visit",
+            "deliveryType": "staff",
+            "activityPurposeText": "Routine visit",
+            "focusIntervention": "leadership",
         }
 
     def _schedule(self, school_ids, visit_date=VISIT_DAY, reason=None):
         return schedule_visits(
-            school_ids=school_ids, scheduled_date=visit_date,
-            activity_common_fields=self.base_fields, reason=reason,
+            school_ids=school_ids,
+            scheduled_date=visit_date,
+            activity_common_fields=self.base_fields,
+            reason=reason,
             principal=self.staff,
         )
 
@@ -143,7 +175,9 @@ class RouteIntelligenceTestCase(TestCase):
         self.assertEqual(r3["confidence"], "low")
         self.assertIn("Nakifuma Hill", r3["tokens"])
         # A verified GeoPoint outranks everything.
-        SchoolGeoPoint.objects.create(school_id=self.weak.id, latitude=0.3, longitude=32.7)
+        SchoolGeoPoint.objects.create(
+            school_id=self.weak.id, latitude=0.3, longitude=32.7
+        )
         r4 = SchoolLocationParserService.resolve(self.weak)
         self.assertEqual(r4["source"], "coordinates")
         self.assertEqual(r4["confidence"], "high")
@@ -151,12 +185,16 @@ class RouteIntelligenceTestCase(TestCase):
     # ── 2. Phrase parsing, not most-common word ──────────────────────────────
     def test_text_parser_extracts_phrases_not_generic_words(self):
         self.assertEqual(
-            extract_location_phrases("Mukono, Goma Division, Goma Division, Nakifuma Hill", "Mukono"),
+            extract_location_phrases(
+                "Mukono, Goma Division, Goma Division, Nakifuma Hill", "Mukono"
+            ),
             ["Goma", "Nakifuma Hill"],
         )
         # Generic words alone prove nothing → no phrases.
         self.assertEqual(
-            extract_location_phrases("Mukono, Central Trading Centre, Primary School", "Mukono"),
+            extract_location_phrases(
+                "Mukono, Central Trading Centre, Primary School", "Mukono"
+            ),
             [],
         )
 
@@ -180,13 +218,20 @@ class RouteIntelligenceTestCase(TestCase):
         p = self._preview([self.g1, self.sa])
         self.assertEqual(p["status"], "blocked")
         self.assertTrue(p["blocked"])
-        self.assertTrue(any("mixed" in w.lower() or "primary district" in w.lower() for w in p["warnings"]))
+        self.assertTrue(
+            any(
+                "mixed" in w.lower() or "primary district" in w.lower()
+                for w in p["warnings"]
+            )
+        )
 
     # ── 6. Secondary route group exception ───────────────────────────────────
     def test_secondary_group_exception(self):
         p = self._preview([self.sa, self.sb])
         self.assertEqual(p["status"], "blocked")  # ungrouped secondary districts
-        group = SecondaryDistrictGroup.objects.create(name="North Route", status="approved")
+        group = SecondaryDistrictGroup.objects.create(
+            name="North Route", status="approved"
+        )
         SecondaryDistrictGroupMember.objects.create(group=group, district=self.sec_a)
         SecondaryDistrictGroupMember.objects.create(group=group, district=self.sec_b)
         p2 = self._preview([self.sa, self.sb])
@@ -194,11 +239,21 @@ class RouteIntelligenceTestCase(TestCase):
 
     # ── 7. Working-day overload → Not Feasible + split/reduce advice ─────────
     def test_working_day_overload_not_feasible(self):
-        many = [self.g1, self.g2, self.g3, self.g4, self.k1, self.n1, self.t1]  # 7 schools
+        many = [
+            self.g1,
+            self.g2,
+            self.g3,
+            self.g4,
+            self.k1,
+            self.n1,
+            self.t1,
+        ]  # 7 schools
         p = self._preview(many)
         self.assertFalse(p["feasible"])
         self.assertTrue(any("exceeds the 8h working day" in w for w in p["warnings"]))
-        self.assertTrue(any(r["kind"] in ("reduce", "split") for r in p["recommendations"]))
+        self.assertTrue(
+            any(r["kind"] in ("reduce", "split") for r in p["recommendations"])
+        )
 
     # ── 8. Coordinates confirm the route ─────────────────────────────────────
     def test_coordinates_confirm_route_and_drive_distance(self):
@@ -214,8 +269,12 @@ class RouteIntelligenceTestCase(TestCase):
     # ── 9. Far-apart coordinates kill the coordinate bonus ───────────────────
     def test_far_coordinates_lower_score(self):
         School.objects.filter(id=self.g1.id).update(latitude=0.30, longitude=32.50)
-        School.objects.filter(id=self.g2.id).update(latitude=0.30, longitude=33.10)  # ~67 km east
-        School.objects.filter(id=self.g3.id).update(latitude=0.90, longitude=32.50)  # ~67 km north
+        School.objects.filter(id=self.g2.id).update(
+            latitude=0.30, longitude=33.10
+        )  # ~67 km east
+        School.objects.filter(id=self.g3.id).update(
+            latitude=0.90, longitude=32.50
+        )  # ~67 km north
         p = self._preview([self.g1, self.g2, self.g3])
         self.assertLess(p["score"], 100)
         self.assertFalse(p["feasible"])  # >130 km of legs at 30 km/h swallows the day
@@ -224,7 +283,9 @@ class RouteIntelligenceTestCase(TestCase):
     def test_cd_target_warning_and_add_recommendation(self):
         p = self._preview([self.g1, self.g2])  # 2 of target 3
         self.assertFalse(p["meets_target"])
-        self.assertTrue(any("CD target is 3" in w and "You selected 2" in w for w in p["warnings"]))
+        self.assertTrue(
+            any("CD target is 3" in w and "You selected 2" in w for w in p["warnings"])
+        )
         add = next((r for r in p["recommendations"] if r["kind"] == "add"), None)
         self.assertIsNotNone(add)
         self.assertIn("Goma", add["message"])  # suggests nearby Goma schools
@@ -232,7 +293,9 @@ class RouteIntelligenceTestCase(TestCase):
     # ── 11. Scheduling builds the route twin; counts stay in step ────────────
     def test_schedule_visits_builds_route_batch_and_counts_match(self):
         self._schedule(["RT-G1", "RT-G2", "RT-G3"])
-        rb = DailyVisitRouteBatch.objects.get(responsible_user=self.staff.id, visit_date=VISIT_DAY)
+        rb = DailyVisitRouteBatch.objects.get(
+            responsible_user=self.staff.id, visit_date=VISIT_DAY
+        )
         self.assertEqual(rb.school_count, 3)
         self.assertIsNotNone(rb.cost_batch)
         self.assertEqual(rb.school_count, rb.cost_batch.school_count)
@@ -250,16 +313,22 @@ class RouteIntelligenceTestCase(TestCase):
     # ── 12. Low location confidence → Data Quality To-Do (never a rejection) ─
     def test_low_confidence_creates_data_quality_todo(self):
         self._schedule(["RT-WK", "RT-G1", "RT-G2"], reason=None)
-        rb = DailyVisitRouteBatch.objects.get(responsible_user=self.staff.id, visit_date=VISIT_DAY)
+        rb = DailyVisitRouteBatch.objects.get(
+            responsible_user=self.staff.id, visit_date=VISIT_DAY
+        )
         self.assertEqual(rb.confidence, "low")  # worst school in the day
         from apps.command_center.todo_service import _route_todos
 
         todos = _route_todos(self.staff, "CCEO")
-        self.assertTrue(any(t["title"] == "Fix school location / coordinates" for t in todos))
+        self.assertTrue(
+            any(t["title"] == "Fix school location / coordinates" for t in todos)
+        )
 
     # ── 13. Health checks count real workflow gaps ───────────────────────────
     def test_health_checks_report_real_gaps(self):
-        self._schedule(["RT-G1", "RT-G2"], reason="area recovery week")  # below target, with reason
+        self._schedule(
+            ["RT-G1", "RT-G2"], reason="area recovery week"
+        )  # below target, with reason
         checks = route_intelligence_checks()
         self.assertEqual(checks["belowTargetNoReason"], 0)
         # Strip the recorded reason (legacy-data simulation) → flagged.

@@ -15,7 +15,6 @@ returned to the caller exactly once.
 
 from __future__ import annotations
 
-from datetime import timedelta
 
 from django.conf import settings
 from django.db import transaction
@@ -35,13 +34,12 @@ from .jwt import issue_token_pair
 from .models import RefreshToken, User, UserInvitation
 
 
-# Tunable lockout knobs (mirror the NestJS env defaults).
-def _max_failed() -> int:
-    return getattr(settings, "AUTH_MAX_FAILED_LOGINS", 5)
-
-
-def _lock_minutes() -> int:
-    return getattr(settings, "AUTH_LOCK_MINUTES", 15)
+# Lockout knobs previously lived here as _max_failed()/_lock_minutes() with
+# fallback defaults (5, 15) that silently disagreed with the OTHER login
+# path's fallbacks (10, 15) -- exactly the inconsistency Issue 3 fixed.
+# Removed: all lockout policy now lives in
+# apps.accounts.lockout_service.AuthenticationLockoutService, the one
+# canonical place, read via django.contrib.auth.authenticate() below.
 
 
 def _reset_ttl_minutes() -> int:
@@ -54,53 +52,37 @@ def _invite_ttl_days() -> int:
 
 # ── Login ────────────────────────────────────────────────────────────────────
 def login(email: str, password: str, requested_active_role: str | None = None) -> dict:
-    """Authenticate + issue a token pair. Mirrors AuthService.login exactly:
-    look up WITHOUT the isActive filter (so lockout state is tracked even for a
-    disabled account); require active for success; generic errors throughout to
-    avoid user enumeration."""
-    email = (email or "").lower().strip()
-    user = (
-        User.objects.filter(email=email, deleted_at__isnull=True)
-        .select_related("staff_profile")
-        .first()
-    )
+    """Authenticate + issue a token pair. ONE authentication call
+    (django.contrib.auth.authenticate(), via AUTHENTICATION_BACKENDS =
+    LockoutEnforcingModelBackend) — the exact same call the web session
+    login path makes, so lockout/lifecycle/password logic lives in exactly
+    one place instead of being reimplemented per login surface. Generic
+    errors throughout to avoid user enumeration."""
+    from django.contrib.auth import authenticate
 
-    now = timezone.now()
+    from apps.accounts.lockout_service import AuthenticationLockoutService
+
+    email = (email or "").lower().strip()
+    existing = User.objects.filter(email=email, deleted_at__isnull=True).first()
 
     # Locked? Reject before checking the password (don't reset the clock).
-    if user and user.locked_until and user.locked_until > now:
-        raise Forbidden(
-            "Account is temporarily locked due to repeated failed sign-ins. "
-            "Try again later."
-        )
+    # authenticate() re-checks this itself; this pre-check exists only to
+    # give a more specific error message (locked vs. wrong credentials) —
+    # it is not itself the security gate.
+    if existing:
+        state = AuthenticationLockoutService.check_lockout(existing)
+        if state.locked:
+            raise Forbidden(
+                "Account is temporarily locked due to repeated failed sign-ins. "
+                "Try again later."
+            )
 
-    # Lifecycle gate: only `active` may sign in. Generic error so the caller
-    # can't distinguish "wrong status" from "wrong password".
-    if user and user.status != "active":
-        raise Unauthorized("Invalid email or password.")
-
-    # A null/unusable password means invited-but-not-set → failed login.
-    password_ok = (
-        bool(user and user.password and user.check_password(password))
-        if user
-        else False
-    )
-    if not user or not password_ok or not user.is_active:
-        if user:
-            failed = user.failed_login_count + 1
-            lock = failed >= _max_failed()
-            user.failed_login_count = 0 if lock else failed
-            if lock:
-                user.locked_until = now + timedelta(minutes=_lock_minutes())
-            user.save(update_fields=["failed_login_count", "locked_until"])
+    user = authenticate(email=email, password=password)
+    if user is None:
         # Generic error either way to avoid user enumeration.
         raise Unauthorized("Invalid credentials")
 
-    # Success — clear any failure counter + stamp last login.
-    user.failed_login_count = 0
-    user.locked_until = None
-    user.last_login_at = now
-    user.save(update_fields=["failed_login_count", "locked_until", "last_login_at"])
+    user = User.objects.select_related("staff_profile").get(id=user.id)
 
     active_role = (
         requested_active_role

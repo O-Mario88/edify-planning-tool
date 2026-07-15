@@ -13,7 +13,7 @@
     </div>
     <form method="get" class="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500 w-fit">
       <span class="uppercase tracking-wider text-[10px]">Status</span>
-      <select name="status" onchange="this.form.submit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+      <select name="status" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
         <option value="">All</option>
         <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
         <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>

@@ -28,12 +28,10 @@ from apps.professional_development.approval_service import PDApprovalRoutingServ
 from apps.professional_development.completion_service import PDCourseTrackingService
 from apps.professional_development.fund_service import PDFundRequestService
 from apps.professional_development.models import (
-    FUNDED_TYPES,
     PDRoleAllocation,
     PDStatus,
     ProfessionalDevelopmentAllocation,
     ProfessionalDevelopmentCertificate,
-    ProfessionalDevelopmentEvidence,
     ProfessionalDevelopmentRequest,
 )
 from apps.professional_development.services import StaffPDService, staff_display_info
@@ -43,39 +41,73 @@ FY = get_operational_fy()
 
 
 def _pdf(name="cert.pdf"):
-    return SimpleUploadedFile(name, b"%PDF-1.4\n" + b"x" * 128, content_type="application/pdf")
+    return SimpleUploadedFile(
+        name, b"%PDF-1.4\n" + b"x" * 128, content_type="application/pdf"
+    )
 
 
 class PDTestBase(TestCase):
     def setUp(self):
-        self.cceo, self.cceo_sp = self._staff("cceo@pd.org", "Casey Cceo", EdifyRole.CCEO.value)
-        self.pl, self.pl_sp = self._staff("pl@pd.org", "Pat Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
-        self.hr, self.hr_sp = self._staff("hr@pd.org", "Hana HR", EdifyRole.HUMAN_RESOURCES.value)
-        self.hr2, self.hr2_sp = self._staff("hr2@pd.org", "Hank HR2", EdifyRole.HUMAN_RESOURCES.value)
+        self.cceo, self.cceo_sp = self._staff(
+            "cceo@pd.org", "Casey Cceo", EdifyRole.CCEO.value
+        )
+        self.pl, self.pl_sp = self._staff(
+            "pl@pd.org", "Pat Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        self.hr, self.hr_sp = self._staff(
+            "hr@pd.org", "Hana HR", EdifyRole.HUMAN_RESOURCES.value
+        )
+        self.hr2, self.hr2_sp = self._staff(
+            "hr2@pd.org", "Hank HR2", EdifyRole.HUMAN_RESOURCES.value
+        )
         self.accountant, self.acct_sp = self._staff(
-            "acct@pd.org", "Ada Accountant", EdifyRole.PROGRAM_ACCOUNTANT.value)
-        self.cd, self.cd_sp = self._staff("cd@pd.org", "Cody Director", EdifyRole.COUNTRY_DIRECTOR.value)
+            "acct@pd.org", "Ada Accountant", EdifyRole.PROGRAM_ACCOUNTANT.value
+        )
+        self.cd, self.cd_sp = self._staff(
+            "cd@pd.org", "Cody Director", EdifyRole.COUNTRY_DIRECTOR.value
+        )
         self.rvp, self.rvp_sp = self._staff(
-            "rvp@pd.org", "Remy VP", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+            "rvp@pd.org", "Remy VP", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
 
-        StaffSupervisorAssignment.objects.create(supervisee=self.cceo_sp, supervisor=self.pl_sp)
-        StaffSupervisorAssignment.objects.create(supervisee=self.hr_sp, supervisor=self.cd_sp)
+        StaffSupervisorAssignment.objects.create(
+            supervisee=self.cceo_sp, supervisor=self.pl_sp
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisee=self.hr_sp, supervisor=self.cd_sp
+        )
 
     def _staff(self, email, name, role):
         u = User.objects.create_user(
-            email=email, name=name, roles=[role], active_role=role, password="x", is_active=True)
+            email=email,
+            name=name,
+            roles=[role],
+            active_role=role,
+            password="x",
+            is_active=True,
+        )
         return u, StaffProfile.objects.create(user=u, title=role, country="Uganda")
 
     def _draft(self, user, **overrides):
         info = staff_display_info(user)
         fields = dict(
-            fy=FY, staff_id=info["staff_id"], staff_name=info["staff_name"],
-            position=info["position"], country=info["country"], department=info["department"],
-            supervisor_staff_id=info["supervisor_staff_id"], supervisor_name=info["supervisor_name"],
-            course_name="Leadership for Impact", course_category="Leadership Development",
-            course_type="online", institution="Coursera", course_link="https://coursera.org/x",
-            start_date=date.today() + timedelta(days=30), end_date=date.today() + timedelta(days=90),
-            funding_type="self_funded", created_by=user.id,
+            fy=FY,
+            staff_id=info["staff_id"],
+            staff_name=info["staff_name"],
+            position=info["position"],
+            country=info["country"],
+            department=info["department"],
+            supervisor_staff_id=info["supervisor_staff_id"],
+            supervisor_name=info["supervisor_name"],
+            course_name="Leadership for Impact",
+            course_category="Leadership Development",
+            course_type="online",
+            institution="Coursera",
+            course_link="https://coursera.org/x",
+            start_date=date.today() + timedelta(days=30),
+            end_date=date.today() + timedelta(days=90),
+            funding_type="self_funded",
+            created_by=user.id,
         )
         fields.update(overrides)
         return ProfessionalDevelopmentRequest.objects.create(**fields)
@@ -83,7 +115,8 @@ class PDTestBase(TestCase):
     def _allocate(self, user, amount_cents):
         sp = StaffProfile.objects.get(user=user)
         return ProfessionalDevelopmentAllocation.objects.create(
-            staff_id=sp.id, fy=FY, country="Uganda", annual_allocation=amount_cents)
+            staff_id=sp.id, fy=FY, country="Uganda", annual_allocation=amount_cents
+        )
 
 
 class BalancesTests(PDTestBase):
@@ -96,8 +129,11 @@ class BalancesTests(PDTestBase):
         self.assertEqual(bal["remaining"], 100_000_00)
 
         req = self._draft(
-            self.cceo, funding_type="fully_funded", requested_amount_cents=40_000_00,
-            course_fee_cents=40_000_00)
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=40_000_00,
+            course_fee_cents=40_000_00,
+        )
         req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
         req.save()
         bal = StaffPDService.balances(self.cceo, FY)
@@ -109,8 +145,11 @@ class BalancesTests(PDTestBase):
         an exception reason, and gets flagged is_exception once approved."""
         self._allocate(self.cceo, 10_000_00)
         req = self._draft(
-            self.cceo, funding_type="fully_funded", requested_amount_cents=50_000_00,
-            course_fee_cents=50_000_00)
+            self.cceo,
+            funding_type="fully_funded",
+            requested_amount_cents=50_000_00,
+            course_fee_cents=50_000_00,
+        )
         with self.assertRaises(BadRequest):
             PDApprovalRoutingService.submit(req, self.cceo)
 
@@ -191,7 +230,9 @@ class EvidenceGateTests(PDTestBase):
         req = self._draft(self.cceo, course_type="in_person", course_link="")
         with self.assertRaises(BadRequest):
             PDApprovalRoutingService.submit(req, self.cceo)
-        PDCourseTrackingService.upload_evidence(req.id, self.cceo, _pdf(), kind="admission_letter")
+        PDCourseTrackingService.upload_evidence(
+            req.id, self.cceo, _pdf(), kind="admission_letter"
+        )
         PDApprovalRoutingService.submit(req, self.cceo)
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.SUBMITTED_TO_SUPERVISOR)
@@ -205,7 +246,9 @@ class EvidenceGateTests(PDTestBase):
         req = self._draft(self.cceo, course_type="hybrid", course_link="https://x.org")
         with self.assertRaises(BadRequest):
             PDApprovalRoutingService.submit(req, self.cceo)
-        PDCourseTrackingService.upload_evidence(req.id, self.cceo, _pdf(), kind="admission_letter")
+        PDCourseTrackingService.upload_evidence(
+            req.id, self.cceo, _pdf(), kind="admission_letter"
+        )
         PDApprovalRoutingService.submit(req, self.cceo)
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.SUBMITTED_TO_SUPERVISOR)
@@ -215,7 +258,9 @@ class EvidenceGateTests(PDTestBase):
         req.status = PDStatus.SUBMITTED_TO_SUPERVISOR
         req.save()
         with self.assertRaises(BadRequest):
-            PDCourseTrackingService.upload_evidence(req.id, self.cceo, _pdf(), kind="admission_letter")
+            PDCourseTrackingService.upload_evidence(
+                req.id, self.cceo, _pdf(), kind="admission_letter"
+            )
 
 
 class ClosureChainTests(PDTestBase):
@@ -235,9 +280,14 @@ class ClosureChainTests(PDTestBase):
         """§24 — nothing else may ever set COMPLETED_CLOSED."""
         req = self._fund_and_approve(self._draft(self.cceo), funded=False)
         self.assertEqual(req.status, PDStatus.APPROVED_UNFUNDED)
-        PDCourseTrackingService.confirm_enrollment(req.id, self.cceo, enrollment_date=date.today())
+        PDCourseTrackingService.confirm_enrollment(
+            req.id, self.cceo, enrollment_date=date.today()
+        )
         req.refresh_from_db()
-        req.start_date, req.end_date = date.today() - timedelta(days=5), date.today() - timedelta(days=1)
+        req.start_date, req.end_date = (
+            date.today() - timedelta(days=5),
+            date.today() - timedelta(days=1),
+        )
         req.save()
         PDCourseTrackingService.sync_dates(req)
         req.refresh_from_db()
@@ -246,13 +296,21 @@ class ClosureChainTests(PDTestBase):
     def test_no_certificate_no_complete(self):
         """§21/§24 — sign-off is blocked without an uploaded certificate."""
         req = self._fund_and_approve(self._draft(self.cceo), funded=False)
-        PDCourseTrackingService.confirm_enrollment(req.id, self.cceo, enrollment_date=date.today())
+        PDCourseTrackingService.confirm_enrollment(
+            req.id, self.cceo, enrollment_date=date.today()
+        )
         req.refresh_from_db()
-        req.start_date, req.end_date = date.today() - timedelta(days=5), date.today() - timedelta(days=1)
+        req.start_date, req.end_date = (
+            date.today() - timedelta(days=5),
+            date.today() - timedelta(days=1),
+        )
         req.save()
         PDCourseTrackingService.mark_complete(
-            req.id, self.cceo, actual_completion_date=date.today(),
-            course_outcome="Completed the leadership track.")
+            req.id,
+            self.cceo,
+            actual_completion_date=date.today(),
+            course_outcome="Completed the leadership track.",
+        )
         req.refresh_from_db()
         missing = PDCourseTrackingService._assert_signoff_eligible(req)
         self.assertIn("Certificate missing", missing)
@@ -261,12 +319,21 @@ class ClosureChainTests(PDTestBase):
         """Unfunded courses have no accountability step — confirm_bamboohr
         routes them directly to AWAITING_HR_SIGNOFF."""
         req = self._fund_and_approve(self._draft(self.cceo), funded=False)
-        PDCourseTrackingService.confirm_enrollment(req.id, self.cceo, enrollment_date=date.today())
+        PDCourseTrackingService.confirm_enrollment(
+            req.id, self.cceo, enrollment_date=date.today()
+        )
         req.refresh_from_db()
-        req.start_date, req.end_date = date.today() - timedelta(days=5), date.today() - timedelta(days=1)
+        req.start_date, req.end_date = (
+            date.today() - timedelta(days=5),
+            date.today() - timedelta(days=1),
+        )
         req.save()
         PDCourseTrackingService.mark_complete(
-            req.id, self.cceo, actual_completion_date=date.today(), course_outcome="Done.")
+            req.id,
+            self.cceo,
+            actual_completion_date=date.today(),
+            course_outcome="Done.",
+        )
         PDCourseTrackingService.upload_certificate(req.id, self.cceo, _pdf())
         PDCourseTrackingService.confirm_bamboohr(req.id, self.cceo)
         req.refresh_from_db()
@@ -277,22 +344,46 @@ class ClosureChainTests(PDTestBase):
         submission AND a NetSuite Expense ID."""
         req = self._fund_and_approve(self._draft(self.cceo), funded=True)
         self.assertTrue(hasattr(req, "fund_request"))
-        PDFundRequestService.disburse(req.fund_request.id, self.accountant, method="bank_transfer", reference="TX1")
-        PDCourseTrackingService.confirm_enrollment(req.id, self.cceo, enrollment_date=date.today())
+        PDFundRequestService.disburse(
+            req.fund_request.id,
+            self.accountant,
+            method="bank_transfer",
+            reference="TX1",
+        )
+        PDCourseTrackingService.confirm_enrollment(
+            req.id, self.cceo, enrollment_date=date.today()
+        )
         req.refresh_from_db()
-        req.start_date, req.end_date = date.today() - timedelta(days=5), date.today() - timedelta(days=1)
+        req.start_date, req.end_date = (
+            date.today() - timedelta(days=5),
+            date.today() - timedelta(days=1),
+        )
         req.save()
         PDCourseTrackingService.mark_complete(
-            req.id, self.cceo, actual_completion_date=date.today(), course_outcome="Done.")
+            req.id,
+            self.cceo,
+            actual_completion_date=date.today(),
+            course_outcome="Done.",
+        )
         PDCourseTrackingService.upload_certificate(req.id, self.cceo, _pdf())
         PDCourseTrackingService.confirm_bamboohr(req.id, self.cceo)
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.BAMBOOHR_CONFIRMED)
         with self.assertRaises(BadRequest):
             PDCourseTrackingService.submit_accountability(
-                req.id, self.cceo, actual_spent=50_000_00, returned_amount=0, netsuite_expense_id="")
+                req.id,
+                self.cceo,
+                actual_spent=50_000_00,
+                returned_amount=0,
+                netsuite_expense_id="",
+            )
         PDCourseTrackingService.submit_accountability(
-            req.id, self.cceo, actual_spent=50_000_00, returned_amount=0, netsuite_expense_id="NS-100")
+            req.id,
+            self.cceo,
+            actual_spent=50_000_00,
+            returned_amount=0,
+            netsuite_expense_id="NS-100",
+        )
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.ACCOUNTABILITY_SUBMITTED)
         missing = PDCourseTrackingService._assert_signoff_eligible(req)
@@ -306,13 +397,17 @@ class ClosureChainTests(PDTestBase):
 
     def test_deferred_withdrawn_requires_a_reason(self):
         req = self._fund_and_approve(self._draft(self.cceo), funded=False)
-        PDCourseTrackingService.confirm_enrollment(req.id, self.cceo, enrollment_date=date.today())
+        PDCourseTrackingService.confirm_enrollment(
+            req.id, self.cceo, enrollment_date=date.today()
+        )
         req.refresh_from_db()
         with self.assertRaises(BadRequest):
             PDCourseTrackingService.mark_deferred_or_withdrawn(
-                req.id, self.cceo, outcome="withdrawn", reason="")
+                req.id, self.cceo, outcome="withdrawn", reason=""
+            )
         PDCourseTrackingService.mark_deferred_or_withdrawn(
-            req.id, self.cceo, outcome="withdrawn", reason="Personal circumstances.")
+            req.id, self.cceo, outcome="withdrawn", reason="Personal circumstances."
+        )
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.WITHDRAWN)
 
@@ -320,8 +415,11 @@ class ClosureChainTests(PDTestBase):
 class SelfConflictTests(PDTestBase):
     def test_accountant_cannot_disburse_own_request(self):
         req = self._draft(
-            self.accountant, funding_type="fully_funded", requested_amount_cents=20_000_00,
-            course_fee_cents=20_000_00)
+            self.accountant,
+            funding_type="fully_funded",
+            requested_amount_cents=20_000_00,
+            course_fee_cents=20_000_00,
+        )
         # The Accountant test fixture has no configured supervisor, so it
         # would auto-skip straight to HR on a real submit() — set the status
         # to match that reality rather than the (unreachable) supervisor stage.
@@ -332,7 +430,11 @@ class SelfConflictTests(PDTestBase):
         self.assertTrue(hasattr(req, "fund_request"))
         with self.assertRaises(Forbidden):
             PDFundRequestService.disburse(
-                req.fund_request.id, self.accountant, method="bank_transfer", reference="X")
+                req.fund_request.id,
+                self.accountant,
+                method="bank_transfer",
+                reference="X",
+            )
 
     def test_accountant_cannot_clear_own_accountability(self):
         req = self._draft(self.accountant)
@@ -369,10 +471,15 @@ class ResubmissionGuardTests(PDTestBase):
         req.save()
         client = Client()
         client.force_login(self.cceo)
-        resp = client.post("/my-professional-development/request", {
-            "id": req.id, "fy": FY, "course_name": "Hacked Name",
-            "intent": "draft",
-        })
+        resp = client.post(
+            "/my-professional-development/request",
+            {
+                "id": req.id,
+                "fy": FY,
+                "course_name": "Hacked Name",
+                "intent": "draft",
+            },
+        )
         self.assertEqual(resp.status_code, 400)
         req.refresh_from_db()
         self.assertEqual(req.course_name, "Leadership for Impact")
@@ -402,7 +509,9 @@ class PrivacyTests(PDTestBase):
         req.save()
         cert = PDCourseTrackingService.upload_certificate(req.id, self.cceo, _pdf())
         client = Client()
-        client.force_login(self.pl)  # not the owner, not the supervisor at this stage, not HR
+        client.force_login(
+            self.pl
+        )  # not the owner, not the supervisor at this stage, not HR
         client.force_login(self.rvp)
         resp = client.get(f"/my-professional-development/certificate/{cert.id}")
         self.assertEqual(resp.status_code, 200)  # RVP is authorized (leadership)
@@ -470,12 +579,15 @@ class HRDashboardTests(PDTestBase):
         super().setUp()
         # A second-country CCEO so CD/PL scoping has something real to exclude.
         self.kenya_cceo, self.kenya_cceo_sp = self._staff(
-            "kenya.cceo@pd.org", "Kamau CCEO", EdifyRole.CCEO.value)
+            "kenya.cceo@pd.org", "Kamau CCEO", EdifyRole.CCEO.value
+        )
         self.kenya_cceo_sp.country = "Kenya"
         self.kenya_cceo_sp.save()
 
     def test_hr_sees_every_country_unrestricted(self):
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         self._draft(self.cceo, status=PDStatus.IN_PROGRESS)
         self._draft(self.kenya_cceo, status=PDStatus.IN_PROGRESS)
@@ -486,7 +598,9 @@ class HRDashboardTests(PDTestBase):
     def test_country_director_locked_to_own_country(self):
         """CD's own StaffProfile is Uganda — the Kenyan CCEO's record must
         never appear, even though HR sees both."""
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         self._draft(self.cceo, status=PDStatus.IN_PROGRESS)
         self._draft(self.kenya_cceo, status=PDStatus.IN_PROGRESS)
@@ -499,7 +613,9 @@ class HRDashboardTests(PDTestBase):
         """PL supervises only self.cceo (per PDTestBase.setUp) — the Kenyan
         CCEO isn't on the team and must not appear even though both are
         nominally the same role."""
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         self._draft(self.cceo, status=PDStatus.IN_PROGRESS)
         self._draft(self.kenya_cceo, status=PDStatus.IN_PROGRESS)
@@ -508,28 +624,45 @@ class HRDashboardTests(PDTestBase):
         self.assertEqual(ctx["tracker_rows"][0]["staff_name"], self.cceo.name)
 
     def test_kpi_strip_has_eight_cards(self):
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         ctx = HRPDDashboardService.get_dashboard(self.hr, {})
         self.assertEqual(len(ctx["kpis"]), 8)
-        self.assertEqual({k["key"] for k in ctx["kpis"]}, {
-            "allocation", "committed", "accounted", "enrolled",
-            "in_progress", "pending_cert", "pending_acct", "signoff",
-        })
+        self.assertEqual(
+            {k["key"] for k in ctx["kpis"]},
+            {
+                "allocation",
+                "committed",
+                "accounted",
+                "enrolled",
+                "in_progress",
+                "pending_cert",
+                "pending_acct",
+                "signoff",
+            },
+        )
 
     def test_action_center_has_five_groups_signoff_is_the_only_dedicated_action(self):
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         req = self._draft(self.cceo, status=PDStatus.AWAITING_HR_SIGNOFF)
         ctx = HRPDDashboardService.get_dashboard(self.hr, {})
         self.assertEqual(len(ctx["action_center"]), 5)
-        signoff_group = next(g for g in ctx["action_center"] if g["key"] == "ready_signoff")
+        signoff_group = next(
+            g for g in ctx["action_center"] if g["key"] == "ready_signoff"
+        )
         self.assertEqual(signoff_group["count"], 1)
         self.assertEqual(signoff_group["items"][0]["id"], req.id)
         self.assertEqual(signoff_group["items"][0]["action"], "sign_off")
 
     def test_status_filter_narrows_tracker(self):
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         self._draft(self.cceo, status=PDStatus.IN_PROGRESS, course_name="Active Course")
         self._draft(self.kenya_cceo, status=PDStatus.ENDED, course_name="Ended Course")
@@ -538,42 +671,74 @@ class HRDashboardTests(PDTestBase):
         self.assertEqual(ctx["tracker_rows"][0]["course_name"], "Active Course")
 
     def test_adjust_role_allocation_creates_template_row(self):
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         pra = HRPDDashboardService.adjust_role_allocation(
-            self.hr, role="CCEO", fy=FY, country="Uganda", amount_major=250000)
+            self.hr, role="CCEO", fy=FY, country="Uganda", amount_major=250000
+        )
         self.assertEqual(pra.annual_allocation_cents, 25000000)
         self.assertEqual(pra.set_by, self.hr.id)
 
     def test_adjust_role_allocation_apply_to_existing_bulk_updates_real_balances(self):
         """The bulk-apply is opt-in: without it, the template changes but no
         staff member's own balance moves."""
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         HRPDDashboardService.adjust_role_allocation(
-            self.hr, role="CCEO", fy=FY, country="Uganda", amount_major=250000)
-        self.assertFalse(ProfessionalDevelopmentAllocation.objects.filter(staff_id=self.cceo_sp.id).exists())
+            self.hr, role="CCEO", fy=FY, country="Uganda", amount_major=250000
+        )
+        self.assertFalse(
+            ProfessionalDevelopmentAllocation.objects.filter(
+                staff_id=self.cceo_sp.id
+            ).exists()
+        )
 
         HRPDDashboardService.adjust_role_allocation(
-            self.hr, role="CCEO", fy=FY, country="Uganda", amount_major=300000, apply_to_existing=True)
-        alloc = ProfessionalDevelopmentAllocation.objects.get(staff_id=self.cceo_sp.id, fy=FY)
+            self.hr,
+            role="CCEO",
+            fy=FY,
+            country="Uganda",
+            amount_major=300000,
+            apply_to_existing=True,
+        )
+        alloc = ProfessionalDevelopmentAllocation.objects.get(
+            staff_id=self.cceo_sp.id, fy=FY
+        )
         self.assertEqual(alloc.annual_allocation, 30000000)
         # The Kenyan CCEO is a different country — must be untouched.
-        self.assertFalse(ProfessionalDevelopmentAllocation.objects.filter(staff_id=self.kenya_cceo_sp.id).exists())
+        self.assertFalse(
+            ProfessionalDevelopmentAllocation.objects.filter(
+                staff_id=self.kenya_cceo_sp.id
+            ).exists()
+        )
 
     def test_adjust_role_allocation_forbidden_for_non_hr(self):
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         with self.assertRaises(Forbidden):
             HRPDDashboardService.adjust_role_allocation(
-                self.cd, role="CCEO", fy=FY, country="Uganda", amount_major=100000)
+                self.cd, role="CCEO", fy=FY, country="Uganda", amount_major=100000
+            )
 
     def test_adjust_role_allocation_rejects_unknown_role(self):
-        from apps.professional_development.hr_dashboard_service import HRPDDashboardService
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
 
         with self.assertRaises(BadRequest):
             HRPDDashboardService.adjust_role_allocation(
-                self.hr, role="NotARealRole", fy=FY, country="Uganda", amount_major=100000)
+                self.hr,
+                role="NotARealRole",
+                fy=FY,
+                country="Uganda",
+                amount_major=100000,
+            )
 
     def test_dashboard_view_renders_for_hr_cd_and_pl(self):
         client = Client()
@@ -593,24 +758,39 @@ class HRDashboardTests(PDTestBase):
     def test_adjust_allocation_view_post_writes_and_redirects(self):
         client = Client()
         client.force_login(self.hr)
-        resp = client.post("/cpd-learning/adjust-allocation", {
-            "role": "CCEO", "fy": FY, "country": "Uganda",
-            "annual_allocation": "400000", "currency": "UGX",
-        })
+        resp = client.post(
+            "/cpd-learning/adjust-allocation",
+            {
+                "role": "CCEO",
+                "fy": FY,
+                "country": "Uganda",
+                "annual_allocation": "400000",
+                "currency": "UGX",
+            },
+        )
         self.assertEqual(resp.status_code, 302)
         pra = PDRoleAllocation.objects.get(role="CCEO", fy=FY, country="Uganda")
         self.assertEqual(pra.annual_allocation_cents, 40000000)
 
     def test_action_view_sign_off_closes_the_request(self):
         req = self._draft(
-            self.cceo, status=PDStatus.AWAITING_HR_SIGNOFF,
-            marked_complete_at=timezone.now(), bamboohr_uploaded=True)
+            self.cceo,
+            status=PDStatus.AWAITING_HR_SIGNOFF,
+            marked_complete_at=timezone.now(),
+            bamboohr_uploaded=True,
+        )
         ProfessionalDevelopmentCertificate.objects.create(
-            request=req, uri="test/cert.pdf", original_name="cert.pdf",
-            uploaded_by=self.cceo.id, status="uploaded")
+            request=req,
+            uri="test/cert.pdf",
+            original_name="cert.pdf",
+            uploaded_by=self.cceo.id,
+            status="uploaded",
+        )
         client = Client()
         client.force_login(self.hr)
-        resp = client.post("/cpd-learning/action", {"action": "sign_off", "request_id": req.id})
+        resp = client.post(
+            "/cpd-learning/action", {"action": "sign_off", "request_id": req.id}
+        )
         self.assertEqual(resp.status_code, 302)
         req.refresh_from_db()
         self.assertEqual(req.status, PDStatus.COMPLETED_CLOSED)

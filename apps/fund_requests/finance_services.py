@@ -77,26 +77,34 @@ class AdvanceDisbursementService:
         user_id: str,
         notes: str = "",
     ) -> Disbursement:
-        # GUARDED: mirrors apps.fund_requests.advance_service.disburse() — the
-        # Accountant may NOT disburse before the responsible user confirms the
-        # advance (the finance-safety rule). This legacy, activity-level path
-        # shares the same AdvanceRequest rows that advance_service.sync_for_activity
-        # auto-creates per budget line, so it must honour the same confirmation
-        # gate rather than disbursing unconditionally.
-        has_confirmed_advance = activity.advance_requests.filter(
-            status__in=[
-                AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
-                AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
-            ]
-        ).exists()
-        if not has_confirmed_advance:
-            raise ValueError(
-                "Cannot disburse — the responsible user has not confirmed this "
-                "advance yet. The Accountant may not disburse before responsible-"
-                "user confirmation."
-            )
-
         with transaction.atomic():
+            # GUARDED: mirrors apps.fund_requests.advance_service.disburse() —
+            # the Accountant may NOT disburse before the responsible user
+            # confirms the advance (the finance-safety rule). This legacy,
+            # activity-level path shares the same AdvanceRequest rows that
+            # advance_service.sync_for_activity auto-creates per budget line,
+            # so it must honour the same confirmation gate rather than
+            # disbursing unconditionally. select_for_update() + the status
+            # check happening inside this same atomic block (rather than
+            # before it) closes the double-click race: a second near-
+            # simultaneous call blocks on the row lock, then sees these rows
+            # already DISBURSED and finds nothing pending instead of
+            # re-disbursing them.
+            pending = list(
+                activity.advance_requests.select_for_update().filter(
+                    status__in=[
+                        AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+                        AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+                    ]
+                )
+            )
+            if not pending:
+                raise ValueError(
+                    "Cannot disburse — the responsible user has not confirmed "
+                    "this advance yet. The Accountant may not disburse before "
+                    "responsible-user confirmation."
+                )
+
             # Create Disbursement
             disb = Disbursement.objects.create(
                 activity=activity,
@@ -106,6 +114,36 @@ class AdvanceDisbursementService:
                 payment_reference=reference,
                 notes=notes,
             )
+
+            # Move the underlying AdvanceRequest(s) to DISBURSED too — this
+            # activity-level legacy path shares the same rows the canonical
+            # advance_service.disburse()/weekly_service.disburse() queues read
+            # their "ready for disbursement" lists from. Leaving them at
+            # CONFIRMED_FOR_ADVANCE let the same money be disbursed a SECOND
+            # time through either of those queues. Scale each row's
+            # disbursed_amount proportionally to the fraction of the pending
+            # total this call actually released, same as the weekly path.
+            pending_total = sum(a.amount for a in pending)
+            fraction = (amount / pending_total) if pending_total else 0
+            now = timezone.now()
+            for adv in pending:
+                adv.status = AdvanceRequestStatus.DISBURSED
+                adv.disbursed_amount = round(adv.amount * fraction)
+                adv.disbursed_at = now
+                adv.disbursed_by_user_id = user_id
+                adv.disburse_method = method
+                adv.disburse_reference = reference
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "disbursed_amount",
+                        "disbursed_at",
+                        "disbursed_by_user_id",
+                        "disburse_method",
+                        "disburse_reference",
+                        "updated_at",
+                    ]
+                )
 
             # Update Activity Payment Status
             activity.payment_status = "disbursed"
@@ -137,10 +175,10 @@ class AdvanceDisbursementService:
                     category="finance",
                     priority="normal",
                     title="Advance Funds Disbursed",
-                    body=f"Advance of {amount // 100} UGX disbursed for Activity #{activity.id[:8]}. Please submit accountability after execution.",
+                    body=f"Advance of {amount} UGX disbursed for Activity #{activity.id[:8]}. Please submit accountability after execution.",
                     context_type="Activity",
                     context_id=activity.id,
-                    recipients=[activity.responsible_staff_id]
+                    recipients=[activity.responsible_staff_id],
                 )
 
             return disb
@@ -331,7 +369,9 @@ class ReimbursementService:
                     "final_budget_amount": budget_total,
                     "disbursed_amount": disb_total,
                     "actual_spend_amount": disb_total,
-                    "netsuite_expense_id": ns_rec.netsuite_expense_id if ns_rec else None,
+                    "netsuite_expense_id": ns_rec.netsuite_expense_id
+                    if ns_rec
+                    else None,
                     "evidence_count": EvidenceRecord.objects.filter(
                         activity=activity
                     ).count(),

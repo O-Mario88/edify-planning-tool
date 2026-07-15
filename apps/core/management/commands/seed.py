@@ -129,6 +129,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.MIGRATE_HEADING("Seeding Edify API..."))
         self._seed_permissions()
+        self._seed_super_admin()
         if demo:
             if settings.IS_PRODUCTION:  # defensive double-check
                 raise CommandError("Demo seed blocked in production.")
@@ -162,12 +163,46 @@ class Command(BaseCommand):
             f"{RolePermission.objects.count()} role grants."
         )
 
-    # ── Demo accounts (local only) ──────────────────────────────────────────
-    def _seed_demo_accounts(self):
+    def _seed_super_admin(self):
+        """Super-admin — env-only password; the ONE account that legitimately
+        ships to production (prod.py refuses to boot without
+        SUPER_ADMIN_PASSWORD set). Runs on every seed, demo or not — before
+        this was hoisted out of _seed_demo_accounts(), a plain production
+        `seed` created zero login-able users and day-1 ops had no way in."""
         from django.utils import timezone
 
-        demo_pw = settings.DEMO_LOGIN_PASSWORD
         super_pw = settings.SUPER_ADMIN_PASSWORD
+        if not super_pw:
+            self.stdout.write(
+                "  super-admin: skipped (SUPER_ADMIN_PASSWORD not set)."
+            )
+            return
+        email = getattr(settings, "SUPER_ADMIN_EMAIL", SUPER_ADMIN_EMAIL)
+        u, created = User.objects.update_or_create(
+            email=email,
+            defaults={
+                "name": "Omario Edwin",
+                "roles": [EdifyRole.ADMIN.value],
+                "active_role": EdifyRole.ADMIN.value,
+                "status": "active",
+                "is_active": True,
+                # Django-admin access: /admin/ is the day-1 bootstrap surface
+                # for reference data the app UI can't create yet (geography
+                # Regions), so the super-admin must be a Django superuser too.
+                "is_staff": True,
+                "is_superuser": True,
+            },
+        )
+        u.set_password(super_pw)
+        u.password_set_at = timezone.now()
+        u.save()
+        self.stdout.write(
+            f"  super-admin: {email} {'created' if created else 'updated'}."
+        )
+
+    # ── Demo accounts (local only) ──────────────────────────────────────────
+    def _seed_demo_accounts(self):
+        demo_pw = settings.DEMO_LOGIN_PASSWORD
 
         for email, name, role in DEMO_ACCOUNTS:
             u, _ = User.objects.update_or_create(
@@ -181,23 +216,6 @@ class Command(BaseCommand):
                 },
             )
             u.set_password(demo_pw)
-            u.save()
-
-        # Super-admin — env-only password; the one admin-setup account that may
-        # legitimately exist in production. Created only when the secret is set.
-        if super_pw:
-            u, _ = User.objects.update_or_create(
-                email=SUPER_ADMIN_EMAIL,
-                defaults={
-                    "name": "Omario Edwin",
-                    "roles": [EdifyRole.ADMIN.value],
-                    "active_role": EdifyRole.ADMIN.value,
-                    "status": "active",
-                    "is_active": True,
-                },
-            )
-            u.set_password(super_pw)
-            u.password_set_at = timezone.now()
             u.save()
 
         # Program Leads (4) + CCEOs (20) with staff profiles + supervisor links.

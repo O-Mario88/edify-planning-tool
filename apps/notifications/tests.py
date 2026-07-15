@@ -1,8 +1,10 @@
 from django.test import TestCase
-from django.utils import timezone
 from apps.accounts.models import User
 from apps.notifications.models import Notification
-from apps.notifications.services import NotificationLinkResolver, WorkflowNotificationService
+from apps.notifications.services import (
+    NotificationLinkResolver,
+    WorkflowNotificationService,
+)
 
 
 class NotificationsWorkflowTest(TestCase):
@@ -44,19 +46,31 @@ class NotificationsWorkflowTest(TestCase):
     def test_notification_link_resolver(self):
         """Verify that the resolver returns role-scoped routes to prevent role leaks."""
         # Critical School SSA
-        cceo_route, _ = NotificationLinkResolver.resolve("critical_school_ssa", "School", "S1", "CCEO")
-        pl_route, _ = NotificationLinkResolver.resolve("critical_school_ssa", "School", "S1", "ProjectLeader")
-        cd_route, _ = NotificationLinkResolver.resolve("critical_school_ssa", "School", "S1", "CountryDirector")
-        ia_route, _ = NotificationLinkResolver.resolve("critical_school_ssa", "School", "S1", "ImpactAssessment")
-        
+        cceo_route, _ = NotificationLinkResolver.resolve(
+            "critical_school_ssa", "School", "S1", "CCEO"
+        )
+        pl_route, _ = NotificationLinkResolver.resolve(
+            "critical_school_ssa", "School", "S1", "ProjectLeader"
+        )
+        cd_route, _ = NotificationLinkResolver.resolve(
+            "critical_school_ssa", "School", "S1", "CountryDirector"
+        )
+        ia_route, _ = NotificationLinkResolver.resolve(
+            "critical_school_ssa", "School", "S1", "ImpactAssessment"
+        )
+
         self.assertEqual(cceo_route, "/planning")
         self.assertEqual(pl_route, "/my-team")
         self.assertEqual(cd_route, "/analytics")
         self.assertEqual(ia_route, "/ia/dashboard/")
 
         # Partner Scheduled Activity
-        partner_route, _ = NotificationLinkResolver.resolve("partner_scheduled_activity", "Activity", "A1", "PartnerFieldOfficer")
-        cceo_act_route, _ = NotificationLinkResolver.resolve("partner_scheduled_activity", "Activity", "A1", "CCEO")
+        partner_route, _ = NotificationLinkResolver.resolve(
+            "partner_scheduled_activity", "Activity", "A1", "PartnerFieldOfficer"
+        )
+        cceo_act_route, _ = NotificationLinkResolver.resolve(
+            "partner_scheduled_activity", "Activity", "A1", "CCEO"
+        )
         self.assertEqual(partner_route, "/my-plan")
         self.assertEqual(cceo_act_route, "/my-plan")
 
@@ -72,8 +86,14 @@ class NotificationsWorkflowTest(TestCase):
             "field_debrief_recurring_issue",
         )
         for event_type in debrief_scoped_events:
-            route, label = NotificationLinkResolver.resolve(event_type, "field_debrief", "DEBRIEF123", "ProjectLeader")
-            self.assertEqual(route, "/debriefs/DEBRIEF123", f"{event_type} should deep-link to the debrief")
+            route, label = NotificationLinkResolver.resolve(
+                event_type, "field_debrief", "DEBRIEF123", "ProjectLeader"
+            )
+            self.assertEqual(
+                route,
+                "/debriefs/DEBRIEF123",
+                f"{event_type} should deep-link to the debrief",
+            )
             self.assertNotEqual(route, "/dashboard")
             self.assertEqual(label, "Open Debrief")
 
@@ -81,7 +101,10 @@ class NotificationsWorkflowTest(TestCase):
         # it must land on the Field Debrief Dashboard (Intelligence
         # Highlights), not the generic dashboard.
         insight_route, insight_label = NotificationLinkResolver.resolve(
-            "field_debrief_recurring_issue_escalated", "field_debrief_insight", "INSIGHT1", "CountryDirector"
+            "field_debrief_recurring_issue_escalated",
+            "field_debrief_insight",
+            "INSIGHT1",
+            "CountryDirector",
         )
         self.assertEqual(insight_route, "/debriefs")
         self.assertNotEqual(insight_route, "/dashboard")
@@ -100,7 +123,10 @@ class NotificationsWorkflowTest(TestCase):
             context_id="DEBRIEF456",
             recipients=[self.cceo],
         )
-        notif = Notification.objects.get(recipient_id=self.cceo.id, source_event_type="field_debrief_clarification_requested")
+        notif = Notification.objects.get(
+            recipient_id=self.cceo.id,
+            source_event_type="field_debrief_clarification_requested",
+        )
         self.assertEqual(notif.target_route, "/debriefs/DEBRIEF456")
         self.assertEqual(notif.action_label, "Open Debrief")
 
@@ -114,7 +140,7 @@ class NotificationsWorkflowTest(TestCase):
             body="SSA score is critical for Goma Academy",
             context_type="School",
             context_id="S123",
-            recipients=[self.cceo, self.pl, self.cd, self.ia]
+            recipients=[self.cceo, self.pl, self.cd, self.ia],
         )
 
         # Assert 4 notifications created
@@ -140,7 +166,7 @@ class NotificationsWorkflowTest(TestCase):
             title="Alert 1",
             priority="low",
             category="leave",
-            status="unread"
+            status="unread",
         )
         Notification.objects.create(
             recipient_id=self.cceo.id,
@@ -148,14 +174,14 @@ class NotificationsWorkflowTest(TestCase):
             priority="urgent",
             category="finance",
             status="unread",
-            action_required=True
+            action_required=True,
         )
-        
+
         self.client.force_login(self.cceo)
         response = self.client.get("/notifications")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Notifications Center")
-        
+
         # Check KPIs
         self.assertEqual(response.context["kpis"]["total"], 2)
         self.assertEqual(response.context["kpis"]["unread"], 2)
@@ -166,4 +192,6 @@ class NotificationsWorkflowTest(TestCase):
         response_filtered = self.client.get("/notifications?category=leave")
         self.assertEqual(response_filtered.status_code, 200)
         self.assertEqual(len(response_filtered.context["notifications"]), 1)
-        self.assertEqual(response_filtered.context["notifications"][0].category, "leave")
+        self.assertEqual(
+            response_filtered.context["notifications"][0].category, "leave"
+        )

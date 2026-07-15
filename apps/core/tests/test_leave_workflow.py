@@ -707,6 +707,7 @@ class LeaveWorkflowIntegrationTest(APITestCase):
 
         # 1. Self-approval should be rejected
         from apps.core.exceptions import BadRequest
+
         with self.assertRaises(BadRequest):
             LeaveApprovalService.approve_request(leave.id, self.cceo2_user)
 
@@ -716,7 +717,9 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         self.assertTrue(is_auth)
 
         # CCEO One is NOT authorized (not supervisor, wrong role)
-        is_auth_cceo1 = LeaveApprovalService.is_authorized_approver(self.cceo1_user, leave)
+        is_auth_cceo1 = LeaveApprovalService.is_authorized_approver(
+            self.cceo1_user, leave
+        )
         self.assertFalse(is_auth_cceo1)
 
     def test_out_of_scope_approver_protection(self):
@@ -743,6 +746,7 @@ class LeaveWorkflowIntegrationTest(APITestCase):
 
         # PL2 is not the supervisor -> should raise BadRequest
         from apps.core.exceptions import BadRequest
+
         with self.assertRaises(BadRequest):
             LeaveApprovalService.approve_request(leave.id, pl2_user)
 
@@ -884,4 +888,103 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         response_partial = self.client.get(f"/leave/approvals/{leave.id}/impact/")
         self.assertEqual(response_partial.status_code, 200)
 
+    def test_requires_attachment_policy_enforced_server_side(self):
+        """LeaveTypePolicy.requires_attachment (sick_leave=True in this
+        setUp) was previously only enforced by client-side JS. Submitting
+        directly to the service without an attachment must now be rejected
+        server-side, and providing one must succeed."""
+        from apps.core.exceptions import BadRequest
 
+        data = {
+            "type": "sick_leave",
+            "start_date": "2026-10-08",
+            "end_date": "2026-10-08",
+            "reason": "Flu",
+        }
+        with self.assertRaises(BadRequest):
+            LeaveRequestService.request_leave(
+                self.cceo2_profile, data, attachment_file=None
+            )
+
+        # Confirm no orphaned Leave row was created by the rejected attempt.
+        self.assertFalse(
+            Leave.objects.filter(staff=self.cceo2_profile, type="sick_leave").exists()
+        )
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        note = SimpleUploadedFile(
+            "doctor_note.pdf", b"%PDF-1.4 fake", content_type="application/pdf"
+        )
+        leave = LeaveRequestService.request_leave(
+            self.cceo2_profile, data, attachment_file=note
+        )
+        self.assertEqual(leave.type, "sick_leave")
+
+    def test_expired_coverage_assignment_not_shown_as_active(self):
+        """A TemporaryCoverageAssignment whose window closed months ago keeps
+        status="active" forever (nothing transitions it to "expired"). The
+        Personal Time Off page, its KPI count, and the Leave Tracker's
+        coverages list must all exclude it via the datetime window, matching
+        the pattern already used for authorization in
+        apps.core.permissions / apps.core.scoping."""
+        past_leave = Leave.objects.create(
+            staff=self.cceo2_profile,
+            type="personal_time_off",
+            start_date="2026-01-05",
+            end_date="2026-01-09",
+            days=5,
+            status="approved",
+            covering_staff=self.cceo1_profile,
+        )
+        stale_assignment = TemporaryCoverageAssignment.objects.create(
+            leave_request=past_leave,
+            original_staff=self.cceo2_profile,
+            covering_staff=self.cceo1_profile,
+            start_datetime=timezone.make_aware(datetime(2026, 1, 5, 8, 0)),
+            end_datetime=timezone.make_aware(datetime(2026, 1, 9, 17, 0)),
+            status="active",
+        )
+        self.assertEqual(stale_assignment.status, "active")
+
+        # Personal Time Off page (cceo1 is the covering_staff -> my_coverages).
+        self.client.force_login(self.cceo1_user)
+        pto_response = self.client.get("/personal-time-off")
+        self.assertEqual(pto_response.status_code, 200)
+        self.assertNotIn(
+            stale_assignment.id, [c.id for c in pto_response.context["my_coverages"]]
+        )
+        self.assertEqual(pto_response.context["coverage_active_count"], 0)
+
+        # Leave Tracker (HR/PL/CD/RVP/Admin audience).
+        self.client.force_login(self.pl_user)
+        tracker_response = self.client.get("/leave/tracker")
+        self.assertEqual(tracker_response.status_code, 200)
+        self.assertNotIn(
+            stale_assignment.id, [c.id for c in tracker_response.context["coverages"]]
+        )
+
+
+class LeaveCoveragePagePermissionTest(APITestCase):
+    """Scoping gap regression: apps.hr.leave_services.CoverageAssignmentService
+    .get_eligible_coverage_staff explicitly builds IA<->IA / IA<->CD coverage
+    candidates, but the /leave/coverage page permission table
+    (apps.core.navigation.PAGE_PERMISSIONS) excluded ImpactAssessment, so an
+    IA staffer covering a colleague could never reach the page to see or
+    manage that coverage assignment."""
+
+    def setUp(self):
+        self.ia_user = User.objects.create_user(
+            email="ia_coverage@edify.test",
+            name="IA Staffer",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            password="x",
+            is_active=True,
+        )
+        StaffProfile.objects.create(user=self.ia_user, staff_number="SP-IA-1")
+
+    def test_ia_role_can_access_leave_coverage_page(self):
+        self.client.force_login(self.ia_user)
+        response = self.client.get("/leave/coverage")
+        self.assertEqual(response.status_code, 200)

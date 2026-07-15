@@ -1,0 +1,128 @@
+{% load frontend_filters %}
+<div id="team-targets-workspace" class="tt-workspace">
+  <section class="tt-filter-panel" aria-label="Team targets filters">
+    <form method="get" action="/team-targets"
+          hx-get="/team-targets"
+          hx-target="#team-targets-workspace"
+          hx-swap="outerHTML"
+          hx-trigger="change"
+          hx-push-url="true"
+          hx-indicator="#team-targets-loading"
+          hx-disabled-elt="select, button"
+          class="tt-filter-grid">
+      <label class="tt-filter-field">
+        <span>Fiscal year</span>
+        <select name="fy" aria-label="Fiscal year">
+          {% for opt in fy_options %}
+          <option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt|add:"-1" }}/{{ opt|slice:"-2:" }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="tt-filter-field">
+        <span>Month</span>
+        <select name="month" aria-label="Month">
+          {% for m in month_options %}
+          <option value="{{ m.value }}" {% if month_of_fy == m.value %}selected{% endif %}>{{ m.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="tt-filter-field">
+        <span>Target category</span>
+        <select name="category" aria-label="Target category">
+          {% for option in category_options %}
+          <option value="{{ option.value }}" {% if selected_category == option.value %}selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="tt-filter-field">
+        <span>District</span>
+        <select name="district" aria-label="District">
+          <option value="">All districts</option>
+          {% for option in district_options %}
+          <option value="{{ option }}" {% if selected_district == option %}selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="tt-filter-field">
+        <span>Team member</span>
+        <select name="team_member" aria-label="Team member">
+          <option value="">All team members</option>
+          {% for option in team_member_options %}
+          <option value="{{ option.value }}" {% if selected_team_member == option.value|stringformat:"s" %}selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <div class="tt-filter-actions">
+        <span id="team-targets-loading" class="tt-loading htmx-indicator" role="status" aria-live="polite">
+          <span class="tt-loading__dot" aria-hidden="true"></span>
+          Updating team data
+        </span>
+        {% if filters_active %}
+        <a href="/team-targets?fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear</a>
+        {% endif %}
+        <a href="/team-targets/export?fy={{ fy }}&month={{ month_of_fy }}&category={{ selected_category|urlencode }}&district={{ selected_district|urlencode }}&team_member={{ selected_team_member|urlencode }}"
+           class="tt-button tt-button--primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 15v4h14v-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Export
+        </a>
+      </div>
+    </form>
+  </section>
+
+  {% include "partials/targets/team/body.html" %}
+
+  <div x-show="showCatchup" x-cloak @keydown.escape.window="showCatchup = false" @click.self="showCatchup = false"
+       class="tt-modal" role="dialog" aria-modal="true" aria-labelledby="tt-catchup-title">
+    <div class="tt-modal__panel">
+      <div class="tt-modal__header">
+        <div>
+          <span class="tt-eyebrow">Performance intervention</span>
+          <h2 id="tt-catchup-title">Create catch-up plan</h2>
+          <p>Approved recovery activities enter the team member’s Planning workflow. Dated items are also scheduled and costed.</p>
+        </div>
+        <button type="button" @click="showCatchup = false" class="tt-icon-button" aria-label="Close catch-up plan">&times;</button>
+      </div>
+      <form method="post" action="/team-targets/catchup" class="tt-modal__form">
+        {% csrf_token %}
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <input type="hidden" name="month" value="{{ month_of_fy }}">
+        <div class="tt-form-pair">
+          <label class="tt-form-field">
+            <span>Team member</span>
+            <select name="staff_user_id" x-model="catchupStaff" required>
+              <option value="" disabled>Select a team member</option>
+              {% for option in team_member_options %}<option value="{{ option.value }}">{{ option.label }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="tt-form-field">
+            <span>Target area</span>
+            <select name="area" x-model="catchupArea">
+              {% for area in areas %}<option value="{{ area.key }}">{{ area.label }}</option>{% endfor %}
+            </select>
+          </label>
+        </div>
+        <label class="tt-form-field">
+          <span>School IDs <small>comma-separated</small></span>
+          <input type="text" name="school_ids" placeholder="S-00123, S-00456">
+        </label>
+        <label class="tt-form-field">
+          <span>Planned dates <small>optional, YYYY-MM-DD</small></span>
+          <input type="text" name="dates" placeholder="2026-07-20, 2026-07-22">
+        </label>
+        <label class="tt-form-field">
+          <span>Intervention note</span>
+          <textarea name="note" rows="3" placeholder="Describe the recovery outcome and support required."></textarea>
+        </label>
+        <div class="tt-modal__footer">
+          <button type="button" @click="showCatchup = false" class="tt-button tt-button--quiet">Cancel</button>
+          <button type="submit" class="tt-button tt-button--primary">Submit catch-up plan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

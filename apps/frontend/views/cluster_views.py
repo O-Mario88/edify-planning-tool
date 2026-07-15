@@ -779,62 +779,100 @@ def get_eligible_staff(district_id):
     from apps.geography.models import District
 
     if not district_id:
-        return StaffProfile.objects.all().select_related("user").order_by("user__name")[:50]
+        return (
+            StaffProfile.objects.all()
+            .select_related("user")
+            .order_by("user__name")[:50]
+        )
 
     # 1. Staff assigned to schools in this district
-    school_ids = School.objects.filter(district_id=district_id).values_list("id", flat=True)
-    staff_ids = StaffSchoolAssignment.objects.filter(school_id__in=school_ids).values_list("staff_id", flat=True)
-    profiles = StaffProfile.objects.filter(id__in=staff_ids).select_related("user").order_by("user__name")
+    school_ids = School.objects.filter(district_id=district_id).values_list(
+        "id", flat=True
+    )
+    staff_ids = StaffSchoolAssignment.objects.filter(
+        school_id__in=school_ids
+    ).values_list("staff_id", flat=True)
+    profiles = (
+        StaffProfile.objects.filter(id__in=staff_ids)
+        .select_related("user")
+        .order_by("user__name")
+    )
     if profiles.exists():
         return profiles
 
     # 2. Fallback to staff assigned to schools in the same region
     district = District.objects.filter(id=district_id).select_related("region").first()
     if district:
-        school_ids_in_region = School.objects.filter(region_id=district.region_id).values_list("id", flat=True)
-        staff_ids_in_region = StaffSchoolAssignment.objects.filter(school_id__in=school_ids_in_region).values_list("staff_id", flat=True)
-        profiles = StaffProfile.objects.filter(id__in=staff_ids_in_region).select_related("user").order_by("user__name")
+        school_ids_in_region = School.objects.filter(
+            region_id=district.region_id
+        ).values_list("id", flat=True)
+        staff_ids_in_region = StaffSchoolAssignment.objects.filter(
+            school_id__in=school_ids_in_region
+        ).values_list("staff_id", flat=True)
+        profiles = (
+            StaffProfile.objects.filter(id__in=staff_ids_in_region)
+            .select_related("user")
+            .order_by("user__name")
+        )
         if profiles.exists():
             return profiles
 
     # 3. Ultimate fallback: all active CCEOs and PLs
-    profiles = StaffProfile.objects.filter(user__is_active=True).select_related("user").order_by("user__name")
-    return [p for p in profiles if any(r in ["CCEO", "Program Lead", "ProgramLead"] for r in p.user.roles)]
+    profiles = (
+        StaffProfile.objects.filter(user__is_active=True)
+        .select_related("user")
+        .order_by("user__name")
+    )
+    return [
+        p
+        for p in profiles
+        if any(r in ["CCEO", "Program Lead", "ProgramLead"] for r in p.user.roles)
+    ]
 
 
 @require_page_permission("planning")
 def eligible_staff_options_view(request):
     district_id = request.GET.get("district_id", "").strip()
     selected_staff_id = request.GET.get("selected_staff_id", "").strip()
-    
+
     staff = get_eligible_staff(district_id)
-    
+
     options_html = '<option value="">-- No Assigned Staff --</option>'
     for sp in staff:
         val = sp.user.user_id
-        selected = 'selected' if str(val) == selected_staff_id or str(sp.id) == selected_staff_id else ''
+        selected = (
+            "selected"
+            if str(val) == selected_staff_id or str(sp.id) == selected_staff_id
+            else ""
+        )
         options_html += f'<option value="{val}" {selected}>{sp.user.name} ({sp.user.active_role})</option>'
-        
+
     from django.http import HttpResponse
+
     return HttpResponse(options_html)
 
 
 @require_page_permission("planning")
 def edit_cluster_drawer_view(request, cluster_id):
     import json
+
     cluster = get_object_or_404(Cluster, id=cluster_id)
     districts = District.objects.all().order_by("name")
     sub_counties = SubCounty.objects.all().order_by("name")
-    
-    covered_ids = list(ClusterSubCounty.objects.filter(cluster=cluster).values_list("sub_county_id", flat=True))
-    
+
+    covered_ids = list(
+        ClusterSubCounty.objects.filter(cluster=cluster).values_list(
+            "sub_county_id", flat=True
+        )
+    )
+
     sub_counties_list = [
         {"id": sc.id, "name": sc.name, "district_id": sc.district_id}
         for sc in sub_counties
     ]
-    
+
     staff = get_eligible_staff(cluster.district_id)
-    
+
     context = {
         "cluster": cluster,
         "districts": districts,
@@ -850,7 +888,7 @@ def edit_cluster_drawer_view(request, cluster_id):
 @require_page_permission("planning")
 def edit_cluster_view(request, cluster_id):
     from apps.clusters.services import update_cluster
-    
+
     if request.method == "POST":
         name = request.POST.get("name", "").strip()
         district_id = request.POST.get("district_id", "").strip()

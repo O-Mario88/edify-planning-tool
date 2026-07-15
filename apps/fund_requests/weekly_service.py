@@ -558,7 +558,15 @@ def disburse(request_id: str, data: dict, principal) -> dict:
                 "Only a confirmed request can be disbursed by the accountant."
             )
 
-        disbursed_amount = int(data.get("amount", wfr.total_amount))
+        try:
+            disbursed_amount = int(data.get("amount") or wfr.total_amount)
+        except (TypeError, ValueError):
+            disbursed_amount = wfr.total_amount
+        if disbursed_amount <= 0 or disbursed_amount > wfr.total_amount:
+            raise BadRequest(
+                "Disbursed amount must be positive and within the approved total."
+            )
+        fraction = disbursed_amount / wfr.total_amount if wfr.total_amount else 0
         now = timezone.now()
 
         wfr.status = "disbursed"
@@ -579,12 +587,15 @@ def disburse(request_id: str, data: dict, principal) -> dict:
             ]
         )
 
-        # Also update linked AdvanceRequests status to keep them in sync
+        # Also update linked AdvanceRequests status to keep them in sync — each
+        # advance's own disbursed_amount is scaled by the same fraction of the
+        # line's full cost as was actually released for the whole request, not
+        # hard-set to the full line amount regardless of what was entered above.
         for line in wfr.lines.select_related("activity_budget_line"):
             adv = line.activity_budget_line.advance_requests.first()
             if adv:
                 adv.status = "disbursed"
-                adv.disbursed_amount = line.total_cost
+                adv.disbursed_amount = round(line.total_cost * fraction)
                 adv.disbursed_at = now
                 adv.disbursed_by_user_id = principal.user_id
                 adv.disburse_method = data.get("method")

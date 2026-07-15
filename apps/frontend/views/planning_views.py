@@ -520,6 +520,27 @@ def assign_partner_action_view(request):
             pa.scheduled_date = expected_date
             pa.save(update_fields=["status", "scheduled_date", "updated_at"])
 
+        # Idempotency guard: a double-click or a retried htmx POST must not
+        # create a second PartnerAssignment (and, worse, a second costed
+        # Activity + budget line) for the same handoff. A near-identical row
+        # created moments ago by the same staff member is treated as the
+        # same submission, not a new one.
+        DEDUP_WINDOW = timezone.timedelta(seconds=15)
+
+        def _recent_duplicate(*, school=None, cluster=None, act_type):
+            qs = PartnerAssignment.objects.filter(
+                partner=partner,
+                assigning_staff_id=monitored_by_staff_id,
+                expected_activity_type=act_type,
+                created_at__gte=timezone.now() - DEDUP_WINDOW,
+            )
+            qs = (
+                qs.filter(school=school)
+                if school is not None
+                else qs.filter(cluster=cluster)
+            )
+            return qs.order_by("-created_at").first()
+
         if school_id:
             school = get_scoped_object_or_404(
                 School, request.user, Q(id=school_id) | Q(school_id=school_id)
@@ -531,6 +552,11 @@ def assign_partner_action_view(request):
                 in ["school_visit", "follow_up_visit", "coaching_visit"]
                 else "school_visit"
             )
+            dup = _recent_duplicate(school=school, act_type=normalized_type)
+            if dup:
+                response = HttpResponse("<script>window.location.reload();</script>")
+                response["HX-Trigger"] = "close-drawer"
+                return response
             with transaction.atomic():
                 pa = PartnerAssignment.objects.create(
                     school=school,
@@ -566,6 +592,11 @@ def assign_partner_action_view(request):
             act_type = (
                 "cluster_meeting" if activity_type == "meeting" else "cluster_training"
             )
+            dup = _recent_duplicate(cluster=cluster, act_type=act_type)
+            if dup:
+                response = HttpResponse("<script>window.location.reload();</script>")
+                response["HX-Trigger"] = "close-drawer"
+                return response
             with transaction.atomic():
                 # Create PartnerAssignment for cluster
                 pa = PartnerAssignment.objects.create(
@@ -740,6 +771,11 @@ def bulk_action_view(request):
             )
 
         partner_id = request.POST.get("partner_id")
+        if not partner_id:
+            return HttpResponse(
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Select a partner before confirming.</div>',
+                status=400,
+            )
         partner = get_object_or_404(Partner, id=partner_id)
 
         from datetime import date as _date
@@ -756,8 +792,17 @@ def bulk_action_view(request):
                 pass
 
         monitored_by_staff_id = request.user.user_id or request.user.id
+        dedup_window = timezone.timedelta(seconds=15)
 
         for s in schools:
+            if PartnerAssignment.objects.filter(
+                school=s,
+                partner=partner,
+                assigning_staff_id=monitored_by_staff_id,
+                expected_activity_type="school_visit",
+                created_at__gte=timezone.now() - dedup_window,
+            ).exists():
+                continue
             with transaction.atomic():
                 pa = PartnerAssignment.objects.create(
                     school=s,
@@ -1065,7 +1110,9 @@ def route_preview_view(request):
     if single and single not in school_ids:
         school_ids.append(single)
     if not school_ids:
-        return render(request, "partials/planning/route_preview.html", {"preview": None})
+        return render(
+            request, "partials/planning/route_preview.html", {"preview": None}
+        )
 
     from datetime import date as _date
 

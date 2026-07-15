@@ -4,7 +4,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
 <div class="space-y-4">
 
   <!-- KPI Strip -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+  <div class="debrief-kpi-grid grid grid-cols-2 sm:grid-cols-4 gap-3">
     {% for k in kpis %}
     <div class="rounded-xl border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
@@ -212,7 +212,17 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
         {% for h in highlights %}
         <div class="flex items-start gap-2 text-[11px] font-semibold text-slate-400">
           <span class="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0"></span>
-          <span>{{ h }}</span>
+          <span class="flex-1">{{ h.text }}</span>
+          {% if h.insight_id and can_manage_insights %}
+          <div class="flex items-center gap-1 shrink-0">
+            <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="acknowledge_insight"><input type="hidden" name="insight_id" value="{{ h.insight_id }}">
+              <button type="submit" class="h-6 px-1.5 rounded border text-[9px] font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Ack</button>
+            </form>
+            <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="dismiss_insight"><input type="hidden" name="insight_id" value="{{ h.insight_id }}">
+              <button type="submit" class="h-6 px-1.5 rounded border text-[9px] font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Dismiss</button>
+            </form>
+          </div>
+          {% endif %}
         </div>
         {% empty %}
         <p class="text-[11px] text-slate-400 font-semibold">No notable patterns detected this period.</p>

@@ -4,9 +4,13 @@
   {# ── KPI strip: 2 rows × 6 ─────────────────────────────────────────── #}
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
     {% for k in kpi_strip_items %}
-    <a href="#"
-       {% if k.link %}hx-get="/analytics/program-lead/drilldown{{ k.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %}
-       class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all group cursor-pointer">
+    {% if k.link %}
+    <button type="button"
+       hx-get="/analytics/program-lead/drilldown{{ k.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}" hx-target="#drawer-container" hx-swap="innerHTML"
+       class="w-full text-left bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all group cursor-pointer">
+    {% else %}
+    <article class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 block">
+    {% endif %}
       <div class="flex items-start justify-between">
         <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50 text-blue-600
@@ -28,7 +32,7 @@
       <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 mt-2.5 leading-tight">{{ k.label }}</p>
       <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
       <p class="text-[10px] font-semibold text-slate-400 mt-0.5">{{ k.helper }}</p>
-    </a>
+    {% if k.link %}</button>{% else %}</article>{% endif %}
     {% endfor %}
   </div>
 

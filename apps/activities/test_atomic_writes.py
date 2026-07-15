@@ -16,6 +16,7 @@ from apps.activities import services as asvc
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.enums import ActivityType
+from apps.core.exceptions import BadRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -25,13 +26,21 @@ FY = "2026"
 
 class ActivitySchedulingAtomicityTest(TestCase):
     def setUp(self):
-        self.region = Region.objects.create(name="Central")
-        self.district = District.objects.create(name="Kampala", region=self.region)
-        self.school = School.objects.create(
+        # get_or_create (not create): a shared --keepdb test database can
+        # already have a "Central"/"Kampala" row from another test's fixture
+        # -- match the CostCatalogue get_or_create pattern below rather than
+        # assume a pristine DB.
+        self.region, _ = Region.objects.get_or_create(name="Central")
+        self.district, _ = District.objects.get_or_create(
+            name="Kampala", region=self.region
+        )
+        self.school, _ = School.objects.get_or_create(
             school_id="SCH-ATOMIC-1",
-            name="Atomic Test School",
-            region=self.region,
-            district=self.district,
+            defaults={
+                "name": "Atomic Test School",
+                "region": self.region,
+                "district": self.district,
+            },
         )
         # Admin is a country-scope role — bypasses the school/cluster
         # assignment fixtures that are irrelevant to this atomicity test.
@@ -169,3 +178,51 @@ class ActivitySchedulingAtomicityTest(TestCase):
         self.assertNotEqual(activity.scheduled_date, old_date)
         self.assertEqual(activity.reschedule_count, 1)
         self.assertGreater(activity.schedule_cost_lines.count(), 0)
+
+    # ── create(): duplicate-submission guard ─────────────────────────────────
+    def test_double_submit_identical_activity_is_rejected(self):
+        """A double-click on the Schedule Activity drawer fires create() twice
+        with identical params. The second call must be rejected, not silently
+        create a second, fully-costed, identical Activity."""
+        data = self._create_data()
+        first = asvc.create(data, self.admin)
+
+        with self.assertRaises(BadRequest):
+            asvc.create(data, self.admin)
+
+        acts = Activity.objects.filter(
+            school=self.school,
+            activity_type=ActivityType.CORE_VISIT,
+            scheduled_date__date="2026-07-20",
+        )
+        self.assertEqual(acts.count(), 1)
+        self.assertEqual(acts.first().id, first["id"])
+
+    def test_undated_activity_via_skip_cost_snapshot_is_not_blocked(self):
+        """assert_schedulable unconditionally requires a scheduledDate, so
+        undated creation only ever reaches Activity.objects.create() through
+        the _skip_cost_snapshot bypass (the one apps.daily_visit_batches uses
+        internally). The duplicate guard must not fire for scheduled_date=None
+        through that path either -- it should behave like any other None
+        field and simply not match a prior row via ORM equality."""
+        data = self._create_data()
+        del data["scheduledDate"]
+        data["_skip_cost_snapshot"] = True
+        first = asvc.create(data, self.admin)
+        second = asvc.create(data, self.admin)
+
+        self.assertNotEqual(first["id"], second["id"])
+        self.assertEqual(
+            Activity.objects.filter(
+                school=self.school, activity_type=ActivityType.CORE_VISIT
+            ).count(),
+            2,
+        )
+
+    def test_different_scheduled_dates_are_not_blocked(self):
+        """A genuinely different day for the same school/type/staff must
+        still be allowed -- the guard matches on the full combination, not
+        just school+type."""
+        first = asvc.create(self._create_data(scheduled_date="2026-07-20"), self.admin)
+        second = asvc.create(self._create_data(scheduled_date="2026-07-21"), self.admin)
+        self.assertNotEqual(first["id"], second["id"])

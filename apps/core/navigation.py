@@ -58,7 +58,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "team_targets": {PL, CD, HR, IA, ACCOUNTANT, ADMIN, PROJECT_COORDINATOR},
     # Every Edify employee is PD-eligible (Partners are external org staff, not
     # on the Edify PD/BambooHR benefit) — one shared page for all of them.
-    "my_professional_development": {CCEO, PL, CD, RVP, IA, ACCOUNTANT, HR, PROJECT_COORDINATOR, ADMIN},
+    "my_professional_development": {
+        CCEO,
+        PL,
+        CD,
+        RVP,
+        IA,
+        ACCOUNTANT,
+        HR,
+        PROJECT_COORDINATOR,
+        ADMIN,
+    },
     "my_plan": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, ADMIN},
     # Field Debrief (§4/§20): CCEO/PL/Partner/ProjectCoordinator submit; CD/HR/
     # IA/RVP are read-only leadership-intelligence audiences — their actual
@@ -71,7 +81,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "leave_requests": ALL_ROLES,
     "leave_tracker": {HR, PL, CD, RVP, ADMIN},
     "leave_approvals": {PL, CD, RVP, HR, ADMIN},
-    "leave_coverage": {CCEO, PL, CD, RVP, HR, ACCOUNTANT, ADMIN},
+    # IA is a valid covering_staff candidate in
+    # CoverageAssignmentService.get_eligible_coverage_staff (IA<->IA / IA<->CD
+    # coverage), so an IA staffer acting as cover must be able to reach this
+    # page too.
+    "leave_coverage": {CCEO, PL, CD, RVP, HR, ACCOUNTANT, IA, ADMIN},
     "leave_calendar": ALL_ROLES,
     "leave_policies": {HR, ADMIN},
     "public_holidays": ALL_ROLES,
@@ -105,7 +119,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "reports": {CD, PL, IA, RVP, PROJECT_COORDINATOR, ADMIN},
     "completed_archive": {IA, ADMIN},
     "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN},
-    "users": {ADMIN},
+    # RBAC matrix grants USER_MANAGE to CD and HR as well as Admin
+    # (apps/core/rbac.py ROLE_PERMISSIONS) and
+    # RolePermissionService.can_manage_users() already includes
+    # HumanResources — this page-permission entry must match, or those
+    # roles hold a permission they can never reach a page to exercise.
+    "users": {CD, HR, ADMIN},
     "roles_permissions": {ADMIN},
     "system_health": {ADMIN},
     "messages": ALL_ROLES,
@@ -121,11 +140,16 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "page_access_matrix": {ADMIN},
     "region_district_setup": {ADMIN},
     "notifications_mgmt": {ADMIN},
-    "upload_history": {ADMIN},
+    # ImpactAssessment is the role that actually generates school/SSA
+    # upload batches (see "school_upload": {IA, ADMIN}) — it must be able to
+    # reach the history of what it uploaded.
+    "upload_history": {IA, ADMIN},
     "data_quality_center": {IA, ADMIN},
     "settings": ALL_ROLES,
     "help": ALL_ROLES,
-    "quality_checks": {IA, ADMIN},
+    # CD raises flags, PL is assigned to act on them (apps/flags) — both
+    # need the page; IA/Admin keep global read-only monitoring access.
+    "quality_checks": {IA, CD, PL, ADMIN},
     # Staff directory permissions
     "staff": {HR, PL, CD, RVP, ADMIN},
     "staff_directory": {HR, PL, CD, RVP, ADMIN},
@@ -407,11 +431,17 @@ SIDEBAR_ITEMS = [
                 "url": "/accounts/partner-payments/",
                 "page_key": "finance_partner_payments",
             },
-            {
-                "label": "Reimbursements",
-                "url": "/accounts/reimbursements/",
-                "page_key": "finance_reimbursements",
-            },
+            # "Reimbursements" (/accounts/reimbursements/, ReimbursementClaim-
+            # backed) intentionally NOT linked here — ReimbursementService.
+            # claim_reimbursement() has zero production callers (only tests
+            # create a ReimbursementClaim), so this queue is permanently
+            # empty. The real, fully-wired self-funded reimbursement flow
+            # lives on AdvanceRequest (advance_service.submit_reimbursement /
+            # .reimburse, status REIMBURSEMENT_SUBMITTED) and is already
+            # surfaced in the Disbursement Dashboard queue via
+            # disbursement_dashboard_service._reimbursement_items(). Keeping
+            # a sidebar link to the dead queue would be a permanent-empty-
+            # state trap for every Accountant.
             {
                 "label": "Batch Payments",
                 "url": "/accounts/batch-payments/",
@@ -716,10 +746,15 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
 
         # Only show the section if it has at least one visible item inside it
         if visible_items:
+            has_active_item = any(item["active"] for item in visible_items)
             sections.append(
                 {
                     "label": sec["group_label"],
                     "items": visible_items,
+                    "active": has_active_item,
+                    # Keep the personal workspace available on first load;
+                    # every other group opens only when it contains the page.
+                    "expanded": has_active_item or sec["group_label"] == "MY WORK",
                 }
             )
 

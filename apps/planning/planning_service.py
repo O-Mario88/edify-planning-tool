@@ -6,6 +6,8 @@ from apps.clusters.models import Cluster
 from apps.activities.models import Activity
 from apps.partners.models import PartnerAssignment
 from apps.ssa.models import SsaRecord
+from apps.core_schools.models import CoreActivitySlot
+from apps.core_schools.services import CORE_SLOT_DONE_STATUSES
 
 
 class PlanningReadinessService:
@@ -786,8 +788,29 @@ class PlanningDashboardService:
             .count()
         )
 
-        core_2nd_visit_pending = max(0, core_1st_visit_pending - 15)
-        core_2nd_training_pending = max(0, core_1st_training_pending - 20)
+        # Real signal: the school's 2nd-sequence visit/training slot on its
+        # active Core Plan (CoreActivitySlot), not yet in a "done" status.
+        # Schools with no Core Plan (or no 2nd slot yet) simply don't count —
+        # an honest zero, not a fabricated offset of the 1st-round count.
+        core_school_op_ids = list(core_schools_qs.values_list("school_id", flat=True))
+        core_2nd_visit_pending = (
+            CoreActivitySlot.objects.filter(
+                core_plan__school_id__in=core_school_op_ids,
+                activity_type="visit",
+                sequence_number=2,
+            )
+            .exclude(status__in=CORE_SLOT_DONE_STATUSES)
+            .count()
+        )
+        core_2nd_training_pending = (
+            CoreActivitySlot.objects.filter(
+                core_plan__school_id__in=core_school_op_ids,
+                activity_type="training",
+                sequence_number=2,
+            )
+            .exclude(status__in=CORE_SLOT_DONE_STATUSES)
+            .count()
+        )
 
         core_summary = {
             "no_ssa": core_no_ssa,

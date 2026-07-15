@@ -9,17 +9,44 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── BRAND ────────────────────────────────────────────────────────────────
-     Primary brand is Steel-Blue (#2e505f) — the deep, trustworthy Edify color
-     used on the sidebar and throughout the app. Interactive accents (links,
-     focus rings, primary CTAs that need to pop) use a brighter SaaS Blue. */
-  --edify-primary: #2e505f;
-  --edify-primary-hover: #213a45;
-  --edify-primary-light: #eff6ff;
-  --edify-accent: #2563eb;        /* Bright interactive blue (CTAs, links) */
-  --edify-accent-hover: #1d4ed8;
-  --edify-accent-light: #eff6ff;
-  --edify-accent-border: #bfdbfe;
+  color-scheme: light dark;
+  accent-color: var(--edify-accent);
+
+  /* ── EDIFY BRAND PALETTE ─────────────────────────────────────────────────
+     The login experience is the visual north star for the application.
+     These literal values come from the approved brand reference. */
+  --edify-navy-950: #001d39;
+  --edify-navy-800: #0a4174;
+  --edify-steel-600: #49769f;
+  --edify-teal-600: #4e8ea2;
+  --edify-teal-400: #6ea2b3;
+  --edify-sky-400: #7bbde8;
+  --edify-sky-100: #bdd8e9;
+
+  /* Official Edify product brand. The blue range above remains available to
+     the image-backed Edify Blue workspace; product actions use this quieter,
+     highly legible enterprise pair in Light and System-daytime modes. */
+  --edify-brand-primary: #4d7187;
+  --edify-brand-primary-hover: #3f6174;
+  --edify-brand-primary-active: #334f5f;
+  --edify-brand-primary-soft: #dfe8ed;
+  --edify-brand-secondary: #ef564b;
+  --edify-brand-secondary-hover: #dc4b42;
+  --edify-brand-secondary-soft: #fce3e1;
+
+  /* Semantic brand tokens — light mode. */
+  --edify-primary: var(--edify-brand-primary);
+  --edify-primary-hover: var(--edify-brand-primary-hover);
+  --edify-primary-active: var(--edify-brand-primary-active);
+  --edify-primary-light: var(--edify-brand-primary-soft);
+  --edify-secondary: var(--edify-brand-secondary);
+  --edify-secondary-hover: var(--edify-brand-secondary-hover);
+  --edify-secondary-light: var(--edify-brand-secondary-soft);
+  --edify-accent: var(--edify-brand-primary);
+  --edify-accent-hover: var(--edify-brand-primary-hover);
+  --edify-on-accent: #ffffff;
+  --edify-accent-light: var(--edify-brand-primary-soft);
+  --edify-accent-border: #aebcc4;
 
   /* ── SEMANTIC COLORS (3-tone ramp each: base / light-bg / border) ──────── */
   --edify-success: #10b981;
@@ -46,22 +73,42 @@
   --edify-teal-light: #f0fdfa;
   --edify-teal-border: #99f6e4;
 
-  /* ── NEUTRAL SURFACES & TEXT — crisp, high-contrast, enterprise grade ─── */
-  --edify-surface: #ffffff;
-  --edify-surface-muted: #f6f8fb;
-  --edify-border: #e3e8ef;
-  --edify-border-strong: #cbd5e1;
-  --edify-text: #0d1526;
-  --edify-text-muted: #5b6b82;
-  --edify-text-subtle: #8b97ab;
-  --edify-bg: #f1f4f9;
+  /* Notifications intentionally use a warm orange so urgency is visible
+     without borrowing the red reserved for destructive/error states. */
+  --edify-notification: #d85b13;
+  --edify-notification-text: #ffffff;
+  --edify-notification-glow: rgba(216, 91, 19, 0.28);
+
+  /* ── LIGHT WORKSPACE SURFACES ─────────────────────────────────────────── */
+  --edify-surface: #f8fafb;
+  --edify-surface-muted: #e5eaed;
+  --edify-surface-raised: #ffffff;
+  --edify-surface-hover: #e9eef1;
+  --edify-surface-selected: #dfe8ed;
+  --edify-border: #c7d1d7;
+  --edify-border-strong: #aebcc4;
+  --edify-divider: #d7dee2;
+  --edify-text: #17232b;
+  --edify-text-muted: #3f515c;
+  --edify-text-subtle: #5f707a;
+  --edify-text-disabled: #6b7b84;
+  --edify-text-secondary: var(--edify-text-muted);
+  --edify-bg: #edf1f3;
+  --edify-section-bg: #f2f5f6;
+  --edify-canvas-treatment:
+    radial-gradient(circle at 92% -10%, rgba(77, 113, 135, 0.12), transparent 34rem),
+    linear-gradient(180deg, #f2f5f6 0%, var(--edify-bg) 48%, #e7edef 100%);
+  --edify-surface-treatment: linear-gradient(180deg, rgba(255,255,255,.82), rgba(248,250,251,.96));
+  --edify-glass-blur: 0px;
+  --edify-glass-saturation: 100%;
+  --edify-glass-highlight: rgba(255, 255, 255, 0.72);
 
   /* Legacy aliases consumed by base.html <style> and some components. */
   --color-edify-primary: var(--edify-primary);
   --color-edify-dark: var(--edify-primary-hover);
   --color-edify-soft: var(--edify-primary-light);
   --color-edify-border: var(--edify-border);
-  --color-edify-divider: #edf2f7;
+  --color-edify-divider: var(--edify-divider);
   --bg-page: var(--edify-bg);
   --foreground: var(--edify-text);
   --text-secondary: var(--edify-text-muted);
@@ -71,35 +118,37 @@
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
      Inter — the enterprise standard for data-dense premium dashboards.
      Tighter sizes, bolder weights, compact leading.
-       display → page titles (H1) — 21px / 800
-       heading → section titles (H2) — 15px / 700
-       title   → card/panel titles (H3) — 13px / 700
-       body    → default text, table cells — 13px / 400
-       label   → captions, secondary — 11px / 500
-       micro   → overlines, badges — 10px / 700 uppercase */
+       display → page titles (fluid 24–30px)
+       heading → section titles (16px)
+       title   → card/panel titles (14px)
+       body    → default text, table cells (14px)
+       label   → captions, secondary (12px)
+       micro   → overlines, badges (11px) */
   --edify-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --edify-font-serif: Georgia, 'Times New Roman', ui-serif, serif;
+  --edify-font-display-family: var(--edify-font-sans);
   --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
-  --edify-text-display-size: 21px;
-  --edify-text-heading-size: 15px;
-  --edify-text-title-size:   13px;
-  --edify-text-body-size:    13px;
-  --edify-text-label-size:   11px;
-  --edify-text-micro-size:   10px;
+  --edify-text-display-size: clamp(1.5rem, 1.34rem + 0.52vw, 1.875rem);
+  --edify-text-heading-size: 1rem;
+  --edify-text-title-size:   0.875rem;
+  --edify-text-body-size:    0.875rem;
+  --edify-text-label-size:   0.75rem;
+  --edify-text-micro-size:   0.6875rem;
 
-  --edify-text-display-weight: 800;
-  --edify-text-heading-weight: 700;
-  --edify-text-title-weight:   700;
+  --edify-text-display-weight: 700;
+  --edify-text-heading-weight: 600;
+  --edify-text-title-weight:   600;
   --edify-text-body-weight:    400;
   --edify-text-label-weight:   500;
-  --edify-text-micro-weight:   700;
+  --edify-text-micro-weight:   600;
 
-  --edify-text-display-leading: 1.15;
-  --edify-text-heading-leading: 1.2;
-  --edify-text-title-leading:   1.25;
-  --edify-text-body-leading:    1.4;
-  --edify-text-label-leading:   1.3;
-  --edify-text-micro-leading:   1.2;
+  --edify-text-display-leading: 1.12;
+  --edify-text-heading-leading: 1.3;
+  --edify-text-title-leading:   1.35;
+  --edify-text-body-leading:    1.5;
+  --edify-text-label-leading:   1.4;
+  --edify-text-micro-leading:   1.3;
 
   --edify-text-display-tracking: -0.025em;
   --edify-text-heading-tracking: -0.005em;
@@ -109,7 +158,7 @@
   --edify-text-micro-tracking: 0.06em;
 
   /* Convenience composed shorthands (use as: font: var(--edify-font-body)) */
-  --edify-font-display: 600 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-sans);
+  --edify-font-display: 700 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-display-family);
   --edify-font-heading: 600 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
   --edify-font-title:   600 var(--edify-text-title-size)/var(--edify-text-title-leading) var(--edify-font-sans);
   --edify-font-body:    400 var(--edify-text-body-size)/var(--edify-text-body-leading) var(--edify-font-sans);
@@ -142,18 +191,18 @@
        pill      → avatars, status dots only                        */
   --edify-radius-xs: 6px;
   --edify-radius-sm: 6px;
-  --edify-radius-md: 10px;
-  --edify-radius-lg: 16px;
+  --edify-radius-md: 12px;
+  --edify-radius-lg: 18px;
   --edify-radius-pill: 9999px;
   --edify-radius-circle: 50%;
 
   /* ── SHADOWS / ELEVATION (warm, multi-stop, very subtle at rest) ──────────
      A-tier cards float — barely-there shadow at rest, gentle lift on hover.
      Opacities kept low (0.02–0.06) so the surface reads as calm, not heavy. */
-  --edify-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
-  --edify-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.05), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
-  --edify-shadow-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
-  --edify-shadow-drawer: -10px 0 30px -5px rgba(15, 23, 42, 0.10);
+  --edify-shadow-sm: 0 1px 2px rgba(0, 29, 57, 0.04), 0 4px 12px -8px rgba(10, 65, 116, 0.10);
+  --edify-shadow-md: 0 10px 30px -18px rgba(0, 29, 57, 0.30), 0 2px 8px rgba(10, 65, 116, 0.05);
+  --edify-shadow-lg: 0 24px 56px -28px rgba(0, 29, 57, 0.42), 0 8px 20px -12px rgba(10, 65, 116, 0.16);
+  --edify-shadow-drawer: -18px 0 48px -20px rgba(0, 29, 57, 0.28);
 
   /* ── MOTION (fast for hovers; normal for overlays; never bounce) ───────── */
   --edify-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -164,89 +213,216 @@
      Frosted glass and translucent panels that adapt to light/dark. These
      aren't pure tokens — they're composite surface treatments consumed by
      base.html / shell.html. */
-  --edify-topbar-bg: rgba(255, 255, 255, 0.85);
+  --edify-topbar-bg: rgba(248, 250, 251, 0.90);
   --edify-topbar-border: var(--edify-border);
-  --edify-scrim: rgba(15, 23, 42, 0.55);
-  --edify-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  --edify-sidebar-bg: linear-gradient(185deg, #1e293b 0%, #111827 55%, #0f172a 100%);
+  --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.8), 0 12px 30px -24px rgba(0,29,57,.35);
+  --edify-scrim: rgba(0, 29, 57, 0.58);
+  --edify-focus-ring: 0 0 0 3px rgba(77, 113, 135, 0.24);
+  --edify-sidebar-bg:
+    radial-gradient(circle at 10% 5%, rgba(123,189,232,.12), transparent 22rem),
+    linear-gradient(180deg, var(--edify-navy-950) 0%, #032a50 56%, #00162c 100%);
   --edify-sidebar-active: var(--edify-accent);
+  --edify-scrollbar-track: transparent;
+  --edify-scrollbar-thumb: var(--edify-sky-100);
+  --edify-page-gutter: clamp(1rem, 0.7rem + 1.1vw, 1.75rem);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   DARK THEME — premium OS-grade dark workspace.
-   Activated by adding `.dark` class to <html> (via FOUC boot script).
-   Every token from :root is remapped — one class change = full theme switch.
+   BLUE THEME — the approved Edify navy palette as a complete workspace.
+   `.dark` remains present for legacy utility compatibility while this class
+   supplies the intentional blue surface hierarchy.
    ════════════════════════════════════════════════════════════════════════════ */
-:root.dark {
+:root.theme-blue {
   color-scheme: dark;
 
-  /* Brand — slightly brighter for dark backgrounds */
-  --edify-primary: #3d6fd6;
-  --edify-primary-hover: #2c5bbf;
-  --edify-primary-light: rgba(61, 111, 214, 0.12);
-  --edify-accent: #3b82f6;
-  --edify-accent-hover: #2563eb;
-  --edify-accent-light: rgba(59, 130, 246, 0.10);
-  --edify-accent-border: rgba(59, 130, 246, 0.25);
+  --edify-primary: var(--edify-sky-400);
+  --edify-primary-hover: var(--edify-sky-100);
+  --edify-primary-light: rgba(123, 189, 232, 0.13);
+  --edify-accent: var(--edify-sky-400);
+  --edify-accent-hover: var(--edify-sky-100);
+  --edify-on-accent: var(--edify-navy-950);
+  --edify-accent-light: rgba(123, 189, 232, 0.13);
+  --edify-accent-border: rgba(123, 189, 232, 0.32);
 
-  /* Semantic — translucent backgrounds, lighter text */
-  --edify-success: #10b981;
-  --edify-success-light: rgba(16, 185, 129, 0.12);
-  --edify-success-border: rgba(16, 185, 129, 0.25);
+  --edify-success: #55d6b3;
+  --edify-success-light: rgba(85, 214, 179, 0.12);
+  --edify-success-border: rgba(85, 214, 179, 0.28);
+  --edify-warning: #f8c56b;
+  --edify-warning-light: rgba(248, 197, 107, 0.12);
+  --edify-warning-border: rgba(248, 197, 107, 0.28);
+  --edify-danger: #ff8796;
+  --edify-danger-light: rgba(255, 135, 150, 0.12);
+  --edify-danger-border: rgba(255, 135, 150, 0.28);
+  --edify-info: var(--edify-sky-400);
+  --edify-info-light: rgba(123, 189, 232, 0.13);
+  --edify-info-border: rgba(123, 189, 232, 0.30);
+  --edify-purple: #b7a6f4;
+  --edify-purple-light: rgba(183, 166, 244, 0.12);
+  --edify-purple-border: rgba(183, 166, 244, 0.26);
+  --edify-teal: #78d5d0;
+  --edify-teal-light: rgba(120, 213, 208, 0.12);
+  --edify-teal-border: rgba(120, 213, 208, 0.26);
 
-  --edify-warning: #f59e0b;
-  --edify-warning-light: rgba(245, 158, 11, 0.12);
-  --edify-warning-border: rgba(245, 158, 11, 0.25);
+  --edify-notification: #ff9d42;
+  --edify-notification-text: var(--edify-navy-950);
+  --edify-notification-glow: rgba(255, 157, 66, 0.38);
 
-  --edify-danger: #ef4444;
-  --edify-danger-light: rgba(239, 68, 68, 0.12);
-  --edify-danger-border: rgba(239, 68, 68, 0.25);
+  --edify-surface: rgba(5, 54, 96, 0.58);
+  --edify-surface-muted: rgba(8, 58, 102, 0.38);
+  --edify-surface-raised: rgba(18, 83, 131, 0.68);
+  --edify-border: rgba(123, 189, 232, 0.32);
+  --edify-border-strong: rgba(123, 189, 232, 0.58);
+  --edify-text: #f5fbff;
+  --edify-text-muted: var(--edify-sky-100);
+  --edify-text-subtle: #91b5cc;
+  --edify-bg: var(--edify-navy-950);
+  --edify-canvas-treatment:
+    linear-gradient(108deg, rgba(0, 19, 39, .80) 0%, rgba(0, 29, 57, .56) 46%, rgba(3, 46, 84, .74) 100%),
+    radial-gradient(circle at 88% 0%, rgba(123,189,232,.24), transparent 36rem),
+    linear-gradient(180deg, rgba(0,29,57,.06) 0%, rgba(0,18,38,.48) 100%),
+    url("../images/login-classroom-portrait.jpg");
+  --edify-surface-treatment:
+    radial-gradient(circle at 94% -8%, rgba(123,189,232,.22), transparent 20rem),
+    linear-gradient(145deg, rgba(73,118,159,.20), rgba(0,29,57,.16));
+  --edify-glass-tile-treatment:
+    linear-gradient(145deg, rgba(73,118,159,.20), rgba(0,29,57,.24));
+  --edify-glass-kpi-treatment:
+    radial-gradient(circle at 92% 0%, rgba(123,189,232,.20), transparent 22rem),
+    linear-gradient(135deg, rgba(10,65,116,.62), rgba(0,38,75,.48));
+  --edify-button-primary-treatment:
+    linear-gradient(135deg, var(--edify-sky-100) 0%, var(--edify-sky-400) 56%, var(--edify-teal-400) 100%);
+  --edify-button-secondary-treatment:
+    linear-gradient(145deg, rgba(73,118,159,.28), rgba(0,29,57,.24));
+  --edify-glass-blur: 18px;
+  --edify-glass-saturation: 150%;
+  --edify-glass-highlight: rgba(220, 240, 252, 0.24);
 
-  --edify-info: #3b82f6;
-  --edify-info-light: rgba(59, 130, 246, 0.12);
-  --edify-info-border: rgba(59, 130, 246, 0.25);
-
-  --edify-purple: #8b5cf6;
-  --edify-purple-light: rgba(139, 92, 246, 0.12);
-  --edify-purple-border: rgba(139, 92, 246, 0.25);
-
-  --edify-teal: #14b8a6;
-  --edify-teal-light: rgba(20, 184, 166, 0.12);
-  --edify-teal-border: rgba(20, 184, 166, 0.25);
-
-  /* Neutral surfaces — deep charcoal, never pure black */
-  --edify-surface: #1a1f28;
-  --edify-surface-muted: #20262f;
-  --edify-border: #2d3540;
-  --edify-border-strong: #3a4452;
-  --edify-text: #e8edf5;
-  --edify-text-muted: #7a8699;
-  --edify-text-subtle: #5c6878;
-  --edify-bg: #0e1116;
-
-  /* Legacy aliases — keep old templates working in dark mode */
-  --color-edify-divider: #222831;
+  --color-edify-divider: rgba(189, 216, 233, 0.12);
   --bg-page: var(--edify-bg);
 
-  /* Shadows — deeper with pure black */
-  --edify-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.20), 0 1px 2px rgba(0, 0, 0, 0.15);
-  --edify-shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.30), 0 2px 4px rgba(0, 0, 0, 0.20);
-  --edify-shadow-lg: 0 12px 32px -8px rgba(0, 0, 0, 0.40), 0 4px 8px rgba(0, 0, 0, 0.25);
-  --edify-shadow-drawer: -10px 0 30px -5px rgba(0, 0, 0, 0.50);
+  --edify-shadow-sm: 0 1px 2px rgba(0, 9, 24, .20), 0 12px 30px -22px rgba(123, 189, 232, .48);
+  --edify-shadow-md: 0 20px 46px -26px rgba(0, 8, 20, .78), 0 6px 18px -12px rgba(123, 189, 232, .28);
+  --edify-shadow-lg: 0 34px 80px -36px rgba(0, 5, 16, .92), 0 12px 30px -16px rgba(78, 142, 162, .34);
+  --edify-shadow-drawer: -20px 0 54px -24px rgba(0, 5, 16, .86);
 
-  /* Shell surfaces */
-  --edify-topbar-bg: rgba(26, 31, 40, 0.85);
-  --edify-topbar-border: var(--edify-border);
-  --edify-scrim: rgba(0, 0, 0, 0.65);
-  --edify-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.20);
-  --edify-sidebar-bg: linear-gradient(185deg, #000000 0%, #0a0d12 55%, #080a0e 100%);
+  --edify-topbar-bg: rgba(0, 29, 57, 0.62);
+  --edify-topbar-border: rgba(123, 189, 232, 0.22);
+  --edify-topbar-shadow: 0 1px 0 rgba(123,189,232,.08), 0 20px 42px -32px rgba(0,0,0,.8);
+  --edify-scrim: rgba(0, 12, 28, 0.76);
+  --edify-focus-ring: 0 0 0 3px rgba(123, 189, 232, 0.26);
+  --edify-sidebar-bg:
+    radial-gradient(circle at 10% 5%, rgba(123,189,232,.14), transparent 24rem),
+    linear-gradient(180deg, #00152a 0%, #001d39 48%, #062f58 100%);
+  --edify-scrollbar-thumb: rgba(123, 189, 232, 0.42);
 }
 
-/* Smooth theme transition on all surfaces */
-html.theme-fade, html.theme-fade * {
-  transition: background-color 0.25s var(--edify-transition-fast, cubic-bezier(0.4,0,0.2,1)),
-              border-color 0.25s var(--edify-transition-fast, cubic-bezier(0.4,0,0.2,1)),
-              color 0.25s var(--edify-transition-fast, cubic-bezier(0.4,0,0.2,1)) !important;
+/* The `.dark` compatibility class also exists in Blue mode. The compiled
+   legacy rule for `html.dark` is more specific than the body token consumer,
+   so Blue needs an equally specific, later rule to expose its image canvas. */
+html.theme-blue,
+html.theme-blue body {
+  background-color: var(--edify-navy-950);
+  background-image: var(--edify-canvas-treatment);
+  background-position: center 30%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+@media (max-width: 48rem), (pointer: coarse) {
+  html.theme-blue,
+  html.theme-blue body {
+    background-position: 38% center;
+    background-attachment: scroll;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DARK THEME — editorial charcoal and ink-blue.
+
+   This theme intentionally follows the approved workflow-report reference:
+   a quiet near-black canvas, opaque ink-blue planes, hairline borders,
+   ivory display type, blue metadata and amber decision accents. It is not a
+   dimmed Light theme and it is not the translucent, image-backed Blue theme.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root.theme-dark {
+  color-scheme: dark;
+
+  --edify-primary: #8fb1e8;
+  --edify-primary-hover: #b2c9ee;
+  --edify-primary-light: rgba(143, 177, 232, 0.14);
+  --edify-accent: #d9aa4b;
+  --edify-accent-hover: #efc66f;
+  --edify-on-accent: #101721;
+  --edify-accent-light: rgba(217, 170, 75, 0.14);
+  --edify-accent-border: rgba(217, 170, 75, 0.34);
+
+  --edify-success: #79ca98;
+  --edify-success-light: rgba(43, 126, 75, 0.22);
+  --edify-success-border: rgba(121, 202, 152, 0.30);
+  --edify-warning: #e0b354;
+  --edify-warning-light: rgba(111, 77, 15, 0.42);
+  --edify-warning-border: rgba(224, 179, 84, 0.34);
+  --edify-danger: #e88c91;
+  --edify-danger-light: rgba(121, 43, 47, 0.34);
+  --edify-danger-border: rgba(232, 140, 145, 0.30);
+  --edify-info: #8fb1e8;
+  --edify-info-light: rgba(41, 73, 119, 0.48);
+  --edify-info-border: rgba(143, 177, 232, 0.28);
+  --edify-purple: #b7a6f4;
+  --edify-purple-light: rgba(183, 166, 244, 0.11);
+  --edify-purple-border: rgba(183, 166, 244, 0.24);
+  --edify-teal: #78d5d0;
+  --edify-teal-light: rgba(120, 213, 208, 0.11);
+  --edify-teal-border: rgba(120, 213, 208, 0.24);
+
+  --edify-notification: #e8792e;
+  --edify-notification-text: #ffffff;
+  --edify-notification-glow: rgba(232, 121, 46, 0.30);
+
+  --edify-surface: #182334;
+  --edify-surface-muted: #131d2a;
+  --edify-surface-raised: #1c293b;
+  --edify-surface-hover: #202e42;
+  --edify-surface-selected: #243853;
+  --edify-border: #2b3a4e;
+  --edify-border-strong: #3b4e67;
+  --edify-divider: #263548;
+  --edify-text: #edf0eb;
+  --edify-text-muted: #aeb8c5;
+  --edify-text-subtle: #7f8c9b;
+  --edify-text-disabled: #687686;
+  --edify-bg: #101721;
+  --edify-section-bg: #121b27;
+  --edify-canvas-treatment: linear-gradient(180deg, #101721 0%, #111923 54%, #0e151e 100%);
+  --edify-surface-treatment: linear-gradient(180deg, rgba(27, 39, 57, .98), rgba(23, 34, 50, .98));
+  --edify-font-display-family: var(--edify-font-serif);
+  --edify-radius-md: 10px;
+  --edify-radius-lg: 14px;
+
+  --color-edify-divider: var(--edify-divider);
+  --bg-page: var(--edify-bg);
+
+  --edify-shadow-sm: 0 1px 1px rgba(0,0,0,.30), 0 10px 22px -18px rgba(0,0,0,.74);
+  --edify-shadow-md: 0 18px 38px -24px rgba(0,0,0,.88), 0 2px 8px rgba(0,0,0,.24);
+  --edify-shadow-lg: 0 30px 68px -32px rgba(0,0,0,.96), 0 8px 22px rgba(0,0,0,.18);
+  --edify-shadow-drawer: -22px 0 58px -26px rgba(0,0,0,.92);
+
+  --edify-topbar-bg: rgba(16, 23, 33, 0.94);
+  --edify-topbar-border: var(--edify-border);
+  --edify-topbar-shadow: 0 1px 0 rgba(123,189,232,.05), 0 20px 44px -30px rgba(0,0,0,.92);
+  --edify-scrim: rgba(0, 4, 10, 0.78);
+  --edify-focus-ring: 0 0 0 3px rgba(143, 177, 232, 0.24);
+  --edify-sidebar-bg: #101822;
+  --edify-scrollbar-thumb: #3b4e67;
+}
+
+/* Theme changes feel immediate but not abrupt. Avoid overriding component
+   motion and transforms by limiting the transition to visual surfaces. */
+html.theme-fade :where(body, main, header, aside, nav, section, article, table, thead, tbody, tr, td, th, input, select, textarea, button, a, .card, .bg-white) {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Focus-visible rings — accessible in both themes */
@@ -262,13 +438,19 @@ html.theme-fade, html.theme-fade * {
    Tailwind's JIT didn't generate them. Keep them in unlayered CSS so they
    win over @layer utilities.
    ════════════════════════════════════════════════════════════════════════════ */
-[class*="bg-[#2e505f]"]      { background-color: #2e505f !important; }
-[class*="text-[#2e505f]"]    { color: #2e505f !important; }
-[class*="border-[#2e505f]"]  { border-color: #2e505f !important; }
-[class*="accent-[#2e505f]"]  { accent-color: #2e505f !important; }
-[class*="hover:bg-[#213a45]"]:hover  { background-color: #213a45 !important; }
-[class*="hover:text-[#213a45]"]:hover { color: #213a45 !important; }
-[class*="hover:border-[#213a45]"]:hover { border-color: #213a45 !important; }
-[class*="bg-[#2e505f]/10"]   { background-color: rgba(46, 80, 95, 0.1) !important; }
-[class*="border-[#2e505f]/20"] { border-color: rgba(46, 80, 95, 0.2) !important; }
-[class*="border-[#2e505f]/30"] { border-color: rgba(46, 80, 95, 0.3) !important; }
+[class*="bg-[#2e505f]"]      { background-color: var(--edify-primary) !important; }
+[class*="text-[#2e505f]"]    { color: var(--edify-primary) !important; }
+[class*="border-[#2e505f]"]  { border-color: var(--edify-primary) !important; }
+[class*="accent-[#2e505f]"]  { accent-color: var(--edify-accent) !important; }
+[class*="hover:bg-[#213a45]"]:hover  { background-color: var(--edify-primary-hover) !important; }
+[class*="hover:text-[#213a45]"]:hover { color: var(--edify-primary-hover) !important; }
+[class*="hover:border-[#213a45]"]:hover { border-color: var(--edify-primary-hover) !important; }
+[class*="bg-[#2e505f]/10"]   { background-color: var(--edify-primary-light) !important; }
+[class*="border-[#2e505f]/20"],
+[class*="border-[#2e505f]/30"] { border-color: var(--edify-accent-border) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-fade :where(body, main, header, aside, nav, section, article, table, input, select, textarea, button, a, .card, .bg-white) {
+    transition-duration: 0ms;
+  }
+}

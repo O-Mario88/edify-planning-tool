@@ -15,13 +15,18 @@ class UIQualityLintTest(TestCase):
     def test_gold_standard_lints_are_clean(self):
         checks = {c["key"]: c for c in ui_quality_checks()["checks"]}
         expected = (
-            "mock_smells", "emojis", "dead_links",
-            "static_chart_series", "uncompiled_variants", "light_only_grids",
+            "mock_smells",
+            "emojis",
+            "dead_links",
+            "static_chart_series",
+            "uncompiled_variants",
+            "light_only_grids",
         )
         for key in expected:
             self.assertIn(key, checks)
             self.assertEqual(
-                checks[key]["count"], 0,
+                checks[key]["count"],
+                0,
                 f"{key} regressed: {checks[key]['items']}",
             )
 

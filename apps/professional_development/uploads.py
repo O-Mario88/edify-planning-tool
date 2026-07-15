@@ -54,6 +54,9 @@ def store_pd_file(file_obj) -> dict:
         for chunk in _chunks(file_obj):
             out.write(chunk)
     return {
-        "uri": stored_name, "original_name": original_name,
-        "mime_type": mime_type or None, "file_extension": ext, "file_size": size,
+        "uri": stored_name,
+        "original_name": original_name,
+        "mime_type": mime_type or None,
+        "file_extension": ext,
+        "file_size": size,
     }

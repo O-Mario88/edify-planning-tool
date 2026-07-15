@@ -1,531 +1,264 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
-{% block title %}Main Dashboard - SIPA{% endblock %}
+{% block title %}Main Dashboard — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4" id="main-dashboard-container" style="max-width:1500px;margin:0 auto;color:var(--edify-text);">
+<div class="admin-command" id="main-dashboard-container">
+  <nav class="admin-command__breadcrumbs" aria-label="Breadcrumb">
+    <a href="/dashboard">Home</a>
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m7 4 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span aria-current="page">Main Dashboard</span>
+  </nav>
 
-<!-- Breadcrumb -->
-<nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-<a href="/dashboard" class="hover:text-slate-600">Home</a>
-<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-<span class="text-slate-600 font-semibold">Main Dashboard</span>
-</nav>
+  <header class="admin-command__header">
+    <div>
+      <h1>Main Dashboard</h1>
+      <p>A complete view of execution, priorities, school improvement, and operational health.</p>
+    </div>
+    <div class="admin-command__actions">
+      <a href="/planning" class="admin-button admin-button--primary">
+        {% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}
+        <span>Open My Plan</span>
+      </a>
+      <a href="/analytics" class="admin-button admin-button--secondary">
+        {% include "partials/dashboards/admin/_icon.html" with name="analytics" only %}
+        <span>View Analytics</span>
+      </a>
+    </div>
+  </header>
 
-<!-- Title & Actions Header -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
-<div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Main Dashboard</h1>
-<p class="text-[12px] text-slate-500 font-semibold mt-1">A complete view of execution, priorities, school improvement, and operational health.</p>
-</div>
+  <section class="admin-kpi-strip" aria-label="Country operational summary">
+    {% for item in kpi_strip_items %}
+    <article class="admin-kpi" data-tone="{{ item.variant }}">
+      <span class="admin-kpi__icon">
+        {% include "partials/dashboards/admin/_icon.html" with name=item.icon only %}
+      </span>
+      <span class="admin-kpi__copy">
+        <span class="admin-kpi__label">{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+        <small>{{ item.helper }}</small>
+      </span>
+    </article>
+    {% endfor %}
+    <a href="/schools?readiness=attention" class="admin-kpi" data-tone="danger">
+      <span class="admin-kpi__icon">{% include "partials/dashboards/admin/_icon.html" with name="attention" only %}</span>
+      <span class="admin-kpi__copy"><span class="admin-kpi__label">Needs Attention</span><strong>{{ signals.needs_attention }}</strong><small>schools</small></span>
+    </a>
+    <a href="/planning" class="admin-kpi" data-tone="warning">
+      <span class="admin-kpi__icon">{% include "partials/dashboards/admin/_icon.html" with name="arrow" only %}</span>
+      <span class="admin-kpi__copy"><span class="admin-kpi__label">Ready for Action</span><strong>{{ signals.ready_for_action }}</strong><small>schools</small></span>
+    </a>
+    <a href="/system-health" class="admin-kpi" data-tone="success">
+      <span class="admin-kpi__icon">{% include "partials/dashboards/admin/_icon.html" with name="health" only %}</span>
+      <span class="admin-kpi__copy"><span class="admin-kpi__label">Operational Health</span><strong>{{ signals.operational_health }}%</strong><small>system score</small></span>
+    </a>
+  </section>
 
-<div class="flex items-center gap-2">
-<!-- Open My Plan -->
-<a 
-href="/planning" 
-class="edify-action-button primary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-Open My Plan
-</a>
+  <div class="admin-workspace">
+    <div class="admin-workspace__main">
+      <div class="admin-grid admin-grid--top">
+        <section class="admin-panel admin-priorities" aria-labelledby="admin-priorities-title">
+          <header class="admin-panel__header">
+            <h2 id="admin-priorities-title">Today’s Priorities <span class="admin-count">{{ priorities|length }}</span></h2>
+            <a href="/planning">View Calendar</a>
+          </header>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--priorities">
+              <caption class="sr-only">Activities prioritized for today</caption>
+              <thead><tr><th scope="col">Activity</th><th scope="col">Time</th><th scope="col">Related to</th><th scope="col">Status</th></tr></thead>
+              <tbody>
+                {% for item in priorities %}
+                <tr><td><strong>{{ item.activity }}</strong></td><td>{{ item.time }}</td><td>{{ item.related_to }}</td><td><span class="admin-status {{ item.status_class }}">{{ item.status }}</span></td></tr>
+                {% empty %}
+                <tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>Nothing scheduled for today.</span><small>Your next scheduled activity will appear here.</small></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <a class="admin-panel__footer-link" href="/planning">View all priorities ({{ priorities|length }}) <span aria-hidden="true">→</span></a>
+        </section>
 
-<!-- View Analytics -->
-<a 
-href="/analytics" 
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
-View Analytics
-</a>
-</div>
-</div>
-
-<!-- Dashboard Grid -->
-<section class="dashboard-grid">
-
-<!-- Left Column: KPIs, Signals, Panels -->
-<div class="content space-y-4">
-
-<!-- KPI Strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
-
-<!-- Signal Grid -->
-<div class="signal-grid">
-<div class="card signal red ">
-<div class="signal-icon red-bg"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg></div>
-<div>
-<h3 class="text-rose-600 font-semibold">Needs Attention</h3>
-<p class="text-[21px] font-extrabold tracking-tight whitespace-nowrap"><span class="text-rose-600">{{ signals.needs_attention }}</span> Schools</p>
-<p class="text-slate-400 font-bold text-[11px]">Require immediate attention</p>
-</div>
-</div>
-
-<div class="card signal orange ">
-<div class="signal-icon orange-bg"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg></div>
-<div>
-<h3 class="text-amber-600 font-semibold">Ready for Action</h3>
-<p class="text-[21px] font-extrabold tracking-tight whitespace-nowrap"><span>{{ signals.ready_for_action }}</span> Schools</p>
-<p class="text-slate-400 font-bold text-[11px]">Ready for next steps</p>
-</div>
-</div>
-
-<div class="card signal green ">
-<div class="signal-icon green-bg"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg></div>
-<div>
-<h3 class="text-emerald-600 font-semibold">Operational Health</h3>
-<p class="text-[21px] font-extrabold tracking-tight whitespace-nowrap">{{ signals.operational_health }}%</p>
-<p class="text-slate-400 font-bold text-[11px]">System performance score</p>
-</div>
-</div>
-</div>
-
-<!-- Panel Grid (Priorities, Progress, SSA) -->
-<div class="panel-grid">
-<!-- Priorities Table -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">
-Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">{{ priorities|length }}</span>
-</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/planning">View Calendar</a>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-[12px] font-semibold text-slate-600 border-collapse">
-<thead>
-<tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
-<th class="py-2">Activity</th>
-<th class="py-2">Time</th>
-<th class="py-2">Related To</th>
-<th class="py-2 text-right">Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% for p in priorities %}
-<tr>
-<td class="py-2.5 font-semibold text-slate-900">{{ p.activity }}</td>
-<td class="py-2.5 text-slate-500">{{ p.time }}</td>
-<td class="py-2.5 text-slate-500">{{ p.related_to }}</td>
-<td class="py-2.5 text-right"><span class="status {{ p.status_class }}">{{ p.status }}</span></td>
-</tr>
-{% empty %}
-<tr>
-<td colspan="4" class="py-6 text-center text-slate-400 font-bold">No priorities scheduled for today.</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-<a class="link text-blue-600 hover:underline block text-[11px] font-semibold" href="/planning">View all priorities ({{ priorities|length }}) &rsaquo;</a>
-</section>
-
-<!-- Planning Progress -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Planning Progress</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/planning">View Details</a>
-</div>
-<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg ">
-<span class="px-2.5 py-1 btn-premium-primary text-white rounded text-[11px] font-semibold cursor-pointer shadow-sm">Week</span>
-<span class="px-2.5 py-1 text-slate-400 hover:text-slate-600 text-[11px] font-bold cursor-pointer">Month</span>
-<span class="px-2.5 py-1 text-slate-400 hover:text-slate-600 text-[11px] font-bold cursor-pointer">Quarter</span>
-<span class="px-2.5 py-1 text-slate-400 hover:text-slate-600 text-[11px] font-bold cursor-pointer">FY</span>
-</div>
-<div class="chart pt-2" id="weekly-progress-chart-container">
-  <div id="weekly-progress-chart" class="h-44 w-full"></div>
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-      var options = {
-          series: [{
-              name: 'Progress',
-              data: [
-                  {% for w in weekly_progress %}
-                  {{ w.percentage }}{% if not forloop.last %},{% endif %}
-                  {% endfor %}
-              ]
-          }],
-          chart: {
-              type: 'bar',
-              height: 150,
-              toolbar: { show: false },
-              sparkline: { enabled: false }
-          },
-          plotOptions: {
-              bar: {
-                  borderRadius: 4,
-                  columnWidth: '60%',
-              }
-          },
-          dataLabels: {
-              enabled: false
-          },
-          xaxis: {
-              categories: [
-                  {% for w in weekly_progress %}
-                  '{{ w.week|safe|escapejs }}'{% if not forloop.last %},{% endif %}
-                  {% endfor %}
-              ],
-              labels: {
-                  style: {
-                      fontSize: '9px',
-                      fontFamily: 'Outfit, sans-serif'
-                  }
-              }
-          },
-          yaxis: {
-              max: 100,
-              labels: {
-                  formatter: function (value) {
-                      return value + "%";
-                  },
-                  style: {
-                      fontSize: '9px',
-                      fontFamily: 'Outfit, sans-serif'
-                  }
-              }
-          },
-          fill: {
-              colors: ['#2e505f']
-          },
-          grid: {
-              borderColor: '#94a3b833'
-          },
-          tooltip: {
-              theme: 'dark',
-              y: {
-                  formatter: function(val) {
-                      return val + "%";
-                  }
-              }
-          }
-      };
-      var chart = new ApexCharts(document.querySelector("#weekly-progress-chart"), options);
-      chart.render();
-  });
-  </script>
-</div>
-</section>
-
-<!-- SSA snapshot -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">SSA Performance Snapshot</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/schools">View Report</a>
-</div>
-
-<div class="space-y-3 text-[11px] font-bold text-slate-600">
-<strong class="text-[11px] uppercase tracking-wider text-slate-400 block pb-1 border-b border-slate-100">Best Performing Interventions</strong>
-{% for item in best_interventions %}
-<div class="intervention">
-<span class="truncate block" title="{{ item.name }}">{{ item.name }}</span>
-<div class="progress h-2 bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full rounded-full bg-emerald-500" style="width: {{ item.percentage }}%"></div>
-</div>
-<b class="text-slate-900 text-right">{{ item.score }}</b>
-</div>
-{% endfor %}
-
-<strong class="text-[11px] uppercase tracking-wider text-slate-400 block pt-2 pb-1 border-b border-slate-100">Weakest Interventions</strong>
-{% for item in weakest_interventions %}
-<div class="intervention">
-<span class="truncate block" title="{{ item.name }}">{{ item.name }}</span>
-<div class="progress h-2 bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full rounded-full {% if item.score < 3.3 %}bg-rose-500{% else %}bg-amber-500{% endif %}" style="width: {{ item.percentage }}%"></div>
-</div>
-<b class="text-slate-900 text-right">{{ item.score }}</b>
-</div>
-{% endfor %}
-</div>
-</section>
-</div>
-
-<!-- Lower row grids -->
-<div class="three-col">
-<!-- Team Target Progress -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Team Target Progress</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/analytics">View Details</a>
-</div>
-<div class="progress-list space-y-3">
-{% for target in team_targets %}
-<div class="progress-row">
-<span class="truncate text-slate-500 block" title="{{ target.name }}">{{ target.name }}</span>
-<div class="progress h-2 bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full rounded-full" style="width: {{ target.percentage }}%; background-color: {{ target.color }}"></div>
-</div>
-<b class="text-slate-900 text-[11px]">{{ target.percentage }}%</b>
-<span class="status {{ target.class }} text-center shrink-0">{{ target.status }}</span>
-</div>
-{% endfor %}
-</div>
-</section>
-
-<!-- Priority Schools -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Priority Schools</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/schools">View All</a>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-[11px] border-collapse font-semibold text-slate-600">
-<thead>
-<tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
-<th class="py-2">School</th>
-<th class="py-2">District</th>
-<th class="py-2">Readiness</th>
-<th class="py-2 text-right">Action</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% for s in priority_schools %}
-<tr>
-<td class="py-2.5 font-semibold text-slate-900">{{ s.name }}</td>
-<td class="py-2.5 text-slate-500">{{ s.district }}</td>
-<td class="py-2.5"><span class="status {{ s.readiness_class }}">{{ s.readiness }}</span></td>
-<td class="py-2.5 text-right"><a class="link text-blue-600 hover:underline cursor-pointer" href="/planning">{{ s.action }}</a></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</section>
-
-<!-- Cluster Performance -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Cluster Performance</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/clusters">View All</a>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-[11px] border-collapse font-semibold text-slate-600">
-<thead>
-<tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
-<th class="py-2">Cluster</th>
-<th class="py-2">Avg SSA</th>
-<th class="py-2 text-center">Trend</th>
-<th class="py-2 text-right">Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% for c in cluster_performance %}
-<tr>
-<td class="py-2.5 font-semibold text-slate-900">{{ c.name }}</td>
-<td class="py-2.5 text-slate-500">{{ c.avg_ssa }}</td>
-<td class="py-2.5 text-center font-bold text-[14px] {% if c.trend == '↑' %}text-emerald-600{% elif c.trend == '↓' %}text-rose-500{% else %}text-amber-500{% endif %}">{{ c.trend }}</td>
-<td class="py-2.5 text-right"><span class="status {{ c.status_class }}">{{ c.status }}</span></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</section>
-</div>
-
-<!-- Support and Budget overview Row -->
-<div class="two-col">
-<!-- Partner Support Overview -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Partner Support Overview</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/partners">View All</a>
-</div>
-<div class="mini-metrics">
-<div class="mini">
-<small>Assigned Partners</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ support_overview.assigned_partners }}</strong>
-<small class="text-emerald-600 mt-1 block">Active</small>
-</div>
-<div class="mini">
-<small>Planned Visits</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ support_overview.planned_visits }}</strong>
-<small class="text-slate-400 mt-1 block">This Month</small>
-</div>
-<div class="mini">
-<small>Evidence Pending</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ support_overview.evidence_pending }}</strong>
-<small class="text-rose-500 mt-1 block">Submissions</small>
-</div>
-<div class="mini">
-<small>Payments Due</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ support_overview.payments_due }}</strong>
-<small class="text-slate-400 mt-1 block">This Month</small>
-</div>
-</div>
-</section>
-
-<!-- Budget & Fund Request Snapshot -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Budget &amp; Fund Request Snapshot</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/finance/fund-allocation">View Details</a>
-</div>
-<div class="mini-metrics">
-<div class="mini">
-<small>This Week</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ budget_snapshot.week }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-<div class="mini">
-<small>This Month</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ budget_snapshot.month }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-<div class="mini">
-<small>This Quarter</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ budget_snapshot.quarter }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-<div class="mini">
-<small>This FY</small>
-<strong class="text-[21px] font-extrabold tracking-tight leading-none mt-2 block">{{ budget_snapshot.fy }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-</div>
-</section>
-</div>
-
-<!-- Execution Summary card -->
-<section class="card">
-<div class="panel border-b border-slate-100" style="padding-bottom:12px;">
-<div class="panel-title font-semibold text-[#2e505f]">Execution Summary</div>
-</div>
-<div class="summary-strip">
-<div class="summary-card">
-<div class="kicon blue-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This Week</span>
-<strong class="text-[21px] font-extrabold tracking-tight block mt-0.5">{{ execution_summary.week }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 18% vs last week</span>
-</div>
-</div>
-
-<div class="summary-card">
-<div class="kicon blue-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This Month</span>
-<strong class="text-[21px] font-extrabold tracking-tight block mt-0.5">{{ execution_summary.month }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 14% vs last month</span>
-</div>
-</div>
-
-<div class="summary-card">
-<div class="kicon purple-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This Quarter</span>
-<strong class="text-[21px] font-extrabold tracking-tight block mt-0.5">{{ execution_summary.quarter }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 9% vs last quarter</span>
-</div>
-</div>
-
-<div class="summary-card">
-<div class="kicon green-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This FY</span>
-<strong class="text-[21px] font-extrabold tracking-tight block mt-0.5">{{ execution_summary.fy }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 11% vs last FY</span>
-</div>
-</div>
-</div>
-</section>
-
-</div>
-
-<!-- Right Column: Rail Cards -->
-<aside class="right-rail">
-
-<!-- Upcoming Today -->
-<section class="card rail-card">
-<div class="rail-title font-semibold text-[#2e505f] text-[14px] border-b border-slate-100 pb-2 mb-3">
-Upcoming Today <span class="count text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">{{ upcoming_today|length }}</span>
-</div>
-
-<div class="space-y-3.5">
-{% for item in upcoming_today %}
-<div class="today-item {% if forloop.first %}highlight{% endif %} flex gap-3 text-[11px]">
-<div class="round-mini {{ item.type_class }} shrink-0 mt-0.5">{{ item.icon }}</div>
-<div class="space-y-1">
-<div class="time {% if forloop.first %}text-amber-700{% else %}text-slate-400{% endif %} font-semibold text-[11px]">{{ item.time }}</div>
-<strong class="text-slate-800 font-semibold leading-snug block">{{ item.title }}</strong>
-<span class="text-slate-500 block leading-tight">{{ item.desc }}</span>
-<span class="text-slate-400 block text-[11px]">{{ item.info }}</span>
-</div>
-</div>
-{% empty %}
-<p class="text-[11px] text-slate-400 font-semibold py-2">Nothing scheduled for today.</p>
-{% endfor %}
-</div>
-
-<a class="link text-blue-600 hover:underline block text-[11px] font-semibold mt-3" href="/planning">View all today’s activities &rsaquo;</a>
-</section>
-
-<!-- Attention Needed Alert Box -->
-<section class="card rail-card">
-<div class="rail-title font-semibold text-rose-600 text-[14px] border-b border-slate-100 pb-2 mb-3">
-Attention Needed <span class="count text-[11px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">{{ attention_items|length }}</span>
-</div>
-<div class="attention-list space-y-3 text-[12px] font-bold">
-{% for item in attention_items %}
-<div class="attention-item flex items-center gap-3">
-<div class="round-mini {{ item.cls }} shrink-0">{{ item.icon }}</div>
-<div>
-<strong class="text-slate-900">{{ item.title }}</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">{{ item.detail }}</span>
-</div>
-</div>
-{% empty %}
-<p class="text-[11px] text-slate-400 font-semibold py-2">Nothing needs attention right now.</p>
-{% endfor %}
-</div>
-</section>
-
-<!-- Team Target Progress -->
-<section class="card rail-card">
-  <div class="rail-title font-semibold text-[#2e505f] text-[14px] border-b border-slate-100 pb-2 mb-3">
-    Team Target Progress
-  </div>
-  <div class="space-y-3.5">
-    {% for target in team_targets %}
-    <div class="space-y-1.5">
-      <div class="flex justify-between items-center text-[11px] font-bold">
-        <span class="truncate text-slate-500 block" title="{{ target.name }}">{{ target.name }}</span>
-        <span class="status {{ target.class }} text-center shrink-0">{{ target.status }}</span>
+        <section class="admin-panel admin-planning-progress" aria-labelledby="admin-planning-title">
+          <header class="admin-panel__header">
+            <h2 id="admin-planning-title">Planning Progress</h2>
+            <a href="/planning">View Details</a>
+          </header>
+          <div class="admin-period-switch" aria-label="Displayed reporting period">
+            <span class="is-active">Week</span><span>Month</span><span>Quarter</span><span>FY</span>
+          </div>
+          <figure class="admin-line-figure">
+            <svg class="admin-line-chart" data-admin-progress-chart data-values="{% for point in weekly_progress %}{{ point.percentage }}{% if not forloop.last %},{% endif %}{% endfor %}" viewBox="0 0 640 180" role="img" aria-labelledby="admin-progress-chart-title admin-progress-chart-desc">
+              <title id="admin-progress-chart-title">Weekly planning progress</title>
+              <desc id="admin-progress-chart-desc">Completion percentage across the five most recent planning weeks.</desc>
+              <defs><linearGradient id="admin-progress-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--edify-accent)" stop-opacity=".18"/><stop offset="1" stop-color="var(--edify-accent)" stop-opacity="0"/></linearGradient></defs>
+              <g class="admin-line-chart__grid" aria-hidden="true"><line x1="42" y1="20" x2="620" y2="20"/><line x1="42" y1="78" x2="620" y2="78"/><line x1="42" y1="136" x2="620" y2="136"/><text x="4" y="24">100%</text><text x="12" y="82">50%</text><text x="20" y="140">0%</text></g>
+              <path class="admin-line-chart__area" data-admin-progress-area aria-hidden="true"/>
+              <polyline class="admin-line-chart__series" data-admin-progress-series aria-hidden="true"/>
+              <g data-admin-progress-points aria-hidden="true"></g>
+            </svg>
+            <div class="admin-line-chart__labels" aria-hidden="true">{% for point in weekly_progress %}<span>{{ point.week }}</span>{% endfor %}</div>
+            <figcaption class="sr-only">
+              <table><caption>Weekly planning progress values</caption><thead><tr><th scope="col">Week</th><th scope="col">Completion</th></tr></thead><tbody>{% for point in weekly_progress %}<tr><th scope="row">{{ point.week }}</th><td>{{ point.percentage }}%</td></tr>{% endfor %}</tbody></table>
+            </figcaption>
+          </figure>
+        </section>
       </div>
-      <div class="flex items-center gap-2">
-        <div class="progress h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-          <div class="h-full rounded-full" style="width: {{ target.percentage }}%; background-color: {{ target.color }}"></div>
+
+      <div class="admin-grid admin-grid--middle">
+        <section class="admin-panel admin-ssa" aria-labelledby="admin-ssa-title">
+          <header class="admin-panel__header"><h2 id="admin-ssa-title">SSA Performance Snapshot</h2><a href="/reports">View Report</a></header>
+          <div class="admin-intervention-group">
+            <h3>Best performing interventions</h3>
+            {% for item in best_interventions %}
+            <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="success" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+            {% empty %}<div class="admin-empty admin-empty--compact"><span>No verified SSA scores yet.</span></div>{% endfor %}
+          </div>
+          <div class="admin-intervention-group">
+            <h3>Weakest interventions</h3>
+            {% for item in weakest_interventions %}
+            <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="warning" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+            {% empty %}<div class="admin-empty admin-empty--compact"><span>No low-performing interventions identified.</span></div>{% endfor %}
+          </div>
+        </section>
+
+        <section class="admin-panel admin-team-targets" aria-labelledby="admin-team-targets-title">
+          <header class="admin-panel__header"><h2 id="admin-team-targets-title">Team Target Progress</h2></header>
+          <div class="admin-target-list">
+            {% for target in team_targets %}
+            <div class="admin-target-row"><span>{{ target.name }}</span><strong>{{ target.percentage }}%</strong><span class="admin-status {{ target.class }}">{{ target.status }}</span></div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="admin-panel admin-priority-schools" aria-labelledby="admin-priority-schools-title">
+          <header class="admin-panel__header"><h2 id="admin-priority-schools-title">Priority Schools</h2><a href="/schools">View All</a></header>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--schools">
+              <caption class="sr-only">Schools requiring priority action</caption>
+              <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
+              <tbody>{% for school in priority_schools %}<tr><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Upload SSA' %}/ssa/upload/{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
+            </table>
+          </div>
+          <a class="admin-panel__footer-link" href="/schools">View all priority schools <span aria-hidden="true">→</span></a>
+        </section>
+      </div>
+
+      <div class="admin-grid admin-grid--lower">
+        <section class="admin-panel admin-clusters" aria-labelledby="admin-clusters-title">
+          <header class="admin-panel__header"><h2 id="admin-clusters-title">Cluster Performance</h2><a href="/clusters">View All</a></header>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <caption class="sr-only">Cluster performance by average SSA score</caption>
+              <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
+              <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{{ cluster.name }}</strong></td><td>{{ cluster.avg_ssa }}</td><td><svg class="admin-spark-line" viewBox="0 0 56 18" fill="none" aria-hidden="true"><path d="M1 12c6-8 9 3 15-2s8-5 13 0 8 4 13-1 8 2 13-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="admin-stack">
+          <section class="admin-panel admin-partners" aria-labelledby="admin-partners-title">
+            <header class="admin-panel__header"><h2 id="admin-partners-title">Partner Support Overview</h2><a href="/partners">View All</a></header>
+            <div class="admin-mini-grid">
+              <article class="admin-mini" data-tone="success"><span>Assigned Partners</span><strong>{{ support_overview.assigned_partners }}</strong><small>Active</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+              <article class="admin-mini" data-tone="info"><span>Planned Visits</span><strong>{{ support_overview.planned_visits }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+              <article class="admin-mini" data-tone="warning"><span>Evidence Pending</span><strong>{{ support_overview.evidence_pending }}</strong><small>Submissions</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+              <article class="admin-mini" data-tone="purple"><span>Payments Due</span><strong>{{ support_overview.payments_due }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+            </div>
+          </section>
+
+          <section class="admin-panel admin-budget" aria-labelledby="admin-budget-title">
+            <header class="admin-panel__header"><h2 id="admin-budget-title">Budget &amp; Fund Request Snapshot</h2><a href="/finance/fund-allocation">View Details</a></header>
+            <div class="admin-budget-grid">
+              <article><span>This Week</span><strong>{{ budget_snapshot.week }}</strong><small>Planned value</small></article>
+              <article><span>This Month</span><strong>{{ budget_snapshot.month }}</strong><small>Planned value</small></article>
+              <article><span>This Quarter</span><strong>{{ budget_snapshot.quarter }}</strong><small>Planned value</small></article>
+              <article><span>This FY</span><strong>{{ budget_snapshot.fy }}</strong><small>Planned value</small></article>
+            </div>
+          </section>
         </div>
-        <b class="text-slate-900 text-[11px] shrink-0">{{ target.percentage }}%</b>
       </div>
     </div>
-    {% endfor %}
+
+    <aside class="admin-rail" aria-label="Operational action rail">
+      <section class="admin-panel admin-rail-card" aria-labelledby="admin-upcoming-title">
+        <header class="admin-panel__header"><h2 id="admin-upcoming-title">Upcoming Today <span class="admin-count">{{ upcoming_today|length }}</span></h2></header>
+        <div class="admin-upcoming-list">
+          {% for item in upcoming_today %}
+          <article class="admin-upcoming"><span class="admin-upcoming__icon" data-tone="{% if item.type == 'school' %}info{% else %}purple{% endif %}">{% if item.type == 'school' %}{% include "partials/dashboards/admin/_icon.html" with name="school" only %}{% else %}{% include "partials/dashboards/admin/_icon.html" with name="users" only %}{% endif %}</span><div><time>{{ item.time }}</time><strong>{{ item.title }}</strong><span>{{ item.desc }}</span><small>{{ item.info }}</small></div></article>
+          {% empty %}<div class="admin-empty admin-empty--compact"><span>Nothing scheduled for today.</span></div>{% endfor %}
+        </div>
+        <a class="admin-panel__footer-link" href="/planning">View all today’s activities <span aria-hidden="true">→</span></a>
+      </section>
+
+      <section class="admin-panel admin-rail-card admin-attention" aria-labelledby="admin-attention-title">
+        <header class="admin-panel__header"><h2 id="admin-attention-title">Attention Needed <span class="admin-count">{{ attention_items|length }}</span></h2></header>
+        <div class="admin-attention-list">
+          {% for item in attention_items %}
+          <a href="{{ item.href|default:'/system-health' }}"><span class="admin-attention__icon" data-tone="{% if item.cls == 'red-bg' %}danger{% elif item.cls == 'orange-bg' %}warning{% else %}purple{% endif %}">{% if item.cls == 'red-bg' %}{% include "partials/dashboards/admin/_icon.html" with name="warning" only %}{% else %}{% include "partials/dashboards/admin/_icon.html" with name="evidence" only %}{% endif %}</span><span><strong>{{ item.title }}</strong><small>{{ item.detail }}</small></span><span aria-hidden="true">›</span></a>
+          {% empty %}<div class="admin-empty admin-empty--compact"><span>Nothing needs attention right now.</span></div>{% endfor %}
+        </div>
+      </section>
+
+      <section class="admin-panel admin-rail-card" aria-labelledby="admin-rail-targets-title">
+        <header class="admin-panel__header"><h2 id="admin-rail-targets-title">Team Target Progress</h2></header>
+        <div class="admin-target-list admin-target-list--rail">{% for target in team_targets %}<div class="admin-target-row"><span>{{ target.name }}</span><strong>{{ target.percentage }}%</strong><span class="admin-status {{ target.class }}">{{ target.status }}</span></div>{% endfor %}</div>
+      </section>
+
+      <section class="admin-panel admin-recommendation" aria-labelledby="admin-recommendation-title">
+        <span class="admin-recommendation__icon">{% include "partials/dashboards/admin/_icon.html" with name="target" only %}</span>
+        <div><h2 id="admin-recommendation-title">Next Recommended Action</h2>{% if recommended_action %}<strong>{{ recommended_action.title }}</strong><p>{{ recommended_action.detail }}</p>{% else %}<strong>All critical queues are clear</strong><p>Nothing needs action right now.</p>{% endif %}</div>
+        {% if recommended_action %}<a href="{{ recommended_action.cta_href }}">{{ recommended_action.cta_label }} <span aria-hidden="true">→</span></a>{% else %}<a href="/system-health">Review system health <span aria-hidden="true">→</span></a>{% endif %}
+      </section>
+
+      <section class="admin-panel admin-rail-card" aria-labelledby="admin-quick-title">
+        <header class="admin-panel__header"><h2 id="admin-quick-title">Quick Actions</h2></header>
+        <ul class="admin-quick-grid" role="list">
+          <li><a href="/planning"><span>{% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}</span><small>Schedule Activity</small></a></li>
+          <li><a href="/planning"><span>{% include "partials/dashboards/admin/_icon.html" with name="school" only %}</span><small>Add School Visit</small></a></li>
+          <li><a href="/clusters"><span>{% include "partials/dashboards/admin/_icon.html" with name="cluster" only %}</span><small>Create Cluster</small></a></li>
+          <li><a href="/fund-requests/weekly"><span>{% include "partials/dashboards/admin/_icon.html" with name="plus" only %}</span><small>New Request</small></a></li>
+        </ul>
+      </section>
+
+      <section class="admin-panel admin-execution" aria-labelledby="admin-execution-title">
+        <h2 id="admin-execution-title" class="sr-only">Execution Summary</h2>
+        <div><span>This Week</span><strong>{{ execution_summary.week }}</strong><small>scheduled</small></div>
+        <div><span>This Month</span><strong>{{ execution_summary.month }}</strong><small>scheduled</small></div>
+        <div><span>This Quarter</span><strong>{{ execution_summary.quarter }}</strong><small>scheduled</small></div>
+        <div><span>This FY</span><strong>{{ execution_summary.fy }}</strong><small>scheduled</small></div>
+      </section>
+    </aside>
   </div>
-</section>
-
-<!-- Recommendation Card -->
-<section class="card rail-card recommend border border-emerald-200 p-5 rounded-xl">
-<h4 class="text-emerald-700 font-semibold text-[14px] mb-2 uppercase tracking-wider">Next Recommended Action</h4>
-<p class="text-[12px] text-slate-600 leading-relaxed mb-4">
-<strong>Confirm this week’s advance request</strong><br>
-Ensure timely disbursement for planned activities.
-</p>
-<a class="edify-action-button primary w-full text-center hover:bg-emerald-600" href="/fund-requests/weekly">Take Action &rarr;</a>
-</section>
-
-<!-- Quick Actions grid -->
-<section class="card rail-card">
-<div class="rail-title font-semibold text-slate-800 text-[14px] border-b border-slate-100 pb-2 mb-3">Quick Actions</div>
-<div class="quick-grid grid grid-cols-2 gap-2">
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/planning">▣ Schedule Activity</a>
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/planning">＋ Add School Visit</a>
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/planning">◎ Create Cluster</a>
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/fund-requests/weekly">◉ New Request</a>
 </div>
-</section>
 
-</aside>
-
-</section>
-
-</div>
+<script>
+  (() => {
+    const ns = 'http://www.w3.org/2000/svg';
+    document.querySelectorAll('[data-admin-progress-chart]').forEach((chart) => {
+      const values = (chart.dataset.values || '').split(',').filter(Boolean).map(Number);
+      if (!values.length) return;
+      const left = 42;
+      const right = 620;
+      const top = 20;
+      const bottom = 136;
+      const step = values.length > 1 ? (right - left) / (values.length - 1) : 0;
+      const points = values.map((value, index) => {
+        const x = left + (step * index);
+        const y = bottom - ((Math.max(0, Math.min(100, value)) / 100) * (bottom - top));
+        return [x, y];
+      });
+      chart.querySelector('[data-admin-progress-series]').setAttribute('points', points.map((point) => point.join(',')).join(' '));
+      chart.querySelector('[data-admin-progress-area]').setAttribute('d', `M ${left} ${bottom} L ${points.map((point) => point.join(' ')).join(' L ')} L ${right} ${bottom} Z`);
+      const pointGroup = chart.querySelector('[data-admin-progress-points]');
+      points.forEach(([cx, cy]) => {
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('cx', cx);
+        circle.setAttribute('cy', cy);
+        circle.setAttribute('r', '3.5');
+        pointGroup.appendChild(circle);
+      });
+    });
+  })();
+</script>
 {% endblock %}

@@ -13,7 +13,12 @@ from collections import defaultdict
 from datetime import date, timedelta
 
 from apps.core.exceptions import Forbidden, NotFoundError
-from apps.debriefs.models import DailyDebriefChallenge, DailyDebriefInsight, InsightEscalationLevel, InsightScope
+from apps.debriefs.models import (
+    DailyDebriefChallenge,
+    DailyDebriefInsight,
+    InsightEscalationLevel,
+    InsightScope,
+)
 
 WINDOW_DAYS = 30
 MIN_OCCURRENCES = 3
@@ -23,8 +28,12 @@ COUNTRY_ESCALATION_THRESHOLD = 3  # same challenge across 3+ countries -> RVP
 # Manager roles that review detected insights — the same leadership set the
 # Field Debrief detail page's `can_manage` flag uses.
 INSIGHT_REVIEWER_ROLES = (
-    "Program Lead", "CountryDirector", "HumanResources", "ImpactAssessment",
-    "RegionalVicePresident", "Admin",
+    "Program Lead",
+    "CountryDirector",
+    "HumanResources",
+    "ImpactAssessment",
+    "RegionalVicePresident",
+    "Admin",
 )
 
 
@@ -64,12 +73,12 @@ class RecurringIssueDetectionService:
         by_school = defaultdict(list)
         by_staff = defaultdict(list)
         by_partner = defaultdict(list)
-        challenges = (
-            DailyDebriefChallenge.objects.filter(
-                debrief__date__date__gte=window_start, debrief__date__date__lte=today,
-                debrief__deleted_at__isnull=True, debrief__is_restricted_incident=False,
-            ).select_related("debrief")
-        )
+        challenges = DailyDebriefChallenge.objects.filter(
+            debrief__date__date__gte=window_start,
+            debrief__date__date__lte=today,
+            debrief__deleted_at__isnull=True,
+            debrief__is_restricted_incident=False,
+        ).select_related("debrief")
         for c in challenges:
             d = c.debrief
             for school_id in d.linked_school_ids:
@@ -83,7 +92,12 @@ class RecurringIssueDetectionService:
             if len(debriefs) < MIN_OCCURRENCES:
                 continue
             c, u = RecurringIssueDetectionService._upsert(
-                InsightScope.SCHOOL, scope_id, challenge_type, debriefs, window_start, today,
+                InsightScope.SCHOOL,
+                scope_id,
+                challenge_type,
+                debriefs,
+                window_start,
+                today,
             )
             created += c
             updated += u
@@ -92,7 +106,12 @@ class RecurringIssueDetectionService:
             if len(debriefs) < MIN_OCCURRENCES:
                 continue
             c, u = RecurringIssueDetectionService._upsert(
-                InsightScope.STAFF, scope_id, challenge_type, debriefs, window_start, today,
+                InsightScope.STAFF,
+                scope_id,
+                challenge_type,
+                debriefs,
+                window_start,
+                today,
             )
             created += c
             updated += u
@@ -101,21 +120,40 @@ class RecurringIssueDetectionService:
             if len(debriefs) < MIN_OCCURRENCES:
                 continue
             c, u = RecurringIssueDetectionService._upsert(
-                InsightScope.PARTNER, scope_id, challenge_type, debriefs, window_start, today,
+                InsightScope.PARTNER,
+                scope_id,
+                challenge_type,
+                debriefs,
+                window_start,
+                today,
             )
             created += c
             updated += u
 
-        RecurringIssueDetectionService._scan_team_and_country_escalations(window_start, today)
-        return {"created": created, "updated": updated, "window_start": window_start, "window_end": today}
+        RecurringIssueDetectionService._scan_team_and_country_escalations(
+            window_start, today
+        )
+        return {
+            "created": created,
+            "updated": updated,
+            "window_start": window_start,
+            "window_end": today,
+        }
 
     @staticmethod
-    def _upsert(scope, scope_id, challenge_type, debriefs, window_start, window_end) -> tuple[int, int]:
+    def _upsert(
+        scope, scope_id, challenge_type, debriefs, window_start, window_end
+    ) -> tuple[int, int]:
         debrief_ids = [d.id for d in debriefs]
         existing = DailyDebriefInsight.objects.filter(
-            scope=scope, scope_id=scope_id, challenge_type=challenge_type, status="open",
+            scope=scope,
+            scope_id=scope_id,
+            challenge_type=challenge_type,
+            status="open",
         ).first()
-        label = DailyDebriefChallenge(challenge_type=challenge_type).get_challenge_type_display()
+        label = DailyDebriefChallenge(
+            challenge_type=challenge_type
+        ).get_challenge_type_display()
         title = f"Recurring issue: {label} ({scope})"
         description = f'"{label}" reported in {len(debrief_ids)} debriefs over the last {WINDOW_DAYS} days.'
         if existing:
@@ -123,12 +161,27 @@ class RecurringIssueDetectionService:
             existing.debrief_ids = debrief_ids
             existing.window_start, existing.window_end = window_start, window_end
             existing.description = description
-            existing.save(update_fields=["occurrence_count", "debrief_ids", "window_start", "window_end", "description"])
+            existing.save(
+                update_fields=[
+                    "occurrence_count",
+                    "debrief_ids",
+                    "window_start",
+                    "window_end",
+                    "description",
+                ]
+            )
             return 0, 1
         DailyDebriefInsight.objects.create(
-            scope=scope, scope_id=scope_id, challenge_type=challenge_type, title=title, description=description,
-            occurrence_count=len(debrief_ids), window_start=window_start, window_end=window_end,
-            debrief_ids=debrief_ids, escalation_level=InsightEscalationLevel.TEAM,
+            scope=scope,
+            scope_id=scope_id,
+            challenge_type=challenge_type,
+            title=title,
+            description=description,
+            occurrence_count=len(debrief_ids),
+            window_start=window_start,
+            window_end=window_end,
+            debrief_ids=debrief_ids,
+            escalation_level=InsightEscalationLevel.TEAM,
         )
         RecurringIssueDetectionService._notify_pl(debriefs[0])
         return 1, 0
@@ -142,11 +195,16 @@ class RecurringIssueDetectionService:
         by_challenge_team = defaultdict(set)
         by_challenge_country = defaultdict(set)
         challenges = DailyDebriefChallenge.objects.filter(
-            debrief__date__date__gte=window_start, debrief__date__date__lte=window_end,
-            debrief__deleted_at__isnull=True, debrief__is_restricted_incident=False, debrief__staff_id__isnull=False,
+            debrief__date__date__gte=window_start,
+            debrief__date__date__lte=window_end,
+            debrief__deleted_at__isnull=True,
+            debrief__is_restricted_incident=False,
+            debrief__staff_id__isnull=False,
         ).select_related("debrief")
         supervisor_by_staff = dict(
-            StaffSupervisorAssignment.objects.values_list("supervisee_id", "supervisor_id")
+            StaffSupervisorAssignment.objects.values_list(
+                "supervisee_id", "supervisor_id"
+            )
         )
         country_by_staff = dict(StaffProfile.objects.values_list("id", "country"))
         for c in challenges:
@@ -162,17 +220,24 @@ class RecurringIssueDetectionService:
             if len(teams) < TEAM_ESCALATION_THRESHOLD:
                 continue
             insight = DailyDebriefInsight.objects.filter(
-                scope=InsightScope.COUNTRY, challenge_type=challenge_type, status="open",
+                scope=InsightScope.COUNTRY,
+                challenge_type=challenge_type,
+                status="open",
             ).first()
             if insight and insight.escalation_level == InsightEscalationLevel.COUNTRY:
                 continue
-            label = DailyDebriefChallenge(challenge_type=challenge_type).get_challenge_type_display()
+            label = DailyDebriefChallenge(
+                challenge_type=challenge_type
+            ).get_challenge_type_display()
             if not insight:
                 insight = DailyDebriefInsight.objects.create(
-                    scope=InsightScope.COUNTRY, challenge_type=challenge_type,
+                    scope=InsightScope.COUNTRY,
+                    challenge_type=challenge_type,
                     title=f"Cross-team recurring issue: {label}",
                     description=f'"{label}" reported across {len(teams)} Program Lead teams.',
-                    occurrence_count=len(teams), window_start=window_start, window_end=window_end,
+                    occurrence_count=len(teams),
+                    window_start=window_start,
+                    window_end=window_end,
                     escalation_level=InsightEscalationLevel.COUNTRY,
                 )
             else:
@@ -184,26 +249,35 @@ class RecurringIssueDetectionService:
         for challenge_type, countries in by_challenge_country.items():
             if len(countries) < COUNTRY_ESCALATION_THRESHOLD:
                 continue
-            label = DailyDebriefChallenge(challenge_type=challenge_type).get_challenge_type_display()
+            label = DailyDebriefChallenge(
+                challenge_type=challenge_type
+            ).get_challenge_type_display()
             insight = DailyDebriefInsight.objects.filter(
-                scope=InsightScope.REGION, challenge_type=challenge_type, status="open",
+                scope=InsightScope.REGION,
+                challenge_type=challenge_type,
+                status="open",
             ).first()
             if not insight:
                 insight = DailyDebriefInsight.objects.create(
-                    scope=InsightScope.REGION, challenge_type=challenge_type,
+                    scope=InsightScope.REGION,
+                    challenge_type=challenge_type,
                     title=f"Regional recurring issue: {label}",
                     description=f'"{label}" reported across {len(countries)} countries.',
-                    occurrence_count=len(countries), window_start=window_start, window_end=window_end,
+                    occurrence_count=len(countries),
+                    window_start=window_start,
+                    window_end=window_end,
                     escalation_level=InsightEscalationLevel.REGION,
                 )
             else:
                 insight.occurrence_count = len(countries)
                 insight.save(update_fields=["occurrence_count"])
-            RecurringIssueDetectionService._notify_role(insight, "RegionalVicePresident")
+            RecurringIssueDetectionService._notify_role(
+                insight, "RegionalVicePresident"
+            )
 
     @staticmethod
     def _notify_pl(sample_debrief) -> None:
-        from apps.debriefs.field_debrief_service import _staff_profile, supervising_pl
+        from apps.debriefs.field_debrief_service import supervising_pl
         from apps.notifications.services import WorkflowNotificationService
 
         if not sample_debrief.staff_id:
@@ -215,10 +289,14 @@ class RecurringIssueDetectionService:
         if not pl or not pl.user_id:
             return
         WorkflowNotificationService.trigger(
-            event_type="field_debrief_recurring_issue", category="field_debrief", priority="normal",
+            event_type="field_debrief_recurring_issue",
+            category="field_debrief",
+            priority="normal",
             title="A recurring field issue was detected on your team",
             body="Check Recurring Field Issues for details.",
-            context_type="field_debrief", context_id=sample_debrief.id, recipients=[pl.user_id],
+            context_type="field_debrief",
+            context_id=sample_debrief.id,
+            recipients=[pl.user_id],
         )
 
     @staticmethod
@@ -232,7 +310,12 @@ class RecurringIssueDetectionService:
         insight.notified_user_ids = list(set(insight.notified_user_ids) | set(user_ids))
         insight.save(update_fields=["notified_user_ids"])
         WorkflowNotificationService.trigger(
-            event_type="field_debrief_recurring_issue_escalated", category="field_debrief", priority="high",
-            title=insight.title, body=insight.description,
-            context_type="field_debrief_insight", context_id=insight.id, recipients=user_ids,
+            event_type="field_debrief_recurring_issue_escalated",
+            category="field_debrief",
+            priority="high",
+            title=insight.title,
+            body=insight.description,
+            context_type="field_debrief_insight",
+            context_id=insight.id,
+            recipients=user_ids,
         )

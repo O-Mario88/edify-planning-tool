@@ -7,114 +7,233 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0011_alter_school_planning_readiness'),
-        ('targets', '0001_initial'),
+        ("schools", "0011_alter_school_planning_readiness"),
+        ("targets", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='TargetArea',
+            name="TargetArea",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('key', models.CharField(max_length=32, unique=True)),
-                ('label', models.CharField(max_length=64)),
-                ('weight', models.IntegerField(default=0)),
-                ('sort_order', models.IntegerField(default=0)),
-                ('active', models.BooleanField(default=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("key", models.CharField(max_length=32, unique=True)),
+                ("label", models.CharField(max_length=64)),
+                ("weight", models.IntegerField(default=0)),
+                ("sort_order", models.IntegerField(default=0)),
+                ("active", models.BooleanField(default=True)),
             ],
             options={
-                'db_table': 'target_area',
-                'ordering': ['sort_order'],
+                "db_table": "target_area",
+                "ordering": ["sort_order"],
             },
         ),
         migrations.CreateModel(
-            name='TargetAdjustment',
+            name="TargetAdjustment",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('user_id', models.CharField(max_length=30)),
-                ('fy', models.CharField(max_length=16)),
-                ('month_of_fy', models.IntegerField()),
-                ('old_target', models.IntegerField()),
-                ('new_target', models.IntegerField()),
-                ('reason', models.CharField(max_length=512)),
-                ('requested_by', models.CharField(max_length=30)),
-                ('approved_by', models.CharField(blank=True, max_length=30, null=True)),
-                ('effective_date', models.DateField(blank=True, null=True)),
-                ('area', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='adjustments', to='targets.targetarea')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("user_id", models.CharField(max_length=30)),
+                ("fy", models.CharField(max_length=16)),
+                ("month_of_fy", models.IntegerField()),
+                ("old_target", models.IntegerField()),
+                ("new_target", models.IntegerField()),
+                ("reason", models.CharField(max_length=512)),
+                ("requested_by", models.CharField(max_length=30)),
+                ("approved_by", models.CharField(blank=True, max_length=30, null=True)),
+                ("effective_date", models.DateField(blank=True, null=True)),
+                (
+                    "area",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="adjustments",
+                        to="targets.targetarea",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'target_adjustment',
+                "db_table": "target_adjustment",
             },
         ),
         migrations.CreateModel(
-            name='MostSignificantChangeStory',
+            name="MostSignificantChangeStory",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('user_id', models.CharField(max_length=30)),
-                ('cluster_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('title', models.CharField(max_length=255)),
-                ('narrative', models.TextField()),
-                ('evidence_uri', models.CharField(blank=True, max_length=512, null=True)),
-                ('story_date', models.DateField()),
-                ('status', models.CharField(choices=[('draft', 'Draft'), ('submitted', 'Submitted'), ('returned', 'Returned'), ('approved', 'Approved'), ('rejected', 'Rejected'), ('archived', 'Archived')], default='draft', max_length=16)),
-                ('reviewed_by', models.CharField(blank=True, max_length=30, null=True)),
-                ('reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('return_reason', models.CharField(blank=True, max_length=512, null=True)),
-                ('school', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='mscs_stories', to='schools.school')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("user_id", models.CharField(max_length=30)),
+                ("cluster_id", models.CharField(blank=True, max_length=30, null=True)),
+                ("title", models.CharField(max_length=255)),
+                ("narrative", models.TextField()),
+                (
+                    "evidence_uri",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                ("story_date", models.DateField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Draft"),
+                            ("submitted", "Submitted"),
+                            ("returned", "Returned"),
+                            ("approved", "Approved"),
+                            ("rejected", "Rejected"),
+                            ("archived", "Archived"),
+                        ],
+                        default="draft",
+                        max_length=16,
+                    ),
+                ),
+                ("reviewed_by", models.CharField(blank=True, max_length=30, null=True)),
+                ("reviewed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "return_reason",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                (
+                    "school",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="mscs_stories",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'mscs_story',
-                'indexes': [models.Index(fields=['user_id', 'status'], name='mscs_story_user_id_4193e3_idx')],
+                "db_table": "mscs_story",
+                "indexes": [
+                    models.Index(
+                        fields=["user_id", "status"],
+                        name="mscs_story_user_id_4193e3_idx",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='TargetAchievementLedger',
+            name="TargetAchievementLedger",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('user_id', models.CharField(max_length=30)),
-                ('source_type', models.CharField(max_length=32)),
-                ('source_id', models.CharField(max_length=64)),
-                ('activity_date', models.DateField()),
-                ('fy', models.CharField(max_length=16)),
-                ('credited_month', models.IntegerField()),
-                ('credited_quarter', models.CharField(max_length=4)),
-                ('quantity', models.IntegerField(default=1)),
-                ('validation_status', models.CharField(default='validated', max_length=16)),
-                ('validated_at', models.DateTimeField(blank=True, null=True)),
-                ('area', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ledger', to='targets.targetarea')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("user_id", models.CharField(max_length=30)),
+                ("source_type", models.CharField(max_length=32)),
+                ("source_id", models.CharField(max_length=64)),
+                ("activity_date", models.DateField()),
+                ("fy", models.CharField(max_length=16)),
+                ("credited_month", models.IntegerField()),
+                ("credited_quarter", models.CharField(max_length=4)),
+                ("quantity", models.IntegerField(default=1)),
+                (
+                    "validation_status",
+                    models.CharField(default="validated", max_length=16),
+                ),
+                ("validated_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "area",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="ledger",
+                        to="targets.targetarea",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'target_achievement_ledger',
-                'indexes': [models.Index(fields=['user_id', 'fy'], name='target_achi_user_id_696ce0_idx'), models.Index(fields=['validation_status'], name='target_achi_validat_001e82_idx')],
-                'constraints': [models.UniqueConstraint(fields=('user_id', 'area', 'source_type', 'source_id'), name='uniq_target_ledger_source')],
+                "db_table": "target_achievement_ledger",
+                "indexes": [
+                    models.Index(
+                        fields=["user_id", "fy"], name="target_achi_user_id_696ce0_idx"
+                    ),
+                    models.Index(
+                        fields=["validation_status"],
+                        name="target_achi_validat_001e82_idx",
+                    ),
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("user_id", "area", "source_type", "source_id"),
+                        name="uniq_target_ledger_source",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='MonthlyPersonalTarget',
+            name="MonthlyPersonalTarget",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('user_id', models.CharField(max_length=30)),
-                ('fy', models.CharField(max_length=16)),
-                ('month_of_fy', models.IntegerField()),
-                ('target', models.IntegerField(default=0)),
-                ('area', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='monthly_targets', to='targets.targetarea')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("user_id", models.CharField(max_length=30)),
+                ("fy", models.CharField(max_length=16)),
+                ("month_of_fy", models.IntegerField()),
+                ("target", models.IntegerField(default=0)),
+                (
+                    "area",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="monthly_targets",
+                        to="targets.targetarea",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'monthly_personal_target',
-                'indexes': [models.Index(fields=['user_id', 'fy'], name='monthly_per_user_id_a6e770_idx')],
-                'constraints': [models.UniqueConstraint(fields=('user_id', 'area', 'fy', 'month_of_fy'), name='uniq_monthly_personal_target')],
+                "db_table": "monthly_personal_target",
+                "indexes": [
+                    models.Index(
+                        fields=["user_id", "fy"], name="monthly_per_user_id_a6e770_idx"
+                    )
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("user_id", "area", "fy", "month_of_fy"),
+                        name="uniq_monthly_personal_target",
+                    )
+                ],
             },
         ),
     ]

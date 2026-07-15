@@ -409,6 +409,42 @@ def create(data: dict, principal) -> dict:
         if is_partner
         else ("scheduled" if scheduled_date else "planned")
     )
+    # Duplicate-submission guard: a double-click on the Schedule Activity
+    # drawer (or any other direct create() caller) must not silently produce
+    # two identical, fully-costed Activity rows. Only enforced once a real
+    # scheduled_date is set — undated "planned" rows (e.g. several untimed
+    # Core School package slots for the same school/staff) are legitimately
+    # allowed to coexist. apps.daily_visit_batches.services.schedule_visits()
+    # already dedups per-school before calling create() with
+    # _skip_cost_snapshot=True, so this never fires spuriously there — each
+    # call in that loop targets a distinct school_id.
+    # planned_week/planned_month are included in the match: the real
+    # scheduling UI (planning_views.py) derives plannedWeek deterministically
+    # from scheduledDate, so a genuine double-click always recomputes the
+    # SAME value and is still caught -- but it correctly distinguishes two
+    # intentionally-different bookings that happen to share a scheduled_date
+    # (e.g. two visits filed under different planning weeks/months of the
+    # same day, as apps/core/tests/test_costing_and_period.py exercises).
+    if scheduled_date:
+        duplicate_exists = (
+            Activity.objects.filter(
+                activity_type=activity_type,
+                school_id=school.id if school else None,
+                cluster_id=cluster_id,
+                scheduled_date=scheduled_date,
+                responsible_staff_id=responsible_staff_id,
+                assigned_partner_id=data.get("assignedPartnerId"),
+                planned_week=data.get("plannedWeek"),
+                planned_month=data.get("plannedMonth"),
+                deleted_at__isnull=True,
+            )
+            .exclude(status="cancelled")
+            .exists()
+        )
+        if duplicate_exists:
+            raise BadRequest(
+                "An identical activity is already scheduled for this date."
+            )
     # The Activity row and its initial cost snapshot (budget lines + weekly
     # fund request sync) must succeed or fail together — otherwise a costing
     # failure right after creation leaves a scheduled Activity persisted with

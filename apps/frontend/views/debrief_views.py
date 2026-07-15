@@ -5,7 +5,12 @@ leadership-action/peer-solution flows."""
 from __future__ import annotations
 
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+)
 from django.shortcuts import redirect, render
 from django.utils.html import escape
 
@@ -15,23 +20,32 @@ from apps.core.permissions import require_page_permission
 from apps.debriefs.action_service import DebriefActionRoutingService
 from apps.debriefs.dashboard_service import FieldDebriefDashboardService
 from apps.debriefs.field_debrief_service import FieldDebriefService
+from apps.debriefs.insight_service import InsightReviewService
 from apps.debriefs.peer_solution_service import PeerSolutionService
 
 
 @require_page_permission("debriefs_list")
 def field_debrief_dashboard_view(request):
     params = {
-        "fy": request.GET.get("fy"), "tab": request.GET.get("tab") or "all",
-        "page": request.GET.get("page"), "district_id": request.GET.get("district_id"),
-        "staff_id": request.GET.get("staff_id"), "partner_id": request.GET.get("partner_id"),
-        "risk_level": request.GET.get("risk_level"), "status": request.GET.get("status"),
-        "q": request.GET.get("q"), "range_days": request.GET.get("range_days"),
+        "fy": request.GET.get("fy"),
+        "tab": request.GET.get("tab") or "all",
+        "page": request.GET.get("page"),
+        "district_id": request.GET.get("district_id"),
+        "staff_id": request.GET.get("staff_id"),
+        "partner_id": request.GET.get("partner_id"),
+        "risk_level": request.GET.get("risk_level"),
+        "status": request.GET.get("status"),
+        "q": request.GET.get("q"),
+        "range_days": request.GET.get("range_days"),
     }
     try:
         context = FieldDebriefDashboardService.get_dashboard(request.user, params)
     except ValueError:
         return HttpResponseBadRequest("Invalid filter value.")
-    if request.headers.get("HX-Request") == "true" and request.GET.get("partial") == "table":
+    if (
+        request.headers.get("HX-Request") == "true"
+        and request.GET.get("partial") == "table"
+    ):
         return render(request, "partials/debriefs/dashboard_table.html", context)
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/debriefs/dashboard_body.html", context)
@@ -56,8 +70,14 @@ def field_debrief_detail_view(request, debrief_id):
         "actions": list(debrief.actions.all()),
         "peer_solutions": list(debrief.peer_solutions.all()),
         "recipients": list(debrief.recipients.all()),
-        "can_manage": getattr(request.user, "active_role", "") in (
-            "Program Lead", "CountryDirector", "HumanResources", "ImpactAssessment", "RegionalVicePresident", "Admin",
+        "can_manage": getattr(request.user, "active_role", "")
+        in (
+            "Program Lead",
+            "CountryDirector",
+            "HumanResources",
+            "ImpactAssessment",
+            "RegionalVicePresident",
+            "Admin",
         ),
         "is_own": debrief.submitted_by_user_id == request.user.user_id,
     }
@@ -69,9 +89,14 @@ def field_debrief_submit_view(request):
     if request.method == "GET":
         from apps.core.fy import get_operational_fy
 
-        return render(request, "pages/debriefs/submit.html", {
-            "fy": get_operational_fy(), "can_submit": FieldDebriefService.can_submit(request.user),
-        })
+        return render(
+            request,
+            "pages/debriefs/submit.html",
+            {
+                "fy": get_operational_fy(),
+                "can_submit": FieldDebriefService.can_submit(request.user),
+            },
+        )
 
     if not FieldDebriefService.can_submit(request.user):
         return HttpResponseForbidden("Your role cannot submit a Field Debrief.")
@@ -81,9 +106,15 @@ def field_debrief_submit_view(request):
         debrief = FieldDebriefService.submit(request.user, data)
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-        return render(request, "pages/debriefs/submit.html", {
-            "error": str(exc), "form_data": request.POST,
-        }, status=400)
+        return render(
+            request,
+            "pages/debriefs/submit.html",
+            {
+                "error": str(exc),
+                "form_data": request.POST,
+            },
+            status=400,
+        )
     messages.success(request, f"Field Debrief “{debrief.title}” submitted.")
     return redirect(f"/debriefs/{debrief.id}")
 
@@ -91,42 +122,72 @@ def field_debrief_submit_view(request):
 def _parse_submission(request) -> dict:
     p = request.POST
     return {
-        "title": p.get("title"), "kind": p.get("kind"), "summary": p.get("summary"),
-        "what_happened": p.get("what_happened"), "what_went_well": p.get("what_went_well"),
-        "what_did_not_go_well": p.get("what_did_not_go_well"), "support_needed": p.get("support_needed"),
-        "recommendations": p.get("recommendations"), "next_action": p.get("next_action"),
-        "activity_ids": p.getlist("activity_ids"), "school_ids": p.getlist("school_ids"),
+        "title": p.get("title"),
+        "kind": p.get("kind"),
+        "summary": p.get("summary"),
+        "what_happened": p.get("what_happened"),
+        "what_went_well": p.get("what_went_well"),
+        "what_did_not_go_well": p.get("what_did_not_go_well"),
+        "support_needed": p.get("support_needed"),
+        "recommendations": p.get("recommendations"),
+        "next_action": p.get("next_action"),
+        "activity_ids": p.getlist("activity_ids"),
+        "school_ids": p.getlist("school_ids"),
         "partner_id": p.get("partner_id"),
-        "completion_status": p.get("completion_status"), "incomplete_reason": p.get("incomplete_reason"),
-        "actual_start_time": p.get("actual_start_time") or None, "actual_end_time": p.get("actual_end_time") or None,
-        "participants_summary": p.get("participants_summary"), "what_was_done": p.get("what_was_done"),
+        "completion_status": p.get("completion_status"),
+        "incomplete_reason": p.get("incomplete_reason"),
+        "actual_start_time": p.get("actual_start_time") or None,
+        "actual_end_time": p.get("actual_end_time") or None,
+        "participants_summary": p.get("participants_summary"),
+        "what_was_done": p.get("what_was_done"),
         "intended_purpose": p.get("intended_purpose"),
-        "purpose_achieved": p.get("purpose_achieved") == "true" if p.get("purpose_achieved") else None,
-        "what_observed": p.get("what_observed"), "what_improved": p.get("what_improved"),
-        "what_remains_weak": p.get("what_remains_weak"), "what_surprised": p.get("what_surprised"),
-        "support_needed_next": p.get("support_needed_next"), "intervention_tags": p.getlist("intervention_tags"),
-        "expected_participants": _int(p.get("expected_participants")), "actual_participants": _int(p.get("actual_participants")),
-        "school_leaders_present": _int(p.get("school_leaders_present")), "teachers_present": _int(p.get("teachers_present")),
-        "other_participants_present": _int(p.get("other_participants_present")), "engagement_level": p.get("engagement_level"),
+        "purpose_achieved": p.get("purpose_achieved") == "true"
+        if p.get("purpose_achieved")
+        else None,
+        "what_observed": p.get("what_observed"),
+        "what_improved": p.get("what_improved"),
+        "what_remains_weak": p.get("what_remains_weak"),
+        "what_surprised": p.get("what_surprised"),
+        "support_needed_next": p.get("support_needed_next"),
+        "intervention_tags": p.getlist("intervention_tags"),
+        "expected_participants": _int(p.get("expected_participants")),
+        "actual_participants": _int(p.get("actual_participants")),
+        "school_leaders_present": _int(p.get("school_leaders_present")),
+        "teachers_present": _int(p.get("teachers_present")),
+        "other_participants_present": _int(p.get("other_participants_present")),
+        "engagement_level": p.get("engagement_level"),
         "attendance_concerns": p.get("attendance_concerns"),
-        "planned_route": p.get("planned_route"), "actual_route": p.get("actual_route"),
-        "schools_planned_count": _int(p.get("schools_planned_count")), "schools_reached_count": _int(p.get("schools_reached_count")),
-        "travel_start_time": p.get("travel_start_time") or None, "travel_end_time": p.get("travel_end_time") or None,
-        "estimated_travel_minutes": _int(p.get("estimated_travel_minutes")), "actual_travel_minutes": _int(p.get("actual_travel_minutes")),
-        "route_quality": p.get("route_quality"), "transport_issue": p.get("transport_issue"),
-        "immediate_result": p.get("immediate_result"), "follow_up_date": p.get("follow_up_date") or None,
+        "planned_route": p.get("planned_route"),
+        "actual_route": p.get("actual_route"),
+        "schools_planned_count": _int(p.get("schools_planned_count")),
+        "schools_reached_count": _int(p.get("schools_reached_count")),
+        "travel_start_time": p.get("travel_start_time") or None,
+        "travel_end_time": p.get("travel_end_time") or None,
+        "estimated_travel_minutes": _int(p.get("estimated_travel_minutes")),
+        "actual_travel_minutes": _int(p.get("actual_travel_minutes")),
+        "route_quality": p.get("route_quality"),
+        "transport_issue": p.get("transport_issue"),
+        "immediate_result": p.get("immediate_result"),
+        "follow_up_date": p.get("follow_up_date") or None,
         "follow_up_owner_id": p.get("follow_up_owner_id"),
         "recommended_next_activity_type": p.get("recommended_next_activity_type"),
         "recommended_intervention": p.get("recommended_intervention"),
-        "key_success": p.get("key_success"), "key_lesson_learned": p.get("key_lesson_learned"),
-        "practice_worth_repeating": p.get("practice_worth_repeating"), "innovation_observed": p.get("innovation_observed"),
-        "potential_mscs_flag": p.get("potential_mscs_flag") == "on", "potential_mscs_title": p.get("potential_mscs_title"),
+        "key_success": p.get("key_success"),
+        "key_lesson_learned": p.get("key_lesson_learned"),
+        "practice_worth_repeating": p.get("practice_worth_repeating"),
+        "innovation_observed": p.get("innovation_observed"),
+        "potential_mscs_flag": p.get("potential_mscs_flag") == "on",
+        "potential_mscs_title": p.get("potential_mscs_title"),
         "potential_mscs_narrative": p.get("potential_mscs_narrative"),
-        "potential_champion_flag": p.get("potential_champion_flag") == "on", "potential_champion_note": p.get("potential_champion_note"),
-        "potential_partner_success_flag": p.get("potential_partner_success_flag") == "on",
-        "risk_level": p.get("risk_level"), "is_restricted_incident": p.get("is_restricted_incident") == "on",
+        "potential_champion_flag": p.get("potential_champion_flag") == "on",
+        "potential_champion_note": p.get("potential_champion_note"),
+        "potential_partner_success_flag": p.get("potential_partner_success_flag")
+        == "on",
+        "risk_level": p.get("risk_level"),
+        "is_restricted_incident": p.get("is_restricted_incident") == "on",
         "restricted_incident_category": p.get("restricted_incident_category"),
-        "challenges": _parse_indexed(p, "challenges"), "commitments": _parse_indexed(p, "commitments"),
+        "challenges": _parse_indexed(p, "challenges"),
+        "commitments": _parse_indexed(p, "commitments"),
         "support_requests": _parse_indexed(p, "support_requests"),
     }
 
@@ -161,36 +222,56 @@ def field_debrief_action_view(request):
     debrief_id = request.POST.get("debrief_id")
     try:
         if action == "request_clarification":
-            FieldDebriefService.request_clarification(request.user, debrief_id, request.POST.get("note", ""))
+            FieldDebriefService.request_clarification(
+                request.user, debrief_id, request.POST.get("note", "")
+            )
             messages.success(request, "Clarification requested.")
         elif action == "update_after_clarification":
-            FieldDebriefService.update_after_clarification(request.user, debrief_id, {
-                "summary": request.POST.get("summary"), "what_happened": request.POST.get("what_happened"),
-                "next_action": request.POST.get("next_action"),
-            })
+            FieldDebriefService.update_after_clarification(
+                request.user,
+                debrief_id,
+                {
+                    "summary": request.POST.get("summary"),
+                    "what_happened": request.POST.get("what_happened"),
+                    "next_action": request.POST.get("next_action"),
+                },
+            )
             messages.success(request, "Debrief updated.")
         elif action == "accept_recommendation":
-            activity = FieldDebriefService.accept_recommendation(request.user, debrief_id)
-            messages.success(request, f"Recommendation accepted — Activity {activity.id} created in My Plan.")
+            activity = FieldDebriefService.accept_recommendation(
+                request.user, debrief_id
+            )
+            messages.success(
+                request,
+                f"Recommendation accepted — Activity {activity.id} created in My Plan.",
+            )
         elif action == "reject_recommendation":
             FieldDebriefService.reject_recommendation(request.user, debrief_id)
             messages.info(request, "Recommendation rejected.")
         elif action == "create_leadership_action":
             DebriefActionRoutingService.create(
-                request.user, debrief_id, issue=request.POST.get("issue", ""), action=request.POST.get("action_text", ""),
-                owner_user_id=request.POST.get("owner_user_id", ""), priority=request.POST.get("priority", "medium"),
+                request.user,
+                debrief_id,
+                issue=request.POST.get("issue", ""),
+                action=request.POST.get("action_text", ""),
+                owner_user_id=request.POST.get("owner_user_id", ""),
+                priority=request.POST.get("priority", "medium"),
                 due_date=request.POST.get("due_date") or None,
             )
             messages.success(request, "Leadership action created.")
         elif action == "update_action_status":
             DebriefActionRoutingService.update_status(
-                request.user, request.POST.get("action_id"), status=request.POST.get("status"),
+                request.user,
+                request.POST.get("action_id"),
+                status=request.POST.get("status"),
                 note=request.POST.get("note", ""),
             )
             messages.success(request, "Action updated.")
         elif action == "propose_peer_solution":
             PeerSolutionService.propose(
-                request.user, debrief_id, suggestion=request.POST.get("suggestion", ""),
+                request.user,
+                debrief_id,
+                suggestion=request.POST.get("suggestion", ""),
                 related_experience=request.POST.get("related_experience", ""),
             )
             messages.success(request, "Peer solution proposed.")
@@ -199,14 +280,43 @@ def field_debrief_action_view(request):
             messages.success(request, "Endorsed.")
         elif action == "pl_classify_peer_solution":
             PeerSolutionService.pl_classify(
-                request.user, request.POST.get("solution_id"), classification=request.POST.get("classification"),
+                request.user,
+                request.POST.get("solution_id"),
+                classification=request.POST.get("classification"),
             )
             messages.success(request, "Peer solution classified.")
+        elif action == "resolve_commitment":
+            FieldDebriefService.resolve_commitment(
+                request.user, request.POST.get("commitment_id")
+            )
+            messages.success(request, "Commitment marked resolved.")
+        elif action == "resolve_support_request":
+            FieldDebriefService.resolve_support_request(
+                request.user, request.POST.get("support_request_id")
+            )
+            messages.success(request, "Support request marked resolved.")
+        elif action == "acknowledge_insight":
+            InsightReviewService.acknowledge(
+                request.user, request.POST.get("insight_id")
+            )
+            messages.success(request, "Insight acknowledged.")
+        elif action == "dismiss_insight":
+            InsightReviewService.dismiss(request.user, request.POST.get("insight_id"))
+            messages.success(request, "Insight dismissed.")
         else:
             return HttpResponseBadRequest("Unknown action.")
+    except NotFoundError as exc:
+        # The referenced id doesn't exist at all — redirecting back to its
+        # own (non-existent) detail page would just trade the raw JSON
+        # envelope for a blank 404, silently swallowing the flash message.
+        # Send the user to the dashboard instead, where they'll see it.
+        messages.error(request, str(exc))
+        return redirect(request.POST.get("redirect_to") or "/debriefs")
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-    redirect_to = request.POST.get("redirect_to") or (f"/debriefs/{debrief_id}" if debrief_id else "/debriefs")
+    redirect_to = request.POST.get("redirect_to") or (
+        f"/debriefs/{debrief_id}" if debrief_id else "/debriefs"
+    )
     return redirect(redirect_to)
 
 
@@ -237,4 +347,6 @@ def field_debrief_activity_options_view(request):
         f'({a.scheduled_date.strftime("%d %b") if a.scheduled_date else "unscheduled"})</option>'
         for a in qs
     )
-    return HttpResponse(options or '<option value="">No recent activities found</option>')
+    return HttpResponse(
+        options or '<option value="">No recent activities found</option>'
+    )

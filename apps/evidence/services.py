@@ -9,6 +9,7 @@ activity. A quarantined file is never downloadable.
 
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 
@@ -17,7 +18,7 @@ from django.http import FileResponse
 from django.utils import timezone
 
 from apps.activities.models import Activity
-from apps.core.enums import EvidenceKind
+from apps.core.enums import EvidenceKind, EvidenceStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.scoping import resolve_user_scope
 
@@ -26,6 +27,7 @@ from .validation import assert_safe_upload
 
 
 VALID_KINDS = {k.value for k in EvidenceKind}
+logger = logging.getLogger(__name__)
 
 
 def _assert_activity_in_scope(activity: Activity, principal) -> None:
@@ -47,6 +49,63 @@ def evidence_dir() -> str:
     d = settings.EVIDENCE_STORAGE_DIR
     os.makedirs(d, exist_ok=True)
     return d
+
+
+def infer_kind_from_upload(file_obj, default: str = EvidenceKind.PHOTO) -> str:
+    """Best-effort EvidenceKind from a just-uploaded file's name/content-type.
+
+    EvidenceKind only distinguishes "photo" from "pdf" by file shape (the
+    other members are caller-asserted document *purposes*, e.g. attendance
+    form). PDFs and Word documents are non-image evidence and should be
+    stored as "pdf", not defaulted to "photo" just because that was the only
+    kind a caller ever passed.
+    """
+    name = (getattr(file_obj, "name", "") or "").lower()
+    content_type = (getattr(file_obj, "content_type", "") or "").lower()
+    if name.endswith((".pdf", ".doc", ".docx")) or content_type in (
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ):
+        return EvidenceKind.PDF
+    return default
+
+
+def _scan_upload(path: str) -> tuple[str, str | None]:
+    """Best-effort malware scan via a ClamAV daemon (clamd), if configured.
+
+    Returns (scan_status, threat_name) where scan_status is one of
+    clean|infected|skipped. Mirrors _try_docx_to_pdf's graceful-degradation
+    pattern below: no CLAMAV_HOST configured, the clamd package missing, a
+    connection failure, or any other scanner problem all degrade to
+    ("skipped", None) rather than raising -- a scan must never block an
+    upload, and "skipped" is always a safe, honest, pre-existing state for
+    this field.
+    """
+    host = getattr(settings, "CLAMAV_HOST", None)
+    if not host:
+        return "skipped", None
+    try:
+        import clamd
+    except ImportError:
+        return "skipped", None
+    try:
+        client = clamd.ClamdNetworkSocket(
+            host=host,
+            port=getattr(settings, "CLAMAV_PORT", 3310),
+            timeout=getattr(settings, "CLAMAV_TIMEOUT_SECONDS", 10),
+        )
+        with open(path, "rb") as fh:
+            result = client.instream(fh)
+        status, reason = result.get("stream", ("ERROR", None))
+        if status == "OK":
+            return "clean", None
+        if status == "FOUND":
+            return "infected", reason
+        return "skipped", None
+    except Exception as exc:  # noqa: BLE001 -- a scan failure must not block the upload
+        logger.warning("Evidence malware scan unavailable (%s): %s", path, exc)
+        return "skipped", None
 
 
 def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
@@ -78,6 +137,33 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
         for chunk in _chunks(file_obj):
             out.write(chunk)
 
+    scan_status, threat_name = _scan_upload(dest)
+
+    if scan_status == "infected":
+        # Keep the record + quarantined file on disk for security review
+        # (file_for() already refuses to serve anything quarantined), but
+        # never let it become usable evidence or advance the activity.
+        EvidenceRecord.objects.create(
+            activity=activity,
+            kind=kind,
+            uri=stored_name,
+            original_name=original_name,
+            mime_type=mime_type or None,
+            file_extension=ext,
+            file_size=size,
+            uploaded_by=principal.user_id,
+            uploader_role=principal.active_role,
+            scan_status="infected",
+            quarantined=True,
+            status=EvidenceStatus.REJECTED,
+            review_note=f"Automatically quarantined: malware scan flagged '{threat_name}'.",
+            preview_status="not_required",
+        )
+        raise BadRequest(
+            "This file was flagged as a security threat by the malware scanner "
+            "and has been rejected. Contact IT if you believe this is an error."
+        )
+
     is_pdf = ext == ".pdf" or mime_type == "application/pdf"
     is_image = mime_type.startswith("image/")
     is_docx = ext in (".docx", ".doc")
@@ -95,7 +181,7 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
         file_size=size,
         uploaded_by=principal.user_id,
         uploader_role=principal.active_role,
-        scan_status="skipped",  # no scanner configured
+        scan_status=scan_status,  # clean|skipped -- see _scan_upload
         preview_status=preview_status,
     )
     # Bump the activity's evidence status.

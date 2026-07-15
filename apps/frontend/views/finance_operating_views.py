@@ -20,6 +20,7 @@ from apps.fund_requests.finance_services import (
     ReimbursementService,
     NetSuiteExpenseService,
 )
+from apps.fund_requests.disbursement_dashboard_service import weekly_status_buckets
 
 
 def format_ugx_compact(val):
@@ -47,48 +48,49 @@ def accountant_dashboard_view(request):
     fy = get_operational_fy()
     fy_qs = WeeklyFundRequest.objects.filter(fy=fy)
 
-    # 1. Real database queries for KPIs
-    total_approved_db = (
-        fy_qs.filter(
-            status__in=[
-                "approved_by_cd",
-                "sent_to_accountant",
-                "disbursed",
-                "accounted",
-                "accountability_pending",
-            ]
-        ).aggregate(Sum("total_amount"))["total_amount__sum"]
-        or 0
-    )
+    # 1. Real database queries for KPIs — bucketed through the same canonical
+    # status classifier the Disbursement Dashboard uses (weekly_status_buckets)
+    # so the two "current budget status" surfaces can never diverge. (The old
+    # version filtered on payment/status literals like "approved_by_cd",
+    # "sent_to_accountant" and "accountability_pending" that WeeklyFundRequest
+    # never actually writes — see weekly_service.py — which silently excluded
+    # "confirmed_for_advance" advances from the approved-funds denominator and
+    # skewed Budget Utilization.)
+    fy_wfrs = list(fy_qs)
+    fy_buckets = weekly_status_buckets(fy_wfrs)
+
+    def _bucket_sum(*labels):
+        return sum(w.total_amount for w in fy_wfrs if fy_buckets[w.id] in labels)
+
+    def _bucket_count(*labels):
+        return sum(1 for w in fy_wfrs if fy_buckets[w.id] in labels)
 
     total_disbursed_db = (
         fy_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
     )
 
     # Approved but not yet disbursed
-    pending_disb_statuses = [
-        "approved_by_cd",
-        "sent_to_accountant",
-        "confirmed_for_advance",
-    ]
-    pending_disb_qs = fy_qs.filter(status__in=pending_disb_statuses)
-    pending_disb_sum = (
-        pending_disb_qs.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
-    )
-    pending_disb_count = pending_disb_qs.count()
+    pending_disb_sum = _bucket_sum("Pending Disbursement")
+    pending_disb_count = _bucket_count("Pending Disbursement")
 
     # Still travelling up the approval chain
-    awaiting_qs = fy_qs.filter(status__startswith="submitted")
-    awaiting_sum = awaiting_qs.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
-    awaiting_count = awaiting_qs.count()
+    awaiting_sum = _bucket_sum("Pending Approval")
+    awaiting_count = _bucket_count("Pending Approval")
 
-    returned_qs = fy_qs.filter(status__startswith="returned")
-    returned_sum = returned_qs.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
+    returned_sum = _bucket_sum("Returned")
 
-    disbursed_count = fy_qs.filter(disbursed_at__isnull=False).count()
-    accounted_count = fy_qs.filter(status="accounted").count()
+    # Every request that has ever been disbursed (still outstanding
+    # reconciliation or already closed) vs. the reconciled subset.
+    disbursed_count = _bucket_count("Disbursed", "Awaiting Reconciliation", "Closed")
+    accounted_count = _bucket_count("Closed")
     recon_rate = (
         round(accounted_count * 100 / disbursed_count) if disbursed_count else 0
+    )
+
+    # "Approved" = passed approval and disbursable-or-beyond — the
+    # denominator for the Budget Utilization ratio.
+    total_approved_db = _bucket_sum(
+        "Pending Disbursement", "Disbursed", "Awaiting Reconciliation", "Closed"
     )
     budget_util = (
         round(total_disbursed_db * 100 / total_approved_db) if total_approved_db else 0
@@ -170,29 +172,23 @@ def accountant_dashboard_view(request):
 
     all_funds = queue_items
 
-    # This Month Overview (current calendar month, by week start date)
+    # This Month Overview (current calendar month, by week start date) — same
+    # bucket classifier as the FY-wide KPIs above, scoped to this month's rows.
     today = date.today()
     month_qs = fy_qs.filter(
         week_start_date__year=today.year, week_start_date__month=today.month
     )
+    month_wfrs = list(month_qs)
+    month_buckets = weekly_status_buckets(month_wfrs)
+
+    def _month_sum(*labels):
+        return sum(w.total_amount for w in month_wfrs if month_buckets[w.id] in labels)
+
     month_overview = {
-        "waiting_for_approval": format_ugx_compact(
-            month_qs.filter(status__startswith="submitted").aggregate(
-                Sum("total_amount")
-            )["total_amount__sum"]
-            or 0
-        ),
-        "returned": format_ugx_compact(
-            month_qs.filter(status__startswith="returned").aggregate(
-                Sum("total_amount")
-            )["total_amount__sum"]
-            or 0
-        ),
+        "waiting_for_approval": format_ugx_compact(_month_sum("Pending Approval")),
+        "returned": format_ugx_compact(_month_sum("Returned")),
         "approved_not_disbursed": format_ugx_compact(
-            month_qs.filter(status__in=pending_disb_statuses).aggregate(
-                Sum("total_amount")
-            )["total_amount__sum"]
-            or 0
+            _month_sum("Pending Disbursement")
         ),
         "disbursed": format_ugx_compact(
             month_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
@@ -596,7 +592,8 @@ def batch_payments_view(request):
         )
         .exclude(payment_status__in=["disbursed", "paid"])
         .select_related("school")
-        .annotate(amount_ugx=F("est_cost_cents") / 100)
+        # est_cost_cents holds plain UGX despite its name -- no /100 here.
+        .annotate(amount_ugx=F("est_cost_cents"))
         .distinct()
     )
     partners = (
@@ -607,7 +604,7 @@ def batch_payments_view(request):
             payment_status__in=["none", "ia_confirmed"],
         )
         .select_related("school")
-        .annotate(amount_ugx=F("est_cost_cents") / 100)
+        .annotate(amount_ugx=F("est_cost_cents"))
     )
     reimbursements = ReimbursementClaim.objects.filter(status="pending").select_related(
         "activity"
@@ -669,15 +666,18 @@ def batch_payments_view(request):
                 ]
             )
             for c in reimbursements[:5000]:
+                # These fields hold plain UGX despite the model's stale
+                # "Cents" comments (see apps/fund_requests/finance_models.py)
+                # -- no /100 here.
                 writer.writerow(
                     [
                         c.id,
                         c.staff_id,
                         c.activity.get_activity_type_display(),
-                        c.approved_budget // 100,
-                        c.amount_advanced // 100,
-                        c.actual_spend // 100,
-                        c.reimbursement_amount // 100,
+                        c.approved_budget,
+                        c.amount_advanced,
+                        c.actual_spend,
+                        c.reimbursement_amount,
                     ]
                 )
         return response
@@ -762,9 +762,11 @@ def monthly_request_view(request):
 @require_page_permission("disbursements")
 def weekly_requests_view(request):
     """Weekly Fund Request Review Page."""
-    requests = WeeklyFundRequest.objects.all().order_by(
-        "-week_start_date"
-    ).prefetch_related("lines")
+    requests = (
+        WeeklyFundRequest.objects.all()
+        .order_by("-week_start_date")
+        .prefetch_related("lines")
+    )
 
     context = {"requests": requests}
     return render(request, "pages/accounts/weekly_requests.html", context)

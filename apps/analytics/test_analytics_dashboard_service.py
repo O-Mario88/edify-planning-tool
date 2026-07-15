@@ -29,33 +29,59 @@ FY = "2026"
 class AnalyticsDashboardTargetDenominatorTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="R")
-        self.district = District.objects.create(name="D", region=self.region, district_type="primary")
+        self.district = District.objects.create(
+            name="D", region=self.region, district_type="primary"
+        )
         self.user = User.objects.create_user(
-            email="acct@t.org", name="Accountant One",
+            email="acct@t.org",
+            name="Accountant One",
             roles=[EdifyRole.PROGRAM_ACCOUNTANT.value],
-            active_role=EdifyRole.PROGRAM_ACCOUNTANT.value, password="x", is_active=True,
+            active_role=EdifyRole.PROGRAM_ACCOUNTANT.value,
+            password="x",
+            is_active=True,
         )
         self.staff = User.objects.create_user(
-            email="cceo@t.org", name="CCEO One", roles=[EdifyRole.CCEO.value],
-            active_role=EdifyRole.CCEO.value, password="x", is_active=True,
+            email="cceo@t.org",
+            name="CCEO One",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x",
+            is_active=True,
         )
         self.staff_sp = StaffProfile.objects.create(user=self.staff, title="CCEO")
         self.school = School.objects.create(
-            school_id="S-AD1", name="Analytics School", region=self.region, district=self.district,
+            school_id="S-AD1",
+            name="Analytics School",
+            region=self.region,
+            district=self.district,
         )
 
     def _act(self, status, evidence="accepted", quarter="Q3"):
         return Activity.objects.create(
-            school=self.school, activity_type="school_visit", delivery_type="staff",
-            status=status, responsible_staff_id=self.staff_sp.id, fy=FY, quarter=quarter,
-            planned_date=date(2026, 4, 10), evidence_status=evidence,
+            school=self.school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status=status,
+            responsible_staff_id=self.staff_sp.id,
+            fy=FY,
+            quarter=quarter,
+            planned_date=date(2026, 4, 10),
+            evidence_status=evidence,
             scheduled_date=timezone.make_aware(timezone.datetime(2026, 4, 10, 9, 0)),
         )
 
     def _filters(self, **overrides):
         base = {
-            "fy": FY, "quarter": "Q3", "region": None, "district": None, "cluster": None,
-            "staff": None, "partner": None, "school_type": None, "activity_type": None, "q": None,
+            "fy": FY,
+            "quarter": "Q3",
+            "region": None,
+            "district": None,
+            "cluster": None,
+            "staff": None,
+            "partner": None,
+            "school_type": None,
+            "activity_type": None,
+            "q": None,
         }
         base.update(overrides)
         return base
@@ -85,8 +111,13 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
     def test_configured_target_still_computes_a_real_percentage(self):
         # A real, explicitly configured target restores the normal path.
         TargetSetting.objects.create(
-            fy=FY, target_type="SCHOOL_VISIT", scope_type="country", target_unit="count",
-            target_value=8, set_by_user_id=self.user.id, set_by_role="Accountant",
+            fy=FY,
+            target_type="SCHOOL_VISIT",
+            scope_type="country",
+            target_unit="count",
+            target_value=8,
+            set_by_user_id=self.user.id,
+            set_by_role="Accountant",
         )
         for _ in range(2):
             self._act("ia_verified")

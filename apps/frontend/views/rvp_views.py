@@ -30,12 +30,14 @@ def rvp_annual_action_view(request, budget_id):
 
     action = (request.POST.get("action") or "").strip()
     try:
-        b = rvp_annual_decide(budget_id, action,
-                              {"note": request.POST.get("note")}, request.user)
+        b = rvp_annual_decide(
+            budget_id, action, {"note": request.POST.get("note")}, request.user
+        )
         messages.success(
             request,
             f"Annual budget FY {b.fy} "
-            f"{'approved — baseline locked' if action == 'approve' else 'returned'}.")
+            f"{'approved — baseline locked' if action == 'approve' else 'returned'}.",
+        )
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
     return redirect("/dashboard")
@@ -52,10 +54,16 @@ def rvp_project_decision_view(request, project_id):
     from apps.monthly_work_plan.services import _rvp_audit, _rvp_notify
     from apps.projects.models import Project
 
-    ALLOWED = {"scale": "Approve Scale", "continue": "Continue Current Scope",
-               "redesign": "Request Redesign", "pause": "Pause New Assignments",
-               "reduce_budget": "Reduce Budget", "increase_budget": "Increase Budget",
-               "close": "Close Project", "measure": "Request Additional Measurement"}
+    ALLOWED = {
+        "scale": "Approve Scale",
+        "continue": "Continue Current Scope",
+        "redesign": "Request Redesign",
+        "pause": "Pause New Assignments",
+        "reduce_budget": "Reduce Budget",
+        "increase_budget": "Increase Budget",
+        "close": "Close Project",
+        "measure": "Request Additional Measurement",
+    }
     action = (request.POST.get("action") or "").strip()
     if action not in ALLOWED:
         return HttpResponseBadRequest("Unknown project decision.")
@@ -63,15 +71,20 @@ def rvp_project_decision_view(request, project_id):
     if project is None:
         return HttpResponseBadRequest("Project not found.")
     reason = (request.POST.get("reason") or "").strip()
-    _rvp_audit("special_project", project.id, project.name, action,
-               request.user, reason=reason)
+    _rvp_audit(
+        "special_project", project.id, project.name, action, request.user, reason=reason
+    )
     from apps.accounts.models import User
 
-    for cd_user in User.objects.filter(roles__contains=["CountryDirector"],
-                                       status="active"):
-        _rvp_notify(cd_user.id, f"RVP decision: {ALLOWED[action]}",
-                    f"{project.name} — {reason or 'strategic decision recorded.'}",
-                    "/projects")
+    for cd_user in User.objects.filter(
+        roles__contains=["CountryDirector"], status="active"
+    ):
+        _rvp_notify(
+            cd_user.id,
+            f"RVP decision: {ALLOWED[action]}",
+            f"{project.name} — {reason or 'strategic decision recorded.'}",
+            "/projects",
+        )
     messages.success(request, f"{ALLOWED[action]} recorded for {project.name}.")
     return redirect("/dashboard")
 
@@ -86,17 +99,23 @@ def rvp_strategy_note_view(request):
     from apps.monthly_work_plan.services import create_strategy_note
 
     try:
-        create_strategy_note({
-            "priority": request.POST.get("priority"),
-            "scope": request.POST.get("scope"),
-            "instruction": request.POST.get("instruction"),
-            "expected_outcome": request.POST.get("expected_outcome"),
-            "responsible_cd_id": request.POST.get("responsible_cd_id"),
-            "deadline": request.POST.get("deadline") or None,
-            "review_date": request.POST.get("review_date") or None,
-        }, request.user)
-        messages.success(request, "Strategy note recorded — the Country Director "
-                                  "has been notified and a To-Do created.")
+        create_strategy_note(
+            {
+                "priority": request.POST.get("priority"),
+                "scope": request.POST.get("scope"),
+                "instruction": request.POST.get("instruction"),
+                "expected_outcome": request.POST.get("expected_outcome"),
+                "responsible_cd_id": request.POST.get("responsible_cd_id"),
+                "deadline": request.POST.get("deadline") or None,
+                "review_date": request.POST.get("review_date") or None,
+            },
+            request.user,
+        )
+        messages.success(
+            request,
+            "Strategy note recorded — the Country Director "
+            "has been notified and a To-Do created.",
+        )
     except BadRequest as exc:
         messages.error(request, str(exc))
     return redirect("/dashboard")
@@ -123,16 +142,29 @@ def rvp_approvals_drawer_view(request):
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     scope_country = _rvp_country_scope()
     monthly = MonthlyWorkPlanBudget.objects.filter(fy=fy).filter(
-        Q(country_id=scope_country) | Q(country_id__isnull=True) | Q(country_id=""))
-    return render(request, "partials/dashboards/rvp/approvals_drawer.html", {
-        "fy": fy,
-        "monthly_pending": [RVPDashboardService._budget_row(b) for b in
-                            monthly.filter(status="submitted_to_rvp")
-                            .order_by("month_key")],
-        "monthly_returned": [RVPDashboardService._budget_row(b) for b in
-                             monthly.filter(status="returned_by_rvp")
-                             .order_by("-month_key")[:6]],
-        "annuals": [RVPDashboardService._annual_row(b) for b in
-                    CountryAnnualBudget.objects.filter(fy=fy, country_id=scope_country)],
-        "history": RVPApprovalDecision.objects.order_by("-created_at")[:15],
-    })
+        Q(country_id=scope_country) | Q(country_id__isnull=True) | Q(country_id="")
+    )
+    return render(
+        request,
+        "partials/dashboards/rvp/approvals_drawer.html",
+        {
+            "fy": fy,
+            "monthly_pending": [
+                RVPDashboardService._budget_row(b)
+                for b in monthly.filter(status="submitted_to_rvp").order_by("month_key")
+            ],
+            "monthly_returned": [
+                RVPDashboardService._budget_row(b)
+                for b in monthly.filter(status="returned_by_rvp").order_by(
+                    "-month_key"
+                )[:6]
+            ],
+            "annuals": [
+                RVPDashboardService._annual_row(b)
+                for b in CountryAnnualBudget.objects.filter(
+                    fy=fy, country_id=scope_country
+                )
+            ],
+            "history": RVPApprovalDecision.objects.order_by("-created_at")[:15],
+        },
+    )

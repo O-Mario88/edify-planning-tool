@@ -258,8 +258,11 @@ class AdminUserOperationsTest(TestCase):
         self.assertIn(self.district_2.id, api_geo_links)
 
     def test_account_lockout_after_failed_logins(self):
-        """Test that 10 failed login attempts lock the account and notify admins."""
-        from apps.notifications.models import Notification
+        """N failed login attempts trigger a TEMPORARY lock (the "safer
+        enterprise default" — Issue 3 of the audit: no permanent lock from a
+        single burst, no admin notification for an ordinary first lock
+        cycle). See test_repeated_lockout_cycles_escalate_and_notify_admin
+        for the escalation path, which IS still admin-notified."""
         from django.conf import settings
 
         # Create a target user who will be locked out
@@ -285,30 +288,72 @@ class AdminUserOperationsTest(TestCase):
             )
             self.assertEqual(res.status_code, 200)  # stays on login page
 
-        # Verify the account is locked
+        # Verify the account is temporarily locked (auto-expiring, not
+        # escalated) — a single burst never triggers a permanent lock.
         target.refresh_from_db()
         self.assertIsNotNone(target.locked_until)
+        self.assertFalse(target.lockout_escalated)
+        self.assertEqual(target.lockout_cycle_count, 1)
 
-        # Verify admin notification was created
-        admin_notifications = Notification.objects.filter(
-            recipient_id=self.admin.id,
-            source_event_type="account_lockout",
-        )
-        self.assertTrue(admin_notifications.exists())
-        self.assertIn("Account Locked", admin_notifications.first().title)
-
-        # Verify login is blocked even with correct password
+        # Verify login is blocked even with correct password while locked.
         res = self.client.post(
             "/login", {"email": "lockme@edify.test", "password": "CorrectPassword1!"}
         )
         self.assertEqual(res.status_code, 200)
         self.assertContains(res, "locked")
 
-    def test_admin_password_reset_and_unlock(self):
-        """Test that admin can reset a user's password and unlock an account."""
+    def test_repeated_lockout_cycles_escalate_and_notify_admin(self):
+        """AUTH_LOCKOUT_ESCALATION_COUNT separate lock cycles within the
+        escalation window escalate to admin-required unlock AND notify
+        admins — the behavior the old "permanent lock on first burst"
+        implementation used to apply to every single lockout."""
+        from apps.accounts.lockout_service import AuthenticationLockoutService
+        from apps.notifications.models import Notification
+        from django.conf import settings
         from django.utils import timezone
         from datetime import timedelta
 
+        target = User.objects.create_user(
+            email="repeat-lock@edify.test",
+            name="Repeat Lock Target",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="CorrectPassword1!",
+            is_active=True,
+            status="active",
+        )
+
+        escalation_count = getattr(settings, "AUTH_LOCKOUT_ESCALATION_COUNT", 3)
+        max_attempts = getattr(settings, "AUTH_MAX_FAILED_LOGINS", 10)
+
+        for cycle in range(escalation_count):
+            for _ in range(max_attempts):
+                AuthenticationLockoutService.record_failed_attempt(target.id)
+            target.refresh_from_db()
+            if cycle < escalation_count - 1:
+                self.assertFalse(
+                    target.lockout_escalated,
+                    f"escalated too early at cycle {cycle + 1}",
+                )
+                # Simulate the temporary lock having expired so the next
+                # cycle's attempts are actually evaluated (not just
+                # rejected pre-password-check).
+                target.locked_until = timezone.now() - timedelta(minutes=1)
+                target.save(update_fields=["locked_until"])
+
+        target.refresh_from_db()
+        self.assertTrue(target.lockout_escalated)
+        self.assertIsNone(target.locked_until)
+        self.assertEqual(target.lockout_cycle_count, escalation_count)
+
+        admin_notifications = Notification.objects.filter(
+            recipient_id=self.admin.id,
+            source_event_type="account_lockout",
+        )
+        self.assertTrue(admin_notifications.exists())
+
+    def test_admin_password_reset_and_unlock(self):
+        """Test that admin can reset a user's password and unlock an account."""
         # Create a user
         target = User.objects.create_user(
             email="resetme@edify.test",
@@ -340,9 +385,13 @@ class AdminUserOperationsTest(TestCase):
         self.assertEqual(target.failed_login_count, 0)
         self.assertIsNone(target.locked_until)
 
-        # Simulate lockout
-        target.locked_until = timezone.now() + timedelta(days=36500)
-        target.save(update_fields=["locked_until"])
+        # Simulate an escalated lockout (admin-required unlock).
+        target.lockout_escalated = True
+        target.lockout_cycle_count = 3
+        target.locked_until = None
+        target.save(
+            update_fields=["lockout_escalated", "lockout_cycle_count", "locked_until"]
+        )
 
         # Admin unlocks
         res = self.client.post(detail_url, {"action": "unlock"})
@@ -351,6 +400,43 @@ class AdminUserOperationsTest(TestCase):
         target.refresh_from_db()
         self.assertIsNone(target.locked_until)
         self.assertEqual(target.failed_login_count, 0)
+        self.assertFalse(target.lockout_escalated)
+        self.assertEqual(target.lockout_cycle_count, 0)
+
+    def test_admin_manual_lock(self):
+        """An admin can explicitly lock an account (e.g. a suspected
+        compromise) without waiting for failed-login attempts to trigger
+        it — this always escalates immediately (admin-required unlock),
+        never a mere temporary lock."""
+        target = User.objects.create_user(
+            email="manuallock@edify.test",
+            name="Manual Lock Target",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="Password1!",
+            is_active=True,
+            status="active",
+        )
+        detail_url = reverse(
+            "frontend:admin_user_detail", kwargs={"user_id": target.id}
+        )
+
+        res = self.client.post(
+            detail_url, {"action": "lock", "reason": "Suspected compromised credential"}
+        )
+        self.assertEqual(res.status_code, 302)
+
+        target.refresh_from_db()
+        self.assertTrue(target.lockout_escalated)
+
+        # Login must be blocked even with the correct password while
+        # manually locked.
+        self.client.logout()
+        res = self.client.post(
+            "/login", {"email": "manuallock@edify.test", "password": "Password1!"}
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "locked")
 
     def test_force_change_password_flow(self):
         """Test that a user with must_change_password=True is forced to change password."""

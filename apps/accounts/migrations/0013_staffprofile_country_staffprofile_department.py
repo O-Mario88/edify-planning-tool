@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0012_stafftargetprofile_new_core_schools_target_and_more'),
+        ("accounts", "0012_stafftargetprofile_new_core_schools_target_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='staffprofile',
-            name='country',
-            field=models.CharField(default='Uganda', max_length=64),
+            model_name="staffprofile",
+            name="country",
+            field=models.CharField(default="Uganda", max_length=64),
         ),
         migrations.AddField(
-            model_name='staffprofile',
-            name='department',
+            model_name="staffprofile",
+            name="department",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
     ]

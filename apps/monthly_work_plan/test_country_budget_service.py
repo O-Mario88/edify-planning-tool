@@ -18,6 +18,7 @@ from apps.core.enums import ActivityType
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.geography.models import District, Region
 from apps.monthly_work_plan import country_budget_service as svc
+from apps.projects.models import Project
 from apps.monthly_work_plan.models import AdminBudgetLine, MonthlyWorkPlanBudget
 from apps.schools.models import School
 
@@ -206,6 +207,75 @@ class CountryMonthlyBudgetTest(TestCase):
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
         by_label = {k["label"]: k["value"] for k in ctx["kpis"]}
         self.assertEqual(by_label["SSA Cost"], svc._ugx(40_000))
+
+    # ── Special Projects category ─────────────────────────────────────────
+    def test_special_project_categorized_via_direct_activity_link(self):
+        project = Project.objects.create(
+            name="Literacy Boost", code="SP-LIT", category="pilot"
+        )
+        # Would otherwise land in Staff Visits (school_visit/staff) — the
+        # project link must override that and route it to Special Projects.
+        act = self._activity(self.cceo.id, ActivityType.SCHOOL_VISIT, "staff")
+        act.project_id = project.id
+        act.save(update_fields=["project_id"])
+        self._cost_line(act, 90_000)
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        by_label = {k["label"]: k["value"] for k in ctx["kpis"]}
+        self.assertEqual(by_label["Special Project Cost"], svc._ugx(90_000))
+        # Still only the original two staff visits (300k) — the project
+        # activity must not double up there.
+        self.assertEqual(by_label["Staff Visits Cost"], svc._ugx(300_000))
+
+    def test_special_project_categorized_via_cost_line_link(self):
+        project = Project.objects.create(
+            name="EdTech Pilot", code="SP-TECH", category="pilot"
+        )
+        # Activity itself has no project_id — only its cost line does (the
+        # indirect path, e.g. partner-costed project work).
+        act = self._activity(self.cceo.id, ActivityType.SCHOOL_VISIT, "staff")
+        line = self._cost_line(act, 70_000)
+        line.project_id = project.id
+        line.save(update_fields=["project_id"])
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        by_label = {k["label"]: k["value"] for k in ctx["kpis"]}
+        self.assertEqual(by_label["Special Project Cost"], svc._ugx(70_000))
+
+    def test_special_project_included_in_total_monthly_budget(self):
+        project = Project.objects.create(name="CCSEL", code="SP-CC", category="pilot")
+        act = self._activity(self.cceo.id, ActivityType.SCHOOL_VISIT, "staff")
+        act.project_id = project.id
+        act.save(update_fields=["project_id"])
+        self._cost_line(act, 90_000)
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        by_label = {k["label"]: k["value"] for k in ctx["kpis"]}
+        # 300k (existing staff visits) + 90k (special project) — never
+        # silently dropped from the country total.
+        self.assertEqual(by_label["Total Monthly Budget"], svc._ugx(390_000))
+
+    def test_special_project_activity_count_in_plan_source_summary(self):
+        project = Project.objects.create(name="CCSEL", code="SP-CC2", category="pilot")
+        act = self._activity(self.cceo.id, ActivityType.SCHOOL_VISIT, "staff")
+        act.project_id = project.id
+        act.save(update_fields=["project_id"])
+        self._cost_line(act, 90_000)
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        row = next(
+            s
+            for s in ctx["plan_source_summary"]
+            if s["label"] == "Special Project Activities"
+        )
+        self.assertEqual(row["value"], 1)
+
+    def test_special_project_staff_row_shows_project_column(self):
+        project = Project.objects.create(name="CCSEL", code="SP-CC3", category="pilot")
+        act = self._activity(self.cceo.id, ActivityType.SCHOOL_VISIT, "staff")
+        act.project_id = project.id
+        act.save(update_fields=["project_id"])
+        self._cost_line(act, 90_000)
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        row = next(r for r in ctx["staff_rows"] if r["user_id"] == self.cceo.id)
+        self.assertEqual(row["cats"]["special_project"]["qty"], 1)
+        self.assertEqual(row["cats"]["special_project"]["total"], svc._ugx(90_000))
 
     # ── plan-backed exclusion rules ──────────────────────────────────────
     def test_cancelled_activity_excluded(self):

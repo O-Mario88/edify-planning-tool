@@ -29,7 +29,16 @@ COPY --from=build /install /usr/local
 COPY . .
 # Collect static (DRF spectacular + admin assets). Fail the build if static
 # collection errors — a silent failure here means broken CSS/JS in production.
-RUN python manage.py collectstatic --noinput
+# config/settings/prod.py fails closed at import unless JWT_SECRET /
+# AUTHZ_MODE / SUPER_ADMIN_PASSWORD are set — none exist at build time
+# (.env is dockerignored), so pass build-only placeholders for this one
+# command. They satisfy the gate, never reach the image's runtime env, and
+# collectstatic itself touches no database and reads no secrets.
+RUN JWT_SECRET=build-time-collectstatic-placeholder-0123456789 \
+    AUTHZ_MODE=enforce \
+    SUPER_ADMIN_PASSWORD=build-time-placeholder \
+    ALLOWED_HOSTS=build-placeholder.invalid \
+    python manage.py collectstatic --noinput
 
 # Railway injects $PORT at runtime. Default to 4000 for local/docker-compose.
 ENV PORT=4000

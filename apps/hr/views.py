@@ -36,7 +36,11 @@ class HrLeaveListView(APIView):
         return Response(services.list_leave(request.user, _q(request)))
 
     def post(self, request: Request) -> Response:
-        return Response(services.request_leave(request.data, request.user), status=201)
+        attachment_file = request.FILES.get("attachment")
+        return Response(
+            services.request_leave(request.data, request.user, attachment_file),
+            status=201,
+        )
 
 
 class HrLeaveCalendarView(APIView):

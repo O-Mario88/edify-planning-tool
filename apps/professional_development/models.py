@@ -43,14 +43,18 @@ class ProfessionalDevelopmentAllocation(TimeStampedModel):
     currency = models.CharField(max_length=8, default="UGX")
     annual_allocation = models.BigIntegerField(default=0)
     status = models.CharField(
-        max_length=20, choices=PDAllocationStatus.choices, default=PDAllocationStatus.ACTIVE
+        max_length=20,
+        choices=PDAllocationStatus.choices,
+        default=PDAllocationStatus.ACTIVE,
     )
     set_by = models.CharField(max_length=30, null=True, blank=True)
 
     class Meta:
         db_table = "pd_allocation"
         constraints = [
-            models.UniqueConstraint(fields=["staff_id", "fy"], name="uniq_pd_allocation_staff_fy")
+            models.UniqueConstraint(
+                fields=["staff_id", "fy"], name="uniq_pd_allocation_staff_fy"
+            )
         ]
         indexes = [models.Index(fields=["staff_id", "fy"])]
 
@@ -79,7 +83,8 @@ class PDRoleAllocation(TimeStampedModel):
         db_table = "pd_role_allocation"
         constraints = [
             models.UniqueConstraint(
-                fields=["role", "fy", "country"], name="uniq_pd_role_allocation_role_fy_country"
+                fields=["role", "fy", "country"],
+                name="uniq_pd_role_allocation_role_fy_country",
             )
         ]
         indexes = [models.Index(fields=["fy", "country"])]
@@ -135,19 +140,36 @@ class PDStatus(models.TextChoices):
 # Statuses in which the record is a "live" course occupying the KPI's
 # Active Courses count.
 ACTIVE_COURSE_STATUSES = (
-    PDStatus.DISBURSED, PDStatus.APPROVED_UNFUNDED, PDStatus.ENROLLMENT_PENDING,
-    PDStatus.ENROLLMENT_CONFIRMED, PDStatus.IN_PROGRESS, PDStatus.ENDED,
+    PDStatus.DISBURSED,
+    PDStatus.APPROVED_UNFUNDED,
+    PDStatus.ENROLLMENT_PENDING,
+    PDStatus.ENROLLMENT_CONFIRMED,
+    PDStatus.IN_PROGRESS,
+    PDStatus.ENDED,
 )
 # Statuses that still hold committed budget against the allocation.
 COMMITTED_STATUSES = (
-    PDStatus.SUBMITTED_TO_SUPERVISOR, PDStatus.SUBMITTED_TO_HR, PDStatus.PENDING_EXCEPTION,
-    PDStatus.APPROVED_PENDING_FUNDING, PDStatus.DISBURSED, PDStatus.ENROLLMENT_PENDING,
-    PDStatus.ENROLLMENT_CONFIRMED, PDStatus.IN_PROGRESS, PDStatus.ENDED,
-    PDStatus.MARKED_COMPLETE, PDStatus.CERTIFICATE_UPLOADED, PDStatus.BAMBOOHR_CONFIRMED,
-    PDStatus.ACCOUNTABILITY_SUBMITTED, PDStatus.AWAITING_HR_SIGNOFF,
+    PDStatus.SUBMITTED_TO_SUPERVISOR,
+    PDStatus.SUBMITTED_TO_HR,
+    PDStatus.PENDING_EXCEPTION,
+    PDStatus.APPROVED_PENDING_FUNDING,
+    PDStatus.DISBURSED,
+    PDStatus.ENROLLMENT_PENDING,
+    PDStatus.ENROLLMENT_CONFIRMED,
+    PDStatus.IN_PROGRESS,
+    PDStatus.ENDED,
+    PDStatus.MARKED_COMPLETE,
+    PDStatus.CERTIFICATE_UPLOADED,
+    PDStatus.BAMBOOHR_CONFIRMED,
+    PDStatus.ACCOUNTABILITY_SUBMITTED,
+    PDStatus.AWAITING_HR_SIGNOFF,
 )
-CLOSED_STATUSES = (PDStatus.COMPLETED_CLOSED, PDStatus.REJECTED, PDStatus.CANCELLED,
-                   PDStatus.WITHDRAWN)
+CLOSED_STATUSES = (
+    PDStatus.COMPLETED_CLOSED,
+    PDStatus.REJECTED,
+    PDStatus.CANCELLED,
+    PDStatus.WITHDRAWN,
+)
 FUNDED_TYPES = (PDFundingType.FULLY_FUNDED, PDFundingType.PARTIALLY_FUNDED)
 
 
@@ -196,7 +218,9 @@ class ProfessionalDevelopmentRequest(TimeStampedModel):
     exception_reason = models.TextField(null=True, blank=True)
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
-    status = models.CharField(max_length=32, choices=PDStatus.choices, default=PDStatus.DRAFT)
+    status = models.CharField(
+        max_length=32, choices=PDStatus.choices, default=PDStatus.DRAFT
+    )
     submitted_at = models.DateTimeField(null=True, blank=True)
 
     # Supervisor stage
@@ -294,10 +318,14 @@ class ProfessionalDevelopmentEvidence(TimeStampedModel):
 
     id = CuidField()
     request = models.ForeignKey(
-        ProfessionalDevelopmentRequest, on_delete=models.CASCADE, related_name="evidence_files"
+        ProfessionalDevelopmentRequest,
+        on_delete=models.CASCADE,
+        related_name="evidence_files",
     )
     kind = models.CharField(
-        max_length=32, choices=PDEvidenceKind.choices, default=PDEvidenceKind.ADMISSION_LETTER
+        max_length=32,
+        choices=PDEvidenceKind.choices,
+        default=PDEvidenceKind.ADMISSION_LETTER,
     )
     uri = models.CharField(max_length=255)
     original_name = models.CharField(max_length=255)
@@ -319,7 +347,9 @@ class ProfessionalDevelopmentCertificate(TimeStampedModel):
 
     id = CuidField()
     request = models.ForeignKey(
-        ProfessionalDevelopmentRequest, on_delete=models.CASCADE, related_name="certificates"
+        ProfessionalDevelopmentRequest,
+        on_delete=models.CASCADE,
+        related_name="certificates",
     )
     uri = models.CharField(max_length=255)
     original_name = models.CharField(max_length=255)
@@ -332,7 +362,9 @@ class ProfessionalDevelopmentCertificate(TimeStampedModel):
     expiry_date = models.DateField(null=True, blank=True)
     verification_link = models.CharField(max_length=512, null=True, blank=True)
     uploaded_by = models.CharField(max_length=30)
-    status = models.CharField(max_length=16, default="uploaded")  # uploaded | returned | verified
+    status = models.CharField(
+        max_length=16, default="uploaded"
+    )  # uploaded | returned | verified
     returned_reason = models.CharField(max_length=512, null=True, blank=True)
 
     class Meta:
@@ -354,7 +386,9 @@ class ProfessionalDevelopmentFundRequest(TimeStampedModel):
 
     id = CuidField()
     request = models.OneToOneField(
-        ProfessionalDevelopmentRequest, on_delete=models.CASCADE, related_name="fund_request"
+        ProfessionalDevelopmentRequest,
+        on_delete=models.CASCADE,
+        related_name="fund_request",
     )
     fy = models.CharField(max_length=16)
     staff_id = models.CharField(max_length=30)
@@ -363,7 +397,8 @@ class ProfessionalDevelopmentFundRequest(TimeStampedModel):
     payment_recipient = models.CharField(max_length=255, null=True, blank=True)
     payment_details = models.TextField(null=True, blank=True)
     status = models.CharField(
-        max_length=24, choices=PDFundRequestStatus.choices,
+        max_length=24,
+        choices=PDFundRequestStatus.choices,
         default=PDFundRequestStatus.PENDING_DISBURSEMENT,
     )
     hold_reason = models.CharField(max_length=512, null=True, blank=True)
@@ -377,7 +412,9 @@ class ProfessionalDevelopmentFundRequest(TimeStampedModel):
 class ProfessionalDevelopmentDisbursement(TimeStampedModel):
     id = CuidField()
     fund_request = models.ForeignKey(
-        ProfessionalDevelopmentFundRequest, on_delete=models.CASCADE, related_name="disbursements"
+        ProfessionalDevelopmentFundRequest,
+        on_delete=models.CASCADE,
+        related_name="disbursements",
     )
     amount_cents = models.BigIntegerField()
     disbursed_by = models.CharField(max_length=30)
@@ -396,7 +433,9 @@ class ProfessionalDevelopmentReminderLog(TimeStampedModel):
 
     id = CuidField()
     request = models.ForeignKey(
-        ProfessionalDevelopmentRequest, on_delete=models.CASCADE, related_name="reminder_logs"
+        ProfessionalDevelopmentRequest,
+        on_delete=models.CASCADE,
+        related_name="reminder_logs",
     )
     reminder_key = models.CharField(max_length=64)
     sent_on = models.DateField()
@@ -405,6 +444,7 @@ class ProfessionalDevelopmentReminderLog(TimeStampedModel):
         db_table = "pd_reminder_log"
         constraints = [
             models.UniqueConstraint(
-                fields=["request", "reminder_key", "sent_on"], name="uniq_pd_reminder_once_per_day"
+                fields=["request", "reminder_key", "sent_on"],
+                name="uniq_pd_reminder_once_per_day",
             )
         ]

@@ -19,7 +19,7 @@
 <div class="flex flex-wrap items-center gap-2">
 <!-- FY Selection — driven by apps.core.fy.fy_options(), not a hardcoded year -->
 <form method="get" class="flex items-center">
-<select name="fy" onchange="this.form.submit()" class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+<select name="fy" @change="$el.form.requestSubmit()" class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
 {% for opt in fy_choices %}
 <option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>
 {% endfor %}

@@ -2,21 +2,28 @@
 
 /* ── Theme Toggle (segmented control in topbar) ─────────────────────────── */
 .theme-toggle {
-  display: inline-flex; align-items: center; gap: 2px;
-  padding: 3px; border-radius: 8px;
-  background: var(--edify-surface-muted); border: 1px solid var(--edify-border);
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px; border-radius: 10px;
+  background: var(--edify-surface-muted);
+  background: color-mix(in oklab, var(--edify-surface-muted) 90%, transparent);
+  border: 1px solid var(--edify-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
 }
 .theme-toggle button {
   display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 24px; border-radius: 5px;
+  min-width: 30px; height: 28px; border-radius: 7px;
   color: var(--edify-text-subtle); cursor: pointer;
-  transition: all var(--edify-transition-fast);
+  transition: background-color var(--edify-transition-fast), color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
   background: transparent; border: none;
 }
-.theme-toggle button:hover { color: var(--edify-text-muted); }
+.theme-toggle button:hover:not(.active) {
+  background: color-mix(in oklab, var(--edify-surface-raised) 54%, transparent);
+  color: var(--edify-text);
+}
 .theme-toggle button.active {
-  background: var(--edify-surface); color: var(--edify-accent);
-  box-shadow: var(--edify-shadow-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-accent);
+  box-shadow: var(--edify-shadow-sm), inset 0 0 0 1px var(--edify-border);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -46,26 +53,42 @@
 .dark .divide-slate-50 > * + *, .dark .divide-slate-100 > * + * { border-color: var(--edify-border) !important; }
 
 /* Semantic backgrounds — translucent tints for dark mode */
-.dark .bg-emerald-50, .dark .bg-green-50 { background-color: rgba(16, 185, 129, 0.12) !important; }
-.dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.12) !important; }
-.dark .bg-rose-50, .dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.12) !important; }
-.dark .bg-blue-50, .dark .bg-sky-50 { background-color: rgba(59, 130, 246, 0.12) !important; }
-.dark .bg-violet-50, .dark .bg-purple-50 { background-color: rgba(139, 92, 246, 0.12) !important; }
-.dark .bg-teal-50, .dark .bg-cyan-50 { background-color: rgba(20, 184, 166, 0.12) !important; }
+.dark .bg-emerald-50, .dark .bg-green-50 { background-color: var(--edify-success-light) !important; }
+.dark .bg-amber-50 { background-color: var(--edify-warning-light) !important; }
+.dark .bg-rose-50, .dark .bg-red-50 { background-color: var(--edify-danger-light) !important; }
+.dark .bg-blue-50, .dark .bg-sky-50 { background-color: var(--edify-info-light) !important; }
+.dark .bg-indigo-50 { background-color: var(--edify-info-light) !important; }
+.dark .bg-violet-50, .dark .bg-purple-50 { background-color: var(--edify-purple-light) !important; }
+.dark .bg-orange-50 { background-color: var(--edify-warning-light) !important; }
+.dark .bg-teal-50, .dark .bg-cyan-50 { background-color: var(--edify-teal-light) !important; }
+.dark [class*="bg-emerald-50/"], .dark [class*="bg-green-50/"] { background-color: var(--edify-success-light) !important; }
+.dark [class*="bg-amber-50/"] { background-color: var(--edify-warning-light) !important; }
+.dark [class*="bg-rose-50/"], .dark [class*="bg-red-50/"] { background-color: var(--edify-danger-light) !important; }
+.dark [class*="bg-blue-50/"], .dark [class*="bg-sky-50/"] { background-color: var(--edify-info-light) !important; }
+.dark [class*="bg-indigo-50/"] { background-color: var(--edify-info-light) !important; }
+.dark [class*="bg-violet-50/"], .dark [class*="bg-purple-50/"] { background-color: var(--edify-purple-light) !important; }
+.dark [class*="bg-orange-50/"] { background-color: var(--edify-warning-light) !important; }
+.dark [class*="bg-teal-50/"], .dark [class*="bg-cyan-50/"] { background-color: var(--edify-teal-light) !important; }
+.dark [class*="bg-slate-50/"], .dark [class*="bg-slate-100/"] { background-color: var(--edify-surface-muted) !important; }
 
 /* Semantic text — lighter for dark mode readability */
-.dark .text-emerald-600, .dark .text-emerald-700 { color: #34d399 !important; }
-.dark .text-amber-600, .dark .text-amber-700 { color: #fbbf24 !important; }
-.dark .text-rose-600, .dark .text-rose-700 { color: #f87171 !important; }
-.dark .text-blue-600, .dark .text-blue-700 { color: #60a5fa !important; }
-.dark .text-violet-600, .dark .text-violet-700 { color: #a78bfa !important; }
-.dark .text-teal-600, .dark .text-teal-700 { color: #2dd4bf !important; }
+.dark .text-emerald-600, .dark .text-emerald-700 { color: var(--edify-success) !important; }
+.dark .text-amber-600, .dark .text-amber-700 { color: var(--edify-warning) !important; }
+.dark .text-rose-600, .dark .text-rose-700 { color: var(--edify-danger) !important; }
+.dark .text-blue-600, .dark .text-blue-700 { color: var(--edify-info) !important; }
+.dark .text-indigo-600, .dark .text-indigo-700 { color: var(--edify-info) !important; }
+.dark .text-violet-600, .dark .text-violet-700 { color: var(--edify-purple) !important; }
+.dark .text-orange-600, .dark .text-orange-700 { color: var(--edify-warning) !important; }
+.dark .text-teal-600, .dark .text-teal-700 { color: var(--edify-teal) !important; }
 
 /* Semantic borders — translucent */
 .dark .border-emerald-200 { border-color: rgba(16, 185, 129, 0.25) !important; }
 .dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.25) !important; }
 .dark .border-rose-200 { border-color: rgba(239, 68, 68, 0.25) !important; }
-.dark .border-blue-200 { border-color: rgba(59, 130, 246, 0.25) !important; }
+.dark .border-blue-100, .dark .border-blue-200 { border-color: var(--edify-info-border) !important; }
+.dark .border-emerald-100, .dark .border-emerald-200 { border-color: var(--edify-success-border) !important; }
+.dark .border-amber-100, .dark .border-amber-200 { border-color: var(--edify-warning-border) !important; }
+.dark .border-rose-100, .dark .border-rose-200 { border-color: var(--edify-danger-border) !important; }
 
 /* Inputs and forms — dark surfaces */
 .dark input[type="text"], .dark input[type="email"], .dark input[type="password"],
@@ -95,8 +118,18 @@
 /* Shell & Layouts */
 .edify-shell {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--edify-bg);
+  background-image: var(--edify-canvas-treatment);
+  background-position: center 28%;
+  background-size: cover;
+  background-attachment: fixed;
+}
+.edify-shell main {
+  background-color: transparent !important;
+  container-name: workspace;
+  container-type: inline-size;
+  scrollbar-gutter: stable;
 }
 
 /* ═══ GLOBAL PAGE CONTENT WRAPPER ═════════════════════════════════════════
@@ -107,14 +140,29 @@
 main > div[class*="p-4"]:not([id]):not([class*="drawer"]),
 main > div[class*="p-6"]:not([id]):not([class*="drawer"]) {
   color: var(--edify-text);
+  min-width: 0;
+}
+main > div[class*="px-4"]:not([class*="drawer"]),
+main > div[class*="px-5"]:not([class*="drawer"]),
+main > div[class*="px-6"]:not([class*="drawer"]),
+main > div[class*="p-4"]:not([class*="drawer"]),
+main > div[class*="p-5"]:not([class*="drawer"]),
+main > div[class*="p-6"]:not([class*="drawer"]),
+main > section[class*="px-4"]:not([class*="drawer"]),
+main > section[class*="px-5"]:not([class*="drawer"]),
+main > section[class*="px-6"]:not([class*="drawer"]) {
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--edify-page-gutter) !important;
 }
 /* Page titles — unify all h1 inside page content */
-main h1[class*="text-[24px]"],
-main h1[class*="text-[22px]"],
-main h1[class*="text-[20px]"] {
+main h1 {
   color: var(--edify-text) !important;
-  font-weight: 800 !important;
+  font-size: var(--edify-text-display-size) !important;
+  line-height: var(--edify-text-display-leading) !important;
+  font-weight: var(--edify-text-display-weight) !important;
   letter-spacing: -.025em !important;
+  font-family: var(--edify-font-display-family) !important;
 }
 /* Page subtitles — unify muted paragraphs */
 main p[class*="text-slate-500"],
@@ -125,21 +173,152 @@ main p[class*="text-slate-400"] {
 /* ═══ GOLD STANDARD CARD ELEVATION ════════════════════════════════════════
    Borderless cards with soft shadow only. The border only appears on hover. */
 main .bg-white {
-  border: 1px solid transparent !important;
-  box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 1px 2px rgba(15,23,42,.03) !important;
-}
-main .bg-white:hover {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment);
   border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
 }
-.dark main .bg-white {
-  border: 1px solid transparent !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.15) !important;
+
+/* Blue is the immersive workspace: the approved classroom image stays
+   visible through layered, frosted surfaces. Dark remains deliberately
+   opaque and therefore reads as a separate low-light mode. */
+.theme-blue :is(.edify-topbar, main .bg-white, main .card, main .premium-card,
+  main .premium-card-elevated, main .panel, main .mini, main .summary-card,
+  main .rail-card, main .edify-kpi-card, main .card-kpi, main .pto-panel,
+  .kpi-strip, .drawer-surface, .pto-drawer-panel) {
+  backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+  -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+  border-color: var(--edify-border) !important;
+  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md) !important;
+}
+
+.theme-blue main :is(.bg-white, .card, .premium-card, .premium-card-elevated,
+  .panel, .mini, .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  .pto-panel) {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+}
+
+/* Glass has hierarchy: large surfaces establish the workspace, while tiles
+   remain darker and quieter so data—not decoration—owns the foreground. */
+.theme-blue main :is(.kpi-strip__item, .pto-balance-tile, .pto-recommendation,
+  .pto-signal, .pto-coverage-card, .pto-constraint, .pto-conflict-card,
+  .pto-tracker-card) {
+  background-color: rgba(0, 29, 57, 0.26) !important;
+  background-image: var(--edify-glass-tile-treatment) !important;
+  border-color: rgba(123, 189, 232, 0.28) !important;
+  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.10), 0 12px 26px -22px rgba(0, 8, 20, .84);
+}
+
+.theme-blue .kpi-strip {
+  background-color: rgba(5, 54, 96, 0.58) !important;
+  background-image: var(--edify-glass-kpi-treatment) !important;
+  border-color: rgba(123, 189, 232, 0.48) !important;
+  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.22), 0 24px 54px -30px rgba(0, 8, 20, .90) !important;
+}
+
+.theme-blue .kpi-strip__item:not(:last-child) {
+  border-color: rgba(123, 189, 232, 0.24);
+}
+
+.theme-blue .kpi-strip__icon-container {
+  border: 1px solid rgba(123, 189, 232, 0.42);
+  background-color: rgba(0, 29, 57, 0.30);
+  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.14), 0 0 20px -10px currentColor;
+}
+
+/* Blue-mode controls use a luminous brand gradient for the primary action and
+   a genuine glass treatment for secondary actions. These selectors cover the
+   shared component API, legacy Tailwind actions, and the PTO gold standard. */
+.theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
+  button.bg-indigo-700, a.bg-indigo-700) {
+  color: var(--edify-navy-950) !important;
+  background-color: var(--edify-sky-400) !important;
+  background-image: var(--edify-button-primary-treatment) !important;
+  border: 1px solid rgba(220, 240, 252, 0.58) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.70), 0 12px 28px -16px rgba(123,189,232,.82) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.24);
+}
+
+.theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
+  button.bg-indigo-700, a.bg-indigo-700):hover:not(:disabled) {
+  background-color: var(--edify-sky-100) !important;
+  background-image: linear-gradient(135deg, #e6f5ff 0%, var(--edify-sky-100) 48%, var(--edify-sky-400) 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.88), 0 16px 34px -16px rgba(123,189,232,.94) !important;
+  transform: translateY(-1px);
+}
+
+.theme-blue :is(.btn-ghost, .edify-action-button.secondary, .pto-button--secondary,
+  button.border-slate-200, a.border-slate-200, button.border-slate-300,
+  a.border-slate-300) {
+  color: var(--edify-text) !important;
+  background-color: rgba(0, 29, 57, 0.30) !important;
+  background-image: var(--edify-button-secondary-treatment) !important;
+  border-color: rgba(123, 189, 232, 0.46) !important;
+  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.14), 0 10px 24px -18px rgba(0,8,20,.82) !important;
+  backdrop-filter: blur(14px) saturate(145%);
+  -webkit-backdrop-filter: blur(14px) saturate(145%);
+}
+
+.theme-blue :is(.btn-ghost, .edify-action-button.secondary, .pto-button--secondary,
+  button.border-slate-200, a.border-slate-200, button.border-slate-300,
+  a.border-slate-300):hover:not(:disabled) {
+  color: var(--edify-sky-100) !important;
+  border-color: var(--edify-sky-400) !important;
+  background-color: rgba(10, 65, 116, 0.50) !important;
+  transform: translateY(-1px);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .theme-blue {
+    --edify-surface: rgba(4, 43, 79, 0.92);
+    --edify-surface-muted: rgba(10, 65, 116, 0.86);
+  }
+}
+.theme-dark main .bg-white {
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+/* Approved Dark Mode reference fidelity. Display type carries the editorial
+   authority; cards, controls and dense data remain crisp sans-serif. */
+.theme-dark main h1,
+.theme-dark main .edify-page-header h1 {
+  color: var(--edify-text) !important;
+  font-family: var(--edify-font-serif) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.018em !important;
+}
+
+.theme-dark main :is(.edify-section-heading, .edify-editorial-heading) {
+  color: var(--edify-text) !important;
+  font-family: var(--edify-font-serif) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.012em !important;
+}
+
+.theme-dark main :is(.card, .premium-card, .premium-card-elevated,
+  .panel, .edify-kpi-card, .card-kpi, .bg-white) {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+.theme-dark main :is(.font-black, .font-extrabold) {
+  font-weight: 700 !important;
+}
+
+.theme-dark main .font-bold {
+  font-weight: 600 !important;
 }
 
 /* ═══ GOLD STANDARD TABLES ═══════════════════════════════════════════════
    Premium tables: no per-row border lines. Zebra striping instead. */
 main table tbody td {
-  border-bottom: none !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--edify-border) 72%, transparent) !important;
 }
 main table thead th {
   background: var(--edify-surface-muted) !important;
@@ -159,7 +338,7 @@ main table tbody tr:hover {
 }
 /* Kill divide utilities that create grid lines */
 main .divide-y > * + * {
-  border-top: none !important;
+  border-top-color: color-mix(in srgb, var(--edify-border) 72%, transparent) !important;
 }
 
 /* ═══ GOLD STANDARD FORM INPUTS ═══════════════════════════════════════════
@@ -170,9 +349,10 @@ main input[type="number"], main input[type="date"], main select, main textarea {
   background: var(--edify-surface) !important;
   border-radius: var(--edify-radius-md) !important;
   color: var(--edify-text) !important;
-  font-size: 13px !important;
+  font-size: var(--edify-text-body-size) !important;
   font-family: var(--edify-font-sans) !important;
   padding: 8px 12px !important;
+  min-height: 40px;
   outline: none !important;
   transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast) !important;
 }
@@ -192,7 +372,20 @@ main label { color: var(--edify-text-muted) !important; }
 
 /* ═══ GOLD STANDARD SECTION HEADINGS ══════════════════════════════════════
    All section titles (h2) inside page content get premium weight + color. */
-main h2 { color: var(--edify-text) !important; font-weight: 700 !important; }
+main h2 {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-heading-size);
+  line-height: var(--edify-text-heading-leading);
+  font-weight: var(--edify-text-heading-weight) !important;
+  letter-spacing: var(--edify-text-heading-tracking);
+}
+
+main h3 {
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  line-height: var(--edify-text-title-leading);
+  font-weight: var(--edify-text-title-weight);
+}
 
 /* ═══ GOLD STANDARD LINKS ═════════════════════════════════════════════════
    "View all →" style links use accent color. */
@@ -210,7 +403,7 @@ main a[class*="text-blue-600"]:hover, main a[class*="text-[var(--edify-accent)]"
 main button[class*="bg-indigo-600"], main a[class*="bg-indigo-600"],
 main button[class*="bg-blue-600"], main a[class*="bg-blue-600"] {
   background: var(--edify-accent) !important;
-  color: #fff !important;
+  color: var(--edify-on-accent) !important;
   border-radius: var(--edify-radius-md) !important;
   font-weight: 600 !important;
   box-shadow: 0 1px 2px rgba(37,99,235,.2) !important;
@@ -221,7 +414,7 @@ main button[class*="bg-blue-600"]:hover, main a[class*="bg-blue-600"]:hover {
 }
 main button[class*="bg-slate-800"], main a[class*="bg-slate-800"] {
   background: var(--edify-primary) !important;
-  color: #fff !important;
+  color: var(--edify-on-accent) !important;
   border-radius: var(--edify-radius-md) !important;
 }
 main button[class*="bg-slate-800"]:hover, main a[class*="bg-slate-800"]:hover {
@@ -249,29 +442,66 @@ main .pagination button:hover, main .pagination a:hover {
 
 .edify-topbar {
   height: 56px;
-  background-color: var(--edify-surface);
-  border-bottom: 1px solid var(--edify-border);
+  background: var(--edify-topbar-bg);
+  border-bottom: 1px solid var(--edify-topbar-border);
+  box-shadow: var(--edify-topbar-shadow);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 var(--edify-page-gutter);
+}
+
+.edify-skip-link {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 10000;
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+  border: 2px solid var(--edify-on-accent);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+  font: var(--edify-font-title);
+  translate: 0 calc(-100% - 1.5rem);
+  transition: translate var(--edify-transition-fast);
+}
+
+.edify-skip-link:focus-visible {
+  translate: 0;
+}
+
+.account-menu__signout {
+  background: transparent;
+  color: var(--edify-danger);
+}
+
+.account-menu__signout:hover {
+  background: var(--edify-danger-light);
 }
 
 /* Page Header */
 .edify-page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
+  padding-bottom: clamp(0.875rem, 0.7rem + 0.5vw, 1.25rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--edify-border) 78%, transparent);
 }
 .edify-page-header h1 {
-  font-size: var(--edify-text-heading-size);
-  font-weight: 600;
+  font-size: var(--edify-text-display-size);
+  line-height: var(--edify-text-display-leading);
+  font-weight: var(--edify-text-display-weight);
   color: var(--edify-text);
   letter-spacing: -0.01em;
-  font-family: var(--edify-font-sans);
+  font-family: var(--edify-font-display-family);
 }
 .edify-page-header p {
-  font-size: var(--edify-text-label-size);
+  font-size: var(--edify-text-body-size);
   color: var(--edify-text-muted);
   font-weight: 400;
+  line-height: 1.5;
+  max-width: 68ch;
 }
 
 /* Base Card container style. No overflow:hidden (it clipped KPI values and
@@ -279,14 +509,40 @@ trapped dropdown menus rendered inside cards) and no hover transform —
 base.html owns card elevation; interactive tiles opt in via .card-interactive. */
 .card {
   background-color: var(--edify-surface) !important;
-  border: 1px solid transparent !important;
-  border-radius: var(--edify-radius-md) !important;
+  background-image: var(--edify-surface-treatment);
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-lg) !important;
   box-shadow: var(--edify-shadow-sm) !important;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   position: relative;
+  min-width: 0;
+  container-type: inline-size;
 }
-.card:hover {
+.premium-card,
+.premium-card-elevated {
+  min-width: 0;
+  container-type: inline-size;
+}
+.card-interactive:hover, a.card:hover, button.card:hover {
   box-shadow: var(--edify-shadow-md) !important;
+}
+
+.edify-hover-lift {
+  transition: box-shadow var(--edify-transition), border-color var(--edify-transition), transform var(--edify-transition);
+}
+
+.edify-hover-lift:hover {
+  border-color: var(--edify-border-strong) !important;
+  box-shadow: var(--edify-shadow-md) !important;
+  transform: translateY(-1px);
+}
+
+.edify-data-row {
+  transition: background-color var(--edify-transition-fast);
+}
+
+.edify-data-row:hover {
+  background: var(--edify-surface-muted) !important;
 }
 
 /* KPI Card semantic component styling */
@@ -341,7 +597,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   border-radius: var(--edify-radius-sm);
   padding: 0.4rem 0.75rem;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--edify-text-muted);
   transition: var(--edify-transition-fast);
   cursor: pointer;
@@ -371,7 +627,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   background-color: var(--edify-surface-muted);
   border-bottom: 1px solid var(--edify-border);
   color: var(--edify-text-muted);
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0.875rem 1rem;
@@ -395,7 +651,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   border-radius: var(--edify-radius-sm);
   padding: 0.25rem 0.6rem;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border: 1px solid transparent;
@@ -429,6 +685,11 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   color: #6d28d9;
   border-color: var(--edify-purple-border);
 }
+.dark :is(.edify-status-badge, .status-pill, .badge).success { color: var(--edify-success); }
+.dark :is(.edify-status-badge, .status-pill, .badge).warning { color: var(--edify-warning); }
+.dark :is(.edify-status-badge, .status-pill, .badge).danger { color: var(--edify-danger); }
+.dark :is(.edify-status-badge, .status-pill, .badge).info { color: var(--edify-info); }
+.dark :is(.edify-status-badge, .status-pill, .badge).pending { color: var(--edify-purple); }
 
 /* Notification & Message Badges */
 .badge-count {
@@ -438,22 +699,41 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   min-width: 16px;
   height: 16px;
   border-radius: var(--edify-radius-pill);
-  background-color: var(--edify-info);
-  color: #ffffff;
+  background-color: var(--edify-notification);
+  color: var(--edify-notification-text);
   font-size: 9px;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #ffffff;
+  border: 1.5px solid var(--edify-surface);
   padding: 0 3px;
   box-shadow: var(--edify-shadow-sm);
 }
 .badge-notification {
-  background-color: var(--edify-danger);
+  background-color: var(--edify-notification);
+  color: var(--edify-notification-text);
 }
 .badge-message {
   background-color: var(--edify-info);
+}
+
+.notification-badge {
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--edify-radius-pill);
+  border: 2px solid var(--edify-surface);
+  background: var(--edify-notification);
+  color: var(--edify-notification-text);
+  box-shadow: 0 3px 10px var(--edify-notification-glow);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Premium Buttons & Controls Design System */
@@ -462,7 +742,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  font-weight: 700;
+  font-weight: 600;
   border-radius: 8px;
   font-size: 12px;
   padding: 0.5rem 1.15rem;
@@ -509,12 +789,12 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 
 /* Button styles to match reference image 3 */
 .btn-primary, .edify-action-button.primary {
-  background-color: var(--edify-info) !important; /* Vivid SaaS Blue */
-  color: #ffffff !important;
+  background-color: var(--edify-accent) !important;
+  color: var(--edify-on-accent) !important;
   box-shadow: var(--edify-shadow-sm);
 }
 .btn-primary:hover, .edify-action-button.primary:hover {
-  background-color: #2563eb !important;
+  background-color: var(--edify-accent-hover) !important;
   transform: translateY(-1px);
   box-shadow: var(--edify-shadow-md);
 }
@@ -635,7 +915,7 @@ input:checked + .toggle-slider:before {
 /* Input Fields styling */
 input[type="text"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
   border: 1px solid var(--edify-border) !important;
-  background-color: #ffffff !important;
+  background-color: var(--edify-surface) !important;
   border-radius: var(--edify-radius-sm) !important;
   color: var(--edify-text) !important;
   font-size: 12.5px !important;
@@ -674,99 +954,104 @@ input:focus, select:focus, textarea:focus {
 
 /* ─── GLOBAL KPI STRIP COMPONENT ───────────────────────────────────────────── */
 .kpi-strip {
-  background: #ffffff;
-  border: 1px solid var(--edify-border, #e2e8f0);
-  border-radius: var(--edify-radius-lg, 18px);
-  box-shadow: var(--edify-shadow-sm, 0 1px 3px 0 rgba(0, 0, 0, 0.05));
-  padding: 0.65rem 0.9rem;
+  background-color: var(--edify-surface);
+  background-image: var(--edify-surface-treatment);
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg);
+  box-shadow: var(--edify-shadow-sm);
+  padding: clamp(0.875rem, 0.72rem + 0.5vw, 1.25rem);
   width: 100%;
   overflow: hidden;
-  margin-bottom: 1.25rem;
+  margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
+  container: kpi-strip / inline-size;
 }
 
 .kpi-strip__header {
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid var(--edify-border, #e2e8f0);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--edify-border);
 }
 
 .kpi-strip__title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--edify-text, #1e293b);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  color: var(--edify-text);
   letter-spacing: -0.01em;
 }
 
 .kpi-strip__subtitle {
-  font-size: 10px;
-  color: var(--edify-text-secondary, #64748b);
-  margin-top: 0.1rem;
+  font-size: var(--edify-text-label-size);
+  color: var(--edify-text-muted);
+  margin-top: 0;
 }
 
 .kpi-strip__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 0.75rem;
-}
-
-@media (min-width: 768px) {
-  .kpi-strip__grid {
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 0;
-  }
-  
-  .kpi-strip__item:not(:last-child) {
-    border-right: 1px solid var(--edify-border, #e2e8f0);
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+  gap: 0.625rem;
 }
 
 .kpi-strip__item {
-  padding: 0.15rem 0.6rem;
+  padding: 0.75rem;
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+  background: color-mix(in srgb, var(--edify-surface-muted) 72%, transparent);
 }
 
 .kpi-strip__item-body {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  min-width: 0;
   color: inherit;
   text-decoration: none;
 }
 
 /* Linked items behave as clickable tiles with a hover lift. */
 .kpi-strip__item:has(.kpi-strip__item-body--link) {
-  border-radius: var(--edify-radius-md, 12px);
+  border-radius: var(--edify-radius-md);
   transition: background-color var(--edify-transition-fast, 0.15s),
-              transform var(--edify-transition-fast, 0.15s);
+              transform var(--edify-transition-fast, 0.15s),
+              border-color var(--edify-transition-fast, 0.15s),
+              box-shadow var(--edify-transition-fast, 0.15s);
 }
-.kpi-strip__item-body--link:hover {
-  background-color: rgba(37, 99, 235, 0.04);
+.kpi-strip__item:has(.kpi-strip__item-body--link):hover {
+  border-color: var(--edify-border-strong);
+  box-shadow: var(--edify-shadow-sm);
   transform: translateY(-1px);
 }
+.kpi-strip__item-body--link:hover { color: inherit; }
 .kpi-strip__item-body--link:focus-visible {
-  outline: 2px solid var(--edify-accent, #2563eb);
+  outline: 2px solid var(--edify-accent);
   outline-offset: 2px;
-  border-radius: var(--edify-radius-md, 12px);
+  border-radius: var(--edify-radius-md);
 }
 
 .kpi-strip__icon-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
   flex-shrink: 0;
 }
 
 .kpi-strip__icon-container--primary,
 .kpi-strip__icon-container--info,
 .kpi-strip__icon-container--blue {
-  background-color: rgba(59, 130, 246, 0.06);
-  color: #2563eb;
+  background-color: var(--edify-info-light);
+  color: var(--edify-info);
 }
 
 .kpi-strip__icon-container--success,
@@ -774,37 +1059,37 @@ input:focus, select:focus, textarea:focus {
 .kpi-strip__icon-container--green,
 .kpi-strip__icon-container--teal,
 .kpi-strip__icon-container--emerald {
-  background-color: rgba(16, 185, 129, 0.06);
-  color: #059669;
+  background-color: var(--edify-success-light);
+  color: var(--edify-success);
 }
 
 .kpi-strip__icon-container--warning,
 .kpi-strip__icon-container--amber {
-  background-color: rgba(245, 158, 11, 0.06);
-  color: #d97706;
+  background-color: var(--edify-warning-light);
+  color: var(--edify-warning);
 }
 
 .kpi-strip__icon-container--danger,
 .kpi-strip__icon-container--red {
-  background-color: rgba(239, 68, 68, 0.06);
-  color: #dc2626;
+  background-color: var(--edify-danger-light);
+  color: var(--edify-danger);
 }
 
 .kpi-strip__icon-container--analytics,
 .kpi-strip__icon-container--purple {
-  background-color: rgba(139, 92, 246, 0.06);
-  color: #7c3aed;
+  background-color: var(--edify-purple-light);
+  color: var(--edify-purple);
 }
 
 .kpi-strip__icon-container--neutral,
 .kpi-strip__icon-container--slate {
-  background-color: rgba(100, 116, 139, 0.06);
-  color: #475569;
+  background-color: color-mix(in srgb, var(--edify-text-muted) 10%, transparent);
+  color: var(--edify-text-muted);
 }
 
 .kpi-strip__icon {
-  width: 14px;
-  height: 14px;
+  width: 17px;
+  height: 17px;
 }
 
 .kpi-strip__item-details {
@@ -815,29 +1100,29 @@ input:focus, select:focus, textarea:focus {
 }
 
 .kpi-strip__label {
-  font-size: 8.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--edify-text-secondary, #64748b);
-  line-height: 1.1;
-  margin-bottom: 0.05rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--edify-text-muted);
+  line-height: 1.25;
+  margin-bottom: 0.125rem;
 }
 
 .kpi-strip__value {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--edify-text, #0f172a);
+  font-size: clamp(1.25rem, 1.05rem + 0.55cqi, 1.625rem);
+  font-weight: 700;
+  color: var(--edify-text);
   line-height: 1.05;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
 }
 
 .kpi-strip__meta {
   display: flex;
   align-items: center;
   gap: 0.2rem;
-  margin-top: 0.05rem;
-  font-size: 9.5px;
+  margin-top: 0.2rem;
+  font-size: var(--edify-text-micro-size);
 }
 
 .kpi-strip__trend {
@@ -847,32 +1132,263 @@ input:focus, select:focus, textarea:focus {
 }
 
 .kpi-strip__trend--up {
-  color: #10b981;
+  color: var(--edify-success);
 }
 
 .kpi-strip__trend--down {
-  color: #ef4444;
+  color: var(--edify-danger);
 }
 
 .kpi-strip__trend--neutral {
-  color: #64748b;
+  color: var(--edify-text-muted);
 }
 
 .kpi-strip__helper {
-  color: var(--edify-text-secondary, #64748b);
+  color: var(--edify-text-muted);
   font-weight: 500;
 }
 
 /* Compact version */
 .kpi-strip--compact {
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem;
 }
 
 .kpi-strip--compact .kpi-strip__grid {
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
 }
 
 .kpi-strip--compact .kpi-strip__value {
-  font-size: 1.05rem;
+  font-size: 1.125rem;
 }
 
+@container kpi-strip (min-width: 30rem) and (max-width: 42rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container kpi-strip (min-width: 48rem) {
+  .kpi-strip__grid { gap: 0; }
+
+  .kpi-strip__item {
+    padding: 0.55rem clamp(0.75rem, 1.4cqi, 1.25rem);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .kpi-strip__item:not(:last-child) {
+    border-right: 1px solid var(--edify-border);
+  }
+}
+
+/* Six-metric finance and operations strips need more reading room on the
+   authenticated canvas. At very wide widths they return to one row. */
+@container kpi-strip (min-width: 38rem) and (max-width: 74.99rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(10))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .kpi-strip__grid:is(
+    :has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))),
+    :has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))),
+    :has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(10)))
+  ) .kpi-strip__item {
+    padding: 0.75rem;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-radius-md);
+    background: color-mix(in srgb, var(--edify-surface-muted) 72%, transparent);
+  }
+}
+
+/* Settings owns appearance selection. These previews communicate the real
+   character of each workspace instead of showing generic color swatches. */
+.appearance-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.75rem;
+}
+
+.appearance-theme-option {
+  min-width: 0;
+  min-height: 8rem;
+  padding: 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text);
+  text-align: start;
+  transition: transform var(--edify-transition-fast), border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+
+.appearance-theme-option:hover {
+  transform: translateY(-1px);
+  border-color: var(--edify-border-strong);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.appearance-theme-option.is-active {
+  border-color: var(--edify-accent);
+  box-shadow: var(--edify-focus-ring), var(--edify-shadow-sm);
+}
+
+.appearance-theme-preview {
+  display: block;
+  height: 3.5rem;
+  margin-bottom: 0.625rem;
+  overflow: hidden;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 10px;
+  background-position: center 30%;
+  background-size: cover;
+}
+
+.appearance-theme-preview--light {
+  background: linear-gradient(135deg, #ffffff, #edf1f3);
+}
+
+.appearance-theme-preview--system {
+  background:
+    linear-gradient(116deg, transparent 0 48%, rgba(255,255,255,.7) 48% 51%, transparent 51%),
+    linear-gradient(116deg, #f8fafb 0 49%, #111c29 49% 100%);
+}
+
+.appearance-theme-preview--blue {
+  background-image:
+    linear-gradient(112deg, rgba(0,29,57,.90), rgba(10,65,116,.64)),
+    url("../images/login-classroom-portrait.jpg");
+}
+
+.appearance-theme-preview--dark {
+  background: radial-gradient(circle at 80% 0%, rgba(10,65,116,.42), transparent 68%), linear-gradient(135deg,#080e16,#182636 60%,#203249);
+}
+
+.settings-detail-tile {
+  min-width: 0;
+  padding: 0.875rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+.settings-detail-tile__label {
+  color: var(--edify-text-muted);
+  font: var(--edify-font-micro);
+  letter-spacing: var(--edify-text-micro-tracking);
+  text-transform: uppercase;
+}
+
+.settings-detail-tile__value {
+  margin-block-start: 0.25rem;
+  color: var(--edify-text);
+  font: var(--edify-font-title);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Responsive composition — mobile is a distinct working layout. ─────── */
+@media (max-width: 767px) {
+  .edify-topbar {
+    padding-inline: 0.75rem;
+  }
+
+  main > div[class*="px-4"],
+  main > div[class*="p-4"],
+  main > div[class*="p-6"] {
+    padding-inline: var(--edify-page-gutter) !important;
+  }
+
+  .edify-page-header {
+    margin-bottom: 1rem;
+  }
+
+  #planning-main-container .edify-page-header > :last-child {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  #planning-main-container .edify-page-header > :last-child > :is(a, button) {
+    flex: 1 1 auto;
+    min-width: max-content;
+  }
+
+  :is(#filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end !important;
+    gap: 0.625rem !important;
+    width: 100%;
+  }
+
+  :is(#filters-form, #analytics-filters-form) > div {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  :is(#filters-form, #analytics-filters-form) > div > span {
+    width: 100%;
+    color: var(--edify-text-muted) !important;
+  }
+
+  :is(#filters-form, #analytics-filters-form) select,
+  :is(#pl-analytics-filters, #cd-analytics-filters, #cb-filters) :is(select, input) {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  #analytics-filters-form > a,
+  #filters-form > button {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-left: 0 !important;
+    min-height: 36px;
+  }
+
+  #cb-filters > label {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .kpi-strip__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .edify-topbar > div:first-child {
+    gap: 0.5rem;
+  }
+
+  .kpi-strip__item-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .kpi-strip__item {
+    min-height: 8.25rem;
+  }
+}
+
+@media (pointer: coarse) {
+  :is(.btn, .edify-action-button),
+  .edify-topbar :is(button, a),
+  main :is(input, select, textarea):not([type="hidden"]) {
+    min-height: 44px;
+  }
+
+}

@@ -1,71 +1,83 @@
-{% extends "layouts/auth.html" %}
+{% extends "layouts/login.html" %}
 
 {% block auth_content %}
-{% if error %}
-<div class="p-3 rounded-lg text-[12px] font-semibold"
-     style="background:var(--edify-danger-light);border:1px solid var(--edify-danger-border);color:var(--edify-danger);">
-{{ error }}
-</div>
-{% endif %}
+<header class="login-heading">
+  <h1 id="login-title">Sign in</h1>
+  <p>Access your Edify account</p>
+</header>
 
-<form action="/login" method="post" class="space-y-4">
-{% csrf_token %}
-<div>
-<label for="email" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--edify-text-muted);display:block;">Email address</label>
-<div class="mt-1">
-<input
-type="email"
-name="email"
-id="email"
-required
-value="{{ email|default:'' }}"
-class="w-full h-10 px-3 rounded-lg text-[13px] focus:outline-none transition-all"
-style="border:1px solid var(--edify-border);background:var(--edify-surface);color:var(--edify-text);"
-placeholder="cceo@edify.org"
->
-</div>
-</div>
+<form class="login-form" action="{% url 'frontend:login' %}" method="post" aria-labelledby="login-title" data-login-form>
+  {% csrf_token %}
 
-<div>
-<label for="password" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--edify-text-muted);display:block;">Password</label>
-<div class="mt-1">
-<input
-type="password"
-name="password"
-id="password"
-required
-class="w-full h-10 px-3 rounded-lg text-[13px] focus:outline-none transition-all"
-style="border:1px solid var(--edify-border);background:var(--edify-surface);color:var(--edify-text);"
-placeholder="••••••••"
->
-</div>
-</div>
+  <div class="login-field">
+    <label for="email">Email address</label>
+    <div class="login-field__control">
+      <svg class="login-field__icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        value="{{ email|default:'' }}"
+        autocomplete="username"
+        inputmode="email"
+        enterkeyhint="next"
+        spellcheck="false"
+        required
+        {% if error %}aria-invalid="true" aria-describedby="login-status"{% endif %}
+      >
+    </div>
+  </div>
 
-<div class="flex items-center justify-between">
-<div class="flex items-center">
-<input
-id="remember_me"
-name="remember_me"
-type="checkbox"
-class="h-4 w-4 rounded"
-style="accent-color:var(--edify-accent);"
->
-<label for="remember_me" class="ml-2 block text-[12px] font-semibold select-none" style="color:var(--edify-text-muted);">
-Remember me
-</label>
-</div>
-</div>
+  <div class="login-field">
+    <label for="current-password">Password</label>
+    <div class="login-field__control">
+      <svg class="login-field__icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+      <input
+        id="current-password"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        enterkeyhint="done"
+        required
+        {% if error %}aria-invalid="true" aria-describedby="login-status"{% endif %}
+      >
+      <button
+        class="password-toggle"
+        type="button"
+        aria-label="Show password"
+        aria-controls="current-password"
+        aria-pressed="false"
+        data-password-toggle
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" data-eye-open><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.6"></circle></svg>
+        <svg class="password-toggle__hidden" aria-hidden="true" viewBox="0 0 24 24" data-eye-closed><path d="m3 3 18 18M10.6 6.1c.46-.07.93-.1 1.4-.1 6 0 9.5 6 9.5 6a18 18 0 0 1-2.4 3.1M6.5 6.6C3.9 8.3 2.5 12 2.5 12s3.5 6 9.5 6c1.2 0 2.3-.24 3.3-.63M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>
+      </button>
+    </div>
+  </div>
 
-<div>
-<button
-type="submit"
-class="w-full h-10 rounded-lg text-white text-[14px] font-semibold transition-all active:scale-[0.98]"
-style="background:var(--edify-accent);box-shadow:0 1px 3px rgba(37,99,235,.25),inset 0 1px 0 rgba(255,255,255,.15);"
-onmouseover="this.style.background='var(--edify-accent-hover)'"
-onmouseout="this.style.background='var(--edify-accent)'"
->
-Sign in
-</button>
-</div>
+  <div class="login-options">
+    <label class="remember-control" for="remember-me">
+      <input id="remember-me" name="remember_me" type="checkbox" {% if remember_me %}checked{% endif %}>
+      <span>Remember me</span>
+    </label>
+    <button class="forgot-button" type="button" data-forgot-password>Forgot password?</button>
+  </div>
+
+  <div
+    id="login-status"
+    class="login-alert{% if not error %} is-hidden{% endif %}"
+    role="alert"
+    aria-live="polite"
+    data-form-status
+  >
+    <svg class="login-alert__icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 17h.01"></path></svg>
+    <span data-form-status-message>{{ error|default:"" }}</span>
+  </div>
+
+  <button class="login-submit" type="submit" data-login-submit>
+    <svg class="login-submit__icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M14 8l4 4-4 4M18 12H7M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"></path></svg>
+    <span>Access workspace</span>
+    <span class="login-submit__spinner" aria-hidden="true"></span>
+  </button>
 </form>
 {% endblock %}

@@ -182,6 +182,61 @@ class FinanceOperatingSystemTest(TestCase):
         activity.refresh_from_db()
         self.assertEqual(activity.payment_status, "disbursed")
 
+    def test_disburse_advance_marks_underlying_advance_request_disbursed(self):
+        """Regression: AdvanceDisbursementService.disburse_advance() used to
+        create a Disbursement + flip Activity.payment_status but never touch
+        the underlying AdvanceRequest row — it stayed CONFIRMED_FOR_ADVANCE
+        forever, so the SAME advance could be disbursed a second time through
+        the canonical apps.fund_requests.advance_service.disburse() queue."""
+        activity = Activity.objects.create(
+            school=self.school,
+            delivery_type="staff",
+            activity_type=ActivityType.SCHOOL_VISIT,
+            status="scheduled",
+            payment_status="pending",
+            responsible_staff_id="cceo_dup_test",
+            planned_date=date(2026, 7, 23),
+        )
+        cost_line = ActivityScheduleCostLine.objects.create(
+            activity=activity,
+            cost_setting_key="transport_allowance",
+            label="Transport",
+            unit_cost=100000,
+            quantity=1,
+            amount=100000,
+        )
+        adv = AdvanceRequest.objects.create(
+            activity=activity,
+            budget_line=cost_line,
+            responsible_user_id="cceo_dup_test",
+            fy="FY26",
+            quarter="Q1",
+            amount=100000,
+            status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+        )
+
+        AdvanceDisbursementService.disburse_advance(
+            activity=activity,
+            amount=100000,
+            method="Mobile Money",
+            reference="TXN-DUP-1",
+            user_id="accountant_jane",
+        )
+        adv.refresh_from_db()
+        self.assertEqual(adv.status, AdvanceRequestStatus.DISBURSED)
+        self.assertEqual(adv.disbursed_amount, 100000)
+
+        # Now provably closed to a second, real disbursement through the
+        # canonical per-advance queue.
+        from apps.core.exceptions import BadRequest
+        from apps.fund_requests.advance_service import disburse as advance_disburse
+
+        class _Principal:
+            user_id = "accountant_jane"
+
+        with self.assertRaises(BadRequest):
+            advance_disburse(adv.id, {"amount": 100000}, _Principal())
+
     def test_partner_payment_blocked_and_success(self):
         # Partner payment should fail if blockers exist (e.g. IA missing)
         with self.assertRaises(ValueError):
@@ -353,10 +408,14 @@ class FinanceOperatingSystemTest(TestCase):
         self.partner_activity.refresh_from_db()
         self.assertNotEqual(self.partner_activity.status, "closed")
         self.assertFalse(
-            NetSuiteExpenseRecord.objects.filter(activity=self.partner_activity).exists()
+            NetSuiteExpenseRecord.objects.filter(
+                activity=self.partner_activity
+            ).exists()
         )
 
-    def test_clear_partner_payment_view_success_creates_netsuite_record_and_snapshot(self):
+    def test_clear_partner_payment_view_success_creates_netsuite_record_and_snapshot(
+        self,
+    ):
         self._make_partner_activity_verification_eligible()
         client = self._accountant_client()
 
@@ -380,7 +439,9 @@ class FinanceOperatingSystemTest(TestCase):
             ).exists()
         )
         self.assertTrue(
-            CompletedActivitySnapshot.objects.filter(activity=self.partner_activity).exists()
+            CompletedActivitySnapshot.objects.filter(
+                activity=self.partner_activity
+            ).exists()
         )
 
     def test_reimbursement_claim_calculations(self):
@@ -593,3 +654,49 @@ class FinanceOperatingSystemTest(TestCase):
         ActivityCertificationService.certify_activity(activity, {}, "ia_user")
         activity.refresh_from_db()
         self.assertEqual(activity.payment_status, "ia_confirmed")
+
+    def test_accountant_dashboard_budget_util_counts_confirmed_advances(self):
+        """Regression: accountant_dashboard_view's KPI block used to filter
+        WeeklyFundRequest on status literals ("approved_by_cd",
+        "sent_to_accountant", "accountability_pending") that
+        weekly_service.py never actually writes to WeeklyFundRequest.status —
+        so a "confirmed_for_advance" advance (approved, awaiting disbursement)
+        was silently excluded from the approved-funds denominator, skewing
+        Budget Utilization toward 100%. The KPI block now shares
+        disbursement_dashboard_service.weekly_status_buckets() with the
+        Disbursement Dashboard so the two "current budget status" surfaces
+        cannot diverge."""
+        from django.utils import timezone
+        from apps.core.fy import get_operational_fy
+        from apps.fund_requests.models import WeeklyFundRequest
+
+        fy = get_operational_fy()
+        # Approved, not yet disbursed — must count toward "approved".
+        WeeklyFundRequest.objects.create(
+            fy=fy,
+            week_start_date=date(2026, 6, 1),
+            week_end_date=date(2026, 6, 7),
+            responsible_user="cceo_user",
+            status="confirmed_for_advance",
+            total_amount=100_000,
+        )
+        # Disbursed — counts toward both "approved" and "disbursed".
+        WeeklyFundRequest.objects.create(
+            fy=fy,
+            week_start_date=date(2026, 6, 8),
+            week_end_date=date(2026, 6, 14),
+            responsible_user="cceo_user",
+            status="disbursed",
+            total_amount=50_000,
+            disbursed_amount=50_000,
+            disbursed_at=timezone.now(),
+        )
+        client = self._accountant_client()
+        resp = client.get("/accounts/")
+        self.assertEqual(resp.status_code, 200)
+        kpis = resp.context["kpis"]
+        # disbursed(50,000) / approved(100,000 pending-disb + 50,000 disbursed)
+        # = 33%. The old dead-status filter treated approved as just 50,000
+        # (only "disbursed" matched) and reported 100%.
+        self.assertEqual(kpis["budget_util"], "33%")
+        self.assertEqual(kpis["pending_disb_count"], 1)

@@ -8,6 +8,7 @@
   --drawer-width-md: 580px;
   --drawer-width-lg: 820px;
   --drawer-width-xl: 1120px;
+  --drawer-width-workspace: 1600px;
   --drawer-radius: 16px;
   --drawer-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.22), 0 8px 24px -8px rgba(15, 23, 42, 0.12);
   --drawer-backdrop-color: rgba(15, 23, 42, 0.45);
@@ -62,6 +63,12 @@
 .drawer-surface.size-md { max-width: var(--drawer-width-md); }
 .drawer-surface.size-lg { max-width: var(--drawer-width-lg); }
 .drawer-surface.size-xl { max-width: var(--drawer-width-xl); }
+.drawer-surface.size-workspace {
+  max-width: min(
+    var(--drawer-width-workspace),
+    calc(100% - clamp(1.5rem, 4vw, 5rem))
+  );
+}
 
 /* ── Centered Floating Modal/Drawer ────────────────────────────────────── */
 .drawer-surface.type-center {

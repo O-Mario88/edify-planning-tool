@@ -117,7 +117,9 @@ class IAWorkflowTests(TestCase):
 
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, ActivityStatus.CLOSED)
-        self.assertEqual(self.activity.ia_verification_status, VerificationStatus.PENDING)
+        self.assertEqual(
+            self.activity.ia_verification_status, VerificationStatus.PENDING
+        )
         self.assertFalse(
             VerificationHistory.objects.filter(activity=self.activity).exists()
         )
@@ -135,10 +137,10 @@ class IAWorkflowTests(TestCase):
 
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, ActivityStatus.CANCELLED)
-        self.assertEqual(self.activity.ia_verification_status, VerificationStatus.PENDING)
-        self.assertFalse(
-            IAVerification.objects.filter(activity=self.activity).exists()
+        self.assertEqual(
+            self.activity.ia_verification_status, VerificationStatus.PENDING
         )
+        self.assertFalse(IAVerification.objects.filter(activity=self.activity).exists())
 
     def test_detect_duplicates(self):
         """Detects duplicate activities that have the same Salesforce ID."""

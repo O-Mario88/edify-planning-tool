@@ -316,6 +316,32 @@ def apply_to_activity(
         activity.quarter = quarter
         activity.fy = fiscal_year
 
+    # A cost line's disbursed/accounted/reimbursed AdvanceRequest (or its
+    # WeeklyFundRequestLine) CASCADEs on the line's own deletion — clearing
+    # the lines below would silently erase that financial record along with
+    # it, no matter how careful advance_service.sync_for_activity() is about
+    # never touching a disbursed advance, since by the time it runs the row
+    # would already be gone. Once money has actually moved on this activity,
+    # re-pricing it here is a locked historical snapshot; the caller must use
+    # a formal amendment/variance workflow instead of a silent reschedule.
+    from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
+
+    if AdvanceRequest.objects.filter(
+        budget_line__activity=activity,
+        status__in=[
+            AdvanceRequestStatus.DISBURSED,
+            AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
+            AdvanceRequestStatus.ACCOUNTED,
+            AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
+            AdvanceRequestStatus.REIMBURSED,
+        ],
+    ).exists():
+        raise BadRequest(
+            "This activity already has a disbursed or accounted advance — its "
+            "cost snapshot is locked. Use a budget amendment instead of "
+            "rescheduling to change its cost."
+        )
+
     # The clear-and-rebuild of ActivityScheduleCostLine plus the activity's own
     # cost-field save must succeed or fail together — a crash mid-sequence (e.g.
     # after the delete but before the bulk_create completes) would otherwise

@@ -93,10 +93,12 @@ class DashboardMetricsService:
             status__in=["completed", "ia_verified"],
             scheduled_date__date__range=[start_month, end_month],
         ).count()
+        # No fabricated fallback: nothing planned this month is an honest 0%,
+        # never an invented number.
         target_achievement = (
-            round(completed_this_month / max(1, activities_this_month) * 100)
+            round(completed_this_month / activities_this_month * 100)
             if activities_this_month > 0
-            else 72
+            else 0
         )
 
         # 2. Signal Strips
@@ -106,7 +108,10 @@ class DashboardMetricsService:
         ready_for_action = schools_qs.exclude(
             planning_readiness__in=["requires_cluster", "data_cleanup_required"]
         ).count()
-        operational_health = 93  # default score
+        # Real composite, not a fabricated constant: school planning readiness
+        # and this-month activity delivery are the two workstream health
+        # signals already computed above -- simple average of the two.
+        operational_health = round((ready_pct + target_achievement) / 2)
 
         # 3. Today's Priorities
         today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -367,6 +372,7 @@ class DashboardMetricsService:
                     "cls": "red-bg",
                     "title": f"{without_ssa_count} schools",
                     "detail": "Missing a verified SSA this year",
+                    "href": "/ssa",
                 }
             )
         _fund_pending = WeeklyFundRequest.objects.filter(
@@ -379,6 +385,7 @@ class DashboardMetricsService:
                     "cls": "orange-bg",
                     "title": f"{_fund_pending} fund requests",
                     "detail": "Awaiting approval",
+                    "href": "/fund-requests/weekly",
                 }
             )
         _evidence_pending = activities_qs.filter(
@@ -391,8 +398,43 @@ class DashboardMetricsService:
                     "cls": "purple-bg",
                     "title": f"{_evidence_pending} evidence submissions",
                     "detail": "Not yet uploaded",
+                    "href": "/evidence/",
                 }
             )
+
+        # 11c. Next Recommended Action — derived from the same real counts as
+        # Attention Needed above (highest-priority open item), never a
+        # hardcoded suggestion. None when there is genuinely nothing to act on
+        # (honest empty state, no fabricated fallback).
+        recommended_action = None
+        if _fund_pending:
+            recommended_action = {
+                "title": "Confirm pending fund request"
+                + ("s" if _fund_pending > 1 else ""),
+                "detail": f"{_fund_pending} weekly fund request"
+                + ("s" if _fund_pending > 1 else "")
+                + " awaiting approval.",
+                "cta_label": "Review Fund Requests",
+                "cta_href": "/fund-requests/weekly",
+            }
+        elif without_ssa_count:
+            recommended_action = {
+                "title": "Close the SSA coverage gap",
+                "detail": f"{without_ssa_count} school"
+                + ("s" if without_ssa_count > 1 else "")
+                + " missing a verified SSA this year.",
+                "cta_label": "Go to SSA",
+                "cta_href": "/ssa",
+            }
+        elif _evidence_pending:
+            recommended_action = {
+                "title": "Upload outstanding evidence",
+                "detail": f"{_evidence_pending} completed activit"
+                + ("ies" if _evidence_pending > 1 else "y")
+                + " still need evidence.",
+                "cta_label": "Go to Evidence",
+                "cta_href": "/evidence/",
+            }
 
         # 12. Right Rail - Upcoming activities today
         upcoming_today_qs = activities_qs.filter(
@@ -435,7 +477,6 @@ class DashboardMetricsService:
                     "helper": "completed vs scheduled",
                     "icon": "target",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+4%"},
                 },
                 {
                     "label": "Planned This Week",
@@ -463,21 +504,33 @@ class DashboardMetricsService:
                 },
             ]
         elif role == "Program Lead":
+            # Reuse the canonical PL team-execution formula (same source as
+            # the PL Analytics "Team Execution Progress %" card) instead of
+            # a locally-derived number under a label reserved for it, and a
+            # fabricated CCEOs-On-Track count.
+            from apps.analytics.pl_analytics_service import (
+                PLAnalyticsService,
+                resolve_pl_scope,
+            )
+
+            pl_scope = resolve_pl_scope(user)
+            team_execution_pct, cceos_on_track = PLAnalyticsService._team_target(
+                pl_scope, fy, current_quarter
+            )
             kpi_items = [
                 {
-                    "label": "Team Target Achievement",
-                    "value": f"{target_achievement}%",
-                    "raw_value": target_achievement,
-                    "helper": "vs last month",
+                    "label": "Team Execution Progress %",
+                    "value": f"{team_execution_pct}%",
+                    "raw_value": team_execution_pct,
+                    "helper": "field completions vs target (not IA-verified)",
                     "icon": "target",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+6%"},
                 },
                 {
                     "label": "CCEOs On Track",
-                    "value": "8/10",
-                    "raw_value": 8,
-                    "helper": "active CCEOs",
+                    "value": f"{cceos_on_track} / {len(pl_scope.cceos)}",
+                    "raw_value": cceos_on_track,
+                    "helper": "at or above pace",
                     "icon": "users",
                     "variant": "info",
                 },
@@ -499,6 +552,27 @@ class DashboardMetricsService:
                 },
             ]
         elif role in ["CountryDirector", "RegionalVicePresident", "Admin"]:
+            # Real country-wide disbursed/approved utilization for the FY
+            # (same disbursed/approved ratio as PLAnalyticsService._budget_utilization,
+            # applied without a per-PL user filter since this KPI is country-scoped).
+            country_fy_requests = WeeklyFundRequest.objects.filter(fy=fy)
+            country_approved = (
+                country_fy_requests.filter(
+                    status__in=["confirmed_for_advance", "disbursed", "accounted"]
+                ).aggregate(Sum("total_amount"))["total_amount__sum"]
+                or 0
+            )
+            country_disbursed = (
+                country_fy_requests.filter(
+                    status__in=["disbursed", "accounted"]
+                ).aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"]
+                or 0
+            )
+            budget_utilization_pct = (
+                round(country_disbursed / country_approved * 100)
+                if country_approved
+                else 0
+            )
             kpi_items = [
                 {
                     "label": "Country Target Achievement",
@@ -507,13 +581,12 @@ class DashboardMetricsService:
                     "helper": "vs last quarter",
                     "icon": "target",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+12%"},
                 },
                 {
                     "label": "Budget Utilization",
-                    "value": "78%",
-                    "raw_value": 78,
-                    "helper": "utilization",
+                    "value": f"{budget_utilization_pct}%",
+                    "raw_value": budget_utilization_pct,
+                    "helper": "disbursed / approved",
                     "icon": "currency",
                     "variant": "finance",
                 },
@@ -613,7 +686,6 @@ class DashboardMetricsService:
                     "helper": f"{ready_pct}% of total",
                     "icon": "school",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+5%"},
                 },
                 {
                     "label": "Schools Without SSA",
@@ -661,6 +733,7 @@ class DashboardMetricsService:
             },
             "priorities": priorities,
             "attention_items": attention_items,
+            "recommended_action": recommended_action,
             "weekly_progress": weekly_progress,
             "best_interventions": best_interventions,
             "weakest_interventions": weakest_interventions,

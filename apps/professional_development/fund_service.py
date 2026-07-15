@@ -47,14 +47,20 @@ class PDFundRequestService:
             return False
         if getattr(principal, "active_role", "") != FINANCE_ROLE:
             return False
-        return req.status in (PDStatus.APPROVED_PENDING_FUNDING, PDStatus.ACCOUNTABILITY_SUBMITTED)
+        return req.status in (
+            PDStatus.APPROVED_PENDING_FUNDING,
+            PDStatus.ACCOUNTABILITY_SUBMITTED,
+        )
 
     @staticmethod
-    def create(req: ProfessionalDevelopmentRequest) -> ProfessionalDevelopmentFundRequest:
+    def create(
+        req: ProfessionalDevelopmentRequest,
+    ) -> ProfessionalDevelopmentFundRequest:
         fr, _ = ProfessionalDevelopmentFundRequest.objects.get_or_create(
             request=req,
             defaults={
-                "fy": req.fy, "staff_id": req.staff_id,
+                "fy": req.fy,
+                "staff_id": req.staff_id,
                 "amount_cents": req.requested_amount_cents,
                 "currency": req.currency,
                 "payment_recipient": req.payment_recipient,
@@ -69,12 +75,17 @@ class PDFundRequestService:
                 from apps.notifications.models import Notification
 
                 Notification.objects.create(
-                    recipient_id=approver.id, title="PD fund request awaiting disbursement",
+                    recipient_id=approver.id,
+                    title="PD fund request awaiting disbursement",
                     body=f"{req.staff_name} — “{req.course_name}” "
-                         f"({req.currency} {req.requested_amount_cents/100:,.0f}).",
-                    category="professional_development", context_type="pd_fund_request",
-                    context_id=fr.id, target_route=f"/my-professional-development/request?id={req.id}",
-                    action_label="Open", action_required=True, priority="high",
+                    f"({req.currency} {req.requested_amount_cents/100:,.0f}).",
+                    category="professional_development",
+                    context_type="pd_fund_request",
+                    context_id=fr.id,
+                    target_route=f"/my-professional-development/request?id={req.id}",
+                    action_label="Open",
+                    action_required=True,
+                    priority="high",
                 )
         except Exception:  # noqa: BLE001 — notification is supportive, never blocking
             pass
@@ -82,28 +93,43 @@ class PDFundRequestService:
 
     @staticmethod
     @transaction.atomic
-    def disburse(fund_request_id: str, principal, *, method: str, reference: str, notes: str = "") -> ProfessionalDevelopmentFundRequest:
-        fr = ProfessionalDevelopmentFundRequest.objects.select_for_update().get(id=fund_request_id)
-        req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=fr.request_id)
+    def disburse(
+        fund_request_id: str, principal, *, method: str, reference: str, notes: str = ""
+    ) -> ProfessionalDevelopmentFundRequest:
+        fr = ProfessionalDevelopmentFundRequest.objects.select_for_update().get(
+            id=fund_request_id
+        )
+        req = ProfessionalDevelopmentRequest.objects.select_for_update().get(
+            id=fr.request_id
+        )
         _assert_finance_role(req, principal)
         if fr.status != PDFundRequestStatus.PENDING_DISBURSEMENT:
             raise BadRequest("This PD fund request is not pending disbursement.")
         ProfessionalDevelopmentDisbursement.objects.create(
-            fund_request=fr, amount_cents=fr.amount_cents, disbursed_by=principal.user_id,
-            payment_method=method, payment_reference=reference, notes=notes,
+            fund_request=fr,
+            amount_cents=fr.amount_cents,
+            disbursed_by=principal.user_id,
+            payment_method=method,
+            payment_reference=reference,
+            notes=notes,
         )
         fr.status = PDFundRequestStatus.DISBURSED
         fr.save(update_fields=["status", "updated_at"])
         req.status = PDStatus.DISBURSED
         req.save(update_fields=["status", "updated_at"])
         PDFundRequestService._notify(
-            req.owner_user_id, "PD funds disbursed",
+            req.owner_user_id,
+            "PD funds disbursed",
             f"Funding for “{req.course_name}” has been disbursed — confirm receipt and "
-            "your enrollment.", req)
+            "your enrollment.",
+            req,
+        )
         return fr
 
     @staticmethod
-    def hold(fund_request_id: str, principal, reason: str) -> ProfessionalDevelopmentFundRequest:
+    def hold(
+        fund_request_id: str, principal, reason: str
+    ) -> ProfessionalDevelopmentFundRequest:
         fr = ProfessionalDevelopmentFundRequest.objects.get(id=fund_request_id)
         req = ProfessionalDevelopmentRequest.objects.get(id=fr.request_id)
         _assert_finance_role(req, principal)
@@ -113,7 +139,9 @@ class PDFundRequestService:
         return fr
 
     @staticmethod
-    def return_request(fund_request_id: str, principal, reason: str) -> ProfessionalDevelopmentFundRequest:
+    def return_request(
+        fund_request_id: str, principal, reason: str
+    ) -> ProfessionalDevelopmentFundRequest:
         if not (reason or "").strip():
             raise BadRequest("A return reason is required.")
         fr = ProfessionalDevelopmentFundRequest.objects.get(id=fund_request_id)
@@ -126,7 +154,8 @@ class PDFundRequestService:
         req.hr_note = f"Finance returned: {reason}"[:512]
         req.save(update_fields=["status", "hr_note", "updated_at"])
         PDFundRequestService._notify(
-            req.owner_user_id, "PD funding request returned", reason, req)
+            req.owner_user_id, "PD funding request returned", reason, req
+        )
         return fr
 
     # ── Accountability clearance (§23) ───────────────────────────────────────
@@ -137,7 +166,9 @@ class PDFundRequestService:
         if req.status != PDStatus.ACCOUNTABILITY_SUBMITTED:
             raise BadRequest("Accountability has not been submitted for this request.")
         if not (req.accountability_netsuite_id or "").strip():
-            raise BadRequest("No NetSuite Expense ID on record — accountability cannot be cleared.")
+            raise BadRequest(
+                "No NetSuite Expense ID on record — accountability cannot be cleared."
+            )
         # Straight to the same AWAITING_HR_SIGNOFF gate unfunded courses reach
         # from BambooHR confirmation — sign_off() then has one uniform check
         # instead of a funded/unfunded branch. `accountability_reviewed_at`
@@ -147,13 +178,18 @@ class PDFundRequestService:
         req.accountability_reviewed_at = timezone.now()
         req.save()
         PDFundRequestService._notify(
-            req.owner_user_id, "PD accountability cleared",
+            req.owner_user_id,
+            "PD accountability cleared",
             f"Finance cleared your accountability for “{req.course_name}” — "
-            "awaiting HR sign-off.", req)
+            "awaiting HR sign-off.",
+            req,
+        )
         return req
 
     @staticmethod
-    def return_accountability(req_id: str, principal, reason: str) -> ProfessionalDevelopmentRequest:
+    def return_accountability(
+        req_id: str, principal, reason: str
+    ) -> ProfessionalDevelopmentRequest:
         if not (reason or "").strip():
             raise BadRequest("A return reason is required.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
@@ -164,7 +200,8 @@ class PDFundRequestService:
         req.accountability_reviewed_at = timezone.now()
         req.save()
         PDFundRequestService._notify(
-            req.owner_user_id, "PD accountability returned", reason, req)
+            req.owner_user_id, "PD accountability returned", reason, req
+        )
         return req
 
     @staticmethod
@@ -175,10 +212,16 @@ class PDFundRequestService:
             from apps.notifications.models import Notification
 
             Notification.objects.create(
-                recipient_id=recipient_user_id, title=title, body=body,
-                category="professional_development", context_type="pd_request",
-                context_id=req.id, target_route=f"/my-professional-development/request?id={req.id}",
-                action_label="Open", action_required=True, priority="high",
+                recipient_id=recipient_user_id,
+                title=title,
+                body=body,
+                category="professional_development",
+                context_type="pd_request",
+                context_id=req.id,
+                target_route=f"/my-professional-development/request?id={req.id}",
+                action_label="Open",
+                action_required=True,
+                priority="high",
             )
         except Exception:  # noqa: BLE001
             pass

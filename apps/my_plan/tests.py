@@ -116,8 +116,10 @@ class ComputeNextActionPaymentStatusTest(TestCase):
         self.region = Region.objects.create(name="CTA Region")
         self.district = District.objects.create(name="CTA District", region=self.region)
         self.school = School.objects.create(
-            school_id="CTA-SCH", name="CTA School",
-            region=self.region, district=self.district,
+            school_id="CTA-SCH",
+            name="CTA School",
+            region=self.region,
+            district=self.district,
         )
 
     def _verified_activity(self, payment_status):
@@ -163,8 +165,10 @@ class MyPlanOwnerNameDisplayTest(TestCase):
             name="Owner Name District", region=self.region
         )
         self.school = School.objects.create(
-            school_id="OWN-SCH", name="Owner Name School",
-            region=self.region, district=self.district,
+            school_id="OWN-SCH",
+            name="Owner Name School",
+            region=self.region,
+            district=self.district,
         )
         self.cceo = User.objects.create_user(
             email="owner-name-cceo@test.org",
@@ -179,7 +183,11 @@ class MyPlanOwnerNameDisplayTest(TestCase):
     def test_owner_resolves_real_name_from_staff_profile_id(self):
         from apps.my_plan.services import get_frontend_context
 
-        today = timezone.now().date()
+        # localdate, not timezone.now().date(): get_frontend_context's own
+        # "today" is date.today() (server-local, Africa/Kampala/EAT) --
+        # timezone.now() is UTC, which is a different calendar date from
+        # 21:00-24:00 UTC (00:00-03:00 EAT) every night.
+        today = timezone.localdate()
         from apps.core.fy import get_operational_fy
 
         Activity.objects.create(
@@ -204,7 +212,7 @@ class MyPlanOwnerNameDisplayTest(TestCase):
         when the principal has no StaffProfile — model exactly that case."""
         from apps.my_plan.services import get_frontend_context
 
-        today = timezone.now().date()
+        today = timezone.localdate()
         from apps.core.fy import get_operational_fy
 
         no_profile_user = User.objects.create_user(

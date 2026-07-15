@@ -13,9 +13,7 @@
     </thead>
     <tbody>
       {% for r in ssa_matrix.rows %}
-      <tr style="border-bottom:1px solid var(--edify-border);"
-          onmouseover="this.style.background='var(--edify-surface-muted)'"
-          onmouseout="this.style.background='transparent'">
+      <tr class="edify-data-row" style="border-bottom:1px solid var(--edify-border);">
         <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ r.name }}</td>
         {% for cell in r.cells %}
         <td style="padding:7px 6px;text-align:center;">

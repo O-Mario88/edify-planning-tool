@@ -230,7 +230,7 @@ def core_schedule_visit_drawer(request):
     school_id = request.GET.get("school_id")
     school = get_scoped_object_or_404(School, request.user, school_id=school_id)
 
-    latest_ssa = (
+    (
         school.ssa_records.filter(deleted_at__isnull=True)
         .order_by("-date_of_ssa")
         .first()
@@ -367,7 +367,7 @@ def core_schedule_training_drawer(request):
     school_id = request.GET.get("school_id")
     school = get_scoped_object_or_404(School, request.user, school_id=school_id)
 
-    latest_ssa = (
+    (
         school.ssa_records.filter(deleted_at__isnull=True)
         .order_by("-date_of_ssa")
         .first()
@@ -583,7 +583,7 @@ def core_assign_partner_action(request):
                 body=f"Your organization has been assigned to support {school.name} with {support_type} {visit_training_number} focusing on {focus_intervention}.",
                 context_type="School",
                 context_id=school.id,
-                recipients=[partner_id]
+                recipients=[partner_id],
             )
 
             messages.success(
@@ -730,27 +730,45 @@ def champion_reject_action(request, school_id):
 @require_page_permission("core_schools")
 def champions_list_view(request):
     """View to list official graduated Champions."""
-    champions = School.objects.filter(
-        school_type="champion", deleted_at__isnull=True
-    ).order_by("name")
-    formatted_champions = []
-    for s in champions:
-        profile = CoreSchoolProfile.objects.filter(school_id=s.school_id).first()
-        latest_ssa = (
-            s.ssa_records.filter(deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
-            .first()
+    from apps.ssa.models import SsaRecord
+
+    champions = (
+        School.objects.filter(school_type="champion", deleted_at__isnull=True)
+        .select_related("district", "region")
+        .order_by("name")
+    )
+    champions = list(champions)
+
+    # Was N+1: one CoreSchoolProfile query + one SsaRecord query per champion
+    # school, plus unfetched district/region FKs. Batch both lookups once for
+    # the whole (naturally small — graduated schools only) list instead.
+    school_ids = [s.school_id for s in champions]
+    profile_by_school_id = dict(
+        CoreSchoolProfile.objects.filter(school_id__in=school_ids).values_list(
+            "school_id", "core_start_fy"
         )
-        formatted_champions.append(
-            {
-                "school_id": s.school_id,
-                "name": s.name,
-                "district": s.district.name if s.district else "Unknown",
-                "region": s.region.name if s.region else "Unknown",
-                "onboard_fy": profile.core_start_fy if profile else "Unknown",
-                "latest_avg": latest_ssa.average_score if latest_ssa else 0.0,
-            }
+    )
+    latest_ssa_by_school_id = {
+        row["school_id"]: row["average_score"]
+        for row in SsaRecord.objects.filter(
+            school_id__in=[s.id for s in champions], deleted_at__isnull=True
         )
+        .order_by("school_id", "-date_of_ssa")
+        .distinct("school_id")
+        .values("school_id", "average_score")
+    }
+
+    formatted_champions = [
+        {
+            "school_id": s.school_id,
+            "name": s.name,
+            "district": s.district.name if s.district else "Unknown",
+            "region": s.region.name if s.region else "Unknown",
+            "onboard_fy": profile_by_school_id.get(s.school_id, "Unknown"),
+            "latest_avg": latest_ssa_by_school_id.get(s.id) or 0.0,
+        }
+        for s in champions
+    ]
     context = {
         "champions": formatted_champions,
     }

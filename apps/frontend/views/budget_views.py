@@ -320,7 +320,9 @@ def _build_fund_requests_context(request):
         or 0
     )
     if requested_last_month > 0:
-        delta_val = int(((requested_this_month - requested_last_month) / requested_last_month) * 100)
+        delta_val = int(
+            ((requested_this_month - requested_last_month) / requested_last_month) * 100
+        )
         direction = "up" if delta_val >= 0 else "down"
         trend = {"direction": direction, "value": f"{abs(delta_val)}%"}
     else:
@@ -350,7 +352,9 @@ def _build_fund_requests_context(request):
 
     # Accountability Pending
     pending_acct_qs = wfr_qs.filter(status="disbursed", accounted_amount__isnull=True)
-    pending_acct_amount = pending_acct_qs.aggregate(total=Sum("total_amount"))["total"] or 0
+    pending_acct_amount = (
+        pending_acct_qs.aggregate(total=Sum("total_amount"))["total"] or 0
+    )
     pending_acct_count = pending_acct_qs.count()
 
     planned_value = (
@@ -470,7 +474,11 @@ def _build_fund_requests_context(request):
         wfr_status = active_wfr.status
         weekly_total = active_wfr.total_amount
         for line in active_wfr.lines.select_related("activity_budget_line__activity"):
-            adv = line.activity_budget_line.advance_requests.first() if line.activity_budget_line else None
+            adv = (
+                line.activity_budget_line.advance_requests.first()
+                if line.activity_budget_line
+                else None
+            )
             status_raw = adv.status if adv else "draft_from_schedule"
 
             status_labels = {
@@ -482,7 +490,14 @@ def _build_fund_requests_context(request):
             }
             status_label = status_labels.get(status_raw, "Auto-calculated")
 
-            act = line.activity_budget_line.activity if (line.activity_budget_line and getattr(line.activity_budget_line, "activity", None)) else None
+            act = (
+                line.activity_budget_line.activity
+                if (
+                    line.activity_budget_line
+                    and getattr(line.activity_budget_line, "activity", None)
+                )
+                else None
+            )
             act_type = act.activity_type if act else None
 
             source_map = {
@@ -506,12 +521,18 @@ def _build_fund_requests_context(request):
             }
             source = source_map.get(act_type)
             if not source:
-                if act_type == "admin_budget" or (line.description and "admin" in line.description.lower()):
+                if act_type == "admin_budget" or (
+                    line.description and "admin" in line.description.lower()
+                ):
                     source = "Admin Budget"
                 else:
                     source = "Other"
 
-            if request_type and request_type.lower() != "all" and source.lower() != request_type.lower():
+            if (
+                request_type
+                and request_type.lower() != "all"
+                and source.lower() != request_type.lower()
+            ):
                 continue
 
             weekly_lines.append(
@@ -522,13 +543,15 @@ def _build_fund_requests_context(request):
                     "quantity": line.quantity,
                     "unit_cost": line.unit_cost,
                     "total_cost": line.total_cost,
-                    "activity_id": line.activity_budget_line.activity_id if line.activity_budget_line else None,
+                    "activity_id": line.activity_budget_line.activity_id
+                    if line.activity_budget_line
+                    else None,
                     "status": status_label,
                     "status_raw": status_raw,
                 }
             )
         if request_type and request_type.lower() != "all":
-            weekly_total = sum(l["total_cost"] for l in weekly_lines)
+            weekly_total = sum(line["total_cost"] for line in weekly_lines)
 
     # 5. Source Activities Listing
     source_activities = []

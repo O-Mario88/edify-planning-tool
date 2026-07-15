@@ -371,13 +371,19 @@ class AnalyticsDashboardService:
                 "label": "Overall Target Achievement",
                 "value": kpi_data["target_achievement"]["value"],
                 "raw_value": achievement_pct,
-                "helper": "vs last period" if achievement_pct is not None else "no target configured",
+                "helper": "vs last period"
+                if achievement_pct is not None
+                else "no target configured",
                 "icon": "target",
                 "variant": "success" if achievement_pct is not None else "neutral",
                 "trend": {
                     "direction": (
-                        "up" if "+" in kpi_data["target_achievement"]["trend"] else "down"
-                    ) if kpi_data["target_achievement"]["trend"] else "neutral",
+                        "up"
+                        if "+" in kpi_data["target_achievement"]["trend"]
+                        else "down"
+                    )
+                    if kpi_data["target_achievement"]["trend"]
+                    else "neutral",
                     "value": kpi_data["target_achievement"]["trend"].split()[0]
                     if kpi_data["target_achievement"]["trend"]
                     else "",

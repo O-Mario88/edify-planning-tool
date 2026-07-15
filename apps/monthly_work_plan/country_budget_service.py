@@ -70,6 +70,7 @@ CATEGORY_META = {
         "label": "Partner In-School Training",
         "unit_label": "Schools",
     },
+    "special_project": {"label": "Special Projects", "unit_label": "Activities"},
 }
 CATEGORY_ORDER = list(CATEGORY_META)
 
@@ -124,11 +125,20 @@ def _month_key(fy, month_num):
     return f"{year}-{month_num:02d}"
 
 
-def _page_category(activity_type, delivery_type):
-    """Bucket an activity into one of the 5 activity-backed budget columns
-    this page shows. SSA collection takes priority regardless of who runs
-    it; staff-delivered in-school trainings fold into Cluster Training since
-    this page has no separate "Staff In-School Training" column."""
+def _page_category(activity_type, delivery_type, is_project=False):
+    """Bucket an activity into one of the 6 activity-backed budget columns
+    this page shows. A Special Project's cost — reachable via either the
+    activity's own `project_id` or its cost line's `project_id`, the same two
+    authoritative paths RVPDashboardService.special_projects consolidates —
+    always shows under Special Projects, regardless of activity type or
+    delivery type: the country budget needs a clean, undiluted view of
+    project-funded spend, not a visit/training figure with project costs
+    silently mixed in. Otherwise SSA collection takes priority regardless of
+    who runs it; staff-delivered in-school trainings fold into Cluster
+    Training since this page has no separate "Staff In-School Training"
+    column."""
+    if is_project:
+        return "special_project"
     if activity_type in SSA_VISIT_TYPES:
         return "ssa"
     if activity_type in VISIT_TYPES:
@@ -136,6 +146,15 @@ def _page_category(activity_type, delivery_type):
     if delivery_type == "partner" and activity_type in TRAINING_TYPES:
         return "partner_in_school_training"
     return "cluster_training"
+
+
+def _is_project_line(li):
+    """A cost line is Special-Project money if either authoritative path
+    says so: the activity's own `project_id`, or the cost line's own
+    `project_id` (set when a project-costed line is attached to an activity
+    that isn't itself tagged to the project — e.g. partner-costed project
+    work)."""
+    return bool(li.activity.project_id or li.project_id)
 
 
 def _get_or_create_budget(fy, month_num):
@@ -237,13 +256,19 @@ def _trailing_month_series(fy, month_num, n=6):
                 activity__deleted_at__isnull=True, activity__fy=line_fy, month=m
             )
             .exclude(activity__status__in=["cancelled", "rejected"])
-            .values("activity__activity_type", "activity__delivery_type")
+            .values(
+                "activity__activity_type",
+                "activity__delivery_type",
+                "activity__project_id",
+                "project_id",
+            )
             .annotate(total=Sum("amount"))
         )
         bucket = {k: 0 for k in CATEGORY_ORDER}
         for r in rows:
+            is_project = bool(r["activity__project_id"] or r["project_id"])
             cat = _page_category(
-                r["activity__activity_type"], r["activity__delivery_type"]
+                r["activity__activity_type"], r["activity__delivery_type"], is_project
             )
             bucket[cat] += r["total"] or 0
         bucket["total"] = sum(bucket.values())
@@ -314,7 +339,9 @@ def get_country_monthly_budget(principal, filters=None):
                 "activity_ids": set(),
             },
         )
-        cat = _page_category(li.activity.activity_type, li.activity.delivery_type)
+        cat = _page_category(
+            li.activity.activity_type, li.activity.delivery_type, _is_project_line(li)
+        )
         c = row["cats"][cat]
         c["acts"].add(li.activity_id)
         if li.activity.school_id:
@@ -376,7 +403,9 @@ def get_country_monthly_budget(principal, filters=None):
     for li in lines:
         if _validate_line(li) == "Excluded":
             continue
-        cat = _page_category(li.activity.activity_type, li.activity.delivery_type)
+        cat = _page_category(
+            li.activity.activity_type, li.activity.delivery_type, _is_project_line(li)
+        )
         cat_totals[cat] += li.amount
     program_total = sum(cat_totals.values())
     total_monthly = program_total + admin_total
@@ -457,6 +486,13 @@ def get_country_monthly_budget(principal, filters=None):
             "finance",
             "From planned activities",
         ),
+        _kpi(
+            "Special Project Cost",
+            cat_totals["special_project"],
+            "special_project",
+            "project",
+            "From planned activities",
+        ),
         _kpi("Admin Budget", admin_total, "admin", "danger", "From CD admin plan"),
     ]
 
@@ -502,7 +538,11 @@ def get_country_monthly_budget(principal, filters=None):
         {
             li.activity_id
             for li in lines
-            if _page_category(li.activity.activity_type, li.activity.delivery_type)
+            if _page_category(
+                li.activity.activity_type,
+                li.activity.delivery_type,
+                _is_project_line(li),
+            )
             == "cluster_training"
         }
     )
@@ -516,6 +556,7 @@ def get_country_monthly_budget(principal, filters=None):
     ssa_visits = len(
         {li.activity_id for li in lines if li.activity.activity_type in SSA_VISIT_TYPES}
     )
+    special_project_acts = len({li.activity_id for li in lines if _is_project_line(li)})
     plan_source_summary = [
         {"icon": "school", "label": "Planned Schools", "value": planned_schools},
         {
@@ -530,6 +571,11 @@ def get_country_monthly_budget(principal, filters=None):
         },
         {"icon": "training", "label": "Trainings Planned", "value": trainings_planned},
         {"icon": "clipboard", "label": "SSA Collection Visits", "value": ssa_visits},
+        {
+            "icon": "project",
+            "label": "Special Project Activities",
+            "value": special_project_acts,
+        },
         {"icon": "admin", "label": "Admin Plan Items", "value": len(admin_lines)},
     ]
 
@@ -881,9 +927,15 @@ def approve(principal, budget_id):
     _audit(principal, "country_budget.approve", budget, {"total": budget.total_amount})
     from apps.monthly_work_plan.services import _rvp_audit
 
-    _rvp_audit("monthly_budget", budget.id,
-               f"Country Monthly Budget {budget.month_key}", "approve",
-               principal, amount=budget.total_amount, fy=budget.fy)
+    _rvp_audit(
+        "monthly_budget",
+        budget.id,
+        f"Country Monthly Budget {budget.month_key}",
+        "approve",
+        principal,
+        amount=budget.total_amount,
+        fy=budget.fy,
+    )
     _notify_role(
         "CountryDirector",
         "country_budget_approved",
@@ -933,9 +985,16 @@ def return_budget(principal, budget_id, data):
     _audit(principal, "country_budget.return", budget, {"reason": reason})
     from apps.monthly_work_plan.services import _rvp_audit
 
-    _rvp_audit("monthly_budget", budget.id,
-               f"Country Monthly Budget {budget.month_key}", "return",
-               principal, reason=reason, amount=budget.total_amount, fy=budget.fy)
+    _rvp_audit(
+        "monthly_budget",
+        budget.id,
+        f"Country Monthly Budget {budget.month_key}",
+        "return",
+        principal,
+        reason=reason,
+        amount=budget.total_amount,
+        fy=budget.fy,
+    )
     _notify_role(
         "CountryDirector",
         "country_budget_returned",

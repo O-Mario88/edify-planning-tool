@@ -823,11 +823,11 @@ def admin_user_detail_view(request, user_id):
 
             from django.utils import timezone
 
+            from apps.accounts.lockout_service import AuthenticationLockoutService
+
             member.set_password(new_password)
             member.must_change_password = True
             member.password_set_at = timezone.now()
-            member.failed_login_count = 0
-            member.locked_until = None
             member.status = "active"
             member.is_active = True
             member.save(
@@ -835,12 +835,16 @@ def admin_user_detail_view(request, user_id):
                     "password",
                     "must_change_password",
                     "password_set_at",
-                    "failed_login_count",
-                    "locked_until",
                     "status",
                     "is_active",
                 ]
             )
+            # Delegate lock-clearing to the ONE canonical service — an admin
+            # password reset must fully clear lockout state (including
+            # escalation), not just the two fields a hand-rolled reset used
+            # to touch, which used to leave lockout_escalated=True accounts
+            # still unable to log in after their "reset".
+            AuthenticationLockoutService.admin_unlock(member.id, actor=request.user)
 
             from apps.core.email import mailer
 
@@ -853,10 +857,19 @@ def admin_user_detail_view(request, user_id):
             )
 
         elif action == "unlock":
-            member.failed_login_count = 0
-            member.locked_until = None
-            member.save(update_fields=["failed_login_count", "locked_until"])
+            from apps.accounts.lockout_service import AuthenticationLockoutService
+
+            AuthenticationLockoutService.admin_unlock(member.id, actor=request.user)
             messages.success(request, f"Account for '{member.name}' has been unlocked.")
+
+        elif action == "lock":
+            from apps.accounts.lockout_service import AuthenticationLockoutService
+
+            reason = request.POST.get("reason", "").strip()
+            AuthenticationLockoutService.admin_lock(
+                member.id, actor=request.user, reason=reason
+            )
+            messages.success(request, f"Account for '{member.name}' has been locked.")
 
         return redirect("frontend:admin_user_detail", user_id=user_id)
 
@@ -882,7 +895,10 @@ def admin_user_detail_view(request, user_id):
 
     from django.utils import timezone
 
-    is_locked = bool(member.locked_until and member.locked_until > timezone.now())
+    is_locked = bool(
+        member.lockout_escalated
+        or (member.locked_until and member.locked_until > timezone.now())
+    )
 
     context = {
         "member": member,
@@ -970,12 +986,16 @@ def map_view(request):
         school_queryset(scope)
         .filter(deleted_at__isnull=True)
         .select_related("district", "sub_county")
-        .values("id", "name", "latitude", "longitude", "district__name", "sub_county__name")
+        .values(
+            "id", "name", "latitude", "longitude", "district__name", "sub_county__name"
+        )
     )
     try:
         from apps.routes.models import SchoolGeoPoint
 
-        overrides = {g.school_id: (g.latitude, g.longitude) for g in SchoolGeoPoint.objects.all()}
+        overrides = {
+            g.school_id: (g.latitude, g.longitude) for g in SchoolGeoPoint.objects.all()
+        }
     except Exception:  # noqa: BLE001
         overrides = {}
 
@@ -983,10 +1003,15 @@ def map_view(request):
     for s in schools:
         lat, lng = overrides.get(s["id"], (s["latitude"], s["longitude"]))
         if lat is not None and lng is not None:
-            points.append({
-                "name": s["name"], "lat": lat, "lng": lng,
-                "district": s["district__name"] or "", "sub_county": s["sub_county__name"] or "",
-            })
+            points.append(
+                {
+                    "name": s["name"],
+                    "lat": lat,
+                    "lng": lng,
+                    "district": s["district__name"] or "",
+                    "sub_county": s["sub_county__name"] or "",
+                }
+            )
     context = {
         "points_json": json.dumps(points),
         "with_coords": len(points),
@@ -1222,9 +1247,75 @@ def completed_activities_view(request):
 
 @require_page_permission("quality_checks")
 def quality_checks_view(request):
-    """Quality checks — IA role."""
-    flags = CdFlag.objects.all().order_by("-created_at")[:50]
-    context = {"flags": flags}
+    """Quality checks — the CD-raised / PL-assigned flag handoff (apps.flags).
+    IA/Admin get the global monitoring view; the CD sees (and raises) the
+    flags they raised; the PL sees (and acts on) the flags assigned to them.
+    Reuses apps.flags.services — the same logic the /api/flags/* endpoints
+    use — rather than re-implementing the raise/acknowledge/resolve rules."""
+    from django.contrib import messages
+    from apps.flags import services as flag_services
+    from apps.core.rbac import EdifyRole
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+    role = request.user.active_role
+    is_cd = role in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value)
+    is_pl = role in (EdifyRole.COUNTRY_PROGRAM_LEAD.value, EdifyRole.ADMIN.value)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        try:
+            if action == "raise":
+                if not is_cd:
+                    raise Forbidden("Only the Country Director may raise flags.")
+                flag_services.raise_flag(
+                    {
+                        "assignedToUserId": request.POST.get("assigned_to_user_id"),
+                        "category": request.POST.get("category", "general"),
+                        "note": request.POST.get("note", ""),
+                        "recommendedAction": request.POST.get("recommended_action"),
+                        "priority": request.POST.get("priority", "normal"),
+                        "dueDate": request.POST.get("due_date"),
+                    },
+                    request.user,
+                )
+                messages.success(
+                    request, "Flag raised and assigned to the Program Lead."
+                )
+            elif action in ("acknowledge", "resolve"):
+                flag_id = request.POST.get("flag_id")
+                flag = CdFlag.objects.filter(id=flag_id).first()
+                if not flag or (
+                    flag.assigned_to_user_id != request.user.id
+                    and role != EdifyRole.ADMIN.value
+                ):
+                    messages.error(
+                        request, "You may only act on flags assigned to you."
+                    )
+                else:
+                    flag_services.update_flag(
+                        flag_id,
+                        {"action": action, "note": request.POST.get("note")},
+                        request.user,
+                    )
+                    messages.success(request, f"Flag {action}d.")
+        except (BadRequest, Forbidden, NotFoundError) as exc:
+            messages.error(request, str(exc))
+        return redirect("frontend:quality_checks")
+
+    qs = CdFlag.objects.all().order_by("-created_at")
+    if role == EdifyRole.COUNTRY_DIRECTOR.value:
+        qs = qs.filter(raised_by_user_id=request.user.id)
+    elif role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        qs = qs.filter(assigned_to_user_id=request.user.id)
+    # IA / Admin: unfiltered — the global monitoring audience.
+
+    context = {
+        "flags": qs[:50],
+        "can_raise": is_cd,
+        "can_act": is_pl,
+        "program_leads": flag_services.program_leads(request.user) if is_cd else [],
+        "current_user_id": request.user.id,
+    }
     return render(request, "pages/quality_checks/index.html", context)
 
 
@@ -1232,26 +1323,38 @@ def quality_checks_view(request):
 def help_view(request):
     """Help centre — the operating-flow guide, role playbooks and FAQs."""
     faqs = [
-        ("Why can't I schedule a visit in some districts?",
-         "Every district must be classified primary or secondary by the CD/Admin before visits can be "
-         "scheduled there — daily visit costing and route rules depend on it. Ask the CD to classify the "
-         "district under Region & District Setup."),
-        ("Why does scheduling ask me for a reason?",
-         "The CD sets a required number of school visits per day. Planning fewer schools than the target "
-         "raises the cost per school, so the system records your justification with the day's batch."),
-        ("What makes a route 'Risky' or 'Not Feasible'?",
-         "Route Intelligence scores each visit day 0–100 from sub-county grouping, coordinates (when they "
-         "exist), the 8-hour working day, the CD daily target and district rules. Spread-out schools or an "
-         "overloaded day lower the score; mixing primary and secondary districts blocks the day entirely."),
-        ("Why is my completed activity not counted as verified?",
-         "Completed work must pass IA verification (evidence review) before it counts as verified impact. "
-         "Track it in My Plan; returned items show what to fix."),
-        ("When do SSA numbers change?",
-         "SSA impact is measured on verified annual cycles — the latest confirmed assessment per school "
-         "compared to the previous cycle. Monthly filters only narrow operational data, never SSA movement."),
-        ("Where does my weekly fund request go after I confirm it?",
-         "CCEO requests go to your Program Lead; PL/PC/IA requests go to the Country Director. Approved "
-         "requests move to the accountant for disbursement, and NetSuite accountability closes the loop."),
+        (
+            "Why can't I schedule a visit in some districts?",
+            "Every district must be classified primary or secondary by the CD/Admin before visits can be "
+            "scheduled there — daily visit costing and route rules depend on it. Ask the CD to classify the "
+            "district under Region & District Setup.",
+        ),
+        (
+            "Why does scheduling ask me for a reason?",
+            "The CD sets a required number of school visits per day. Planning fewer schools than the target "
+            "raises the cost per school, so the system records your justification with the day's batch.",
+        ),
+        (
+            "What makes a route 'Risky' or 'Not Feasible'?",
+            "Route Intelligence scores each visit day 0–100 from sub-county grouping, coordinates (when they "
+            "exist), the 8-hour working day, the CD daily target and district rules. Spread-out schools or an "
+            "overloaded day lower the score; mixing primary and secondary districts blocks the day entirely.",
+        ),
+        (
+            "Why is my completed activity not counted as verified?",
+            "Completed work must pass IA verification (evidence review) before it counts as verified impact. "
+            "Track it in My Plan; returned items show what to fix.",
+        ),
+        (
+            "When do SSA numbers change?",
+            "SSA impact is measured on verified annual cycles — the latest confirmed assessment per school "
+            "compared to the previous cycle. Monthly filters only narrow operational data, never SSA movement.",
+        ),
+        (
+            "Where does my weekly fund request go after I confirm it?",
+            "CCEO requests go to your Program Lead; PL/PC/IA requests go to the Country Director. Approved "
+            "requests move to the accountant for disbursement, and NetSuite accountability closes the loop.",
+        ),
     ]
     return render(request, "pages/help/index.html", {"faqs": faqs})
 
@@ -1493,6 +1596,73 @@ def admin_data_quality_center_view(request):
         "unmatched_ssa_count": unmatched_ssa_count,
     }
     return render(request, "pages/admin/data_quality_center.html", context)
+
+
+@require_page_permission("data_quality_center")
+def data_quality_issue_action_view(request, issue_id):
+    """Resolve or assign a single Data Quality Center issue.
+
+    POST action=resolve -> writes status="resolved" + resolved_at (and claims
+    assigned_to if nobody had it yet), audit-logged.
+    POST action=assign  -> writes assigned_to=request.user.id, audit-logged.
+
+    Returns the re-rendered row partial so the calling `hx-post` swaps the
+    row in place (HTMX partial refresh) rather than reloading the page.
+    Re-saving the owning School regenerates a fresh "open" issue if the
+    underlying data problem is still present (see
+    apps.schools.models.create_data_quality_issues) — resolving here is an
+    explicit human acknowledgement, not a guarantee the data got fixed.
+    """
+    from django.http import HttpResponseNotAllowed
+    from django.utils import timezone
+    from django.db import transaction
+    from apps.schools.models import DataQualityIssue
+    from apps.audit.services import log as audit_log
+
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    issue = get_object_or_404(DataQualityIssue, id=issue_id)
+    action = request.POST.get("action")
+    assignee_name = None
+
+    if action == "resolve" and issue.status == "open":
+        with transaction.atomic():
+            issue.status = "resolved"
+            issue.resolved_at = timezone.now()
+            if not issue.assigned_to:
+                issue.assigned_to = str(request.user.id)
+            issue.save(update_fields=["status", "resolved_at", "assigned_to"])
+            audit_log(
+                action="data_quality_issue.resolve",
+                subject_kind="DataQualityIssue",
+                subject_id=issue.id,
+                actor_id=str(request.user.id),
+                actor_role=getattr(request.user, "active_role", None),
+                success=True,
+                payload={"issue_type": issue.issue_type, "school_id": issue.school_id},
+            )
+    elif action == "assign" and issue.status == "open":
+        with transaction.atomic():
+            issue.assigned_to = str(request.user.id)
+            issue.save(update_fields=["assigned_to"])
+            audit_log(
+                action="data_quality_issue.assign",
+                subject_kind="DataQualityIssue",
+                subject_id=issue.id,
+                actor_id=str(request.user.id),
+                actor_role=getattr(request.user, "active_role", None),
+                success=True,
+                payload={
+                    "issue_type": issue.issue_type,
+                    "school_id": issue.school_id,
+                    "assigned_to": str(request.user.id),
+                },
+            )
+        assignee_name = getattr(request.user, "name", None)
+
+    context = {"issue": issue, "assignee_name": assignee_name}
+    return render(request, "partials/data_quality/issue_row.html", context)
 
 
 @require_page_permission("workflow_rules")
@@ -1765,11 +1935,7 @@ def unmatched_ssa_queue_view(request):
     from apps.core.enums import SsaCollectorType, VerificationStatus
     from django.contrib import messages
     from django.utils import timezone
-
-    records = UnmatchedSSARecord.objects.filter(
-        status__in=["pending", "hold"]
-    ).order_by("-created_at")
-    schools_list = School.objects.filter(deleted_at__isnull=True).order_by("name")
+    from apps.ssa import unmatched_service
 
     if request.method == "POST":
         record_id = request.POST.get("record_id")
@@ -1841,18 +2007,25 @@ def unmatched_ssa_queue_view(request):
 
             from apps.geography.models import District
 
-            # Lookup district by name
+            # Lookup district by name — never fall back to an arbitrary
+            # District/Region row: on a sparse database that silently filed
+            # the school under whichever district happened to sort first
+            # (or null geography on an empty one), corrupting the directory.
             district_obj = None
             if rec.district_raw:
                 district_obj = District.objects.filter(
                     name__icontains=rec.district_raw
                 ).first()
             if not district_obj:
-                district_obj = District.objects.first()
+                messages.error(
+                    request,
+                    f"Cannot create school: district '{rec.district_raw or '—'}' "
+                    "does not match any District in the directory. Create or "
+                    "correct the district first, then retry.",
+                )
+                return redirect("/ssa/unmatched")
 
-            from apps.geography.models import Region
-
-            region_obj = district_obj.region if district_obj else Region.objects.first()
+            region_obj = district_obj.region
 
             # Create school
             school = School.objects.create(
@@ -1922,19 +2095,34 @@ def unmatched_ssa_queue_view(request):
             messages.info(request, "Unmatched SSA record marked as ignored.")
             return redirect("/ssa/unmatched")
 
-    # Compute suggested matches based on closest raw name matches
-    suggested_matches = {}
-    for r in records:
-        if r.school_name_raw:
-            s_match = School.objects.filter(
-                name__icontains=r.school_name_raw, deleted_at__isnull=True
-            ).first()
-            if s_match:
-                suggested_matches[r.id] = s_match
+    # Suggested matches are computed ONCE at upload time (apps.ssa
+    # .unmatched_service.compute_suggested_match, called from
+    # apps.ssa.upload_service.import_ssa_batch) and stored on
+    # UnmatchedSSARecord.suggested_school/match_confidence — no per-row
+    # matching query here, just select_related (see get_unmatched_queue).
+    filters = {
+        "status": request.GET.get("status", ""),
+        "batch": request.GET.get("batch", ""),
+        "district": request.GET.get("district", ""),
+        "school_id": request.GET.get("school_id", ""),
+        "min_confidence": request.GET.get("min_confidence", ""),
+        "date_from": request.GET.get("date_from", ""),
+        "date_to": request.GET.get("date_to", ""),
+    }
+    try:
+        page_number = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        page_number = 1
+
+    records_page = unmatched_service.get_unmatched_queue(filters, page=page_number)
+    schools_list = School.objects.filter(deleted_at__isnull=True).order_by("name")
 
     context = {
-        "records": records,
+        "records_page": records_page,
+        "records": records_page.object_list,
         "schools": schools_list,
-        "suggested_matches": suggested_matches,
+        "filters": filters,
+        "batch_options": unmatched_service.batch_options(),
+        "status_choices": UnmatchedSSARecord.STATUSES,
     }
     return render(request, "pages/admin/unmatched_ssa_queue.html", context)

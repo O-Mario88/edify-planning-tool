@@ -9,7 +9,7 @@ cached, so there is no manual or drifting remaining-fund number.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 from django.utils import timezone
 
@@ -23,8 +23,6 @@ from apps.professional_development.models import (
     FUNDED_TYPES,
     PDStatus,
     ProfessionalDevelopmentAllocation,
-    ProfessionalDevelopmentCertificate,
-    ProfessionalDevelopmentEvidence,
     ProfessionalDevelopmentRequest,
 )
 
@@ -109,9 +107,11 @@ def staff_display_info(user) -> dict:
     sp = _staff(user)
     supervisor_sp = None
     if sp:
-        link = StaffSupervisorAssignment.objects.filter(supervisee=sp).select_related(
-            "supervisor__user"
-        ).first()
+        link = (
+            StaffSupervisorAssignment.objects.filter(supervisee=sp)
+            .select_related("supervisor__user")
+            .first()
+        )
         supervisor_sp = link.supervisor if link else None
     return {
         "staff_id": sp.id if sp else None,
@@ -133,7 +133,8 @@ class StaffPDService:
     def get_or_create_allocation(user, fy: str) -> ProfessionalDevelopmentAllocation:
         sp = _staff(user)
         alloc, _ = ProfessionalDevelopmentAllocation.objects.get_or_create(
-            staff_id=sp.id, fy=fy,
+            staff_id=sp.id,
+            fy=fy,
             defaults={"country": sp.country or "Uganda", "annual_allocation": 0},
         )
         return alloc
@@ -150,22 +151,36 @@ class StaffPDService:
             r.requested_amount_cents for r in rows if r.status in COMMITTED_STATUSES
         )
         disbursed = sum(
-            r.requested_amount_cents for r in rows
-            if r.status in (PDStatus.DISBURSED, PDStatus.ENROLLMENT_PENDING,
-                            PDStatus.ENROLLMENT_CONFIRMED, PDStatus.IN_PROGRESS,
-                            PDStatus.ENDED, PDStatus.MARKED_COMPLETE,
-                            PDStatus.CERTIFICATE_UPLOADED, PDStatus.BAMBOOHR_CONFIRMED,
-                            PDStatus.ACCOUNTABILITY_SUBMITTED, PDStatus.ACCOUNTABILITY_CLEARED,
-                            PDStatus.AWAITING_HR_SIGNOFF, PDStatus.COMPLETED_CLOSED)
+            r.requested_amount_cents
+            for r in rows
+            if r.status
+            in (
+                PDStatus.DISBURSED,
+                PDStatus.ENROLLMENT_PENDING,
+                PDStatus.ENROLLMENT_CONFIRMED,
+                PDStatus.IN_PROGRESS,
+                PDStatus.ENDED,
+                PDStatus.MARKED_COMPLETE,
+                PDStatus.CERTIFICATE_UPLOADED,
+                PDStatus.BAMBOOHR_CONFIRMED,
+                PDStatus.ACCOUNTABILITY_SUBMITTED,
+                PDStatus.ACCOUNTABILITY_CLEARED,
+                PDStatus.AWAITING_HR_SIGNOFF,
+                PDStatus.COMPLETED_CLOSED,
+            )
         )
         accounted = sum(r.accounted_amount or 0 for r in rows)
         returned = sum(r.returned_amount or 0 for r in rows)
         remaining = alloc.annual_allocation - committed - accounted
         return {
-            "allocation": alloc, "annual_allocation": alloc.annual_allocation,
-            "committed": committed, "disbursed": disbursed,
-            "accounted": accounted, "returned": returned,
-            "remaining": max(0, remaining), "remaining_raw": remaining,
+            "allocation": alloc,
+            "annual_allocation": alloc.annual_allocation,
+            "committed": committed,
+            "disbursed": disbursed,
+            "accounted": accounted,
+            "returned": returned,
+            "remaining": max(0, remaining),
+            "remaining_raw": remaining,
             "currency": alloc.currency,
         }
 
@@ -176,26 +191,41 @@ class StaffPDService:
         if not sp:
             return []
         fys = set(
-            ProfessionalDevelopmentAllocation.objects.filter(staff_id=sp.id)
-            .values_list("fy", flat=True)
+            ProfessionalDevelopmentAllocation.objects.filter(
+                staff_id=sp.id
+            ).values_list("fy", flat=True)
         ) | set(
-            ProfessionalDevelopmentRequest.objects.filter(staff_id=sp.id).values_list("fy", flat=True)
+            ProfessionalDevelopmentRequest.objects.filter(staff_id=sp.id).values_list(
+                "fy", flat=True
+            )
         )
-        allocs = {a.fy: a for a in ProfessionalDevelopmentAllocation.objects.filter(staff_id=sp.id)}
+        allocs = {
+            a.fy: a
+            for a in ProfessionalDevelopmentAllocation.objects.filter(staff_id=sp.id)
+        }
         rows = []
         for fy in sorted(fys, reverse=True):
             alloc = allocs.get(fy)
             reqs = ProfessionalDevelopmentRequest.objects.filter(staff_id=sp.id, fy=fy)
-            committed = sum(r.requested_amount_cents for r in reqs if r.status in COMMITTED_STATUSES)
+            committed = sum(
+                r.requested_amount_cents for r in reqs if r.status in COMMITTED_STATUSES
+            )
             accounted = sum(r.accounted_amount or 0 for r in reqs)
             annual = alloc.annual_allocation if alloc else 0
-            rows.append({
-                "fy": fy, "currency": alloc.currency if alloc else "UGX",
-                "annual_allocation": annual, "committed": committed, "accounted": accounted,
-                "remaining": max(0, annual - committed - accounted),
-                "request_count": reqs.count(),
-                "completed_count": reqs.filter(status=PDStatus.COMPLETED_CLOSED).count(),
-            })
+            rows.append(
+                {
+                    "fy": fy,
+                    "currency": alloc.currency if alloc else "UGX",
+                    "annual_allocation": annual,
+                    "committed": committed,
+                    "accounted": accounted,
+                    "remaining": max(0, annual - committed - accounted),
+                    "request_count": reqs.count(),
+                    "completed_count": reqs.filter(
+                        status=PDStatus.COMPLETED_CLOSED
+                    ).count(),
+                }
+            )
         return rows
 
     # ── Page payload ─────────────────────────────────────────────────────────
@@ -207,17 +237,24 @@ class StaffPDService:
         today = date.today()
 
         rows = list(
-            ProfessionalDevelopmentRequest.objects.filter(staff_id=sp.id, fy=fy)
-            .order_by("-created_at")
+            ProfessionalDevelopmentRequest.objects.filter(
+                staff_id=sp.id, fy=fy
+            ).order_by("-created_at")
         )
         active = [r for r in rows if r.status in ACTIVE_COURSE_STATUSES]
         # "Current course" = the active one soonest to need employee action,
         # else the one currently in progress, else the most recent.
         current = None
         for r in rows:
-            if r.status in (PDStatus.IN_PROGRESS, PDStatus.ENDED, PDStatus.MARKED_COMPLETE,
-                            PDStatus.CERTIFICATE_UPLOADED, PDStatus.BAMBOOHR_CONFIRMED,
-                            PDStatus.ACCOUNTABILITY_SUBMITTED, PDStatus.AWAITING_HR_SIGNOFF):
+            if r.status in (
+                PDStatus.IN_PROGRESS,
+                PDStatus.ENDED,
+                PDStatus.MARKED_COMPLETE,
+                PDStatus.CERTIFICATE_UPLOADED,
+                PDStatus.BAMBOOHR_CONFIRMED,
+                PDStatus.ACCOUNTABILITY_SUBMITTED,
+                PDStatus.AWAITING_HR_SIGNOFF,
+            ):
                 current = r
                 break
         if current is None and active:
@@ -228,7 +265,11 @@ class StaffPDService:
             # awaiting funding) — the reference design's "Request Submitted"
             # step should appear as soon as a non-draft request exists, not
             # only once it becomes an "active" course.
-            pipeline = [r for r in rows if r.status != PDStatus.DRAFT and r.status not in CLOSED_STATUSES]
+            pipeline = [
+                r
+                for r in rows
+                if r.status != PDStatus.DRAFT and r.status not in CLOSED_STATUSES
+            ]
             if pipeline:
                 current = pipeline[0]
 
@@ -236,100 +277,205 @@ class StaffPDService:
             1 for r in rows if r.status in (PDStatus.ENDED, PDStatus.MARKED_COMPLETE)
         )
         accountability_pending = sum(
-            1 for r in rows
+            1
+            for r in rows
             if r.funding_type in FUNDED_TYPES
             and r.status in (PDStatus.BAMBOOHR_CONFIRMED,)
         )
         completed = sum(1 for r in rows if r.status == PDStatus.COMPLETED_CLOSED)
 
         kpis = [
-            {"key": "allocation", "label": "Annual PD Allocation", "icon": "currency", "variant": "primary",
-             "value": f"{bal['currency']} {bal['annual_allocation']/100:,.0f}", "helper": f"FY {fy}"},
-            {"key": "committed", "label": "Committed Amount", "icon": "chart", "variant": "default",
-             "value": f"{bal['currency']} {bal['committed']/100:,.0f}",
-             "helper": f"{round(bal['committed']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation"},
-            {"key": "used", "label": "Funds Used (Accounted)", "icon": "accountability", "variant": "default",
-             "value": f"{bal['currency']} {bal['accounted']/100:,.0f}",
-             "helper": f"{round(bal['accounted']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation"},
-            {"key": "remaining", "label": "Remaining Fund", "icon": "shield",
-             "variant": "danger" if bal["remaining"] <= 0 else "success",
-             "value": f"{bal['currency']} {bal['remaining']/100:,.0f}",
-             "helper": f"{round(bal['remaining']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation"},
-            {"key": "active", "label": "Active Courses", "icon": "graduation", "variant": "primary",
-             "value": str(len(active)), "helper": "In progress"},
-            {"key": "cert_pending", "label": "Certificates Pending", "icon": "certificate",
-             "variant": "warning" if certs_pending else "success", "value": str(certs_pending),
-             "helper": "All up to date" if not certs_pending else "Action required"},
-            {"key": "accountability_pending", "label": "Accountability Pending", "icon": "expense",
-             "variant": "warning" if accountability_pending else "success", "value": str(accountability_pending),
-             "helper": "All up to date" if not accountability_pending else "Action required"},
-            {"key": "completed", "label": "Completed Courses", "icon": "signoff", "variant": "success",
-             "value": str(completed), "helper": "This FY"},
+            {
+                "key": "allocation",
+                "label": "Annual PD Allocation",
+                "icon": "currency",
+                "variant": "primary",
+                "value": f"{bal['currency']} {bal['annual_allocation']/100:,.0f}",
+                "helper": f"FY {fy}",
+            },
+            {
+                "key": "committed",
+                "label": "Committed Amount",
+                "icon": "chart",
+                "variant": "default",
+                "value": f"{bal['currency']} {bal['committed']/100:,.0f}",
+                "helper": f"{round(bal['committed']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+            },
+            {
+                "key": "used",
+                "label": "Funds Used (Accounted)",
+                "icon": "accountability",
+                "variant": "default",
+                "value": f"{bal['currency']} {bal['accounted']/100:,.0f}",
+                "helper": f"{round(bal['accounted']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+            },
+            {
+                "key": "remaining",
+                "label": "Remaining Fund",
+                "icon": "shield",
+                "variant": "danger" if bal["remaining"] <= 0 else "success",
+                "value": f"{bal['currency']} {bal['remaining']/100:,.0f}",
+                "helper": f"{round(bal['remaining']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+            },
+            {
+                "key": "active",
+                "label": "Active Courses",
+                "icon": "graduation",
+                "variant": "primary",
+                "value": str(len(active)),
+                "helper": "In progress",
+            },
+            {
+                "key": "cert_pending",
+                "label": "Certificates Pending",
+                "icon": "certificate",
+                "variant": "warning" if certs_pending else "success",
+                "value": str(certs_pending),
+                "helper": "All up to date" if not certs_pending else "Action required",
+            },
+            {
+                "key": "accountability_pending",
+                "label": "Accountability Pending",
+                "icon": "expense",
+                "variant": "warning" if accountability_pending else "success",
+                "value": str(accountability_pending),
+                "helper": "All up to date"
+                if not accountability_pending
+                else "Action required",
+            },
+            {
+                "key": "completed",
+                "label": "Completed Courses",
+                "icon": "signoff",
+                "variant": "success",
+                "value": str(completed),
+                "helper": "This FY",
+            },
         ]
 
         return {
-            "fy": fy, "today": today,
+            "fy": fy,
+            "today": today,
             "kpis": kpis,
             "balances": bal,
-            "current_course": StaffPDService._course_card(current, today) if current else None,
+            "current_course": StaffPDService._course_card(current, today)
+            if current
+            else None,
             "timeline": StaffPDService._timeline(current) if current else None,
             "next_actions": StaffPDService._next_actions(rows),
             "reminders": StaffPDService._upcoming_reminders(rows, today),
             "hr_messages": StaffPDService._recent_messages(user),
             "courses": [StaffPDService._course_row(r) for r in rows],
-            "in_progress_count": sum(1 for r in rows if r.status not in CLOSED_STATUSES and r.status != PDStatus.DRAFT),
+            "in_progress_count": sum(
+                1
+                for r in rows
+                if r.status not in CLOSED_STATUSES and r.status != PDStatus.DRAFT
+            ),
             "completed_count": completed,
-            "cancelled_count": sum(1 for r in rows if r.status in (PDStatus.REJECTED, PDStatus.CANCELLED, PDStatus.WITHDRAWN)),
+            "cancelled_count": sum(
+                1
+                for r in rows
+                if r.status
+                in (PDStatus.REJECTED, PDStatus.CANCELLED, PDStatus.WITHDRAWN)
+            ),
             "staff_info": staff_display_info(user),
             "last_refreshed": timezone.now(),
         }
 
     # ── Upcoming Reminders panel (§19 — derived live, never stored) ─────────
     @staticmethod
-    def _upcoming_reminders(rows: list[ProfessionalDevelopmentRequest], today: date) -> list[dict]:
+    def _upcoming_reminders(
+        rows: list[ProfessionalDevelopmentRequest], today: date
+    ) -> list[dict]:
         items = []
 
         def _add(r, tone, label, ref_date, days_left):
-            items.append({"id": r.id, "course_name": r.course_name, "tone": tone,
-                          "label": label, "date": ref_date, "days_left": days_left})
+            items.append(
+                {
+                    "id": r.id,
+                    "course_name": r.course_name,
+                    "tone": tone,
+                    "label": label,
+                    "date": ref_date,
+                    "days_left": days_left,
+                }
+            )
 
         for r in rows:
             if r.status in (PDStatus.RETURNED_BY_SUPERVISOR, PDStatus.RETURNED_BY_HR):
                 since = (today - r.updated_at.date()).days
-                _add(r, "warning", f"“{r.course_name}” was returned — fix and resubmit", r.updated_at.date(), -since)
+                _add(
+                    r,
+                    "warning",
+                    f"“{r.course_name}” was returned — fix and resubmit",
+                    r.updated_at.date(),
+                    -since,
+                )
             elif r.status == PDStatus.ENROLLMENT_CONFIRMED and r.start_date:
                 days = (r.start_date - today).days
                 if 0 <= days <= 7:
-                    _add(r, "warning" if days <= 1 else "info",
-                         f"“{r.course_name}” starts in {days} day{'s' if days != 1 else ''}", r.start_date, days)
+                    _add(
+                        r,
+                        "warning" if days <= 1 else "info",
+                        f"“{r.course_name}” starts in {days} day{'s' if days != 1 else ''}",
+                        r.start_date,
+                        days,
+                    )
             elif r.status == PDStatus.IN_PROGRESS and r.end_date:
                 days = (r.end_date - today).days
                 if 0 <= days <= 14:
-                    _add(r, "neutral", f"“{r.course_name}” ends in {days} day{'s' if days != 1 else ''}", r.end_date, days)
+                    _add(
+                        r,
+                        "neutral",
+                        f"“{r.course_name}” ends in {days} day{'s' if days != 1 else ''}",
+                        r.end_date,
+                        days,
+                    )
             elif r.status == PDStatus.ENDED:
                 overdue = (today - r.end_date).days
-                _add(r, "warning" if overdue < 14 else "danger",
-                     f"Mark “{r.course_name}” complete — {overdue} day{'s' if overdue != 1 else ''} overdue",
-                     r.end_date, -overdue)
+                _add(
+                    r,
+                    "warning" if overdue < 14 else "danger",
+                    f"Mark “{r.course_name}” complete — {overdue} day{'s' if overdue != 1 else ''} overdue",
+                    r.end_date,
+                    -overdue,
+                )
             elif r.status == PDStatus.MARKED_COMPLETE:
-                since_date = r.marked_complete_at.date() if r.marked_complete_at else r.end_date
+                since_date = (
+                    r.marked_complete_at.date() if r.marked_complete_at else r.end_date
+                )
                 overdue = (today - since_date).days
                 if overdue >= 3:
-                    _add(r, "warning" if overdue < 14 else "danger",
-                         f"Upload certificate for “{r.course_name}” — {overdue} days since completion",
-                         since_date, -overdue)
+                    _add(
+                        r,
+                        "warning" if overdue < 14 else "danger",
+                        f"Upload certificate for “{r.course_name}” — {overdue} days since completion",
+                        since_date,
+                        -overdue,
+                    )
             elif r.status == PDStatus.CERTIFICATE_UPLOADED:
                 overdue = (today - r.updated_at.date()).days
                 if overdue >= 3:
-                    _add(r, "warning" if overdue < 14 else "danger",
-                         f"Confirm BambooHR upload for “{r.course_name}” — {overdue} days pending",
-                         r.updated_at.date(), -overdue)
-            elif r.status == PDStatus.BAMBOOHR_CONFIRMED and r.funding_type in FUNDED_TYPES:
+                    _add(
+                        r,
+                        "warning" if overdue < 14 else "danger",
+                        f"Confirm BambooHR upload for “{r.course_name}” — {overdue} days pending",
+                        r.updated_at.date(),
+                        -overdue,
+                    )
+            elif (
+                r.status == PDStatus.BAMBOOHR_CONFIRMED
+                and r.funding_type in FUNDED_TYPES
+            ):
                 overdue = (today - r.updated_at.date()).days
                 if overdue >= 3:
-                    _add(r, "warning" if overdue < 14 else "danger",
-                         f"Submit accountability for “{r.course_name}” — {overdue} days pending",
-                         r.updated_at.date(), -overdue)
+                    _add(
+                        r,
+                        "warning" if overdue < 14 else "danger",
+                        f"Submit accountability for “{r.course_name}” — {overdue} days pending",
+                        r.updated_at.date(),
+                        -overdue,
+                    )
         items.sort(key=lambda x: x["days_left"])
         return items[:6]
 
@@ -340,15 +486,23 @@ class StaffPDService:
         from apps.messaging.models import Message
 
         msgs = list(
-            Message.objects.filter(recipient_id=user.id, category="professional_development")
-            .order_by("-created_at")[:limit]
+            Message.objects.filter(
+                recipient_id=user.id, category="professional_development"
+            ).order_by("-created_at")[:limit]
         )
-        sender_ids = {m.sender_id for m in msgs if m.sender_id and m.sender_id != "system"}
+        sender_ids = {
+            m.sender_id for m in msgs if m.sender_id and m.sender_id != "system"
+        }
         names = dict(User.objects.filter(id__in=sender_ids).values_list("id", "name"))
         return [
-            {"id": m.id, "sender_name": names.get(m.sender_id, "Edify System"),
-             "body": m.body, "created_at": m.created_at, "unread": m.status == "unread",
-             "context_id": m.context_id}
+            {
+                "id": m.id,
+                "sender_name": names.get(m.sender_id, "Edify System"),
+                "body": m.body,
+                "created_at": m.created_at,
+                "unread": m.status == "unread",
+                "context_id": m.context_id,
+            }
             for m in msgs
         ]
 
@@ -356,20 +510,36 @@ class StaffPDService:
     def _course_card(r: ProfessionalDevelopmentRequest, today: date) -> dict:
         total_days = max(1, (r.end_date - r.start_date).days)
         elapsed = max(0, min(total_days, (today - r.start_date).days))
-        pct = round(elapsed / total_days * 100) if r.status in (
-            PDStatus.IN_PROGRESS, PDStatus.ENDED, PDStatus.MARKED_COMPLETE,
-            PDStatus.CERTIFICATE_UPLOADED, PDStatus.BAMBOOHR_CONFIRMED,
-            PDStatus.ACCOUNTABILITY_SUBMITTED, PDStatus.AWAITING_HR_SIGNOFF,
-            PDStatus.COMPLETED_CLOSED,
-        ) else 0
+        pct = (
+            round(elapsed / total_days * 100)
+            if r.status
+            in (
+                PDStatus.IN_PROGRESS,
+                PDStatus.ENDED,
+                PDStatus.MARKED_COMPLETE,
+                PDStatus.CERTIFICATE_UPLOADED,
+                PDStatus.BAMBOOHR_CONFIRMED,
+                PDStatus.ACCOUNTABILITY_SUBMITTED,
+                PDStatus.AWAITING_HR_SIGNOFF,
+                PDStatus.COMPLETED_CLOSED,
+            )
+            else 0
+        )
         pct = min(100, pct)
         label, action = NEXT_ACTION_BY_STATUS.get(r.status, ("View", None))
         return {
-            "id": r.id, "course_name": r.course_name, "institution": r.institution,
-            "course_type": r.get_course_type_display(), "start_date": r.start_date,
-            "end_date": r.end_date, "duration_days": total_days,
-            "category": r.course_category, "status": r.get_status_display(),
-            "status_key": r.status, "pct": pct, "next_action_label": label,
+            "id": r.id,
+            "course_name": r.course_name,
+            "institution": r.institution,
+            "course_type": r.get_course_type_display(),
+            "start_date": r.start_date,
+            "end_date": r.end_date,
+            "duration_days": total_days,
+            "category": r.course_category,
+            "status": r.get_status_display(),
+            "status_key": r.status,
+            "pct": pct,
+            "next_action_label": label,
             "next_action": action,
         }
 
@@ -378,16 +548,30 @@ class StaffPDService:
         idx = _STEP_INDEX.get(r.status, -1)
         steps = []
         dates = {
-            0: r.submitted_at, 1: r.supervisor_reviewed_at, 2: r.hr_reviewed_at,
+            0: r.submitted_at,
+            1: r.supervisor_reviewed_at,
+            2: r.hr_reviewed_at,
             4: r.enrollment_confirmed_at,
-            6: r.certificates.filter(status="uploaded").order_by("-created_at")
-                 .values_list("created_at", flat=True).first(),
-            7: r.bamboohr_uploaded_at, 8: r.accountability_submitted_at,
-            9: r.signed_off_at, 10: r.signed_off_at,
+            6: r.certificates.filter(status="uploaded")
+            .order_by("-created_at")
+            .values_list("created_at", flat=True)
+            .first(),
+            7: r.bamboohr_uploaded_at,
+            8: r.accountability_submitted_at,
+            9: r.signed_off_at,
+            10: r.signed_off_at,
         }
         for i, (_key, label) in enumerate(TIMELINE_STEPS):
-            if r.status in (PDStatus.RETURNED_BY_SUPERVISOR, PDStatus.RETURNED_BY_HR,
-                            PDStatus.REJECTED, PDStatus.CANCELLED) and i >= idx:
+            if (
+                r.status
+                in (
+                    PDStatus.RETURNED_BY_SUPERVISOR,
+                    PDStatus.RETURNED_BY_HR,
+                    PDStatus.REJECTED,
+                    PDStatus.CANCELLED,
+                )
+                and i >= idx
+            ):
                 state = "blocked"
             elif i < idx or (i == idx and r.status == PDStatus.COMPLETED_CLOSED):
                 state = "done"
@@ -405,64 +589,113 @@ class StaffPDService:
         actions = []
         for r in rows:
             if r.status in (PDStatus.RETURNED_BY_SUPERVISOR, PDStatus.RETURNED_BY_HR):
-                actions.append({
-                    "key": f"returned-{r.id}", "request_id": r.id,
-                    "icon": "warning", "title": "Fix Returned Request",
-                    "description": f"{r.course_name} was returned — review the note and resubmit.",
-                    "action": "draft", "button": "Review & Fix",
-                })
+                actions.append(
+                    {
+                        "key": f"returned-{r.id}",
+                        "request_id": r.id,
+                        "icon": "warning",
+                        "title": "Fix Returned Request",
+                        "description": f"{r.course_name} was returned — review the note and resubmit.",
+                        "action": "draft",
+                        "button": "Review & Fix",
+                    }
+                )
             if r.status == PDStatus.ENDED or r.status == PDStatus.MARKED_COMPLETE:
                 if r.status == PDStatus.MARKED_COMPLETE:
-                    actions.append({
-                        "key": f"cert-{r.id}", "request_id": r.id,
-                        "icon": "certificate", "title": "Upload Certificate",
-                        "description": f"Upload your completion certificate for {r.course_name}.",
-                        "action": "upload_certificate", "button": "Upload Now",
-                    })
+                    actions.append(
+                        {
+                            "key": f"cert-{r.id}",
+                            "request_id": r.id,
+                            "icon": "certificate",
+                            "title": "Upload Certificate",
+                            "description": f"Upload your completion certificate for {r.course_name}.",
+                            "action": "upload_certificate",
+                            "button": "Upload Now",
+                        }
+                    )
             if r.status == PDStatus.CERTIFICATE_UPLOADED:
-                actions.append({
-                    "key": f"bamboo-{r.id}", "request_id": r.id,
-                    "icon": "bamboo", "title": "BambooHR Upload",
-                    "description": f"Upload certificate to BambooHR and confirm here for {r.course_name}.",
-                    "action": "bamboohr", "button": "Confirm Upload",
-                })
-            if r.status == PDStatus.BAMBOOHR_CONFIRMED and r.funding_type in FUNDED_TYPES:
-                actions.append({
-                    "key": f"acct-{r.id}", "request_id": r.id,
-                    "icon": "accountability", "title": "Submit Accountability",
-                    "description": f"Submit receipts and accountability for {r.course_name}.",
-                    "action": "accountability", "button": "Submit Now",
-                })
+                actions.append(
+                    {
+                        "key": f"bamboo-{r.id}",
+                        "request_id": r.id,
+                        "icon": "bamboo",
+                        "title": "BambooHR Upload",
+                        "description": f"Upload certificate to BambooHR and confirm here for {r.course_name}.",
+                        "action": "bamboohr",
+                        "button": "Confirm Upload",
+                    }
+                )
+            if (
+                r.status == PDStatus.BAMBOOHR_CONFIRMED
+                and r.funding_type in FUNDED_TYPES
+            ):
+                actions.append(
+                    {
+                        "key": f"acct-{r.id}",
+                        "request_id": r.id,
+                        "icon": "accountability",
+                        "title": "Submit Accountability",
+                        "description": f"Submit receipts and accountability for {r.course_name}.",
+                        "action": "accountability",
+                        "button": "Submit Now",
+                    }
+                )
             elif r.status == PDStatus.BAMBOOHR_CONFIRMED:
-                actions.append({
-                    "key": f"signoff-{r.id}", "request_id": r.id,
-                    "icon": "signoff", "title": "Awaiting HR Sign-Off",
-                    "description": f"{r.course_name} is ready for HR sign-off.",
-                    "action": None, "button": "View",
-                })
-            if r.status == PDStatus.ACCOUNTABILITY_SUBMITTED and not r.accountability_netsuite_id:
-                actions.append({
-                    "key": f"netsuite-{r.id}", "request_id": r.id,
-                    "icon": "expense", "title": "Enter Expense ID",
-                    "description": f"Enter NetSuite Expense ID after accountability for {r.course_name}.",
-                    "action": "accountability", "button": "Enter ID",
-                })
+                actions.append(
+                    {
+                        "key": f"signoff-{r.id}",
+                        "request_id": r.id,
+                        "icon": "signoff",
+                        "title": "Awaiting HR Sign-Off",
+                        "description": f"{r.course_name} is ready for HR sign-off.",
+                        "action": None,
+                        "button": "View",
+                    }
+                )
+            if (
+                r.status == PDStatus.ACCOUNTABILITY_SUBMITTED
+                and not r.accountability_netsuite_id
+            ):
+                actions.append(
+                    {
+                        "key": f"netsuite-{r.id}",
+                        "request_id": r.id,
+                        "icon": "expense",
+                        "title": "Enter Expense ID",
+                        "description": f"Enter NetSuite Expense ID after accountability for {r.course_name}.",
+                        "action": "accountability",
+                        "button": "Enter ID",
+                    }
+                )
         return actions[:4]
 
     @staticmethod
     def _course_row(r: ProfessionalDevelopmentRequest) -> dict:
         label, action = NEXT_ACTION_BY_STATUS.get(r.status, ("View", None))
         return {
-            "id": r.id, "course_name": r.course_name, "institution": r.institution,
-            "course_type": r.get_course_type_display(), "start_date": r.start_date,
-            "end_date": r.end_date, "status": r.get_status_display(),
+            "id": r.id,
+            "course_name": r.course_name,
+            "institution": r.institution,
+            "course_type": r.get_course_type_display(),
+            "start_date": r.start_date,
+            "end_date": r.end_date,
+            "status": r.get_status_display(),
             "status_key": r.status,
-            "funding_used": f"{r.currency} {r.requested_amount_cents/100:,.0f}" if r.requested_amount_cents else
-                            ("Self-Funded" if r.funding_type == "self_funded" else f"{r.currency} 0"),
-            "next_action_label": label, "next_action": action,
-            "bucket": ("completed" if r.status == PDStatus.COMPLETED_CLOSED
-                      else "cancelled" if r.status in (PDStatus.REJECTED, PDStatus.CANCELLED, PDStatus.WITHDRAWN)
-                      else "in_progress"),
+            "funding_used": f"{r.currency} {r.requested_amount_cents/100:,.0f}"
+            if r.requested_amount_cents
+            else (
+                "Self-Funded" if r.funding_type == "self_funded" else f"{r.currency} 0"
+            ),
+            "next_action_label": label,
+            "next_action": action,
+            "bucket": (
+                "completed"
+                if r.status == PDStatus.COMPLETED_CLOSED
+                else "cancelled"
+                if r.status
+                in (PDStatus.REJECTED, PDStatus.CANCELLED, PDStatus.WITHDRAWN)
+                else "in_progress"
+            ),
         }
 
     # ── Workload/calendar conflict check (§14) ──────────────────────────────
@@ -473,37 +706,64 @@ class StaffPDService:
 
         sp = _staff(user)
         ids = [sp.id, user.id] if sp else [user.id]
-        activities = Activity.objects.filter(
-            responsible_staff_id__in=ids, deleted_at__isnull=True,
-            planned_date__gte=start_date, planned_date__lt=end_date,
-        ).exclude(status__in=["cancelled", "rejected", "not_planned"]).count()
+        activities = (
+            Activity.objects.filter(
+                responsible_staff_id__in=ids,
+                deleted_at__isnull=True,
+                planned_date__gte=start_date,
+                planned_date__lt=end_date,
+            )
+            .exclude(status__in=["cancelled", "rejected", "not_planned"])
+            .count()
+        )
 
-        leave_overlap = Leave.objects.filter(
-            staff_id=sp.id, status="approved",
-            start_date__lt=end_date.isoformat(), end_date__gte=start_date.isoformat(),
-        ).count() if sp else 0
+        leave_overlap = (
+            Leave.objects.filter(
+                staff_id=sp.id,
+                status="approved",
+                start_date__lt=end_date.isoformat(),
+                end_date__gte=start_date.isoformat(),
+            ).count()
+            if sp
+            else 0
+        )
 
         blocks = CalendarBlock.objects.filter(
-            is_active=True, start_date__lt=end_date, end_date__gte=start_date,
+            is_active=True,
+            start_date__lt=end_date,
+            end_date__gte=start_date,
         ).count()
 
         if activities >= 8 or leave_overlap:
             status, detail_bits = "major_conflict", []
             if leave_overlap:
-                detail_bits.append(f"{leave_overlap} approved leave period(s) overlap this course")
+                detail_bits.append(
+                    f"{leave_overlap} approved leave period(s) overlap this course"
+                )
             if activities >= 8:
-                detail_bits.append(f"{activities} planned activities fall within the course dates")
+                detail_bits.append(
+                    f"{activities} planned activities fall within the course dates"
+                )
         elif activities >= 3:
-            status, detail_bits = "supervisor_review_required", [
-                f"{activities} planned activities fall within the course dates"]
+            status, detail_bits = (
+                "supervisor_review_required",
+                [f"{activities} planned activities fall within the course dates"],
+            )
         elif activities >= 1 or blocks:
-            status, detail_bits = "minor_conflict", [
-                f"{activities} planned activit{'y' if activities == 1 else 'ies'}, {blocks} calendar block(s)"]
+            status, detail_bits = (
+                "minor_conflict",
+                [
+                    f"{activities} planned activit{'y' if activities == 1 else 'ies'}, {blocks} calendar block(s)"
+                ],
+            )
         else:
             status, detail_bits = "no_conflict", []
         return {
-            "status": status, "detail": "; ".join(detail_bits) or "No scheduling conflicts detected.",
-            "activities": activities, "leave_overlap": leave_overlap, "blocks": blocks,
+            "status": status,
+            "detail": "; ".join(detail_bits) or "No scheduling conflicts detected.",
+            "activities": activities,
+            "leave_overlap": leave_overlap,
+            "blocks": blocks,
         }
 
     @staticmethod
@@ -520,8 +780,10 @@ class StaffPDService:
             title=f"PD: {request_obj.course_name}",
             description=f"{request_obj.staff_name} — {request_obj.institution}",
             block_type="CUSTOM_BLOCK",
-            start_date=request_obj.start_date, end_date=request_obj.end_date,
-            country=request_obj.country, applies_to_all_roles=False,
+            start_date=request_obj.start_date,
+            end_date=request_obj.end_date,
+            country=request_obj.country,
+            applies_to_all_roles=False,
             created_by=request_obj.staff_id,
         )
         return block.id
@@ -534,29 +796,55 @@ class StaffPDService:
         The single source for both the global To-Do queue and the sidebar
         badge — reuses each service's own `can_review`/`can_signoff_review`
         check rather than re-deriving routing rules here."""
-        from apps.professional_development.approval_service import PDApprovalRoutingService
+        from apps.professional_development.approval_service import (
+            PDApprovalRoutingService,
+        )
         from apps.professional_development.fund_service import PDFundRequestService
-        from apps.professional_development.completion_service import PDCourseTrackingService
+        from apps.professional_development.completion_service import (
+            PDCourseTrackingService,
+        )
 
         sp_id = getattr(user, "staff_profile_id", None)
         own = []
         if sp_id:
             own_action_statuses = (
-                PDStatus.RETURNED_BY_SUPERVISOR, PDStatus.RETURNED_BY_HR,
-                PDStatus.DISBURSED, PDStatus.APPROVED_UNFUNDED, PDStatus.ENROLLMENT_PENDING,
-                PDStatus.ENDED, PDStatus.MARKED_COMPLETE, PDStatus.CERTIFICATE_UPLOADED,
+                PDStatus.RETURNED_BY_SUPERVISOR,
+                PDStatus.RETURNED_BY_HR,
+                PDStatus.DISBURSED,
+                PDStatus.APPROVED_UNFUNDED,
+                PDStatus.ENROLLMENT_PENDING,
+                PDStatus.ENDED,
+                PDStatus.MARKED_COMPLETE,
+                PDStatus.CERTIFICATE_UPLOADED,
             )
-            own = list(ProfessionalDevelopmentRequest.objects.filter(staff_id=sp_id, status__in=own_action_statuses))
-            own += list(ProfessionalDevelopmentRequest.objects.filter(
-                staff_id=sp_id, status=PDStatus.BAMBOOHR_CONFIRMED, funding_type__in=FUNDED_TYPES))
+            own = list(
+                ProfessionalDevelopmentRequest.objects.filter(
+                    staff_id=sp_id, status__in=own_action_statuses
+                )
+            )
+            own += list(
+                ProfessionalDevelopmentRequest.objects.filter(
+                    staff_id=sp_id,
+                    status=PDStatus.BAMBOOHR_CONFIRMED,
+                    funding_type__in=FUNDED_TYPES,
+                )
+            )
 
-        candidates = ProfessionalDevelopmentRequest.objects.exclude(staff_id=sp_id or "").filter(
-            status__in=(PDStatus.SUBMITTED_TO_SUPERVISOR, PDStatus.SUBMITTED_TO_HR, PDStatus.PENDING_EXCEPTION,
-                        PDStatus.APPROVED_PENDING_FUNDING, PDStatus.ACCOUNTABILITY_SUBMITTED,
-                        PDStatus.AWAITING_HR_SIGNOFF)
+        candidates = ProfessionalDevelopmentRequest.objects.exclude(
+            staff_id=sp_id or ""
+        ).filter(
+            status__in=(
+                PDStatus.SUBMITTED_TO_SUPERVISOR,
+                PDStatus.SUBMITTED_TO_HR,
+                PDStatus.PENDING_EXCEPTION,
+                PDStatus.APPROVED_PENDING_FUNDING,
+                PDStatus.ACCOUNTABILITY_SUBMITTED,
+                PDStatus.AWAITING_HR_SIGNOFF,
+            )
         )
         reviewing = [
-            r for r in candidates
+            r
+            for r in candidates
             if PDApprovalRoutingService.can_review(r, user)
             or PDFundRequestService.can_review(r, user)
             or PDCourseTrackingService.can_signoff_review(r, user)

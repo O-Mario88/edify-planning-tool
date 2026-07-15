@@ -22,7 +22,7 @@
   {% for message in messages %}
     <div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
       <span>{{ message }}</span>
-      <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
+      <button type="button" @click="$el.parentElement.remove()" class="text-slate-400 hover:text-slate-600" aria-label="Dismiss notification">&times;</button>
     </div>
   {% endfor %}
   </div>

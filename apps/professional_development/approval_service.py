@@ -29,7 +29,11 @@ from django.utils import timezone
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
 from apps.core.exceptions import BadRequest, Forbidden
 
-from apps.professional_development.models import FUNDED_TYPES, PDStatus, ProfessionalDevelopmentRequest
+from apps.professional_development.models import (
+    FUNDED_TYPES,
+    PDStatus,
+    ProfessionalDevelopmentRequest,
+)
 
 HR_ROLE = "HumanResources"
 FINANCE_ROLE = "Accountant"
@@ -49,9 +53,13 @@ def _pick_approver(role: str, exclude_user_id: str) -> User | None:
     if role == HR_ROLE:
         return (
             User.objects.filter(roles__contains=["CountryDirector"], status="active")
-            .exclude(id=exclude_user_id).first()
-            or User.objects.filter(roles__contains=["RegionalVicePresident"], status="active")
-            .exclude(id=exclude_user_id).first()
+            .exclude(id=exclude_user_id)
+            .first()
+            or User.objects.filter(
+                roles__contains=["RegionalVicePresident"], status="active"
+            )
+            .exclude(id=exclude_user_id)
+            .first()
         )
     return None
 
@@ -59,9 +67,11 @@ def _pick_approver(role: str, exclude_user_id: str) -> User | None:
 class PDApprovalRoutingService:
     @staticmethod
     def supervisor_for(staff: StaffProfile) -> StaffProfile | None:
-        link = StaffSupervisorAssignment.objects.filter(supervisee=staff).select_related(
-            "supervisor__user"
-        ).first()
+        link = (
+            StaffSupervisorAssignment.objects.filter(supervisee=staff)
+            .select_related("supervisor__user")
+            .first()
+        )
         return link.supervisor if link else None
 
     @staticmethod
@@ -72,37 +82,61 @@ class PDApprovalRoutingService:
             return False
         if req.status == PDStatus.SUBMITTED_TO_SUPERVISOR:
             staff = StaffProfile.objects.filter(id=req.staff_id).first()
-            supervisor = PDApprovalRoutingService.supervisor_for(staff) if staff else None
+            supervisor = (
+                PDApprovalRoutingService.supervisor_for(staff) if staff else None
+            )
             return bool(supervisor and supervisor.user_id == principal.user_id)
         if req.status in (PDStatus.SUBMITTED_TO_HR, PDStatus.PENDING_EXCEPTION):
-            return getattr(principal, "active_role", "") in (HR_ROLE,) + LEADERSHIP_ROLES
+            return (
+                getattr(principal, "active_role", "") in (HR_ROLE,) + LEADERSHIP_ROLES
+            )
         return False
 
     # ── Submission ────────────────────────────────────────────────────────────
     @staticmethod
-    def submit(req: ProfessionalDevelopmentRequest, principal) -> ProfessionalDevelopmentRequest:
+    def submit(
+        req: ProfessionalDevelopmentRequest, principal
+    ) -> ProfessionalDevelopmentRequest:
         if req.staff_id != (principal.staff_profile_id or ""):
             raise Forbidden("You may only submit your own request.")
-        if req.status not in (PDStatus.DRAFT, PDStatus.RETURNED_BY_SUPERVISOR, PDStatus.RETURNED_BY_HR):
+        if req.status not in (
+            PDStatus.DRAFT,
+            PDStatus.RETURNED_BY_SUPERVISOR,
+            PDStatus.RETURNED_BY_HR,
+        ):
             raise BadRequest("Only a draft or returned request can be submitted.")
         required = [
-            req.course_name, req.course_type, req.institution, req.start_date,
-            req.end_date, req.funding_type,
+            req.course_name,
+            req.course_type,
+            req.institution,
+            req.start_date,
+            req.end_date,
+            req.funding_type,
         ]
         if any(v in (None, "") for v in required):
-            raise BadRequest("Course name, type, institution, dates and funding type are required.")
-        if req.course_type == "in_person" and not req.evidence_files.filter(
-            status="uploaded"
-        ).exists():
-            raise BadRequest("In-person courses require an admission or enrollment letter (PDF).")
+            raise BadRequest(
+                "Course name, type, institution, dates and funding type are required."
+            )
+        if (
+            req.course_type == "in_person"
+            and not req.evidence_files.filter(status="uploaded").exists()
+        ):
+            raise BadRequest(
+                "In-person courses require an admission or enrollment letter (PDF)."
+            )
         if req.course_type == "online" and not (req.course_link or "").strip():
             raise BadRequest("Online courses require an institution or course link.")
         if req.course_type == "hybrid" and not (
-            (req.course_link or "").strip() and req.evidence_files.filter(status="uploaded").exists()
+            (req.course_link or "").strip()
+            and req.evidence_files.filter(status="uploaded").exists()
         ):
-            raise BadRequest("Hybrid courses require both a course link and enrollment evidence.")
+            raise BadRequest(
+                "Hybrid courses require both a course link and enrollment evidence."
+            )
 
-        req.total_cost_cents = (req.course_fee_cents or 0) + (req.other_costs_cents or 0)
+        req.total_cost_cents = (req.course_fee_cents or 0) + (
+            req.other_costs_cents or 0
+        )
 
         # §9 — the requested amount must not exceed the remaining PD fund
         # unless the employee has explicitly requested a funding exception.
@@ -132,9 +166,12 @@ class PDApprovalRoutingService:
             PDApprovalRoutingService._notify_hr_stage(req)
         else:
             PDApprovalRoutingService._notify(
-                supervisor.user_id, "PD request awaiting your review",
+                supervisor.user_id,
+                "PD request awaiting your review",
                 f"{req.staff_name} requested Professional Development support for "
-                f"“{req.course_name}”.", req)
+                f"“{req.course_name}”.",
+                req,
+            )
         return req
 
     # ── Stage 1: Supervisor ──────────────────────────────────────────────────
@@ -163,12 +200,21 @@ class PDApprovalRoutingService:
         req.status = PDStatus.SUBMITTED_TO_HR
         req.supervisor_reviewed_by = principal.user_id
         req.supervisor_reviewed_at = timezone.now()
-        req.save(update_fields=["status", "supervisor_reviewed_by", "supervisor_reviewed_at", "updated_at"])
+        req.save(
+            update_fields=[
+                "status",
+                "supervisor_reviewed_by",
+                "supervisor_reviewed_at",
+                "updated_at",
+            ]
+        )
         PDApprovalRoutingService._notify_hr_stage(req)
         return req
 
     @staticmethod
-    def supervisor_return(req_id: str, principal, reason: str) -> ProfessionalDevelopmentRequest:
+    def supervisor_return(
+        req_id: str, principal, reason: str
+    ) -> ProfessionalDevelopmentRequest:
         if not (reason or "").strip():
             raise BadRequest("A return reason is required.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
@@ -179,7 +225,8 @@ class PDApprovalRoutingService:
         req.supervisor_note = reason[:512]
         req.save()
         PDApprovalRoutingService._notify(
-            req.owner_user_id, "PD request returned by your supervisor", reason, req)
+            req.owner_user_id, "PD request returned by your supervisor", reason, req
+        )
         return req
 
     @staticmethod
@@ -189,8 +236,11 @@ class PDApprovalRoutingService:
         approver = _pick_approver(HR_ROLE, req.owner_user_id)
         if approver:
             PDApprovalRoutingService._notify(
-                approver.id, "PD request awaiting HR review",
-                f"{req.staff_name} — “{req.course_name}”.", req)
+                approver.id,
+                "PD request awaiting HR review",
+                f"{req.staff_name} — “{req.course_name}”.",
+                req,
+            )
 
     # ── Stage 2: HR ───────────────────────────────────────────────────────────
     @staticmethod
@@ -200,13 +250,19 @@ class PDApprovalRoutingService:
         role = getattr(principal, "active_role", "")
         is_hr_leadership = role in (HR_ROLE,) + LEADERSHIP_ROLES
         if not is_hr_leadership:
-            raise Forbidden("Only HR (or leadership, for HR's own requests) may review this stage.")
+            raise Forbidden(
+                "Only HR (or leadership, for HR's own requests) may review this stage."
+            )
         if req.staff_id == (principal.staff_profile_id or ""):
-            raise Forbidden("You cannot approve or sign off your own request — HR self-approval is not permitted.")
+            raise Forbidden(
+                "You cannot approve or sign off your own request — HR self-approval is not permitted."
+            )
 
     @staticmethod
     @transaction.atomic
-    def hr_approve(req_id: str, principal, exception: bool = False) -> ProfessionalDevelopmentRequest:
+    def hr_approve(
+        req_id: str, principal, exception: bool = False
+    ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=req_id)
         PDApprovalRoutingService._assert_hr(req, principal)
         req.hr_reviewed_by = principal.user_id
@@ -216,13 +272,16 @@ class PDApprovalRoutingService:
         # else — flag that explicitly for the audit trail (§13).
         requester_role = getattr(
             StaffProfile.objects.filter(id=req.staff_id).select_related("user").first(),
-            "user", None,
+            "user",
+            None,
         )
         req.hr_is_independent_reviewer = bool(
             requester_role and requester_role.active_role == HR_ROLE
         )
         if req.is_exception and not exception:
-            raise BadRequest("This request requires exception approval before HR can approve it.")
+            raise BadRequest(
+                "This request requires exception approval before HR can approve it."
+            )
         from apps.professional_development.fund_service import PDFundRequestService
 
         if req.funding_type in FUNDED_TYPES and req.requested_amount_cents > 0:
@@ -238,16 +297,24 @@ class PDApprovalRoutingService:
         req.calendar_block_id = StaffPDService.create_calendar_block(req)
         req.save(update_fields=["calendar_block_id", "updated_at"])
         PDApprovalRoutingService._notify(
-            req.owner_user_id, "PD request approved",
-            f"Your request for “{req.course_name}” was approved by HR.", req)
+            req.owner_user_id,
+            "PD request approved",
+            f"Your request for “{req.course_name}” was approved by HR.",
+            req,
+        )
         PDApprovalRoutingService._message_from_hr(
-            req, principal, "Your PD request was approved",
+            req,
+            principal,
+            "Your PD request was approved",
             f"Good news — “{req.course_name}” has been approved. "
-            "Check My Professional Development for the next step.")
+            "Check My Professional Development for the next step.",
+        )
         return req
 
     @staticmethod
-    def hr_return(req_id: str, principal, reason: str) -> ProfessionalDevelopmentRequest:
+    def hr_return(
+        req_id: str, principal, reason: str
+    ) -> ProfessionalDevelopmentRequest:
         if not (reason or "").strip():
             raise BadRequest("A return reason is required.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
@@ -258,14 +325,20 @@ class PDApprovalRoutingService:
         req.hr_note = reason[:512]
         req.save()
         PDApprovalRoutingService._notify(
-            req.owner_user_id, "PD request returned by HR", reason, req)
+            req.owner_user_id, "PD request returned by HR", reason, req
+        )
         PDApprovalRoutingService._message_from_hr(
-            req, principal, "Your PD request needs a fix",
-            f"“{req.course_name}” was returned: {reason}")
+            req,
+            principal,
+            "Your PD request needs a fix",
+            f"“{req.course_name}” was returned: {reason}",
+        )
         return req
 
     @staticmethod
-    def hr_reject(req_id: str, principal, reason: str) -> ProfessionalDevelopmentRequest:
+    def hr_reject(
+        req_id: str, principal, reason: str
+    ) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         PDApprovalRoutingService._assert_hr(req, principal)
         req.status = PDStatus.REJECTED
@@ -274,10 +347,15 @@ class PDApprovalRoutingService:
         req.hr_note = (reason or "")[:512]
         req.save()
         PDApprovalRoutingService._notify(
-            req.owner_user_id, "PD request rejected", reason or "", req)
+            req.owner_user_id, "PD request rejected", reason or "", req
+        )
         PDApprovalRoutingService._message_from_hr(
-            req, principal, "Your PD request was not approved",
-            f"“{req.course_name}” was rejected." + (f" Reason: {reason}" if reason else ""))
+            req,
+            principal,
+            "Your PD request was not approved",
+            f"“{req.course_name}” was rejected."
+            + (f" Reason: {reason}" if reason else ""),
+        )
         return req
 
     # ── Helpers ───────────────────────────────────────────────────────────────
@@ -289,10 +367,16 @@ class PDApprovalRoutingService:
             from apps.notifications.models import Notification
 
             Notification.objects.create(
-                recipient_id=recipient_user_id, title=title, body=body,
-                category="professional_development", context_type="pd_request",
-                context_id=req.id, target_route=f"/my-professional-development/request?id={req.id}",
-                action_label="Open", action_required=True, priority="high",
+                recipient_id=recipient_user_id,
+                title=title,
+                body=body,
+                category="professional_development",
+                context_type="pd_request",
+                context_id=req.id,
+                target_route=f"/my-professional-development/request?id={req.id}",
+                action_label="Open",
+                action_required=True,
+                priority="high",
             )
         except Exception:  # noqa: BLE001 — notification is supportive, never blocking
             pass
@@ -307,9 +391,13 @@ class PDApprovalRoutingService:
             from apps.messaging.services import workflow_message
 
             workflow_message(
-                context_type="professional_development", context_id=req.id,
-                subject=subject, body=body, recipient_ids=[req.owner_user_id],
-                category="professional_development", priority="high",
+                context_type="professional_development",
+                context_id=req.id,
+                subject=subject,
+                body=body,
+                recipient_ids=[req.owner_user_id],
+                category="professional_development",
+                priority="high",
                 sender_id=principal.user_id,
             )
         except Exception:  # noqa: BLE001

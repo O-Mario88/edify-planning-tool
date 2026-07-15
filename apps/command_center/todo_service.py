@@ -725,24 +725,26 @@ def _pl_analytics_todos(principal, role):
     out = []
     try:
         for t in PLAnalyticsService.pl_todos(principal):
-            out.append({
-                "id": t["id"],
-                "title": t["title"],
-                "description": t["description"],
-                "category": t.get("category", "Analytics"),
-                "priority": t.get("priority", "medium"),
-                "status_key": "waiting_me",
-                "status_label": "Waiting on Me",
-                "status_tone": "info",
-                "due_label": "—",
-                "due_tone": "neutral",
-                "linked": "Program Lead Analytics",
-                "action_label": t.get("action_label", "Review"),
-                "action_url": t.get("action_url", "/analytics/program-lead"),
-                "actionable": True,
-                "source": "PL Analytics",
-                "_due_sort": _date.today(),
-            })
+            out.append(
+                {
+                    "id": t["id"],
+                    "title": t["title"],
+                    "description": t["description"],
+                    "category": t.get("category", "Analytics"),
+                    "priority": t.get("priority", "medium"),
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "Program Lead Analytics",
+                    "action_label": t.get("action_label", "Review"),
+                    "action_url": t.get("action_url", "/analytics/program-lead"),
+                    "actionable": True,
+                    "source": "PL Analytics",
+                    "_due_sort": _date.today(),
+                }
+            )
     except Exception:  # noqa: BLE001 — analytics To-Dos must never break the queue
         return []
     return out[:8]
@@ -762,21 +764,28 @@ def _my_target_todos(principal, role):
         page = MyTargetQueryService.get_page(principal)
         out = []
         for f in page["focus"][:3]:
-            out.append({
-                "id": f"target-{f['area'].lower().replace(' ', '-')}",
-                "title": f"Recover {f['area']} target",
-                "description": f"{f['achieved']} of {f['target']} this month — {f['reason']}.",
-                "category": "My Targets",
-                "priority": "high" if f["status"] == "Off Track" else "medium",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning" if f["status"] == "Off Track" else "info",
-                "due_label": "—", "due_tone": "neutral",
-                "linked": "My Targets",
-                "action_label": f["action_label"],
-                "action_url": f["action_url"] if f["action_url"] != "?mscs=new" else "/my-targets",
-                "actionable": True, "source": "My Targets",
-                "_due_sort": _date.today(),
-            })
+            out.append(
+                {
+                    "id": f"target-{f['area'].lower().replace(' ', '-')}",
+                    "title": f"Recover {f['area']} target",
+                    "description": f"{f['achieved']} of {f['target']} this month — {f['reason']}.",
+                    "category": "My Targets",
+                    "priority": "high" if f["status"] == "Off Track" else "medium",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning" if f["status"] == "Off Track" else "info",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "My Targets",
+                    "action_label": f["action_label"],
+                    "action_url": f["action_url"]
+                    if f["action_url"] != "?mscs=new"
+                    else "/my-targets",
+                    "actionable": True,
+                    "source": "My Targets",
+                    "_due_sort": _date.today(),
+                }
+            )
         return out
     except Exception:  # noqa: BLE001 — target To-Dos must never break the queue
         return []
@@ -800,35 +809,51 @@ def _rvp_todos(principal, role):
         fy = get_operational_fy()
         out = []
         for b in MonthlyWorkPlanBudget.objects.filter(
-            fy=fy, status="submitted_to_rvp").order_by("month_key"):
-            out.append({
-                "id": f"rvp-mwpb-{b.id}",
-                "title": f"Review Country Monthly Budget {b.month_key}",
-                "description": f"UGX {b.total_amount:,} across {b.activity_count} "
-                               "plan-backed activities awaits your approval.",
-                "category": "Approvals", "priority": "high",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": "—", "due_tone": "neutral",
-                "linked": f"Country Budget · {b.month_key}",
-                "action_label": "Review", "action_url": "/country-budget/",
-                "actionable": True, "source": "RVP approvals",
-                "_due_sort": _date.today(),
-            })
-        for b in CountryAnnualBudget.objects.filter(
-            fy=fy, status="submitted_to_rvp"):
-            out.append({
-                "id": f"rvp-annual-{b.id}",
-                "title": f"Review Country Annual Budget FY {b.fy}",
-                "description": f"UGX {b.total_amount:,} annual baseline awaiting "
-                               "approval — approval locks the baseline.",
-                "category": "Approvals", "priority": "high",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": "—", "due_tone": "neutral",
-                "linked": f"Annual Budget · FY {b.fy}",
-                "action_label": "Review", "action_url": "/dashboard",
-                "actionable": True, "source": "RVP approvals",
-                "_due_sort": _date.today(),
-            })
+            fy=fy, status="submitted_to_rvp"
+        ).order_by("month_key"):
+            out.append(
+                {
+                    "id": f"rvp-mwpb-{b.id}",
+                    "title": f"Review Country Monthly Budget {b.month_key}",
+                    "description": f"UGX {b.total_amount:,} across {b.activity_count} "
+                    "plan-backed activities awaits your approval.",
+                    "category": "Approvals",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": f"Country Budget · {b.month_key}",
+                    "action_label": "Review",
+                    "action_url": "/country-budget/",
+                    "actionable": True,
+                    "source": "RVP approvals",
+                    "_due_sort": _date.today(),
+                }
+            )
+        for b in CountryAnnualBudget.objects.filter(fy=fy, status="submitted_to_rvp"):
+            out.append(
+                {
+                    "id": f"rvp-annual-{b.id}",
+                    "title": f"Review Country Annual Budget FY {b.fy}",
+                    "description": f"UGX {b.total_amount:,} annual baseline awaiting "
+                    "approval — approval locks the baseline.",
+                    "category": "Approvals",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": f"Annual Budget · FY {b.fy}",
+                    "action_label": "Review",
+                    "action_url": "/dashboard",
+                    "actionable": True,
+                    "source": "RVP approvals",
+                    "_due_sort": _date.today(),
+                }
+            )
         return out
     except Exception:  # noqa: BLE001
         return []
@@ -849,20 +874,26 @@ def _strategy_note_todos(principal, role):
             | models.Q(responsible_cd_id__isnull=True)
         )[:8]
         for n in notes:
-            out.append({
-                "id": f"strategy-note-{n.id}",
-                "title": f"Act on RVP guidance — {n.priority_label}",
-                "description": n.instruction[:180],
-                "category": "Strategy", "priority": "high",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "info",
-                "due_label": n.deadline.strftime("%b %d") if n.deadline else "—",
-                "due_tone": "warning" if n.deadline else "neutral",
-                "linked": n.scope, "action_label": "Open",
-                "action_url": "/dashboard", "actionable": True,
-                "source": "RVP strategy note",
-                "_due_sort": n.deadline or _date.today(),
-            })
+            out.append(
+                {
+                    "id": f"strategy-note-{n.id}",
+                    "title": f"Act on RVP guidance — {n.priority_label}",
+                    "description": n.instruction[:180],
+                    "category": "Strategy",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": n.deadline.strftime("%b %d") if n.deadline else "—",
+                    "due_tone": "warning" if n.deadline else "neutral",
+                    "linked": n.scope,
+                    "action_label": "Open",
+                    "action_url": "/dashboard",
+                    "actionable": True,
+                    "source": "RVP strategy note",
+                    "_due_sort": n.deadline or _date.today(),
+                }
+            )
         return out
     except Exception:  # noqa: BLE001
         return []
@@ -886,61 +917,97 @@ def _core_school_todos(principal, role):
         if not school_pks:
             return []
         sids = list(
-            School.objects.filter(id__in=school_pks, school_type="core",
-                                  deleted_at__isnull=True)
-            .values_list("school_id", flat=True)
+            School.objects.filter(
+                id__in=school_pks, school_type="core", deleted_at__isnull=True
+            ).values_list("school_id", flat=True)
         )
         if not sids:
             return []
         names = dict(
             School.objects.filter(school_id__in=sids).values_list("school_id", "name")
         )
-        done = {"Completed", "Accountant Confirmed", "ia_verified", "iaVerify",
-                "accountant_confirmed"}
-        in_flight = {"Scheduled", "scheduled", "Submitted", "submitted",
-                     "IA Pending", "ia_pending"}
+        done = {
+            "Completed",
+            "Accountant Confirmed",
+            "ia_verified",
+            "iaVerify",
+            "accountant_confirmed",
+        }
+        in_flight = {
+            "Scheduled",
+            "scheduled",
+            "Submitted",
+            "submitted",
+            "IA Pending",
+            "ia_pending",
+        }
         out = []
-        plans = CorePlan.objects.filter(
-            school_id__in=sids, fy=get_operational_fy()
-        ).exclude(status__in=["Cancelled", "cancelled"]).prefetch_related("slots")
+        plans = (
+            CorePlan.objects.filter(school_id__in=sids, fy=get_operational_fy())
+            .exclude(status__in=["Cancelled", "cancelled"])
+            .prefetch_related("slots")
+        )
         for plan in plans[:40]:
             slots = list(plan.slots.all())
             returned = [sl for sl in slots if sl.status in ("Returned", "returned")]
             for sl in returned[:2]:
-                out.append({
-                    "id": f"core-returned-{sl.id}",
-                    "title": f"Fix returned core {sl.activity_type} — {names.get(plan.school_id, plan.school_id)}",
-                    "description": sl.returned_reason or "Returned by verification — correct and resubmit.",
-                    "category": "Core Schools", "priority": "high",
-                    "status_key": "returned", "status_label": "Returned",
-                    "status_tone": "danger", "due_label": "—", "due_tone": "neutral",
-                    "linked": names.get(plan.school_id, plan.school_id),
-                    "action_label": "Open Core Schools", "action_url": "/core-schools",
-                    "actionable": True, "source": "Core Schools",
-                    "_due_sort": _date.today(),
-                })
+                out.append(
+                    {
+                        "id": f"core-returned-{sl.id}",
+                        "title": f"Fix returned core {sl.activity_type} — {names.get(plan.school_id, plan.school_id)}",
+                        "description": sl.returned_reason
+                        or "Returned by verification — correct and resubmit.",
+                        "category": "Core Schools",
+                        "priority": "high",
+                        "status_key": "returned",
+                        "status_label": "Returned",
+                        "status_tone": "danger",
+                        "due_label": "—",
+                        "due_tone": "neutral",
+                        "linked": names.get(plan.school_id, plan.school_id),
+                        "action_label": "Open Core Schools",
+                        "action_url": "/core-schools",
+                        "actionable": True,
+                        "source": "Core Schools",
+                        "_due_sort": _date.today(),
+                    }
+                )
             for kind, label in (("visit", "Visit"), ("training", "Training")):
                 kind_slots = sorted(
                     [sl for sl in slots if sl.activity_type == kind],
-                    key=lambda sl: sl.sequence_number)
+                    key=lambda sl: sl.sequence_number,
+                )
                 nxt = next(
-                    (sl for sl in kind_slots
-                     if sl.status not in done and sl.status not in in_flight
-                     and sl.status not in ("Returned", "returned")),
-                    None)
+                    (
+                        sl
+                        for sl in kind_slots
+                        if sl.status not in done
+                        and sl.status not in in_flight
+                        and sl.status not in ("Returned", "returned")
+                    ),
+                    None,
+                )
                 if nxt is not None:
-                    out.append({
-                        "id": f"core-slot-{nxt.id}",
-                        "title": f"Schedule {label[0]}{nxt.sequence_number} Core {label} — {names.get(plan.school_id, plan.school_id)}",
-                        "description": "Core package slot not yet scheduled this financial year.",
-                        "category": "Core Schools", "priority": "medium",
-                        "status_key": "waiting_me", "status_label": "Waiting on Me",
-                        "status_tone": "info", "due_label": "—", "due_tone": "neutral",
-                        "linked": names.get(plan.school_id, plan.school_id),
-                        "action_label": "Plan Now", "action_url": "/core-schools",
-                        "actionable": True, "source": "Core Schools",
-                        "_due_sort": _date.today(),
-                    })
+                    out.append(
+                        {
+                            "id": f"core-slot-{nxt.id}",
+                            "title": f"Schedule {label[0]}{nxt.sequence_number} Core {label} — {names.get(plan.school_id, plan.school_id)}",
+                            "description": "Core package slot not yet scheduled this financial year.",
+                            "category": "Core Schools",
+                            "priority": "medium",
+                            "status_key": "waiting_me",
+                            "status_label": "Waiting on Me",
+                            "status_tone": "info",
+                            "due_label": "—",
+                            "due_tone": "neutral",
+                            "linked": names.get(plan.school_id, plan.school_id),
+                            "action_label": "Plan Now",
+                            "action_url": "/core-schools",
+                            "actionable": True,
+                            "source": "Core Schools",
+                            "_due_sort": _date.today(),
+                        }
+                    )
         return out[:12]
     except Exception:  # noqa: BLE001 — core To-Dos must never break the queue
         return []
@@ -963,46 +1030,76 @@ def _team_target_todos(principal, role):
         for m in page["members"]:
             if m["status"] not in ("High Risk", "Critical"):
                 continue
-            out.append({
-                "id": f"team-risk-{m['user_id']}",
-                "title": f"Review high-risk CCEO — {m['name']}",
-                "description": (f"{m['month_pct'] or 0}% vs expected pace {m['pace']}% "
-                                f"({m['status']}). Open the recovery queue."),
-                "category": "Team Targets", "priority": "high",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": "—", "due_tone": "neutral",
-                "linked": "Team Targets", "action_label": "Review",
-                "action_url": "/team-targets", "actionable": True,
-                "source": "Team Targets", "_due_sort": _date.today(),
-            })
+            out.append(
+                {
+                    "id": f"team-risk-{m['user_id']}",
+                    "title": f"Review high-risk CCEO — {m['name']}",
+                    "description": (
+                        f"{m['month_pct'] or 0}% vs expected pace {m['pace']}% "
+                        f"({m['status']}). Open the recovery queue."
+                    ),
+                    "category": "Team Targets",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "Team Targets",
+                    "action_label": "Review",
+                    "action_url": "/team-targets",
+                    "actionable": True,
+                    "source": "Team Targets",
+                    "_due_sort": _date.today(),
+                }
+            )
         pending = CatchUpPlan.objects.filter(
-            pl_user_id=principal.id, status="submitted").count()
+            pl_user_id=principal.id, status="submitted"
+        ).count()
         if pending:
-            out.append({
-                "id": "team-catchup-queue",
-                "title": f"Approve {pending} catch-up plan{'s' if pending > 1 else ''}",
-                "description": "Submitted recovery plans are waiting for your decision.",
-                "category": "Team Targets", "priority": "high",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "info", "due_label": "—", "due_tone": "neutral",
-                "linked": "Recovery queue", "action_label": "Open Queue",
-                "action_url": "/team-targets", "actionable": True,
-                "source": "Team Targets", "_due_sort": _date.today(),
-            })
+            out.append(
+                {
+                    "id": "team-catchup-queue",
+                    "title": f"Approve {pending} catch-up plan{'s' if pending > 1 else ''}",
+                    "description": "Submitted recovery plans are waiting for your decision.",
+                    "category": "Team Targets",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "Recovery queue",
+                    "action_label": "Open Queue",
+                    "action_url": "/team-targets",
+                    "actionable": True,
+                    "source": "Team Targets",
+                    "_due_sort": _date.today(),
+                }
+            )
         sf_kpi = next((k for k in page["kpis"] if k["key"] == "sfid"), None)
         missing = int(sf_kpi["delta_unit"].split()[0]) if sf_kpi else 0
         if missing >= 5:
-            out.append({
-                "id": "team-sfid-backlog",
-                "title": f"Follow up {missing} missing Activity SF IDs",
-                "description": "Completed team activities are not credited until the Activity SF ID is entered.",
-                "category": "Team Targets", "priority": "medium",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": "—", "due_tone": "neutral",
-                "linked": "SF ID backlog", "action_label": "Open Backlog",
-                "action_url": "/team-targets", "actionable": True,
-                "source": "Team Targets", "_due_sort": _date.today(),
-            })
+            out.append(
+                {
+                    "id": "team-sfid-backlog",
+                    "title": f"Follow up {missing} missing Activity SF IDs",
+                    "description": "Completed team activities are not credited until the Activity SF ID is entered.",
+                    "category": "Team Targets",
+                    "priority": "medium",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "SF ID backlog",
+                    "action_label": "Open Backlog",
+                    "action_url": "/team-targets",
+                    "actionable": True,
+                    "source": "Team Targets",
+                    "_due_sort": _date.today(),
+                }
+            )
         return out
     except Exception:  # noqa: BLE001 — team To-Dos must never break the queue
         return []
@@ -1028,31 +1125,53 @@ def _route_todos(principal, role):
         low_conf = [b for b in batches if b.confidence in ("low", "needs_cleanup")]
         if low_conf:
             days = ", ".join(b.visit_date.strftime("%d %b") for b in low_conf[:3])
-            out.append({
-                "id": "route-fix-location",
-                "title": "Fix school location / coordinates",
-                "description": f"Route estimate may be inaccurate — visit day(s) {days} include schools with incomplete location data.",
-                "category": "Data Quality", "priority": "medium",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "info", "due_label": "—", "due_tone": "neutral",
-                "linked": "Route Intelligence", "action_label": "Review Schools",
-                "action_url": "/my-plan", "actionable": True,
-                "source": "Route Intelligence", "_due_sort": today,
-            })
-        bad = [b for b in batches if not b.feasible or b.status in ("not_feasible", "blocked")]
+            out.append(
+                {
+                    "id": "route-fix-location",
+                    "title": "Fix school location / coordinates",
+                    "description": f"Route estimate may be inaccurate — visit day(s) {days} include schools with incomplete location data.",
+                    "category": "Data Quality",
+                    "priority": "medium",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "Route Intelligence",
+                    "action_label": "Review Schools",
+                    "action_url": "/my-plan",
+                    "actionable": True,
+                    "source": "Route Intelligence",
+                    "_due_sort": today,
+                }
+            )
+        bad = [
+            b
+            for b in batches
+            if not b.feasible or b.status in ("not_feasible", "blocked")
+        ]
         if bad:
             b = bad[0]
-            out.append({
-                "id": f"route-infeasible-{b.visit_date.isoformat()}",
-                "title": "Rework route plan — day overloaded",
-                "description": f"Your {b.visit_date.strftime('%d %b')} visit day is {b.get_status_display()} (load exceeds the working day or route rules). Reduce schools or split into another day.",
-                "category": "Planning", "priority": "high",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": b.visit_date.strftime("%d %b"),
-                "due_tone": "warning", "linked": "Route Intelligence",
-                "action_label": "Open My Plan", "action_url": "/my-plan",
-                "actionable": True, "source": "Route Intelligence", "_due_sort": b.visit_date,
-            })
+            out.append(
+                {
+                    "id": f"route-infeasible-{b.visit_date.isoformat()}",
+                    "title": "Rework route plan — day overloaded",
+                    "description": f"Your {b.visit_date.strftime('%d %b')} visit day is {b.get_status_display()} (load exceeds the working day or route rules). Reduce schools or split into another day.",
+                    "category": "Planning",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": b.visit_date.strftime("%d %b"),
+                    "due_tone": "warning",
+                    "linked": "Route Intelligence",
+                    "action_label": "Open My Plan",
+                    "action_url": "/my-plan",
+                    "actionable": True,
+                    "source": "Route Intelligence",
+                    "_due_sort": b.visit_date,
+                }
+            )
         return out
     except Exception:  # noqa: BLE001 — route To-Dos must never break the queue
         return []
@@ -1071,24 +1190,26 @@ def _cd_analytics_todos(principal, role):
     out = []
     try:
         for t in CDAnalyticsService.cd_todos(principal):
-            out.append({
-                "id": t["id"],
-                "title": t["title"],
-                "description": t["description"],
-                "category": t.get("category", "Oversight"),
-                "priority": t.get("priority", "medium"),
-                "status_key": "waiting_me",
-                "status_label": "Waiting on Me",
-                "status_tone": "info",
-                "due_label": "—",
-                "due_tone": "neutral",
-                "linked": "Country Director Analytics",
-                "action_label": t.get("action_label", "Review"),
-                "action_url": t.get("action_url", "/analytics/country-director"),
-                "actionable": True,
-                "source": "CD Analytics",
-                "_due_sort": _date.today(),
-            })
+            out.append(
+                {
+                    "id": t["id"],
+                    "title": t["title"],
+                    "description": t["description"],
+                    "category": t.get("category", "Oversight"),
+                    "priority": t.get("priority", "medium"),
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "Country Director Analytics",
+                    "action_label": t.get("action_label", "Review"),
+                    "action_url": t.get("action_url", "/analytics/country-director"),
+                    "actionable": True,
+                    "source": "CD Analytics",
+                    "_due_sort": _date.today(),
+                }
+            )
     except Exception:  # noqa: BLE001 — analytics To-Dos must never break the queue
         return []
     return out[:8]
@@ -1096,39 +1217,99 @@ def _cd_analytics_todos(principal, role):
 
 # Employee-facing: what the requester must do next on their own record.
 _PD_OWN_TITLES = {
-    "returned_by_supervisor": ("Fix Returned PD Request", "Your supervisor returned",
-                               "Fix & Resubmit", "high"),
-    "returned_by_hr": ("Fix Returned PD Request", "HR returned",
-                        "Fix & Resubmit", "high"),
-    "disbursed": ("Confirm PD Enrollment", "Funds were disbursed for",
-                  "Confirm Enrollment", "medium"),
-    "approved_unfunded": ("Confirm PD Enrollment", "Your request was approved for",
-                          "Confirm Enrollment", "medium"),
-    "enrollment_pending": ("Confirm PD Enrollment", "Enrollment is pending for",
-                          "Confirm Enrollment", "medium"),
-    "ended": ("Mark PD Course Complete", "The course period has ended for",
-              "Mark Complete", "high"),
-    "marked_complete": ("Upload PD Certificate", "Upload your completion certificate for",
-                        "Upload", "high"),
-    "certificate_uploaded": ("Confirm BambooHR Upload", "Confirm the BambooHR upload for",
-                             "Confirm", "medium"),
-    "bamboohr_confirmed": ("Submit PD Accountability", "Submit receipts and NetSuite Expense ID for",
-                           "Submit", "high"),
+    "returned_by_supervisor": (
+        "Fix Returned PD Request",
+        "Your supervisor returned",
+        "Fix & Resubmit",
+        "high",
+    ),
+    "returned_by_hr": (
+        "Fix Returned PD Request",
+        "HR returned",
+        "Fix & Resubmit",
+        "high",
+    ),
+    "disbursed": (
+        "Confirm PD Enrollment",
+        "Funds were disbursed for",
+        "Confirm Enrollment",
+        "medium",
+    ),
+    "approved_unfunded": (
+        "Confirm PD Enrollment",
+        "Your request was approved for",
+        "Confirm Enrollment",
+        "medium",
+    ),
+    "enrollment_pending": (
+        "Confirm PD Enrollment",
+        "Enrollment is pending for",
+        "Confirm Enrollment",
+        "medium",
+    ),
+    "ended": (
+        "Mark PD Course Complete",
+        "The course period has ended for",
+        "Mark Complete",
+        "high",
+    ),
+    "marked_complete": (
+        "Upload PD Certificate",
+        "Upload your completion certificate for",
+        "Upload",
+        "high",
+    ),
+    "certificate_uploaded": (
+        "Confirm BambooHR Upload",
+        "Confirm the BambooHR upload for",
+        "Confirm",
+        "medium",
+    ),
+    "bamboohr_confirmed": (
+        "Submit PD Accountability",
+        "Submit receipts and NetSuite Expense ID for",
+        "Submit",
+        "high",
+    ),
 }
 # Reviewer-facing: what stage this principal is being asked to act on.
 _PD_REVIEW_TITLES = {
-    "submitted_to_supervisor": ("Review PD Request", "Approve or return",
-                                "Review", "high"),
-    "submitted_to_hr": ("Review PD Request (HR)", "HR approval needed for",
-                        "Review", "high"),
-    "pending_exception": ("Review PD Funding Exception", "Exception approval needed for",
-                          "Review", "critical"),
-    "approved_pending_funding": ("Disburse PD Funds", "Disbursement is due for",
-                                "Disburse", "high"),
-    "accountability_submitted": ("Clear PD Accountability", "Accountability awaits clearance for",
-                                 "Clear", "medium"),
-    "awaiting_hr_signoff": ("Sign Off PD Completion", "Ready for HR sign-off:",
-                            "Sign Off", "medium"),
+    "submitted_to_supervisor": (
+        "Review PD Request",
+        "Approve or return",
+        "Review",
+        "high",
+    ),
+    "submitted_to_hr": (
+        "Review PD Request (HR)",
+        "HR approval needed for",
+        "Review",
+        "high",
+    ),
+    "pending_exception": (
+        "Review PD Funding Exception",
+        "Exception approval needed for",
+        "Review",
+        "critical",
+    ),
+    "approved_pending_funding": (
+        "Disburse PD Funds",
+        "Disbursement is due for",
+        "Disburse",
+        "high",
+    ),
+    "accountability_submitted": (
+        "Clear PD Accountability",
+        "Accountability awaits clearance for",
+        "Clear",
+        "medium",
+    ),
+    "awaiting_hr_signoff": (
+        "Sign Off PD Completion",
+        "Ready for HR sign-off:",
+        "Sign Off",
+        "medium",
+    ),
 }
 
 
@@ -1144,34 +1325,52 @@ def _pd_todos(principal, role):
         out = []
         for r in req["own"]:
             title, desc_prefix, action_label, priority = _PD_OWN_TITLES.get(
-                r.status, ("Act on PD Request", "Action needed on", "Open", "medium"))
-            out.append({
-                "id": f"pd-own-{r.id}",
-                "title": title,
-                "description": f"{desc_prefix} “{r.course_name}”.",
-                "category": "Professional Development", "priority": priority,
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": "—", "due_tone": "neutral",
-                "linked": r.course_name, "action_label": action_label,
-                "action_url": f"/my-professional-development/request?id={r.id}",
-                "actionable": True, "source": "My Professional Development",
-                "_due_sort": r.updated_at.date(),
-            })
+                r.status, ("Act on PD Request", "Action needed on", "Open", "medium")
+            )
+            out.append(
+                {
+                    "id": f"pd-own-{r.id}",
+                    "title": title,
+                    "description": f"{desc_prefix} “{r.course_name}”.",
+                    "category": "Professional Development",
+                    "priority": priority,
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": r.course_name,
+                    "action_label": action_label,
+                    "action_url": f"/my-professional-development/request?id={r.id}",
+                    "actionable": True,
+                    "source": "My Professional Development",
+                    "_due_sort": r.updated_at.date(),
+                }
+            )
         for r in req["reviewing"]:
             title, desc_prefix, action_label, priority = _PD_REVIEW_TITLES.get(
-                r.status, ("Review PD Request", "Action needed on", "Review", "medium"))
-            out.append({
-                "id": f"pd-review-{r.id}",
-                "title": title,
-                "description": f"{desc_prefix} {r.staff_name} — “{r.course_name}”.",
-                "category": "Professional Development", "priority": priority,
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": "—", "due_tone": "neutral",
-                "linked": f"{r.staff_name} · {r.course_name}", "action_label": action_label,
-                "action_url": f"/my-professional-development/request?id={r.id}",
-                "actionable": True, "source": "PD Review Queue",
-                "_due_sort": r.updated_at.date(),
-            })
+                r.status, ("Review PD Request", "Action needed on", "Review", "medium")
+            )
+            out.append(
+                {
+                    "id": f"pd-review-{r.id}",
+                    "title": title,
+                    "description": f"{desc_prefix} {r.staff_name} — “{r.course_name}”.",
+                    "category": "Professional Development",
+                    "priority": priority,
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": f"{r.staff_name} · {r.course_name}",
+                    "action_label": action_label,
+                    "action_url": f"/my-professional-development/request?id={r.id}",
+                    "actionable": True,
+                    "source": "PD Review Queue",
+                    "_due_sort": r.updated_at.date(),
+                }
+            )
         return out
     except Exception:  # noqa: BLE001 — PD To-Dos must never break the queue
         return []
@@ -1179,67 +1378,220 @@ def _pd_todos(principal, role):
 
 def _field_debrief_todos(principal, role):
     """Field Debrief To-Dos (§21) — clarification responses owed by the
-    submitter, escalated debriefs owed a leadership decision, and open
-    leadership actions owed by their owner. Auto-closes: resolving the
-    action, responding to clarification, or the debrief leaving the
-    escalated state removes the derived item."""
+    submitter, escalated debriefs owed a leadership decision, open
+    leadership actions owed by their owner, pending recommendations owed a
+    supervisor decision, open support requests owed by the routed role, and
+    restricted incidents owed a first-touch review. Auto-closes: resolving
+    the action/request, responding to clarification, deciding the
+    recommendation, or a leadership action being created on the incident
+    removes the derived item."""
     try:
-        from apps.debriefs.field_debrief_service import FieldDebriefService
-        from apps.debriefs.models import DebriefActionStatus, DebriefStatus
+        from apps.debriefs.field_debrief_service import (
+            RESTRICTED_ROUTING,
+            FieldDebriefService,
+        )
+        from apps.debriefs.models import (
+            DailyDebriefSupportRequest,
+            DebriefActionStatus,
+            DebriefStatus,
+            RecommendationStatus,
+        )
 
         out = []
-        own_pending = FieldDebriefService.scoped_queryset(principal, {"mine": True}).filter(
-            status=DebriefStatus.CLARIFICATION_REQUESTED
-        )
+        own_pending = FieldDebriefService.scoped_queryset(
+            principal, {"mine": True}
+        ).filter(status=DebriefStatus.CLARIFICATION_REQUESTED)
         for d in own_pending:
-            out.append({
-                "id": f"debrief-clarify-{d.id}",
-                "title": "Respond to Debrief Clarification",
-                "description": f"Your supervisor requested clarification on “{d.title}”.",
-                "category": "Field Debrief", "priority": "high",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning", "due_label": "—", "due_tone": "neutral",
-                "linked": d.title, "action_label": "Respond",
-                "action_url": f"/debriefs/{d.id}", "actionable": True,
-                "source": "Field Debrief", "_due_sort": d.updated_at.date(),
-            })
+            out.append(
+                {
+                    "id": f"debrief-clarify-{d.id}",
+                    "title": "Respond to Debrief Clarification",
+                    "description": f"Your supervisor requested clarification on “{d.title}”.",
+                    "category": "Field Debrief",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": d.title,
+                    "action_label": "Respond",
+                    "action_url": f"/debriefs/{d.id}",
+                    "actionable": True,
+                    "source": "Field Debrief",
+                    "_due_sort": d.updated_at.date(),
+                }
+            )
 
-        if role in ("Program Lead", "CountryDirector", "HumanResources", "ImpactAssessment", "RegionalVicePresident", "Admin"):
-            escalated = FieldDebriefService.scoped_queryset(principal, {}).filter(
-                status=DebriefStatus.ESCALATED
-            ).exclude(actions__status__in=(DebriefActionStatus.OPEN, DebriefActionStatus.ASSIGNED, DebriefActionStatus.IN_PROGRESS))
+        if role in (
+            "Program Lead",
+            "CountryDirector",
+            "HumanResources",
+            "ImpactAssessment",
+            "RegionalVicePresident",
+            "Admin",
+        ):
+            escalated = (
+                FieldDebriefService.scoped_queryset(principal, {})
+                .filter(status=DebriefStatus.ESCALATED)
+                .exclude(
+                    actions__status__in=(
+                        DebriefActionStatus.OPEN,
+                        DebriefActionStatus.ASSIGNED,
+                        DebriefActionStatus.IN_PROGRESS,
+                    )
+                )
+            )
             for d in escalated:
-                out.append({
-                    "id": f"debrief-escalated-{d.id}",
-                    "title": "Review Escalated Field Debrief",
-                    "description": f"“{d.title}” by {d.submitted_by_role} is escalated and needs a leadership decision.",
-                    "category": "Field Debrief", "priority": "high",
-                    "status_key": "waiting_me", "status_label": "Waiting on Me",
-                    "status_tone": "danger", "due_label": "—", "due_tone": "neutral",
-                    "linked": d.title, "action_label": "Review",
-                    "action_url": f"/debriefs/{d.id}", "actionable": True,
-                    "source": "Field Debrief", "_due_sort": d.updated_at.date(),
-                })
+                out.append(
+                    {
+                        "id": f"debrief-escalated-{d.id}",
+                        "title": "Review Escalated Field Debrief",
+                        "description": f"“{d.title}” by {d.submitted_by_role} is escalated and needs a leadership decision.",
+                        "category": "Field Debrief",
+                        "priority": "high",
+                        "status_key": "waiting_me",
+                        "status_label": "Waiting on Me",
+                        "status_tone": "danger",
+                        "due_label": "—",
+                        "due_tone": "neutral",
+                        "linked": d.title,
+                        "action_label": "Review",
+                        "action_url": f"/debriefs/{d.id}",
+                        "actionable": True,
+                        "source": "Field Debrief",
+                        "_due_sort": d.updated_at.date(),
+                    }
+                )
 
         from apps.debriefs.models import DailyDebriefAction
 
-        my_actions = DailyDebriefAction.objects.filter(owner_user_id=principal.user_id).exclude(
-            status__in=(DebriefActionStatus.RESOLVED, DebriefActionStatus.CLOSED)
-        ).select_related("debrief")
+        my_actions = (
+            DailyDebriefAction.objects.filter(owner_user_id=principal.user_id)
+            .exclude(
+                status__in=(DebriefActionStatus.RESOLVED, DebriefActionStatus.CLOSED)
+            )
+            .select_related("debrief")
+        )
         for a in my_actions:
-            out.append({
-                "id": f"debrief-action-{a.id}",
-                "title": "Resolve Field Debrief Action",
-                "description": a.action,
-                "category": "Field Debrief", "priority": a.priority if a.priority in ("low", "medium", "high", "critical") else "medium",
-                "status_key": "waiting_me", "status_label": "Waiting on Me",
-                "status_tone": "warning" if a.priority in ("high", "critical") else "neutral",
-                "due_label": a.due_date.strftime("%d %b") if a.due_date else "—",
-                "due_tone": "danger" if a.due_date and a.due_date < timezone.now().date() else "neutral",
-                "linked": a.debrief.title, "action_label": "Resolve",
-                "action_url": f"/debriefs/{a.debrief_id}", "actionable": True,
-                "source": "Field Debrief", "_due_sort": a.due_date or a.updated_at.date(),
-            })
+            out.append(
+                {
+                    "id": f"debrief-action-{a.id}",
+                    "title": "Resolve Field Debrief Action",
+                    "description": a.action,
+                    "category": "Field Debrief",
+                    "priority": a.priority
+                    if a.priority in ("low", "medium", "high", "critical")
+                    else "medium",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning"
+                    if a.priority in ("high", "critical")
+                    else "neutral",
+                    "due_label": a.due_date.strftime("%d %b") if a.due_date else "—",
+                    "due_tone": "danger"
+                    if a.due_date and a.due_date < timezone.now().date()
+                    else "neutral",
+                    "linked": a.debrief.title,
+                    "action_label": "Resolve",
+                    "action_url": f"/debriefs/{a.debrief_id}",
+                    "actionable": True,
+                    "source": "Field Debrief",
+                    "_due_sort": a.due_date or a.updated_at.date(),
+                }
+            )
+
+        if role in ("Program Lead", "CountryDirector", "Admin"):
+            pending_recommendations = FieldDebriefService.scoped_queryset(
+                principal, {}
+            ).filter(recommendation_status=RecommendationStatus.PROPOSED)
+            for d in pending_recommendations:
+                out.append(
+                    {
+                        "id": f"debrief-recommendation-{d.id}",
+                        "title": "Decide Debrief Recommendation",
+                        "description": f"“{d.title}” recommends {d.get_recommended_next_activity_type_display() or 'a follow-up'} — accept or reject.",
+                        "category": "Field Debrief",
+                        "priority": "medium",
+                        "status_key": "waiting_me",
+                        "status_label": "Waiting on Me",
+                        "status_tone": "neutral",
+                        "due_label": "—",
+                        "due_tone": "neutral",
+                        "linked": d.title,
+                        "action_label": "Decide",
+                        "action_url": f"/debriefs/{d.id}",
+                        "actionable": True,
+                        "source": "Field Debrief",
+                        "_due_sort": d.updated_at.date(),
+                    }
+                )
+
+        open_support_requests = DailyDebriefSupportRequest.objects.filter(
+            status="open",
+            requested_from_role=role,
+            debrief__in=FieldDebriefService.scoped_queryset(principal, {}),
+        ).select_related("debrief")
+        for s in open_support_requests:
+            out.append(
+                {
+                    "id": f"debrief-support-{s.id}",
+                    "title": "Respond to Support Request",
+                    "description": f"{s.get_support_type_display()} requested on “{s.debrief.title}”.",
+                    "category": "Field Debrief",
+                    "priority": "medium",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "neutral",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": s.debrief.title,
+                    "action_label": "Respond",
+                    "action_url": f"/debriefs/{s.debrief_id}",
+                    "actionable": True,
+                    "source": "Field Debrief",
+                    "_due_sort": s.updated_at.date(),
+                }
+            )
+
+        restricted_incidents = (
+            FieldDebriefService.scoped_queryset(principal, {})
+            .filter(
+                is_restricted_incident=True,
+                status=DebriefStatus.RESTRICTED_INCIDENT,
+            )
+            .exclude(
+                actions__status__in=(
+                    DebriefActionStatus.OPEN,
+                    DebriefActionStatus.ASSIGNED,
+                    DebriefActionStatus.IN_PROGRESS,
+                )
+            )
+        )
+        for d in restricted_incidents:
+            routed_roles = RESTRICTED_ROUTING.get(d.restricted_incident_category, ())
+            if role != "Admin" and role not in routed_roles:
+                continue
+            out.append(
+                {
+                    "id": f"debrief-restricted-{d.id}",
+                    "title": "Review Restricted Incident",
+                    "description": f"“{d.title}” is a restricted incident ({d.get_restricted_incident_category_display()}) awaiting first-touch review.",
+                    "category": "Field Debrief",
+                    "priority": "critical",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "danger",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": d.title,
+                    "action_label": "Review",
+                    "action_url": f"/debriefs/{d.id}",
+                    "actionable": True,
+                    "source": "Field Debrief",
+                    "_due_sort": d.updated_at.date(),
+                }
+            )
         return out
     except Exception:  # noqa: BLE001 — Field Debrief To-Dos must never break the queue
         return []

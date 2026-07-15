@@ -190,9 +190,7 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         checklist, blockers = ClosureEligibilityService.evaluate(self.activity)
         self.assertFalse(checklist.netsuite_id_entered)
         self.assertFalse(ClosureEligibilityService.is_eligible(self.activity))
-        self.assertIn(
-            "NetSuite ID missing", [b.blocking_reason for b in blockers]
-        )
+        self.assertIn("NetSuite ID missing", [b.blocking_reason for b in blockers])
         with self.assertRaises(ValueError):
             ActivityClosureService.close(self.activity, closed_by=self.accountant.id)
 
@@ -211,3 +209,36 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, "closed")
         self.assertIsNotNone(closure)
+
+    # ── audit trail on the final money-closing transitions ───────────────────
+    def test_submit_and_approve_accountability_write_audit_log(self):
+        """Regression: advance_service.py had zero audit_log calls anywhere —
+        the single most financially terminal transition (Accountant final-
+        clears to ACCOUNTED) left no audit trail at all."""
+        from apps.audit.models import AuditLog
+
+        self.activity.status = "ia_verified"
+        self.activity.ia_verification_status = "confirmed"
+        self.activity.save(update_fields=["status", "ia_verification_status"])
+
+        submit_accountability(
+            self.adv.id,
+            {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": "EXP-AUDIT-1"},
+            self.cceo,
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="advance_request.submit_accountability",
+                subject_id=str(self.adv.id),
+            ).exists()
+        )
+
+        approve_accountability(self.adv.id, self.accountant)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="advance_request.approve_accountability",
+                subject_id=str(self.adv.id),
+            ).exists()
+        )
+        self.adv.refresh_from_db()
+        self.assertEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTED)

@@ -117,6 +117,21 @@ def upload_ssa_file(file, principal) -> dict:
                 except ValueError:
                     pass  # non-numeric enrollment count — ignore silently
 
+        # Read optional "School Name" / "District" columns the SAME way —
+        # SSAImportRow has no columns for these, so they flow through the
+        # scores dict too (filtered back out before SsaScore creation, same
+        # as _enrollment_count). Without this, an unmatched row's School ID
+        # not existing in the directory leaves NO raw name/district to
+        # suggest a match against — apps.ssa.unmatched_service needs these.
+        if "school_name" in field_index:
+            name_raw = _value(field_index, "school_name", cells).strip()
+            if name_raw:
+                scores["_school_name_raw"] = name_raw
+        if "district" in field_index:
+            district_raw = _value(field_index, "district", cells).strip()
+            if district_raw:
+                scores["_district_raw"] = district_raw
+
         if bad_score:
             validation_errors.append(bad_score)
             status = "blocked"
@@ -323,6 +338,8 @@ def import_ssa_batch(batch, user) -> dict:
     )
     from django.utils import timezone
 
+    from apps.ssa import unmatched_service
+
     if isinstance(batch, UploadBatch):
         real_batch = (
             SSAImportBatch.objects.filter(
@@ -331,8 +348,10 @@ def import_ssa_batch(batch, user) -> dict:
             .order_by("-created_at")
             .first()
         )
-        if real_batch:
-            batch = real_batch
+        # UnmatchedSSARecord.batch is an SSAImportBatch FK — a plain legacy
+        # UploadBatch instance would fail Django's FK type check below, so
+        # only ever pass through the real SSAImportBatch (or None).
+        batch = real_batch
 
     rows = batch.rows.exclude(status="blocked")
     created_count = 0
@@ -374,13 +393,32 @@ def import_ssa_batch(batch, user) -> dict:
                 r.validation_errors.append(f"Import error: {exc}")
                 r.save()
         else:
-            # Create UnmatchedSSARecord
+            # Create UnmatchedSSARecord. Pop the pass-through-only keys
+            # (school_name/district/enrollment ride in `scores` because
+            # SSAImportRow has no columns for them — see the comment where
+            # they're written above) before storing `scores`: the "match" /
+            # "create_school" actions later average every value in it, and a
+            # raw name string there would TypeError, an enrollment count
+            # would silently skew the SSA average.
+            row_scores = dict(r.scores or {})
+            school_name_raw = row_scores.pop("_school_name_raw", None)
+            district_raw = row_scores.pop("_district_raw", None)
+            row_scores.pop("_enrollment_count", None)
+
+            suggested_id, confidence = unmatched_service.compute_suggested_match(
+                school_name_raw, district_raw
+            )
             UnmatchedSSARecord.objects.create(
+                batch=batch,
                 school_id=r.school_id,
+                school_name_raw=school_name_raw,
+                district_raw=district_raw,
                 date_of_ssa=r.date_of_ssa,
-                scores=r.scores,
+                scores=row_scores,
                 reason="School ID does not exist in School Directory",
                 status="pending",
+                suggested_school_id=suggested_id,
+                match_confidence=confidence,
             )
             unmatched_count += 1
 

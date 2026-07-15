@@ -455,7 +455,10 @@ def build_target_card(
 
 
 def staff_metrics_with_targets(
-    staff_id: str, fy: str, start: datetime | None = None, end: datetime | None = None,
+    staff_id: str,
+    fy: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
     quarter: str | None = None,
 ) -> dict:
     """Compute metrics + resolve targets + build status cards for every metric.

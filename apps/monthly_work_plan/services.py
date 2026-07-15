@@ -143,15 +143,28 @@ def _assert_rvp_can_decide(b: MonthlyWorkPlanBudget) -> None:
         )
 
 
-def _rvp_audit(decision_type, subject_id, subject_label, action, principal,
-               reason="", amount=0, fy=""):
+def _rvp_audit(
+    decision_type,
+    subject_id,
+    subject_label,
+    action,
+    principal,
+    reason="",
+    amount=0,
+    fy="",
+):
     from apps.monthly_work_plan.models import RVPApprovalDecision
 
     RVPApprovalDecision.objects.create(
-        decision_type=decision_type, subject_id=subject_id,
-        subject_label=subject_label[:255], action=action,
-        reason=(reason or "")[:512], decided_by=principal.user_id,
-        amount=amount or 0, fy=fy or "")
+        decision_type=decision_type,
+        subject_id=subject_id,
+        subject_label=subject_label[:255],
+        action=action,
+        reason=(reason or "")[:512],
+        decided_by=principal.user_id,
+        amount=amount or 0,
+        fy=fy or "",
+    )
 
 
 def _rvp_notify(recipient_id, title, body, route):
@@ -159,10 +172,16 @@ def _rvp_notify(recipient_id, title, body, route):
         from apps.notifications.models import Notification
 
         Notification.objects.create(
-            recipient_id=recipient_id, title=title, body=body,
-            category="country_budget", context_type="rvp_decision",
-            target_route=route, action_label="Open", action_required=True,
-            priority="high")
+            recipient_id=recipient_id,
+            title=title,
+            body=body,
+            category="country_budget",
+            context_type="rvp_decision",
+            target_route=route,
+            action_label="Open",
+            action_required=True,
+            priority="high",
+        )
     except Exception:  # noqa: BLE001 — notification is supportive, not blocking
         pass
 
@@ -179,13 +198,23 @@ def rvp_approve(budget_id: str, data: dict, principal) -> dict:
         field="rvp_reviewed_at",
         actor_field="rvp_reviewed_by_user_id",
     )
-    _rvp_audit("monthly_budget", b.id, f"Country Monthly Budget {b.month_key}",
-               "approve", principal, amount=b.total_amount, fy=b.fy)
+    _rvp_audit(
+        "monthly_budget",
+        b.id,
+        f"Country Monthly Budget {b.month_key}",
+        "approve",
+        principal,
+        amount=b.total_amount,
+        fy=b.fy,
+    )
     if b.submitted_by_user_id:
-        _rvp_notify(b.submitted_by_user_id, "Monthly budget approved by RVP",
-                    f"The {b.month_key} country budget was approved — the "
-                    "Accountant can now receive the allocation.",
-                    "/country-budget")
+        _rvp_notify(
+            b.submitted_by_user_id,
+            "Monthly budget approved by RVP",
+            f"The {b.month_key} country budget was approved — the "
+            "Accountant can now receive the allocation.",
+            "/country-budget",
+        )
     return _serialize(b)
 
 
@@ -206,16 +235,28 @@ def rvp_return(budget_id: str, data: dict, principal) -> dict:
     )
     b.rvp_review_note = note
     b.save(update_fields=["rvp_review_note"])
-    _rvp_audit("monthly_budget", b.id, f"Country Monthly Budget {b.month_key}",
-               "return", principal, reason=note, amount=b.total_amount, fy=b.fy)
+    _rvp_audit(
+        "monthly_budget",
+        b.id,
+        f"Country Monthly Budget {b.month_key}",
+        "return",
+        principal,
+        reason=note,
+        amount=b.total_amount,
+        fy=b.fy,
+    )
     if b.submitted_by_user_id:
-        _rvp_notify(b.submitted_by_user_id, "Monthly budget returned by RVP",
-                    note, "/country-budget")
+        _rvp_notify(
+            b.submitted_by_user_id,
+            "Monthly budget returned by RVP",
+            note,
+            "/country-budget",
+        )
     return _serialize(b)
 
 
 # ── Country Annual Budget (§14) ──────────────────────────────────────────────
-def submit_annual_to_rvp(budget_id: str, principal) -> "CountryAnnualBudget":
+def submit_annual_to_rvp(budget_id: str, principal):
     from apps.monthly_work_plan.models import (
         CountryAnnualBudget,
         CountryAnnualBudgetStatus,
@@ -248,7 +289,7 @@ def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
         raise BadRequest("Only a submitted annual budget can be decided.")
     if action == "approve":
         b.status = CountryAnnualBudgetStatus.APPROVED_BY_RVP
-        b.baseline_locked_at = timezone.now()   # baseline locked on approval
+        b.baseline_locked_at = timezone.now()  # baseline locked on approval
     elif action == "return":
         reason = (data.get("note") or "").strip()
         if not reason:
@@ -260,14 +301,23 @@ def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
     b.rvp_reviewed_at = timezone.now()
     b.rvp_reviewed_by_user_id = principal.user_id
     b.save()
-    _rvp_audit("annual_budget", b.id, f"Country Annual Budget FY {b.fy}",
-               action, principal, reason=b.rvp_review_note or "",
-               amount=b.total_amount, fy=b.fy)
+    _rvp_audit(
+        "annual_budget",
+        b.id,
+        f"Country Annual Budget FY {b.fy}",
+        action,
+        principal,
+        reason=b.rvp_review_note or "",
+        amount=b.total_amount,
+        fy=b.fy,
+    )
     if b.submitted_by_user_id:
-        _rvp_notify(b.submitted_by_user_id,
-                    f"Annual budget {'approved' if action == 'approve' else 'returned'} by RVP",
-                    b.rvp_review_note or "Annual baseline locked.",
-                    "/country-budget")
+        _rvp_notify(
+            b.submitted_by_user_id,
+            f"Annual budget {'approved' if action == 'approve' else 'returned'} by RVP",
+            b.rvp_review_note or "Annual baseline locked.",
+            "/country-budget",
+        )
     return b
 
 
@@ -288,13 +338,20 @@ def update_annual_budget(budget_id: str, data: dict, principal):
             "Approved annual budget is locked — request a formal budget "
             "amendment (RVP return and resubmission) instead of editing it."
         )
-    for field in ("program_total", "admin_total", "special_project_total",
-                  "target_schools", "target_activities", "expected_impact",
-                  "strategic_priorities"):
+    for field in (
+        "program_total",
+        "admin_total",
+        "special_project_total",
+        "target_schools",
+        "target_activities",
+        "expected_impact",
+        "strategic_priorities",
+    ):
         if field in data:
             setattr(b, field, data[field])
-    b.total_amount = (b.program_total or 0) + (b.admin_total or 0) \
-        + (b.special_project_total or 0)
+    b.total_amount = (
+        (b.program_total or 0) + (b.admin_total or 0) + (b.special_project_total or 0)
+    )
     b.save()
     return b
 
@@ -318,10 +375,20 @@ def create_strategy_note(data: dict, principal):
         review_date=data.get("review_date") or None,
     )
     if note.responsible_cd_id:
-        _rvp_notify(note.responsible_cd_id, "New strategic guidance from RVP",
-                    instruction[:300], "/dashboard")
-    _rvp_audit("strategy_note", note.id, note.priority_label, "create",
-               principal, reason=instruction[:512])
+        _rvp_notify(
+            note.responsible_cd_id,
+            "New strategic guidance from RVP",
+            instruction[:300],
+            "/dashboard",
+        )
+    _rvp_audit(
+        "strategy_note",
+        note.id,
+        note.priority_label,
+        "create",
+        principal,
+        reason=instruction[:512],
+    )
     return note
 
 

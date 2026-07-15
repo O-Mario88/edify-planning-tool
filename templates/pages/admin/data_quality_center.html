@@ -57,5 +57,16 @@
 </div>
 </div>
 
+<!-- Open Issues Queues -->
+<div class="space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 pt-2">Open Data Quality Issues</h3>
+{% include "partials/data_quality/issue_section.html" with title="Missing Phone Numbers" issues=missing_phone %}
+{% include "partials/data_quality/issue_section.html" with title="Missing Primary Contact" issues=missing_contact %}
+{% include "partials/data_quality/issue_section.html" with title="Missing Enrollment Data" issues=missing_enrollment %}
+{% include "partials/data_quality/issue_section.html" with title="Schools Without a Cluster" issues=no_cluster %}
+{% include "partials/data_quality/issue_section.html" with title="Unmatched Staff Owners" issues=unmatched_staff %}
+{% include "partials/data_quality/issue_section.html" with title="Schools Missing SSA" issues=no_ssa %}
+</div>
+
 </div>
 {% endblock %}

@@ -17,7 +17,6 @@ from django.urls import resolve
 from django.utils import timezone
 
 from apps.accounts.models import (
-    Leave,
     StaffProfile,
     StaffSchoolAssignment,
     StaffSupervisorAssignment,
@@ -49,16 +48,26 @@ class PLDashboardTest(TestCase):
         self.dist_a = District.objects.create(name="Dist A", region=self.region)
         self.dist_b = District.objects.create(name="Dist B", region=self.region)
 
-        self.pl_a, self.pl_a_sp = self._staff("pla@t.org", "PL A", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.pl_a, self.pl_a_sp = self._staff(
+            "pla@t.org", "PL A", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
         self.a1, self.a1_sp = self._staff("a1@t.org", "CCEO A1", EdifyRole.CCEO.value)
-        StaffSupervisorAssignment.objects.create(supervisor=self.pl_a_sp, supervisee=self.a1_sp)
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_a_sp, supervisee=self.a1_sp
+        )
 
-        self.pl_b, self.pl_b_sp = self._staff("plb@t.org", "PL B", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.pl_b, self.pl_b_sp = self._staff(
+            "plb@t.org", "PL B", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
         self.b1, self.b1_sp = self._staff("b1@t.org", "CCEO B1", EdifyRole.CCEO.value)
-        StaffSupervisorAssignment.objects.create(supervisor=self.pl_b_sp, supervisee=self.b1_sp)
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_b_sp, supervisee=self.b1_sp
+        )
 
         self.sch_a1 = self._school("A1", self.dist_a, ssa_done=True)
-        self.sch_a2 = self._school("A2", self.dist_a, ssa_done=False)   # no SSA → at risk
+        self.sch_a2 = self._school(
+            "A2", self.dist_a, ssa_done=False
+        )  # no SSA → at risk
         self.sch_b1 = self._school("B1", self.dist_b, ssa_done=False)
         StaffSchoolAssignment.objects.create(staff=self.a1_sp, school_id=self.sch_a1.id)
         StaffSchoolAssignment.objects.create(staff=self.a1_sp, school_id=self.sch_a2.id)
@@ -66,38 +75,66 @@ class PLDashboardTest(TestCase):
 
         # A1 completes a visit on A1 (with SF ID) + a training missing SF ID.
         self._act(self.a1_sp.id, self.sch_a1, "school_visit", sf="SV-1")
-        self._act(self.a1_sp.id, self.sch_a1, "training", sf="")  # completed, no SF → backlog
+        self._act(
+            self.a1_sp.id, self.sch_a1, "training", sf=""
+        )  # completed, no SF → backlog
         # B1's work must never surface for PL-A.
         self._act(self.b1_sp.id, self.sch_b1, "school_visit", sf="SV-B")
 
         # A weekly fund request from A1 → awaits PL-A.
         self.wfr_a = WeeklyFundRequest.objects.create(
-            fy=FY, week_start_date=date(2026, 7, 6), week_end_date=date(2026, 7, 12),
-            responsible_user=self.a1.id, total_amount=90_000, status="submitted_to_pl",
+            fy=FY,
+            week_start_date=date(2026, 7, 6),
+            week_end_date=date(2026, 7, 12),
+            responsible_user=self.a1.id,
+            total_amount=90_000,
+            status="submitted_to_pl",
         )
         # A weekly fund request from B1 → awaits PL-B (must not appear for PL-A).
         WeeklyFundRequest.objects.create(
-            fy=FY, week_start_date=date(2026, 7, 6), week_end_date=date(2026, 7, 12),
-            responsible_user=self.b1.id, total_amount=50_000, status="submitted_to_pl",
+            fy=FY,
+            week_start_date=date(2026, 7, 6),
+            week_end_date=date(2026, 7, 12),
+            responsible_user=self.b1.id,
+            total_amount=50_000,
+            status="submitted_to_pl",
         )
 
     # ── fixtures ─────────────────────────────────────────────────────────────
     def _staff(self, email, name, role):
-        u = User.objects.create_user(email=email, name=name, roles=[role], active_role=role, password="x", is_active=True)
+        u = User.objects.create_user(
+            email=email,
+            name=name,
+            roles=[role],
+            active_role=role,
+            password="x",
+            is_active=True,
+        )
         return u, StaffProfile.objects.create(user=u, title=role)
 
     def _school(self, sid, district, ssa_done):
         return School.objects.create(
-            school_id=f"S-{sid}", name=f"School {sid}", region=self.region, district=district,
-            enrollment=100, current_fy_ssa_status="done" if ssa_done else "not_done",
+            school_id=f"S-{sid}",
+            name=f"School {sid}",
+            region=self.region,
+            district=district,
+            enrollment=100,
+            current_fy_ssa_status="done" if ssa_done else "not_done",
         )
 
     def _act(self, sp_id, school, atype, sf=""):
         return Activity.objects.create(
-            school=school, activity_type=atype, delivery_type="staff", status="completed",
-            responsible_staff_id=sp_id, fy=FY, quarter="Q3", planned_date=date(2026, 4, 10),
+            school=school,
+            activity_type=atype,
+            delivery_type="staff",
+            status="completed",
+            responsible_staff_id=sp_id,
+            fy=FY,
+            quarter="Q3",
+            planned_date=date(2026, 4, 10),
             scheduled_date=timezone.make_aware(timezone.datetime(2026, 4, 10, 9, 0)),
-            evidence_status="accepted", salesforce_activity_id=sf,
+            evidence_status="accepted",
+            salesforce_activity_id=sf,
         )
 
     def _dash(self, user):
@@ -126,12 +163,26 @@ class PLDashboardTest(TestCase):
     # ── 4. personal vs team targets are separate ─────────────────────────────
     def test_pl_personal_targets_are_separate_from_team_targets(self):
         StaffTargetProfile.objects.create(staff=self.pl_a_sp, fy=FY, visits_target=10)
-        StaffTargetProfile.objects.create(staff=self.a1_sp, fy=FY, visits_target=2, trainings_target=1)
+        StaffTargetProfile.objects.create(
+            staff=self.a1_sp, fy=FY, visits_target=2, trainings_target=1
+        )
         d = self._dash(self.pl_a)
         labels = {c["label"] for c in d["personal_targets"]["cards"]}
-        self.assertEqual(labels, {"Supervision Visits", "Plan Approvals", "Team Reviews", "Fund Requests Reviewed"})
+        self.assertEqual(
+            labels,
+            {
+                "Supervision Visits",
+                "Plan Approvals",
+                "Team Reviews",
+                "Fund Requests Reviewed",
+            },
+        )
         # PL's own supervision-visit target (10) is independent of the team target.
-        sv = next(c for c in d["personal_targets"]["cards"] if c["label"] == "Supervision Visits")
+        sv = next(
+            c
+            for c in d["personal_targets"]["cards"]
+            if c["label"] == "Supervision Visits"
+        )
         self.assertEqual(sv["target"], 10)
 
     # ── 5. approval queue scoped ─────────────────────────────────────────────
@@ -144,8 +195,12 @@ class PLDashboardTest(TestCase):
     # ── 6. PL cannot approve own weekly fund request ─────────────────────────
     def test_pl_cannot_approve_own_weekly_fund_request(self):
         own = WeeklyFundRequest.objects.create(
-            fy=FY, week_start_date=date(2026, 7, 13), week_end_date=date(2026, 7, 19),
-            responsible_user=self.pl_a.id, total_amount=40_000, status="submitted_to_cd",
+            fy=FY,
+            week_start_date=date(2026, 7, 13),
+            week_end_date=date(2026, 7, 19),
+            responsible_user=self.pl_a.id,
+            total_amount=40_000,
+            status="submitted_to_cd",
         )
         with self.assertRaises(Forbidden):
             approve_weekly_request(own.id, _P(self.pl_a))
@@ -153,8 +208,12 @@ class PLDashboardTest(TestCase):
     # ── 7. PL's own weekly fund request routes to CD ─────────────────────────
     def test_pl_own_weekly_fund_request_routes_to_cd(self):
         own = WeeklyFundRequest.objects.create(
-            fy=FY, week_start_date=date(2026, 7, 20), week_end_date=date(2026, 7, 26),
-            responsible_user=self.pl_a.id, total_amount=40_000, status="pending_responsible_confirmation",
+            fy=FY,
+            week_start_date=date(2026, 7, 20),
+            week_end_date=date(2026, 7, 26),
+            responsible_user=self.pl_a.id,
+            total_amount=40_000,
+            status="pending_responsible_confirmation",
         )
         res = request_advance(own.id, _P(self.pl_a))
         self.assertEqual(res["status"], "submitted_to_cd")
@@ -198,13 +257,21 @@ class PLDashboardTest(TestCase):
     # ── 12. funding & execution scoped ───────────────────────────────────────
     def test_funding_execution_scoped_to_pl(self):
         # A1's approved request counts for PL-A; B1's never does.
-        WeeklyFundRequest.objects.filter(id=self.wfr_a.id).update(status="confirmed_for_advance")
+        WeeklyFundRequest.objects.filter(id=self.wfr_a.id).update(
+            status="confirmed_for_advance"
+        )
         WeeklyFundRequest.objects.create(
-            fy=FY, week_start_date=date(2026, 8, 3), week_end_date=date(2026, 8, 9),
-            responsible_user=self.b1.id, total_amount=500_000, status="confirmed_for_advance",
+            fy=FY,
+            week_start_date=date(2026, 8, 3),
+            week_end_date=date(2026, 8, 9),
+            responsible_user=self.b1.id,
+            total_amount=500_000,
+            status="confirmed_for_advance",
         )
         d = self._dash(self.pl_a)
-        approved = next(b for b in d["funding_execution"]["statuses"] if b["label"] == "Approved")
+        approved = next(
+            b for b in d["funding_execution"]["statuses"] if b["label"] == "Approved"
+        )
         self.assertEqual(approved["count"], 1)  # only A1's, not B1's
 
     # ── 13. quick actions route to valid pages ───────────────────────────────
@@ -221,6 +288,8 @@ class PLDashboardTest(TestCase):
         titles = {t["title"] for t in PLAnalyticsService.pl_todos(self.pl_a, fy=FY)}
         self.assertIn("Schedule SSA Collection", titles)
         # Resolve the underlying state: every school gets verified SSA.
-        School.objects.filter(id__in=[self.sch_a1.id, self.sch_a2.id]).update(current_fy_ssa_status="done")
+        School.objects.filter(id__in=[self.sch_a1.id, self.sch_a2.id]).update(
+            current_fy_ssa_status="done"
+        )
         titles2 = {t["title"] for t in PLAnalyticsService.pl_todos(self.pl_a, fy=FY)}
         self.assertNotIn("Schedule SSA Collection", titles2)

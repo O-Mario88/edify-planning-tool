@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 
-from apps.core.exceptions import BadRequest, NotFoundError
-from apps.core.scoping import resolve_partner_ids
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 
 from .models import Partner
 
@@ -141,6 +141,14 @@ def update(partner_id: str, data: dict, principal) -> dict:
     p = Partner.objects.filter(id=partner_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Partner not found.")
+    # PARTNER_MANAGE alone isn't ownership — mirrors the scope check every
+    # other domain service applies before mutation (e.g. clusters._scope_filter
+    # gating writes by district_ids). Country-scoped roles (Admin, CD) manage
+    # every partner by design; any role holding PARTNER_MANAGE without country
+    # scope is restricted to the partner(s) actually in their resolved scope.
+    scope = resolve_user_scope(principal)
+    if not scope.country_scope and p.id not in scope.partner_ids:
+        raise Forbidden("You may only update a partner within your scope.")
     for field_name in (
         "name",
         "region_name",

@@ -13,7 +13,9 @@ class Disbursement(TimeStampedModel):
     fund_request = models.ForeignKey(
         FundRequest, on_delete=models.SET_NULL, null=True, blank=True
     )
-    amount_disbursed = models.BigIntegerField()  # UGX Cents
+    amount_disbursed = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
     disbursed_at = models.DateTimeField(default=timezone.now)
     disbursed_by = models.CharField(max_length=30)
     payment_method = models.CharField(max_length=64)
@@ -30,7 +32,9 @@ class PartnerPayment(TimeStampedModel):
         Activity, on_delete=models.CASCADE, related_name="partner_payments"
     )
     partner_name = models.CharField(max_length=255)
-    amount_paid = models.BigIntegerField()  # UGX Cents
+    amount_paid = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
     payment_method = models.CharField(max_length=64)
     payment_reference = models.CharField(max_length=128)
     payment_date = models.DateTimeField(default=timezone.now)
@@ -47,10 +51,18 @@ class ReimbursementClaim(TimeStampedModel):
         Activity, on_delete=models.CASCADE, related_name="reimbursement_claims"
     )
     staff_id = models.CharField(max_length=30)
-    approved_budget = models.BigIntegerField()  # UGX Cents
-    amount_advanced = models.BigIntegerField(default=0)  # UGX Cents
-    actual_spend = models.BigIntegerField()  # UGX Cents
-    reimbursement_amount = models.BigIntegerField()  # UGX Cents
+    approved_budget = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    amount_advanced = models.BigIntegerField(
+        default=0
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    actual_spend = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    reimbursement_amount = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
     status = models.CharField(
         max_length=32, default="pending"
     )  # pending, approved, paid, returned
@@ -70,9 +82,15 @@ class AccountabilityRecord(TimeStampedModel):
         Activity, on_delete=models.CASCADE, related_name="accountability_records"
     )
     staff_id = models.CharField(max_length=30)
-    amount_disbursed = models.BigIntegerField()  # UGX Cents
-    actual_spend = models.BigIntegerField()  # UGX Cents
-    variance = models.BigIntegerField()  # UGX Cents
+    amount_disbursed = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    actual_spend = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    variance = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
     variance_reason = models.TextField(null=True, blank=True)
     netsuite_expense_id = models.CharField(max_length=128, null=True, blank=True)
     status = models.CharField(
@@ -120,7 +138,9 @@ class NetSuiteExpenseRecord(TimeStampedModel):
     )
     netsuite_expense_id = models.CharField(max_length=128, unique=True)
     expense_date = models.DateField()
-    amount_entered = models.BigIntegerField()  # UGX Cents
+    amount_entered = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
     entered_by = models.CharField(max_length=30)
     notes = models.TextField(null=True, blank=True)
 
@@ -150,10 +170,18 @@ class VarianceReview(TimeStampedModel):
     activity = models.ForeignKey(
         Activity, on_delete=models.CASCADE, related_name="variance_reviews"
     )
-    budgeted_amount = models.BigIntegerField()  # UGX Cents
-    disbursed_amount = models.BigIntegerField()  # UGX Cents
-    actual_spend = models.BigIntegerField()  # UGX Cents
-    variance = models.BigIntegerField()  # UGX Cents
+    budgeted_amount = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    disbursed_amount = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    actual_spend = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
+    variance = (
+        models.BigIntegerField()
+    )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
     reason = models.TextField()
     status = models.CharField(
         max_length=32, default="pending"

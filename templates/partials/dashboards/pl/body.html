@@ -4,11 +4,13 @@
   {# ── KPI strip (8 cards) ────────────────────────────────────────────── #}
   <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
     {% for k in kpi_strip_items %}
-    <div class="rounded-lg p-3"
-         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);transition:box-shadow .2s,border-color .2s,transform .2s;cursor:pointer;"
-         onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='var(--edify-shadow-lg)';this.style.borderColor='var(--edify-border-strong)'"
-         onmouseout="this.style.transform='';this.style.boxShadow='var(--edify-shadow-sm)';this.style.borderColor='var(--edify-border)'"
-         {% if k.link %}onclick="window.location='/dashboard/pl-drilldown{{ k.link }}&fy={{ fy }}'"{% endif %}>
+    {% if k.link %}
+    <a href="/dashboard/pl-drilldown{{ k.link }}&fy={{ fy }}" class="rounded-lg p-3 edify-hover-lift"
+       style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);text-decoration:none;">
+    {% else %}
+    <article class="rounded-lg p-3"
+             style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+    {% endif %}
       <div class="flex items-center gap-2.5">
         <div class="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
              style="background:
@@ -29,7 +31,7 @@
           <p style="font-size:10px;color:var(--edify-text-subtle);margin-top:2px;">{{ k.helper }}</p>
         </div>
       </div>
-    </div>
+    {% if k.link %}</a>{% else %}</article>{% endif %}
     {% endfor %}
   </div>
 
@@ -199,10 +201,8 @@
     <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:8px;">Quick Actions</h2>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       {% for q in quick_actions %}
-      <a href="{{ q.url }}" class="rounded-lg p-3 flex items-center gap-2.5"
-         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);transition:box-shadow .2s,border-color .2s,transform .2s;cursor:pointer;text-decoration:none;"
-         onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='var(--edify-shadow-lg)';this.style.borderColor='var(--edify-border-strong)'"
-         onmouseout="this.style.transform='';this.style.boxShadow='var(--edify-shadow-sm)';this.style.borderColor='var(--edify-border)'">
+      <a href="{{ q.url }}" class="rounded-lg p-3 flex items-center gap-2.5 edify-hover-lift"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);text-decoration:none;">
         <span class="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
               style="background:var(--edify-surface-muted);">
           {% include "partials/analytics/pl/_icon.html" with name=q.icon %}

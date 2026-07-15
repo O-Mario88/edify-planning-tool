@@ -52,6 +52,7 @@ padding: 4px 28px 28px 28px !important;
 <form
 hx-post="/planning/assign-partner-action"
 hx-target="#assign-errors"
+hx-disabled-elt="find button[type=submit]"
 class="space-y-4 text-[12px] font-bold text-slate-600"
 >
 {% csrf_token %}
@@ -130,7 +131,8 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 
 <!-- Expected Date -->
 <div>
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Date / Target Date</label>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Date / Target Date (Optional)</label>
+<p class="text-[10.5px] font-semibold text-slate-400 normal-case tracking-normal mb-1.5">Leave blank if the partner will confirm their own schedule — the activity is only costed and budgeted once a date is set, by you now or by the partner later.</p>
 <div 
 x-data="{
 open: false,
@@ -219,7 +221,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 </svg>
 </button>
 
-<input type="hidden" name="expected_date" :value="selectedDate" required>
+<input type="hidden" name="expected_date" :value="selectedDate">
 
 <!-- Calendar Popover Card -->
 <div 

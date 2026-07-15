@@ -85,7 +85,9 @@ def pl_analytics_view(request):
     fy = (request.GET.get("fy") or "").strip() or None
     quarter = (request.GET.get("quarter") or "").strip() or None
 
-    data = PLAnalyticsService.get_dashboard(request.user, fy=fy, quarter=quarter, filters=filters)
+    data = PLAnalyticsService.get_dashboard(
+        request.user, fy=fy, quarter=quarter, filters=filters
+    )
     context = {
         **data,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
@@ -113,13 +115,26 @@ def pl_analytics_export_view(request):
         "cceo": request.GET.get("cceo"),
         "school_type": request.GET.get("school_type"),
     }
-    rows = PLAnalyticsService.export_rows(request.user, fy=fy, quarter=quarter, filters=filters)
+    rows = PLAnalyticsService.export_rows(
+        request.user, fy=fy, quarter=quarter, filters=filters
+    )
     resp = HttpResponse(content_type="text/csv")
     resp["Content-Disposition"] = 'attachment; filename="pl_analytics_risk.csv"'
     w = csv.writer(resp)
-    w.writerow(["School", "District", "Issue", "Last Visit", "Last Training", "Next Action"])
+    w.writerow(
+        ["School", "District", "Issue", "Last Visit", "Last Training", "Next Action"]
+    )
     for r in rows:
-        w.writerow([r["school"], r["district"], r["issue"], r["last_visit"], r["last_training"], r["next_action"]])
+        w.writerow(
+            [
+                r["school"],
+                r["district"],
+                r["issue"],
+                r["last_visit"],
+                r["last_training"],
+                r["next_action"],
+            ]
+        )
     return resp
 
 
@@ -127,7 +142,7 @@ def pl_analytics_export_view(request):
 def pl_analytics_drilldown_view(request):
     """Role-scoped drill-down drawer for the PL cockpit (district / cluster /
     CCEO / risk-list / KPI). Renders into the global #drawer-container."""
-    from apps.analytics.pl_analytics_service import PLAnalyticsService, resolve_pl_scope
+    from apps.analytics.pl_analytics_service import PLAnalyticsService
 
     drill = (request.GET.get("drill") or "").strip()
     fy = (request.GET.get("fy") or "").strip() or None
@@ -421,10 +436,27 @@ def cd_analytics_view(request):
         request.user, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
     )
     # Month-of-FY labels (FY starts in October).
-    _fy_months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
+    _fy_months = [
+        "Oct",
+        "Nov",
+        "Dec",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+    ]
     month_options = [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)]
-    context = {**data, "month_options": month_options, "month": (month or ""),
-               "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p")}
+    context = {
+        **data,
+        "month_options": month_options,
+        "month": (month or ""),
+        "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
+    }
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/analytics/cd/body.html", context)
     return render(request, "pages/analytics/cd_analytics.html", context)
@@ -442,7 +474,13 @@ def cd_analytics_drilldown_view(request):
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
     payload = CDAnalyticsService.drilldown(
-        request.user, drill, request.GET, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
+        request.user,
+        drill,
+        request.GET,
+        fy=fy,
+        quarter=quarter,
+        month=month,
+        filters=_cd_filters(request),
     )
     context = {"drill": drill, "drawer_size": "lg", **payload}
     return render(request, "partials/analytics/cd/drilldown.html", context)
@@ -467,7 +505,27 @@ def cd_analytics_export_view(request):
     resp = HttpResponse(content_type="text/csv")
     resp["Content-Disposition"] = 'attachment; filename="cd_analytics_pl_oversight.csv"'
     w = csv.writer(resp)
-    w.writerow(["PL", "CCEOs Supervised", "Target Achievement %", "Schools at Risk", "Budget Utilization %", "Backlog", "Risk Status"])
+    w.writerow(
+        [
+            "PL",
+            "CCEOs Supervised",
+            "Target Achievement %",
+            "Schools at Risk",
+            "Budget Utilization %",
+            "Backlog",
+            "Risk Status",
+        ]
+    )
     for r in rows:
-        w.writerow([r["name"], r["cceos"], r["target_pct"], r["schools_at_risk"], r["budget_util"], r["backlog"], r["risk"]])
+        w.writerow(
+            [
+                r["name"],
+                r["cceos"],
+                r["target_pct"],
+                r["schools_at_risk"],
+                r["budget_util"],
+                r["backlog"],
+                r["risk"],
+            ]
+        )
     return resp

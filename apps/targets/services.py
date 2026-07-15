@@ -1,4 +1,10 @@
-"""Targets service — CD/IA annual commitments + cumulative progress."""
+"""Targets service — CD/IA annual commitments (TargetSetting) + cumulative
+progress against them.
+
+This is the leadership scope-level target system. For the separate
+individual "My Targets" system (MonthlyPersonalTarget, TargetAchievementLedger,
+CatchUpPlan), see apps/targets/my_targets.py -- the two do not share data.
+"""
 
 from __future__ import annotations
 

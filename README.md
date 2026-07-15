@@ -5,7 +5,9 @@ Framework** (replacing the previous NestJS + Prisma backend). The School
 Directory is the source of truth; ~200 endpoints across 33 domain apps; JWT
 access + rotating refresh tokens; a 38-key RBAC permission matrix with
 data-access scope resolution; a tamper-evident audit hash-chain; realtime SSE;
-and 4 background jobs.
+and 7 background jobs (weekly fund requests, monthly work plans, notification
+escalation, daily digest, target-ledger sync, PD reminders, and recurring
+field-debrief issue detection — see `apps/realtime/registry.py`).
 
 ## Stack
 

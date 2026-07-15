@@ -33,6 +33,11 @@ cryptography==44.0.0
 # Image / file validation for evidence uploads.
 Pillow==11.0.0
 
+# ClamAV daemon client for evidence malware scanning (apps.evidence.services).
+# Pure-Python socket client, no compiled deps -- inert unless CLAMAV_HOST is
+# set to point at a reachable clamd; see config/settings/base.py.
+clamd==1.0.2
+
 # XLSX parsing for school / SSA spreadsheet uploads.
 openpyxl==3.1.5
 

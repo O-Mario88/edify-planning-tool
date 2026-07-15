@@ -48,7 +48,7 @@
 {% csrf_token %}
 <input type="hidden" name="action" value="classify_district">
 <input type="hidden" name="district_id" value="{{ dist.id }}">
-<select name="district_type" onchange="this.form.submit()" class="text-[11px] font-bold rounded-md border px-1.5 py-1 focus:outline-none
+<select name="district_type" @change="$el.form.requestSubmit()" class="text-[11px] font-bold rounded-md border px-1.5 py-1 focus:outline-none
 {% if dist.district_type == 'secondary' %}border-purple-200 bg-purple-50 text-purple-700
 {% elif dist.district_type == 'primary' %}border-emerald-200 bg-emerald-50 text-emerald-700
 {% else %}border-amber-200 bg-amber-50 text-amber-700{% endif %}">

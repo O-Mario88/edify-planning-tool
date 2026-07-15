@@ -68,17 +68,24 @@ if railway_domain:
     if railway_domain not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(railway_domain)
 
-# Allow local loopback addresses for container health probes
-for host in ["localhost", "127.0.0.1", "0.0.0.0"]:
-    if host not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(host)
-
+# Refuse to boot with no real host configured. This check must run BEFORE
+# the loopback hosts are appended below — with them already in the list, an
+# unset ALLOWED_HOSTS would boot "healthy" (localhost health probes pass)
+# while every real request 400s with DisallowedHost.
 if not ALLOWED_HOSTS:
-    _issues.append("ALLOWED_HOSTS must be set to explicit hosts in production.")
+    _issues.append(
+        "ALLOWED_HOSTS must be set to explicit hosts in production "
+        "(or RAILWAY_PUBLIC_DOMAIN must be present)."
+    )
     sys.stderr.write(
         "Production environment is not safe:\n" + "\n".join(_issues) + "\n"
     )
     raise SystemExit(1)
+
+# Allow local loopback addresses for container health probes
+for host in ["localhost", "127.0.0.1", "0.0.0.0"]:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
 SECURE_SSL_REDIRECT = _truthy(os.environ.get("SECURE_SSL_REDIRECT"), fallback=True)
 SESSION_COOKIE_SECURE = _truthy(os.environ.get("SESSION_COOKIE_SECURE"), fallback=True)

@@ -142,6 +142,22 @@ def schedule_visits(
             if batch
             else []
         )
+        # Guard against double-submission (e.g. a double-click on "Schedule
+        # Activity"): if this staff member already has a live, non-cancelled
+        # visit to one of these schools on this date — most likely the exact
+        # same request landing twice — reject the repeat instead of silently
+        # adding a second Activity for the same school/day into the batch.
+        already_scheduled_pks = {
+            a.school_id for a in existing_activities if a.school_id
+        } & {s.id for s in schools}
+        if already_scheduled_pks:
+            dupe_names = ", ".join(
+                s.name for s in schools if s.id in already_scheduled_pks
+            )
+            raise BadRequest(
+                f"A visit is already scheduled for {dupe_names} on this date."
+            )
+
         existing_district_ids = {
             a.school.district_id
             for a in existing_activities
@@ -398,7 +414,9 @@ def _sync_route_batch(batch: DailyVisitBatch) -> None:
     try:
         from apps.routes.engine import DailyVisitRouteBatchService
 
-        DailyVisitRouteBatchService.rebuild_for(batch.responsible_user, batch.visit_date)
+        DailyVisitRouteBatchService.rebuild_for(
+            batch.responsible_user, batch.visit_date
+        )
     except Exception:  # noqa: BLE001 — route intelligence is advisory
         pass
 

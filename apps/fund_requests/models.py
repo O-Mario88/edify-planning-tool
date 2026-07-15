@@ -47,7 +47,7 @@ class FundRequest(TimeStampedModel):
     scope = models.CharField(max_length=16)  # own | team | country
     submitted_by_user_id = models.CharField(max_length=30)
     submitted_by_role = models.CharField(max_length=64)
-    total_amount = models.BigIntegerField()  # UGX, integer cents
+    total_amount = models.BigIntegerField()  # UGX, integer (plain shillings, not cents)
     activity_count = models.IntegerField()
     status = models.CharField(
         max_length=32,
@@ -97,7 +97,7 @@ class FundRequestItem(TimeStampedModel):
     )
     activity_id = models.CharField(max_length=30)
     activity_schedule_cost_line_id = models.CharField(max_length=30)
-    amount = models.BigIntegerField()  # UGX, integer cents
+    amount = models.BigIntegerField()  # UGX, integer (plain shillings, not cents)
     period = models.CharField(max_length=16, choices=FundRequestPeriod.choices)
     period_key = models.CharField(max_length=32)
     added_after_generation = models.BooleanField(default=False)

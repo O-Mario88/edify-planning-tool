@@ -88,7 +88,7 @@
         {% for q in queue %}
         <button hx-get="/fund-approvals/detail?cceo={{ q.cceo_user_id }}&fy={{ fy }}&month={{ month }}" hx-target="#fund-plan-detail" hx-swap="innerHTML"
                 data-fa-card
-                onclick="document.querySelectorAll('[data-fa-card]').forEach(function(el){el.classList.remove('bg-emerald-50','ring-1','ring-inset','ring-emerald-200');});this.classList.add('bg-emerald-50','ring-1','ring-inset','ring-emerald-200');"
+                @click="document.querySelectorAll('[data-fa-card]').forEach((card) => card.classList.remove('bg-emerald-50', 'ring-1', 'ring-inset', 'ring-emerald-200')); $el.classList.add('bg-emerald-50', 'ring-1', 'ring-inset', 'ring-emerald-200')"
                 class="w-full text-left px-4 py-3 hover:bg-slate-50/60 transition-colors {% if q.selected %}bg-emerald-50 ring-1 ring-inset ring-emerald-200{% endif %}">
           <div class="flex items-start justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0">

@@ -39,16 +39,28 @@ class CDCommandCenterTest(TestCase):
     def setUp(self):
         self.region_a = Region.objects.create(name="Central Region")
         self.region_b = Region.objects.create(name="Northern Region")
-        self.dist_a = District.objects.create(name="Dist A", region=self.region_a, district_type="primary")
-        self.dist_b = District.objects.create(name="Dist B", region=self.region_b, district_type="primary")
+        self.dist_a = District.objects.create(
+            name="Dist A", region=self.region_a, district_type="primary"
+        )
+        self.dist_b = District.objects.create(
+            name="Dist B", region=self.region_b, district_type="primary"
+        )
 
         self.cd, _ = self._staff("cd@t.org", "CD", EdifyRole.COUNTRY_DIRECTOR.value)
-        self.pl_a, self.pl_a_sp = self._staff("pla@t.org", "PL Ada", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.pl_a, self.pl_a_sp = self._staff(
+            "pla@t.org", "PL Ada", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
         self.a1, self.a1_sp = self._staff("a1@t.org", "CCEO A1", EdifyRole.CCEO.value)
-        StaffSupervisorAssignment.objects.create(supervisor=self.pl_a_sp, supervisee=self.a1_sp)
-        self.pl_b, self.pl_b_sp = self._staff("plb@t.org", "PL Bola", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_a_sp, supervisee=self.a1_sp
+        )
+        self.pl_b, self.pl_b_sp = self._staff(
+            "plb@t.org", "PL Bola", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
         self.b1, self.b1_sp = self._staff("b1@t.org", "CCEO B1", EdifyRole.CCEO.value)
-        StaffSupervisorAssignment.objects.create(supervisor=self.pl_b_sp, supervisee=self.b1_sp)
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_b_sp, supervisee=self.b1_sp
+        )
 
         self.sch_a = self._school("A", self.region_a, self.dist_a, ssa_done=True)
         self.sch_a2 = self._school("A2", self.region_a, self.dist_a, ssa_done=False)
@@ -65,57 +77,102 @@ class CDCommandCenterTest(TestCase):
         # Region B: planned only → 0% regional achievement.
         self._act(self.b1_sp.id, self.sch_b, "school_visit", "scheduled")
 
-        StaffTargetProfile.objects.create(staff=self.a1_sp, fy=FY, visits_target=2, trainings_target=1)
+        StaffTargetProfile.objects.create(
+            staff=self.a1_sp, fy=FY, visits_target=2, trainings_target=1
+        )
         StaffTargetProfile.objects.create(staff=self.b1_sp, fy=FY, visits_target=4)
 
         self.wfr = WeeklyFundRequest.objects.create(
-            fy=FY, week_start_date=date(2026, 7, 13), week_end_date=date(2026, 7, 19),
-            responsible_user=self.pl_a.id, total_amount=300_000, status="submitted_to_cd",
+            fy=FY,
+            week_start_date=date(2026, 7, 13),
+            week_end_date=date(2026, 7, 19),
+            responsible_user=self.pl_a.id,
+            total_amount=300_000,
+            status="submitted_to_cd",
         )
         MonthlyWorkPlanBudget.objects.create(
-            fy=FY, month_key="2026-08", status="cd_review", total_amount=5_000_000,
+            fy=FY,
+            month_key="2026-08",
+            status="cd_review",
+            total_amount=5_000_000,
         )
         # Disbursed advance on a still-scheduled (funded-not-completed) activity.
-        self.act_funded = self._act(self.b1_sp.id, self.sch_b, "school_visit", "scheduled")
+        self.act_funded = self._act(
+            self.b1_sp.id, self.sch_b, "school_visit", "scheduled"
+        )
         line = ActivityScheduleCostLine.objects.create(
-            activity=self.act_funded, cost_setting_key="transport", label="Transport",
-            unit_cost=80_000, amount=80_000,
+            activity=self.act_funded,
+            cost_setting_key="transport",
+            label="Transport",
+            unit_cost=80_000,
+            amount=80_000,
         )
         AdvanceRequest.objects.create(
-            activity=self.act_funded, budget_line=line, responsible_user_id=self.b1.id,
-            fy=FY, quarter="Q4", planned_date=date(2026, 7, 1), amount=80_000,
-            status="disbursed", disbursed_amount=80_000,
+            activity=self.act_funded,
+            budget_line=line,
+            responsible_user_id=self.b1.id,
+            fy=FY,
+            quarter="Q4",
+            planned_date=date(2026, 7, 1),
+            amount=80_000,
+            status="disbursed",
+            disbursed_amount=80_000,
         )
         CorePlan.objects.create(
-            id="cplan-test-1", school_id=self.sch_a.school_id, fy=FY,
-            status="Active", baseline_average=5.5,
-            visits_completed=0, trainings_completed=0,
+            id="cplan-test-1",
+            school_id=self.sch_a.school_id,
+            fy=FY,
+            status="Active",
+            baseline_average=5.5,
+            visits_completed=0,
+            trainings_completed=0,
         )
 
     # ── fixtures ─────────────────────────────────────────────────────────────
     def _staff(self, email, name, role):
-        u = User.objects.create_user(email=email, name=name, roles=[role],
-                                     active_role=role, password="x", is_active=True)
+        u = User.objects.create_user(
+            email=email,
+            name=name,
+            roles=[role],
+            active_role=role,
+            password="x",
+            is_active=True,
+        )
         return u, StaffProfile.objects.create(user=u, title=role)
 
     def _school(self, sid, region, district, ssa_done):
         return School.objects.create(
-            school_id=f"S-{sid}", name=f"School {sid}", region=region, district=district,
-            enrollment=100, current_fy_ssa_status="done" if ssa_done else "not_done",
+            school_id=f"S-{sid}",
+            name=f"School {sid}",
+            region=region,
+            district=district,
+            enrollment=100,
+            current_fy_ssa_status="done" if ssa_done else "not_done",
         )
 
     def _ssa(self, school, fy, avg, scores):
         rec = SsaRecord.objects.create(
-            school=school, fy=fy, quarter="Q1", average_score=avg,
-            verification_status="confirmed", date_of_ssa=date(2025, 11, 1), uploaded_by="t",
+            school=school,
+            fy=fy,
+            quarter="Q1",
+            average_score=avg,
+            verification_status="confirmed",
+            date_of_ssa=date(2025, 11, 1),
+            uploaded_by="t",
         )
         for k, v in scores.items():
             SsaScore.objects.create(ssa_record=rec, intervention=k, score=v)
 
     def _act(self, sp_id, school, atype, status, sf=""):
         return Activity.objects.create(
-            school=school, activity_type=atype, delivery_type="staff", status=status,
-            responsible_staff_id=sp_id, fy=FY, quarter="Q3", planned_date=date(2026, 4, 10),
+            school=school,
+            activity_type=atype,
+            delivery_type="staff",
+            status=status,
+            responsible_staff_id=sp_id,
+            fy=FY,
+            quarter="Q3",
+            planned_date=date(2026, 4, 10),
             scheduled_date=timezone.make_aware(timezone.datetime(2026, 4, 10, 9, 0)),
             salesforce_activity_id=sf,
         )
@@ -138,8 +195,14 @@ class CDCommandCenterTest(TestCase):
     # 2 ─ no field execution actions
     def test_cd_dashboard_does_not_show_field_execution_actions(self):
         d = self._dash()
-        banned = ("schedule visit", "schedule school", "start activity",
-                  "upload evidence", "enter sf", "my plan")
+        banned = (
+            "schedule visit",
+            "schedule school",
+            "start activity",
+            "upload evidence",
+            "enter sf",
+            "my plan",
+        )
         for q in d["quick_actions"]:
             text = (q["label"] + " " + q["helper"]).lower()
             self.assertFalse(any(b in text for b in banned), q["label"])
@@ -149,11 +212,13 @@ class CDCommandCenterTest(TestCase):
     # 3 ─ KPIs dynamic
     def test_cd_kpis_dynamic(self):
         by = self._kpis()
-        self.assertEqual(by["Active Schools Served"]["value"], "1")   # only sch_a completed
+        self.assertEqual(
+            by["Active Schools Served"]["value"], "1"
+        )  # only sch_a completed
         before = by["Active Schools Served"]["value"]
         self._act(self.b1_sp.id, self.sch_b, "school_visit", "completed", sf="SV-B")
         after = self._kpis()["Active Schools Served"]["value"]
-        self.assertNotEqual(before, after)                            # recomputed, not static
+        self.assertNotEqual(before, after)  # recomputed, not static
 
     # 4 ─ Activity SF ID compliance calculation
     def test_cd_activity_sf_id_compliance_calculation(self):
@@ -166,7 +231,9 @@ class CDCommandCenterTest(TestCase):
         by = self._kpis()
         # 1 escalated weekly + 1 monthly budget in cd_review = 2.
         self.assertEqual(by["Pending Fund Requests"]["value"], "2")
-        WeeklyFundRequest.objects.filter(id=self.wfr.id).update(status="confirmed_for_advance")
+        WeeklyFundRequest.objects.filter(id=self.wfr.id).update(
+            status="confirmed_for_advance"
+        )
         MonthlyWorkPlanBudget.objects.all().update(status="submitted_to_rvp")
         self.assertEqual(self._kpis()["Pending Fund Requests"]["value"], "0")
 
@@ -189,10 +256,12 @@ class CDCommandCenterTest(TestCase):
     def test_cd_leadership_attention_cards_generated_from_real_data(self):
         d = self._dash()
         titles = " ".join(c["title"] for c in d["leadership_attention"])
-        self.assertIn("Region", titles)          # Northern Region at 0% < threshold
-        self.assertIn("Pending", titles)         # escalated fund items
+        self.assertIn("Region", titles)  # Northern Region at 0% < threshold
+        self.assertIn("Pending", titles)  # escalated fund items
         # Resolve the fund items → the card disappears.
-        WeeklyFundRequest.objects.filter(id=self.wfr.id).update(status="confirmed_for_advance")
+        WeeklyFundRequest.objects.filter(id=self.wfr.id).update(
+            status="confirmed_for_advance"
+        )
         MonthlyWorkPlanBudget.objects.all().update(status="submitted_to_rvp")
         titles2 = " ".join(c["title"] for c in self._dash()["leadership_attention"])
         self.assertNotIn("Pending", titles2)
@@ -204,18 +273,20 @@ class CDCommandCenterTest(TestCase):
             d["ssa_matrix"]["codes"],
             ["CB", "WOG", "FH", "Lship", "LE", "GR", "TE", "Erlm't"],
         )
-        central = next(r for r in d["ssa_matrix"]["rows"] if r["label"] == "Central Region")
+        central = next(
+            r for r in d["ssa_matrix"]["rows"] if r["label"] == "Central Region"
+        )
         self.assertEqual(len(central["cells"]), 8)
         lship_idx = d["ssa_matrix"]["codes"].index("Lship")
-        self.assertEqual(central["cells"][lship_idx]["pct"], 70.0)   # 7.0/10 → 70%
+        self.assertEqual(central["cells"][lship_idx]["pct"], 70.0)  # 7.0/10 → 70%
 
     # 10 ─ priority schools from real workflow gaps
     def test_cd_priority_school_list_generated_from_real_workflow_gaps(self):
         d = self._dash()
         rows = {p["school"]: p for p in d["priority_schools"]}
-        self.assertIn("School B", rows)                       # no visit+training+SSA
+        self.assertIn("School B", rows)  # no visit+training+SSA
         self.assertIn("No SSA", rows["School B"]["issues"])
-        self.assertNotIn("School A", rows)                    # visited+trained+SSA done
+        self.assertNotIn("School A", rows)  # visited+trained+SSA done
 
     # 11 ─ quick actions route to real pages
     def test_cd_quick_actions_route_to_real_pages(self):
@@ -234,7 +305,7 @@ class CDCommandCenterTest(TestCase):
         self.assertEqual(fs["pending_rows"][0]["team"], "PL Ada")
         self.assertEqual(fs["pending_rows"][0]["stage"], "CD Review")
         fnc = fs["funded_not_completed"]
-        self.assertEqual(fnc["activities"], 1)                # disbursed, still scheduled
+        self.assertEqual(fnc["activities"], 1)  # disbursed, still scheduled
         self.assertEqual(fnc["amount"], "UGX 80K")
         self.assertEqual(d["budget_stage"]["label"], "In CD Review")
 
@@ -244,7 +315,9 @@ class CDCommandCenterTest(TestCase):
 
         titles = {t["title"] for t in CDAnalyticsService.cd_todos(self.cd, fy=FY)}
         self.assertIn("Approve PL Weekly Fund Request", titles)
-        WeeklyFundRequest.objects.filter(id=self.wfr.id).update(status="confirmed_for_advance")
+        WeeklyFundRequest.objects.filter(id=self.wfr.id).update(
+            status="confirmed_for_advance"
+        )
         titles2 = {t["title"] for t in CDAnalyticsService.cd_todos(self.cd, fy=FY)}
         self.assertNotIn("Approve PL Weekly Fund Request", titles2)  # auto-closes
 
@@ -255,9 +328,13 @@ class CDCommandCenterTest(TestCase):
         resp = c.get("/dashboard")
         self.assertEqual(resp.status_code, 200)
         body = resp.content.decode()
-        for marker in ("Country Target Progress", "Activity SF ID Compliance",
-                       "Regional Performance", "Funded Not Completed",
-                       "Quick Leadership Actions"):
+        for marker in (
+            "Country Target Progress",
+            "Activity SF ID Compliance",
+            "Regional Performance",
+            "Funded Not Completed",
+            "Quick Leadership Actions",
+        ):
             self.assertIn(marker, body)
 
 
@@ -277,16 +354,30 @@ class CDTargetCreditConvergenceTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Solo Region")
         self.district = District.objects.create(
-            name="Solo District", region=self.region, district_type="primary")
-        self.cd, _ = self._staff("cd-solo@t.org", "CD Solo", EdifyRole.COUNTRY_DIRECTOR.value)
-        self.pl, self.pl_sp = self._staff("pl-solo@t.org", "PL Solo", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
-        self.cceo, self.cceo_sp = self._staff("cceo-solo@t.org", "CCEO Solo", EdifyRole.CCEO.value)
-        StaffSupervisorAssignment.objects.create(supervisor=self.pl_sp, supervisee=self.cceo_sp)
+            name="Solo District", region=self.region, district_type="primary"
+        )
+        self.cd, _ = self._staff(
+            "cd-solo@t.org", "CD Solo", EdifyRole.COUNTRY_DIRECTOR.value
+        )
+        self.pl, self.pl_sp = self._staff(
+            "pl-solo@t.org", "PL Solo", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        self.cceo, self.cceo_sp = self._staff(
+            "cceo-solo@t.org", "CCEO Solo", EdifyRole.CCEO.value
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=self.cceo_sp
+        )
         self.school = School.objects.create(
-            school_id="S-SOLO", name="Solo School", region=self.region, district=self.district,
+            school_id="S-SOLO",
+            name="Solo School",
+            region=self.region,
+            district=self.district,
             current_fy_ssa_status="done",
         )
-        StaffSchoolAssignment.objects.create(staff=self.cceo_sp, school_id=self.school.id)
+        StaffSchoolAssignment.objects.create(
+            staff=self.cceo_sp, school_id=self.school.id
+        )
         StaffTargetProfile.objects.create(staff=self.cceo_sp, fy=FY, visits_target=4)
         # 2 completed visits with an Activity SF ID (validated) + 1 without
         # (provisional — must never silently count, unlike the old raw
@@ -296,14 +387,26 @@ class CDTargetCreditConvergenceTest(TestCase):
         self._act(self.cceo_sp.id, self.school, "school_visit", "completed", sf="")
 
     def _staff(self, email, name, role):
-        u = User.objects.create_user(email=email, name=name, roles=[role],
-                                     active_role=role, password="x", is_active=True)
+        u = User.objects.create_user(
+            email=email,
+            name=name,
+            roles=[role],
+            active_role=role,
+            password="x",
+            is_active=True,
+        )
         return u, StaffProfile.objects.create(user=u, title=role)
 
     def _act(self, sp_id, school, atype, status, sf=""):
         return Activity.objects.create(
-            school=school, activity_type=atype, delivery_type="staff", status=status,
-            responsible_staff_id=sp_id, fy=FY, quarter="Q3", planned_date=date(2026, 4, 10),
+            school=school,
+            activity_type=atype,
+            delivery_type="staff",
+            status=status,
+            responsible_staff_id=sp_id,
+            fy=FY,
+            quarter="Q3",
+            planned_date=date(2026, 4, 10),
             scheduled_date=timezone.make_aware(timezone.datetime(2026, 4, 10, 9, 0)),
             salesforce_activity_id=sf,
         )
@@ -313,13 +416,18 @@ class CDTargetCreditConvergenceTest(TestCase):
 
         # Never called TargetAchievementService.rebuild() manually — the
         # ledger starts empty for this CCEO.
-        self.assertFalse(TargetAchievementLedger.objects.filter(user_id=self.cceo.id).exists())
+        self.assertFalse(
+            TargetAchievementLedger.objects.filter(user_id=self.cceo.id).exists()
+        )
 
         d = S.get_dashboard(self.cd, fy=FY)
 
         # (b) the dashboard read must have triggered its own rebuild.
-        self.assertTrue(TargetAchievementLedger.objects.filter(
-            user_id=self.cceo.id, fy=FY, validation_status="validated").exists())
+        self.assertTrue(
+            TargetAchievementLedger.objects.filter(
+                user_id=self.cceo.id, fy=FY, validation_status="validated"
+            ).exists()
+        )
 
         # (a) the KPI strip and the PL row now read the identical math for
         # the identical (single-PL, single-CCEO) scope, so they must match

@@ -342,7 +342,9 @@ def clear_partner_payment_action(request):
                 # place, and produces the CompletedActivitySnapshot the
                 # direct write used to skip.
                 if ClosureEligibilityService.is_eligible(activity):
-                    ActivityClosureService.close(activity, closed_by=request.user.user_id)
+                    ActivityClosureService.close(
+                        activity, closed_by=request.user.user_id
+                    )
 
             response = HttpResponse("<script>window.location.reload();</script>")
             response["HX-Trigger"] = "close-drawer"
@@ -435,9 +437,7 @@ def confirm_accountability_action(request):
                 # Close the weekly request only when the whole set is accounted.
                 for adv in advances:
                     adv.refresh_from_db()
-                if all(
-                    a.status == AdvanceRequestStatus.ACCOUNTED for a in advances
-                ):
+                if all(a.status == AdvanceRequestStatus.ACCOUNTED for a in advances):
                     codes = sorted(
                         {
                             a.accountability_netsuite_id
@@ -462,9 +462,7 @@ def confirm_accountability_action(request):
                     wfr.accounted_amount = sum(
                         a.accounted_amount or 0 for a in advances
                     )
-                    wfr.returned_amount = sum(
-                        a.returned_amount or 0 for a in advances
-                    )
+                    wfr.returned_amount = sum(a.returned_amount or 0 for a in advances)
                     wfr.save(
                         update_fields=[
                             "status",
@@ -489,30 +487,71 @@ def confirm_accountability_action(request):
 
 @require_page_permission("disbursements")
 def finance_return_action(request):
-    """POST to return fund request for correction."""
+    """POST to return a confirmed-for-advance weekly fund request for
+    correction — the Accountant's alternative to disbursing it."""
     if request.user.active_role != "Accountant":
         return HttpResponse("Unauthorized", status=403)
 
     if request.method == "POST":
         request_id = request.POST.get("request_id")
         reason = request.POST.get("reason", "").strip()
+        if not reason:
+            return HttpResponse(
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">A return reason is required.</div>',
+                status=400,
+            )
 
         try:
             from django.db import transaction
 
             with transaction.atomic():
-                wfr = get_object_or_404(WeeklyFundRequest, id=request_id)
+                wfr = (
+                    WeeklyFundRequest.objects.select_for_update()
+                    .filter(id=request_id)
+                    .first()
+                )
+                if not wfr:
+                    return HttpResponse(
+                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Weekly fund request not found.</div>',
+                        status=400,
+                    )
+                # Same precondition disburse() requires — only a plan the
+                # Accountant hasn't yet acted on can still be returned. This
+                # also blocks the request from being un-disbursed/un-accounted
+                # by a stale tab or double-click on this action.
+                if wfr.status != "confirmed_for_advance":
+                    return HttpResponse(
+                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Only a confirmed request can be returned by the accountant — this one is already {wfr.get_status_display()}.</div>',
+                        status=400,
+                    )
+
                 wfr.status = "returned_by_accountant"
                 wfr.confirmed_at = None
                 wfr.save(update_fields=["status", "confirmed_at", "updated_at"])
 
-                # Also return AdvanceRequests
+                # Only advances still awaiting disbursement move with it — an
+                # advance that's already disbursed/accounted on a sibling line
+                # must never be silently reopened.
                 for line in wfr.lines.select_related("activity_budget_line"):
-                    adv = line.activity_budget_line.advance_requests.first()
+                    adv = line.activity_budget_line.advance_requests.filter(
+                        status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE
+                    ).first()
                     if adv:
                         adv.status = AdvanceRequestStatus.RETURNED
                         adv.last_note = reason
                         adv.save(update_fields=["status", "last_note", "updated_at"])
+
+                from apps.audit.services import log as audit_log
+
+                audit_log(
+                    action="weekly_fund_request.return_by_accountant",
+                    subject_kind="WeeklyFundRequest",
+                    subject_id=str(wfr.id),
+                    actor_id=str(request.user.id),
+                    actor_role=request.user.active_role,
+                    success=True,
+                    payload={"reason": reason, "total_amount": wfr.total_amount},
+                )
 
             response = HttpResponse("<script>window.location.reload();</script>")
             response["HX-Trigger"] = "close-drawer"

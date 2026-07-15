@@ -191,6 +191,21 @@ class DailyVisitBatchTestCase(TestCase):
         self.assertEqual(len(lines), 2)  # transport + lunch
         self.assertEqual(sum(l.amount for l in lines), expected_pool)
 
+    # ── 1b. Double-submit (double-click) must not create a duplicate visit ───
+    def test_double_submit_same_school_same_day_is_idempotent(self):
+        """A double-click on 'Schedule Activity' fires schedule_visits() twice
+        with identical school_ids/date/staff. The second call must not create
+        a second Activity for the same school on the same day."""
+        first = self._schedule(["BATCH-P-1"], date(2026, 8, 3), reason="solo visit")
+        with self.assertRaises(BadRequest):
+            self._schedule(["BATCH-P-1"], date(2026, 8, 3), reason="solo visit")
+
+        acts = Activity.objects.filter(
+            school__school_id="BATCH-P-1", scheduled_date=date(2026, 8, 3)
+        )
+        self.assertEqual(acts.count(), 1)
+        self.assertEqual(acts.first().id, first["activities"][0]["id"])
+
     # ── 2. Bulk 3-school split, exact-sum remainder distribution ─────────────
     def test_bulk_schedule_splits_pool_exactly(self):
         result = self._schedule(

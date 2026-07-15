@@ -8,7 +8,7 @@
   <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mr-0.5">Suggested</span>
   {% for s in suggested %}
   <button type="button"
-          onclick="this.dispatchEvent(new CustomEvent('add-modal-recipient', {bubbles: true, detail: {id: '{{ s.id|escapejs }}', name: '{{ s.name|escapejs }}', role: '{{ s.role|escapejs }}'}})); this.classList.add('bg-emerald-50','border-emerald-200','text-emerald-700'); this.disabled=true;"
+          @click="$dispatch('add-modal-recipient', { id: '{{ s.id|escapejs }}', name: '{{ s.name|escapejs }}', role: '{{ s.role|escapejs }}' }); $el.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-700'); $el.disabled = true"
           class="inline-flex items-center gap-1 pl-1 pr-2 py-0.5 rounded-full bg-white border border-slate-200 hover:border-blue-300 text-[11px] font-bold text-slate-600 transition-colors">
     <span class="h-5 w-5 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-[8px] font-black">{{ s.name|avatar_initials }}</span>
     {{ s.name }}
@@ -22,7 +22,9 @@
   <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Suggested Recipients</h3>
   {% if context_id %}
   <button type="button"
-          onclick="htmx.ajax('GET', '/messages/new/suggestions?type={{ context_type|urlencode }}&id={{ context_id|urlencode }}', '#suggested-panel')"
+          hx-get="/messages/new/suggestions?type={{ context_type|urlencode }}&id={{ context_id|urlencode }}"
+          hx-target="#suggested-panel"
+          hx-swap="innerHTML"
           class="text-[11px] font-bold text-blue-600 hover:underline">Refresh</button>
   {% endif %}
 </div>
@@ -42,7 +44,7 @@
       <p class="text-[10.5px] font-semibold text-slate-400 truncate">{{ s.role }}{% if s.meta %} — {{ s.meta }}{% endif %}</p>
     </div>
     <button type="button"
-            onclick="window.dispatchEvent(new CustomEvent('add-recipient', {detail: {id: '{{ s.id|escapejs }}', name: '{{ s.name|escapejs }}', role: '{{ s.role|escapejs }}'}})); this.textContent='Added'; this.disabled=true; this.className='shrink-0 h-7 px-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[10.5px] font-bold text-emerald-700';"
+            @click="$dispatch('add-recipient', { id: '{{ s.id|escapejs }}', name: '{{ s.name|escapejs }}', role: '{{ s.role|escapejs }}' }); $el.textContent = 'Added'; $el.disabled = true; $el.className = 'shrink-0 h-7 px-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[10.5px] font-bold text-emerald-700'"
             class="shrink-0 h-7 px-2.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[10.5px] font-bold text-blue-700 transition-colors">
       Add
     </button>

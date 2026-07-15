@@ -4,30 +4,56 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fund_requests', '0006_accountabilityrecord_disbursement_financeauditlog_and_more'),
+        (
+            "fund_requests",
+            "0006_accountabilityrecord_disbursement_financeauditlog_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='fundrequest',
-            name='held_at',
+            model_name="fundrequest",
+            name="held_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='fundrequest',
-            name='held_reason',
+            model_name="fundrequest",
+            name="held_reason",
             field=models.CharField(blank=True, max_length=256, null=True),
         ),
         migrations.AddField(
-            model_name='fundrequest',
-            name='receipt_confirmed_at',
+            model_name="fundrequest",
+            name="receipt_confirmed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='fundrequest',
-            name='status',
-            field=models.CharField(choices=[('submitted', 'Submitted'), ('approved', 'Approved'), ('returned', 'Returned'), ('rejected', 'Rejected'), ('disbursed', 'Disbursed'), ('draft', 'Draft'), ('submitted_to_pl', 'Submitted to PL'), ('approved_by_pl', 'Approved by PL'), ('submitted_to_cd', 'Submitted to CD'), ('approved_by_cd', 'Approved by CD'), ('submitted_to_rvp', 'Submitted to RVP'), ('approved_by_rvp', 'Approved by RVP'), ('sent_to_accountant', 'Sent to Accountant'), ('held', 'Held'), ('closed', 'Closed'), ('returned_by_pl', 'Returned by PL'), ('returned_by_cd', 'Returned by CD'), ('returned_by_rvp', 'Returned by RVP'), ('returned_by_accountant', 'Returned by Accountant')], default='submitted', max_length=32),
+            model_name="fundrequest",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("submitted", "Submitted"),
+                    ("approved", "Approved"),
+                    ("returned", "Returned"),
+                    ("rejected", "Rejected"),
+                    ("disbursed", "Disbursed"),
+                    ("draft", "Draft"),
+                    ("submitted_to_pl", "Submitted to PL"),
+                    ("approved_by_pl", "Approved by PL"),
+                    ("submitted_to_cd", "Submitted to CD"),
+                    ("approved_by_cd", "Approved by CD"),
+                    ("submitted_to_rvp", "Submitted to RVP"),
+                    ("approved_by_rvp", "Approved by RVP"),
+                    ("sent_to_accountant", "Sent to Accountant"),
+                    ("held", "Held"),
+                    ("closed", "Closed"),
+                    ("returned_by_pl", "Returned by PL"),
+                    ("returned_by_cd", "Returned by CD"),
+                    ("returned_by_rvp", "Returned by RVP"),
+                    ("returned_by_accountant", "Returned by Accountant"),
+                ],
+                default="submitted",
+                max_length=32,
+            ),
         ),
     ]

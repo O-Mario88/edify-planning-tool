@@ -1,19 +1,28 @@
 # Deploying Edify Planning Tool to Railway
 
 This guide covers everything needed to deploy the Django + DRF backend to
-Railway. The app runs as a single service (Daphne ASGI — serves HTTP, the
-realtime SSE layer, and the APScheduler background jobs from one process).
+Railway. The app runs as **two services from the same image**: the web
+service (Daphne ASGI — HTTP + realtime SSE) and a scheduler worker
+(`manage.py runscheduler` — the only place background jobs run).
 
 ---
 
 ## Architecture (what Railway runs)
 
-- **One service** (the `edify-api` Dockerfile at the repo root).
+- **Web service** (the `edify-api` Dockerfile at the repo root).
+- **Scheduler worker service** — same repo/Dockerfile, start command
+  `python manage.py runscheduler`, `ENABLE_BACKGROUND_JOBS=true`, no public
+  domain. Background jobs deliberately do NOT run inside the web process
+  (`apps/realtime/apps.py` never starts APScheduler — a past incident had
+  every replica running its own copy of every job). **If this service is
+  missing, all 7 scheduled jobs silently never run** (weekly fund requests,
+  monthly work plans on the 25th, notification escalation, daily digest,
+  target-ledger sync, PD reminders, field-debrief pattern detection).
 - **Runtime:** Daphne (ASGI) on `$PORT` (Railway injects this).
-- **Database:** Railway Postgres (provisioned separately; referenced via `DATABASE_URL`).
+- **Database:** Railway Postgres (provisioned separately; referenced via `DATABASE_URL`), shared by both services.
 - **Static files:** WhiteNoise (`CompressedManifestStaticFilesStorage`) — collected at build time, served from the container. No CDN required.
-- **Migrations:** Applied automatically on every deploy by `docker-entrypoint.sh` (before the server starts). Safe for a single replica.
-- **Persistent volume:** `/data/evidence` — required for uploaded evidence files to survive redeploy.
+- **Migrations:** Applied automatically on every start by `docker-entrypoint.sh` (both services inherit it — deploy web and worker sequentially, not simultaneously, to avoid two concurrent `migrate` runs).
+- **Persistent volume:** `/data/evidence` on the **web** service — required for uploaded evidence files to survive redeploy. Without it the default path (`/app/uploads/evidence`) still passes the boot gate but silently loses every file on redeploy.
 
 ---
 
@@ -60,6 +69,9 @@ In the **service** (not the database), set these under **Variables**.
 | `ENABLE_BACKGROUND_JOBS` | `true` | APScheduler (cleanup, reminders). |
 | `ACCESS_TOKEN_TTL_MINUTES` | `15` | JWT access token lifetime. |
 | `REFRESH_TOKEN_TTL_DAYS` | `7` | JWT refresh token lifetime. |
+| `CLAMAV_HOST` | (none → scans skipped) | Hostname/IP of a reachable ClamAV daemon (`clamd`) for evidence-upload malware scanning. Leave unset to keep the current no-scanner behavior (`EvidenceRecord.scan_status="skipped"`) — a scan failure or unreachable daemon always degrades to "skipped", it never blocks an upload. |
+| `CLAMAV_PORT` | `3310` | clamd TCP port, only read when `CLAMAV_HOST` is set. |
+| `CLAMAV_TIMEOUT_SECONDS` | `10` | Scan timeout, only read when `CLAMAV_HOST` is set. |
 
 > **Note on `JWT_EXPIRES_IN`:** this variable is **not read** by the code. Use `ACCESS_TOKEN_TTL_MINUTES` and `REFRESH_TOKEN_TTL_DAYS` instead.
 
@@ -101,7 +113,7 @@ Evidence files must survive container restarts.
 Once the service is live, verify the critical path:
 
 ```bash
-# 1. Health check (should return {"status":"healthy",...})
+# 1. Health check (should return {"status":"ok","db":"up"})
 curl https://YOUR-DOMAIN/api/health
 
 # 2. Login page loads (should return 200 + HTML)
@@ -115,7 +127,8 @@ Then in a browser:
 - Log in as the super-admin (`SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD`).
 - Switch roles (top-right avatar) and confirm each role's dashboard renders.
 - Visit `/admin-panel` → confirm it loads.
-- Visit `/api/health` → confirm `"db":"ok"`.
+- Visit `/api/health` → confirm `"db":"up"`.
+- Confirm the **scheduler worker** service is running (its logs show the 7 registered jobs) — or `/system-health` will show a critical "Scheduler Disabled" check.
 
 ---
 
@@ -174,7 +187,7 @@ Because migrations run on boot, a rollback to a pre-migration deploy is safe **o
 
 ## What's intentionally NOT in this deploy
 
-- **No Celery / separate worker.** Background jobs run via APScheduler in the same Daphne process. Fine for current scale; add a worker if job volume grows.
+- **No Celery.** Background jobs run via APScheduler in the dedicated `runscheduler` worker service (see Architecture above) — never inside the web process. `docs/scheduler-deployment.md` has the full runbook.
 - **No CDN.** WhiteNoise serves static files from the container with gzip/brotli compression. Add a CDN only if static latency matters for your region.
 - **No Redis.** LocMem cache is used. Add Railway Redis + set `REDIS_URL` if you scale beyond 1 replica (cache must be shared).
 - **LibreOffice** is installed in the image for the optional DOCX→PDF evidence rendition. It adds ~600MB to the image. If you don't use that feature, remove `libreoffice` from the Dockerfile to shrink the image.

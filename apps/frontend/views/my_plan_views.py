@@ -15,8 +15,14 @@ from apps.activities.services import (
     complete as complete_activity,
     ia_confirm,
     ia_return,
+    sf_kind,
 )
-from apps.evidence.services import record_upload, list_for_activity
+from apps.activities.salesforce import is_valid_salesforce_id
+from apps.evidence.services import (
+    record_upload,
+    list_for_activity,
+    infer_kind_from_upload,
+)
 from apps.core.enums import SsaIntervention, ActivityStatus
 from apps.pl_review.services import (
     queue as pl_queue,
@@ -250,10 +256,16 @@ def accountability_action(request, activity_id):
             "Access Denied: You do not have permission to access this activity."
         )
 
+    forbidden = _forbid_staff_on_partner_activity(request, a)
+    if forbidden:
+        return forbidden
+
     disbursed = list(
         a.advance_requests.filter(status="disbursed").select_related("budget_line")
     )
-    total_disbursed = sum((adv.disbursed_amount or adv.amount or 0) for adv in disbursed)
+    total_disbursed = sum(
+        (adv.disbursed_amount or adv.amount or 0) for adv in disbursed
+    )
 
     if request.method != "POST":
         act = get_activity(activity_id, request.user)
@@ -288,11 +300,10 @@ def accountability_action(request, activity_id):
     receipt = request.FILES.get("receipt_file")
     if receipt:
         try:
-            kind = "pdf" if (receipt.name or "").lower().endswith(".pdf") else "photo"
             record_upload(
                 principal=request.user,
                 activity_id=activity_id,
-                kind=kind,
+                kind=infer_kind_from_upload(receipt),
                 file_obj=receipt,
             )
         except Exception as e:
@@ -308,7 +319,7 @@ def accountability_action(request, activity_id):
     try:
         spent_left, returned_left = amount_spent, amount_returned
         for i, adv in enumerate(disbursed):
-            share = (adv.disbursed_amount or adv.amount or 0)
+            share = adv.disbursed_amount or adv.amount or 0
             if i == len(disbursed) - 1 or not total_disbursed:
                 adv_spent, adv_returned = spent_left, returned_left
             else:
@@ -483,6 +494,10 @@ def complete_activity_action(request, activity_id):
             "Access Denied: You are not authorized to complete this activity."
         )
 
+    forbidden = _forbid_staff_on_partner_activity(request, a)
+    if forbidden:
+        return forbidden
+
     act = get_activity(activity_id, request.user)
 
     if request.method == "POST":
@@ -510,7 +525,7 @@ def complete_activity_action(request, activity_id):
                 record_upload(
                     principal=request.user,
                     activity_id=activity_id,
-                    kind="photo",
+                    kind=infer_kind_from_upload(evidence_file),
                     file_obj=evidence_file,
                 )
             except Exception as e:
@@ -935,7 +950,7 @@ def evidence_upload_action(request, activity_id):
                 record_upload(
                     principal=request.user,
                     activity_id=activity_id,
-                    kind="photo",
+                    kind=infer_kind_from_upload(evidence_file),
                     file_obj=evidence_file,
                 )
                 a.evidence_status = "uploaded"
@@ -992,6 +1007,20 @@ def salesforce_id_action(request, activity_id):
         if not salesforce_id:
             return HttpResponse(
                 '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: SF ID cannot be blank.</div>',
+                status=400,
+            )
+
+        if a.ia_verification_status == "confirmed":
+            return HttpResponse(
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction.</div>',
+                status=400,
+            )
+
+        kind = sf_kind(a.activity_type)
+        if not is_valid_salesforce_id(salesforce_id, kind):
+            prefix = "SV-" if kind == "visit" else "TS-"
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Invalid Salesforce ID format. Expected a {prefix} prefixed ID.</div>',
                 status=400,
             )
 
@@ -1172,6 +1201,10 @@ def attendance_upload_action(request, activity_id):
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
 
+    forbidden = _forbid_staff_on_partner_activity(request, a)
+    if forbidden:
+        return forbidden
+
     if request.method == "POST":
         teachers = request.POST.get("teachers_attended", 0)
         leaders = request.POST.get("leaders_attended", 0)
@@ -1197,7 +1230,7 @@ def attendance_upload_action(request, activity_id):
             record_upload(
                 principal=request.user,
                 activity_id=activity_id,
-                kind="attendance_sheet",
+                kind="attendance_form",
                 file_obj=attendance_file,
             )
             a.evidence_status = "uploaded"
@@ -1309,7 +1342,7 @@ def ssa_evidence_upload_action(request, activity_id):
             record_upload(
                 principal=request.user,
                 activity_id=activity_id,
-                kind="ssa_form",
+                kind="assessment_form",
                 file_obj=ssa_file,
             )
             a.evidence_status = "uploaded"

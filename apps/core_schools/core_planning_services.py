@@ -67,13 +67,32 @@ class CoreSchoolsService:
             from django.db import transaction
 
             interventions = [i.value for i in SsaIntervention]
+            # Provenance for auto-created plans/slots — same shape as the
+            # audited onboard() path (created_by_id/created_by_name), so a
+            # self-healed record is never indistinguishable from a hand-made
+            # one with no author on file.
+            actor_id = getattr(user, "user_id", None) or getattr(user, "id", None)
+            actor_name = getattr(user, "name", None) or "System (auto-heal)"
             for s in uninitialized_schools:
                 latest = (
                     s.ssa_records.filter(deleted_at__isnull=True)
                     .order_by("-date_of_ssa")
                     .first()
                 )
-                baseline_avg = latest.average_score if latest else 0.0
+                if not latest:
+                    # SSA gate: mirrors the official onboard() path, which
+                    # only ever runs after IA has verified an SSA-backed
+                    # candidate (services.verify_candidate). Without a real
+                    # SSA record there is no legitimate baseline to onboard
+                    # against, so skip rather than silently fabricating a
+                    # 0.0 baseline for this FY.
+                    logger.warning(
+                        "Skipping self-heal for core school %s: no SSA record "
+                        "on file to gate onboarding against.",
+                        s.school_id,
+                    )
+                    continue
+                baseline_avg = latest.average_score
                 plan_id = cplan_id(s.school_id)
                 try:
                     with transaction.atomic():
@@ -84,7 +103,9 @@ class CoreSchoolsService:
                                 "fy": fy,
                                 "status": "Active",
                                 "baseline_average": baseline_avg,
-                                "baseline_ssa_record_id": latest.id if latest else None,
+                                "baseline_ssa_record_id": latest.id,
+                                "created_by_id": actor_id,
+                                "created_by_name": actor_name,
                             },
                         )
                         CoreSchoolProfile.objects.update_or_create(
@@ -979,44 +1000,63 @@ class CoreRecommendationService:
         # Derive the strategy from the actual gap profile — never a canned line.
         total_v_missing = sum(a["visits_missing"] for a in attention_needed)
         total_t_missing = sum(a["trainings_missing"] for a in attention_needed)
-        unassessed = sum(
-            1 for p in plans if p.baseline_average is None
-        )
+        unassessed = sum(1 for p in plans if p.baseline_average is None)
         parts = []
         if unassessed:
-            parts.append(f"complete {unassessed} pending Core Assessment"
-                         f"{'s' if unassessed != 1 else ''} first")
+            parts.append(
+                f"complete {unassessed} pending Core Assessment"
+                f"{'s' if unassessed != 1 else ''} first"
+            )
         if total_v_missing >= total_t_missing and total_v_missing:
-            parts.append(f"close the {total_v_missing} missing visit slot"
-                         f"{'s' if total_v_missing != 1 else ''}")
+            parts.append(
+                f"close the {total_v_missing} missing visit slot"
+                f"{'s' if total_v_missing != 1 else ''}"
+            )
             if total_t_missing:
-                parts.append(f"then the {total_t_missing} training slot"
-                             f"{'s' if total_t_missing != 1 else ''}")
+                parts.append(
+                    f"then the {total_t_missing} training slot"
+                    f"{'s' if total_t_missing != 1 else ''}"
+                )
         elif total_t_missing:
-            parts.append(f"close the {total_t_missing} missing training slot"
-                         f"{'s' if total_t_missing != 1 else ''}")
-        strategy = ("Focus on " + ", ".join(parts) + "."
-                    if parts else
-                    "All core packages are on track — prepare Champion reviews and follow-up assessments.")
+            parts.append(
+                f"close the {total_t_missing} missing training slot"
+                f"{'s' if total_t_missing != 1 else ''}"
+            )
+        strategy = (
+            "Focus on " + ", ".join(parts) + "."
+            if parts
+            else "All core packages are on track — prepare Champion reviews and follow-up assessments."
+        )
         # Next actions — real queue-derived counts, each with a working route.
         pending_visit_schools = sum(1 for a in attention_needed if a["visits_missing"])
-        pending_training_schools = sum(1 for a in attention_needed if a["trainings_missing"])
+        pending_training_schools = sum(
+            1 for a in attention_needed if a["trainings_missing"]
+        )
         next_actions = []
         if unassessed:
-            next_actions.append({
-                "label": f"Review assessment results for {unassessed} core school"
-                         f"{'s' if unassessed != 1 else ''}",
-                "url": "/core-schools?ssa_status=required"})
+            next_actions.append(
+                {
+                    "label": f"Review assessment results for {unassessed} core school"
+                    f"{'s' if unassessed != 1 else ''}",
+                    "url": "/core-schools?ssa_status=required",
+                }
+            )
         if pending_visit_schools:
-            next_actions.append({
-                "label": f"Schedule pending visits for {pending_visit_schools} core school"
-                         f"{'s' if pending_visit_schools != 1 else ''}",
-                "url": "/core-schools"})
+            next_actions.append(
+                {
+                    "label": f"Schedule pending visits for {pending_visit_schools} core school"
+                    f"{'s' if pending_visit_schools != 1 else ''}",
+                    "url": "/core-schools",
+                }
+            )
         if pending_training_schools:
-            next_actions.append({
-                "label": f"Schedule pending trainings for {pending_training_schools} core school"
-                         f"{'s' if pending_training_schools != 1 else ''}",
-                "url": "/core-schools"})
+            next_actions.append(
+                {
+                    "label": f"Schedule pending trainings for {pending_training_schools} core school"
+                    f"{'s' if pending_training_schools != 1 else ''}",
+                    "url": "/core-schools",
+                }
+            )
         return {
             "attention_needed": attention_needed[:5],
             "attention_count": len(attention_needed),
@@ -1043,39 +1083,58 @@ class CoreInterventionRecommendationService:
             .first()
         )
         if latest is None:
-            return {"available": False, "reason": "Baseline Required", "rows": [],
-                    "maintenance": False}
+            return {
+                "available": False,
+                "reason": "Baseline Required",
+                "rows": [],
+                "maintenance": False,
+            }
         scores = sorted(
             latest.scores.all().values("intervention", "score"),
             key=lambda r: r["score"],
         )
         if not scores:
-            return {"available": False, "reason": "Baseline Required", "rows": [],
-                    "maintenance": False}
+            return {
+                "available": False,
+                "reason": "Baseline Required",
+                "rows": [],
+                "maintenance": False,
+            }
         if all((r["score"] or 0) >= 8.0 for r in scores):
             return {
-                "available": True, "maintenance": True, "rows": [],
-                "reason": ("All interventions strong — recommend maintenance, "
-                           "mentorship, peer learning and Champion preparation."),
+                "available": True,
+                "maintenance": True,
+                "rows": [],
+                "reason": (
+                    "All interventions strong — recommend maintenance, "
+                    "mentorship, peer learning and Champion preparation."
+                ),
             }
         labels = dict(SsaIntervention.choices)
-        partner_exists = Partner.objects.filter(deleted_at__isnull=True).exists() \
-            if hasattr(Partner, "deleted_at") else Partner.objects.exists()
+        partner_exists = (
+            Partner.objects.filter(deleted_at__isnull=True).exists()
+            if hasattr(Partner, "deleted_at")
+            else Partner.objects.exists()
+        )
         rows = []
         for i, r in enumerate(scores[:4]):
             owner = "Partner" if i < 2 else "Staff"
-            rows.append({
-                "priority": i + 1,
-                "code": r["intervention"],
-                "label": labels.get(r["intervention"], r["intervention"]),
-                "score": r["score"],
-                "owner": owner,
-                "owner_available": partner_exists if owner == "Partner" else True,
-                "support": ("In-school one-on-one coaching" if owner == "Partner"
-                            else "Staff visit and/or training"),
-            })
-        return {"available": True, "maintenance": False, "rows": rows,
-                "reason": ""}
+            rows.append(
+                {
+                    "priority": i + 1,
+                    "code": r["intervention"],
+                    "label": labels.get(r["intervention"], r["intervention"]),
+                    "score": r["score"],
+                    "owner": owner,
+                    "owner_available": partner_exists if owner == "Partner" else True,
+                    "support": (
+                        "In-school one-on-one coaching"
+                        if owner == "Partner"
+                        else "Staff visit and/or training"
+                    ),
+                }
+            )
+        return {"available": True, "maintenance": False, "rows": rows, "reason": ""}
 
 
 class CoreMyPlanSyncService:

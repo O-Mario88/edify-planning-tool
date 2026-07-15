@@ -16,6 +16,7 @@ cluster FK is added once the clusters app exists.
 from __future__ import annotations
 
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
 from apps.core.enums import (
@@ -147,6 +148,11 @@ class School(SoftDeleteModel):
             models.Index(fields=["planning_readiness"], name="school_plan_ready_idx"),
             models.Index(fields=["account_owner_status"], name="school_owner_st_idx"),
             models.Index(fields=["duplicate_status"], name="school_dup_status_idx"),
+            # Trigram GIN index — lets apps.ssa.unmatched_service rank fuzzy
+            # name-similarity candidates without a full-table ILIKE scan.
+            GinIndex(
+                fields=["name"], name="school_name_trgm_idx", opclasses=["gin_trgm_ops"]
+            ),
         ]
 
     def recompute_quality_and_readiness(self):
@@ -730,7 +736,16 @@ class SSAImportRow(TimeStampedModel):
 
 
 class UnmatchedSSARecord(TimeStampedModel):
-    """SSA rows whose School ID does not exist in School Directory."""
+    """SSA rows whose School ID does not exist in School Directory.
+
+    suggested_school/match_confidence are computed ONCE, at upload time
+    (apps.ssa.unmatched_service.compute_suggested_match, called from
+    apps.ssa.upload_service.upload_ssa_file) — never recomputed per page
+    view. That's the fix for the old per-row `School.objects.filter(
+    name__icontains=...).first()` N+1 loop that ran on every load of
+    /ssa/unmatched: the expensive narrowed-candidate/trigram lookup now runs
+    once per unmatched row at write time, and the read-time queue view is a
+    plain indexed SELECT with zero extra per-row queries."""
 
     STATUSES = (
         ("pending", "Pending"),
@@ -739,6 +754,13 @@ class UnmatchedSSARecord(TimeStampedModel):
         ("hold", "Hold for Review"),
     )
     id = CuidField()
+    batch = models.ForeignKey(
+        "schools.SSAImportBatch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="unmatched_records",
+    )
     school_id = models.CharField(max_length=64)
     school_name_raw = models.CharField(max_length=512, null=True, blank=True)
     district_raw = models.CharField(max_length=255, null=True, blank=True)
@@ -746,10 +768,25 @@ class UnmatchedSSARecord(TimeStampedModel):
     scores = models.JSONField(null=True, blank=True, default=dict)
     reason = models.CharField(max_length=512, null=True, blank=True)
     status = models.CharField(max_length=32, choices=STATUSES, default="pending")
+    suggested_school = models.ForeignKey(
+        "schools.School",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    match_confidence = models.FloatField(null=True, blank=True)
 
     class Meta:
         db_table = "unmatched_ssa_record"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["batch"]),
+            models.Index(fields=["district_raw"]),
+            models.Index(fields=["school_id"]),
+            models.Index(fields=["match_confidence"]),
+        ]
 
 
 __all__ = [

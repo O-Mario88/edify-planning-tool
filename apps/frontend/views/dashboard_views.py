@@ -1,19 +1,13 @@
-from django.shortcuts import render, redirect
-from django.db.models import Q, Avg, Count, Sum
-from django.utils import timezone
-from datetime import date as date_type, timedelta
+import csv
 
-from apps.activities.models import Activity, ActivityScheduleCostLine
-from apps.schools.models import School
-from apps.clusters.models import Cluster
+from django.shortcuts import render, redirect
+from django.db.models import Q
+from django.http import HttpResponse
+from django.utils import timezone
+from datetime import timedelta
+
+from apps.activities.models import Activity
 from apps.fund_requests.models import WeeklyFundRequest
-from apps.ssa.models import SsaRecord, SsaScore
-from apps.accounts.models import (
-    User,
-    StaffProfile,
-    StaffSupervisorAssignment,
-    StaffSchoolAssignment,
-)
 from apps.command_center import services as cc_services
 from apps.core.permissions import require_page_permission
 from apps.core.enums import SsaIntervention
@@ -31,6 +25,33 @@ def _format_ugx_compact(val):
     if val >= 1_000:
         return f"UGX {val / 1_000:.0f}K"
     return f"UGX {val}"
+
+
+def _export_hr_dashboard_csv(data, *, fy, month, country, department):
+    """Export the same live, role-scoped HR metrics shown on the dashboard."""
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="hr_dashboard_report.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["Section", "Metric", "Value", "Context"])
+    filters = ", ".join(
+        value
+        for value in (
+            f"FY {fy}" if fy else "",
+            f"month {month}" if month else "",
+            country or "",
+            department or "",
+        )
+        if value
+    )
+    for item in data.get("kpi_strip_items", []):
+        writer.writerow(
+            ["Workforce KPI", item.get("label", ""), item.get("value", ""), filters]
+        )
+    for item in data.get("pending_actions", []):
+        writer.writerow(
+            ["Pending action", item.get("label", ""), item.get("count", 0), filters]
+        )
+    return response
 
 
 # Activity-type groupings shared by the agenda-building helpers below.
@@ -70,18 +91,32 @@ def _agenda_icon(activity_type):
         )
 
     if activity_type in _VISIT_TYPES:
-        return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/>')
+        return svg(
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/>'
+        )
     if activity_type in _TRAINING_TYPES:
-        return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.3C10.5 5.3 8.6 5 6.5 5c-1.1 0-2.2.1-3.2.4v13c1-.3 2.1-.4 3.2-.4 2.1 0 4 .3 5.5 1.3 1.5-1 3.4-1.3 5.5-1.3 1.1 0 2.2.1 3.2.4v-13c-1-.3-2.1-.4-3.2-.4-2.1 0-4 .3-5.5 1.3zm0 0V19"/>')
+        return svg(
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.3C10.5 5.3 8.6 5 6.5 5c-1.1 0-2.2.1-3.2.4v13c1-.3 2.1-.4 3.2-.4 2.1 0 4 .3 5.5 1.3 1.5-1 3.4-1.3 5.5-1.3 1.1 0 2.2.1 3.2.4v-13c-1-.3-2.1-.4-3.2-.4-2.1 0-4 .3-5.5 1.3zm0 0V19"/>'
+        )
     if activity_type in _MEETING_TYPES:
-        return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/>')
+        return svg(
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/>'
+        )
     if activity_type in _SSA_TYPES:
-        return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>')
+        return svg(
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>'
+        )
     if activity_type in _PARTNER_TYPES:
-        return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/>')
+        return svg(
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/>'
+        )
     if activity_type in _PROJECT_TYPES:
-        return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0-4a5 5 0 100-10 5 5 0 000 10zm0-3a2 2 0 100-4 2 2 0 000 4z"/>')
-    return svg('<path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.6L18 7.4V19a2 2 0 01-2 2z"/>')
+        return svg(
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0-4a5 5 0 100-10 5 5 0 000 10zm0-3a2 2 0 100-4 2 2 0 000 4z"/>'
+        )
+    return svg(
+        '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.6L18 7.4V19a2 2 0 01-2 2z"/>'
+    )
 
 
 def _agenda_type_class(activity_type):
@@ -193,6 +228,14 @@ def dashboard_view(request):
     if role == "ImpactAssessment":
         return redirect("/ia/dashboard/")
 
+    if role in ("PartnerAdmin", "PartnerFieldOfficer"):
+        # Partner logins have no StaffProfile/country-cluster scope, so the
+        # generic internal-staff dashboard below (schools/clusters/team
+        # targets) is meaningless to them. Send them to the existing
+        # partner-scoped landing page (their org's today/upcoming activities)
+        # instead of building a second parallel dashboard.
+        return redirect("/partner/today")
+
     if role == "CountryDirector":
         # Country Director Command Dashboard — the CD's national operating
         # cockpit (what must the CD act on today). Country-wide, oversight-only;
@@ -205,7 +248,20 @@ def dashboard_view(request):
         raw_month = (request.GET.get("month") or "").strip()
         month = int(raw_month) if raw_month.isdigit() else None
         data = CDDashboardService.get_dashboard(request.user, fy=fy, month=month)
-        _fy_months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
+        _fy_months = [
+            "Oct",
+            "Nov",
+            "Dec",
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+        ]
         context = {
             **data,
             "role": role,
@@ -278,7 +334,28 @@ def dashboard_view(request):
         data = HRDashboardService.get_dashboard(
             request.user, fy=fy, month=month, country=country, department=department
         )
-        _fy_months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
+        if request.GET.get("export") == "csv":
+            return _export_hr_dashboard_csv(
+                data,
+                fy=fy,
+                month=month,
+                country=country,
+                department=department,
+            )
+        _fy_months = [
+            "Oct",
+            "Nov",
+            "Dec",
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+        ]
         context = {
             **data,
             "alerts": alerts_list,
@@ -380,16 +457,36 @@ def dashboard_view(request):
             .order_by("planned_date")[:8]
         ):
             if a.status == "in_progress":
-                st, tone, lbl, url, primary = "Unsuccessful", "warning", "Complete", f"/activities/{a.id}/complete", True
+                st, tone, lbl, url, primary = (
+                    "Unsuccessful",
+                    "warning",
+                    "Complete",
+                    f"/activities/{a.id}/complete",
+                    True,
+                )
             elif a.status in ("returned", "returned_by_pl", "returned_by_ia"):
-                st, tone, lbl, url, primary = "Returned", "danger", "Complete", f"/activities/{a.id}/complete", True
+                st, tone, lbl, url, primary = (
+                    "Returned",
+                    "danger",
+                    "Complete",
+                    f"/activities/{a.id}/complete",
+                    True,
+                )
             else:
-                st, tone, lbl, url, primary = "Not Completed", "danger", "Reschedule", f"/my-plan/{a.id}", False
+                st, tone, lbl, url, primary = (
+                    "Not Completed",
+                    "danger",
+                    "Reschedule",
+                    f"/my-plan/{a.id}",
+                    False,
+                )
             overdue_last_week.append(
                 {
                     "icon": _agenda_icon(a.activity_type),
                     "activity": a.get_activity_type_display(),
-                    "where": a.school.name if a.school_id else (a.cluster.name if a.cluster_id else "—"),
+                    "where": a.school.name
+                    if a.school_id
+                    else (a.cluster.name if a.cluster_id else "—"),
                     "due": a.planned_date.strftime("%b %-d, %Y (%a)"),
                     "status": st,
                     "status_tone": tone,
@@ -419,7 +516,9 @@ def dashboard_view(request):
                     "purpose": a.activity_purpose_text or a.get_activity_type_display(),
                     "date": a.planned_date.strftime("%b %-d, %Y (%a)"),
                     "action_label": "Start Visit" if is_today else "View Details",
-                    "action_url": f"/activities/{a.id}/start" if is_today else f"/my-plan/{a.id}",
+                    "action_url": f"/activities/{a.id}/start"
+                    if is_today
+                    else f"/my-plan/{a.id}",
                     "action_primary": is_today,
                 }
             )
@@ -443,12 +542,16 @@ def dashboard_view(request):
                     "cluster": a.cluster.name,
                     "type_label": a.get_activity_type_display(),
                     "type_tone": "success" if is_training else "info",
-                    "focus": _interv.get(a.focus_intervention, "—") if a.focus_intervention else "—",
+                    "focus": _interv.get(a.focus_intervention, "—")
+                    if a.focus_intervention
+                    else "—",
                     "date": a.scheduled_date.strftime("%b %-d (%a) %-I:%M %p")
                     if a.scheduled_date
                     else a.planned_date.strftime("%b %-d (%a)"),
                     "action_label": "Start" if is_today else "View Details",
-                    "action_url": f"/activities/{a.id}/start" if is_today else f"/my-plan/{a.id}",
+                    "action_url": f"/activities/{a.id}/start"
+                    if is_today
+                    else f"/my-plan/{a.id}",
                     "action_primary": is_today,
                 }
             )
@@ -699,6 +802,7 @@ def dashboard_view(request):
         "execution_summary": metrics["execution_summary"],
         "upcoming_today": metrics["upcoming_today"],
         "attention_items": metrics.get("attention_items", []),
+        "recommended_action": metrics.get("recommended_action"),
         "use_dark_sidebar": False,
     }
 
@@ -719,7 +823,11 @@ def pl_dashboard_drilldown_view(request):
     drill = (request.GET.get("drill") or "").strip()
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     payload = ProgramLeadDashboardService.drilldown(request.user, drill, fy=fy)
-    return render(request, "partials/dashboards/pl/drilldown.html", {"drawer_size": "lg", "fy": fy, **payload})
+    return render(
+        request,
+        "partials/dashboards/pl/drilldown.html",
+        {"drawer_size": "lg", "fy": fy, **payload},
+    )
 
 
 @require_page_permission("dashboard")
@@ -772,6 +880,11 @@ def cd_dashboard_approve_view(request):
         except Exception as e:  # noqa: BLE001
             error = str(e)
     data = CDDashboardService.get_dashboard(request.user, fy=fy)
-    context = {**data, "fy_options": fy_options(), "approve_error": error,
-               "role": "CountryDirector", "user_name": request.user.name}
+    context = {
+        **data,
+        "fy_options": fy_options(),
+        "approve_error": error,
+        "role": "CountryDirector",
+        "user_name": request.user.name,
+    }
     return render(request, "partials/dashboards/cd/body.html", context)

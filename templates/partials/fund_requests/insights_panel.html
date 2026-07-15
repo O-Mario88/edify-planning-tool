@@ -86,7 +86,7 @@
 {% if insights.can_take_action %}
 {% if insights.action_type == 'confirm' %}
 <button 
-onclick="document.getElementById('weekly-request-card-container').scrollIntoView({ behavior: 'smooth', block: 'center' })"
+@click="document.getElementById('weekly-request-card-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' })"
 class="w-full flex items-center justify-between px-3 h-9 bg-amber-500 text-white text-[11px] font-bold rounded-lg hover:bg-amber-600 transition-colors shadow-sm mt-2"
 >
 <span>Take Action</span>

@@ -4,25 +4,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#edf1f3">
 <title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
 
-<!-- FOUC prevention — apply theme BEFORE CSS renders.
-     Reads localStorage preference and applies .dark class immediately. -->
+<!-- Apply the saved theme before CSS renders to prevent an unthemed flash. -->
 <script>
   (function() {
-    var pref = localStorage.getItem('edify_theme') || 'system';
-    var actual;
-    if (pref === 'system') {
-      var h = new Date().getHours();
-      actual = (h >= 19 || h < 6) ? 'dark' : 'light';
-    } else {
-      actual = pref;
-    }
     var html = document.documentElement;
-    html.classList.add('theme-fade');
-    if (actual === 'dark') html.classList.add('dark');
+    var allowed = ['system', 'light', 'blue', 'dark'];
+    var pref = 'system';
+
+    function resolveSystemTheme() {
+      var hour = new Date().getHours();
+      return hour >= 6 && hour < 19 ? 'light' : 'dark';
+    }
+
+    try {
+      var saved = localStorage.getItem('edify_theme');
+      if (allowed.indexOf(saved) !== -1) pref = saved;
+    } catch (error) {
+      pref = 'system';
+    }
+
+    var actual = pref === 'system' ? resolveSystemTheme() : pref;
+
+    html.classList.remove('light', 'theme-blue', 'theme-dark', 'dark');
+    if (actual === 'blue') html.classList.add('dark', 'theme-blue');
+    if (actual === 'dark') html.classList.add('dark', 'theme-dark');
+    if (actual === 'light') html.classList.add('light');
     html.dataset.theme = actual;
     html.dataset.themePref = pref;
+
+    var schemeMeta = document.querySelector('meta[name="color-scheme"]');
+    var themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (schemeMeta) schemeMeta.content = pref === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
+    if (themeMeta) themeMeta.content = actual === 'light' ? '#edf1f3' : (actual === 'blue' ? '#001d39' : '#080e16');
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { html.classList.add('theme-fade'); });
+    });
   })();
 </script>
 
@@ -32,17 +53,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260717a">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260718a">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260717a">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260717a">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260717a">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260717a">
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260717a">
-<link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260717a">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260722b">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260723g">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260723a">
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260723l">
+<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260715a">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260718b">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
+    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260715k">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -55,6 +78,10 @@ live here. Templates consume tokens via var(--edify-*). -->
 body {
   font-family: var(--edify-font-sans);
   background-color: var(--edify-bg);
+  background-image: var(--edify-canvas-treatment);
+  background-position: center 28%;
+  background-size: cover;
+  background-attachment: fixed;
   color: var(--edify-text);
   font-size: var(--edify-text-body-size);
   line-height: var(--edify-text-body-leading);
@@ -63,8 +90,8 @@ body {
 
 /* Custom scrollbars — token-driven */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--edify-border-strong); border-radius: var(--edify-radius-pill); }
+::-webkit-scrollbar-track { background: var(--edify-scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--edify-scrollbar-thumb); border-radius: var(--edify-radius-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--edify-text-subtle); }
 
 /* Hover-revealed row actions stay reachable on touch + keyboard. */
@@ -79,7 +106,7 @@ button.bg-indigo-600, a.bg-indigo-600,
 button.bg-blue-600, a.bg-blue-600,
 button.bg-indigo-700, a.bg-indigo-700 {
   background-color: var(--edify-accent);
-  color: #ffffff;
+  color: var(--edify-on-accent);
   font-weight: var(--edify-text-title-weight);
   border-radius: var(--edify-radius-md);
   transition: background-color var(--edify-transition-fast), transform var(--edify-transition-fast);
@@ -115,8 +142,9 @@ table th {
 table tbody tr:hover { background-color: var(--edify-accent-light); }
 
 /* Form fields — :where() keeps specificity zero so Tailwind utilities win. */
-:where(input[type="text"], input[type="number"], input[type="email"],
-input[type="password"], select, textarea) {
+:where(input[type="text"], input[type="search"], input[type="number"],
+input[type="email"], input[type="password"], input[type="tel"],
+input[type="date"], input[type="datetime-local"], select, textarea) {
   border: 1px solid var(--edify-border);
   background-color: var(--edify-surface);
   border-radius: var(--edify-radius-md);
@@ -127,10 +155,18 @@ input[type="password"], select, textarea) {
   outline: none;
   transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
 }
-input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus,
-input[type="password"]:focus, select:focus, textarea:focus {
+:where(input[type="text"], input[type="search"], input[type="number"],
+input[type="email"], input[type="password"], input[type="tel"],
+input[type="date"], input[type="datetime-local"], select, textarea):focus-visible {
   border-color: var(--edify-accent);
   box-shadow: var(--edify-focus-ring);
+}
+
+@media (max-width: 48rem), (pointer: coarse) {
+  :where(input, select, textarea) {
+    min-height: 48px;
+    font-size: 1rem;
+  }
 }
 
 /* Smooth transitions on interactive elements. */
@@ -156,7 +192,7 @@ button, a, select, input, textarea {
 </script>
 
 <!-- Alpine.js Components -->
-<script src="{% static 'js/alpine-components.js' %}"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260723b"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
@@ -172,7 +208,7 @@ hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
 {% block content %}{% endblock %}
 
 <!-- Global Flash/Alert Messages -->
-<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none" aria-live="polite" aria-atomic="false">
 {% if messages %}
 {% for msg in messages %}
 <div 
@@ -183,7 +219,7 @@ x-transition
 class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border shadow-lg max-w-sm text-[12px] font-semibold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif msg.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}"
 >
 <span>{{ msg }}</span>
-<button @click="show = false" class="text-current opacity-70 hover:opacity-100">&times;</button>
+<button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100" aria-label="Dismiss notification">&times;</button>
 </div>
 {% endfor %}
 {% endif %}

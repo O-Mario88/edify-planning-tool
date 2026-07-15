@@ -17,7 +17,20 @@ from apps.core.fy import (
 )
 
 QUARTERS = ("Q1", "Q2", "Q3", "Q4")
-MONTH_LABELS = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
+MONTH_LABELS = [
+    "Oct",
+    "Nov",
+    "Dec",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+]
 
 
 class FinancialYearCalendarService:
@@ -71,8 +84,9 @@ class FinancialYearCalendarService:
         from apps.accounts.models import Leave, PublicHoliday
 
         holidays = set(
-            PublicHoliday.objects.filter(date__gte=start, date__lt=end)
-            .values_list("date", flat=True)
+            PublicHoliday.objects.filter(date__gte=start, date__lt=end).values_list(
+                "date", flat=True
+            )
         )
         leave_days: set[date] = set()
         if user is not None:
@@ -103,7 +117,9 @@ class FinancialYearCalendarService:
         return n
 
     @staticmethod
-    def expected_pace_pct(start: date, end: date, at: date | None = None, user=None) -> int:
+    def expected_pace_pct(
+        start: date, end: date, at: date | None = None, user=None
+    ) -> int:
         """Expected achievement %% for a period at `at`: working days elapsed /
         working days total. 0 before the period, 100 after it."""
         today = at or date.today()
@@ -114,7 +130,9 @@ class FinancialYearCalendarService:
         total = FinancialYearCalendarService.working_days(start, end, user)
         if not total:
             return 100
-        elapsed = FinancialYearCalendarService.working_days(start, today + timedelta(days=1), user)
+        elapsed = FinancialYearCalendarService.working_days(
+            start, today + timedelta(days=1), user
+        )
         return min(100, round(elapsed / total * 100))
 
     @staticmethod

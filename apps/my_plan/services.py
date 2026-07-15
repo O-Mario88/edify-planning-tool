@@ -887,7 +887,13 @@ def get_frontend_context(principal, query: dict) -> dict:
             returned_needs_correction_list.append(activity_data)
         elif a.delivery_type == "partner":
             partner_monitoring_list.append(activity_data)
-        elif next_act["action"] in ["evidence", "sf_id", "ssa", "fix", "accountability"]:
+        elif next_act["action"] in [
+            "evidence",
+            "sf_id",
+            "ssa",
+            "fix",
+            "accountability",
+        ]:
             waiting_on_me_list.append(activity_data)
         elif a.planned_date == today and a.status in ["scheduled", "in_progress"]:
             due_today_list.append(activity_data)

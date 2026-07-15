@@ -33,15 +33,28 @@ FY = "2026"
 class TimePeriodTargetsTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="R")
-        self.district = District.objects.create(name="D", region=self.region, district_type="primary")
-        self.pl, self.pl_sp = self._staff("pl@t.org", "PL One", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
-        self.cceo, self.cceo_sp = self._staff("c@t.org", "CCEO One", EdifyRole.CCEO.value)
-        StaffSupervisorAssignment.objects.create(supervisor=self.pl_sp, supervisee=self.cceo_sp)
+        self.district = District.objects.create(
+            name="D", region=self.region, district_type="primary"
+        )
+        self.pl, self.pl_sp = self._staff(
+            "pl@t.org", "PL One", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        self.cceo, self.cceo_sp = self._staff(
+            "c@t.org", "CCEO One", EdifyRole.CCEO.value
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=self.cceo_sp
+        )
         self.school = School.objects.create(
-            school_id="S-1", name="School One", region=self.region, district=self.district,
+            school_id="S-1",
+            name="School One",
+            region=self.region,
+            district=self.district,
             current_fy_ssa_status="done",
         )
-        StaffSchoolAssignment.objects.create(staff=self.cceo_sp, school_id=self.school.id)
+        StaffSchoolAssignment.objects.create(
+            staff=self.cceo_sp, school_id=self.school.id
+        )
         # Annual target: 8 visits. Q share = 2 per quarter.
         StaffTargetProfile.objects.create(staff=self.cceo_sp, fy=FY, visits_target=8)
         # Real work: 1 completed visit in Q1, 2 in Q3.
@@ -50,17 +63,29 @@ class TimePeriodTargetsTest(TestCase):
         self._visit("Q3", date(2026, 5, 12))
 
     def _staff(self, email, name, role):
-        u = User.objects.create_user(email=email, name=name, roles=[role],
-                                     active_role=role, password="x", is_active=True)
+        u = User.objects.create_user(
+            email=email,
+            name=name,
+            roles=[role],
+            active_role=role,
+            password="x",
+            is_active=True,
+        )
         return u, StaffProfile.objects.create(user=u, title=role)
 
     def _visit(self, quarter, planned):
         return Activity.objects.create(
-            school=self.school, activity_type="school_visit", delivery_type="staff",
-            status="completed", responsible_staff_id=self.cceo_sp.id, fy=FY,
-            quarter=quarter, planned_date=planned,
+            school=self.school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="completed",
+            responsible_staff_id=self.cceo_sp.id,
+            fy=FY,
+            quarter=quarter,
+            planned_date=planned,
             scheduled_date=timezone.make_aware(
-                timezone.datetime(planned.year, planned.month, planned.day, 9)),
+                timezone.datetime(planned.year, planned.month, planned.day, 9)
+            ),
             salesforce_activity_id=f"SV-{planned.isoformat()}",
         )
 
@@ -76,13 +101,15 @@ class TimePeriodTargetsTest(TestCase):
 
         completed = Activity.objects.filter(status="completed", quarter="Q3")
         pct, ach, tgt = CDAnalyticsService._completion_vs_target(
-            self.cceo_sp.id, completed, FY, quarter="Q3")
-        self.assertEqual(tgt, 2)      # 8 ÷ 4
-        self.assertEqual(ach, 2)      # only Q3 work, validated (has an SF ID)
+            self.cceo_sp.id, completed, FY, quarter="Q3"
+        )
+        self.assertEqual(tgt, 2)  # 8 ÷ 4
+        self.assertEqual(ach, 2)  # only Q3 work, validated (has an SF ID)
         self.assertEqual(pct, 100)
         pct_fy, ach_fy, tgt_fy = CDAnalyticsService._completion_vs_target(
-            self.cceo_sp.id, Activity.objects.filter(status="completed"), FY)
-        self.assertEqual(tgt_fy, 8)   # FY Cumulative keeps the annual target
+            self.cceo_sp.id, Activity.objects.filter(status="completed"), FY
+        )
+        self.assertEqual(tgt_fy, 8)  # FY Cumulative keeps the annual target
         self.assertEqual(ach_fy, 3)
 
     # ── canonical performance engine ─────────────────────────────────────────
@@ -119,8 +146,13 @@ class TimePeriodTargetsTest(TestCase):
         c = Client()
         c.force_login(self.cceo)
         html = c.get("/my-targets").content.decode()
-        for area in ("School Visits", "Cluster Meetings", "Cluster Trainings",
-                     "SSA Completed", "MSCS"):
+        for area in (
+            "School Visits",
+            "Cluster Meetings",
+            "Cluster Trainings",
+            "SSA Completed",
+            "MSCS",
+        ):
             self.assertIn(area, html)
         # Superseded areas must no longer render as target areas.
         self.assertNotIn("New School", html)
@@ -129,21 +161,31 @@ class TimePeriodTargetsTest(TestCase):
         from apps.core_schools.models import CoreActivitySlot, CorePlan
 
         plan = CorePlan.objects.create(
-            id="cplan-track-1", school_id=self.school.school_id, fy=FY,
-            status="Active", baseline_average=6.2,
-            visits_completed=2, trainings_completed=1,
+            id="cplan-track-1",
+            school_id=self.school.school_id,
+            fy=FY,
+            status="Active",
+            baseline_average=6.2,
+            visits_completed=2,
+            trainings_completed=1,
         )
         for i in range(1, 5):
             CoreActivitySlot.objects.create(
-                id=f"cslot-{self.school.school_id}-v{i}", core_plan=plan,
-                school_id=self.school.school_id, intervention="leadership",
-                activity_type="visit", sequence_number=i,
+                id=f"cslot-{self.school.school_id}-v{i}",
+                core_plan=plan,
+                school_id=self.school.school_id,
+                intervention="leadership",
+                activity_type="visit",
+                sequence_number=i,
                 status="completed" if i <= 2 else "Planned",
             )
             CoreActivitySlot.objects.create(
-                id=f"cslot-{self.school.school_id}-t{i}", core_plan=plan,
-                school_id=self.school.school_id, intervention="leadership",
-                activity_type="training", sequence_number=i,
+                id=f"cslot-{self.school.school_id}-t{i}",
+                core_plan=plan,
+                school_id=self.school.school_id,
+                intervention="leadership",
+                activity_type="training",
+                sequence_number=i,
                 status="completed" if i <= 1 else "Planned",
             )
         c = Client()
@@ -151,22 +193,25 @@ class TimePeriodTargetsTest(TestCase):
         html = c.get("/my-targets").content.decode()
         self.assertIn("Core School Tracker", html)
         self.assertIn("School One", html)
-        self.assertIn("2/4", html)      # visits progress
-        self.assertIn("1/4", html)      # trainings progress
+        self.assertIn("2/4", html)  # visits progress
+        self.assertIn("1/4", html)  # trainings progress
         self.assertIn("On Track", html)  # baseline set + progressing
-        self.assertIn("6.2/10", html)    # baseline shown
+        self.assertIn("6.2/10", html)  # baseline shown
 
     def test_core_plan_still_feeds_tracker_not_target_area(self):
         from apps.core_schools.models import CorePlan
 
         CorePlan.objects.create(
-            id="cplan-track-2", school_id=self.school.school_id, fy=FY, status="Active",
+            id="cplan-track-2",
+            school_id=self.school.school_id,
+            fy=FY,
+            status="Active",
         )
         c = Client()
         c.force_login(self.cceo)
         html = c.get("/my-targets").content.decode()
-        self.assertIn("Core School Tracker", html)   # tracker card kept
-        self.assertNotIn("New Core School", html)    # but not a target area
+        self.assertIn("Core School Tracker", html)  # tracker card kept
+        self.assertNotIn("New Core School", html)  # but not a target area
 
     def test_team_targets_periods_are_month_quarters_fy(self):
         c = Client()

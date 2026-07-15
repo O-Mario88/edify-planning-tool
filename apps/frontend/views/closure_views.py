@@ -30,8 +30,12 @@ def closure_readiness_queue_view(request):
         .order_by("-updated_at")
     )
 
-    # Run evaluation update on activities dynamically to ensure checklist exists
-    for a in activities[:20]:
+    # Run evaluation update on activities dynamically to ensure checklist exists.
+    # Must cover the full queryset -- the categorization loop below iterates
+    # every row in `activities`, so a partial refresh window would leave rows
+    # beyond it bucketed on stale/None checklists and able to silently vanish
+    # from tabs.
+    for a in activities:
         ClosureEligibilityService.evaluate(a)
 
     # Categorize items into tabs

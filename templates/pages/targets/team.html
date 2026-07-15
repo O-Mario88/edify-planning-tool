@@ -4,87 +4,23 @@
 {% block title %}Team Targets · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;"
-     x-data="{ showCatchup: false, catchupStaff: '', catchupArea: 'school_visits', staffFilter: 'all' }">
-
-  <!-- Header -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+<main class="tt-page"
+      x-data="{ showCatchup: false, catchupStaff: '', catchupArea: 'school_visits', staffFilter: 'all', expandedStaff: '' }"
+      @click.window="if (expandedStaff && !$event.target.closest('.tt-member-row, .tt-area-row, .tt-mobile-member')) expandedStaff = ''">
+  <header class="tt-page-header">
     <div>
-      <h1 class="text-[21px] font-extrabold tracking-tight">Team Targets Dashboard</h1>
-      <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">
-        Track team target progress, identify gaps, and intervene early — {{ team_size }} supervised staff.
-      </p>
+      <div class="tt-eyebrow">Performance intelligence</div>
+      <h1>Team Targets</h1>
+      <p>Track validated team performance across the selected month, quarters, and full fiscal year.</p>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
-      <form hx-get="/team-targets" hx-target="#team-targets-body" hx-swap="innerHTML" hx-trigger="change" hx-push-url="true"
-            class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500">
-        <span class="uppercase tracking-wider text-[10px]">FY</span>
-        <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
-          {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
-        </select>
-        <span class="h-4 w-px bg-slate-200"></span>
-        <span class="uppercase tracking-wider text-[10px]">Month</span>
-        <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
-          {% for m in month_options %}<option value="{{ m.value }}" {% if month_of_fy == m.value %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
-        </select>
-      </form>
-      <a href="/team-targets/export?fy={{ fy }}"
-         class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-lg transition-colors">
-        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-        Export Report
-      </a>
+    <div class="tt-page-header__context" aria-label="Current reporting context">
+      <span class="tt-context-dot" aria-hidden="true"></span>
+      <span><strong>{{ overall_team_size }}</strong> supervised team member{{ overall_team_size|pluralize }}</span>
+      <span aria-hidden="true">·</span>
+      <span>Updated {{ last_refreshed|date:"H:i" }}</span>
     </div>
-  </div>
+  </header>
 
-  <div id="team-targets-body">
-    {% include "partials/targets/team/body.html" %}
-  </div>
-
-  <!-- Create Catch-Up Plan -->
-  <div x-show="showCatchup" x-cloak @click.self="showCatchup = false"
-       class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-[14px] font-bold text-slate-800">Create Catch-Up Plan</h3>
-          <p class="text-[11px] text-slate-400 font-medium">On approval, recovery activities enter the CCEO's Planning; dated items are scheduled and costed.</p>
-        </div>
-        <button type="button" @click="showCatchup = false" class="text-slate-400 hover:text-slate-600 text-[18px] leading-none">&times;</button>
-      </div>
-      <form method="post" action="/team-targets/catchup" class="space-y-3">
-        {% csrf_token %}
-        <input type="hidden" name="fy" value="{{ fy }}">
-        <input type="hidden" name="month" value="{{ month_of_fy }}">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">Staff <span class="text-rose-500">*</span></label>
-            <select name="staff_user_id" x-model="catchupStaff" required class="mt-1 w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] bg-white">
-              {% for m in members %}<option value="{{ m.user_id }}">{{ m.name }}</option>{% endfor %}
-            </select>
-          </div>
-          <div>
-            <label class="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">Target Area</label>
-            <select name="area" x-model="catchupArea" class="mt-1 w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] bg-white">
-              {% for a in areas %}<option value="{{ a.key }}">{{ a.label }}</option>{% endfor %}
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">School IDs <span class="text-slate-300 normal-case">(comma-separated)</span></label>
-          <input type="text" name="school_ids" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]" placeholder="S-00123, S-00456">
-        </div>
-        <div>
-          <label class="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">Dates <span class="text-slate-300 normal-case">(optional — dated items are scheduled &amp; costed)</span></label>
-          <input type="text" name="dates" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]" placeholder="2026-07-20, 2026-07-22">
-        </div>
-        <div>
-          <label class="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">Note</label>
-          <textarea name="note" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]" placeholder="Why this recovery plan is needed…"></textarea>
-        </div>
-        <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Submit Catch-Up Plan</button>
-      </form>
-    </div>
-  </div>
-
-</div>
+  {% include "partials/targets/team/workspace.html" %}
+</main>
 {% endblock %}

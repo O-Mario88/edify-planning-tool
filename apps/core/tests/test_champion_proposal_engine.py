@@ -42,16 +42,10 @@ class ChampionProposalEngineTest(TestCase):
         )
 
     def test_champion_graduation_flow(self):
-        # 1. Promote school to Core
-        set_type(self.user, self.school.school_id, "core")
-
-        profile = CoreSchoolProfile.objects.filter(
-            school_id=self.school.school_id
-        ).first()
-        self.assertIsNotNone(profile)
-        self.assertEqual(profile.champion_status, "Not Eligible")
-
-        # 2. Add Baseline SSA (low scores: avg 6.0)
+        # 1. Add Baseline SSA (low scores: avg 6.0) — a real SSA record must
+        # exist before a school can onboard into Core (SSA gate), same as
+        # the audited candidate-verification path in
+        # apps.core_schools.services.verify_candidate/onboard.
         baseline = SsaRecord.objects.create(
             school=self.school,
             date_of_ssa="2025-07-10",
@@ -72,6 +66,18 @@ class ChampionProposalEngineTest(TestCase):
         ]
         for idx, item in enumerate(interventions):
             SsaScore.objects.create(ssa_record=baseline, intervention=item, score=6.0)
+
+        # 2. Promote school to Core — set_type's self-heal onboards it (SSA
+        # gate now satisfied) and records provenance on the CorePlan.
+        set_type(self.user, self.school.school_id, "core")
+
+        profile = CoreSchoolProfile.objects.filter(
+            school_id=self.school.school_id
+        ).first()
+        self.assertIsNotNone(profile)
+        self.assertEqual(profile.champion_status, "Not Eligible")
+        plan = CorePlan.objects.get(school_id=self.school.school_id)
+        self.assertTrue(plan.created_by_id)
 
         # Ineligible because package is not complete & latest SSA is < 8.0
         res = ChampionEligibilityService.calculate_score(self.school)
@@ -96,10 +102,15 @@ class ChampionProposalEngineTest(TestCase):
         self.assertFalse(res["eligible"])
         self.assertEqual(res["completed_slots"], 0)
 
-        # 4. Mock package completion by marking slots as Closed / Completed
+        # 4. Mock package completion by marking slots with the canonical
+        # "done" status that the real completion path actually writes
+        # (Activity.save() mirrors Activity.status onto the slot verbatim —
+        # see apps.core_schools.services.CORE_SLOT_DONE_STATUSES). "Closed"
+        # is not a real CoreActivitySlot status and would never match in
+        # production.
         plan = CorePlan.objects.get(school_id=self.school.school_id)
         for slot in plan.slots.all():
-            slot.status = "Closed"
+            slot.status = "completed"
             slot.save()
 
         # Re-evaluate: Now should be fully eligible for Graduation!

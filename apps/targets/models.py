@@ -1,4 +1,25 @@
-"""Targets models — CD/IA annual commitments."""
+"""Targets models.
+
+This module holds TWO separate, parallel target systems that share the
+"targets" name but not a data model or purpose -- easy to conflate when
+reading unfamiliar code:
+
+1. TargetSetting -- leadership-set annual COMMITMENTS by scope (country,
+   region, district, cluster, staff, PL-team, partner, project, or
+   school-type). Set by a CD/IA, read by leadership dashboards. This is a
+   target *for a scope*, not for any one person's monthly work.
+
+2. TargetArea / MonthlyPersonalTarget / TargetAdjustment /
+   TargetAchievementLedger / MostSignificantChangeStory / CatchUpPlan --
+   the "My Targets" system: one individual's own monthly targets and
+   achievement ledger, described further at the "My Targets" section below.
+   MonthlyPersonalTarget is that system's source of truth; TargetSetting
+   never feeds it and vice versa.
+
+If you're looking for "does this school/region hit its target," you want
+TargetSetting. If you're looking for "did this CCEO/PL hit their personal
+monthly target," you want MonthlyPersonalTarget.
+"""
 
 from __future__ import annotations
 
@@ -40,7 +61,12 @@ class TargetUnit(models.TextChoices):
 
 
 class TargetSetting(TimeStampedModel):
-    """A CD/IA-set annual target across a category + scope."""
+    """A CD/IA-set annual target across a category + scope (country, region,
+    district, cluster, staff, PL-team, partner, project, or school-type).
+
+    Not to be confused with MonthlyPersonalTarget below -- that is a
+    separate, individual-scoped system ("My Targets"); the two never share
+    rows or feed each other."""
 
     id = CuidField()
     fy = models.CharField(max_length=16)
@@ -73,6 +99,12 @@ __all__ = ["TargetType", "TargetScopeType", "TargetUnit", "TargetSetting"]
 
 
 # ── My Targets: monthly-first personal target model ──────────────────────────
+# This is the "My Targets" system: one individual's own monthly targets and
+# achievement ledger (TargetArea, MonthlyPersonalTarget, TargetAdjustment,
+# TargetAchievementLedger, MostSignificantChangeStory, CatchUpPlan below).
+# It is entirely separate from TargetSetting above (leadership's annual,
+# scope-level commitments) -- neither system reads or writes the other's
+# rows despite sharing the word "target."
 
 
 class TargetArea(TimeStampedModel):
@@ -96,12 +128,18 @@ class TargetArea(TimeStampedModel):
 
 
 class MonthlyPersonalTarget(TimeStampedModel):
-    """The source of truth for personal targets: one value per user × area ×
-    FY month. Quarters and FY are ALWAYS derived sums — never stored."""
+    """The source of truth for personal targets ("My Targets"): one value
+    per user × area × FY month. Quarters and FY are ALWAYS derived sums —
+    never stored.
+
+    Not to be confused with TargetSetting above (leadership's annual,
+    scope-level commitments) -- this is per-individual, not per-scope."""
 
     id = CuidField()
     user_id = models.CharField(max_length=30)  # accounts.User.id
-    area = models.ForeignKey(TargetArea, on_delete=models.CASCADE, related_name="monthly_targets")
+    area = models.ForeignKey(
+        TargetArea, on_delete=models.CASCADE, related_name="monthly_targets"
+    )
     fy = models.CharField(max_length=16)
     month_of_fy = models.IntegerField()  # 1 = October … 12 = September
     target = models.IntegerField(default=0)
@@ -123,7 +161,9 @@ class TargetAdjustment(TimeStampedModel):
 
     id = CuidField()
     user_id = models.CharField(max_length=30)
-    area = models.ForeignKey(TargetArea, on_delete=models.CASCADE, related_name="adjustments")
+    area = models.ForeignKey(
+        TargetArea, on_delete=models.CASCADE, related_name="adjustments"
+    )
     fy = models.CharField(max_length=16)
     month_of_fy = models.IntegerField()
     old_target = models.IntegerField()
@@ -144,15 +184,19 @@ class TargetAchievementLedger(TimeStampedModel):
 
     id = CuidField()
     user_id = models.CharField(max_length=30)
-    area = models.ForeignKey(TargetArea, on_delete=models.CASCADE, related_name="ledger")
-    source_type = models.CharField(max_length=32)   # activity | ssa_record | mscs
+    area = models.ForeignKey(
+        TargetArea, on_delete=models.CASCADE, related_name="ledger"
+    )
+    source_type = models.CharField(max_length=32)  # activity | ssa_record | mscs
     source_id = models.CharField(max_length=64)
     activity_date = models.DateField()
     fy = models.CharField(max_length=16)
-    credited_month = models.IntegerField()           # month-of-FY of activity_date
+    credited_month = models.IntegerField()  # month-of-FY of activity_date
     credited_quarter = models.CharField(max_length=4)
     quantity = models.IntegerField(default=1)
-    validation_status = models.CharField(max_length=16, default="validated")  # validated|provisional|reversed
+    validation_status = models.CharField(
+        max_length=16, default="validated"
+    )  # validated|provisional|reversed
     validated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -183,9 +227,12 @@ class MostSignificantChangeStory(TimeStampedModel):
     MSCS target, credited to the story date."""
 
     id = CuidField()
-    user_id = models.CharField(max_length=30)          # author (accounts.User.id)
+    user_id = models.CharField(max_length=30)  # author (accounts.User.id)
     school = models.ForeignKey(
-        "schools.School", on_delete=models.SET_NULL, null=True, blank=True,
+        "schools.School",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="mscs_stories",
     )
     cluster_id = models.CharField(max_length=30, null=True, blank=True)
@@ -193,7 +240,9 @@ class MostSignificantChangeStory(TimeStampedModel):
     narrative = models.TextField()
     evidence_uri = models.CharField(max_length=512, null=True, blank=True)
     story_date = models.DateField()
-    status = models.CharField(max_length=16, choices=MSCSStatus.choices, default=MSCSStatus.DRAFT)
+    status = models.CharField(
+        max_length=16, choices=MSCSStatus.choices, default=MSCSStatus.DRAFT
+    )
     reviewed_by = models.CharField(max_length=30, null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     return_reason = models.CharField(max_length=512, null=True, blank=True)
@@ -224,17 +273,21 @@ class CatchUpPlan(TimeStampedModel):
     ActivityScheduleCostLines and the weekly fund request follow)."""
 
     id = CuidField()
-    pl_user_id = models.CharField(max_length=30)       # supervising PL (accounts.User.id)
-    staff_user_id = models.CharField(max_length=30)    # CCEO being recovered
-    area = models.ForeignKey(TargetArea, on_delete=models.CASCADE, related_name="catchup_plans")
+    pl_user_id = models.CharField(max_length=30)  # supervising PL (accounts.User.id)
+    staff_user_id = models.CharField(max_length=30)  # CCEO being recovered
+    area = models.ForeignKey(
+        TargetArea, on_delete=models.CASCADE, related_name="catchup_plans"
+    )
     fy = models.CharField(max_length=16)
-    month_of_fy = models.IntegerField()                # 1 = October … 12 = September
+    month_of_fy = models.IntegerField()  # 1 = October … 12 = September
     activities_proposed = models.IntegerField(default=0)
-    school_ids = models.JSONField(default=list, blank=True)     # school_id strings
+    school_ids = models.JSONField(default=list, blank=True)  # school_id strings
     planned_dates = models.JSONField(default=list, blank=True)  # ISO dates
     partner_id = models.CharField(max_length=30, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
-    status = models.CharField(max_length=16, choices=CatchUpStatus.choices, default=CatchUpStatus.SUBMITTED)
+    status = models.CharField(
+        max_length=16, choices=CatchUpStatus.choices, default=CatchUpStatus.SUBMITTED
+    )
     return_reason = models.CharField(max_length=512, null=True, blank=True)
     approved_by = models.CharField(max_length=30, null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)

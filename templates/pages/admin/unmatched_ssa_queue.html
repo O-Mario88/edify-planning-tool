@@ -11,10 +11,56 @@
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Unmatched SSA Queue</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manually link SSA records that were uploaded with unknown School IDs.</p>
+<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manually link SSA records that were uploaded with unknown School IDs — {{ records_page.paginator.count }} matching this filter.</p>
 </div>
 <a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
 </div>
+
+<!-- Filters -->
+<form method="get" action="" class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 items-end">
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
+<select name="status" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<option value="">Pending + Hold</option>
+{% for value, label in status_choices %}
+<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Upload Batch</label>
+<select name="batch" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<option value="">All batches</option>
+{% for batch_id, file_name in batch_options %}
+<option value="{{ batch_id }}" {% if filters.batch == batch_id %}selected{% endif %}>{{ file_name }}</option>
+{% endfor %}
+</select>
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">District</label>
+<input type="text" name="district" value="{{ filters.district }}" placeholder="Contains…" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Suspected School ID</label>
+<input type="text" name="school_id" value="{{ filters.school_id }}" placeholder="Contains…" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Min. Confidence</label>
+<input type="number" step="0.05" min="0" max="1" name="min_confidence" value="{{ filters.min_confidence }}" placeholder="0.00–1.00" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Uploaded From</label>
+<input type="date" name="date_from" value="{{ filters.date_from }}" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+</div>
+<div>
+<label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Uploaded To</label>
+<input type="date" name="date_to" value="{{ filters.date_to }}" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+</div>
+<div class="col-span-2 sm:col-span-4 lg:col-span-7 flex items-center gap-2">
+<button type="submit" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[11px] rounded-lg transition-all shadow-sm">Apply Filters</button>
+<a href="?" class="px-4 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-semibold text-[11px] rounded-lg transition-all">Clear</a>
+</div>
+</form>
 
 <!-- Table -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -41,14 +87,12 @@
 <td class="px-4 py-4 text-slate-500">{{ r.date_of_ssa }}</td>
 <td class="px-4 py-4 text-rose-600 text-[11px] leading-relaxed">{{ r.reason }}</td>
 <td class="px-4 py-4">
-{% with match=suggested_matches|lookup:r.id %}
-{% if match %}
-<span class="text-blue-600 font-semibold">{{ match.name }}</span>
-<span class="text-[11px] text-slate-400 block font-semibold">ID: {{ match.school_id }}</span>
+{% if r.suggested_school %}
+<span class="text-blue-600 font-semibold">{{ r.suggested_school.name }}</span>
+<span class="text-[11px] text-slate-400 block font-semibold">ID: {{ r.suggested_school.school_id }} · confidence {{ r.match_confidence|floatformat:2 }}</span>
 {% else %}
 <span class="text-slate-400">None found</span>
 {% endif %}
-{% endwith %}
 </td>
 <td class="px-4 py-4">
 {% if r.status == 'hold' %}
@@ -68,6 +112,9 @@
 
 <select name="school_id" required class="text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 max-w-[160px] focus:outline-none font-semibold">
 <option value="">-- Select school --</option>
+{% if r.suggested_school %}
+<option value="{{ r.suggested_school.id }}" selected>Suggested: {{ r.suggested_school.name }} ({{ r.suggested_school.school_id }})</option>
+{% endif %}
 {% for school in schools %}
 <option value="{{ school.id }}">{{ school.name }} ({{ school.school_id }})</option>
 {% endfor %}
@@ -116,13 +163,28 @@ Ignore
 {% empty %}
 <tr>
 <td colspan="8" class="px-5 py-8 text-center text-slate-400 font-semibold">
-No unmatched SSA records pending in queue.
+No unmatched SSA records match this filter.
 </td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
+
+<!-- Pagination -->
+{% if records_page.paginator.num_pages > 1 %}
+<div class="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-[12px] font-semibold text-slate-500">
+<span>Page {{ records_page.number }} of {{ records_page.paginator.num_pages }} · {{ records_page.paginator.count }} total</span>
+<div class="flex items-center gap-2">
+{% if records_page.has_previous %}
+<a href="?page={{ records_page.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-lg">&larr; Prev</a>
+{% endif %}
+{% if records_page.has_next %}
+<a href="?page={{ records_page.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-lg">Next &rarr;</a>
+{% endif %}
+</div>
+</div>
+{% endif %}
 </div>
 
 </div>

@@ -15,7 +15,6 @@ whatever `risk_level`/restricted-incident implies.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
 
 from django.db.models import Q, QuerySet
 from django.utils import timezone
@@ -25,7 +24,6 @@ from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 
 from .models import (
-    CompletionStatus,
     DailyDebrief,
     DailyDebriefActivityLink,
     DailyDebriefChallenge,
@@ -68,10 +66,22 @@ DEBRIEF_MANAGER_ROLES = (
 # Restricted-incident categories route ONLY to these roles — never the
 # general peer feed, team view, or routine dashboard queryset (§7-J, §23).
 RESTRICTED_ROUTING = {
-    RestrictedIncidentCategory.SAFEGUARDING: (EdifyRole.HUMAN_RESOURCES.value, EdifyRole.COUNTRY_DIRECTOR.value),
-    RestrictedIncidentCategory.FRAUD: (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.PROGRAM_ACCOUNTANT.value),
-    RestrictedIncidentCategory.STAFF_SAFETY: (EdifyRole.HUMAN_RESOURCES.value, EdifyRole.COUNTRY_DIRECTOR.value),
-    RestrictedIncidentCategory.DATA_INTEGRITY: (EdifyRole.IMPACT_ASSESSMENT.value, EdifyRole.COUNTRY_DIRECTOR.value),
+    RestrictedIncidentCategory.SAFEGUARDING: (
+        EdifyRole.HUMAN_RESOURCES.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+    ),
+    RestrictedIncidentCategory.FRAUD: (
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.PROGRAM_ACCOUNTANT.value,
+    ),
+    RestrictedIncidentCategory.STAFF_SAFETY: (
+        EdifyRole.HUMAN_RESOURCES.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+    ),
+    RestrictedIncidentCategory.DATA_INTEGRITY: (
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+    ),
     RestrictedIncidentCategory.PARTNER_MISCONDUCT: (EdifyRole.COUNTRY_DIRECTOR.value,),
     RestrictedIncidentCategory.SCHOOL_COMPLAINT: (EdifyRole.COUNTRY_DIRECTOR.value,),
     RestrictedIncidentCategory.OTHER: (EdifyRole.COUNTRY_DIRECTOR.value,),
@@ -114,9 +124,9 @@ def team_staff_ids(supervisor_staff_id: str) -> list[str]:
     from apps.accounts.models import StaffSupervisorAssignment
 
     return list(
-        StaffSupervisorAssignment.objects.filter(supervisor_id=supervisor_staff_id).values_list(
-            "supervisee_id", flat=True
-        )
+        StaffSupervisorAssignment.objects.filter(
+            supervisor_id=supervisor_staff_id
+        ).values_list("supervisee_id", flat=True)
     )
 
 
@@ -159,7 +169,9 @@ class FieldDebriefService:
             # scoped_queryset() reads it back, so a partner always sees their
             # own submission. data["partner_id"] can still override (e.g. a
             # user linked to more than one active partner).
-            partner_id = data.get("partner_id") or next(iter(resolve_partner_ids(principal)), None)
+            partner_id = data.get("partner_id") or next(
+                iter(resolve_partner_ids(principal)), None
+            )
 
         debrief = DailyDebrief.objects.create(
             fy=get_operational_fy(),
@@ -168,9 +180,13 @@ class FieldDebriefService:
             submitted_by_role=role,
             staff_id=sp.id if sp else None,
             partner_id=partner_id,
-            debrief_type=DebriefType.PARTNER if role in PARTNER_ROLES else DebriefType.STAFF,
+            debrief_type=DebriefType.PARTNER
+            if role in PARTNER_ROLES
+            else DebriefType.STAFF,
             kind=data.get("kind") or DebriefKind.ACTIVITY,
-            status=DebriefStatus.RESTRICTED_INCIDENT if is_restricted else DebriefStatus.SUBMITTED,
+            status=DebriefStatus.RESTRICTED_INCIDENT
+            if is_restricted
+            else DebriefStatus.SUBMITTED,
             title=title,
             summary=data.get("summary"),
             what_happened=data.get("what_happened"),
@@ -216,7 +232,8 @@ class FieldDebriefService:
             immediate_result=data.get("immediate_result"),
             follow_up_date=data.get("follow_up_date") or None,
             follow_up_owner_id=data.get("follow_up_owner_id"),
-            recommended_next_activity_type=data.get("recommended_next_activity_type") or None,
+            recommended_next_activity_type=data.get("recommended_next_activity_type")
+            or None,
             recommended_intervention=data.get("recommended_intervention") or None,
             recommendation_status=(
                 RecommendationStatus.PROPOSED
@@ -233,7 +250,9 @@ class FieldDebriefService:
             potential_mscs_narrative=data.get("potential_mscs_narrative"),
             potential_champion_flag=bool(data.get("potential_champion_flag")),
             potential_champion_note=data.get("potential_champion_note"),
-            potential_partner_success_flag=bool(data.get("potential_partner_success_flag")),
+            potential_partner_success_flag=bool(
+                data.get("potential_partner_success_flag")
+            ),
             risk_level=data.get("risk_level") or RiskLevel.NONE,
             is_restricted_incident=is_restricted,
             restricted_incident_category=restricted_category,
@@ -244,7 +263,9 @@ class FieldDebriefService:
 
             activity = Activity.objects.filter(id=aid).first()
             DailyDebriefActivityLink.objects.create(
-                debrief=debrief, activity_id=aid, school_id=activity.school_id if activity else None
+                debrief=debrief,
+                activity_id=aid,
+                school_id=activity.school_id if activity else None,
             )
 
         for c in data.get("challenges") or []:
@@ -305,26 +326,38 @@ class FieldDebriefService:
         if role in PARTNER_ROLES:
             from apps.core.scoping import resolve_partner_ids
 
-            if activity.assigned_partner_id and activity.assigned_partner_id in resolve_partner_ids(principal):
+            if (
+                activity.assigned_partner_id
+                and activity.assigned_partner_id in resolve_partner_ids(principal)
+            ):
                 return
-            raise Forbidden("You may only debrief activities assigned to your Partner organization.")
-        if activity.responsible_staff_id in owner_ids or activity.monitored_by_staff_id in owner_ids:
+            raise Forbidden(
+                "You may only debrief activities assigned to your Partner organization."
+            )
+        if (
+            activity.responsible_staff_id in owner_ids
+            or activity.monitored_by_staff_id in owner_ids
+        ):
             return
         if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value and sp:
             if activity.responsible_staff_id in team_staff_ids(sp.id):
                 return
-        raise Forbidden("You may only debrief activities assigned to or supervised by you.")
+        raise Forbidden(
+            "You may only debrief activities assigned to or supervised by you."
+        )
 
     @staticmethod
     def _create_mscs_draft(principal, debrief: DailyDebrief) -> None:
-        """"Create an MSCS draft recommendation. Do not count it as an
+        """ "Create an MSCS draft recommendation. Do not count it as an
         approved MSCS" (§7-I) — reuses the existing MSCS model exactly;
         approval still goes through the normal Targets MSCS review."""
         from apps.targets.models import MostSignificantChangeStory
 
         story = MostSignificantChangeStory.objects.create(
             user_id=principal.user_id,
-            school_id=debrief.linked_school_ids[0] if debrief.linked_school_ids else None,
+            school_id=debrief.linked_school_ids[0]
+            if debrief.linked_school_ids
+            else None,
             title=debrief.potential_mscs_title or debrief.title,
             narrative=debrief.potential_mscs_narrative or debrief.key_success or "",
             story_date=debrief.date.date(),
@@ -341,13 +374,22 @@ class FieldDebriefService:
         pl = supervising_pl(sp) if sp else None
 
         if pl and pl.user_id and pl.user_id != principal.user_id:
-            recipients.append((pl.user_id, EdifyRole.COUNTRY_PROGRAM_LEAD.value, "Supervising Program Lead", True))
+            recipients.append(
+                (
+                    pl.user_id,
+                    EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+                    "Supervising Program Lead",
+                    True,
+                )
+            )
         elif principal.active_role in PARTNER_ROLES:
             # Partner debriefs route to the CCEO managing the assigned school/activity.
             for link in debrief.activity_links.select_related("activity"):
                 owner_id = link.activity.responsible_staff_id if link.activity else None
                 if owner_id:
-                    recipients.append((owner_id, EdifyRole.CCEO.value, "Managing CCEO", True))
+                    recipients.append(
+                        (owner_id, EdifyRole.CCEO.value, "Managing CCEO", True)
+                    )
 
         def _resolve_role(role: str) -> list[str]:
             """Program Lead always means *this submitter's own* supervising
@@ -365,16 +407,32 @@ class FieldDebriefService:
             return _users_with_role(role, country=country)
 
         if debrief.is_restricted_incident:
-            for role in RESTRICTED_ROUTING.get(debrief.restricted_incident_category, ()):
+            for role in RESTRICTED_ROUTING.get(
+                debrief.restricted_incident_category, ()
+            ):
                 for uid in _resolve_role(role):
                     recipients.append((uid, role, "Restricted incident", True))
         else:
             for role in RISK_ROUTING.get(debrief.risk_level, ()):
                 for uid in _resolve_role(role):
-                    recipients.append((uid, role, f"Risk level: {debrief.get_risk_level_display()}", True))
+                    recipients.append(
+                        (
+                            uid,
+                            role,
+                            f"Risk level: {debrief.get_risk_level_display()}",
+                            True,
+                        )
+                    )
             for sr in debrief.support_requests.all():
                 for uid in _resolve_role(sr.requested_from_role):
-                    recipients.append((uid, sr.requested_from_role, f"Support requested: {sr.get_support_type_display()}", True))
+                    recipients.append(
+                        (
+                            uid,
+                            sr.requested_from_role,
+                            f"Support requested: {sr.get_support_type_display()}",
+                            True,
+                        )
+                    )
 
         seen = set()
         for user_id, role, reason, action_required in recipients:
@@ -383,15 +441,23 @@ class FieldDebriefService:
                 continue
             seen.add(key)
             DailyDebriefRecipient.objects.create(
-                debrief=debrief, recipient_user_id=user_id, recipient_role=role,
-                routing_reason=reason, action_required=action_required,
+                debrief=debrief,
+                recipient_user_id=user_id,
+                recipient_role=role,
+                routing_reason=reason,
+                action_required=action_required,
             )
             WorkflowNotificationService.trigger(
-                event_type="field_debrief_routed", category="field_debrief",
-                priority="high" if debrief.risk_level in (RiskLevel.CRITICAL,) or debrief.is_restricted_incident else "normal",
+                event_type="field_debrief_routed",
+                category="field_debrief",
+                priority="high"
+                if debrief.risk_level in (RiskLevel.CRITICAL,)
+                or debrief.is_restricted_incident
+                else "normal",
                 title=f"Field Debrief: {debrief.title}",
                 body=f"{debrief.submitted_by_role} debrief — {reason}.",
-                context_type="field_debrief", context_id=debrief.id,
+                context_type="field_debrief",
+                context_id=debrief.id,
                 recipients=[user_id],
             )
 
@@ -440,7 +506,9 @@ class FieldDebriefService:
             team_ids = team_staff_ids(sp.id)
             partner_ids = list(scope.partner_ids or [])
             qs = qs.filter(
-                Q(staff_id=sp.id) | Q(staff_id__in=team_ids) | Q(partner_id__in=partner_ids)
+                Q(staff_id=sp.id)
+                | Q(staff_id__in=team_ids)
+                | Q(partner_id__in=partner_ids)
             )
         elif role == EdifyRole.CCEO.value and sp:
             pl = supervising_pl(sp)
@@ -483,11 +551,17 @@ class FieldDebriefService:
 
     @staticmethod
     def can_read(principal, debrief: DailyDebrief) -> bool:
-        return FieldDebriefService.scoped_queryset(principal).filter(id=debrief.id).exists()
+        return (
+            FieldDebriefService.scoped_queryset(principal)
+            .filter(id=debrief.id)
+            .exists()
+        )
 
     @staticmethod
     def get_one(principal, debrief_id: str) -> DailyDebrief:
-        debrief = FieldDebriefService.scoped_queryset(principal).filter(id=debrief_id).first()
+        debrief = (
+            FieldDebriefService.scoped_queryset(principal).filter(id=debrief_id).first()
+        )
         if not debrief:
             raise NotFoundError("Debrief not found or not visible to you.")
         return debrief
@@ -496,26 +570,44 @@ class FieldDebriefService:
     def request_clarification(principal, debrief_id: str, note: str) -> DailyDebrief:
         debrief = FieldDebriefService.get_one(principal, debrief_id)
         if getattr(principal, "active_role", "") not in (
-            EdifyRole.COUNTRY_PROGRAM_LEAD.value, EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value,
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.COUNTRY_DIRECTOR.value,
+            EdifyRole.ADMIN.value,
         ):
             raise Forbidden("Only a supervisor may request clarification.")
         debrief.status = DebriefStatus.CLARIFICATION_REQUESTED
         debrief.review_note = note
         debrief.reviewed_by_user_id = principal.user_id
         debrief.reviewed_at = timezone.now()
-        debrief.save(update_fields=["status", "review_note", "reviewed_by_user_id", "reviewed_at"])
+        debrief.save(
+            update_fields=[
+                "status",
+                "review_note",
+                "reviewed_by_user_id",
+                "reviewed_at",
+            ]
+        )
         from apps.notifications.services import WorkflowNotificationService
 
         WorkflowNotificationService.trigger(
-            event_type="field_debrief_clarification_requested", category="field_debrief", priority="high",
-            title=f"Clarification needed: {debrief.title}", body=note or "Your supervisor requested clarification.",
-            context_type="field_debrief", context_id=debrief.id, recipients=[debrief.submitted_by_user_id],
+            event_type="field_debrief_clarification_requested",
+            category="field_debrief",
+            priority="high",
+            title=f"Clarification needed: {debrief.title}",
+            body=note or "Your supervisor requested clarification.",
+            context_type="field_debrief",
+            context_id=debrief.id,
+            recipients=[debrief.submitted_by_user_id],
         )
         return debrief
 
     @staticmethod
-    def update_after_clarification(principal, debrief_id: str, data: dict) -> DailyDebrief:
-        debrief = DailyDebrief.objects.filter(id=debrief_id, deleted_at__isnull=True).first()
+    def update_after_clarification(
+        principal, debrief_id: str, data: dict
+    ) -> DailyDebrief:
+        debrief = DailyDebrief.objects.filter(
+            id=debrief_id, deleted_at__isnull=True
+        ).first()
         if not debrief:
             raise NotFoundError("Debrief not found.")
         if debrief.submitted_by_user_id != principal.user_id:
@@ -527,14 +619,20 @@ class FieldDebriefService:
                 setattr(debrief, field, data[field])
         debrief.status = DebriefStatus.UPDATED
         debrief.save()
-        if debrief.reviewed_by_user_id and debrief.reviewed_by_user_id != principal.user_id:
+        if (
+            debrief.reviewed_by_user_id
+            and debrief.reviewed_by_user_id != principal.user_id
+        ):
             from apps.notifications.services import WorkflowNotificationService
 
             WorkflowNotificationService.trigger(
-                event_type="field_debrief_clarification_response", category="field_debrief", priority="normal",
+                event_type="field_debrief_clarification_response",
+                category="field_debrief",
+                priority="normal",
                 title=f"Clarification response: {debrief.title}",
                 body="The submitter updated the debrief you asked to be clarified.",
-                context_type="field_debrief", context_id=debrief.id,
+                context_type="field_debrief",
+                context_id=debrief.id,
                 recipients=[debrief.reviewed_by_user_id],
             )
         return debrief
@@ -550,23 +648,56 @@ class FieldDebriefService:
         debrief = FieldDebriefService.get_one(principal, debrief_id)
         role = getattr(principal, "active_role", "")
         if role not in (
-            EdifyRole.COUNTRY_PROGRAM_LEAD.value, EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value,
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.COUNTRY_DIRECTOR.value,
+            EdifyRole.ADMIN.value,
         ):
             raise Forbidden("Only a supervisor may accept a debrief recommendation.")
         if debrief.recommendation_status != RecommendationStatus.PROPOSED:
             raise BadRequest("This debrief has no pending recommendation.")
 
         type_map = {
-            "school_visit": ActivityType.SCHOOL_VISIT, "follow_up_visit": ActivityType.FOLLOW_UP_VISIT,
-            "baseline_ssa": ActivityType.BASELINE_SSA_VISIT, "cluster_meeting": ActivityType.CLUSTER_MEETING,
-            "cluster_training": ActivityType.CLUSTER_TRAINING, "core_visit": ActivityType.CORE_VISIT,
-            "core_training": ActivityType.CORE_TRAINING, "partner_coaching": ActivityType.PARTNER_ACTIVITY,
+            "school_visit": ActivityType.SCHOOL_VISIT,
+            "follow_up_visit": ActivityType.FOLLOW_UP_VISIT,
+            "baseline_ssa": ActivityType.BASELINE_SSA_VISIT,
+            "cluster_meeting": ActivityType.CLUSTER_MEETING,
+            "cluster_training": ActivityType.CLUSTER_TRAINING,
+            "core_visit": ActivityType.CORE_VISIT,
+            "core_training": ActivityType.CORE_TRAINING,
+            "partner_coaching": ActivityType.PARTNER_ACTIVITY,
         }
-        activity_type = type_map.get(debrief.recommended_next_activity_type, ActivityType.FOLLOW_UP_VISIT)
+        activity_type = type_map.get(
+            debrief.recommended_next_activity_type, ActivityType.FOLLOW_UP_VISIT
+        )
         school_id = debrief.linked_school_ids[0] if debrief.linked_school_ids else None
+        # Activity.responsible_staff_id is a User id everywhere else in the
+        # app (e.g. my_plan_views.py resolves it via User.objects.get(id=...)),
+        # but debrief.staff_id — and, per existing test fixtures, callers'
+        # follow_up_owner_id too — is a StaffProfile id (set from
+        # _staff_profile(principal).id at submission time). Writing that
+        # straight into responsible_staff_id silently orphaned the follow-up
+        # Activity from its intended owner's My Plan. Resolve through
+        # StaffProfile first; if nothing matches, assume the id was already a
+        # User id and pass it through unchanged.
+        from apps.accounts.models import StaffProfile
+
+        def _to_user_id(candidate_id):
+            if not candidate_id:
+                return None
+            resolved = (
+                StaffProfile.objects.filter(id=candidate_id)
+                .values_list("user_id", flat=True)
+                .first()
+            )
+            return resolved or candidate_id
+
+        owner_id = _to_user_id(debrief.follow_up_owner_id) or _to_user_id(
+            debrief.staff_id
+        )
         activity = Activity.objects.create(
-            fy=debrief.fy, activity_type=activity_type,
-            responsible_staff_id=debrief.follow_up_owner_id or debrief.staff_id,
+            fy=debrief.fy,
+            activity_type=activity_type,
+            responsible_staff_id=owner_id,
             school_id=school_id,
             focus_intervention=debrief.recommended_intervention or None,
             planned_date=debrief.follow_up_date,
@@ -576,44 +707,68 @@ class FieldDebriefService:
         debrief.recommendation_accepted_activity_id = activity.id
         debrief.recommendation_reviewed_by_user_id = principal.user_id
         debrief.recommendation_reviewed_at = timezone.now()
-        debrief.save(update_fields=[
-            "recommendation_status", "recommendation_accepted_activity_id",
-            "recommendation_reviewed_by_user_id", "recommendation_reviewed_at",
-        ])
-        FieldDebriefService._notify_recommendation_review(principal, debrief, accepted=True)
+        debrief.save(
+            update_fields=[
+                "recommendation_status",
+                "recommendation_accepted_activity_id",
+                "recommendation_reviewed_by_user_id",
+                "recommendation_reviewed_at",
+            ]
+        )
+        FieldDebriefService._notify_recommendation_review(
+            principal, debrief, accepted=True
+        )
         return activity
 
     @staticmethod
     def reject_recommendation(principal, debrief_id: str) -> DailyDebrief:
         debrief = FieldDebriefService.get_one(principal, debrief_id)
         if getattr(principal, "active_role", "") not in (
-            EdifyRole.COUNTRY_PROGRAM_LEAD.value, EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value,
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.COUNTRY_DIRECTOR.value,
+            EdifyRole.ADMIN.value,
         ):
             raise Forbidden("Only a supervisor may reject a debrief recommendation.")
         debrief.recommendation_status = RecommendationStatus.REJECTED
         debrief.recommendation_reviewed_by_user_id = principal.user_id
         debrief.recommendation_reviewed_at = timezone.now()
-        debrief.save(update_fields=[
-            "recommendation_status", "recommendation_reviewed_by_user_id", "recommendation_reviewed_at",
-        ])
-        FieldDebriefService._notify_recommendation_review(principal, debrief, accepted=False)
+        debrief.save(
+            update_fields=[
+                "recommendation_status",
+                "recommendation_reviewed_by_user_id",
+                "recommendation_reviewed_at",
+            ]
+        )
+        FieldDebriefService._notify_recommendation_review(
+            principal, debrief, accepted=False
+        )
         return debrief
 
     @staticmethod
-    def _notify_recommendation_review(principal, debrief: DailyDebrief, *, accepted: bool) -> None:
+    def _notify_recommendation_review(
+        principal, debrief: DailyDebrief, *, accepted: bool
+    ) -> None:
         """§13 — the submitter learns their recommended follow-up was decided,
         mirroring how the forward direction (routing/clarification) notifies."""
-        if not debrief.submitted_by_user_id or debrief.submitted_by_user_id == principal.user_id:
+        if (
+            not debrief.submitted_by_user_id
+            or debrief.submitted_by_user_id == principal.user_id
+        ):
             return
         from apps.notifications.services import WorkflowNotificationService
 
-        recommended = debrief.get_recommended_next_activity_type_display() or "follow-up"
+        recommended = (
+            debrief.get_recommended_next_activity_type_display() or "follow-up"
+        )
         verdict = "accepted — a draft Activity was created" if accepted else "rejected"
         WorkflowNotificationService.trigger(
-            event_type="field_debrief_recommendation_reviewed", category="field_debrief", priority="normal",
+            event_type="field_debrief_recommendation_reviewed",
+            category="field_debrief",
+            priority="normal",
             title=f"Recommendation {'accepted' if accepted else 'rejected'}: {debrief.title}",
             body=f"Your recommended {recommended} was {verdict}.",
-            context_type="field_debrief", context_id=debrief.id,
+            context_type="field_debrief",
+            context_id=debrief.id,
             recipients=[debrief.submitted_by_user_id],
         )
 
@@ -622,7 +777,9 @@ class FieldDebriefService:
         """§7-G — close the loop on a commitment. Allowed for the debrief's
         submitter (they track the follow-up) or a manager role."""
         commitment = (
-            DailyDebriefCommitment.objects.select_related("debrief").filter(id=commitment_id).first()
+            DailyDebriefCommitment.objects.select_related("debrief")
+            .filter(id=commitment_id)
+            .first()
         )
         if not commitment:
             raise NotFoundError("Commitment not found.")
@@ -635,20 +792,28 @@ class FieldDebriefService:
         return commitment
 
     @staticmethod
-    def resolve_support_request(principal, support_request_id: str) -> DailyDebriefSupportRequest:
+    def resolve_support_request(
+        principal, support_request_id: str
+    ) -> DailyDebriefSupportRequest:
         """§7-H — close the loop on a support request, recording who resolved it."""
         support_request = (
-            DailyDebriefSupportRequest.objects.select_related("debrief").filter(id=support_request_id).first()
+            DailyDebriefSupportRequest.objects.select_related("debrief")
+            .filter(id=support_request_id)
+            .first()
         )
         if not support_request:
             raise NotFoundError("Support request not found.")
-        FieldDebriefService._assert_can_resolve_child(principal, support_request.debrief)
+        FieldDebriefService._assert_can_resolve_child(
+            principal, support_request.debrief
+        )
         if support_request.status == "resolved":
             raise BadRequest("This support request is already resolved.")
         support_request.status = "resolved"
         support_request.resolved_at = timezone.now()
         support_request.resolved_by_user_id = principal.user_id
-        support_request.save(update_fields=["status", "resolved_at", "resolved_by_user_id"])
+        support_request.save(
+            update_fields=["status", "resolved_at", "resolved_by_user_id"]
+        )
         return support_request
 
     @staticmethod
@@ -658,9 +823,14 @@ class FieldDebriefService:
         if not FieldDebriefService.can_read(principal, debrief):
             raise NotFoundError("Debrief not found or not visible to you.")
         role = getattr(principal, "active_role", "")
-        if debrief.submitted_by_user_id == principal.user_id or role in DEBRIEF_MANAGER_ROLES:
+        if (
+            debrief.submitted_by_user_id == principal.user_id
+            or role in DEBRIEF_MANAGER_ROLES
+        ):
             return
-        raise Forbidden("Only the debrief submitter or a manager may resolve this item.")
+        raise Forbidden(
+            "Only the debrief submitter or a manager may resolve this item."
+        )
 
 
 def _users_with_role(role: str, country: str | None = None) -> list[str]:
@@ -669,7 +839,9 @@ def _users_with_role(role: str, country: str | None = None) -> list[str]:
     an unscoped query would incorrectly notify every country's holder."""
     from apps.accounts.models import User
 
-    qs = User.objects.filter(roles__contains=[role], status="active", deleted_at__isnull=True)
+    qs = User.objects.filter(
+        roles__contains=[role], status="active", deleted_at__isnull=True
+    )
     if country:
         qs = qs.filter(staff_profile__country=country)
     return list(qs.values_list("id", flat=True))
@@ -680,10 +852,14 @@ def _country_staff_ids(country: str | None) -> list[str]:
 
     if not country:
         return []
-    return list(StaffProfile.objects.filter(country=country).values_list("id", flat=True))
+    return list(
+        StaffProfile.objects.filter(country=country).values_list("id", flat=True)
+    )
 
 
 def _school_ids_in_district(district_id: str) -> list[str]:
     from apps.schools.models import School
 
-    return list(School.objects.filter(district_id=district_id).values_list("id", flat=True))
+    return list(
+        School.objects.filter(district_id=district_id).values_list("id", flat=True)
+    )

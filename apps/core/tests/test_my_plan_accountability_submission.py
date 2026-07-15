@@ -31,10 +31,14 @@ class CompleteActivityAccountabilitySubmissionTest(TestCase):
         )
         cceo_staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
         region = Region.objects.create(name="Accountability Region")
-        district = District.objects.create(name="Accountability District", region=region)
+        district = District.objects.create(
+            name="Accountability District", region=region
+        )
         school = School.objects.create(
-            school_id="ACC-SCH", name="Accountability School",
-            region=region, district=district,
+            school_id="ACC-SCH",
+            name="Accountability School",
+            region=region,
+            district=district,
         )
         StaffSchoolAssignment.objects.create(staff=cceo_staff, school_id=school.id)
 

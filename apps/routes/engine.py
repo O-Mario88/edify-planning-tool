@@ -19,7 +19,6 @@ before submit and health checks can catch legacy data.
 
 from __future__ import annotations
 
-from datetime import date as date_cls
 
 from django.db import transaction
 
@@ -36,18 +35,22 @@ from apps.routes.models import (
 )
 
 # ── Working-day + travel constants ───────────────────────────────────────────
-WORK_MINUTES = 9 * 60            # 08:00 – 17:00
+WORK_MINUTES = 9 * 60  # 08:00 – 17:00
 LUNCH_MINUTES = 60
-AVAILABLE_MINUTES = WORK_MINUTES - LUNCH_MINUTES   # 8h of field time
+AVAILABLE_MINUTES = WORK_MINUTES - LUNCH_MINUTES  # 8h of field time
 VISIT_MINUTES_PER_SCHOOL = 60
 BUFFER_MINUTES = 30
 # No-coordinates fallback: per-hop travel estimates from structured grouping.
 HOP_SAME_SUBCOUNTY_MIN = 20
 HOP_CROSS_SUBCOUNTY_MIN = 45
-BASE_TRAVEL_MIN = 30             # start-of-day leg to the first school
-COORD_RADIUS_KM = 15             # "coordinates within radius" scoring gate
+BASE_TRAVEL_MIN = 30  # start-of-day leg to the first school
+COORD_RADIUS_KM = 15  # "coordinates within radius" scoring gate
 
-SCORE_BANDS = ((85, RouteStatus.EXCELLENT), (70, RouteStatus.GOOD), (50, RouteStatus.RISKY))
+SCORE_BANDS = (
+    (85, RouteStatus.EXCELLENT),
+    (70, RouteStatus.GOOD),
+    (50, RouteStatus.RISKY),
+)
 
 
 def _classify(score: int, blocked: bool) -> str:
@@ -66,36 +69,55 @@ class RouteValidationService:
     @staticmethod
     def validate(schools) -> list[dict]:
         issues: list[dict] = []
-        unclassified = sorted({
-            s.district.name for s in schools
-            if s.district_id and not s.district.district_type
-        })
+        unclassified = sorted(
+            {
+                s.district.name
+                for s in schools
+                if s.district_id and not s.district.district_type
+            }
+        )
         if unclassified:
-            issues.append({
-                "code": "unclassified_district", "severity": "blocking",
-                "message": f"District(s) not classified primary/secondary yet: {', '.join(unclassified)}. CD/Admin must classify before route approval.",
-            })
-        types = {s.district.district_type for s in schools if s.district_id and s.district.district_type}
+            issues.append(
+                {
+                    "code": "unclassified_district",
+                    "severity": "blocking",
+                    "message": f"District(s) not classified primary/secondary yet: {', '.join(unclassified)}. CD/Admin must classify before route approval.",
+                }
+            )
+        types = {
+            s.district.district_type
+            for s in schools
+            if s.district_id and s.district.district_type
+        }
         if len(types) > 1:
-            issues.append({
-                "code": "mixed_district_types", "severity": "blocking",
-                "message": "Primary district schools mixed with secondary district schools on the same day.",
-            })
+            issues.append(
+                {
+                    "code": "mixed_district_types",
+                    "severity": "blocking",
+                    "message": "Primary district schools mixed with secondary district schools on the same day.",
+                }
+            )
         district_ids = {s.district_id for s in schools if s.district_id}
         if types == {"secondary"} and len(district_ids) > 1:
             from apps.daily_visit_batches.services import _resolve_group
 
             if _resolve_group(district_ids) is None:
-                issues.append({
-                    "code": "secondary_group_unapproved", "severity": "blocking",
-                    "message": "Multiple secondary districts without an approved Secondary Route Group.",
-                })
+                issues.append(
+                    {
+                        "code": "secondary_group_unapproved",
+                        "severity": "blocking",
+                        "message": "Multiple secondary districts without an approved Secondary Route Group.",
+                    }
+                )
         no_district = [s.name for s in schools if not s.district_id]
         if no_district:
-            issues.append({
-                "code": "missing_district", "severity": "warning",
-                "message": f"No district on record for: {', '.join(no_district[:3])}{'…' if len(no_district) > 3 else ''}.",
-            })
+            issues.append(
+                {
+                    "code": "missing_district",
+                    "severity": "warning",
+                    "message": f"No district on record for: {', '.join(no_district[:3])}{'…' if len(no_district) > 3 else ''}.",
+                }
+            )
         return issues
 
 
@@ -103,9 +125,18 @@ class RouteQualityScoringService:
     """The 0–100 backend score + Excellent/Good/Risky/Not Feasible/Blocked."""
 
     @staticmethod
-    def score(*, subcounty_groups: int, total_schools: int, coords_confirmed: bool,
-              coords_used: int, fits_day: bool, day_load: int,
-              meets_target: bool, blocked: bool, structured_confirmed: bool = False) -> tuple[int, str]:
+    def score(
+        *,
+        subcounty_groups: int,
+        total_schools: int,
+        coords_confirmed: bool,
+        coords_used: int,
+        fits_day: bool,
+        day_load: int,
+        meets_target: bool,
+        blocked: bool,
+        structured_confirmed: bool = False,
+    ) -> tuple[int, str]:
         pts = 0
         # Same sub-county match (+30, degrading with spread).
         if total_schools and subcounty_groups <= 1:
@@ -122,7 +153,9 @@ class RouteQualityScoringService:
             pts += 25
         elif structured_confirmed:
             pts += 15
-        elif coords_used and total_schools and coords_used >= max(2, total_schools // 2):
+        elif (
+            coords_used and total_schools and coords_used >= max(2, total_schools // 2)
+        ):
             pts += 12
         # Travel time under threshold / fits the working day (+20; near-miss 8).
         if fits_day:
@@ -171,14 +204,18 @@ class RouteComputation:
                 for a, b in zip(order, order[1:])
             ]
             max_leg_km = max(legs) if legs else 0.0
-            travel_min = BASE_TRAVEL_MIN + SchoolCoordinateService.travel_minutes_for_km(est_km)
+            travel_min = (
+                BASE_TRAVEL_MIN + SchoolCoordinateService.travel_minutes_for_km(est_km)
+            )
             ordered_ids = order + [sid for sid in by_id if sid not in points]
         else:
             # Structured fallback: hop cost by sub-county relationship.
             ordered_ids = list(by_id)
             hops = max(0, len(schools) - 1)
             same = groups <= 1
-            travel_min = BASE_TRAVEL_MIN + hops * (HOP_SAME_SUBCOUNTY_MIN if same else HOP_CROSS_SUBCOUNTY_MIN)
+            travel_min = BASE_TRAVEL_MIN + hops * (
+                HOP_SAME_SUBCOUNTY_MIN if same else HOP_CROSS_SUBCOUNTY_MIN
+            )
 
         n = len(schools)
         visit_min = n * VISIT_MINUTES_PER_SCHOOL
@@ -186,27 +223,50 @@ class RouteComputation:
         fits_day = day_load <= AVAILABLE_MINUTES
 
         coords_confirmed = bool(
-            coords_used == n and n >= 2 and est_km is not None and max_leg_km <= COORD_RADIUS_KM
+            coords_used == n
+            and n >= 2
+            and est_km is not None
+            and max_leg_km <= COORD_RADIUS_KM
         )
         structured_confirmed = bool(
-            not coords_confirmed and coords_used < 2 and n >= 2
-            and groups <= 1 and sub_county_ids
+            not coords_confirmed
+            and coords_used < 2
+            and n >= 2
+            and groups <= 1
+            and sub_county_ids
             and all(p["confidence"] == LocationConfidence.HIGH for p in parsed)
         )
 
         # Route confidence = worst school confidence in the day.
-        rank = {LocationConfidence.HIGH: 0, LocationConfidence.MEDIUM: 1,
-                LocationConfidence.LOW: 2, LocationConfidence.NEEDS_CLEANUP: 3}
-        worst = max((p["confidence"] for p in parsed), key=lambda c: rank[c], default=LocationConfidence.NEEDS_CLEANUP)
+        rank = {
+            LocationConfidence.HIGH: 0,
+            LocationConfidence.MEDIUM: 1,
+            LocationConfidence.LOW: 2,
+            LocationConfidence.NEEDS_CLEANUP: 3,
+        }
+        worst = max(
+            (p["confidence"] for p in parsed),
+            key=lambda c: rank[c],
+            default=LocationConfidence.NEEDS_CLEANUP,
+        )
 
         return {
-            "parsed": parsed, "ordered_ids": ordered_ids, "sub_county_ids": sub_county_ids,
-            "area_labels": area_labels[:4], "groups": groups, "coords_used": coords_used,
-            "est_km": est_km, "travel_min": travel_min, "visit_min": visit_min,
-            "buffer_min": BUFFER_MINUTES, "day_load": day_load,
-            "available": AVAILABLE_MINUTES, "fits_day": fits_day,
+            "parsed": parsed,
+            "ordered_ids": ordered_ids,
+            "sub_county_ids": sub_county_ids,
+            "area_labels": area_labels[:4],
+            "groups": groups,
+            "coords_used": coords_used,
+            "est_km": est_km,
+            "travel_min": travel_min,
+            "visit_min": visit_min,
+            "buffer_min": BUFFER_MINUTES,
+            "day_load": day_load,
+            "available": AVAILABLE_MINUTES,
+            "fits_day": fits_day,
             "coords_confirmed": coords_confirmed,
-            "structured_confirmed": structured_confirmed, "confidence": worst,
+            "structured_confirmed": structured_confirmed,
+            "confidence": worst,
             "meets_target": bool(target and n >= target),
         }
 
@@ -226,14 +286,21 @@ class RouteComputation:
                 "Reduce schools or split into another day."
             )
         if target and n < target:
-            out.append(f"CD target is {target} schools per day. You selected {n}. Reason required.")
+            out.append(
+                f"CD target is {target} schools per day. You selected {n}. Reason required."
+            )
         if target and n >= target and not comp["fits_day"]:
             out.append(
                 f"{n} schools selected, but route feasibility is low. "
                 "Group schools by same sub-county or nearby area."
             )
-        if comp["confidence"] in (LocationConfidence.LOW, LocationConfidence.NEEDS_CLEANUP):
-            out.append("Location confidence low — verify sub-county before route approval.")
+        if comp["confidence"] in (
+            LocationConfidence.LOW,
+            LocationConfidence.NEEDS_CLEANUP,
+        ):
+            out.append(
+                "Location confidence low — verify sub-county before route approval."
+            )
         for i in issues:
             if i["severity"] == "blocking":
                 out.append(i["message"])
@@ -244,7 +311,9 @@ class RouteRecommendationService:
     """Suggest better groupings from the staff member's own plannable schools."""
 
     @staticmethod
-    def recommend(schools, comp, *, responsible_user, target: int | None, visit_date=None) -> list[dict]:
+    def recommend(
+        schools, comp, *, responsible_user, target: int | None, visit_date=None
+    ) -> list[dict]:
         from apps.schools.models import School
 
         recs: list[dict] = []
@@ -257,9 +326,14 @@ class RouteRecommendationService:
             if s.sub_county_id:
                 counts[s.sub_county_id] = counts.get(s.sub_county_id, 0) + 1
         dominant = max(counts, key=counts.get) if counts else None
-        dominant_name = next(
-            (s.sub_county.name for s in schools if s.sub_county_id == dominant), None
-        ) if dominant else None
+        dominant_name = (
+            next(
+                (s.sub_county.name for s in schools if s.sub_county_id == dominant),
+                None,
+            )
+            if dominant
+            else None
+        )
 
         candidates = School.objects.none()
         if dominant:
@@ -274,37 +348,48 @@ class RouteRecommendationService:
 
         # Scattered day → swap the outlier for a school in the dominant area.
         if comp["groups"] >= 3 and dominant:
-            outlier = next((s for s in schools if s.sub_county_id and s.sub_county_id != dominant), None)
+            outlier = next(
+                (s for s in schools if s.sub_county_id and s.sub_county_id != dominant),
+                None,
+            )
             swap_in = candidates.first() if candidates else None
             if outlier and swap_in:
-                recs.append({
-                    "kind": "swap",
-                    "message": f"Replace {outlier.name} with {swap_in.name} — it is closer to the selected {dominant_name} route.",
-                    "school_ids": [outlier.id, swap_in.id],
-                })
+                recs.append(
+                    {
+                        "kind": "swap",
+                        "message": f"Replace {outlier.name} with {swap_in.name} — it is closer to the selected {dominant_name} route.",
+                        "school_ids": [outlier.id, swap_in.id],
+                    }
+                )
             else:
-                recs.append({
-                    "kind": "split",
-                    "message": "Split this day: keep the schools in one sub-county and move the rest to another day.",
-                    "school_ids": [],
-                })
+                recs.append(
+                    {
+                        "kind": "split",
+                        "message": "Split this day: keep the schools in one sub-county and move the rest to another day.",
+                        "school_ids": [],
+                    }
+                )
         # Below CD target → add nearby schools from the dominant area.
         if target and n < target and dominant:
             addable = list(candidates[: target - n])
             if addable:
                 names = ", ".join(a.name for a in addable[:2])
-                recs.append({
-                    "kind": "add",
-                    "message": f"Add {min(len(addable), target - n)} nearby school(s) from {dominant_name} to reach the daily target (e.g. {names}).",
-                    "school_ids": [a.id for a in addable],
-                })
+                recs.append(
+                    {
+                        "kind": "add",
+                        "message": f"Add {min(len(addable), target - n)} nearby school(s) from {dominant_name} to reach the daily target (e.g. {names}).",
+                        "school_ids": [a.id for a in addable],
+                    }
+                )
         # Over the day's capacity → reduce.
         if not comp["fits_day"] and n > 1:
-            recs.append({
-                "kind": "reduce",
-                "message": "Reduce the number of schools or split into two days — the estimated load exceeds the working day.",
-                "school_ids": [],
-            })
+            recs.append(
+                {
+                    "kind": "reduce",
+                    "message": "Reduce the number of schools or split into two days — the estimated load exceeds the working day.",
+                    "school_ids": [],
+                }
+            )
         return recs[:3]
 
 
@@ -333,9 +418,11 @@ class DailyVisitRouteBatchService:
                 responsible_staff_id=responsible_user, scheduled_date__date=visit_date
             )
         schools = [
-            a.school for a in acts.select_related(
+            a.school
+            for a in acts.select_related(
                 "school__district", "school__sub_county", "school__parish"
-            ) if a.school_id
+            )
+            if a.school_id
         ]
         # Dedup (two visits to the same school on one day is still one stop).
         seen, uniq = set(), []
@@ -357,27 +444,42 @@ class DailyVisitRouteBatchService:
         issues = RouteValidationService.validate(schools)
         blocked = any(i["severity"] == "blocking" for i in issues)
         score, status = RouteQualityScoringService.score(
-            subcounty_groups=comp["groups"], total_schools=len(schools),
-            coords_confirmed=comp["coords_confirmed"], coords_used=comp["coords_used"],
-            fits_day=comp["fits_day"], day_load=comp["day_load"],
-            meets_target=comp["meets_target"], blocked=blocked,
+            subcounty_groups=comp["groups"],
+            total_schools=len(schools),
+            coords_confirmed=comp["coords_confirmed"],
+            coords_used=comp["coords_used"],
+            fits_day=comp["fits_day"],
+            day_load=comp["day_load"],
+            meets_target=comp["meets_target"],
+            blocked=blocked,
             structured_confirmed=comp["structured_confirmed"],
         )
         warnings = RouteComputation.warnings(schools, comp, issues, target=target)
         recs = RouteRecommendationService.recommend(
-            schools, comp, responsible_user=responsible_user, target=target, visit_date=visit_date
+            schools,
+            comp,
+            responsible_user=responsible_user,
+            target=target,
+            visit_date=visit_date,
         )
 
         district = next((s.district for s in schools if s.district_id), None)
-        dtypes = {s.district.district_type for s in schools if s.district_id and s.district.district_type}
+        dtypes = {
+            s.district.district_type
+            for s in schools
+            if s.district_id and s.district.district_type
+        }
 
         with transaction.atomic():
             batch, _ = DailyVisitRouteBatch.objects.update_or_create(
-                responsible_user=responsible_user, visit_date=visit_date,
+                responsible_user=responsible_user,
+                visit_date=visit_date,
                 defaults={
                     "district_type": next(iter(dtypes)) if len(dtypes) == 1 else None,
                     "district": district,
-                    "secondary_district_group": cost_batch.secondary_district_group if cost_batch else None,
+                    "secondary_district_group": cost_batch.secondary_district_group
+                    if cost_batch
+                    else None,
                     "cost_batch": cost_batch,
                     "school_ids": comp["ordered_ids"],
                     "school_count": len(schools),
@@ -399,15 +501,29 @@ class DailyVisitRouteBatchService:
                 },
             )
             batch.issues.all().delete()
-            RouteValidationIssue.objects.bulk_create([
-                RouteValidationIssue(batch=batch, code=i["code"], severity=i["severity"], message=i["message"])
-                for i in issues
-            ])
+            RouteValidationIssue.objects.bulk_create(
+                [
+                    RouteValidationIssue(
+                        batch=batch,
+                        code=i["code"],
+                        severity=i["severity"],
+                        message=i["message"],
+                    )
+                    for i in issues
+                ]
+            )
             batch.recommendations.all().delete()
-            RouteRecommendation.objects.bulk_create([
-                RouteRecommendation(batch=batch, kind=r["kind"], message=r["message"], school_ids=r["school_ids"])
-                for r in recs
-            ])
+            RouteRecommendation.objects.bulk_create(
+                [
+                    RouteRecommendation(
+                        batch=batch,
+                        kind=r["kind"],
+                        message=r["message"],
+                        school_ids=r["school_ids"],
+                    )
+                    for r in recs
+                ]
+            )
         return batch
 
 
@@ -416,17 +532,21 @@ class PlanningRoutePreviewService:
     nothing persisted except refreshed per-school location confidence."""
 
     @staticmethod
-    def preview(*, school_ids: list[str], responsible_user: str, visit_date=None) -> dict:
+    def preview(
+        *, school_ids: list[str], responsible_user: str, visit_date=None
+    ) -> dict:
         from apps.budget.costing_service import active_catalogue
         from apps.daily_visit_batches.pricing import compute_daily_pool
         from apps.schools.models import School
 
         schools = list(
-            School.objects.filter(school_id__in=school_ids, deleted_at__isnull=True)
-            .select_related("district", "sub_county", "parish")
+            School.objects.filter(
+                school_id__in=school_ids, deleted_at__isnull=True
+            ).select_related("district", "sub_county", "parish")
         ) or list(
-            School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
-            .select_related("district", "sub_county", "parish")
+            School.objects.filter(
+                id__in=school_ids, deleted_at__isnull=True
+            ).select_related("district", "sub_county", "parish")
         )
         if not schools:
             return {"ok": False, "error": "No valid schools selected."}
@@ -437,21 +557,33 @@ class PlanningRoutePreviewService:
         issues = RouteValidationService.validate(schools)
         blocked = any(i["severity"] == "blocking" for i in issues)
         score, status = RouteQualityScoringService.score(
-            subcounty_groups=comp["groups"], total_schools=len(schools),
-            coords_confirmed=comp["coords_confirmed"], coords_used=comp["coords_used"],
-            fits_day=comp["fits_day"], day_load=comp["day_load"],
-            meets_target=comp["meets_target"], blocked=blocked,
+            subcounty_groups=comp["groups"],
+            total_schools=len(schools),
+            coords_confirmed=comp["coords_confirmed"],
+            coords_used=comp["coords_used"],
+            fits_day=comp["fits_day"],
+            day_load=comp["day_load"],
+            meets_target=comp["meets_target"],
+            blocked=blocked,
             structured_confirmed=comp["structured_confirmed"],
         )
         warnings = RouteComputation.warnings(schools, comp, issues, target=target)
         recs = RouteRecommendationService.recommend(
-            schools, comp, responsible_user=responsible_user, target=target, visit_date=visit_date
+            schools,
+            comp,
+            responsible_user=responsible_user,
+            target=target,
+            visit_date=visit_date,
         )
 
         # Honest cost-per-school from the real catalogue pool (None when the
         # catalogue/district data can't price the day yet).
         cost_per_school = None
-        dtypes = {s.district.district_type for s in schools if s.district_id and s.district.district_type}
+        dtypes = {
+            s.district.district_type
+            for s in schools
+            if s.district_id and s.district.district_type
+        }
         if catalogue and len(dtypes) == 1:
             try:
                 from apps.budget.costing_service import _rate_card
@@ -466,12 +598,17 @@ class PlanningRoutePreviewService:
             h, m = divmod(int(minutes), 60)
             return f"{h}h {m:02d}m"
 
-        detected = " / ".join(comp["area_labels"]) if comp["area_labels"] else (
-            schools[0].district.name if schools[0].district_id else "Unknown area"
+        detected = (
+            " / ".join(comp["area_labels"])
+            if comp["area_labels"]
+            else (
+                schools[0].district.name if schools[0].district_id else "Unknown area"
+            )
         )
         return {
             "ok": True,
-            "status": status, "score": score,
+            "status": status,
+            "score": score,
             "school_count": len(schools),
             "detected_area": detected,
             "district": next((s.district.name for s in schools if s.district_id), None),
@@ -503,7 +640,12 @@ class RouteIntelligenceService:
             qs = qs.filter(visit_date__gte=since)
         batches = list(qs)
         if not batches:
-            return {"has_batches": False, "avg_score": None, "counts": {}, "batches": []}
+            return {
+                "has_batches": False,
+                "avg_score": None,
+                "counts": {},
+                "batches": [],
+            }
         counts: dict[str, int] = {}
         for b in batches:
             counts[b.status] = counts.get(b.status, 0) + 1

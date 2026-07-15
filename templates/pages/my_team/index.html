@@ -32,7 +32,13 @@
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
 {% for m in team %}
-<tr class="hover:bg-slate-50/80 transition-colors group cursor-pointer" onclick="window.location='/staff/{{ m.id }}'" tabindex="0" role="link" onkeydown="if(event.key === 'Enter' || event.key === ' ') { window.location='/staff/{{ m.id }}'; event.preventDefault(); }">
+<tr class="edify-data-row transition-colors group cursor-pointer"
+    tabindex="0"
+    role="link"
+    aria-label="Open {{ m.name }} profile"
+    @click="if (!$event.target.closest('a, button, input, select, textarea')) window.location.assign('/staff/{{ m.id }}')"
+    @keydown.enter="window.location.assign('/staff/{{ m.id }}')"
+    @keydown.space.prevent="window.location.assign('/staff/{{ m.id }}')">
 <td class="px-5 py-4">
 <div class="flex items-center gap-3">
 <div class="h-9 w-9 rounded-full bg-slate-100 text-slate-600 font-semibold text-[12px] flex items-center justify-center shrink-0 shadow-sm border border-slate-200 group-hover:border-[var(--edify-accent)] group-hover:text-[var(--edify-accent)] transition-colors">{{ m.initials }}</div>

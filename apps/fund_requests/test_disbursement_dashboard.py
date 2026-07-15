@@ -6,11 +6,13 @@ reimbursements; the accountant disburses / holds / returns; every action is
 audited, notified, and reflected in derive-from-state To-Dos.
 """
 
+import threading
 from datetime import date
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.db import connection
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
@@ -229,8 +231,10 @@ class DisbursementDashboardTest(TestCase):
         # setUp() already schedules one 250_000 activity for this CCEO/month;
         # add a second so the proportional split has two real lines to cover.
         school2 = School.objects.create(
-            school_id="SCH-2", name="Second School",
-            region=self.region, district=self.district,
+            school_id="SCH-2",
+            name="Second School",
+            region=self.region,
+            district=self.district,
         )
         act2 = Activity.objects.create(
             school=school2,
@@ -258,7 +262,8 @@ class DisbursementDashboardTest(TestCase):
         self.assertEqual(len(line_activity_ids), 2)
 
         svc.disburse(
-            self.acct_p, fr.id,
+            self.acct_p,
+            fr.id,
             {"amount": "250000", "method": "Bank Transfer", "reference": "TXN-88"},
         )
         records = Disbursement.objects.filter(fund_request=fr)
@@ -373,3 +378,136 @@ class DisbursementDashboardTest(TestCase):
         # Utilization: allocation from real cost lines; nothing disbursed yet.
         self.assertEqual(ctx["utilization"]["allocation"], "UGX 250K")
         self.assertEqual(ctx["utilization"]["pct"], 0)
+
+
+class DisbursementDoubleClickRaceTest(TransactionTestCase):
+    """Regression test for a double-click on the "Disburse Funds" button: two
+    near-simultaneous POSTs to /disbursements/action must not both pass the
+    "still sent_to_accountant" check and write two sets of Disbursement audit
+    rows. Uses real threads + TransactionTestCase so the two svc.disburse()
+    calls run in genuinely concurrent DB transactions (a plain TestCase wraps
+    the whole test in one transaction and can't reproduce the race)."""
+
+    # TransactionTestCase truncates every table after each test, which would
+    # otherwise silently wipe migration-seeded rows (e.g. the default
+    # CostCatalogue) that other test modules in the same run depend on.
+    # serialized_rollback=True would only restore that seeded state
+    # transiently in THIS class's own setUp (not permanently -- under
+    # --keepdb the next `manage.py test` invocation reuses a database left
+    # flushed), AND it collides with the explicit reseed below (Django
+    # inserts the ORIGINAL serialized snapshot's rows on top of what the
+    # previous test's teardown already reseeded -- duplicate-key IntegrityError
+    # on CostCatalogue's natural-key unique constraint). Deliberately NOT
+    # using serialized_rollback; _post_teardown is the single source of
+    # truth that leaves the kept database in a good state either way.
+
+    def _post_teardown(self):
+        super()._post_teardown()
+        from apps.core.test_seed_utils import reseed_migration_data
+
+        reseed_migration_data()
+
+    def setUp(self):
+        User = get_user_model()
+        self.region = Region.objects.create(name="Central")
+        self.district = District.objects.create(name="Kampala", region=self.region)
+        self.pl = User.objects.create(
+            id="pl-race-1",
+            email="pl-race@edify.org",
+            name="Pat Lead",
+            roles=["Program Lead"],
+            active_role="Program Lead",
+            is_active=True,
+        )
+        self.pl_sp = StaffProfile.objects.create(
+            id="sp-pl-race", user=self.pl, title="PL"
+        )
+        self.cceo = User.objects.create(
+            id="cceo-race-1",
+            email="cceo-race@edify.org",
+            name="Race Cceo",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
+        )
+        self.cceo_sp = StaffProfile.objects.create(
+            id="sp-cceo-race", user=self.cceo, title="CCEO"
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=self.cceo_sp
+        )
+        self.acct = User.objects.create(
+            id="acct-race-1",
+            email="acct-race@edify.org",
+            name="Moses Tindi",
+            roles=["Accountant"],
+            active_role="Accountant",
+            is_active=True,
+        )
+        self.acct_p = _Principal(self.acct)
+
+        school = School.objects.create(
+            school_id="SCH-RACE-1",
+            name="Race School",
+            region=self.region,
+            district=self.district,
+        )
+        act = Activity.objects.create(
+            school=school,
+            delivery_type="staff",
+            activity_type=ActivityType.SCHOOL_VISIT,
+            status="scheduled",
+            responsible_staff_id=self.cceo_sp.id,
+            fy=FY,
+        )
+        ActivityScheduleCostLine.objects.create(
+            activity=act,
+            cost_setting_key="transport_allowance",
+            label="Transport",
+            unit_cost=250_000,
+            quantity=1,
+            amount=250_000,
+            month=MONTH,
+            fiscal_year=FY,
+            catalogue_id="cat-v1",
+        )
+
+    def test_concurrent_disburse_calls_write_exactly_one_set_of_records(self):
+        from apps.fund_requests.finance_models import Disbursement
+
+        fr = pl_svc.approve(_Principal(self.pl, self.pl_sp), self.cceo.id, FY, MONTH)
+
+        barrier = threading.Barrier(2)
+        outcomes = []
+
+        def worker():
+            try:
+                barrier.wait(timeout=5)
+                svc.disburse(
+                    self.acct_p,
+                    fr.id,
+                    {"method": "Mobile Money", "reference": "TXN-RACE"},
+                )
+                outcomes.append("disbursed")
+            except BadRequest as e:
+                outcomes.append(f"blocked:{e}")
+            finally:
+                connection.close()
+
+        threads = [threading.Thread(target=worker) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=10)
+
+        # Exactly one of the two double-click requests must win; the other
+        # must be cleanly rejected — never both silently "succeeding".
+        self.assertEqual(outcomes.count("disbursed"), 1, outcomes)
+        self.assertEqual(
+            sum(1 for o in outcomes if o.startswith("blocked:")), 1, outcomes
+        )
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "disbursed")
+        # Only one activity funds this plan — a duplicate write would leave 2.
+        self.assertEqual(Disbursement.objects.filter(fund_request=fr).count(), 1)

@@ -30,9 +30,10 @@ def _walk_templates():
         for fn in files:
             if fn.endswith(".html"):
                 path = os.path.join(dirpath, fn)
-                yield path.replace(str(settings.BASE_DIR) + os.sep, ""), open(
-                    path, encoding="utf-8", errors="ignore"
-                ).read()
+                yield (
+                    path.replace(str(settings.BASE_DIR) + os.sep, ""),
+                    open(path, encoding="utf-8", errors="ignore").read(),
+                )
 
 
 def ui_quality_checks() -> dict:
@@ -59,7 +60,8 @@ def ui_quality_checks() -> dict:
         for m in _XL.finditer(src):
             cls = m.group(1)
             escaped = "." + cls.replace(":", "\\:").replace("[", "\\[").replace(
-                "]", "\\]").replace("/", "\\/").replace(".", "\\.")
+                "]", "\\]"
+            ).replace("/", "\\/").replace(".", "\\.")
             if compiled_css and escaped not in compiled_css:
                 uncompiled.append((rel, cls))
         for m in _LINK.finditer(src):
@@ -77,31 +79,58 @@ def ui_quality_checks() -> dict:
 
     def check(key, label, items, severity, fix):
         return {
-            "key": key, "label": label, "count": len(items),
+            "key": key,
+            "label": label,
+            "count": len(items),
             "severity": severity if items else "ok",
-            "items": items[:10], "fix": fix,
+            "items": items[:10],
+            "fix": fix,
         }
 
     return {
         "checks": [
-            check("mock_smells", "Templates with mock/sample data markers",
-                  mock_files, "blocking",
-                  "Replace with backend data or a premium empty state."),
-            check("emojis", "Templates using emojis instead of SVG icons",
-                  emoji_files, "warning",
-                  "Swap to professional inline SVG line icons (1em, currentColor)."),
-            check("dead_links", "Static links/HX targets that do not resolve",
-                  dead_links, "blocking",
-                  "Point the button/link at a registered route or remove it."),
-            check("static_chart_series", "Charts with hardcoded numeric series",
-                  static_series, "blocking",
-                  "Bind ApexCharts series to backend context variables."),
-            check("uncompiled_variants", "Responsive classes missing from compiled CSS",
-                  uncompiled, "warning",
-                  "Rebuild Tailwind or switch to a compiled variant (lg:)."),
-            check("light_only_grids", "Charts with light-only gridline colors",
-                  light_grids, "warning",
-                  "Use a translucent gridline (e.g. #94a3b833) readable in both themes."),
+            check(
+                "mock_smells",
+                "Templates with mock/sample data markers",
+                mock_files,
+                "blocking",
+                "Replace with backend data or a premium empty state.",
+            ),
+            check(
+                "emojis",
+                "Templates using emojis instead of SVG icons",
+                emoji_files,
+                "warning",
+                "Swap to professional inline SVG line icons (1em, currentColor).",
+            ),
+            check(
+                "dead_links",
+                "Static links/HX targets that do not resolve",
+                dead_links,
+                "blocking",
+                "Point the button/link at a registered route or remove it.",
+            ),
+            check(
+                "static_chart_series",
+                "Charts with hardcoded numeric series",
+                static_series,
+                "blocking",
+                "Bind ApexCharts series to backend context variables.",
+            ),
+            check(
+                "uncompiled_variants",
+                "Responsive classes missing from compiled CSS",
+                uncompiled,
+                "warning",
+                "Rebuild Tailwind or switch to a compiled variant (lg:).",
+            ),
+            check(
+                "light_only_grids",
+                "Charts with light-only gridline colors",
+                light_grids,
+                "warning",
+                "Use a translucent gridline (e.g. #94a3b833) readable in both themes.",
+            ),
         ],
     }
 

@@ -8,12 +8,63 @@
 <div class="flex items-center justify-between">
 <div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Quality Checks</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Edify Operations · Quality Checks</p>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Edify Operations · CD-raised, PL-actioned quality flags</p>
 </div>
 </div>
 
+{% if can_raise %}
+<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm p-5">
+<h2 class="text-[13px] font-extrabold text-slate-800 mb-3">Raise a Flag</h2>
+<form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-semibold text-[12px] text-slate-600">
+{% csrf_token %}
+<input type="hidden" name="action" value="raise">
+<div>
+<label class="block mb-1 font-bold text-slate-700">Assign to Program Lead</label>
+<select name="assigned_to_user_id" required class="w-full border border-[var(--edify-border)] rounded-lg px-3 py-2 text-[12px]">
+<option value="">Select a Program Lead…</option>
+{% for pl in program_leads %}<option value="{{ pl.id }}">{{ pl.name }}</option>{% endfor %}
+</select>
+</div>
+<div>
+<label class="block mb-1 font-bold text-slate-700">Category</label>
+<input type="text" name="category" placeholder="e.g. data-quality" class="w-full border border-[var(--edify-border)] rounded-lg px-3 py-2 text-[12px]">
+</div>
+<div class="sm:col-span-2">
+<label class="block mb-1 font-bold text-slate-700">Note</label>
+<textarea name="note" required rows="2" class="w-full border border-[var(--edify-border)] rounded-lg px-3 py-2 text-[12px]"></textarea>
+</div>
+<div class="sm:col-span-2">
+<label class="block mb-1 font-bold text-slate-700">Recommended Action</label>
+<input type="text" name="recommended_action" class="w-full border border-[var(--edify-border)] rounded-lg px-3 py-2 text-[12px]">
+</div>
+<div class="sm:col-span-2 flex justify-end">
+<button type="submit" class="px-4 py-2 rounded-lg bg-[var(--edify-primary)] text-white text-[12px] font-bold">Raise Flag</button>
+</div>
+</form>
+</div>
+{% endif %}
+
 <div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
-{% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between"><div><p class="text-[14px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p><p class="text-[11px] text-slate-400">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p></div><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span></li>{% endfor %}</ul>
+{% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between gap-3">
+<div class="min-w-0">
+<p class="text-[14px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p>
+<p class="text-[11.5px] text-slate-500 mt-0.5">{{ f.note }}</p>
+<p class="text-[11px] text-slate-400 mt-0.5">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span>
+{% if can_act and f.assigned_to_user_id == current_user_id and f.status != "resolved" %}
+<form method="POST" class="inline">
+{% csrf_token %}
+<input type="hidden" name="action" value="{% if f.status == 'open' %}acknowledge{% else %}resolve{% endif %}">
+<input type="hidden" name="flag_id" value="{{ f.id }}">
+<button type="submit" class="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50">
+{% if f.status == "open" %}Acknowledge{% else %}Resolve{% endif %}
+</button>
+</form>
+{% endif %}
+</div>
+</li>{% endfor %}</ul>
 {% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg></p><p class="text-[14px] font-bold text-slate-600">No quality flags raised</p></div>{% endif %}
 </div>
 
