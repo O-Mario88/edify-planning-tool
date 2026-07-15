@@ -72,7 +72,7 @@ class CDCommandCenterTest(TestCase):
         self._ssa(self.sch_a, FY, 7.5, {"leadership": 7.0, "enrolment": 6.0})
 
         # Region A: 2 completed (1 with SF ID, 1 without) → 50% compliance.
-        self._act(self.a1_sp.id, self.sch_a, "school_visit", "completed", sf="SV-1")
+        self._act(self.a1_sp.id, self.sch_a, "school_visit", "ia_verified", sf="SV-1")
         self._act(self.a1_sp.id, self.sch_a, "training", "completed", sf="")
         # Region B: planned only → 0% regional achievement.
         self._act(self.b1_sp.id, self.sch_b, "school_visit", "scheduled")
@@ -216,7 +216,7 @@ class CDCommandCenterTest(TestCase):
             by["Active Schools Served"]["value"], "1"
         )  # only sch_a completed
         before = by["Active Schools Served"]["value"]
-        self._act(self.b1_sp.id, self.sch_b, "school_visit", "completed", sf="SV-B")
+        self._act(self.b1_sp.id, self.sch_b, "school_visit", "ia_verified", sf="SV-B")
         after = self._kpis()["Active Schools Served"]["value"]
         self.assertNotEqual(before, after)  # recomputed, not static
 
@@ -382,8 +382,8 @@ class CDTargetCreditConvergenceTest(TestCase):
         # 2 completed visits with an Activity SF ID (validated) + 1 without
         # (provisional — must never silently count, unlike the old raw
         # completed-status count which counted all 3).
-        self._act(self.cceo_sp.id, self.school, "school_visit", "completed", sf="SV-1")
-        self._act(self.cceo_sp.id, self.school, "school_visit", "completed", sf="SV-2")
+        self._act(self.cceo_sp.id, self.school, "school_visit", "ia_verified", sf="SV-1")
+        self._act(self.cceo_sp.id, self.school, "school_visit", "ia_verified", sf="SV-2")
         self._act(self.cceo_sp.id, self.school, "school_visit", "completed", sf="")
 
     def _staff(self, email, name, role):

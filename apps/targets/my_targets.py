@@ -45,6 +45,13 @@ from apps.analytics.pl_analytics_service import (
     VISIT_TYPES,
 )
 
+# Target CREDIT requires IA verification (§8: "no target or impact result may
+# be treated as verified before IA approval"). COMPLETED_STATUSES is broader —
+# it counts pre-IA execution for the PL execution-progress metric — so the
+# ledger uses this stricter set to decide "validated" (credited) vs
+# "provisional" (executed, visible, but not yet counted).
+IA_VERIFIED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
+
 RETURNED_STATUSES = ("returned_by_pl", "returned_by_ia", "cancelled", "rejected")
 
 # Pacing thresholds (mandate §11) — configurable in one place.
@@ -275,12 +282,16 @@ class TargetAchievementService:
                 if a.status in RETURNED_STATUSES:
                     status = "reversed"
                 elif a.status in COMPLETED_STATUSES:
-                    # Validated = executed + Activity SF ID present (program
-                    # proof); IA return above reverses. Completed without SF ID
-                    # stays provisional — visible, never counted.
+                    # Validated (credited) = IA-verified + Activity SF ID
+                    # present. Merely executed/awaiting-IA work stays
+                    # provisional — visible, never counted — until IA
+                    # verification, per §8. IA return above reverses.
                     status = (
                         "validated"
-                        if (a.salesforce_activity_id or "").strip()
+                        if (
+                            a.status in IA_VERIFIED_STATUSES
+                            and (a.salesforce_activity_id or "").strip()
+                        )
                         else "provisional"
                     )
                 else:

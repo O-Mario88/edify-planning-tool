@@ -100,7 +100,10 @@ class MyTargetsPageTest(TestCase):
             defaults={"target": target},
         )
 
-    def _visit(self, planned, status="completed", sf_id="SF-1", user=None, sp=None):
+    # Default status is ia_verified: target CREDIT requires IA verification
+    # (§8), so a "done, credited" fixture visit must be IA-verified, not merely
+    # "completed" (which is pre-IA and only ever provisional).
+    def _visit(self, planned, status="ia_verified", sf_id="SF-1", user=None, sp=None):
         return Activity.objects.create(
             school=self.school,
             activity_type="school_visit",
@@ -198,16 +201,19 @@ class MyTargetsPageTest(TestCase):
         self.assertNotIn("New School", html)  # superseded areas gone
 
     # ── 6–10: validity rules per area ────────────────────────────────────────
-    def test_visit_counts_only_when_validated(self):
-        """Scheduled → no credit. Completed without Activity SF ID → provisional,
-        no credit. Completed with SF ID → validated credit."""
+    def test_visit_counts_only_when_ia_verified(self):
+        """Target credit requires IA verification (§8). Scheduled → no credit.
+        Completed (pre-IA) with SF ID → provisional, still no credit. Only once
+        IA-verified does it become validated credit."""
         self._visit(date(2026, 7, 2), status="scheduled", sf_id="")
-        no_sf = self._visit(date(2026, 7, 3), status="completed", sf_id="")
+        pre_ia = self._visit(date(2026, 7, 3), status="completed", sf_id="SF-9")
         TargetAchievementService.rebuild(self.user, FY)
+        # Executed + SF ID but not yet IA-verified → provisional, NOT counted.
         self.assertEqual(self._achieved()[JULY - 1], 0)
-        row = TargetAchievementLedger.objects.get(source_id=no_sf.id)
+        row = TargetAchievementLedger.objects.get(source_id=pre_ia.id)
         self.assertEqual(row.validation_status, "provisional")
-        Activity.objects.filter(id=no_sf.id).update(salesforce_activity_id="SF-9")
+        # IA verifies → credited.
+        Activity.objects.filter(id=pre_ia.id).update(status="ia_verified")
         TargetAchievementService.rebuild(self.user, FY)
         self.assertEqual(self._achieved()[JULY - 1], 1)
 

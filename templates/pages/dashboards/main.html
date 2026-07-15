@@ -69,9 +69,14 @@
               <thead><tr><th scope="col">Activity</th><th scope="col">Time</th><th scope="col">Related to</th><th scope="col">Status</th></tr></thead>
               <tbody>
                 {% for item in priorities %}
-                <tr><td><strong>{{ item.activity }}</strong></td><td>{{ item.time }}</td><td>{{ item.related_to }}</td><td><span class="admin-status {{ item.status_class }}">{{ item.status }}</span></td></tr>
+                <tr>
+                  <td data-label="Activity"><strong>{{ item.activity }}</strong></td>
+                  <td data-label="Time">{{ item.time }}</td>
+                  <td data-label="Related to">{{ item.related_to }}</td>
+                  <td data-label="Status"><span class="admin-status {{ item.status_class }}">{{ item.status }}</span></td>
+                </tr>
                 {% empty %}
-                <tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>Nothing scheduled for today.</span><small>Your next scheduled activity will appear here.</small></div></td></tr>
+                <tr class="admin-table__empty-row"><td colspan="4"><div class="admin-empty admin-empty--table"><span>Nothing scheduled for today.</span><small>Your next scheduled activity will appear here.</small></div></td></tr>
                 {% endfor %}
               </tbody>
             </table>

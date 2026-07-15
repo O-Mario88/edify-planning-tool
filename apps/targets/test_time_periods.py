@@ -78,7 +78,8 @@ class TimePeriodTargetsTest(TestCase):
             school=self.school,
             activity_type="school_visit",
             delivery_type="staff",
-            status="completed",
+            # IA-verified: target credit requires IA verification (§8).
+            status="ia_verified",
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
             quarter=quarter,
@@ -99,15 +100,15 @@ class TimePeriodTargetsTest(TestCase):
         # count, so it needs a rebuild first — exactly like My/Team Targets.
         TargetAchievementService.rebuild(self.cceo, FY)
 
-        completed = Activity.objects.filter(status="completed", quarter="Q3")
+        completed = Activity.objects.filter(status="ia_verified", quarter="Q3")
         pct, ach, tgt = CDAnalyticsService._completion_vs_target(
             self.cceo_sp.id, completed, FY, quarter="Q3"
         )
         self.assertEqual(tgt, 2)  # 8 ÷ 4
-        self.assertEqual(ach, 2)  # only Q3 work, validated (has an SF ID)
+        self.assertEqual(ach, 2)  # only Q3 work, validated (IA-verified + SF ID)
         self.assertEqual(pct, 100)
         pct_fy, ach_fy, tgt_fy = CDAnalyticsService._completion_vs_target(
-            self.cceo_sp.id, Activity.objects.filter(status="completed"), FY
+            self.cceo_sp.id, Activity.objects.filter(status="ia_verified"), FY
         )
         self.assertEqual(tgt_fy, 8)  # FY Cumulative keeps the annual target
         self.assertEqual(ach_fy, 3)

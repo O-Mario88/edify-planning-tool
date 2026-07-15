@@ -127,7 +127,8 @@ class TargetFormulaEndToEndTest(TestCase):
         )
         return u, StaffProfile.objects.create(user=u, title=role)
 
-    def _visit(self, sp, month_of_fy, status="completed", sf="SV-1"):
+    # Default ia_verified: target credit requires IA verification (§8).
+    def _visit(self, sp, month_of_fy, status="ia_verified", sf="SV-1"):
         d, _ = Cal.month_range(self.fy, month_of_fy)
         return Activity.objects.create(
             school=self.school,
@@ -141,7 +142,9 @@ class TargetFormulaEndToEndTest(TestCase):
             scheduled_date=timezone.make_aware(
                 timezone.datetime(d.year, d.month, d.day, 9, 0)
             ),
-            evidence_status="accepted" if status == "completed" else "",
+            evidence_status="accepted"
+            if status in ("completed", "ia_verified", "accountant_confirmed", "closed")
+            else "",
             salesforce_activity_id=sf,
         )
 

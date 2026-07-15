@@ -97,12 +97,12 @@ class CDAnalyticsTest(TestCase):
 
         # Activities (staff-delivered) — a1 visit + training, b1 visit.
         self.act_a1_visit = self._act(
-            self.a1_sp.id, self.sch_a1, "school_visit", "completed", sf="SV-A1"
+            self.a1_sp.id, self.sch_a1, "school_visit", "ia_verified", sf="SV-A1"
         )
         self.act_a1_train = self._act(
-            self.a1_sp.id, self.sch_a1, "training", "completed", teachers=10, leaders=3
+            self.a1_sp.id, self.sch_a1, "training", "ia_verified", teachers=10, leaders=3
         )
-        self._act(self.b1_sp.id, self.sch_b1, "school_visit", "completed", sf="SV-B1")
+        self._act(self.b1_sp.id, self.sch_b1, "school_visit", "ia_verified", sf="SV-B1")
 
         # Partner P delivers on a1 (attributed + one verified activity).
         self.partner = Partner.objects.create(name="Hope Builders Network")
@@ -549,7 +549,7 @@ class CDRefinedSpecTest(CDAnalyticsTest):
             StaffSupervisorAssignment.objects.create(supervisor=pl_sp, supervisee=sp)
             school = self._school(f"EX{i}", self.dist_a, 50, ssa_done=False)
             StaffSchoolAssignment.objects.create(staff=sp, school_id=school.id)
-            self._act(sp.id, school, "school_visit", "completed", sf=f"SV-EX{i}")
+            self._act(sp.id, school, "school_visit", "ia_verified", sf=f"SV-EX{i}")
         cd = resolve_cd_scope(FY)
         acts = _country_activities(cd)
         with self.assertNumQueries(11):

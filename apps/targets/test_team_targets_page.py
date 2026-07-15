@@ -127,7 +127,9 @@ class TeamTargetsPageTest(TestCase):
         sp,
         planned,
         atype="school_visit",
-        status="completed",
+        # Target credit requires IA verification (§8): a "done, credited"
+        # fixture activity must be IA-verified, not merely "completed".
+        status="ia_verified",
         sf_id="SF-OK",
         delivery="staff",
         partner=None,
@@ -438,9 +440,11 @@ class TeamTargetsPageTest(TestCase):
     def test_team_visit_target_counts_only_valid_visits(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)
         self._act(self.cceo1_sp, date(2026, 7, 2), status="scheduled", sf_id="")
-        self._act(self.cceo1_sp, date(2026, 7, 3), status="completed", sf_id="")
+        # Completed + SF ID but pre-IA → still provisional, not counted (§8).
+        self._act(self.cceo1_sp, date(2026, 7, 3), status="completed", sf_id="SF-8")
         self.assertEqual(self._area(self._page(), "school_visits")["achieved"], 0)
-        self._act(self.cceo1_sp, date(2026, 7, 6), status="completed", sf_id="SF-9")
+        # Only an IA-verified visit is credited.
+        self._act(self.cceo1_sp, date(2026, 7, 6), status="ia_verified", sf_id="SF-9")
         self.assertEqual(self._area(self._page(), "school_visits")["achieved"], 1)
 
     def test_team_cluster_meeting_target_counts_only_valid_meetings(self):
@@ -764,7 +768,9 @@ class TeamTargetsTodoTest(TestCase):
                 school=school,
                 activity_type="school_visit",
                 delivery_type="staff",
-                status="completed",
+                # IA-verified so the work is actually credited (§8) and the
+                # CCEO recovers out of the high-risk band.
+                status="ia_verified",
                 responsible_staff_id=self.cceo_sp.id,
                 fy=FY,
                 quarter="Q4",

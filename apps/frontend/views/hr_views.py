@@ -1,87 +1,270 @@
+from __future__ import annotations
+
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import redirect, render
 
+from apps.accounts.models import Leave, StaffProfile
 from apps.core.permissions import require_page_permission
+from apps.hr.models import (
+    Application,
+    CompensationRecord,
+    ComplianceRequirement,
+    EmployeeComplianceRecord,
+    EmployeeRelationsCase,
+    HRAuditEvent,
+    OffboardingPlan,
+    OnboardingPlan,
+    PayrollReadinessRecord,
+    PerformanceImprovementPlan,
+    PerformanceReview,
+    SuccessionCandidate,
+    Vacancy,
+)
+
+
+SUCCESS_TERMS = ("active", "approved", "closed", "completed", "compliant", "hired", "open", "ready", "resolved", "verified")
+DANGER_TERMS = ("critical", "escalated", "expired", "missing", "overdue", "rejected", "suspended")
+WARNING_TERMS = ("draft", "pending", "review", "screen", "triage", "progress", "submitted")
+
+
+def _status_tone(value) -> str:
+    normalized = str(value or "").strip().lower()
+    if any(term in normalized for term in DANGER_TERMS):
+        return "danger"
+    if any(term in normalized for term in SUCCESS_TERMS):
+        return "success"
+    if any(term in normalized for term in WARNING_TERMS):
+        return "warning"
+    return "info"
+
+
+def _cell(label: str, value, *, primary=False, status=False) -> dict:
+    display = "—" if value in (None, "") else str(value)
+    return {
+        "label": label,
+        "value": display,
+        "primary": primary,
+        "status": status,
+        "tone": _status_tone(display) if status else "",
+    }
+
+
+def _metric(label: str, value, helper: str, tone="info") -> dict:
+    return {"label": label, "value": value, "helper": helper, "tone": tone}
+
+
+def _profile_scope(request):
+    """Return the staff scope visible to the active role.
+
+    Admin is organization-wide, PL is limited to its supervised team, and the
+    remaining leadership/people roles are country-scoped when their profile has
+    a country. This prevents a shared HR surface from widening data access.
+    """
+
+    profiles = StaffProfile.objects.select_related("user").filter(
+        user__deleted_at__isnull=True
+    )
+    role = getattr(request.user, "active_role", "")
+    if role == "Admin":
+        return profiles
+
+    viewer = getattr(request.user, "staff_profile", None)
+    if role == "ProgramLead" and viewer:
+        return profiles.filter(
+            Q(id=viewer.id) | Q(supervisor_links__supervisor=viewer)
+        ).distinct()
+    if viewer and viewer.country:
+        return profiles.filter(country=viewer.country)
+    return profiles.none()
+
+
+def _search_profiles(profiles, query: str):
+    if not query:
+        return profiles
+    return profiles.filter(
+        Q(user__name__icontains=query)
+        | Q(user__email__icontains=query)
+        | Q(title__icontains=query)
+        | Q(department__icontains=query)
+        | Q(country__icontains=query)
+    )
+
+
+def _render_workspace(request, *, title, description, metrics, rows, primary_action, empty_title="No records in this scope", empty_body="New records will appear here as the connected workflow progresses."):
+    paginator = Paginator(rows, 25)
+    page = paginator.get_page(request.GET.get("page") or 1)
+    context = {
+        "title": title,
+        "description": description,
+        "metrics": metrics,
+        "page_obj": page,
+        "rows": page.object_list,
+        "primary_action": primary_action,
+        "empty_title": empty_title,
+        "empty_body": empty_body,
+        "search": (request.GET.get("q") or "").strip(),
+    }
+    return render(request, "pages/hr/module_workspace.html", context)
 
 
 @require_page_permission("org_structure")
 def org_structure_view(request):
-    return render(
+    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
+    rows = [
+        {"cells": [
+            _cell("Team member", profile.user.name, primary=True),
+            _cell("Role", profile.title or profile.user.active_role),
+            _cell("Department", profile.department),
+            _cell("Country", profile.country),
+            _cell("Lifecycle", profile.get_onboarding_state_display(), status=True),
+        ]}
+        for profile in profiles.order_by("department", "user__name")
+    ]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Organization Structure",
-            "capabilities": [
-                "Visual organogram reporting lines mapping.",
-                "Functional department structures and roles hierarchy.",
-                "Cross-functional team matrix definitions.",
-            ],
-        },
+        title="Organization Structure",
+        description="A live, role-scoped directory of reporting capacity, departments, countries, and staff lifecycle state.",
+        metrics=[
+            _metric("People in scope", profiles.count(), "active and onboarding profiles", "info"),
+            _metric("Active", profiles.filter(onboarding_state="active").count(), "fully activated staff", "success"),
+            _metric("Departments", profiles.exclude(department__isnull=True).exclude(department="").values("department").distinct().count(), "represented in this scope"),
+            _metric("Countries", profiles.values("country").distinct().count(), "operating footprint"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open People Directory", "href": "/staff"},
     )
 
 
 @require_page_permission("workforce_planning")
 def workforce_planning_view(request):
-    return render(
+    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
+    grouped = profiles.values("department", "country").annotate(
+        headcount=Count("id"),
+        active=Count("id", filter=Q(onboarding_state="active")),
+        pending=Count("id", filter=Q(onboarding_state="pending")),
+    ).order_by("country", "department")
+    rows = [{"cells": [
+        _cell("Department", item["department"] or "Unassigned", primary=True),
+        _cell("Country", item["country"]),
+        _cell("Headcount", item["headcount"]),
+        _cell("Active", item["active"]),
+        _cell("Pending activation", item["pending"], status=item["pending"] > 0),
+    ]} for item in grouped]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Workforce Planning & Capacity",
-            "capabilities": [
-                "FTE headcount targets and budget gap analysis.",
-                "Staff workload distribution and overload analysis.",
-                "Recruitment priorities planning.",
-            ],
-        },
+        title="Workforce Planning & Capacity",
+        description="A truthful headcount and activation view derived from the current people directory—without forecast or budget values that have not been configured.",
+        metrics=[
+            _metric("Headcount", profiles.count(), "people in your access scope"),
+            _metric("Active", profiles.filter(onboarding_state="active").count(), "available workforce", "success"),
+            _metric("Pending", profiles.filter(onboarding_state="pending").count(), "awaiting activation", "warning"),
+            _metric("Vacancies", Vacancy.objects.filter(status__in=["Approved", "Open", "Screening"]).count(), "approved or recruiting", "info"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review Recruitment", "href": "/recruitment"},
+        empty_title="No workforce profiles in this scope",
     )
 
 
 @require_page_permission("recruitment")
 def recruitment_view(request):
-    return render(
+    query = (request.GET.get("q") or "").strip()
+    vacancies = Vacancy.objects.select_related("reporting_manager").annotate(application_count=Count("applications"))
+    viewer = getattr(request.user, "staff_profile", None)
+    if request.user.active_role != "Admin":
+        vacancies = vacancies.filter(country=getattr(viewer, "country", "")) if viewer else vacancies.none()
+    if query:
+        vacancies = vacancies.filter(Q(role__icontains=query) | Q(department__icontains=query) | Q(country__icontains=query) | Q(status__icontains=query))
+    rows = [{"cells": [
+        _cell("Vacancy", vacancy.role, primary=True),
+        _cell("Department", vacancy.department),
+        _cell("Country", vacancy.country),
+        _cell("Applications", vacancy.application_count),
+        _cell("Target start", vacancy.target_start_date),
+        _cell("Status", vacancy.status, status=True),
+    ]} for vacancy in vacancies.order_by("-created_at")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Recruitment & Vacancies",
-            "capabilities": [
-                "Requisition and vacancy approval workflows.",
-                "Job descriptions registry and salary bands mapping.",
-                "Integration with global recruitment channels.",
-            ],
-        },
+        title="Recruitment & Vacancies",
+        description="Approved and active vacancies connected to the real candidate pipeline, reporting owners, and target start dates.",
+        metrics=[
+            _metric("Open", vacancies.filter(status="Open").count(), "accepting candidates", "success"),
+            _metric("Pending approval", vacancies.filter(status="Pending Approval").count(), "requiring decision", "warning"),
+            _metric("In screening", vacancies.filter(status="Screening").count(), "active selection", "info"),
+            _metric("Applications", Application.objects.filter(vacancy__in=vacancies).count(), "across visible vacancies"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open Candidate Pipeline", "href": "/candidate-pipeline"},
+        empty_title="No vacancies have been created",
+        empty_body="Approved job openings will appear here once HR starts the recruitment workflow.",
     )
 
 
 @require_page_permission("candidate_pipeline")
 def candidate_pipeline_view(request):
-    return render(
+    query = (request.GET.get("q") or "").strip()
+    applications = Application.objects.select_related("candidate", "vacancy")
+    viewer = getattr(request.user, "staff_profile", None)
+    if request.user.active_role != "Admin":
+        applications = applications.filter(vacancy__country=getattr(viewer, "country", "")) if viewer else applications.none()
+    if query:
+        applications = applications.filter(Q(candidate__name__icontains=query) | Q(candidate__email__icontains=query) | Q(vacancy__role__icontains=query) | Q(stage__icontains=query))
+    rows = [{"cells": [
+        _cell("Candidate", application.candidate.name, primary=True),
+        _cell("Vacancy", application.vacancy.role),
+        _cell("Country", application.vacancy.country),
+        _cell("Stage", application.stage, status=True),
+        _cell("Updated", application.updated_at.date()),
+    ]} for application in applications.order_by("-updated_at")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Candidate Pipeline",
-            "capabilities": [
-                "Applicant tracking system (ATS) pipeline states.",
-                "Interview schedules and screening forms.",
-                "Reference check logging and offer letter generation.",
-            ],
-        },
+        title="Candidate Pipeline",
+        description="Every candidate application, scoped to visible vacancies and grouped by its current evidence-backed selection stage.",
+        metrics=[
+            _metric("Applications", applications.count(), "visible candidate records"),
+            _metric("Screening", applications.filter(stage__in=["Screened", "Shortlisted"]).count(), "in early assessment", "info"),
+            _metric("Interviews", applications.filter(stage__in=["Interview 1", "Interview 2", "Assessment", "Reference Check"]).count(), "in active selection", "warning"),
+            _metric("Hired", applications.filter(stage="Hired").count(), "accepted candidates", "success"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review Vacancies", "href": "/recruitment"},
+        empty_title="No candidate applications yet",
     )
 
 
 @require_page_permission("onboarding")
 def onboarding_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    plans = OnboardingPlan.objects.filter(staff_id__in=visible_ids).select_related("staff__user").annotate(
+        total_tasks=Count("tasks"), completed_tasks=Count("tasks", filter=Q(tasks__is_completed=True))
+    )
+    if query:
+        plans = plans.filter(Q(staff__user__name__icontains=query) | Q(staff__country__icontains=query) | Q(status__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", plan.staff.user.name, primary=True),
+        _cell("Role", plan.staff.title or plan.staff.user.active_role),
+        _cell("Country", plan.staff.country),
+        _cell("Start date", plan.start_date),
+        _cell("Checklist", f"{plan.completed_tasks} of {plan.total_tasks}"),
+        _cell("Status", plan.status, status=True),
+    ]} for plan in plans.order_by("-created_at")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Staff Onboarding",
-            "capabilities": [
-                "New hire orientation checklist tracking.",
-                "Automated system account setup queues.",
-                "Documents collection and supervisor orientation tasks.",
-            ],
-        },
+        title="Staff Onboarding",
+        description="New-hire activation plans with live checklist completion, start dates, and ownership context.",
+        metrics=[
+            _metric("Plans", plans.count(), "onboarding records in scope"),
+            _metric("Active", plans.filter(status="Active").count(), "fully activated", "success"),
+            _metric("In progress", plans.exclude(status__in=["Active", "Overdue"]).count(), "moving through checklist", "info"),
+            _metric("Overdue", plans.filter(status="Overdue").count(), "requiring intervention", "danger"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open People Directory", "href": "/staff"},
+        empty_title="No onboarding plans in this scope",
     )
 
 

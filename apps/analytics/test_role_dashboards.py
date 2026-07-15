@@ -241,7 +241,8 @@ class RoleDashboardsTest(TestCase):
             school=school,
             activity_type="school_visit",
             delivery_type="staff",
-            status="completed",
+            # IA-verified so it credits the target ledger (§8).
+            status="ia_verified",
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
             quarter="Q3",
