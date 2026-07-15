@@ -1,0 +1,45 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Confirm Reimbursement Receipt{% endblock %}
+{% block drawer_subtitle %}Confirm the reimbursement disbursed for {{ act.activityType|title|replace_underscore }}{% if act.school %} @ {{ act.school.name }}{% endif %} actually arrived{% endblock %}
+
+{% block drawer_body %}
+<form
+hx-post="/my-plan/{{ act.id }}/confirm-reimbursement-receipt"
+hx-target="#reimbursement-receipt-errors"
+class="space-y-4 text-[12px] font-bold text-slate-600"
+>
+{% csrf_token %}
+<div id="reimbursement-receipt-errors"></div>
+
+{% if adv %}
+<div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1.5">
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reimbursement disbursed to you</p>
+<p class="text-[18px] font-semibold text-slate-800">{{ adv.reimbursed_amount|ugx }}</p>
+<p class="edify-text-caption text-slate-500 font-semibold">Reference: {{ adv.reimburse_reference|default:"—" }}</p>
+</div>
+
+<div>
+<label for="amount" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Amount Received (UGX)</label>
+<input type="number" name="amount" id="amount" required min="0"
+value="{{ adv.reimbursed_amount }}"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+</div>
+
+<p class="edify-text-caption font-semibold text-slate-400 leading-relaxed">
+Confirming closes the finance loop on this reimbursement. If the amount received
+does not match, contact the Accountant before confirming.
+</p>
+
+<div class="pt-2 flex items-center justify-end gap-2">
+<button type="submit"
+class="flex items-center gap-1.5 h-10 px-5 !bg-[var(--edify-primary)] !text-white text-[12px] font-bold rounded-lg hover:bg-opacity-95 shadow-sm focus:outline-none transition-all">
+Confirm Receipt
+</button>
+</div>
+{% else %}
+<p class="edify-text-caption font-semibold text-slate-400">No disbursed reimbursement is awaiting receipt confirmation on this activity.</p>
+{% endif %}
+</form>
+{% endblock %}

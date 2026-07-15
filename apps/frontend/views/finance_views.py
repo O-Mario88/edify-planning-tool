@@ -432,12 +432,33 @@ def confirm_accountability_action(request):
                         status=400,
                     )
                 for adv in pending:
+                    # An under-spend's returned amount is accountant-verified
+                    # as part of this single "Confirm Accountability
+                    # Clearance" click (mandate §11) — a genuine, separately
+                    # audited verify_return() call, not a silent trust of the
+                    # employee's self-declared figure.
+                    if adv.returned_amount:
+                        advance_service.verify_return(
+                            adv.id, {"reference": ""}, request.user
+                        )
                     advance_service.approve_accountability(adv.id, request.user)
 
-                # Close the weekly request only when the whole set is accounted.
+                # Close the weekly request once the whole set has reached a
+                # terminal cleared state — ACCOUNTED (exact-spend/verified
+                # return) or REIMBURSED (an over-spent advance's
+                # reimbursement was disbursed and receipt-confirmed).
+                # REIMBURSEMENT_SUBMITTED/_DISBURSED are legitimate
+                # in-progress states that must NOT close the request yet.
                 for adv in advances:
                     adv.refresh_from_db()
-                if all(a.status == AdvanceRequestStatus.ACCOUNTED for a in advances):
+                if all(
+                    a.status
+                    in (
+                        AdvanceRequestStatus.ACCOUNTED,
+                        AdvanceRequestStatus.REIMBURSED,
+                    )
+                    for a in advances
+                ):
                     codes = sorted(
                         {
                             a.accountability_netsuite_id

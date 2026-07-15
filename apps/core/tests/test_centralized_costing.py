@@ -412,11 +412,21 @@ class CentralizedCostingTest(APITestCase):
         )
         self.assertEqual(claim["status"], "reimbursement_submitted")
 
-        # Accountant reimburses.
+        # Accountant reimburses — money is sent but not yet "reimbursed"
+        # (financially cleared) until the employee confirms receipt
+        # (2026-07-15 finance-unification mandate).
         self._as(accountant)
         reimbursed = self._post(
             f"/api/fund-requests/advances/{adv.id}/reimburse",
             {"amount": adv.amount, "method": "bank", "reference": "BANK-1"},
             200,
         )
-        self.assertEqual(reimbursed["status"], "reimbursed")
+        self.assertEqual(reimbursed["status"], "reimbursement_disbursed")
+
+        from apps.fund_requests.advance_service import confirm_reimbursement_receipt
+
+        self._as(self.cceo)
+        confirmed = confirm_reimbursement_receipt(
+            adv.id, {"amount": adv.amount}, self.cceo
+        )
+        self.assertEqual(confirmed["status"], "reimbursed")

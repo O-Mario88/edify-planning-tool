@@ -12,7 +12,7 @@ from apps.activities.models import (
     ActivityTimelineEvent,
 )
 from apps.evidence.models import EvidenceRecord
-from apps.fund_requests.models import Disbursement, NetSuiteExpenseRecord
+from apps.fund_requests.models import NetSuiteExpenseRecord, PartnerPayment
 from apps.notifications.services import WorkflowNotificationService
 
 
@@ -108,6 +108,7 @@ class ClosureEligibilityService:
                         "accountability_pending",
                         "accounted",
                         "reimbursement_submitted",
+                        "reimbursement_disbursed",
                         "reimbursed",
                     ]
                 )
@@ -260,25 +261,49 @@ class ActivityClosureService:
                 },
             )
 
-            # Freeze snapshot of financial stats
+            # Freeze snapshot of financial stats. Sourced from AdvanceRequest
+            # (System B) rather than the legacy Disbursement model (System A):
+            # AdvanceDisbursementService.disburse_advance always mirrors its
+            # writes into the same AdvanceRequest rows, so AdvanceRequest is
+            # the superset covering both paths — reading only Disbursement
+            # left activities funded purely through the weekly-advance path
+            # (which never creates a Disbursement row) with a silent 0 here.
             budget_total = (
                 activity.schedule_cost_lines.aggregate(s=Sum("amount"))["s"] or 0
             )
-            disb_total = (
-                Disbursement.objects.filter(activity=activity).aggregate(
-                    s=Sum("amount_disbursed")
+            adv_agg = activity.advance_requests.aggregate(
+                d=Sum("disbursed_amount"),
+                r=Sum("reimbursed_amount"),
+                a=Sum("accounted_amount"),
+            )
+            partner_total = (
+                PartnerPayment.objects.filter(activity=activity).aggregate(
+                    s=Sum("amount_paid")
                 )["s"]
                 or 0
             )
+            disb_total = (adv_agg["d"] or 0) + (adv_agg["r"] or 0) + partner_total
+            actual_spend_total = (adv_agg["a"] or 0) + partner_total
             ns_rec = NetSuiteExpenseRecord.objects.filter(activity=activity).first()
-            ns_id = ns_rec.netsuite_expense_id if ns_rec else None
+            ns_id = (
+                ns_rec.netsuite_expense_id
+                if ns_rec
+                else (
+                    activity.advance_requests.exclude(
+                        accountability_netsuite_id__isnull=True
+                    )
+                    .exclude(accountability_netsuite_id="")
+                    .values_list("accountability_netsuite_id", flat=True)
+                    .first()
+                )
+            )
 
             CompletedActivitySnapshot.objects.update_or_create(
                 activity=activity,
                 defaults={
                     "final_budget_amount": budget_total,
                     "disbursed_amount": disb_total,
-                    "actual_spend_amount": disb_total,
+                    "actual_spend_amount": actual_spend_total,
                     "netsuite_expense_id": ns_id,
                     "evidence_count": EvidenceRecord.objects.filter(
                         activity=activity

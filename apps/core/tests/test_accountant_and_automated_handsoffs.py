@@ -14,9 +14,11 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.fund_requests.weekly_service import disburse as disburse_weekly
 from apps.fund_requests.advance_service import (
     submit_accountability,
+    verify_return,
     approve_accountability,
     submit_reimbursement,
     reimburse as process_reimburse,
+    confirm_reimbursement_receipt,
 )
 from apps.core.rbac import EdifyRole
 
@@ -134,9 +136,21 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
         self.assertEqual(self.adv.returned_amount, 5000)
         self.assertEqual(self.adv.accountability_netsuite_id, "EXP-9900")
 
-        # Approve/Confirm — final clearance requires IA verification first.
+        # Under-spend (45,000 accounted vs 50,000 disbursed) requires the
+        # Accountant to verify the return before clearance can proceed
+        # (mandate §11) — a direct approve_accountability() call without it
+        # must be rejected.
         self.activity.ia_verification_status = "confirmed"
         self.activity.save(update_fields=["ia_verification_status"])
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaises(BadRequest):
+            approve_accountability(self.adv.id, self.accountant)
+
+        verify_return(self.adv.id, {"reference": "RET-9900"}, self.accountant)
+        self.adv.refresh_from_db()
+        self.assertIsNotNone(self.adv.return_verified_at)
+
         approve_accountability(self.adv.id, self.accountant)
         self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTED)
@@ -157,13 +171,24 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
         self.assertEqual(self.adv.status, AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED)
         self.assertEqual(self.adv.accountability_netsuite_id, "EXP-9901")
 
-        # Reimburse/Disburse
+        # Reimburse/Disburse — money is sent but not yet "reimbursed"
+        # (financially cleared) until the employee confirms receipt.
         process_reimburse(
             self.adv.id,
             {"method": "bank_transfer", "reference": "BANK-REF-99"},
             self.accountant,
         )
         self.adv.refresh_from_db()
+        self.assertEqual(self.adv.status, AdvanceRequestStatus.REIMBURSEMENT_DISBURSED)
+        self.assertEqual(self.adv.reimburse_method, "bank_transfer")
+        self.assertEqual(self.adv.reimburse_reference, "BANK-REF-99")
+        # The original advance's own disbursement fields are untouched — a
+        # self-funded activity never had an original advance disbursement.
+        self.assertIsNone(self.adv.disbursed_amount)
+
+        confirm_reimbursement_receipt(
+            self.adv.id, {"amount": 50000}, self.cceo_user
+        )
+        self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.REIMBURSED)
-        self.assertEqual(self.adv.disburse_method, "bank_transfer")
-        self.assertEqual(self.adv.disburse_reference, "BANK-REF-99")
+        self.assertEqual(self.adv.reimbursement_receipt_confirmed_amount, 50000)

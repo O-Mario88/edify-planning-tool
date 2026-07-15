@@ -421,11 +421,17 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "FINANCE OPERATIONS",
         "items": [
-            {
-                "label": "Advances Queue",
-                "url": "/accounts/advances/",
-                "page_key": "finance_advances",
-            },
+            # "Advances Queue" (/accounts/advances/) and "Accountability"
+            # (/accounts/accountability/) intentionally NOT linked here as of
+            # the 2026-07-15 finance-unification mandate — both pages' sole
+            # actions (mark_disbursed_action, netsuite_id_action) are
+            # retired: disbursing an advance and entering its NetSuite
+            # Expense ID now happen exclusively through the canonical weekly/
+            # advance flow (Disbursement Dashboard, /disbursements +
+            # apps.fund_requests.advance_service), where the RESPONSIBLE
+            # EMPLOYEE — never the Accountant — originates the NetSuite ID.
+            # The two legacy pages still exist for historical/read access at
+            # their URLs; they are just no longer a sidebar dead end.
             {
                 "label": "Partner Payments",
                 "url": "/accounts/partner-payments/",
@@ -435,10 +441,12 @@ SIDEBAR_ITEMS = [
             # backed) intentionally NOT linked here — ReimbursementService.
             # claim_reimbursement() has zero production callers (only tests
             # create a ReimbursementClaim), so this queue is permanently
-            # empty. The real, fully-wired self-funded reimbursement flow
-            # lives on AdvanceRequest (advance_service.submit_reimbursement /
-            # .reimburse, status REIMBURSEMENT_SUBMITTED) and is already
-            # surfaced in the Disbursement Dashboard queue via
+            # empty. The real, fully-wired reimbursement flow (self-funded
+            # activities AND advance-funded over-spend) lives on
+            # AdvanceRequest (advance_service.submit_reimbursement/reimburse/
+            # confirm_reimbursement_receipt, status REIMBURSEMENT_SUBMITTED ->
+            # REIMBURSEMENT_DISBURSED -> REIMBURSED) and is already surfaced
+            # in the Disbursement Dashboard queue via
             # disbursement_dashboard_service._reimbursement_items(). Keeping
             # a sidebar link to the dead queue would be a permanent-empty-
             # state trap for every Accountant.
@@ -446,11 +454,6 @@ SIDEBAR_ITEMS = [
                 "label": "Batch Payments",
                 "url": "/accounts/batch-payments/",
                 "page_key": "finance_batch_payments",
-            },
-            {
-                "label": "Accountability",
-                "url": "/accounts/accountability/",
-                "page_key": "finance_accountability",
             },
             {
                 "label": "Approval History",

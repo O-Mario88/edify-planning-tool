@@ -15,10 +15,8 @@ from apps.fund_requests.models import (
 )
 from apps.fund_requests.finance_services import (
     FinanceBlockedReasonService,
-    AdvanceDisbursementService,
     PartnerPaymentService,
     ReimbursementService,
-    NetSuiteExpenseService,
 )
 from apps.fund_requests.disbursement_dashboard_service import weekly_status_buckets
 
@@ -325,27 +323,22 @@ def ready_for_advance_view(request):
 
 @require_page_permission("disbursements")
 def mark_disbursed_action(request, activity_id):
-    """POST to record a disbursement in the advance drawer."""
-    activity = get_object_or_404(Activity, id=activity_id)
-
-    if request.method == "POST":
-        method = request.POST.get("payment_method")
-        reference = request.POST.get("payment_reference", "").strip()
-        notes = request.POST.get("notes", "").strip()
-
-        try:
-            amount = int(request.POST.get("amount_disbursed", 0))
-            AdvanceDisbursementService.disburse_advance(
-                activity, amount, method, reference, request.user.user_id, notes
-            )
-            messages.success(
-                request,
-                f"Advance of {amount} UGX disbursed for Activity #{activity.id[:8]} successfully.",
-            )
-        except Exception as e:
-            messages.error(request, f"Disbursement failed: {e}")
-
-    return redirect("/accounts/advances/")
+    """RETIRED (2026-07-15 finance-unification mandate). This activity-level
+    disburse path shared the same AdvanceRequest rows the canonical weekly/
+    advance disburse queues (apps.fund_requests.weekly_service.disburse /
+    advance_service.disburse) read from — two live entry points onto the
+    same money was a genuine double-disbursement hazard the mandate
+    explicitly forbids ("no parallel accountability workflows"). Disbursement
+    now happens exclusively through /disbursements
+    (disbursement_dashboard_service) and the weekly advance queue. This route
+    is kept (rather than 404ing) only so old bookmarks/links redirect
+    cleanly; it performs no mutation."""
+    messages.info(
+        request,
+        "This disbursement path has been retired — use the Disbursement "
+        "Dashboard to disburse advances.",
+    )
+    return redirect("/disbursements")
 
 
 @require_page_permission("disbursements")
@@ -451,27 +444,20 @@ def accountability_view(request):
 
 @require_page_permission("disbursements")
 def netsuite_id_action(request, activity_id):
-    """POST to record NetSuite Expense ID."""
-    activity = get_object_or_404(Activity, id=activity_id)
-
-    if request.method == "POST":
-        netsuite_id = request.POST.get("netsuite_expense_id", "").strip()
-        expense_date = request.POST.get("expense_date")
-        notes = request.POST.get("notes", "").strip()
-
-        try:
-            amount = int(request.POST.get("amount_entered", 0))
-            NetSuiteExpenseService.enter_netsuite_id(
-                activity, netsuite_id, amount, expense_date, request.user.user_id, notes
-            )
-            messages.success(
-                request,
-                f"NetSuite ID {netsuite_id} entered for Activity #{activity.id[:8]} successfully.",
-            )
-        except Exception as e:
-            messages.error(request, f"NetSuite ID entry failed: {e}")
-
-    return redirect("/accounts/accountability/")
+    """RETIRED (2026-07-15 finance-unification mandate). Letting the
+    Accountant type the NetSuite Expense ID here directly contradicted the
+    canonical rule: the RESPONSIBLE EMPLOYEE completes accountability in
+    NetSuite and enters the resulting ID; the Accountant only verifies it
+    (apps.fund_requests.advance_service.submit_accountability /
+    approve_accountability). Kept as a redirect, not a 404, for old
+    bookmarks/links; it performs no mutation."""
+    messages.info(
+        request,
+        "Accountants no longer enter NetSuite IDs directly — the responsible "
+        "employee submits accountability with their NetSuite Expense ID, and "
+        "the Accountant reviews it from the Disbursement Dashboard.",
+    )
+    return redirect("/disbursements")
 
 
 @require_page_permission("disbursements")

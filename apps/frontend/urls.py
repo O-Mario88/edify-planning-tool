@@ -340,6 +340,11 @@ urlpatterns = [
         name="accountability_action",
     ),
     path(
+        "my-plan/<str:activity_id>/confirm-reimbursement-receipt",
+        my_plan_views.confirm_reimbursement_receipt_action,
+        name="confirm_reimbursement_receipt_action",
+    ),
+    path(
         "activities/<str:activity_id>",
         my_plan_views.activity_detail_view,
         name="activity_detail_full",

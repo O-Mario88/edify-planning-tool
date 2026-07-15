@@ -362,6 +362,65 @@ def accountability_action(request, activity_id):
 
 
 @require_page_permission("my_plan")
+def confirm_reimbursement_receipt_action(request, activity_id):
+    """The responsible employee confirms a disbursed reimbursement actually
+    arrived — required before the reimbursement (and the accountability it
+    settles) reaches its terminal financially-cleared state (mandate: no
+    accountability closes without the employee's own receipt confirmation)."""
+    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    if not RolePermissionService.can_view_record(request.user, a):
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to access this activity."
+        )
+
+    adv = (
+        a.advance_requests.filter(status="reimbursement_disbursed")
+        .order_by("-reimbursed_at")
+        .first()
+    )
+    if request.method != "POST":
+        return render(
+            request,
+            "partials/my_plan/confirm_reimbursement_receipt_drawer.html",
+            {"act": get_activity(activity_id, request.user), "adv": adv, "drawer_size": "sm"},
+        )
+
+    if not adv:
+        return HttpResponse(
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">No disbursed reimbursement is awaiting receipt confirmation on this activity.</div>',
+            status=400,
+        )
+
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.fund_requests import advance_service
+
+    try:
+        advance_service.confirm_reimbursement_receipt(
+            adv.id,
+            {"amount": request.POST.get("amount", adv.reimbursed_amount)},
+            request.user,
+        )
+    except (BadRequest, Forbidden) as e:
+        return HttpResponse(
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            status=400,
+        )
+
+    audit_log(
+        action="reimbursement_receipt_confirmed",
+        subject_kind="Activity",
+        subject_id=str(a.id),
+        actor_id=str(request.user.id),
+        actor_role=request.user.active_role,
+        success=True,
+        payload={"advance_id": adv.id, "amount": adv.reimbursed_amount},
+    )
+    response = HttpResponse("<script>window.location.reload();</script>")
+    response["HX-Trigger"] = "close-drawer"
+    return response
+
+
+@require_page_permission("my_plan")
 def reschedule_drawer_view(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):

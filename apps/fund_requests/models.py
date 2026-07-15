@@ -137,6 +137,16 @@ class AdvanceRequestStatus(models.TextChoices):
     ACCOUNTABILITY_PENDING = "accountability_pending", "Accountability pending"
     ACCOUNTED = "accounted", "Accounted"
     REIMBURSEMENT_SUBMITTED = "reimbursement_submitted", "Reimbursement submitted"
+    # Accountant has disbursed the reimbursement but the employee has not yet
+    # confirmed receipt — money is not "reimbursed" (financially cleared)
+    # until that confirmation lands (2026-07-15 finance-unification mandate:
+    # "reimbursement_disbursed -> reimbursement_receipt_pending ->
+    # financially_cleared"). See advance_service.reimburse /
+    # confirm_reimbursement_receipt.
+    REIMBURSEMENT_DISBURSED = (
+        "reimbursement_disbursed",
+        "Reimbursement disbursed (awaiting receipt confirmation)",
+    )
     REIMBURSED = "reimbursed", "Reimbursed"
     RETURNED = "returned", "Returned"
     CANCELLED = "cancelled", "Cancelled"
@@ -199,6 +209,33 @@ class AdvanceRequest(TimeStampedModel):
     # Confirmation / review audit.
     confirmed_at = models.DateTimeField(null=True, blank=True)
     last_note = models.CharField(max_length=512, null=True, blank=True)
+    # Reimbursement payout (self-funded activities, OR the over-spend portion
+    # of an advance-funded activity) — kept on separate fields from
+    # disbursed_amount/disburse_reference (the ORIGINAL advance) per the
+    # 2026-07-15 finance-unification mandate's identifier-separation rule:
+    # "Disbursement Reference" and "Reimbursement Reference" must never share
+    # a field, since an advance-funded overspend needs BOTH amounts recorded.
+    reimbursed_amount = models.BigIntegerField(null=True, blank=True)
+    reimbursed_at = models.DateTimeField(null=True, blank=True)
+    reimbursed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    reimburse_method = models.CharField(max_length=64, null=True, blank=True)
+    reimburse_reference = models.CharField(max_length=128, null=True, blank=True)
+    # The employee's confirmation that a disbursed reimbursement actually
+    # arrived — required before the advance reaches its terminal REIMBURSED
+    # (financially-cleared) status. Without this, "disbursed" and "received"
+    # were being conflated.
+    reimbursement_receipt_confirmed_at = models.DateTimeField(null=True, blank=True)
+    reimbursement_receipt_confirmed_amount = models.BigIntegerField(
+        null=True, blank=True
+    )
+    # Accountant verification of an employee-declared under-spend return.
+    # Required before approve_accountability may clear an accountability
+    # whose returned_amount > 0 — previously the employee's self-declared
+    # returned_amount was trusted with no accountant verification step at
+    # all (mandate §11: "Accountant verifies the return").
+    return_verified_at = models.DateTimeField(null=True, blank=True)
+    return_verified_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    return_reference = models.CharField(max_length=128, null=True, blank=True)
 
     class Meta:
         db_table = "advance_request"
