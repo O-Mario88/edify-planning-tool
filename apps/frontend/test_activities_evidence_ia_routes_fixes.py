@@ -132,11 +132,11 @@ class SalesforceIdActionValidationTest(DomainFixturesMixin, TestCase):
         self.client.force_login(self.user)
         response = self.client.post(
             f"/activities/{self.activity.id}/salesforce-id/action",
-            {"salesforce_id": "SV-12345"},
+            {"salesforce_id": "SVE-12345"},
         )
         self.assertIn(response.status_code, (200, 302))
         self.activity.refresh_from_db()
-        self.assertEqual(self.activity.salesforce_activity_id, "SV-12345")
+        self.assertEqual(self.activity.salesforce_activity_id, "SVE-12345")
 
     def test_locked_after_ia_confirmation(self):
         self.activity.ia_verification_status = "confirmed"

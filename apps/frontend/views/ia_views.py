@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q
+from datetime import timedelta
+
+from django.db.models import Avg, DurationField, ExpressionWrapper, F, Q
 
 from apps.core.permissions import require_page_permission, RolePermissionService
 from apps.audit.services import log as audit_log
@@ -27,10 +29,20 @@ QUEUE_PAGE_SIZE = 50
 
 @require_page_permission("ia_verification_queue")
 def ia_verification_queue_view(request):
-    """Central queue of activities waiting for verification."""
-    activities = Activity.objects.filter(
-        deleted_at__isnull=True, status="awaiting_ia_verification"
-    ).order_by("-updated_at")
+    """Central queue of activities waiting for verification.
+
+    Defense-in-depth (2026-07-15 preventive-verification mandate §11): even
+    though the only paths into "awaiting_ia_verification" already require a
+    Salesforce ID (apps.activities.services.complete()), this queue's own
+    query excludes any activity without one — no future code path that sets
+    this status can silently skip the requirement."""
+    activities = (
+        Activity.objects.filter(
+            deleted_at__isnull=True, status="awaiting_ia_verification"
+        )
+        .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
+        .order_by("-updated_at")
+    )
 
     # ── KPI Strip Calculation ────────────────────────────────────────────────
     waiting_count = activities.count()
@@ -44,9 +56,31 @@ def ia_verification_queue_view(request):
         decision="RETURN", decided_at__gte=today_start
     ).count()
 
-    # Average Verification Time (in hours)
-    # We calculate the average time between submission and verification
-    avg_hours = 1.8  # Default baseline SLA
+    # Verification SLA is measured from the immutable IA-queue entry time,
+    # never from Activity.updated_at (which changes during review). Limit the
+    # operational headline to the latest 30 days while keeping each history
+    # row available for the long-range audit view.
+    sla_history = VerificationHistory.objects.filter(
+        verified_at__gte=timezone.now() - timedelta(days=30),
+        activity__submitted_to_ia_at__isnull=False,
+    )
+    turnaround = ExpressionWrapper(
+        F("verified_at") - F("activity__submitted_to_ia_at"),
+        output_field=DurationField(),
+    )
+    average_duration = sla_history.aggregate(value=Avg(turnaround))["value"]
+    avg_hours = (
+        round(average_duration.total_seconds() / 3600, 1)
+        if average_duration is not None
+        else None
+    )
+    sla_total = sla_history.count()
+    sla_compliant_count = sla_history.filter(
+        verified_at__lte=F("activity__submitted_to_ia_at") + timedelta(hours=24)
+    ).count()
+    sla_compliance = (
+        round((sla_compliant_count / sla_total) * 100, 1) if sla_total else None
+    )
 
     ssa_pending = activities.filter(ssa_collection_expected=True).count()
     duplicate_risks = (
@@ -169,7 +203,11 @@ def ia_verification_queue_view(request):
         {
             "label": "Verified Today",
             "value": f"+{verified_today}",
-            "helper": "SLA Compliant",
+            "helper": (
+                f"{sla_compliance:g}% within 24h"
+                if sla_compliance is not None
+                else "SLA tracking ready"
+            ),
             "icon": "check",
             "variant": "success",
         },
@@ -182,8 +220,12 @@ def ia_verification_queue_view(request):
         },
         {
             "label": "Avg Process SLA",
-            "value": f"{avg_hours}h",
-            "helper": "Baseline SLA: 24h",
+            "value": f"{avg_hours:g}h" if avg_hours is not None else "—",
+            "helper": (
+                "30-day measured turnaround"
+                if avg_hours is not None
+                else "No measured cycle yet"
+            ),
             "icon": "clock",
             "variant": "info",
         },
@@ -218,7 +260,9 @@ def ia_verification_queue_view(request):
             "waiting": waiting_count,
             "verified_today": verified_today,
             "returned_today": returned_today,
-            "avg_time": f"{avg_hours}h",
+            "avg_time": f"{avg_hours:g}h" if avg_hours is not None else "—",
+            "sla_compliance": sla_compliance,
+            "sla_sample_size": sla_total,
             "ssa_pending": ssa_pending,
             "duplicate_risks": duplicate_risks,
             "high_priority": high_priority,

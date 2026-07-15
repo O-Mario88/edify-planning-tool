@@ -44,6 +44,7 @@ class SubmitForReviewActionTest(TestCase):
             status=ActivityStatus.COMPLETED,
             responsible_staff_id=responsible_staff_id,
             scheduled_date=timezone.now(),
+            salesforce_activity_id="SV-SUBMIT-1",
         )
 
     def test_cceo_submission_routes_to_pl_review_not_a_fake_status(self):
@@ -67,6 +68,7 @@ class SubmitForReviewActionTest(TestCase):
         self.assertIn(activity.status, ActivityStatus.values)
         self.assertEqual(activity.status, ActivityStatus.SUBMITTED_TO_PL)
         self.assertNotEqual(activity.status, "submitted")
+        self.assertIsNone(activity.submitted_to_ia_at)
 
     def test_non_cceo_submission_routes_straight_to_ia_verification(self):
         pl = User.objects.create_user(
@@ -87,6 +89,7 @@ class SubmitForReviewActionTest(TestCase):
         self.assertIn(activity.status, ActivityStatus.values)
         self.assertEqual(activity.status, ActivityStatus.AWAITING_IA_VERIFICATION)
         self.assertNotEqual(activity.status, "submitted")
+        self.assertIsNotNone(activity.submitted_to_ia_at)
 
         # The real read-site consumer of this status: the IA verification
         # queue must now actually pick the activity up.

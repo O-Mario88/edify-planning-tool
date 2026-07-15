@@ -23,7 +23,11 @@ from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
 from .models import Activity, ActivityCompletionVerification
-from .salesforce import is_valid_salesforce_id
+from .salesforce import (
+    ENTRY_SOURCE_MANAGING_STAFF,
+    ENTRY_SOURCE_STAFF_SELF,
+    reserve_salesforce_id,
+)
 
 
 # Type rules (spec §8).
@@ -548,10 +552,6 @@ def complete(activity_id: str, data: dict, principal) -> dict:
 
     kind = sf_kind(a.activity_type)
     sf_id = (data.get("salesforceId") or "").strip()
-    if not is_valid_salesforce_id(sf_id, kind):
-        raise BadRequest(
-            f"{'SV-' if kind == 'visit' else 'TS-'} Salesforce ID required"
-        )
 
     # Trainings require attendance.
     if kind == "training" and not (
@@ -568,28 +568,44 @@ def complete(activity_id: str, data: dict, principal) -> dict:
             "Partner evidence must be accepted by staff before submission."
         )
 
+    # Reserve the Salesforce ID first, as its own atomic operation — reject
+    # submission (and advance nothing else about completion) on an invalid
+    # format or a duplicate BEFORE any other completion state changes.
+    entry_source = (
+        ENTRY_SOURCE_MANAGING_STAFF
+        if a.delivery_type == "partner"
+        else ENTRY_SOURCE_STAFF_SELF
+    )
+    reserve_salesforce_id(
+        activity=a,
+        raw_value=sf_id,
+        kind=kind,
+        principal=principal,
+        entry_source=entry_source,
+    )
+    a.refresh_from_db(fields=["salesforce_activity_id", "salesforce_activity_type"])
+
     is_cceo = principal.active_role == "CCEO"
     next_status = "submitted_to_pl" if is_cceo else "awaiting_ia_verification"
     with transaction.atomic():
-        a.salesforce_activity_id = sf_id
-        a.salesforce_activity_type = kind
         a.teachers_attended = data.get("teachersAttended")
         a.leaders_attended = data.get("leadersAttended")
         a.other_participants = data.get("otherParticipants")
         a.attended_school_ids = data.get("attendedSchoolIds") or []
         a.status = next_status
+        if next_status == "awaiting_ia_verification":
+            a.submitted_to_ia_at = timezone.now()
         a.evidence_status = (
             "accepted" if a.evidence_status == "none" else a.evidence_status
         )
         a.save(
             update_fields=[
-                "salesforce_activity_id",
-                "salesforce_activity_type",
                 "teachers_attended",
                 "leaders_attended",
                 "other_participants",
                 "attended_school_ids",
                 "status",
+                "submitted_to_ia_at",
                 "evidence_status",
                 "updated_at",
             ]
@@ -597,7 +613,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
             defaults={
-                "salesforce_id": sf_id,
+                "salesforce_id": a.salesforce_activity_id,
                 "entered_by": principal.user_id,
                 "status": "pending",
             },

@@ -84,7 +84,7 @@ class CompleteActivityAccountabilitySubmissionTest(TestCase):
         resp = self.client.post(
             f"/my-plan/{self.activity.id}/complete",
             {
-                "salesforce_id": "SV-99001100",
+                "salesforce_id": "SVE-99001100",
                 "netsuite_id": "EXP-2026-00889",
                 "amount_spent": "48000",
                 "amount_returned": "2000",
@@ -105,7 +105,7 @@ class CompleteActivityAccountabilitySubmissionTest(TestCase):
         self.client.post(
             f"/my-plan/{self.activity.id}/complete",
             {
-                "salesforce_id": "SV-99001101",
+                "salesforce_id": "SVE-99001101",
                 "netsuite_id": "EXP-2026-00890",
                 "amount_spent": "50000",
                 "amount_returned": "0",

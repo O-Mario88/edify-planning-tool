@@ -150,11 +150,11 @@ class PartnerAndClusterFlowTest(APITestCase):
         )
         self.assertEqual(reviewed["status"], "accepted")
 
-        # Staff (CCEO) enters the SV- Activity Code and submits completion. A CCEO
+        # Staff (CCEO) enters the SVE- Activity Code and submits completion. A CCEO
         # completion routes to PL (CCEO→PL→IA), so the next status is submitted_to_pl.
         completed = self._post(
             f"/api/activities/{activity_id}/complete",
-            {"salesforceId": "SV-FLOW4"},
+            {"salesforceId": "SVE-FLOW4"},
             200,
         )
         self.assertEqual(completed["status"], "submitted_to_pl")

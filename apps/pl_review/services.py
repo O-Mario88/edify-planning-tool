@@ -28,9 +28,19 @@ def confirm(activity_id: str, principal) -> dict:
     if a.status != "submitted_to_pl":
         raise BadRequest("Activity is not awaiting PL review.")
     a.status = "awaiting_ia_verification"
-    a.pl_reviewed_at = timezone.now()
+    reviewed_at = timezone.now()
+    a.pl_reviewed_at = reviewed_at
+    a.submitted_to_ia_at = reviewed_at
     a.pl_reviewed_by = principal.user_id
-    a.save(update_fields=["status", "pl_reviewed_at", "pl_reviewed_by", "updated_at"])
+    a.save(
+        update_fields=[
+            "status",
+            "pl_reviewed_at",
+            "pl_reviewed_by",
+            "submitted_to_ia_at",
+            "updated_at",
+        ]
+    )
     return _serialize(a)
 
 

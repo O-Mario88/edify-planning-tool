@@ -552,6 +552,8 @@ class CoreSchoolsPlanningTest(TestCase):
         act.refresh_from_db()
         self.assertEqual(act.status, "submitted_to_pl")  # CCEO -> PL review first
         pl_confirm(act.id, self.pl)
+        act.refresh_from_db()
+        self.assertIsNotNone(act.submitted_to_ia_at)
         ia_confirm(act.id, principal=self.ia)
         act.refresh_from_db()
         self.assertEqual(act.status, "ia_verified")
@@ -560,7 +562,7 @@ class CoreSchoolsPlanningTest(TestCase):
     def test_completing_core_visit_advances_slot_and_plan_counters(self):
         self._schedule_visit()
         act = Activity.objects.get(school=self.school, activity_type="core_visit")
-        self._complete_core_activity(act, "SV-CORE1")
+        self._complete_core_activity(act, "SVE-CORE1")
 
         slot = CoreActivitySlot.objects.get(id=cslot_id(self.school.school_id, "v", 1))
         self.assertEqual(
@@ -604,7 +606,7 @@ class CoreSchoolsPlanningTest(TestCase):
         resync_plan_completion recomputes from the slots, it doesn't += 1."""
         self._schedule_visit()
         act = Activity.objects.get(school=self.school, activity_type="core_visit")
-        self._complete_core_activity(act, "SV-CORE9")
+        self._complete_core_activity(act, "SVE-CORE9")
         act.save()
         act.save()
         plan = CorePlan.objects.get(id=self.plan.id)
@@ -618,7 +620,7 @@ class CoreSchoolsPlanningTest(TestCase):
 
         self._schedule_visit()
         act = Activity.objects.get(school=self.school, activity_type="core_visit")
-        self._complete_core_activity(act, "SV-CORE2")
+        self._complete_core_activity(act, "SVE-CORE2")
 
         data = _build_core_tracker(self.cceo)
         row = next(r for r in data["rows"] if r["school"] == "Alpha Core School")
@@ -630,7 +632,7 @@ class CoreSchoolsPlanningTest(TestCase):
 
         self._schedule_visit()
         act = Activity.objects.get(school=self.school, activity_type="core_visit")
-        self._complete_core_activity(act, "SV-CORE3")
+        self._complete_core_activity(act, "SVE-CORE3")
         CorePlan.objects.filter(id=self.plan.id).update(baseline_average=5.6)
 
         page = PLTeamTargetsService.get_page(self.pl, fy=FY)
@@ -650,7 +652,7 @@ class CoreSchoolsPlanningTest(TestCase):
 
         self._schedule_visit()
         act = Activity.objects.get(school=self.school, activity_type="core_visit")
-        self._complete_core_activity(act, "SV-CORE4")
+        self._complete_core_activity(act, "SVE-CORE4")
         CorePlan.objects.filter(id=self.plan.id).update(baseline_average=5.6)
 
         core = CDDashboardService._core_on_track(FY)

@@ -17,7 +17,12 @@ from apps.activities.services import (
     ia_return,
     sf_kind,
 )
-from apps.activities.salesforce import is_valid_salesforce_id
+from apps.activities.salesforce import (
+    ENTRY_SOURCE_MANAGING_STAFF,
+    ENTRY_SOURCE_STAFF_SELF,
+    DuplicateSalesforceId,
+    reserve_salesforce_id,
+)
 from apps.evidence.services import (
     record_upload,
     evidence_records_for_activity,
@@ -1076,26 +1081,29 @@ def salesforce_id_action(request, activity_id):
             )
 
         kind = sf_kind(a.activity_type)
-        if not is_valid_salesforce_id(salesforce_id, kind):
-            prefix = "SV-" if kind == "visit" else "TS-"
+        entry_source = (
+            ENTRY_SOURCE_MANAGING_STAFF
+            if a.delivery_type == "partner"
+            else ENTRY_SOURCE_STAFF_SELF
+        )
+        try:
+            reserve_salesforce_id(
+                activity=a,
+                raw_value=salesforce_id,
+                kind=kind,
+                principal=request.user,
+                entry_source=entry_source,
+            )
+        except DuplicateSalesforceId as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Invalid Salesforce ID format. Expected a {prefix} prefixed ID.</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">{str(e)}</div>',
+                status=409,
+            )
+        except Exception as e:
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
                 status=400,
             )
-
-        a.salesforce_activity_id = salesforce_id
-        a.save(update_fields=["salesforce_activity_id", "updated_at"])
-
-        audit_log(
-            action="enter_salesforce_id",
-            subject_kind="Activity",
-            subject_id=str(a.id),
-            actor_id=str(request.user.id),
-            actor_role=request.user.active_role,
-            success=True,
-            reason="Salesforce ID entered",
-            payload={"salesforce_id": salesforce_id},
-        )
 
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse("<script>window.location.reload();</script>")
@@ -1176,7 +1184,9 @@ def submit_for_review_action(request, activity_id):
             if is_cceo
             else ActivityStatus.AWAITING_IA_VERIFICATION
         )
-        a.save(update_fields=["status", "updated_at"])
+        if not is_cceo:
+            a.submitted_to_ia_at = timezone.now()
+        a.save(update_fields=["status", "submitted_to_ia_at", "updated_at"])
 
         audit_log(
             action="submit_for_review",

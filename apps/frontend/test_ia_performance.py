@@ -29,7 +29,7 @@ from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile
-from apps.activities.models import Activity
+from apps.activities.models import Activity, VerificationHistory
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.geography.models import District, Region
@@ -74,6 +74,7 @@ class IAPerformanceTestBase(TestCase):
             quarter="Q3",
             planned_date=date(2026, 4, 10),
             scheduled_date=timezone.make_aware(timezone.datetime(2026, 4, 10, 9, 0)),
+            salesforce_activity_id=f"SV-IAP-{school.school_id}",
         )
         if with_evidence:
             EvidenceRecord.objects.create(
@@ -211,3 +212,41 @@ class IAVerificationQueueN1FixTest(IAPerformanceTestBase):
         response = self.client.get("/ia/verification/")
         by_id = {row["id"]: row for row in response.context["queue"]}
         self.assertFalse(by_id[act.id]["has_evidence"])
+
+    def test_sla_headline_is_empty_until_a_real_cycle_is_measured(self):
+        response = self.client.get("/ia/verification/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["kpis"]["sla_compliance"])
+        self.assertEqual(response.context["kpis"]["avg_time"], "—")
+        self.assertContains(response, "Not yet measured")
+
+    def test_sla_headline_uses_submission_to_verification_timestamps(self):
+        now = timezone.now()
+        durations = (10, 30)
+        for index, hours in enumerate(durations):
+            activity = self._pending_activity(self._school(f"sla-{index}"))
+            activity.status = "ia_verified"
+            activity.submitted_to_ia_at = now - timezone.timedelta(hours=hours)
+            activity.ia_confirmed_at = now
+            activity.save(
+                update_fields=[
+                    "status",
+                    "submitted_to_ia_at",
+                    "ia_confirmed_at",
+                    "updated_at",
+                ]
+            )
+            VerificationHistory.objects.create(
+                activity=activity,
+                verified_by=self.ia.id,
+                verified_at=now,
+            )
+
+        response = self.client.get("/ia/verification/")
+
+        self.assertEqual(response.context["kpis"]["sla_compliance"], 50.0)
+        self.assertEqual(response.context["kpis"]["sla_sample_size"], 2)
+        self.assertEqual(response.context["kpis"]["avg_time"], "20h")
+        self.assertContains(response, "50.0%")
+        self.assertContains(response, "n=2")

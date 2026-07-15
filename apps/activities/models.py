@@ -121,6 +121,10 @@ class Activity(SoftDeleteModel):
         choices=VerificationStatus.choices,
         default=VerificationStatus.PENDING,
     )
+    # The moment the completion enters IA's queue. This is intentionally
+    # distinct from updated_at (which changes throughout review) so SLA
+    # reporting is reproducible and never inferred from a mutable timestamp.
+    submitted_to_ia_at = models.DateTimeField(null=True, blank=True)
     ia_confirmed_at = models.DateTimeField(null=True, blank=True)
     ia_confirmed_by = models.CharField(max_length=30, null=True, blank=True)
     payment_status = models.CharField(
@@ -314,6 +318,52 @@ class ActivityScheduleCostLine(TimeStampedModel):
         indexes = [models.Index(fields=["activity"])]
 
 
+class SalesforceEntrySource(models.TextChoices):
+    """Who supplied an Activity Salesforce ID, for audit and duplicate-
+    investigation purposes (2026-07-15 preventive-verification mandate)."""
+
+    STAFF_SELF_ENTRY = "staff_self_entry", "Staff self-entry"
+    MANAGING_STAFF_FOR_PARTNER = (
+        "managing_staff_for_partner",
+        "Managing staff (for Partner activity)",
+    )
+    LEGACY_IMPORT = "legacy_import", "Legacy import"
+    ADMIN_EXCEPTION = "admin_exception", "Admin exception"
+
+
+class ActivitySalesforceReference(TimeStampedModel):
+    """The duplicate-prevention registry for Activity Salesforce IDs — proof
+    a completed field activity (visit or training) was entered into
+    Salesforce. Never to be confused with the platform School ID (SSA CSV
+    matching), a School's own Salesforce ID, or the NetSuite Expense ID
+    (financial accountability) — those are separate identifiers on separate
+    models.
+
+    normalized_value carries the single-Salesforce-organization global
+    uniqueness constraint (see apps.activities.salesforce module docstring
+    for why); raw_value preserves exactly what was typed/pasted, for audit.
+    Only apps.activities.salesforce.reserve_salesforce_id() may write this
+    model — no other code path should create or update a row here."""
+
+    id = CuidField()
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="salesforce_reference"
+    )
+    raw_value = models.CharField(max_length=128)
+    normalized_value = models.CharField(max_length=128, unique=True)
+    activity_type = models.CharField(max_length=48)
+    expected_prefix = models.CharField(max_length=8)
+    entry_source = models.CharField(
+        max_length=32, choices=SalesforceEntrySource.choices
+    )
+    entered_by = models.CharField(max_length=30)
+    entered_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "activity_salesforce_reference"
+        indexes = [models.Index(fields=["normalized_value"])]
+
+
 class ActivityCompletionVerification(TimeStampedModel):
     """Manual Salesforce SV-/TS- ID confirmation (IA verifies the entry)."""
 
@@ -359,6 +409,8 @@ from .closure_models import (  # noqa: E402 — circular import, must load after
 __all__ = [
     "Activity",
     "ActivityScheduleCostLine",
+    "SalesforceEntrySource",
+    "ActivitySalesforceReference",
     "ActivityCompletionVerification",
     "IAVerification",
     "VerificationChecklist",
