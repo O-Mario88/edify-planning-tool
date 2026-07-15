@@ -72,7 +72,7 @@ def _profile_scope(request):
         return profiles
 
     viewer = getattr(request.user, "staff_profile", None)
-    if role == "ProgramLead" and viewer:
+    if role in {"Program Lead", "ProgramLead"} and viewer:
         return profiles.filter(
             Q(id=viewer.id) | Q(supervisor_links__supervisor=viewer)
         ).distinct()
@@ -690,7 +690,7 @@ def payroll_readiness_view(request):
             _metric("Exceptions", latest.filter(has_exceptions=True).count(), "requiring resolution", "danger"),
         ],
         rows=rows,
-        primary_action={"label": "Review Finance Operations", "href": "/finance-operations"},
+        primary_action={"label": "Review Finance Operations", "href": "/finance/fund-allocation"},
         empty_title="No payroll-readiness checks in this scope",
     )
 

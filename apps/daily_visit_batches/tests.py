@@ -191,6 +191,37 @@ class DailyVisitBatchTestCase(TestCase):
         self.assertEqual(len(lines), 2)  # transport + lunch
         self.assertEqual(sum(l.amount for l in lines), expected_pool)
 
+    # ── 1a. §12 mandated arithmetic: secondary 5-school split = 112,000 each ──
+    def test_secondary_five_school_split_equals_112000_each(self):
+        """The mandate's explicit worked example (§12): with a secondary
+        daily pool of transport 330,000 + lunch 30,000 + accommodation
+        150,000 + dinner 50,000 = 560,000, split across 5 schools in one
+        batch, every school pays exactly 112,000 and the pool reconciles to
+        the shilling. Validated at the pricing-function level so it asserts
+        the formula the mandate specifies with exactly its four named rates
+        (the full scheduling path additionally layers in any optional
+        breakfast/incidentals rates the CD has configured in the catalogue —
+        environment-dependent and out of scope for this arithmetic check)."""
+        from apps.daily_visit_batches.pricing import (
+            allocate_pool,
+            compute_daily_pool,
+        )
+
+        rates = {
+            "secondary_transport_per_day": 330000,
+            "secondary_lunch_per_day": 30000,
+            "secondary_accommodation_per_night": 150000,
+            "secondary_overnight_dinner_per_day": 50000,
+        }
+        pool = compute_daily_pool(rates, "secondary")
+        self.assertEqual(sum(pool.values()), 560000)
+
+        allocations = allocate_pool(pool, 5)
+        per_school = [sum(a.values()) for a in allocations]
+        self.assertEqual(per_school, [112000, 112000, 112000, 112000, 112000])
+        # Exact reconciliation — no shillings created or lost to rounding.
+        self.assertEqual(sum(per_school), 560000)
+
     # ── 1b. Double-submit (double-click) must not create a duplicate visit ───
     def test_double_submit_same_school_same_day_is_idempotent(self):
         """A double-click on 'Schedule Activity' fires schedule_visits() twice

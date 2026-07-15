@@ -1,0 +1,99 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ title }} · Edify{% endblock %}
+
+{% block shell_content %}
+<main class="hcos-workspace" aria-labelledby="hcos-title">
+  <nav class="hcos-breadcrumbs" aria-label="Breadcrumb">
+    <a href="/dashboard">Human Capital</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ title }}</span>
+  </nav>
+
+  <header class="hcos-hero">
+    <div class="hcos-hero__copy">
+      <span class="hcos-eyebrow">Human Capital Operations</span>
+      <h1 id="hcos-title">{{ title }}</h1>
+      <p>{{ description }}</p>
+    </div>
+    <div class="hcos-hero__actions">
+      <a class="hcos-button hcos-button--primary" href="{{ primary_action.href }}">
+        <span>{{ primary_action.label }}</span>
+        <span aria-hidden="true">→</span>
+      </a>
+      <a class="hcos-button hcos-button--secondary" href="/dashboard">HR overview</a>
+    </div>
+  </header>
+
+  <section class="hcos-metrics" aria-label="{{ title }} summary">
+    {% for metric in metrics %}
+    <article class="hcos-metric" data-tone="{{ metric.tone }}">
+      <span class="hcos-metric__marker" aria-hidden="true"></span>
+      <div>
+        <span>{{ metric.label }}</span>
+        <strong>{{ metric.value }}</strong>
+        <small>{{ metric.helper }}</small>
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+
+  <section class="hcos-register" aria-labelledby="hcos-register-title">
+    <header class="hcos-register__header">
+      <div>
+        <span class="hcos-register__overline">Live register</span>
+        <h2 id="hcos-register-title">Current operational records</h2>
+      </div>
+      <form class="hcos-search" method="get" role="search">
+        <label for="hcos-search-input">Search this register</label>
+        <div class="hcos-search__control">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2" stroke-linecap="round"/></svg>
+          <input id="hcos-search-input" type="search" name="q" value="{{ search }}" placeholder="Search people, status, role…">
+          <button type="submit">Search</button>
+        </div>
+        {% if search %}<a href="{{ request.path }}">Clear search</a>{% endif %}
+      </form>
+    </header>
+
+    {% if rows %}
+    <div class="hcos-table-wrap">
+      <table class="hcos-table">
+        <caption class="sr-only">{{ title }} operational records</caption>
+        <thead>
+          <tr>{% for cell in rows.0.cells %}<th scope="col">{{ cell.label }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            {% for cell in row.cells %}
+            <td data-label="{{ cell.label }}"{% if cell.primary %} class="hcos-table__primary"{% endif %}>
+              {% if cell.status %}<span class="hcos-status" data-tone="{{ cell.tone }}">{{ cell.value }}</span>{% else %}{{ cell.value }}{% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="hcos-empty">
+      <span class="hcos-empty__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 5h14v14H5z"/><path d="M8 9h8M8 13h5" stroke-linecap="round"/></svg>
+      </span>
+      <h3>{{ empty_title }}</h3>
+      <p>{{ empty_body }}</p>
+    </div>
+    {% endif %}
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="hcos-pagination" aria-label="Register pagination">
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      <div>
+        {% if page_obj.has_previous %}<a href="?q={{ search|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+        {% if page_obj.has_next %}<a href="?q={{ search|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+      </div>
+    </nav>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}
