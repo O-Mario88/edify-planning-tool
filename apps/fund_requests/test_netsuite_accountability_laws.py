@@ -194,7 +194,10 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         with self.assertRaises(ValueError):
             ActivityClosureService.close(self.activity, closed_by=self.accountant.id)
 
-        # Accountability submitted with the code → the gate opens.
+        # Accountability submitted with the code satisfies the NetSuite gate,
+        # but the activity must NOT yet be closeable — the accountant has not
+        # final-cleared it. Closure requires genuine accountant clearance
+        # (mandate §9/§18), not merely a submitted accountability.
         submit_accountability(
             self.adv.id,
             {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": "EXP-77"},
@@ -202,6 +205,20 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         )
         checklist, _ = ClosureEligibilityService.evaluate(self.activity)
         self.assertTrue(checklist.netsuite_id_entered)
+        self.assertFalse(
+            checklist.accounts_cleared,
+            "accountability_pending must not count as accountant-cleared",
+        )
+        self.assertFalse(ClosureEligibilityService.is_eligible(self.activity))
+        with self.assertRaises(ValueError):
+            ActivityClosureService.close(self.activity, closed_by=self.accountant.id)
+
+        # The accountant final-clears (→ ACCOUNTED) → the gate opens.
+        from apps.fund_requests.advance_service import approve_accountability
+
+        approve_accountability(self.adv.id, self.accountant)
+        checklist, _ = ClosureEligibilityService.evaluate(self.activity)
+        self.assertTrue(checklist.accounts_cleared)
         self.assertTrue(ClosureEligibilityService.is_eligible(self.activity))
         closure = ActivityClosureService.close(
             self.activity, closed_by=self.accountant.id

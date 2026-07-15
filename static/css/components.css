@@ -22,6 +22,20 @@
   background-color: var(--edify-surface) !important;
 }
 
+.edify-calendar-popover {
+  width: min(17.5rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+}
+
+.edify-toast-card {
+  width: min(22.5rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+}
+
+.edify-permission-column {
+  width: clamp(12rem, 20vw, 15rem);
+}
+
 /* Weight discipline: operational interfaces need hierarchy, not shouting. */
 .font-bold { font-weight: 600 !important; }
 .font-extrabold,

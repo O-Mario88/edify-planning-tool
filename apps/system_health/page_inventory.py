@@ -293,7 +293,7 @@ def _template_findings(source: str) -> list[Finding]:
         (
             "fixed-pixel-width",
             "medium",
-            re.search(r"\bw-\[\d+px\]", source),
+            re.search(r"(?<![-\w])w-\[(?:2[4-9]\d|[3-9]\d{2,})px\]", source),
             "A fixed pixel width may create narrow-screen overflow or dead space.",
             "Use minmax, fluid sizing, or a size-aware container rule.",
         ),

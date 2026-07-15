@@ -91,7 +91,12 @@ def get(principal, query: dict) -> dict:
     fy = query.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
 
-    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    # The active My Plan feed excludes terminal activities — a closed activity
+    # leaves the active queue and lives in Completed Activities instead
+    # (previously they leaked into the "upcoming" bucket).
+    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy).exclude(
+        status__in=["closed", "cancelled", "rejected"]
+    )
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:
@@ -383,8 +388,12 @@ def get_frontend_context(principal, query: dict) -> dict:
     status = query.get("status")
     period = query.get("period", "week")
 
-    # 3. Base queryset constrained by user scope
+    # 3. Base queryset constrained by user scope. Terminal activities leave
+    # the active feed and live in Completed Activities — unless the caller
+    # explicitly filters for one of those statuses.
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    if status not in ("closed", "cancelled", "rejected"):
+        qs = qs.exclude(status__in=["closed", "cancelled", "rejected"])
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:

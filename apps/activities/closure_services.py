@@ -52,30 +52,33 @@ class ClosureEligibilityService:
                 or activity.delivery_type == "partner"
             )
 
-            # Check 6: Accounts Cleared — money actually released via either
-            # finance system: a Disbursement record (System A / monthly plan)
-            # or a disbursed/accounted weekly AdvanceRequest (System B).
+            # Check 6: Accounts Cleared — requires genuine ACCOUNTANT action,
+            # not merely that money left the account. The mandate: "NO CLOSING
+            # AN ACTIVITY WITHOUT ... FINANCE CLEARANCE." The two finance
+            # systems each have a distinct accountant-clearance signal:
+            #   System A (activity-level disburse+clear): the accountant's
+            #     NetSuiteExpenseRecord entry IS the clearance step.
+            #   System B (weekly advance accountability): the accountant
+            #     approves submitted accountability, moving the advance to
+            #     "accounted" (or "reimbursed").
+            # "disbursed" and "accountability_pending" are pre-clearance
+            # states — an advance sitting at accountability_pending means the
+            # responsible user submitted but the accountant has NOT yet
+            # approved, so it must NOT count as cleared (previously it did,
+            # letting activities close before accountant final-clearance).
             accounts_cleared = True
             if finance_required:
                 if activity.delivery_type == "partner":
                     accounts_cleared = activity.payment_status == "paid"
                 else:
-                    disbursed = (
-                        Disbursement.objects.filter(activity=activity).aggregate(
-                            s=Sum("amount_disbursed")
-                        )["s"]
-                        or 0
-                    )
+                    has_netsuite_expense = NetSuiteExpenseRecord.objects.filter(
+                        activity=activity
+                    ).exists()
+                    accountant_approved_advance = activity.advance_requests.filter(
+                        status__in=["accounted", "reimbursed"]
+                    ).exists()
                     accounts_cleared = (
-                        disbursed > 0
-                        or activity.advance_requests.filter(
-                            status__in=[
-                                "disbursed",
-                                "accountability_pending",
-                                "accounted",
-                                "reimbursed",
-                            ]
-                        ).exists()
+                        has_netsuite_expense or accountant_approved_advance
                     )
 
             # Check 7: NetSuite Code — accountability proof, required whenever

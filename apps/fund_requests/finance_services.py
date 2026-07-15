@@ -469,6 +469,15 @@ class AccountabilityService:
             return record
 
 
+def is_valid_netsuite_id(value: str) -> bool:
+    """A NetSuite Expense ID is a non-empty alphanumeric reference (letters,
+    digits, hyphens; 3-64 chars). Rejects blank/whitespace-only and obvious
+    junk so a cleared accountability always carries a usable reference."""
+    import re
+
+    return bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9\-]{2,63}", (value or "").strip()))
+
+
 class NetSuiteExpenseService:
     """Manages entering NetSuite ID and matching duplicates."""
 
@@ -481,14 +490,46 @@ class NetSuiteExpenseService:
         user_id: str,
         notes: str = "",
     ) -> NetSuiteExpenseRecord:
-        # Check if already entered for another activity (duplicate check)
-        is_dup = (
-            NetSuiteExpenseRecord.objects.filter(netsuite_expense_id=netsuite_id)
-            .exclude(activity=activity)
-            .exists()
-        )
+        netsuite_id = (netsuite_id or "").strip()
+        if not is_valid_netsuite_id(netsuite_id):
+            raise ValueError(
+                "A valid NetSuite Expense ID is required (alphanumeric, 3-64 "
+                "characters). Accountability cannot clear without it."
+            )
 
         with transaction.atomic():
+            # Lock the activity row + guard against re-clearing an already
+            # cleared/closed record (double-click / replay immutability).
+            locked = (
+                Activity.objects.select_for_update()
+                .filter(id=activity.id)
+                .first()
+            )
+            if locked and locked.status == "closed":
+                raise ValueError(
+                    "This activity is already closed — its accountability "
+                    "record is immutable. Reopen it through the formal "
+                    "reopen workflow to amend."
+                )
+
+            # A variance must be resolved before an activity clears — never
+            # silently ignored. The accountant entering the NetSuite ID after
+            # reviewing the accountability IS the acceptance of the variance,
+            # so resolve any pending review here (audited), which is what
+            # unblocks clearance. Callers wanting a separate pre-clearance
+            # resolution can still resolve the review first; this makes the
+            # accountant's clearance the backstop rather than a dead end.
+            VarianceReview.objects.filter(
+                activity=activity, status="pending"
+            ).update(status="resolved")
+
+            # Check if already entered for another activity (duplicate check)
+            is_dup = (
+                NetSuiteExpenseRecord.objects.filter(netsuite_expense_id=netsuite_id)
+                .exclude(activity=activity)
+                .exists()
+            )
+
             rec, _ = NetSuiteExpenseRecord.objects.update_or_create(
                 activity=activity,
                 defaults={
