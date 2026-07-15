@@ -4,7 +4,7 @@
 {% block title %}Leave Approvals Cockpit — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-6" style="max-width:1600px; margin:0 auto; color:var(--edify-text);">
+<div class="px-4 sm:px-6 py-5 space-y-6 max-w-[1600px] mx-auto" style="color:var(--edify-text);">
 
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b pb-4 gap-4" style="border-color:var(--edify-border);">
@@ -79,86 +79,8 @@
   </div>
   {% endif %}
 
-  <!-- Top KPI strip -->
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-    <!-- KPI 1 -->
-    <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
-         style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Pending Approvals</span>
-      <div class="flex items-baseline gap-2 mt-2">
-        <span class="text-2xl font-black">{{ kpis.pending }}</span>
-        <span class="edify-text-caption text-emerald-500 font-bold flex items-center">&uarr; 2 this wk</span>
-      </div>
-      <div class="w-full h-1 bg-amber-500/10 rounded-full mt-3 overflow-hidden">
-        <div class="h-full bg-amber-500" style="width: 65%;"></div>
-      </div>
-    </div>
-
-    <!-- KPI 2 -->
-    <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
-         style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Approved This Week</span>
-      <div class="flex items-baseline gap-2 mt-2">
-        <span class="text-2xl font-black">{{ kpis.approved_this_week }}</span>
-        <span class="edify-text-caption text-emerald-500 font-bold flex items-center">&uarr; 8 this wk</span>
-      </div>
-      <div class="w-full h-1 bg-emerald-500/10 rounded-full mt-3 overflow-hidden">
-        <div class="h-full bg-emerald-500" style="width: 82%;"></div>
-      </div>
-    </div>
-
-    <!-- KPI 3 -->
-    <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
-         style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Coverage Assigned</span>
-      <div class="flex items-baseline gap-2 mt-2">
-        <span class="text-2xl font-black">{{ kpis.coverage_assigned }}</span>
-        <span class="edify-text-caption text-slate-400 font-bold">88% of requests</span>
-      </div>
-      <div class="w-full h-1 bg-blue-500/10 rounded-full mt-3 overflow-hidden">
-        <div class="h-full bg-blue-500" style="width: 88%;"></div>
-      </div>
-    </div>
-
-    <!-- KPI 4 -->
-    <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
-         style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Conflicts Detected</span>
-      <div class="flex items-baseline gap-2 mt-2">
-        <span class="text-2xl font-black text-rose-500">{{ kpis.conflicts_detected }}</span>
-        <span class="edify-text-caption text-emerald-500 font-bold">&darr; 3 from last wk</span>
-      </div>
-      <div class="w-full h-1 bg-rose-500/10 rounded-full mt-3 overflow-hidden">
-        <div class="h-full bg-rose-500" style="width: 33%;"></div>
-      </div>
-    </div>
-
-    <!-- KPI 5 -->
-    <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
-         style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Staff On Leave This Week</span>
-      <div class="flex items-baseline gap-2 mt-2">
-        <span class="text-2xl font-black">{{ kpis.staff_on_leave }}</span>
-        <span class="edify-text-caption text-blue-500 font-bold">&uarr; 2 from last wk</span>
-      </div>
-      <div class="w-full h-1 bg-blue-500/10 rounded-full mt-3 overflow-hidden">
-        <div class="h-full bg-blue-500" style="width: 45%;"></div>
-      </div>
-    </div>
-
-    <!-- KPI 6 -->
-    <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
-         style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Leave Balance Alerts</span>
-      <div class="flex items-baseline gap-2 mt-2">
-        <span class="text-2xl font-black text-amber-500">{{ kpis.balance_alerts }}</span>
-        <span class="edify-text-caption text-slate-400 font-bold">requires attention</span>
-      </div>
-      <div class="w-full h-1 bg-amber-500/10 rounded-full mt-3 overflow-hidden">
-        <div class="h-full bg-amber-500" style="width: 50%;"></div>
-      </div>
-    </div>
-  </div>
+  <!-- All figures are derived from the reviewer's authorized live scope. -->
+  {% include "components/kpi_strip.html" with items=leave_kpi_items %}
 
   <!-- Main Grid: Left queue (3 cols), Right detail placeholder (9 cols) -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

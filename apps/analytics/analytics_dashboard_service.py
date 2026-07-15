@@ -574,7 +574,10 @@ class AnalyticsDashboardService:
                     "code": code,
                     "label": label,
                     "value": round(val, 2),
-                    "pct": round(val / 6.0 * 100) if avg_score is not None else 0,
+                    # SSA interventions are scored on the canonical 0-10
+                    # scale. Keep the visual bar on that same contract so a
+                    # 6.0 score reads as 60%, not as a full bar.
+                    "pct": round(val / 10.0 * 100) if avg_score is not None else 0,
                 }
             )
 

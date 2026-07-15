@@ -4,7 +4,7 @@
 {% block title %}Quality Certification Queue - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;" x-data="{ activePill: 'all' }">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ activePill: 'all' }">
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
@@ -25,16 +25,22 @@ Authoritative validation layer. Review implementation evidence, detect anomalies
 </div>
 
 <!-- Metrics SLA summary badge -->
-<div class="shrink-0 flex flex-col gap-1.5 bg-slate-800/80 backdrop-blur-md border border-slate-700/50 p-4 rounded-lg">
+<div class="w-full md:w-auto md:min-w-[250px] shrink-0 flex flex-col gap-1.5 bg-slate-800/80 backdrop-blur-md border border-slate-700/50 p-4 rounded-lg">
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider block">SLA COMPLIANCE</span>
-<div class="flex items-baseline gap-1">
-<span class="text-[24px] font-semibold text-emerald-400">98.4%</span>
-<span class="edify-text-caption text-slate-400 font-bold">within 24h</span>
+<div class="{% if kpis.sla_compliance is not None %}flex items-baseline gap-1{% else %}space-y-0.5{% endif %}">
+<span class="text-[24px] font-semibold {% if kpis.sla_compliance is not None %}text-emerald-400{% else %}text-slate-300{% endif %}">
+  {% if kpis.sla_compliance is not None %}{{ kpis.sla_compliance|floatformat:1 }}%{% else %}Not yet measured{% endif %}
+</span>
+<span class="edify-text-caption text-slate-400 font-medium block">
+  {% if kpis.sla_compliance is not None %}within 24h · n={{ kpis.sla_sample_size }}{% else %}Starts with the next IA submission{% endif %}
+</span>
 </div>
-<!-- Simple linear progress bar -->
+<!-- Measured 30-day SLA progress; never filled from a placeholder value. -->
+{% if kpis.sla_compliance is not None %}
 <div class="w-36 h-1.5 bg-slate-700 rounded-full overflow-hidden mt-1">
-<div class="h-full bg-emerald-400 rounded-full" style="width: 98.4%"></div>
+<div class="h-full bg-emerald-400 rounded-full" style="width: {% if kpis.sla_compliance is not None %}{{ kpis.sla_compliance }}{% else %}0{% endif %}%"></div>
 </div>
+{% endif %}
 </div>
 </div>
 </div>

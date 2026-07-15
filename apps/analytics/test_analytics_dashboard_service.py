@@ -20,6 +20,7 @@ from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
+from apps.ssa.models import SsaRecord, SsaScore
 from apps.targets.models import TargetSetting
 
 User = get_user_model()
@@ -127,3 +128,27 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
         self.assertEqual(data["kpis"]["target_achievement"]["value"], "100%")
         strip = {k["label"]: k for k in data["kpi_strip_items"]}
         self.assertEqual(strip["Overall Target Achievement"]["raw_value"], 100)
+
+    def test_ssa_intervention_bars_use_the_canonical_zero_to_ten_scale(self):
+        record = SsaRecord.objects.create(
+            school=self.school,
+            date_of_ssa=timezone.make_aware(timezone.datetime(2026, 4, 10, 9, 0)),
+            fy=FY,
+            quarter="Q3",
+            average_score=6.0,
+            verification_status="confirmed",
+            uploaded_by=self.user.id,
+        )
+        SsaScore.objects.create(
+            ssa_record=record,
+            intervention="leadership",
+            score=6.0,
+        )
+
+        data = AnalyticsDashboardService.get_analytics_data(self.user, self._filters())
+        leadership = next(
+            item for item in data["ssa_performance"] if item["code"] == "leadership"
+        )
+
+        self.assertEqual(leadership["value"], 6.0)
+        self.assertEqual(leadership["pct"], 60)

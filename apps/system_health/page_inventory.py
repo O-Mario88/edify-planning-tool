@@ -53,6 +53,7 @@ _INLINE_EVENT_RE = re.compile(
     r"\bon(?:click|change|input|submit|mouseover|mouseout)=", re.I
 )
 _RAW_HEX_RE = re.compile(r"(?<!&)#[0-9a-fA-F]{3,8}\b")
+_INLINE_STYLE_RE = re.compile(r"\bstyle=[\"']([^\"']*)[\"']", re.I)
 _EMOJI_RE = re.compile(
     "["
     "\U0001f300-\U0001f5ff"
@@ -286,7 +287,7 @@ def _template_findings(source: str) -> list[Finding]:
         (
             "inline-style",
             "low",
-            re.search(r"\bstyle=[\"']", source),
+            _unsafe_inline_style(source),
             "Static inline styling reduces theme and component consistency.",
             "Move static presentation into a shared component class; keep inline custom properties only for live data.",
         ),
@@ -302,6 +303,33 @@ def _template_findings(source: str) -> list[Finding]:
         if match:
             findings.append(Finding(key, severity, evidence, action))
     return findings
+
+
+def _unsafe_inline_style(source: str) -> bool:
+    """Return whether a template contains presentation that belongs in CSS.
+
+    Token-driven declarations, live Django values and Alpine's pre-init
+    ``display:none`` guard are legitimate inline state.  Static dimensions,
+    spacing, color literals and layout rules are not: they bypass the shared
+    component layer and remain a low-severity migration finding.
+    """
+
+    for match in _INLINE_STYLE_RE.finditer(source):
+        for declaration in match.group(1).split(";"):
+            declaration = declaration.strip()
+            if not declaration or ":" not in declaration:
+                continue
+            property_name, value = (
+                part.strip() for part in declaration.split(":", 1)
+            )
+            if property_name.startswith("--"):
+                continue
+            if "var(" in value or "{{" in value or "{%" in value:
+                continue
+            if property_name == "display" and value == "none":
+                continue
+            return True
+    return False
 
 
 def _score(findings: list[Finding], state_coverage: dict[str, bool]) -> float:

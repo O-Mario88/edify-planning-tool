@@ -1,5 +1,6 @@
 .hcos-workspace {
-  container: hcos / inline-size;
+  container-name: hcos;
+  container-type: inline-size;
   width: min(100%, 112rem);
   margin-inline: auto;
   padding: clamp(1rem, 2.2vw, 2rem);
@@ -161,7 +162,7 @@
 .hcos-pagination div { display: flex; gap: 0.45rem; }
 .hcos-pagination a { min-height: 2.2rem; display: inline-flex; align-items: center; padding-inline: 0.68rem; border: 1px solid var(--edify-border); border-radius: 0.42rem; color: var(--edify-text); background: var(--edify-surface-muted); font-weight: 600; }
 
-@container hcos (max-width: 58rem) {
+@media (max-width: 980px) {
   .hcos-hero { align-items: flex-start; flex-direction: column; }
   .hcos-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hcos-metric:nth-child(2) { border-inline-end: 0; }
@@ -170,7 +171,7 @@
   .hcos-search { min-width: 0; width: 100%; }
 }
 
-@container hcos (max-width: 36rem) {
+@media (max-width: 640px) {
   .hcos-workspace { padding: 0.9rem; }
   .hcos-hero__actions { width: 100%; }
   .hcos-button { flex: 1; }
