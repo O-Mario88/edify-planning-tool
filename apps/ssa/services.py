@@ -18,7 +18,7 @@ from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import resolve_user_scope
-from apps.schools.models import School, SchoolEnrollmentHistory
+from apps.schools.models import School
 
 from .models import SsaRecord, SsaScore
 
@@ -161,17 +161,15 @@ def upload(data: dict, principal) -> dict:
             ]
         )
 
-        if data.get("newEnrollment") is not None:
-            school.enrollment = data["newEnrollment"]
-            school.save(update_fields=["enrollment", "updated_at"])
-            SchoolEnrollmentHistory.objects.update_or_create(
-                school=school,
-                fy=fy,
-                defaults={
-                    "enrollment": data["newEnrollment"],
-                    "recorded_at": timezone.now(),
-                },
-            )
+        # NOTE (2026-07-15 clarification): SSA import must NEVER overwrite the
+        # School Enrolment Count (School.enrollment) -- it is sourced only
+        # from School upload / School Directory. The optional "New Enrolment"
+        # CSV column is a per-assessment headcount observation and is stored
+        # on the record only (SsaRecord.new_enrollment, set above); it is
+        # deliberately never applied back to School.enrollment or
+        # SchoolEnrollmentHistory to avoid any risk of the SSA Enrolment
+        # Score (a 0-10 performance metric) being confused with, or
+        # overwriting, the actual child headcount.
 
         # SSA done + verified -> school's current-FY SSA status becomes done.
         if record.verification_status == "confirmed":
@@ -234,22 +232,17 @@ def recommendation(school_id: str, principal) -> dict:
         latest.scores.all().values("intervention", "score"), key=lambda s: s["score"]
     )
     weakest = scores[:2]
-    avg = latest.average_score or 0
-    if avg >= 7:
-        severity = "healthy"
-    elif avg >= 5:
-        severity = "moderate"
-    elif avg >= 3:
-        severity = "weak"
-    else:
-        severity = "critical"
+    # Canonical classification (§5) — never a locally hand-rolled scheme.
+    from apps.core.enums import ssa_score_band
+
+    band_label, _hex, _tone = ssa_score_band(latest.average_score)
     return {
         "schoolId": school_id,
         "hasSsa": True,
         "fy": latest.fy,
         "averageScore": latest.average_score,
         "weakest": weakest,
-        "severity": severity,
+        "severity": band_label,
     }
 
 

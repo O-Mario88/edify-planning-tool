@@ -118,6 +118,13 @@ class SsaCollectorType(models.TextChoices):
 
 
 class SsaIntervention(models.TextChoices):
+    """The 8 SSA interventions, in the canonical CSV column order (2026-07-15
+    clarification — do not rename, reorder, merge, or omit without an
+    approved data migration and product decision). Note ENROLMENT is the
+    school's *performance score* on enrolment (0-10) — entirely distinct
+    from School.enrollment, the actual headcount. Never conflate the two;
+    see apps.schools.models.School.enrollment."""
+
     CHRISTLIKE_BEHAVIOUR = "christlike_behaviour", "Christlike Behaviour"
     EXPOSURE_TO_WORD_OF_GOD = (
         "exposure_to_word_of_god",
@@ -125,10 +132,10 @@ class SsaIntervention(models.TextChoices):
     )
     FINANCIAL_HEALTH = "financial_health", "Financial Health"
     LEADERSHIP = "leadership", "Leadership"
+    GOVERNMENT_REQUIREMENT = "government_requirement", "Government Requirements"
     LEARNING_ENVIRONMENT = "learning_environment", "Learning Environment"
-    GOVERNMENT_REQUIREMENT = "government_requirement", "Government Requirement"
-    TEACHING_ENVIRONMENT = "teaching_environment", "Teaching Environment"
-    ENROLMENT = "enrolment", "Enrollment Score"
+    TEACHING_ENVIRONMENT = "teaching_environment", "Teacher's Environment"
+    ENROLMENT = "enrolment", "Enrolment"
 
 
 # Canonical SSA status bands on the 0-10 intervention/average score. This is

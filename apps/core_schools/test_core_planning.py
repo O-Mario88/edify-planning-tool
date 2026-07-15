@@ -398,12 +398,18 @@ class CoreSchoolsPlanningTest(TestCase):
 
     # ── 16–18: interventions + recommendations ───────────────────────────────
     def test_all_eight_ssa_interventions_are_used(self):
+        from django.utils.html import escape
+
         from apps.core.enums import SsaIntervention
 
         self.assertEqual(len(SsaIntervention.choices), 8)
         html = self._client(self.cceo).get("/core-schools").content.decode()
         for _code, label in SsaIntervention.choices:
-            self.assertIn(str(label), html)
+            # Django auto-escapes template output (e.g. "Teacher's
+            # Environment" -> "Teacher&#x27;s Environment") — compare against
+            # the escaped form so this doesn't false-fail on labels with
+            # apostrophes.
+            self.assertIn(escape(str(label)), html)
 
     def test_four_weakest_interventions_are_recommended(self):
         from apps.core_schools.core_planning_services import (

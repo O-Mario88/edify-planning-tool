@@ -107,15 +107,16 @@ SSA_COLLECTION_TYPES = (
 PARTNER_TYPES = ("partner_activity",)
 PROJECT_TYPES = ("project_activity",)
 
-# SSA interventions in the design's display order: (stored value, label, code).
+# SSA interventions in the canonical CSV column order (2026-07-15
+# clarification): (stored value, label, code).
 SSA_INTERVENTIONS = [
     ("christlike_behaviour", "Christlike Behaviour", "CB"),
     ("exposure_to_word_of_god", "Exposure to the Word of God", "WOG"),
     ("financial_health", "Financial Health", "FH"),
     ("leadership", "Leadership", "Lship"),
+    ("government_requirement", "Government Requirements", "GR"),
     ("learning_environment", "Learning Environment", "LE"),
-    ("government_requirement", "Government Requirement", "GR"),
-    ("teaching_environment", "Teaching Environment", "TE"),
+    ("teaching_environment", "Teacher's Environment", "TE"),
     ("enrolment", "Enrolment", "Erlm't"),
 ]
 _INTERVENTION_LABELS = {v: (label, code) for v, label, code in SSA_INTERVENTIONS}

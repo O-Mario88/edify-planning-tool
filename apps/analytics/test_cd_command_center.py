@@ -271,7 +271,7 @@ class CDCommandCenterTest(TestCase):
         d = self._dash()
         self.assertEqual(
             d["ssa_matrix"]["codes"],
-            ["CB", "WOG", "FH", "Lship", "LE", "GR", "TE", "Erlm't"],
+            ["CB", "WOG", "FH", "Lship", "GR", "LE", "TE", "Erlm't"],
         )
         central = next(
             r for r in d["ssa_matrix"]["rows"] if r["label"] == "Central Region"

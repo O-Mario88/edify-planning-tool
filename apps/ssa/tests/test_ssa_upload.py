@@ -157,3 +157,103 @@ class SsaScoreBandTest(APITestCase):
         self.assertEqual(ssa_band(65.0)[0], "Warning")
         self.assertEqual(ssa_band(75.0)[0], "Improving")
         self.assertEqual(ssa_band(None)[0], "No SSA")
+
+
+class SchoolEnrolmentCountVsSsaScoreTest(APITestCase):
+    """2026-07-15 clarification: School Enrolment Count (a headcount, on
+    School) and SSA Enrolment Score (a 0-10 performance metric, one of the 8
+    SSA interventions) are separate data objects that must never conflate,
+    and SSA import must never overwrite the school's enrolment count."""
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Enrolment Region")
+        self.district = District.objects.create(
+            name="Enrolment District", region=self.region
+        )
+        self.school = School.objects.create(
+            school_id="ENR-SCH-1",
+            name="Enrolment Test School",
+            region=self.region,
+            district=self.district,
+            enrollment=450,
+        )
+        self.ia = User.objects.create_user(
+            email="ia-enr@ssa.test",
+            name="Enrolment IA",
+            roles=[EdifyRole.IMPACT_ASSESSMENT.value],
+            active_role=EdifyRole.IMPACT_ASSESSMENT.value,
+            password="x",
+            is_active=True,
+        )
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {issue_access_token(self.ia.id, self.ia.active_role)}"
+        )
+
+    def _csv(self, body, name="ssa.csv"):
+        return SimpleUploadedFile(name, body.encode("utf-8"), content_type="text/csv")
+
+    def _post_and_import(self, file):
+        res = self.client.post("/api/ssa/upload", {"file": file}, format="multipart")
+        if res.status_code == 200:
+            batch_id = res.json()["upload_batch_id"]
+            return self.client.post(f"/api/uploads/{batch_id}/import")
+        return res
+
+    def test_ssa_enrolment_score_never_overwrites_school_enrollment_count(self):
+        """A CSV row's "Enrolment" column (the SSA score, e.g. 6) must not
+        touch School.enrollment (the headcount, 450)."""
+        body = (
+            f"{SSA_HEADERS}\nENR-SCH-1,2026-07-02,{SCORES}\n"
+        )
+        res = self._post_and_import(self._csv(body))
+        self.assertEqual(res.status_code, 200, res.content)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.enrollment, 450)
+
+    def test_new_enrollment_column_does_not_overwrite_school_record(self):
+        """Even the optional "New Enrolment" headcount column (distinct from
+        the SSA score) must not flow into School.enrollment -- SSA import is
+        never a write path for the school's enrolment count."""
+        headers = (
+            "School ID,Assessment Date,SSA Year,New Enrolment,Christlike Behaviour,"
+            "Exposure to the Word of God,Financial Health,Leadership,"
+            "Government Requirements,Learning Environment,Teacher's Environment,"
+            "Enrolment"
+        )
+        body = f"{headers}\nENR-SCH-1,2026-07-03,last,999,7,6,8,7,5,6,4,7\n"
+        res = self._post_and_import(self._csv(body))
+        self.assertEqual(res.status_code, 200, res.content)
+        self.school.refresh_from_db()
+        # School.enrollment must remain exactly what School Directory set —
+        # never the CSV's "New Enrolment" value (999).
+        self.assertEqual(self.school.enrollment, 450)
+        self.assertNotEqual(self.school.enrollment, 999)
+
+    def test_ssa_score_stored_separately_from_school_enrollment(self):
+        body = f"{SSA_HEADERS}\nENR-SCH-1,2026-07-04,{SCORES}\n"
+        res = self._post_and_import(self._csv(body))
+        self.assertEqual(res.status_code, 200, res.content)
+        record = SsaRecord.objects.get(school=self.school)
+        enrolment_score = record.scores.get(intervention="enrolment").score
+        self.school.refresh_from_db()
+        # Two entirely different values, on two entirely different models.
+        self.assertNotEqual(enrolment_score, self.school.enrollment)
+        self.assertLessEqual(enrolment_score, 10)
+        self.assertEqual(self.school.enrollment, 450)
+
+
+class LearnersImpactedUsesSchoolEnrollmentTest(APITestCase):
+    """Learners-impacted/reached calculations must aggregate the real school
+    headcount (School.enrollment), never any SSA score."""
+
+    def test_analytics_learners_impacted_sums_school_enrollment(self):
+        import inspect
+
+        from apps.analytics import services as analytics_services
+
+        source = inspect.getsource(analytics_services)
+        # The learners-impacted aggregation must reference the count field...
+        self.assertIn('Sum("enrollment")', source)
+        # ...and must never aggregate an SSA score field for that purpose.
+        self.assertNotIn('learners_impacted = reached_schools.aggregate(total=Sum("score"',
+                          source)

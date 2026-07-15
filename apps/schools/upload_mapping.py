@@ -147,9 +147,8 @@ SSA_HEADER_MAP: dict[str, str] = {
     "district": "district",
     "subcounty": "sub_county",
     "sub county": "sub_county",
-    # 8 interventions (canonical: CB, WOG, FH, Lship, LE, GR, TE, Enrolment).
-    # Note: enrolment SCORE uses "enrolment score" to avoid colliding with the
-    # student enrolment-count column above.
+    # 8 interventions (canonical CSV order: CB, WOG, FH, Lship, GR, LE, TE,
+    # Enrolment — see apps.core.enums.SsaIntervention).
     "christlike behaviour": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
     "christlike behavior": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
     "exposure to the word of god": SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value,
@@ -162,8 +161,17 @@ SSA_HEADER_MAP: dict[str, str] = {
     "government requirements and compliance": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
     "government requirements compliance": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
     "teaching environment": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "teacher's environment": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "teachers environment": SsaIntervention.TEACHING_ENVIRONMENT.value,
     "teaching and learning": SsaIntervention.TEACHING_ENVIRONMENT.value,
     "teaching & learning": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    # The canonical CSV column for the enrolment SCORE is the bare
+    # "Enrolment" header (2026-07-15 clarification) — distinct from the
+    # "new enrolment"/"enrolment count" COUNT aliases above. The explicit
+    # "... score" variants remain accepted for uploaders who disambiguate
+    # in the header themselves.
+    "enrolment": SsaIntervention.ENROLMENT.value,
+    "enrollment": SsaIntervention.ENROLMENT.value,
     "enrolment score": SsaIntervention.ENROLMENT.value,
     "enrollment score": SsaIntervention.ENROLMENT.value,
     "enrolment (0-10)": SsaIntervention.ENROLMENT.value,
@@ -176,15 +184,14 @@ SSA_REQUIRED_FIELDS = ("school_id", "date_of_ssa")
 SSA_EXPECTED_HEADERS = [
     "School ID",
     "Assessment Date",
-    "SSA Year",
     "Christlike Behaviour",
     "Exposure to the Word of God",
     "Financial Health",
     "Leadership",
+    "Government Requirements",
     "Learning Environment",
-    "Government Requirement",
-    "Teaching Environment",
-    "Enrolment Score",
+    "Teacher's Environment",
+    "Enrolment",
 ]
 
 

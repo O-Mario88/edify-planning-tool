@@ -452,7 +452,7 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         hm = d["district_heatmap"]
         self.assertEqual(len(hm["codes"]), 8)
         self.assertEqual(
-            hm["codes"], ["CB", "WOG", "FH", "Lship", "LE", "GR", "TE", "Erlm't"]
+            hm["codes"], ["CB", "WOG", "FH", "Lship", "GR", "LE", "TE", "Erlm't"]
         )
         for row in hm["rows"]:
             self.assertEqual(len(row["cells"]), 8)

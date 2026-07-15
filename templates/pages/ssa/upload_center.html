@@ -53,7 +53,7 @@
         <tr><td class="py-2 font-medium">School ID</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Must match a school in the directory</td><td class="py-2 text-slate-400">SCH-0001</td></tr>
         <tr><td class="py-2 font-medium">Assessment Date</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Date of the SSA assessment (YYYY-MM-DD)</td><td class="py-2 text-slate-400">2026-07-01</td></tr>
         <tr><td class="py-2 font-medium">SSA Year</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Which FY: "last" (2025 baseline) or "current" (2026). Upload last FY <strong>once</strong>, then current FY only.</td><td class="py-2 text-slate-400">last / current / 2025 / 2026</td></tr>
-        <tr><td class="py-2 font-medium">New Enrolment</td><td class="py-2">{% include "components/badge.html" with tone="neutral" label="Optional" %}</td><td class="py-2 text-slate-500">Student enrolment count (number, not a score)</td><td class="py-2 text-slate-400">320</td></tr>
+        <tr><td class="py-2 font-medium">New Enrolment</td><td class="py-2">{% include "components/badge.html" with tone="neutral" label="Optional" %}</td><td class="py-2 text-slate-500">Reference-only headcount reported at assessment time — a number, not a score. Never overwrites the School Enrolment Count on the school record; update that through School Directory / School Upload.</td><td class="py-2 text-slate-400">320</td></tr>
         {% for code, label in intervention_choices|default:"" %}
         <tr>
           <td class="py-2 font-medium">{{ label }} (0-10)</td>
