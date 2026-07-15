@@ -1000,7 +1000,39 @@ def _workflow_issues() -> dict:
             f"{core_champion_without_verified_ssa} champion candidate(s) proposed without a verified SSA baseline."
         )
 
+    # ── Annual-vs-monthly budget reconciliation (§16) ────────────────────────
+    # The Country Annual Budget's program_total must equal the sum of its 12
+    # monthly work-plan program totals for the same FY + country. A CD-entered
+    # annual figure that drifts from the plan-backed monthly snapshots is a
+    # reconciliation break the mandate requires the platform to catch.
+    from apps.monthly_work_plan.models import (
+        CountryAnnualBudget,
+        MonthlyWorkPlanBudget,
+    )
+
+    annual_reconciliation_breaks = 0
+    for annual in CountryAnnualBudget.objects.all().only(
+        "fy", "country_id", "program_total"
+    ):
+        monthly_sum = (
+            MonthlyWorkPlanBudget.objects.filter(
+                fy=annual.fy, country_id=annual.country_id
+            ).aggregate(s=Sum("program_total"))["s"]
+            or 0
+        )
+        # Only flag when monthly snapshots exist and disagree — an annual with
+        # no monthly plans yet is "not started", not a break.
+        if monthly_sum and monthly_sum != (annual.program_total or 0):
+            annual_reconciliation_breaks += 1
+    if annual_reconciliation_breaks:
+        blockers.append(
+            f"{annual_reconciliation_breaks} country annual budget(s) whose "
+            "program total does not reconcile to the sum of their monthly "
+            "work-plan budgets."
+        )
+
     return {
+        "annualBudgetReconciliationBreaks": annual_reconciliation_breaks,
         "coreSchoolsMissingPlan": core_schools_missing_plan,
         "coreSchoolsMissingCluster": core_schools_missing_cluster,
         "coreSlotsScheduledMissingActivity": core_slots_scheduled_missing_activity,
