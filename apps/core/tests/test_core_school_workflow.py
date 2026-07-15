@@ -116,7 +116,8 @@ class CoreSchoolWorkflowTest(TestCase):
 
         plan = CorePlan.objects.filter(school_id=self.school.school_id).first()
         self.assertIsNotNone(plan)
-        self.assertEqual(plan.slots.count(), 8)
+        # Mandated 9-slot package: 1 assessment + 4 visits + 4 trainings.
+        self.assertEqual(plan.slots.count(), 9)
 
         # 2. Assign Core Activity to Partner
         pa = PartnerAssignment.objects.create(

@@ -2,7 +2,7 @@ import logging
 from django.db import transaction
 from apps.schools.models import School
 from apps.core_schools.models import CoreSchoolProfile, CorePlan
-from apps.core_schools.services import CORE_SLOT_DONE_STATUSES
+from apps.core_schools.services import CORE_SLOT_DONE_STATUSES, EXPECTED_CORE_SLOTS
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,8 @@ class ChampionEligibilityService:
         balance_score = (min(lowest_score, 7.0) / 7.0) * 15.0
 
         # 4. Core Package Completion (10%)
-        # Total required slots are 8. Uses the same canonical "done" status
+        # Total required slots come from CORE_PACKAGE_SPEC (9: 1 assessment +
+        # 4 visits + 4 trainings). Uses the same canonical "done" status
         # set the real completion path writes (CORE_SLOT_DONE_STATUSES —
         # see apps.core_schools.services.resync_plan_completion) rather than
         # a hand-duplicated list of status spellings that can drift out of
@@ -84,7 +85,11 @@ class ChampionEligibilityService:
         )
 
         # Eligibility Checks
-        eligible = latest_avg >= 8.0 and lowest_score >= 7.0 and completed_slots >= 8
+        eligible = (
+            latest_avg >= 8.0
+            and lowest_score >= 7.0
+            and completed_slots >= EXPECTED_CORE_SLOTS
+        )
 
         return {
             "score": round(total_score, 1),

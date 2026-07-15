@@ -14,9 +14,9 @@ from apps.core_schools.models import (
     CoreActivitySlot,
     CoreSchoolProfile,
     cplan_id,
-    cslot_id,
     cprof_id,
 )
+from apps.core_schools.services import EXPECTED_CORE_SLOTS
 
 logger = logging.getLogger(__name__)
 
@@ -116,23 +116,14 @@ class CoreSchoolsService:
                                 "core_start_fy": fy,
                             },
                         )
-                        for kind, count in (("v", 4), ("t", 4)):
-                            for seq in range(1, count + 1):
-                                slot_id = cslot_id(s.school_id, kind, seq)
-                                CoreActivitySlot.objects.get_or_create(
-                                    id=slot_id,
-                                    defaults={
-                                        "core_plan": plan,
-                                        "school_id": s.school_id,
-                                        "intervention": interventions[
-                                            (seq - 1) % len(interventions)
-                                        ],
-                                        "activity_type": "visit"
-                                        if kind == "v"
-                                        else "training",
-                                        "sequence_number": seq,
-                                    },
-                                )
+                        # Canonical 9-slot package (assessment + 4v + 4t) via
+                        # the shared helper so this self-heal path can never
+                        # drift from the onboard path.
+                        from apps.core_schools.services import create_package_slots
+
+                        create_package_slots(
+                            plan, s.school_id, interventions, actor_id, actor_name
+                        )
                 except Exception as e:
                     logger.error(
                         f"Error auto-onboarding core school {s.school_id}: {e}"
@@ -259,11 +250,16 @@ class CorePackageProgressService:
             trainings = []
             v_slots = []
             t_slots = []
+            assessment_cell = CorePackageProgressService._serialize_slot_ui(None)
 
             if plan:
                 slots = list(plan.slots.all().order_by("sequence_number"))
                 v_slots = [sl for sl in slots if sl.activity_type == "visit"]
                 t_slots = [sl for sl in slots if sl.activity_type == "training"]
+                a_slot = next(
+                    (sl for sl in slots if sl.activity_type == "assessment"), None
+                )
+                assessment_cell = CorePackageProgressService._serialize_slot_ui(a_slot)
 
                 for seq in range(1, 5):
                     slot = next(
@@ -379,6 +375,7 @@ class CorePackageProgressService:
                     "score_pct": score_pct,
                     "score_label": score_label,
                     "score_badge_class": badge_class,
+                    "assessment": assessment_cell,
                     "visits": visits,
                     "trainings": trainings,
                     "blocked_reason": blocked_reason,
@@ -498,6 +495,8 @@ class CorePlanningService:
 
             visits_done = 0
             trainings_done = 0
+            assessment_done = 0
+            total_done = 0
             assigned_staff_name = "Unassigned"
             assigned_partner_name = "Unassigned"
 
@@ -540,6 +539,12 @@ class CorePlanningService:
                     for sl in slot_list
                     if sl.activity_type == "training" and sl.status in done_statuses
                 )
+                assessment_done = sum(
+                    1
+                    for sl in slot_list
+                    if sl.activity_type == "assessment" and sl.status in done_statuses
+                )
+                total_done = visits_done + trainings_done + assessment_done
 
                 # Check slot assignments
                 first_partner_slot = next(
@@ -561,8 +566,11 @@ class CorePlanningService:
                         lowest_score.intervention, lowest_score.intervention
                     )
 
-                # Recommendation logic: next missing item in slot
-                if visits_done < 4:
+                # Recommendation logic: next missing item in slot. The Core
+                # Assessment is the package's first milestone.
+                if assessment_done < 1:
+                    next_recommended = "Core Assessment"
+                elif visits_done < 4:
                     next_recommended = f"V{visits_done + 1} Visit"
                 elif trainings_done < 4:
                     next_recommended = f"T{trainings_done + 1} Training"
@@ -578,9 +586,10 @@ class CorePlanningService:
                     "assigned_partner": assigned_partner_name,
                     "weakest_interventions": weakest_intervention,
                     "next_recommended": next_recommended,
+                    "assessment_progress": f"{assessment_done} / 1",
                     "visits_progress": f"{visits_done} / 4",
                     "trainings_progress": f"{trainings_done} / 4",
-                    "progress_pct": int(((visits_done + trainings_done) / 8.0) * 100),
+                    "progress_pct": int((total_done / EXPECTED_CORE_SLOTS) * 100),
                 }
             )
 

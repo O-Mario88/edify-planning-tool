@@ -972,7 +972,11 @@ def _core_school_todos(principal, role):
                         "_due_sort": _date.today(),
                     }
                 )
-            for kind, label in (("visit", "Visit"), ("training", "Training")):
+            for kind, label in (
+                ("assessment", "Assessment"),
+                ("visit", "Visit"),
+                ("training", "Training"),
+            ):
                 kind_slots = sorted(
                     [sl for sl in slots if sl.activity_type == kind],
                     key=lambda sl: sl.sequence_number,
@@ -988,10 +992,15 @@ def _core_school_todos(principal, role):
                     None,
                 )
                 if nxt is not None:
+                    slot_tag = (
+                        "Core Assessment"
+                        if kind == "assessment"
+                        else f"{label[0]}{nxt.sequence_number} Core {label}"
+                    )
                     out.append(
                         {
                             "id": f"core-slot-{nxt.id}",
-                            "title": f"Schedule {label[0]}{nxt.sequence_number} Core {label} — {names.get(plan.school_id, plan.school_id)}",
+                            "title": f"Schedule {slot_tag} — {names.get(plan.school_id, plan.school_id)}",
                             "description": "Core package slot not yet scheduled this financial year.",
                             "category": "Core Schools",
                             "priority": "medium",

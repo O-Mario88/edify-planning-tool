@@ -187,17 +187,11 @@ class CoreSchoolsPlanningTest(TestCase):
             core_plan=plan,
             core_start_fy=FY,
         )
-        for kind, prefix in (("visit", "v"), ("training", "t")):
-            for seq in range(1, 5):
-                CoreActivitySlot.objects.create(
-                    id=cslot_id(school.school_id, prefix, seq),
-                    core_plan=plan,
-                    school_id=school.school_id,
-                    intervention="leadership",
-                    activity_type=kind,
-                    sequence_number=seq,
-                    status="Planned",
-                )
+        # Build the canonical 9-slot package (1 assessment + 4v + 4t) via the
+        # production helper so fixtures never drift from real onboarding.
+        from apps.core_schools.services import create_package_slots
+
+        create_package_slots(plan, school.school_id, ["leadership"])
         return plan
 
     def _client(self, user):
@@ -275,8 +269,11 @@ class CoreSchoolsPlanningTest(TestCase):
     # ── 7: the package definition ────────────────────────────────────────────
     def test_core_school_requires_assessment_four_visits_four_trainings(self):
         slots = CoreActivitySlot.objects.filter(core_plan=self.plan)
+        # The mandated 9-slot package: 1 assessment + 4 visits + 4 trainings.
+        self.assertEqual(slots.filter(activity_type="assessment").count(), 1)
         self.assertEqual(slots.filter(activity_type="visit").count(), 4)
         self.assertEqual(slots.filter(activity_type="training").count(), 4)
+        self.assertEqual(slots.count(), 9)
         self.assertEqual(self.plan.visits_target, 4)
         self.assertEqual(self.plan.trainings_target, 4)
         self.assertIsNone(self.plan.baseline_average)  # assessment still required
@@ -493,6 +490,32 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertIn("score", result2)
         self.assertLess(result2["score"], 80)  # weak interventions block champion
 
+    def test_assessment_slot_counts_toward_completion(self):
+        # The assessment slot is the 9th mandatory slot; completing it moves
+        # the plan's assessment counter and package-completion math.
+        from apps.core_schools.services import resync_plan_completion
+
+        a_slot = CoreActivitySlot.objects.get(
+            core_plan=self.plan, activity_type="assessment"
+        )
+        a_slot.status = "ia_verified"
+        a_slot.save(update_fields=["status"])
+        resync_plan_completion(self.plan)
+        self.plan.refresh_from_db()
+        self.assertEqual(self.plan.assessment_completed, 1)
+
+    def test_champion_eligibility_needs_all_nine_slots(self):
+        from apps.core_schools.champion_services import ChampionEligibilityService
+
+        # Complete only the 8 visit/training slots — the assessment is still
+        # outstanding, so the package (and champion eligibility) is incomplete.
+        CoreActivitySlot.objects.filter(
+            core_plan=self.plan, activity_type__in=["visit", "training"]
+        ).update(status="accountant_confirmed")
+        result = ChampionEligibilityService.calculate_score(self.school)
+        self.assertEqual(result["completed_slots"], 8)
+        self.assertFalse(result["eligible"])  # 8 of 9 — assessment missing
+
     # ── 23: HTMX scope ───────────────────────────────────────────────────────
     def test_core_htmx_endpoints_enforce_scope(self):
         resp = self._schedule_visit(client=self._client(self.other_cceo))
@@ -668,4 +691,11 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertEqual(plan.baseline_average, 6.2)
         self.assertEqual(plan.created_by_id, self.cceo.user_id)
         self.assertTrue(plan.created_by_name)
-        self.assertEqual(CoreActivitySlot.objects.filter(core_plan=plan).count(), 8)
+        # Self-heal creates the full 9-slot package (1 assessment + 4v + 4t).
+        self.assertEqual(CoreActivitySlot.objects.filter(core_plan=plan).count(), 9)
+        self.assertEqual(
+            CoreActivitySlot.objects.filter(
+                core_plan=plan, activity_type="assessment"
+            ).count(),
+            1,
+        )

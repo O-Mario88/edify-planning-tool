@@ -31,6 +31,7 @@ class CorePlan(TimeStampedModel):
     trainings_target = models.IntegerField(default=4)
     visits_completed = models.IntegerField(default=0)
     trainings_completed = models.IntegerField(default=0)
+    assessment_completed = models.IntegerField(default=0)  # 0 or 1
     baseline_average = models.FloatField(null=True, blank=True)
     follow_up_average = models.FloatField(null=True, blank=True)
     baseline_ssa_record_id = models.CharField(max_length=30, null=True, blank=True)
@@ -47,7 +48,8 @@ class CorePlan(TimeStampedModel):
 
 
 class CoreActivitySlot(TimeStampedModel):
-    """One of the 8 core slots (4 visit + 4 training). Deterministic id."""
+    """One of the 9 core slots (1 assessment + 4 visit + 4 training).
+    Deterministic id. See apps.core_schools.services.CORE_PACKAGE_SPEC."""
 
     id = models.CharField(max_length=64, primary_key=True)  # cslot-{schoolId}-v1
     core_plan = models.ForeignKey(
@@ -73,6 +75,7 @@ class CoreActivitySlot(TimeStampedModel):
     pl_verification_status = models.CharField(max_length=16, null=True, blank=True)
     ia_verification_status = models.CharField(max_length=16, null=True, blank=True)
     accountant_status = models.CharField(max_length=16, null=True, blank=True)
+    netsuite_status = models.CharField(max_length=16, null=True, blank=True)
     teachers = models.IntegerField(null=True, blank=True)
     leaders = models.IntegerField(null=True, blank=True)
     participants = models.IntegerField(null=True, blank=True)

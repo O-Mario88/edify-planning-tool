@@ -19,7 +19,6 @@ from .models import (
     CoreSchoolProfile,
     cplan_id,
     cprof_id,
-    cslot_id,
 )
 
 # The 11 polymorphic slot actions.
@@ -42,6 +41,37 @@ SLOT_ACTIONS = {
 # activities.services.list_activities(), the canonical "is this activity
 # done?" definition already used elsewhere in the app.
 CORE_SLOT_DONE_STATUSES = {"completed", "ia_verified", "accountant_confirmed"}
+
+# The mandatory Core School package: 1 Core Assessment + 4 visits + 4
+# trainings = 9 slots. This spec is the single source of truth for slot
+# creation (onboard + self-heal) and every completion threshold — never
+# hardcode "8" or "9" against it again.
+CORE_PACKAGE_SPEC = (("a", 1), ("v", 4), ("t", 4))
+CORE_SLOT_KIND_TO_TYPE = {"a": "assessment", "v": "visit", "t": "training"}
+EXPECTED_CORE_SLOTS = sum(count for _kind, count in CORE_PACKAGE_SPEC)
+
+
+def create_package_slots(
+    plan, school_id, interventions, actor_id=None, actor_name=None
+):
+    """Create the canonical 9-slot Core package if not already present.
+    Shared by the onboard path and the self-heal path so they can never
+    drift. Idempotent via get_or_create on the deterministic slot id."""
+    from apps.core_schools.models import CoreActivitySlot, cslot_id
+
+    interventions = interventions or ["christlike_behaviour"]
+    for kind, count in CORE_PACKAGE_SPEC:
+        for seq in range(1, count + 1):
+            CoreActivitySlot.objects.get_or_create(
+                id=cslot_id(school_id, kind, seq),
+                defaults={
+                    "core_plan": plan,
+                    "school_id": school_id,
+                    "intervention": interventions[(seq - 1) % len(interventions)],
+                    "activity_type": CORE_SLOT_KIND_TO_TYPE[kind],
+                    "sequence_number": seq,
+                },
+            )
 
 
 def list_candidates(principal) -> list[dict]:
@@ -145,21 +175,10 @@ def onboard(school_id: str, data: dict, principal) -> dict:
                 "onboarding_reason": data.get("reason"),
             },
         )
-        # Create the 8 slots (4 visit + 4 training) if not present.
+        # Create the canonical 9-slot package (1 assessment + 4 visit +
+        # 4 training) if not present.
         interventions = [i.value for i in SsaIntervention]
-        for kind, count in (("v", 4), ("t", 4)):
-            for seq in range(1, count + 1):
-                slot_id = cslot_id(school_id, kind, seq)
-                CoreActivitySlot.objects.get_or_create(
-                    id=slot_id,
-                    defaults={
-                        "core_plan": plan,
-                        "school_id": school_id,
-                        "intervention": interventions[(seq - 1) % len(interventions)],
-                        "activity_type": "visit" if kind == "v" else "training",
-                        "sequence_number": seq,
-                    },
-                )
+        create_package_slots(plan, school_id, interventions)
         school.school_type = "core"
         school.save(update_fields=["school_type"])
     return _serialize_plan(plan)
@@ -270,14 +289,24 @@ def resync_plan_completion(plan: CorePlan) -> None:
     trainings_completed = plan.slots.filter(
         activity_type="training", status__in=CORE_SLOT_DONE_STATUSES
     ).count()
+    assessment_completed = plan.slots.filter(
+        activity_type="assessment", status__in=CORE_SLOT_DONE_STATUSES
+    ).count()
     if (
         plan.visits_completed != visits_completed
         or plan.trainings_completed != trainings_completed
+        or plan.assessment_completed != assessment_completed
     ):
         plan.visits_completed = visits_completed
         plan.trainings_completed = trainings_completed
+        plan.assessment_completed = assessment_completed
         plan.save(
-            update_fields=["visits_completed", "trainings_completed", "updated_at"]
+            update_fields=[
+                "visits_completed",
+                "trainings_completed",
+                "assessment_completed",
+                "updated_at",
+            ]
         )
 
 
@@ -322,7 +351,7 @@ def upload_follow_up_ssa(plan_id: str, data: dict, principal) -> dict:
             "accountant_confirmed",
         ]
     ).count()
-    slots_complete = completed_slots_count >= 8
+    slots_complete = completed_slots_count >= EXPECTED_CORE_SLOTS
 
     is_champion_candidate = followup >= 7.5 and average_change > 0.0 and slots_complete
 
