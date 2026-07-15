@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}CD Monthly Admin Plan allocation for {{ selected_month }} {{ selected_fy }}{% endblock %}
 
 {% block drawer_badge %}
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase {{ admin_data.status_class }}">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase {{ admin_data.status_class }}">
 {{ admin_data.status_label }}
 </span>
 {% endblock %}
@@ -16,28 +16,28 @@
 <!-- Plan Summary Info -->
 <div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 border border-slate-100 rounded-xl text-[12px]">
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Total Planned</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Total Planned</p>
 <p class="font-semibold text-slate-800 mt-0.5">{{ admin_data.planned_total|ugx }}</p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Total Allocated</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Total Allocated</p>
 <p class="font-semibold text-emerald-700 mt-0.5">{{ admin_data.allocated_total|ugx }}</p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Monthly Period</p>
-<p class="font-semibold text-[#2e505f] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Monthly Period</p>
+<p class="font-semibold text-[var(--edify-primary)] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
 </div>
 </div>
 
 <!-- Admin lines table -->
 <div class="space-y-2">
-<p class="text-[11px] uppercase font-bold text-slate-400">Plan Line Items</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Plan Line Items</p>
 
 {% if admin_data.lines %}
 <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-<table class="w-full text-left text-[12px] border-collapse bg-white">
+<table class="w-full text-left text-[12px] border-collapse edify-surface">
 <thead>
-<tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<tr class="bg-slate-50 border-b border-slate-200 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <th class="px-4 py-2.5">Item Description</th>
 <th class="px-3 py-2.5">Category</th>
 <th class="px-3 py-2.5 text-center">Qty</th>
@@ -51,13 +51,13 @@
 <td class="px-4 py-3 font-semibold text-slate-800">
 {{ line.description }}
 {% if line.justification and line.justification != "None" %}
-<p class="text-[11px] font-semibold text-slate-400 mt-1 leading-normal">Justification: {{ line.justification }}</p>
+<p class="edify-text-caption font-semibold text-slate-400 mt-1 leading-normal">Justification: {{ line.justification }}</p>
 {% endif %}
 </td>
 <td class="px-3 py-3 font-semibold text-slate-500">{{ line.cost_category }}</td>
 <td class="px-3 py-3 text-center font-bold text-slate-700">{{ line.quantity|stringformat:".2f" }}</td>
 <td class="px-3 py-3 text-right text-slate-500">{{ line.unit_cost|ugx }}</td>
-<td class="px-4 py-3 text-right font-semibold text-[#2e505f]">{{ line.total_cost|ugx }}</td>
+<td class="px-4 py-3 text-right font-semibold text-[var(--edify-primary)]">{{ line.total_cost|ugx }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -72,7 +72,7 @@ No administrative budget lines exist for this month.
 
 <!-- Sticky Actions Footer -->
 <div class="drawer-footer flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
-<button 
+<button
 type="button"
 @click="$dispatch('close-drawer')"
 class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"
@@ -80,15 +80,15 @@ class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"
 Close
 </button>
 
-<a 
+<a
 href="/finance/fund-allocation?export=csv&export_mode=admin_only&month={{ selected_month }}&fy={{ selected_fy }}"
 class="btn btn-ghost h-10 text-[12px] text-blue-600 border-blue-200 hover:bg-blue-50 shadow-sm font-semibold flex items-center gap-1"
 >
 <span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg></span> Export Breakdown
 </a>
 
-<a 
-href="/work-plan" 
+<a
+href="/work-plan"
 target="_blank"
 class="btn btn-primary h-10 text-[12px] shadow-sm font-semibold"
 >

@@ -10,7 +10,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 edify-text-caption font-semibold uppercase tracking-widest">
 Partner Operations
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Partner Payment Queue</h1>
@@ -21,10 +21,10 @@ Manage and release payments for verified partner activities. Partner items appea
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Partner</th>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -47,7 +47,7 @@ Manage and release payments for verified partner activities. Partner items appea
 <!-- ID -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-900">#{{ act.id|slice:":8" }}</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ act.get_activity_type_display }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ act.get_activity_type_display }}</div>
 </td>
 <!-- School -->
 <td class="px-6 py-4">
@@ -63,7 +63,7 @@ Manage and release payments for verified partner activities. Partner items appea
 </td>
 <!-- IA Status -->
 <td class="px-6 py-4 text-center">
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
 Verified
 </span>
@@ -77,7 +77,7 @@ Verified
 <div class="flex items-center justify-end gap-2">
 <button
 @click="payOpen = true; selectedAct = '{{ act.id }}'; partnerName = '{{ act.assigned_partner_id }}'; payAmount = {{ act.est_cost_cents|default:0 }}"
-type="button" 
+type="button"
 class="h-8 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >
 Pay Partner
@@ -106,7 +106,7 @@ Pay Partner
 </div>
 
 <!-- PARTNER PAYMENT DETAIL DRAWER (Slide-over overlay inside parent) -->
-<div 
+<div
 x-show="payOpen"
 x-transition:enter="transition ease-out duration-300 transform"
 x-transition:enter-start="translate-x-full"
@@ -114,7 +114,7 @@ x-transition:enter-end="translate-x-0"
 x-transition:leave="transition ease-in duration-200 transform"
 x-transition:leave-start="translate-x-0"
 x-transition:leave-end="translate-x-full"
-class="absolute inset-y-0 right-0 w-96 bg-white z-25 p-6 flex flex-col justify-between shadow-md border-l border-slate-200"
+class="absolute inset-y-0 right-0 w-96 edify-surface z-25 p-6 flex flex-col justify-between shadow-md border-l border-slate-200"
 style="display: none;"
 >
 <div class="space-y-6">
@@ -129,30 +129,30 @@ style="display: none;"
 {% csrf_token %}
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Partner Name</label>
-<input 
-type="text" 
-name="partner_name" 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Partner Name</label>
+<input
+type="text"
+name="partner_name"
 required
 x-model="partnerName"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-emerald-500 focus:outline-none transition-all"
 >
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Payment Amount (UGX)</label>
-<input 
-type="number" 
-name="amount_paid" 
-required 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Amount (UGX)</label>
+<input
+type="number"
+name="amount_paid"
+required
 x-model="payAmount"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-emerald-500 focus:outline-none transition-all"
 >
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Payment Method</label>
-<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all">
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Method</label>
+<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-emerald-500 focus:outline-none transition-all">
 {% for m in methods %}
 <option value="{{ m }}">{{ m }}</option>
 {% endfor %}
@@ -160,50 +160,50 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] fo
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Payment Reference</label>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Reference</label>
 <input
 type="text"
 name="payment_reference"
 required
 placeholder="e.g. EFT-1100223"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3.5 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3.5 edify-focus-surface focus:border-emerald-500 focus:outline-none transition-all"
 >
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">NetSuite Expense ID</label>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">NetSuite Expense ID</label>
 <input
 type="text"
 name="netsuite_expense_id"
 required
 placeholder="e.g. NS-EXP-1100223"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3.5 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3.5 edify-focus-surface focus:border-emerald-500 focus:outline-none transition-all"
 >
-<p class="text-[10px] text-slate-400 font-semibold mt-1">Required — proof the payment was entered into NetSuite before this activity can close.</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Required — proof the payment was entered into NetSuite before this activity can close.</p>
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Notes</label>
-<textarea 
-name="notes" 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Notes</label>
+<textarea
+name="notes"
 placeholder="Internal comments..."
-class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] focus:bg-white focus:border-emerald-500 focus:outline-none h-20 resize-none font-semibold"
+class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] edify-focus-surface focus:border-emerald-500 focus:outline-none h-20 resize-none font-semibold"
 ></textarea>
 </div>
 </form>
 </div>
 
-<div class="space-y-2 border-t border-slate-100 pt-4 bg-white">
-<button 
+<div class="space-y-2 border-t border-slate-100 pt-4 edify-surface">
+<button
 form="pay-form"
 type="submit"
 class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
 >
 Confirm Payment
 </button>
-<button 
+<button
 @click="payOpen = false"
-type="button" 
+type="button"
 class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel

@@ -5,20 +5,20 @@
      class="fixed inset-0 z-[60] flex items-stretch justify-end"
      aria-modal="true" role="dialog">
   <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-md" x-show="active" x-transition.opacity @click="$dispatch('close-drawer')"></div>
-  <div class="relative z-10 w-full max-w-[720px] bg-white shadow-2xl border-l border-slate-200 overflow-hidden flex flex-col"
+  <div class="relative z-10 w-full max-w-[720px] edify-surface shadow-2xl border-l border-slate-200 overflow-hidden flex flex-col"
        x-show="active"
        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
     <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between shrink-0">
       <div>
         <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Plan Sources — {{ month_label }} {{ fy }}</h2>
-        <p class="text-[11.5px] font-semibold text-slate-400">{{ count }} scheduled, costed activity line{{ count|pluralize }} behind this month's budget.</p>
+        <p class="edify-text-caption font-semibold text-slate-400">{{ count }} scheduled, costed activity line{{ count|pluralize }} behind this month's budget.</p>
       </div>
       <button @click="$dispatch('close-drawer')" class="text-slate-400 hover:text-slate-600 shrink-0"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="overflow-y-auto flex-1">
       <table class="w-full text-left border-collapse">
         <thead class="sticky top-0 bg-slate-50/95 backdrop-blur">
-          <tr class="text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+          <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-4 py-2.5">Activity</th>
             <th class="px-3 py-2.5">Staff</th>
             <th class="px-3 py-2.5">School</th>
@@ -32,14 +32,14 @@
           <tr class="hover:bg-slate-50/50 text-[12px]">
             <td class="px-4 py-2.5">
               <p class="font-bold text-slate-800">{{ r.activity_type }}</p>
-              <p class="text-[10.5px] font-semibold text-slate-400">{{ r.label }} · {{ r.delivery_type|title }}</p>
+              <p class="edify-text-caption font-semibold text-slate-400">{{ r.label }} · {{ r.delivery_type|title }}</p>
             </td>
             <td class="px-3 py-2.5 font-semibold text-slate-600">{{ r.staff }}</td>
             <td class="px-3 py-2.5 text-slate-500">{{ r.school }}</td>
             <td class="px-3 py-2.5 text-slate-500 tabular-nums">{{ r.planned_date|date:"M j, Y"|default:"—" }}</td>
             <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.amount_fmt }}</td>
             <td class="px-3 py-2.5 text-center">
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded edify-text-caption font-bold uppercase
                 {% if r.status == 'Plan-backed' %}bg-emerald-50 text-emerald-700{% elif r.status == 'Missing Cost' or r.status == 'Needs Review' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ r.status }}</span>
             </td>
           </tr>

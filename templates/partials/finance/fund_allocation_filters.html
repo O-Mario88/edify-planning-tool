@@ -1,5 +1,5 @@
 <!-- Filters Form for Consolidated Fund Allocation -->
-<form 
+<form
 id="filters-form"
 hx-get="/finance/fund-allocation"
 hx-trigger="change delay:100ms, keyup delay:200ms changed from:input[name='q']"
@@ -8,7 +8,7 @@ hx-push-url="true"
 class="flex flex-wrap items-center gap-2.5 text-[12px] font-bold"
 >
 <!-- Month Dropdown -->
-<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
 <span class="text-[14px] text-slate-400"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
 <select name="month" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
 <option value="October" {% if selected_month == 'October' %}selected{% endif %}>October</option>
@@ -27,7 +27,7 @@ class="flex flex-wrap items-center gap-2.5 text-[12px] font-bold"
 </div>
 
 <!-- Region / Team Dropdown -->
-<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
 <span class="text-[14px] text-slate-400"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
 <select name="region" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
 <option value="">All Regions / Teams</option>
@@ -38,24 +38,24 @@ class="flex flex-wrap items-center gap-2.5 text-[12px] font-bold"
 </div>
 
 <!-- Search Box -->
-<div class="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
+<div class="flex items-center gap-1.5 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
 <span class="text-[14px] text-slate-400"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg></span>
-<input 
-type="text" 
-name="q" 
-placeholder="Search staff, owner, school, cluster..." 
+<input
+type="text"
+name="q"
+placeholder="Search staff, owner, school, cluster..."
 value="{{ search_q }}"
 class="bg-transparent focus:outline-none w-48 placeholder-slate-400 font-bold text-slate-700"
 >
 </div>
 
 <!-- Export button opening Export Drawer -->
-<button 
+<button
 type="button"
 hx-get="/finance/fund-allocation/export-drawer?month={{ selected_month }}&fy={{ selected_fy }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="flex items-center gap-1.5 h-8 px-4 btn-premium-primary text-white border border-[#2e505f] rounded-lg hover:bg-[#001f40] hover:border-[#001f40] focus:outline-none transition-all shadow-sm font-semibold"
+class="flex items-center gap-1.5 h-8 px-4 btn-premium-primary text-white border border-[var(--edify-primary)] rounded-lg hover:bg-[var(--edify-primary-active)] hover:border-[var(--edify-primary-active)] focus:outline-none transition-all shadow-sm font-semibold"
 >
 <svg class="h-3.5 w-3.5 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>

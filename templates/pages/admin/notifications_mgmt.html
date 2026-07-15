@@ -14,16 +14,16 @@
 </div>
 
 <!-- Listings Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Alert Summary</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Recipient Details</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Priority</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Delivery Status</th>
-<th class="px-5 py-3.5 text-right text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Action</th>
+<th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Alert Summary</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Recipient Details</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Priority</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Delivery Status</th>
+<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Action</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
@@ -32,31 +32,31 @@
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-800 block">{{ log.title }}</span>
 {% if log.body %}
-<span class="text-[11px] text-slate-400 font-semibold block mt-0.5 max-w-[320px] truncate" title="{{ log.body }}">
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5 max-w-[320px] truncate" title="{{ log.body }}">
 {{ log.body }}
 </span>
 {% endif %}
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Generated: {{ log.created_at|date:"M d, Y H:i" }}</span>
+<span class="edify-text-caption text-slate-400 font-bold block mt-1">Generated: {{ log.created_at|date:"M d, Y H:i" }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold">
 <span class="block">User ID: {{ log.recipient_id }}</span>
 {% if log.recipient_role %}
-<span class="block text-[11px] text-slate-400 mt-0.5">Role: {{ log.recipient_role|upper }}</span>
+<span class="block edify-text-caption text-slate-400 mt-0.5">Role: {{ log.recipient_role|upper }}</span>
 {% endif %}
 </td>
 <td class="px-4 py-4">
-<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100">
+<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-slate-100">
 {{ log.priority }}
 </span>
 </td>
 <td class="px-4 py-4">
 {% if log.status == 'read' %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-emerald-50 text-emerald-700">
 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
 <span>Delivered & Read</span>
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-blue-50 text-blue-700">
 <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
 <span>Sent (Unread)</span>
 </span>
@@ -66,9 +66,9 @@
 <form method="post" action="/admin/notifications-mgmt">
 {% csrf_token %}
 <input type="hidden" name="resend_id" value="{{ log.id }}">
-<button 
-type="submit" 
-class="px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-600 hover:text-blue-800 rounded text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
+<button
+type="submit"
+class="px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-600 hover:text-blue-800 rounded edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Resend Alert
 </button>

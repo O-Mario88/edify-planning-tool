@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
 Compliance Log
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Finance Audit Log Ledger</h1>
@@ -20,10 +20,10 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Event Type</th>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -38,7 +38,7 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Event -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 border ">
+<span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 border ">
 {{ log.event_type|upper }}
 </span>
 </td>
@@ -53,14 +53,14 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 <!-- Actor -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-800">{{ log.actor_id }}</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ log.actor_role }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ log.actor_role }}</div>
 </td>
 <!-- Changes -->
 <td class="px-6 py-4 max-w-sm leading-normal">
 {{ log.new_value }}
 </td>
 <!-- Timestamp -->
-<td class="px-6 py-4 text-right text-slate-500 font-bold uppercase text-[11px]">
+<td class="px-6 py-4 text-right text-slate-500 font-bold uppercase edify-text-caption">
 {{ log.timestamp|date:"M d, Y H:i:s" }}
 </td>
 </tr>

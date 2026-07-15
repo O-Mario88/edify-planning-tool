@@ -8,19 +8,19 @@
 
 <!-- Header / Breadcrumb navigation -->
 <div>
-<a href="/my-plan" class="text-[11px] font-semibold text-[#2e505f] hover:underline uppercase tracking-wider">&larr; Back to My Plan</a>
+<a href="/my-plan" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to My Plan</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
 <h1 class="text-[21px] font-extrabold tracking-tight capitalize">{{ act.activity_type|title|replace_underscore }}</h1>
 <p class="text-[12px] text-slate-500 mt-0.5 font-semibold">
 {% if act.school %}
-School: <a href="/schools/{{ act.school.school_id }}" class="font-bold hover:underline text-[#2e505f]">{{ act.school.name }}</a>
+School: <a href="/schools/{{ act.school.school_id }}" class="font-bold hover:underline text-[var(--edify-primary)]">{{ act.school.name }}</a>
 {% elif act.cluster %}
-Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underline text-[#2e505f]">{{ act.cluster.name }}</a>
+Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underline text-[var(--edify-primary)]">{{ act.cluster.name }}</a>
 {% endif %}
 </p>
 </div>
-<span class="inline-flex items-center rounded-full px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider {{ status_class }}">
+<span class="inline-flex items-center rounded-full px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {{ status_class }}">
 {{ status_label }}
 </span>
 </div>
@@ -37,32 +37,32 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Scheduled Date</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Scheduled Date</p>
 <p class="font-semibold text-slate-800 mt-0.5">{{ act.planned_date|default:"Not scheduled" }}</p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Focus Intervention</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Focus Intervention</p>
 <p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ act.focus_intervention|default:"None"|replace_underscore }}</p>
 </div>
 <div class="col-span-2">
-<p class="text-[11px] uppercase font-bold text-slate-400">Purpose Description</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Purpose Description</p>
 <p class="font-semibold mt-0.5 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
 {{ act.activity_purpose_text|default:"No purpose description entered." }}
 </p>
 </div>
 <div class="col-span-2">
-<p class="text-[11px] uppercase font-bold text-slate-400">Expected Outcome</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Expected Outcome</p>
 <p class="font-semibold mt-0.5 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
 {{ act.expected_outcome|default:"No expected outcome entered." }}
 </p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Salesforce Activity ID</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Salesforce Activity ID</p>
 <p class="font-bold mt-0.5">{{ act.salesforce_activity_id|default:"Not completed yet" }}</p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Allocated Budget</p>
-<p class="font-semibold text-[#2e505f] mt-0.5">{{ act.est_cost_cents|ugx }}</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Allocated Budget</p>
+<p class="font-semibold text-[var(--edify-primary)] mt-0.5">{{ act.est_cost_cents|ugx }}</p>
 </div>
 </div>
 </div>
@@ -76,9 +76,9 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 <div class="py-3 flex items-center justify-between text-[12px]">
 <div class="space-y-0.5">
 <p class="font-bold text-slate-800">{{ ev.original_name }}</p>
-<p class="text-[11px] text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
+<p class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_extension }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-md px-2 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>
@@ -98,7 +98,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 <h3 class="text-[14px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Execution Actions</h3>
 
 <div class="space-y-2.5">
-<button 
+<button
 hx-get="/my-plan/{{ act.id }}/complete-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"

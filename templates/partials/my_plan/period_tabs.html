@@ -3,7 +3,7 @@
 
 <!-- Left Side: Segmented Tabs Control -->
 <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
-<button 
+<button
 hx-get="/my-plan?period=week"
 hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
@@ -14,7 +14,7 @@ class="px-4.5 py-1.5 text-[12px] font-bold rounded-lg transition-all {% if perio
 Week
 </button>
 
-<button 
+<button
 hx-get="/my-plan?period=month"
 hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
@@ -25,7 +25,7 @@ class="px-4.5 py-1.5 text-[12px] font-bold rounded-lg transition-all {% if perio
 Month
 </button>
 
-<button 
+<button
 hx-get="/my-plan?period=quarter"
 hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
@@ -36,7 +36,7 @@ class="px-4.5 py-1.5 text-[12px] font-bold rounded-lg transition-all {% if perio
 Quarter
 </button>
 
-<button 
+<button
 hx-get="/my-plan?period=fy"
 hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
@@ -51,7 +51,7 @@ FY
 <!-- Middle Section: Selected Period Range display label -->
 <div class="text-[12px] font-bold text-slate-700 flex items-center gap-1.5">
 <span class="text-slate-400">Showing plans for</span>
-<span class="text-[#0f172a] font-semibold">{{ period_label }}</span>
+<span class="text-[var(--edify-text)] font-semibold">{{ period_label }}</span>
 </div>
 
 <!-- Right Side: View Calendar button -->

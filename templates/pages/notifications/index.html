@@ -10,26 +10,26 @@
       <h1 class="text-[21px] font-extrabold tracking-tight">Notifications Center</h1>
       <p class="text-[12px] text-slate-500 mt-1 font-semibold">Edify Alert Operations · Keep Track of Actionable Tasks</p>
     </div>
-    
+
     <!-- Bulk Actions -->
     <div class="flex items-center gap-2">
       <form method="post" action="/notifications" class="inline">
         {% csrf_token %}
         <input type="hidden" name="action" value="mark_all_read">
-        <button 
+        <button
           type="submit"
-          class="h-9 px-4 rounded-xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-9 px-4 rounded-xl border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Mark All Read
         </button>
       </form>
-      
+
       <form method="post" action="/notifications" class="inline">
         {% csrf_token %}
         <input type="hidden" name="action" value="archive_all_read">
-        <button 
+        <button
           type="submit"
-          class="h-9 px-4 rounded-xl border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-9 px-4 rounded-xl border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Archive All Read
         </button>
@@ -40,36 +40,36 @@
   <!-- KPI Strip -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
     <!-- KPI Card: Total -->
-    <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Total Notifications</p>
+        <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Total Notifications</p>
         <h3 class="text-[26px] font-bold text-slate-800 mt-1 leading-none">{{ kpis.total }}</h3>
       </div>
       <span class="text-[28px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></span>
     </div>
 
     <!-- KPI Card: Unread -->
-    <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Unread Alerts</p>
+        <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Unread Alerts</p>
         <h3 class="text-[26px] font-bold text-blue-600 mt-1 leading-none">{{ kpis.unread }}</h3>
       </div>
       <span class="text-[28px] animate-pulse"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/></svg></span>
     </div>
 
     <!-- KPI Card: Action Required -->
-    <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Action Required</p>
+        <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Action Required</p>
         <h3 class="text-[26px] font-bold text-amber-600 mt-1 leading-none">{{ kpis.action_required }}</h3>
       </div>
       <span class="text-[28px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></span>
     </div>
 
     <!-- KPI Card: Critical -->
-    <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
       <div>
-        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Critical Tasks</p>
+        <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Critical Tasks</p>
         <h3 class="text-[26px] font-bold text-rose-600 mt-1 leading-none">{{ kpis.critical }}</h3>
       </div>
       <span class="text-[28px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></span>
@@ -77,15 +77,15 @@
   </div>
 
   <!-- Filters & Search Toolbar -->
-  <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+  <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs">
     <form method="get" action="/notifications" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <!-- Search bar -->
         <div class="col-span-1 md:col-span-2 relative">
-          <label class="text-[10px] uppercase font-black text-slate-400 tracking-wider block mb-1">Search notifications</label>
-          <input 
-            type="text" 
-            name="q" 
+          <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Search notifications</label>
+          <input
+            type="text"
+            name="q"
             placeholder="Search keywords, schools, or event details..."
             value="{{ q }}"
             class="w-full h-10 px-3 border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-850 placeholder-slate-400 focus:outline-none focus:border-blue-500"
@@ -94,10 +94,10 @@
 
         <!-- Filter: Status -->
         <div>
-          <label class="text-[10px] uppercase font-black text-slate-400 tracking-wider block mb-1">Status</label>
-          <select 
+          <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Status</label>
+          <select
             name="status"
-            class="w-full h-10 px-3 bg-white border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
+            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All (except archived)</option>
             <option value="unread" {% if selected_status == 'unread' %}selected{% endif %}>Unread</option>
@@ -108,10 +108,10 @@
 
         <!-- Filter: Priority -->
         <div>
-          <label class="text-[10px] uppercase font-black text-slate-400 tracking-wider block mb-1">Priority</label>
-          <select 
+          <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Priority</label>
+          <select
             name="priority"
-            class="w-full h-10 px-3 bg-white border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
+            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="" {% if not selected_priority %}selected{% endif %}>All Priorities</option>
             <option value="low" {% if selected_priority == 'low' %}selected{% endif %}>Low</option>
@@ -126,9 +126,9 @@
         <!-- Filter: Category & Checkbox -->
         <div class="flex items-center gap-5 flex-wrap">
           <div>
-            <select 
+            <select
               name="category"
-              class="h-9 px-3 bg-white border border-slate-250 rounded-lg text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer"
+              class="h-9 px-3 edify-surface border border-slate-250 rounded-lg text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
               <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
               {% for cat in categories %}
@@ -138,10 +138,10 @@
           </div>
 
           <label class="flex items-center gap-2 cursor-pointer select-none">
-            <input 
-              type="checkbox" 
-              name="action_required" 
-              value="true" 
+            <input
+              type="checkbox"
+              name="action_required"
+              value="true"
               {% if action_required_only %}checked{% endif %}
               class="h-4 w-4 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             >
@@ -151,14 +151,14 @@
 
         <!-- Submit & Reset Buttons -->
         <div class="flex items-center gap-2.5">
-          <a 
+          <a
             href="/notifications"
-            class="h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-bold text-slate-650 flex items-center justify-center cursor-pointer transition-colors"
+            class="h-9 px-4 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-650 flex items-center justify-center cursor-pointer transition-colors"
           >
             Reset Filters
           </a>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             class="h-9 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
           >
             Apply Filters
@@ -169,13 +169,13 @@
   </div>
 
   <!-- Notification Feed list -->
-  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-xs">
+  <div class="edify-surface border border-slate-200 rounded-lg overflow-hidden shadow-xs">
     {% if notifications %}
       <div class="divide-y divide-slate-100">
         {% for n in notifications %}
           <div class="p-5 flex items-start gap-4 transition-colors {% if n.status == 'unread' %}bg-blue-50/15{% endif %} hover:bg-slate-50/50">
             <!-- Priority Indicator Icon -->
-            <div class="h-10 w-10 rounded-xl shrink-0 grid place-items-center border 
+            <div class="h-10 w-10 rounded-xl shrink-0 grid place-items-center border
               {% if n.priority == 'urgent' %}
                 bg-rose-50 border-rose-200 text-rose-600
               {% elif n.priority == 'high' %}
@@ -204,14 +204,14 @@
                 <h4 class="font-extrabold text-[14px] text-slate-800 leading-tight">
                   {{ n.title }}
                 </h4>
-                
+
                 <!-- Category Pill -->
-                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-slate-100 text-slate-600 select-none border border-slate-200">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md edify-text-caption font-black uppercase bg-slate-100 text-slate-600 select-none border border-slate-200">
                   {{ n.category|title }}
                 </span>
 
                 <!-- Priority pill label -->
-                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase select-none border
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md edify-text-caption font-bold uppercase select-none border
                   {% if n.priority == 'urgent' %}
                     bg-rose-50 text-rose-700 border-rose-200
                   {% elif n.priority == 'high' %}
@@ -222,10 +222,10 @@
                 >
                   {% if n.priority == 'urgent' %}Critical{% else %}{{ n.priority|title }}{% endif %}
                 </span>
-                
+
                 <!-- Action Required badge -->
                 {% if n.action_required and n.status == 'unread' %}
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9.5px] font-black uppercase bg-red-600 text-white select-none animate-pulse">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-md edify-text-caption font-black uppercase bg-red-600 text-white select-none animate-pulse">
                     Action Required
                   </span>
                 {% endif %}
@@ -239,7 +239,7 @@
               {% endif %}
 
               <!-- Linked Record Meta info -->
-              <div class="flex items-center gap-4 text-[11px] text-slate-400 font-semibold pt-1">
+              <div class="flex items-center gap-4 edify-text-caption text-slate-400 font-semibold pt-1">
                 <span>{{ n.created_at|date:"M j, Y H:i" }}</span>
                 {% if n.context_type %}
                   <span class="flex items-center gap-1 select-none">
@@ -253,7 +253,7 @@
             <div class="shrink-0 flex flex-col items-end gap-2.5">
               <!-- Route trigger Link -->
               {% if n.target_route %}
-                <a 
+                <a
                   href="{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route }}{% else %}{{ n.target_route }}{% endif %}"
                   class="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[12px] uppercase tracking-wider flex items-center justify-center shadow-xs transition-colors cursor-pointer"
                 >
@@ -264,9 +264,9 @@
               <div class="flex items-center gap-3">
                 <!-- Mark Single Read toggle -->
                 {% if n.status == 'unread' %}
-                  <a 
+                  <a
                     href="/notifications/{{ n.id }}/read?redirect=/notifications"
-                    class="text-[11px] font-bold text-slate-450 hover:transition-colors"
+                    class="edify-text-caption font-bold text-slate-450 hover:transition-colors"
                   >
                     Mark read
                   </a>
@@ -278,9 +278,9 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="archive_single">
                     <input type="hidden" name="notification_id" value="{{ n.id }}">
-                    <button 
+                    <button
                       type="submit"
-                      class="text-[11px] font-bold text-slate-450 hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 p-0"
+                      class="edify-text-caption font-bold text-slate-450 hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 p-0"
                     >
                       Archive
                     </button>

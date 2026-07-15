@@ -1,7 +1,7 @@
 {% load frontend_filters %}
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity / ID</th>
 <th class="px-6 py-4 text-left">School / Cluster</th>
@@ -22,24 +22,24 @@
 <tr class="hover:bg-slate-50/50 transition-all duration-200">
 <!-- Activity ID -->
 <td class="px-6 py-4">
-<div class="font-semibold text-slate-900 text-[12px] hover:text-[#2563eb] transition-colors">
+<div class="font-semibold text-slate-900 text-[12px] hover:text-[var(--edify-chart-blue)] transition-colors">
 <a href="/ia/verification/{{ act.id }}/">#{{ act.id|slice:":8" }}</a>
 </div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ act.fy }} &bull; {{ act.quarter }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ act.fy }} &bull; {{ act.quarter }}</div>
 </td>
 <!-- School / Cluster -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-800 text-[12px]">{{ act.schoolName|default:"Cluster-wide" }}</div>
-<div class="text-[11px] text-slate-400 mt-0.5 font-semibold">{{ act.clusterName|default:"No Cluster" }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5 font-semibold">{{ act.clusterName|default:"No Cluster" }}</div>
 </td>
 <!-- Owner -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-800">{{ act.responsibleStaffId|default:"Unassigned" }}</div>
-<div class="text-[11px] text-[#2563eb] font-bold mt-0.5 capitalize">{{ act.deliveryType }}</div>
+<div class="edify-text-caption text-[var(--edify-chart-blue)] font-bold mt-0.5 capitalize">{{ act.deliveryType }}</div>
 </td>
 <!-- Activity Type -->
 <td class="px-6 py-4">
-<div class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
+<div class="inline-flex items-center px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
 {{ act.activityType|title|replace_underscore }}
 </div>
 </td>
@@ -59,20 +59,20 @@
 <td class="px-6 py-4 text-center">
 {% if act.ssa_collection_expected %}
 {% if act.has_ssa %}
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Collected</span>
+<span class="px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Collected</span>
 {% else %}
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Missing</span>
+<span class="px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-200">Missing</span>
 {% endif %}
 {% else %}
-<span class="text-slate-400 text-[11px] font-normal">N/A</span>
+<span class="text-slate-400 edify-text-caption font-normal">N/A</span>
 {% endif %}
 </td>
 <!-- Salesforce ID -->
 <td class="px-6 py-4">
 {% if act.salesforceActivityId %}
-<span class="font-mono text-slate-800 font-bold bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg text-[11px]">{{ act.salesforceActivityId }}</span>
+<span class="font-mono text-slate-800 font-bold bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg edify-text-caption">{{ act.salesforceActivityId }}</span>
 {% else %}
-<span class="text-rose-600 font-semibold text-[11px] inline-flex items-center gap-0.5">
+<span class="text-rose-600 font-semibold edify-text-caption inline-flex items-center gap-0.5">
 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01" /></svg>
 Unlinked
 </span>
@@ -81,7 +81,7 @@ Unlinked
 <!-- Attendance -->
 <td class="px-6 py-4 text-center">
 {% if act.teachersAttended is not None or act.leadersAttended is not None %}
-<span class="font-semibold text-slate-800 bg-slate-50 px-2 py-1 border border-slate-200/50 rounded-lg text-[11px]">
+<span class="font-semibold text-slate-800 bg-slate-50 px-2 py-1 border border-slate-200/50 rounded-lg edify-text-caption">
 T:{{ act.teachersAttended|default:0 }} &bull; L:{{ act.leadersAttended|default:0 }}
 </span>
 {% else %}
@@ -91,12 +91,12 @@ T:{{ act.teachersAttended|default:0 }} &bull; L:{{ act.leadersAttended|default:0
 <!-- Priority -->
 <td class="px-6 py-4 text-center">
 {% if act.is_high_priority %}
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
 High
 </span>
 {% else %}
-<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
+<span class="px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
 Normal
 </span>
 {% endif %}
@@ -109,7 +109,7 @@ Normal
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
 <!-- Open Workspace -->
-<a href="/ia/verification/{{ act.id }}/" class="h-8 px-3 rounded-xl bg-blue-50 text-[#2563eb] hover:bg-[#2563eb] hover:text-white text-[11px] font-semibold flex items-center justify-center transition-all shadow-sm">
+<a href="/ia/verification/{{ act.id }}/" class="h-8 px-3 rounded-xl bg-blue-50 text-[var(--edify-chart-blue)] hover:bg-[var(--edify-chart-blue)] hover:text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
 Review Action
 </a>
 

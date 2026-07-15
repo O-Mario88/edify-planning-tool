@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
 Audit log
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Activity Journey Timeline</h1>
@@ -20,7 +20,7 @@ Vertical event timeline for Activity #{{ act.id|slice:":8" }} showing all workfl
 </div>
 
 <!-- Timeline Card -->
-<div class="bg-white rounded-xl border border-slate-100 p-8 shadow-sm space-y-6">
+<div class="edify-surface rounded-xl border border-slate-100 p-8 shadow-sm space-y-6">
 <div class="relative pl-8 border-l-2 border-slate-100 space-y-6">
 {% for ev in events %}
 <div class="relative">
@@ -33,10 +33,10 @@ Vertical event timeline for Activity #{{ act.id|slice:":8" }} showing all workfl
 
 <div class="flex items-center justify-between text-[14px] font-bold text-slate-950">
 <span class="font-semibold text-[14px]">{{ ev.event_name }}</span>
-<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">{{ ev.timestamp|date:"M d, Y H:i" }}</span>
+<span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider">{{ ev.timestamp|date:"M d, Y H:i" }}</span>
 </div>
 <p class="text-[12px] text-slate-600 font-medium mt-1 leading-relaxed">{{ ev.description }}</p>
-<div class="text-[11px] text-slate-400 font-semibold uppercase mt-1 flex items-center gap-1.5">
+<div class="edify-text-caption text-slate-400 font-semibold uppercase mt-1 flex items-center gap-1.5">
 <span>By: {{ ev.actor_id }}</span>
 <span>&bull;</span>
 <span>Role: {{ ev.actor_role|default:"System" }}</span>

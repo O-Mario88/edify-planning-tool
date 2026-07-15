@@ -9,16 +9,16 @@
 
   {% if kind == 'pl' %}
   <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schools at Risk</p><p class="text-[18px] font-bold text-rose-600 tabular-nums">{{ schools_at_risk|intcomma }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Budget Utilization</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_util }}%</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SSA Improvement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if ssa_improve is not None %}{% if ssa_improve > 0 %}+{% endif %}{{ ssa_improve }}pp{% else %}—{% endif %}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools at Risk</p><p class="text-[18px] font-bold text-rose-600 tabular-nums">{{ schools_at_risk|intcomma }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Budget Utilization</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_util }}%</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Improvement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if ssa_improve is not None %}{% if ssa_improve > 0 %}+{% endif %}{{ ssa_improve }}pp{% else %}—{% endif %}</p></div>
   </div>
-  <div class="rounded-lg bg-blue-50 border border-blue-100 p-3"><p class="text-[11px] font-bold text-blue-800">Recommended CD action: {{ recommended }}</p></div>
-  <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">Supervised CCEOs</p>
+  <div class="rounded-lg bg-blue-50 border border-blue-100 p-3"><p class="edify-text-caption font-bold text-blue-800">Recommended CD action: {{ recommended }}</p></div>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">Supervised CCEOs</p>
   <div class="overflow-x-auto">
-    <table class="w-full text-[11px]">
-      <thead><tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+    <table class="w-full edify-text-caption">
+      <thead><tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
         <th class="text-left py-1.5">CCEO</th><th class="text-right py-1.5">Schools</th><th class="text-right py-1.5">Planned</th><th class="text-right py-1.5">Completed</th><th class="text-right py-1.5">Verified</th><th class="text-right py-1.5">Tgt %</th></tr></thead>
       <tbody class="divide-y divide-slate-50">
         {% for c in cceos %}
@@ -35,84 +35,84 @@
 
   {% elif kind == 'cceo' %}
   <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Completed</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ completed }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Completed</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ completed }}</p></div>
   </div>
-  <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">Activity mix</p>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">Activity mix</p>
   <div class="space-y-1">
     {% for r in activity_rows %}
     <div class="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-1.5">
-      <span class="text-[11.5px] font-semibold text-slate-600 capitalize">{{ r.type|cut:"_"|default:r.type }}</span>
+      <span class="edify-text-caption font-semibold text-slate-600 capitalize">{{ r.type|cut:"_"|default:r.type }}</span>
       <span class="text-[12px] font-bold text-slate-800 tabular-nums">{{ r.count }}</span>
     </div>
-    {% empty %}<p class="text-[11px] text-slate-400">No activities in this period.</p>{% endfor %}
+    {% empty %}<p class="edify-text-caption text-slate-400">No activities in this period.</p>{% endfor %}
   </div>
 
   {% elif kind == 'district' or kind == 'cluster' %}
   <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
     {% if kind == 'district' %}
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schools at Risk</p><p class="text-[18px] font-bold text-rose-600 tabular-nums">{{ schools_at_risk|intcomma }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools at Risk</p><p class="text-[18px] font-bold text-rose-600 tabular-nums">{{ schools_at_risk|intcomma }}</p></div>
     {% else %}
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Trainings / Visits</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ trainings }} / {{ visits }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Trainings / Visits</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ trainings }} / {{ visits }}</p></div>
     {% endif %}
   </div>
-  <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">SSA by intervention</p>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">SSA by intervention</p>
   <div class="space-y-1.5">
     {% for cell in cells %}
     <div class="flex items-center gap-2">
-      <span class="w-[150px] shrink-0 text-[11px] font-semibold text-slate-600 truncate">{{ cell.label }}</span>
+      <span class="w-[150px] shrink-0 edify-text-caption font-semibold text-slate-600 truncate">{{ cell.label }}</span>
       <div class="flex-1 h-[16px] bg-slate-50 rounded overflow-hidden">{% if cell.pct is not None %}<div class="h-full rounded {% if cell.tone == 'success' %}bg-emerald-500{% elif cell.tone == 'lime' %}bg-lime-500{% elif cell.tone == 'warning' %}bg-amber-500{% elif cell.tone == 'danger' %}bg-rose-500{% else %}bg-slate-300{% endif %}" style="width: {{ cell.pct }}%"></div>{% endif %}</div>
-      <span class="w-[38px] text-right text-[11px] font-bold text-slate-700 tabular-nums">{% if cell.pct is not None %}{{ cell.pct|floatformat:0 }}%{% else %}—{% endif %}</span>
+      <span class="w-[38px] text-right edify-text-caption font-bold text-slate-700 tabular-nums">{% if cell.pct is not None %}{{ cell.pct|floatformat:0 }}%{% else %}—{% endif %}</span>
     </div>
-    {% empty %}<p class="text-[11px] text-slate-400">No verified SSA membership for this {{ kind }} yet.</p>{% endfor %}
+    {% empty %}<p class="edify-text-caption text-slate-400">No verified SSA membership for this {{ kind }} yet.</p>{% endfor %}
   </div>
 
   {% elif kind == 'region' %}
   <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg SSA</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if avg_ssa is not None %}{{ avg_ssa|floatformat:0 }}%{% else %}—{% endif %}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Avg SSA</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if avg_ssa is not None %}{{ avg_ssa|floatformat:0 }}%{% else %}—{% endif %}</p></div>
   </div>
-  <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 pt-1">Districts</p>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">Districts</p>
   <div class="space-y-1">
     {% for d in districts %}
     <div class="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-1.5">
-      <span class="text-[11.5px] font-semibold text-slate-600">{{ d.name }}</span>
-      <span class="text-[11px] font-bold text-slate-500 tabular-nums">{{ d.schools|intcomma }} schools</span>
+      <span class="edify-text-caption font-semibold text-slate-600">{{ d.name }}</span>
+      <span class="edify-text-caption font-bold text-slate-500 tabular-nums">{{ d.schools|intcomma }} schools</span>
     </div>
     {% endfor %}
   </div>
 
   {% elif kind == 'partner' and detail %}
   <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Achievement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.target_pct }}%</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Schools Supported</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.schools_supported|intcomma }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Verified Activities</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.verified }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SSA Improvement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if detail.ssa_improve is not None %}{{ detail.ssa_improve }}pp{% else %}—{% endif %}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Target Achievement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.target_pct }}%</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools Supported</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.schools_supported|intcomma }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Verified Activities</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.verified }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Improvement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if detail.ssa_improve is not None %}{{ detail.ssa_improve }}pp{% else %}—{% endif %}</p></div>
   </div>
-  <div class="rounded-lg bg-blue-50 border border-blue-100 p-3"><p class="text-[11px] font-bold text-blue-800">Recommendation: {{ detail.recommendation }}</p></div>
+  <div class="rounded-lg bg-blue-50 border border-blue-100 p-3"><p class="edify-text-caption font-bold text-blue-800">Recommendation: {{ detail.recommendation }}</p></div>
 
   {% elif kind == 'ssa' %}
-  <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">By district (weakest first)</p>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">By district (weakest first)</p>
   <div class="space-y-1.5">
     {% for r in rows %}
     <div class="flex items-center gap-2">
-      <span class="w-[130px] shrink-0 text-[11px] font-semibold text-slate-600 truncate">{{ r.name }}</span>
+      <span class="w-[130px] shrink-0 edify-text-caption font-semibold text-slate-600 truncate">{{ r.name }}</span>
       <div class="flex-1 h-[16px] bg-slate-50 rounded overflow-hidden">{% if r.pct is not None %}<div class="h-full rounded {% if r.tone == 'success' %}bg-emerald-500{% elif r.tone == 'lime' %}bg-lime-500{% elif r.tone == 'warning' %}bg-amber-500{% elif r.tone == 'danger' %}bg-rose-500{% else %}bg-slate-300{% endif %}" style="width: {{ r.pct }}%"></div>{% endif %}</div>
-      <span class="w-[38px] text-right text-[11px] font-bold text-slate-700 tabular-nums">{% if r.pct is not None %}{{ r.pct|floatformat:0 }}%{% else %}—{% endif %}</span>
+      <span class="w-[38px] text-right edify-text-caption font-bold text-slate-700 tabular-nums">{% if r.pct is not None %}{{ r.pct|floatformat:0 }}%{% else %}—{% endif %}</span>
     </div>
-    {% empty %}<p class="text-[11px] text-slate-400">No verified SSA yet.</p>{% endfor %}
+    {% empty %}<p class="edify-text-caption text-slate-400">No verified SSA yet.</p>{% endfor %}
   </div>
 
   {% elif kind == 'budget' %}
   <div class="grid grid-cols-2 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Utilization</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ finance.utilization_pct }}%</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Requested</p><p class="text-[15px] font-bold text-slate-800 tabular-nums">UGX {{ finance.requested|intcomma }}</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Utilization</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ finance.utilization_pct }}%</p></div>
+    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Requested</p><p class="text-[15px] font-bold text-slate-800 tabular-nums">UGX {{ finance.requested|intcomma }}</p></div>
   </div>
   <div class="space-y-1.5">
     {% for s in finance.statuses %}
     <div class="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-1.5">
-      <span class="text-[11.5px] font-semibold text-slate-600">{{ s.label }}</span>
+      <span class="edify-text-caption font-semibold text-slate-600">{{ s.label }}</span>
       <span class="text-[12px] font-bold text-slate-800 tabular-nums">UGX {{ s.amount|intcomma }}</span>
     </div>
     {% endfor %}
@@ -122,10 +122,10 @@
   <div class="space-y-1.5">
     {% for r in rows %}
     <div class="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
-      <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.school }}</p><p class="text-[10px] text-slate-400">{{ r.district }}</p></div>
-      <span class="text-[10px] font-bold text-rose-600 shrink-0">{{ r.detail }}</span>
+      <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.school }}</p><p class="edify-text-caption text-slate-400">{{ r.district }}</p></div>
+      <span class="edify-text-caption font-bold text-rose-600 shrink-0">{{ r.detail }}</span>
     </div>
-    {% empty %}<p class="text-[11px] text-slate-400 py-4 text-center">No records for this risk category — clean.</p>{% endfor %}
+    {% empty %}<p class="edify-text-caption text-slate-400 py-4 text-center">No records for this risk category — clean.</p>{% endfor %}
   </div>
 
   {% else %}
@@ -133,7 +133,7 @@
     {% for r in rows %}
     <div class="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
       <span class="text-[12px] font-semibold text-slate-700">{{ r.name }}</span>
-      <span class="text-[11px] font-bold text-slate-500">{{ r.target_pct }}% · {{ r.risk }}</span>
+      <span class="edify-text-caption font-bold text-slate-500">{{ r.target_pct }}% · {{ r.risk }}</span>
     </div>
     {% endfor %}
   </div>
@@ -142,16 +142,16 @@
   {# Oversight actions available to the CD (leadership routing — never field execution) #}
   {% if actions %}
   <div class="pt-2 border-t border-slate-100">
-    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">CD oversight actions</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-2">CD oversight actions</p>
     <div class="flex flex-wrap gap-1.5">
       {% for a in actions %}
-      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-semibold text-slate-600">
+      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-600">
         <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         {{ a }}
       </span>
       {% endfor %}
     </div>
-    <p class="text-[9.5px] text-slate-400 font-medium mt-2">Oversight only — the CD reviews, recommends, and routes follow-up to the responsible PL. No field scheduling or execution from this drawer.</p>
+    <p class="edify-text-caption text-slate-400 font-medium mt-2">Oversight only — the CD reviews, recommends, and routes follow-up to the responsible PL. No field scheduling or execution from this drawer.</p>
   </div>
   {% endif %}
 

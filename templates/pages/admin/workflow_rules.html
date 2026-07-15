@@ -14,15 +14,15 @@
 </div>
 
 <!-- Rules Stack (read-only reference — these are enforced in code, not configurable) -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm divide-y divide-slate-100">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm divide-y divide-slate-100">
 {% for rule in rules %}
 <div class="p-5 flex items-center justify-between hover:bg-slate-50/40 transition-colors">
 <div class="space-y-1 pr-6">
 <h3 class="text-[14px] font-semibold text-slate-800">{{ rule.label }}</h3>
-<p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Rule Key: {{ rule.key }}</p>
+<p class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider">Rule Key: {{ rule.key }}</p>
 </div>
 
-<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-150 shrink-0">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-150 shrink-0">
 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
 Enforced
 </span>
@@ -37,7 +37,7 @@ Enforced
 </svg>
 <div>
 <p class="text-[12px] font-semibold text-amber-800">These rules are not configurable here</p>
-<p class="text-[11px] text-amber-600 font-semibold mt-0.5 leading-relaxed">
+<p class="edify-text-caption text-amber-600 font-semibold mt-0.5 leading-relaxed">
 Each rule above is enforced directly in application code (role/permission checks and closure-eligibility logic), not stored as a toggleable database setting. Changing this behavior requires a code change and deployment, not a switch on this page.
 </p>
 </div>

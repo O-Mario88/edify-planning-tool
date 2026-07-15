@@ -1,6 +1,6 @@
 {% comment %}SSA delta pill. Param: delta (float or None){% endcomment %}
 {% if delta is None %}
-<span class="text-[11px] font-bold text-slate-300">—</span>
+<span class="edify-text-caption font-bold text-slate-300">—</span>
 {% else %}
-<span class="inline-flex items-center justify-center px-2 h-5 rounded-md text-[11px] font-bold tabular-nums {% if delta >= 0.5 %}bg-emerald-50 text-emerald-700{% elif delta <= -0.5 %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-500{% endif %}">{% if delta > 0 %}+{% endif %}{{ delta }}</span>
+<span class="inline-flex items-center justify-center px-2 h-5 rounded-md edify-text-caption font-bold tabular-nums {% if delta >= 0.5 %}bg-emerald-50 text-emerald-700{% elif delta <= -0.5 %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-500{% endif %}">{% if delta > 0 %}+{% endif %}{{ delta }}</span>
 {% endif %}

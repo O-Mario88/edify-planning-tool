@@ -1,22 +1,22 @@
-<div class="bg-white rounded-xl  p-4 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>Cluster Performance (Top 10)</span>
-<span class="text-[11px] text-slate-400 cursor-help" title="Top performing clusters ranked by average SSA score">ℹ️</span>
+<span class="edify-text-caption text-slate-400 cursor-help" title="Top performing clusters ranked by average SSA score">ℹ️</span>
 </h3>
-<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Top performing cluster networks</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Top performing cluster networks</p>
 </div>
 
-<select class="bg-slate-50  rounded-lg text-[11px] font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<select class="bg-slate-50  rounded-lg edify-text-caption font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
 <option>This Quarter</option>
 </select>
 </div>
 
 <div class="overflow-x-auto">
-<table class="w-full text-left text-[11px] border-collapse bg-white">
+<table class="w-full text-left edify-text-caption border-collapse edify-surface">
 <thead>
-<tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<tr class="bg-slate-50 border-b border-slate-200 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <th class="px-2 py-2">Rank</th>
 <th class="px-3 py-2">Cluster</th>
 <th class="px-3 py-2 text-center">Avg SSA</th>
@@ -30,7 +30,7 @@
 <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
 {% if cluster_performance %}
 {% for c in cluster_performance %}
-<tr 
+<tr
 class="hover:bg-slate-50/50 cursor-pointer"
 hx-get="/analytics/drilldown?metric=cluster&id={{ c.id }}&fy={{ filters.selected_fy }}&quarter={{ filters.selected_quarter }}"
 hx-target="#drawer-container"
@@ -38,9 +38,9 @@ hx-swap="innerHTML"
 >
 <td class="px-2 py-2 text-slate-400 font-semibold">{{ c.rank }}</td>
 <td class="px-3 py-2 font-bold text-slate-800">{{ c.name }}</td>
-<td class="px-3 py-2 text-center font-semibold text-[#2e505f]">{{ c.ssa_avg }}</td>
-<td class="px-3 py-2 text-[11px] text-emerald-600 font-bold truncate max-w-[100px]">{{ c.best_intervention }}</td>
-<td class="px-3 py-2 text-[11px] text-rose-600 font-bold truncate max-w-[100px]">{{ c.worst_intervention }}</td>
+<td class="px-3 py-2 text-center font-semibold text-[var(--edify-primary)]">{{ c.ssa_avg }}</td>
+<td class="px-3 py-2 edify-text-caption text-emerald-600 font-bold truncate max-w-[100px]">{{ c.best_intervention }}</td>
+<td class="px-3 py-2 edify-text-caption text-rose-600 font-bold truncate max-w-[100px]">{{ c.worst_intervention }}</td>
 <td class="px-2 py-2 text-center font-semibold">{{ c.trainings }}</td>
 <td class="px-2 py-2 text-center font-semibold">{{ c.visits }}</td>
 <td class="px-2 py-2 text-center">

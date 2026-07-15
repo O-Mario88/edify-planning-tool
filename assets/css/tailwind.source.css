@@ -56,4 +56,4 @@
 
 /* Hand-written component/page CSS that historically shipped inside main.css
    (pills, chips, btn system, workflow/mfr styles, motion, dark/glass themes). */
-@import "./custom.css";
+@import "../../static/css/custom.css";

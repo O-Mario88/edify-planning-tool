@@ -43,7 +43,7 @@
   </header>
 
   <section class="pto-command-grid" aria-label="Leave readiness overview">
-    <article class="pto-panel pto-balance-command bg-white">
+    <article class="pto-panel pto-balance-command edify-surface">
       <div class="pto-panel__header">
         <div>
           <span class="pto-kicker">Personal leave balance</span>
@@ -96,7 +96,7 @@
       </div>
     </article>
 
-    <aside class="pto-panel pto-readiness bg-white">
+    <aside class="pto-panel pto-readiness edify-surface">
       <div class="pto-readiness__top">
         <div>
           <span class="pto-kicker">Operational readiness</span>
@@ -147,7 +147,7 @@
 
   <div class="pto-workspace">
     <div class="pto-primary-column">
-      <section class="pto-panel bg-white" aria-labelledby="balance-portfolio-title">
+      <section class="pto-panel edify-surface" aria-labelledby="balance-portfolio-title">
         <div class="pto-panel__header pto-panel__header--bordered">
           <div>
             <span class="pto-kicker">Entitlements</span>
@@ -178,7 +178,7 @@
         </div>
       </section>
 
-      <section class="pto-panel bg-white" id="my-requests" aria-labelledby="my-requests-title">
+      <section class="pto-panel edify-surface" id="my-requests" aria-labelledby="my-requests-title">
         <div class="pto-panel__header pto-panel__header--bordered pto-requests-header">
           <div>
             <span class="pto-kicker">My workflow</span>
@@ -241,7 +241,7 @@
     </div>
 
     <aside class="pto-decision-rail" aria-label="Leave planning details">
-      <section class="pto-panel bg-white">
+      <section class="pto-panel edify-surface">
         <div class="pto-panel__header pto-panel__header--bordered">
           <div>
             <span class="pto-kicker">Decision support</span>
@@ -268,7 +268,7 @@
         {% endif %}
       </section>
 
-      <section class="pto-panel bg-white">
+      <section class="pto-panel edify-surface">
         <div class="pto-panel__header pto-panel__header--bordered">
           <div>
             <span class="pto-kicker">Accountability</span>
@@ -344,7 +344,7 @@
     </div>
 
     <div class="pto-operations-grid">
-      <article class="pto-panel bg-white">
+      <article class="pto-panel edify-surface">
         <div class="pto-panel__header pto-panel__header--bordered">
           <div><span class="pto-kicker">Calendar controls</span><h3>Upcoming constraints</h3></div>
           <a href="{% url 'frontend:public_holidays' %}" class="pto-text-link">View all →</a>
@@ -364,7 +364,7 @@
         </div>
       </article>
 
-      <article class="pto-panel bg-white">
+      <article class="pto-panel edify-surface">
         <div class="pto-panel__header pto-panel__header--bordered">
           <div><span class="pto-kicker">Risk controls</span><h3>Schedule conflicts</h3></div>
           <span class="pto-count-badge {% if my_conflicts %}is-risk{% endif %}">{{ my_conflicts|length }} active</span>
@@ -389,7 +389,7 @@
         </div>
       </article>
 
-      <article class="pto-panel bg-white">
+      <article class="pto-panel edify-surface">
         <div class="pto-panel__header pto-panel__header--bordered">
           <div><span class="pto-kicker">Next four weeks</span><h3>Team availability</h3></div>
           <a href="{% url 'frontend:team_availability' %}" class="pto-text-link">Full report →</a>
@@ -416,7 +416,7 @@
     </div>
   </section>
 
-  <section class="pto-panel pto-tracker bg-white" id="history" aria-labelledby="team-tracker-title">
+  <section class="pto-panel pto-tracker edify-surface" id="history" aria-labelledby="team-tracker-title">
     <div class="pto-panel__header pto-panel__header--bordered">
       <div>
         <span class="pto-kicker">Audit-ready visibility</span>
@@ -482,7 +482,7 @@
     <div class="pto-drawer-stage" @click.self="closeRequestDrawer()">
       <div class="pto-drawer-shell fixed inset-y-0 right-0 max-w-full flex">
         <div
-          class="pto-drawer-panel bg-white border-l border-slate-100 shadow-2xl flex flex-col"
+          class="pto-drawer-panel edify-surface border-l border-slate-100 shadow-2xl flex flex-col"
           hx-get="{% url 'frontend:request_leave_drawer' %}"
           hx-trigger="load"
           hx-target="#drawer-content-placeholder"

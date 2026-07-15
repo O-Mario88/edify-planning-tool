@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
 Budget Deviation
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Variance Review Queue</h1>
@@ -20,10 +20,10 @@ Review activities where the actual spend differs from the approved/disbursed amo
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
 <th class="px-6 py-4 text-left">School / Scope</th>
@@ -42,7 +42,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 <!-- ID -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ item.activity.get_activity_type_display }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ item.activity.get_activity_type_display }}</div>
 </td>
 <!-- School -->
 <td class="px-6 py-4">
@@ -65,7 +65,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 {% if item.variance > 0 %}
 <span class="text-rose-600 font-semibold">+{{ item.variance }} UGX</span>
 {% else %}
-<span class="text-[#2563eb] font-semibold">{{ item.variance }} UGX</span>
+<span class="text-[var(--edify-chart-blue)] font-semibold">{{ item.variance }} UGX</span>
 {% endif %}
 </td>
 <!-- Reason -->
@@ -75,7 +75,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-1.5">
-<a href="/accounts/activities/{{ item.activity.id }}/" class="h-8 px-3.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-[11px] font-semibold flex items-center justify-center transition-colors">
+<a href="/accounts/activities/{{ item.activity.id }}/" class="h-8 px-3.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 edify-text-caption font-semibold flex items-center justify-center transition-colors">
 Reconcile
 </a>
 </div>

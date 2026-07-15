@@ -16,17 +16,17 @@
   <!-- Controls -->
   <div class="flex flex-wrap items-center gap-2.5">
     <!-- Date Dropdown -->
-    <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg shadow-sm cursor-pointer text-[12px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+    <div class="flex items-center gap-1.5 edify-surface px-3 py-1.5 rounded-lg shadow-sm cursor-pointer text-[12px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
       <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg> {{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}
       <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
     </div>
 
     <!-- Notifications -->
-    <div class="h-9 w-9 bg-white rounded-lg flex items-center justify-center relative cursor-pointer hover:bg-slate-50 shadow-sm transition-colors">
+    <div class="h-9 w-9 edify-surface rounded-lg flex items-center justify-center relative cursor-pointer hover:bg-slate-50 shadow-sm transition-colors">
       <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
       {% if unread_notifications_count %}
-      <span class="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full text-[10px] font-semibold h-4 w-4 flex items-center justify-center">{{ unread_notifications_count }}</span>
+      <span class="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full edify-text-caption font-semibold h-4 w-4 flex items-center justify-center">{{ unread_notifications_count }}</span>
       {% endif %}
     </div>
 
@@ -35,7 +35,7 @@
       <div class="h-9 w-9 rounded-full bg-slate-100 font-semibold text-[12px] text-slate-600 flex items-center justify-center">{{ avatar_initials }}</div>
       <div class="text-left hidden sm:block">
         <span class="text-[12px] font-semibold block leading-tight">{{ user_name }}</span>
-        <span class="text-[11px] text-slate-400 block mt-0.5">CCEO / Field Officer</span>
+        <span class="edify-text-caption text-slate-400 block mt-0.5">CCEO / Field Officer</span>
       </div>
     </div>
   </div>
@@ -53,7 +53,7 @@
   <div class="lg:col-span-8 space-y-5">
     <div class="flex items-center justify-between">
       <h2 class="text-[21px] font-extrabold tracking-tight">This Week's Plan</h2>
-      <a href="/planning" class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+      <a href="/planning" class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
         <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         View Calendar
       </a>
@@ -64,13 +64,13 @@
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <h3 class="text-[15px] font-bold text-rose-600 tracking-tight">Overdue From Last Week</h3>
-          <span class="bg-rose-50 text-rose-600 font-bold rounded-md px-2 py-0.5 text-[11px] tabular-nums">{{ overdue_last_week|length }}</span>
+          <span class="bg-rose-50 text-rose-600 font-bold rounded-md px-2 py-0.5 edify-text-caption tabular-nums">{{ overdue_last_week|length }}</span>
         </div>
         <a href="/my-plan" class="text-[12px] font-bold text-blue-600 hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead><tr class="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-5 py-2.5">Activity</th><th class="px-3 py-2.5">School / Cluster</th><th class="px-3 py-2.5">Due Date</th><th class="px-3 py-2.5">Status</th><th class="px-3 py-2.5 text-right">Action</th>
           </tr></thead>
           <tbody class="divide-y divide-slate-50">
@@ -78,9 +78,9 @@
             <tr class="hover:bg-slate-50/50">
               <td class="px-5 py-3"><span class="inline-flex items-center gap-2"><span class="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center text-[15px] shrink-0">{{ r.icon }}</span><span class="text-[12.5px] font-bold text-slate-800">{{ r.activity }}</span></span></td>
               <td class="px-3 py-3 text-[12px] font-semibold text-slate-600">{{ r.where }}</td>
-              <td class="px-3 py-3 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ r.due }}</td>
-              <td class="px-3 py-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {% if r.status_tone == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-amber-50 text-amber-700{% endif %}">{{ r.status }}</span></td>
-              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-lg text-[11px] font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% elif r.action_label == 'Reschedule' %}border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.due }}</td>
+              <td class="px-3 py-3"><span class="inline-flex items-center rounded-full px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wide {% if r.status_tone == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-amber-50 text-amber-700{% endif %}">{{ r.status }}</span></td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-lg edify-text-caption font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% elif r.action_label == 'Reschedule' %}border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">Nothing overdue — you're on track. <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4m3 8l2.3-6L15 13l6 2.3-6 2.3L12.7 23l-2.4-5.4L4 15l6-2zM19 3l.9 2.1L22 6l-2.1.9L19 9l-.9-2.1L16 6l2.1-.9L19 3z"/></svg></td></tr>
@@ -95,23 +95,23 @@
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">School Visits</h3>
-          <span class="bg-blue-50 text-blue-600 font-bold rounded-md px-2 py-0.5 text-[11px] tabular-nums">{{ school_visits_week|length }}</span>
+          <span class="bg-blue-50 text-blue-600 font-bold rounded-md px-2 py-0.5 edify-text-caption tabular-nums">{{ school_visits_week|length }}</span>
         </div>
         <a href="/planning" class="text-[12px] font-bold text-blue-600 hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead><tr class="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-5 py-2.5">School</th><th class="px-3 py-2.5">District</th><th class="px-3 py-2.5">Visit Purpose</th><th class="px-3 py-2.5">Planned Date</th><th class="px-3 py-2.5 text-right">Action</th>
           </tr></thead>
           <tbody class="divide-y divide-slate-50">
             {% for r in school_visits_week %}
             <tr class="hover:bg-slate-50/50">
               <td class="px-5 py-3 text-[12.5px] font-bold text-slate-800">{{ r.school }}</td>
-              <td class="px-3 py-3 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ r.district }}</td>
-              <td class="px-3 py-3 text-[11.5px] font-semibold text-slate-600">{{ r.purpose|truncatechars:32 }}</td>
-              <td class="px-3 py-3 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
-              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-lg text-[11px] font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.district }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.purpose|truncatechars:32 }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-lg edify-text-caption font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">No school visits scheduled this week.</td></tr>
@@ -126,23 +126,23 @@
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Cluster Activities This Week</h3>
-          <span class="bg-indigo-50 text-indigo-600 font-bold rounded-md px-2 py-0.5 text-[11px] tabular-nums">{{ cluster_activities_week|length }}</span>
+          <span class="bg-indigo-50 text-indigo-600 font-bold rounded-md px-2 py-0.5 edify-text-caption tabular-nums">{{ cluster_activities_week|length }}</span>
         </div>
         <a href="/planning" class="text-[12px] font-bold text-blue-600 hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead><tr class="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-5 py-2.5">Cluster</th><th class="px-3 py-2.5">Activity Type</th><th class="px-3 py-2.5">Intervention Focus</th><th class="px-3 py-2.5">Date</th><th class="px-3 py-2.5 text-right">Action</th>
           </tr></thead>
           <tbody class="divide-y divide-slate-50">
             {% for r in cluster_activities_week %}
             <tr class="hover:bg-slate-50/50">
               <td class="px-5 py-3 text-[12.5px] font-bold text-slate-800">{{ r.cluster }}</td>
-              <td class="px-3 py-3"><span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10.5px] font-bold {% if r.type_tone == 'success' %}bg-emerald-50 text-emerald-700{% else %}bg-blue-50 text-blue-700{% endif %}">{{ r.type_label }}</span></td>
-              <td class="px-3 py-3 text-[11.5px] font-semibold text-slate-600">{{ r.focus }}</td>
-              <td class="px-3 py-3 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
-              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-lg text-[11px] font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
+              <td class="px-3 py-3"><span class="inline-flex items-center rounded-md px-2 py-0.5 edify-text-caption font-bold {% if r.type_tone == 'success' %}bg-emerald-50 text-emerald-700{% else %}bg-blue-50 text-blue-700{% endif %}">{{ r.type_label }}</span></td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.focus }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-lg edify-text-caption font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">No cluster activities scheduled this week.</td></tr>
@@ -164,7 +164,7 @@
     <div class="card p-5 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">At a Glance</h3>
-        <a href="/analytics" class="text-[11px] font-medium text-blue-600 hover:underline">View full analytics</a>
+        <a href="/analytics" class="edify-text-caption font-medium text-blue-600 hover:underline">View full analytics</a>
       </div>
 
       <div class="flex items-center justify-center gap-6">
@@ -182,7 +182,7 @@
           </svg>
           <div class="absolute flex flex-col justify-center items-center text-center">
             <span class="text-[24px] font-semibold text-slate-800 leading-none tabular-nums">{{ kpis.total }}</span>
-            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wide mt-1">Total Tasks</span>
+            <span class="edify-text-caption font-medium text-slate-400 uppercase tracking-wide mt-1">Total Tasks</span>
           </div>
         </div>
 
@@ -199,7 +199,7 @@
     <div class="card p-5 space-y-3.5">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Upcoming This Week</h3>
-        <a href="/planning" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
+        <a href="/planning" class="edify-text-caption font-medium text-blue-600 hover:underline">View all</a>
       </div>
 
       <div class="space-y-3">
@@ -207,13 +207,13 @@
         <div class="flex gap-3 text-[12px]">
           <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-[15px] {{ event.type_class }}" >{{ event.icon }}</div>
           <div class="space-y-0.5">
-            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wide block leading-none">{{ event.day }}</span>
+            <span class="edify-text-caption text-slate-400 font-medium uppercase tracking-wide block leading-none">{{ event.day }}</span>
             <span class="font-medium block leading-snug">{{ event.title }}</span>
             <span class="text-slate-400 block leading-tight text-[12px]">{{ event.desc }}</span>
           </div>
         </div>
         {% empty %}
-        <p class="text-[11px] text-slate-400 font-semibold py-2">Nothing scheduled for the rest of this week.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold py-2">Nothing scheduled for the rest of this week.</p>
         {% endfor %}
       </div>
     </div>
@@ -222,7 +222,7 @@
     <div class="card p-5 space-y-3.5">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Pending Approvals</h3>
-        <a href="/fund-requests/weekly" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
+        <a href="/fund-requests/weekly" class="edify-text-caption font-medium text-blue-600 hover:underline">View all</a>
       </div>
 
       <div class="space-y-2.5">
@@ -232,13 +232,13 @@
             <div class="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center text-[15px] shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.6L18 7.4V19a2 2 0 01-2 2z"/></svg></div>
             <div>
               <h4 class="text-[12px] font-medium leading-tight">{{ approval.title }}</h4>
-              <p class="text-[11px] text-slate-400 mt-0.5">{{ approval.desc|safe }}</p>
+              <p class="edify-text-caption text-slate-400 mt-0.5">{{ approval.desc|safe }}</p>
             </div>
           </div>
-          <span class="bg-amber-50 text-amber-700 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ approval.status }}</span>
+          <span class="bg-amber-50 text-amber-700 inline-flex items-center rounded-full px-2 py-0.5 edify-text-caption font-medium uppercase tracking-wide">{{ approval.status }}</span>
         </div>
         {% empty %}
-        <p class="text-[11px] text-slate-400 font-semibold py-2">No fund requests need your attention.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold py-2">No fund requests need your attention.</p>
         {% endfor %}
       </div>
     </div>
@@ -257,7 +257,7 @@
       <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Quick Actions</h3>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px] font-medium text-slate-600 mt-1">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center edify-text-caption font-medium text-slate-600 mt-1">
       <a href="/completed-activities" class="flex flex-col items-center gap-1.5 p-2.5 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors">
         <span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z"/></svg></span>
         Log Visit

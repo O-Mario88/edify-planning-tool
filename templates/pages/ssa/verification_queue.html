@@ -25,16 +25,16 @@
 {% endif %}
 
 <!-- Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">School</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Collector Type</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Date of SSA</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Average Score</th>
-<th class="px-5 py-3.5 text-right text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Actions</th>
+<th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Collector Type</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Date of SSA</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Average Score</th>
+<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Actions</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
@@ -42,7 +42,7 @@
 <tr class="hover:bg-slate-50/20">
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-900 block leading-tight">{{ r.school.name }}</span>
-<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">ID: {{ r.school.school_id }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">ID: {{ r.school.school_id }}</span>
 </td>
 <td class="px-4 py-4 text-slate-600 font-semibold capitalize">{{ r.collector_type }}</td>
 <td class="px-4 py-4 text-slate-500 font-semibold">{{ r.date_of_ssa|date:"N j, Y" }}</td>
@@ -55,7 +55,7 @@
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="verify">
-<button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] rounded-lg shadow-sm transition-all">
+<button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold edify-text-caption rounded-lg shadow-sm transition-all">
 Verify & Confirm
 </button>
 </form>
@@ -64,7 +64,7 @@ Verify & Confirm
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="return">
-<button type="submit" class="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] rounded-lg transition-all">
+<button type="submit" class="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-lg transition-all">
 Return for Correction
 </button>
 </form>

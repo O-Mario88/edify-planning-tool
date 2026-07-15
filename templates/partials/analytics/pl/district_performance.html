@@ -1,19 +1,19 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <div class="flex items-center justify-between">
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">C. District Performance Under My Team</h3>
-    <span class="text-[10px] font-bold text-slate-400">Team Avg <span class="text-slate-700">{{ district_performance.team_avg }}%</span></span>
+    <span class="edify-text-caption font-bold text-slate-400">Team Avg <span class="text-slate-700">{{ district_performance.team_avg }}%</span></span>
   </div>
   <div class="space-y-3 pt-1">
     {% for d in district_performance.rows %}
     <button type="button" hx-get="/analytics/program-lead/drilldown?drill=district&id={{ d.id }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
        hx-target="#drawer-container" hx-swap="innerHTML"
        class="block group w-full text-left">
-      <div class="flex items-center justify-between text-[11.5px] mb-1">
+      <div class="flex items-center justify-between edify-text-caption mb-1">
         <span class="font-semibold text-slate-700 group-hover:text-blue-600 truncate">{{ d.name }}</span>
         <div class="flex items-center gap-2.5">
-          <span class="text-[10px] text-slate-400 font-semibold">{{ d.schools }} schools</span>
-          {% if d.critical %}<span class="text-[10px] font-bold text-rose-500">{{ d.critical }} critical</span>{% endif %}
+          <span class="edify-text-caption text-slate-400 font-semibold">{{ d.schools }} schools</span>
+          {% if d.critical %}<span class="edify-text-caption font-bold text-rose-500">{{ d.critical }} critical</span>{% endif %}
           <span class="font-bold text-slate-800 tabular-nums w-9 text-right">{{ d.pct }}%</span>
         </div>
       </div>

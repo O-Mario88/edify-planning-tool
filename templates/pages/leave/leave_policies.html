@@ -31,11 +31,11 @@
     <h3 class="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Leave Entitlement Policies</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       {% for p in policies %}
-      <div class="bg-white border border-slate-100 rounded-lg p-6 shadow-sm space-y-5">
+      <div class="edify-surface border border-slate-100 rounded-lg p-6 shadow-sm space-y-5">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h4 class="text-[15px] font-bold text-slate-800">{{ p.label }}</h4>
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Key: {{ p.leave_type }}</span>
+            <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider">Key: {{ p.leave_type }}</span>
           </div>
           <span class="text-[24px]">
             {% if p.leave_type == 'personal_time_off' %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.9-6.4l-1.4 1.4M7.5 16.5l-1.4 1.4m0-11.3l1.4 1.4m9 9l1.4 1.4M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -53,11 +53,11 @@
           <div class="grid grid-cols-2 gap-4">
             <!-- Entitlement -->
             <div class="space-y-1">
-              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Annual Entitlement (Days)</label>
-              <input 
-                type="number" 
-                name="entitlement" 
-                value="{{ p.annual_entitlement }}" 
+              <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Annual Entitlement (Days)</label>
+              <input
+                type="number"
+                name="entitlement"
+                value="{{ p.annual_entitlement }}"
                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
                 required
               />
@@ -65,9 +65,9 @@
 
             <!-- Approver Role -->
             <div class="space-y-1">
-              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Review/Approver Role</label>
-              <select 
-                name="approver_role" 
+              <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Review/Approver Role</label>
+              <select
+                name="approver_role"
                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
               >
                 {% for role in approver_roles %}
@@ -80,9 +80,9 @@
           <div class="grid grid-cols-2 gap-4">
             <!-- Requires Attachment -->
             <div class="space-y-1">
-              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Requires Supporting Doc?</label>
-              <select 
-                name="requires_attachment" 
+              <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Requires Supporting Doc?</label>
+              <select
+                name="requires_attachment"
                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
               >
                 <option value="yes" {% if p.requires_attachment %}selected{% endif %}>Yes</option>
@@ -91,9 +91,9 @@
             </div>
 
             <div class="space-y-1">
-              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Calculate Weekends?</label>
-              <select 
-                name="weekends_count" 
+              <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Calculate Weekends?</label>
+              <select
+                name="weekends_count"
                 class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
               >
                 <option value="yes" {% if p.weekends_count %}selected{% endif %}>Include Weekends</option>
@@ -103,10 +103,10 @@
           </div>
 
           <div class="flex items-center justify-between border-t border-slate-100 pt-3.5">
-            <span class="text-[11px] text-slate-400 font-semibold">Last updated: {{ p.updated_at|date:"d M H:i" }}</span>
-            <button 
-              type="submit" 
-              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-[10.5px] font-bold uppercase rounded-lg tracking-wider transition"
+            <span class="edify-text-caption text-slate-400 font-semibold">Last updated: {{ p.updated_at|date:"d M H:i" }}</span>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white edify-text-caption font-bold uppercase rounded-lg tracking-wider transition"
             >
               Update Policy
             </button>
@@ -120,25 +120,25 @@
 
   <!-- Public Holidays List -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-    
+
     <!-- Left: List of Holidays (7 cols) -->
-    <div class="lg:col-span-8 bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+    <div class="lg:col-span-8 edify-surface rounded-lg border border-slate-100 shadow-sm overflow-hidden flex flex-col">
       <div class="p-5 border-b border-slate-100 flex items-center justify-between">
         <h3 class="text-[15px] font-bold text-slate-800">Public Holidays</h3>
-        <span class="px-2.5 py-0.5 bg-slate-150 rounded-full text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">
+        <span class="px-2.5 py-0.5 bg-slate-150 rounded-full edify-text-caption font-bold text-slate-500 uppercase tracking-wider">
           {{ holidays|length }} holidays configured
         </span>
       </div>
-      
+
       <div class="divide-y divide-slate-100">
         {% for h in holidays %}
         <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">
           <div>
             <span class="font-bold text-slate-800 text-[13px]">{{ h.name }}</span>
-            <span class="text-[11px] text-slate-400 font-bold block mt-0.5">Date: {{ h.date }}</span>
+            <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">Date: {{ h.date }}</span>
           </div>
-          
-          <a 
+
+          <a
             href="?delete_holiday={{ h.id }}"
             class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition"
             @click="if (!window.confirm('Remove public holiday?')) $event.preventDefault()"
@@ -158,17 +158,17 @@
     </div>
 
     <!-- Right: Add Holiday Form (4 cols) -->
-    <div class="lg:col-span-4 bg-white rounded-lg border border-slate-100 p-5 shadow-sm space-y-4">
+    <div class="lg:col-span-4 edify-surface rounded-lg border border-slate-100 p-5 shadow-sm space-y-4">
       <h4 class="text-[14px] font-bold text-slate-800">Add Public Holiday</h4>
-      
+
       <form method="GET" action="{% url 'frontend:leave_policies' %}" class="space-y-4">
         <input type="hidden" name="action" value="add_holiday" />
 
         <div class="space-y-1">
-          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Holiday Name</label>
-          <input 
-            type="text" 
-            name="holiday_name" 
+          <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Holiday Name</label>
+          <input
+            type="text"
+            name="holiday_name"
             placeholder="e.g. Independence Day"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
             required
@@ -176,18 +176,18 @@
         </div>
 
         <div class="space-y-1">
-          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Holiday Date</label>
-          <input 
-            type="date" 
-            name="holiday_date" 
+          <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Holiday Date</label>
+          <input
+            type="date"
+            name="holiday_date"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
             required
           />
         </div>
 
-        <button 
-          type="submit" 
-          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold uppercase rounded-lg tracking-wider transition"
+        <button
+          type="submit"
+          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white edify-text-caption font-bold uppercase rounded-lg tracking-wider transition"
         >
           Add Holiday
         </button>

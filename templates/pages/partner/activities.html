@@ -11,8 +11,8 @@
       <h1 class="text-[21px] font-extrabold tracking-tight">Activity Log</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">{{ total }} recent activities assigned to your organization.</p>
     </div>
-    <form method="get" class="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500 w-fit">
-      <span class="uppercase tracking-wider text-[10px]">Status</span>
+    <form method="get" class="flex items-center gap-1.5 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 edify-text-caption font-bold text-slate-500 w-fit">
+      <span class="uppercase tracking-wider edify-text-caption">Status</span>
       <select name="status" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
         <option value="">All</option>
         <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
@@ -22,12 +22,12 @@
     </form>
   </div>
 
-  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
     {% if activities %}
     <div class="overflow-x-auto -mx-1">
-      <table class="w-full text-[11.5px]">
+      <table class="w-full edify-text-caption">
         <thead>
-          <tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
             <th class="text-left font-bold py-2 pl-1">School / Cluster</th>
             <th class="text-left font-bold py-2">Type</th>
             <th class="text-left font-bold py-2">Date</th>
@@ -41,7 +41,7 @@
             <td class="text-left text-slate-500 py-2.5 capitalize">{{ a.activity_type|cut:"_" }}</td>
             <td class="text-left tabular-nums text-slate-500 py-2.5">{{ a.planned_date|date:"d M Y" }}</td>
             <td class="text-right py-2.5 pr-1">
-              <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold
+              <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold
                 {% if a.status == 'completed' or a.status == 'closed' %}bg-emerald-50 text-emerald-700
                 {% elif a.status == 'ia_verified' %}bg-blue-50 text-blue-700
                 {% elif a.status == 'scheduled' %}bg-sky-50 text-sky-700

@@ -1,29 +1,29 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
   <div>
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">10. Impact Summary <span class="text-slate-400 font-medium text-[11px]">(Cumulative FY)</span></h3>
-    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Verified completed activity outcomes</p>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">10. Impact Summary <span class="text-slate-400 font-medium edify-text-caption">(Cumulative FY)</span></h3>
+    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified completed activity outcomes</p>
   </div>
   <div class="grid grid-cols-2 gap-2.5 pt-1">
     <div class="rounded-xl bg-blue-50/50 border border-blue-100/60 p-3">
       <div class="h-7 w-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-2">{% include "partials/analytics/pl/_icon.html" with name="users" %}</div>
       <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none">{{ impact_summary.students_impacted|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-500 mt-1">Students Impacted</p>
+      <p class="edify-text-caption font-semibold text-slate-500 mt-1">Students Impacted</p>
     </div>
     <div class="rounded-xl bg-emerald-50/50 border border-emerald-100/60 p-3">
       <div class="h-7 w-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2">{% include "partials/analytics/pl/_icon.html" with name="graduation" %}</div>
       <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none">{{ impact_summary.teachers_trained|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-500 mt-1">Teachers Trained</p>
+      <p class="edify-text-caption font-semibold text-slate-500 mt-1">Teachers Trained</p>
     </div>
     <div class="rounded-xl bg-violet-50/50 border border-violet-100/60 p-3">
       <div class="h-7 w-7 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center mb-2">{% include "partials/analytics/pl/_icon.html" with name="school" %}</div>
       <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none">{{ impact_summary.leaders_trained|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-500 mt-1">School Leaders Trained</p>
+      <p class="edify-text-caption font-semibold text-slate-500 mt-1">School Leaders Trained</p>
     </div>
     <div class="rounded-xl bg-amber-50/50 border border-amber-100/60 p-3">
       <div class="h-7 w-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mb-2">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</div>
       <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none">{{ impact_summary.schools_improved|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-500 mt-1">Schools Improved</p>
+      <p class="edify-text-caption font-semibold text-slate-500 mt-1">Schools Improved</p>
     </div>
   </div>
   <div class="rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 p-3 flex items-center gap-3 mt-2">
@@ -32,8 +32,8 @@
     </div>
     <div>
       <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none">{{ impact_summary.champion_candidates|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-500 mt-0.5">Champion School Candidates</p>
+      <p class="edify-text-caption font-semibold text-slate-500 mt-0.5">Champion School Candidates</p>
     </div>
   </div>
-  <p class="text-[9.5px] text-slate-400 font-medium pt-1">Champion = latest verified SSA ≥ 80% with a non-negative annual delta.</p>
+  <p class="edify-text-caption text-slate-400 font-medium pt-1">Champion = latest verified SSA ≥ 80% with a non-negative annual delta.</p>
 </div>

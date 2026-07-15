@@ -16,51 +16,51 @@
 
 <!-- Tabs Navigation -->
 <div class="flex items-center gap-1 border-b  overflow-x-auto pb-px">
-<button 
+<button
 @click="tab = 'pending'"
-:class="tab === 'pending' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+:class="tab === 'pending' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Evidence Pending ({{ pending|length }})
 </button>
-<button 
+<button
 @click="tab = 'sf_missing'"
-:class="tab === 'sf_missing' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+:class="tab === 'sf_missing' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 SF ID Missing ({{ sf_missing|length }})
 </button>
-<button 
+<button
 @click="tab = 'submitted'"
-:class="tab === 'submitted' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+:class="tab === 'submitted' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Submitted ({{ submitted|length }})
 </button>
-<button 
+<button
 @click="tab = 'returned'"
-:class="tab === 'returned' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+:class="tab === 'returned' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Returned ({{ returned|length }})
 </button>
-<button 
+<button
 @click="tab = 'ia_pending'"
-:class="tab === 'ia_pending' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+:class="tab === 'ia_pending' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 IA Pending ({{ ia_pending|length }})
 </button>
-<button 
+<button
 @click="tab = 'verified'"
-:class="tab === 'verified' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+:class="tab === 'verified' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Verified ({{ verified|length }})
 </button>
-<button 
+<button
 @click="tab = 'partner_ev'"
-:class="tab === 'partner_ev' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+:class="tab === 'partner_ev' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Partner Work ({{ partner_ev|length }})

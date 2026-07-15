@@ -15,7 +15,7 @@
 {% endcomment %}
 <div class="card p-5">
   <div class="flex items-start justify-between">
-    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ label }}</p>
+    <p class="edify-text-caption font-semibold uppercase tracking-wider text-slate-400">{{ label }}</p>
     {% if icon %}
       <div class="w-8 h-8 rounded-lg flex items-center justify-center
                   {% if tone == 'info' %}bg-blue-50 text-blue-500{% elif tone == 'success' %}bg-emerald-50 text-emerald-500{% elif tone == 'warning' %}bg-amber-50 text-amber-500{% elif tone == 'danger' %}bg-rose-50 text-rose-500{% else %}bg-slate-100 text-slate-500{% endif %}">
@@ -28,11 +28,11 @@
                  {% if tone == 'info' %}text-blue-700{% elif tone == 'success' %}text-emerald-700{% elif tone == 'warning' %}text-amber-700{% elif tone == 'danger' %}text-rose-700{% else %}text-slate-800{% endif %}
                  tabular-nums leading-none">{{ value }}</span>
     {% if delta %}
-      <span class="text-[11px] font-semibold
+      <span class="edify-text-caption font-semibold
                    {% if delta_tone == 'success' %}text-emerald-600{% elif delta_tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">
         {{ delta }}
       </span>
     {% endif %}
   </div>
-  {% if hint %}<p class="text-[11px] text-slate-400 font-medium mt-1">{{ hint }}</p>{% endif %}
+  {% if hint %}<p class="edify-text-caption text-slate-400 font-medium mt-1">{{ hint }}</p>{% endif %}
 </div>

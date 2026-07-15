@@ -9,11 +9,11 @@
 </div>
 
 <!-- Monthly Fund Request Preview Card (Weekly Totals) -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700 mt-6">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700 mt-6">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
       <h3 class="text-[15px] font-semibold text-slate-800">Monthly Fund Request — {{ selected_month }} {{ selected_fy }}</h3>
-      <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Preview</span>
+      <span class="inline-flex items-center rounded-md px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Preview</span>
     </div>
   </div>
 
@@ -23,8 +23,8 @@
       {% for wk in monthly_weeks %}
         <div class="bg-slate-50/50 p-3 rounded-lg border border-slate-100 flex flex-col justify-between hover:shadow-sm transition-shadow">
           <div>
-            <span class="text-[11px] font-bold text-slate-400 block">{{ wk.label }}</span>
-            <span class="text-[11px] text-slate-500 font-semibold block mt-0.5">{{ wk.range_str }}</span>
+            <span class="edify-text-caption font-bold text-slate-400 block">{{ wk.label }}</span>
+            <span class="edify-text-caption text-slate-500 font-semibold block mt-0.5">{{ wk.range_str }}</span>
           </div>
           <span class="text-[14px] font-bold text-slate-800 block mt-3">{{ wk.total|ugx }}</span>
         </div>

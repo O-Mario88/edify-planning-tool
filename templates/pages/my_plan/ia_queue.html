@@ -15,12 +15,12 @@
 <div class="grid gap-6">
 {% if queue %}
 {% for act in queue %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
 <div class="space-y-3 min-w-0 flex-1">
 <div>
 <div class="flex items-center gap-2">
 <h3 class="text-[15px] font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h3>
-<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold bg-slate-100 text-slate-600">
+<span class="inline-flex items-center rounded px-2 py-0.5 edify-text-caption font-semibold bg-slate-100 text-slate-600">
 Salesforce ID: {{ act.salesforceActivityId }}
 </span>
 </div>
@@ -31,16 +31,16 @@ School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline t
 
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-slate-100/50 pt-2 text-[12px] text-slate-500 font-semibold">
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Planned Date</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Planned Date</p>
 <p class="font-bold mt-0.5">{{ act.scheduledDate }}</p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Focus Intervention</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Focus Intervention</p>
 <p class="font-bold mt-0.5 capitalize">{{ act.focusIntervention|replace_underscore }}</p>
 </div>
 {% if act.teachersAttended or act.leadersAttended %}
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Attendance</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Attendance</p>
 <p class="font-bold mt-0.5">T: {{ act.teachersAttended }} &bull; L: {{ act.leadersAttended }}</p>
 </div>
 {% endif %}
@@ -51,8 +51,8 @@ School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline t
 <div class="flex flex-col gap-2 min-w-[200px] w-full md:w-auto">
 <form method="POST" action="/ia/verification-queue/{{ act.id }}/confirm" class="w-full">
 {% csrf_token %}
-<button 
-type="submit" 
+<button
+type="submit"
 class="w-full h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Verify &amp; Confirm
@@ -60,9 +60,9 @@ Verify &amp; Confirm
 </form>
 
 <div x-data="{ open: false }" class="w-full">
-<button 
-@click="open = !open" 
-type="button" 
+<button
+@click="open = !open"
+type="button"
 class="w-full h-10 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Return for Correction
@@ -71,16 +71,16 @@ Return for Correction
 <div x-show="open" class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-left" style="display: none;" @click.outside="open = false">
 <form method="POST" action="/ia/verification-queue/{{ act.id }}/return">
 {% csrf_token %}
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Return Reason</label>
-<textarea 
-name="reason" 
-required 
-placeholder="Specify correction details..." 
-class="w-full p-2 bg-white border border-slate-200 rounded-lg text-[12px] focus:outline-none h-16 resize-none"
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Return Reason</label>
+<textarea
+name="reason"
+required
+placeholder="Specify correction details..."
+class="w-full p-2 edify-surface border border-slate-200 rounded-lg text-[12px] focus:outline-none h-16 resize-none"
 ></textarea>
-<button 
-type="submit" 
-class="w-full h-8 mt-2 rounded bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold transition-colors"
+<button
+type="submit"
+class="w-full h-8 mt-2 rounded bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-bold transition-colors"
 >
 Submit Return
 </button>
@@ -91,7 +91,7 @@ Submit Return
 </div>
 {% endfor %}
 {% else %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-12 text-center text-slate-400 font-semibold">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-12 text-center text-slate-400 font-semibold">
 No completions awaiting IA verification.
 </div>
 {% endif %}

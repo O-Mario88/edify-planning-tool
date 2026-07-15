@@ -11,7 +11,7 @@
       <h1 class="text-[21px] font-extrabold tracking-tight">School Map</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">Every school with verified coordinates, plotted live. Coordinates power Route Intelligence.</p>
     </div>
-    <span class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-50 border border-slate-200 text-[11.5px] font-semibold text-slate-500 w-fit">
+    <span class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-500 w-fit">
       <span class="h-1.5 w-1.5 rounded-full {% if with_coords %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
       {{ with_coords|intcomma }} of {{ total|intcomma }} schools have coordinates
     </span>
@@ -22,11 +22,11 @@
     <p class="text-[12px] font-semibold text-amber-800">
       {{ without_coords|intcomma }} school(s) have no coordinates yet — route estimates for them fall back to sub-county data.
     </p>
-    <a href="/system-health" class="text-[11px] font-bold text-amber-700 hover:underline shrink-0">Location data quality →</a>
+    <a href="/system-health" class="edify-text-caption font-bold text-amber-700 hover:underline shrink-0">Location data quality →</a>
   </div>
   {% endif %}
 
-  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-2">
+  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-2">
     {% if with_coords %}
     <div id="school-map" class="h-[560px] w-full rounded-lg"></div>
     {% else %}
@@ -35,7 +35,7 @@
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.6 16.6A10 10 0 0021 10a9 9 0 10-18 0 10 10 0 003.4 6.6L12 22z"/><circle cx="12" cy="10" r="2.4"/></svg>
       </span>
       <p class="text-[13px] font-bold text-slate-600">No school coordinates captured yet</p>
-      <p class="text-[11.5px] text-slate-400 max-w-md">The map activates automatically as coordinates arrive — from school uploads or verified GPS points captured during visits. Nothing is plotted until the data is real.</p>
+      <p class="edify-text-caption text-slate-400 max-w-md">The map activates automatically as coordinates arrive — from school uploads or verified GPS points captured during visits. Nothing is plotted until the data is real.</p>
     </div>
     {% endif %}
   </div>
@@ -53,7 +53,7 @@
     }).addTo(map);
     var bounds = [];
     points.forEach(function (p) {
-      var m = L.circleMarker([p.lat, p.lng], {radius: 6, color: '#2563eb', weight: 1.5, fillColor: '#60a5fa', fillOpacity: 0.75}).addTo(map);
+      var m = L.circleMarker([p.lat, p.lng], {radius: 6, color: 'var(--edify-chart-blue)', weight: 1.5, fillColor: 'var(--edify-chart-blue)', fillOpacity: 0.75}).addTo(map);
       m.bindPopup('<b>' + p.name + '</b><br>' + [p.sub_county, p.district].filter(Boolean).join(', '));
       bounds.push([p.lat, p.lng]);
     });

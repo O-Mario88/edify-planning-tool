@@ -13,7 +13,7 @@
 border-radius: 20px !important;
 box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
 background-color: white !important;
-border: 1px solid #cbd5e1 !important;
+border: 1px solid var(--edify-border) !important;
 }
 .drawer-header {
 border-bottom: none !important;
@@ -23,27 +23,27 @@ padding: 24px 28px 4px 28px !important;
 .drawer-header h3 {
 font-size: 19px !important;
 font-weight: 700 !important;
-color: #0f172a !important;
+color: var(--edify-text) !important;
 letter-spacing: -0.025em !important;
 }
 .drawer-header p {
 font-size: 13px !important;
 font-weight: 400 !important;
-color: #64748b !important;
+color: var(--edify-text-muted) !important;
 margin-top: 6px !important;
 line-height: 1.5 !important;
 }
 .drawer-close-btn {
-border: 1.5px solid #cbd5e1 !important;
+border: 1.5px solid var(--edify-border) !important;
 border-radius: 10px !important;
 padding: 7px !important;
-color: #475569 !important;
+color: var(--edify-text-muted) !important;
 background: white !important;
 transition: all 0.2s !important;
 }
 .drawer-close-btn:hover {
-background: #f8fafc !important;
-border-color: #94a3b8 !important;
+background: var(--edify-surface-muted) !important;
+border-color: var(--edify-text-subtle) !important;
 }
 .drawer-body {
 padding: 4px 28px 28px 28px !important;
@@ -76,9 +76,9 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 
 <!-- Partner Dropdown -->
 <div>
-<label for="partner_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Partner Organization</label>
-<select 
-name="partner_id" 
+<label for="partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Partner Organization</label>
+<select
+name="partner_id"
 id="partner_id"
 required
 class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
@@ -92,9 +92,9 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 
 <!-- Activity Type -->
 <div>
-<label for="activity_type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity Type</label>
-<select 
-name="activity_type" 
+<label for="activity_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Type</label>
+<select
+name="activity_type"
 id="activity_type"
 required
 class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
@@ -116,9 +116,9 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 
 <!-- Focus Intervention -->
 <div>
-<label for="focus_intervention" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
-<select 
-name="focus_intervention" 
+<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+<select
+name="focus_intervention"
 id="focus_intervention"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
 >
@@ -131,9 +131,9 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 
 <!-- Expected Date -->
 <div>
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Date / Target Date (Optional)</label>
-<p class="text-[10.5px] font-semibold text-slate-400 normal-case tracking-normal mb-1.5">Leave blank if the partner will confirm their own schedule — the activity is only costed and budgeted once a date is set, by you now or by the partner later.</p>
-<div 
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Date / Target Date (Optional)</label>
+<p class="edify-text-caption font-semibold text-slate-400 normal-case tracking-normal mb-1.5">Leave blank if the partner will confirm their own schedule — the activity is only costed and budgeted once a date is set, by you now or by the partner later.</p>
+<div
 x-data="{
 open: false,
 selectedDate: '',
@@ -197,15 +197,15 @@ return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'nu
 isSelected(day) {
 if (!day || !this.selectedDate) return false;
 let parts = this.selectedDate.split('-');
-return parseInt(parts[0]) === this.currentYear && 
-(parseInt(parts[1]) - 1) === this.currentMonth && 
+return parseInt(parts[0]) === this.currentYear &&
+(parseInt(parts[1]) - 1) === this.currentMonth &&
 parseInt(parts[2]) === day;
 }
 }"
 class="relative "
 >
 <!-- Dropdown Trigger button -->
-<button 
+<button
 type="button"
 @click="open = !open"
 class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
@@ -224,10 +224,10 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <input type="hidden" name="expected_date" :value="selectedDate">
 
 <!-- Calendar Popover Card -->
-<div 
+<div
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
+class="absolute left-0 mt-1.5 w-[280px] edify-surface border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -241,14 +241,14 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
-<span class="font-semibold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
 <button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
 </div>
 
 <!-- Weekdays Header -->
-<div class="grid grid-cols-7 gap-y-1 text-center text-[11px] font-bold text-slate-400">
+<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
 <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
 </div>
 
@@ -256,12 +256,12 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
 <template x-for="(day, index) in days" :key="index">
 <div>
-<button 
+<button
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
 class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
-:class="isSelected(day) ? 'bg-[#0f172a] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
 </div>
@@ -273,9 +273,9 @@ x-text="day"
 
 <!-- Assignment Purpose -->
 <div>
-<label for="purpose" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Assignment Purpose / Scope</label>
-<textarea 
-name="purpose" 
+<label for="purpose" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assignment Purpose / Scope</label>
+<textarea
+name="purpose"
 id="purpose"
 required
 rows="2"
@@ -286,9 +286,9 @@ class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:ou
 
 <!-- Notes -->
 <div>
-<label for="notes" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Additional Notes / Instructions</label>
-<textarea 
-name="notes" 
+<label for="notes" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Additional Notes / Instructions</label>
+<textarea
+name="notes"
 id="notes"
 rows="2"
 placeholder="Specific field instructions or scheduling notes..."
@@ -298,8 +298,8 @@ class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:ou
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="
 if (isDirty) {
 if (confirm('You have unsaved changes. Discard changes?')) {
@@ -313,7 +313,7 @@ class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >

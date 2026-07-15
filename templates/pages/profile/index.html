@@ -7,42 +7,42 @@
 <!-- Hero Card -->
 <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-lg p-6 text-white shadow-lg">
 <div class="flex items-start gap-5">
-<div class="h-16 w-16 rounded-lg bg-white/20 text-white font-semibold text-[20px] grid place-items-center shrink-0 backdrop-blur border border-white/30">{{ initials }}</div>
+<div class="h-16 w-16 rounded-lg edify-surface-translucent text-white font-semibold text-[20px] grid place-items-center shrink-0 backdrop-blur border border-white/30">{{ initials }}</div>
 <div class="flex-1">
 <h1 class="text-[21px] font-extrabold tracking-tight">{{ member.name }}</h1>
 <p class="text-indigo-200 text-[12px] font-semibold mt-0.5">{{ member.email }}</p>
 <div class="flex flex-wrap gap-2 mt-3">
 {% for role in member.roles %}
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-bold backdrop-blur">{{ role }}</span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full edify-surface-translucent text-white edify-text-caption font-bold backdrop-blur">{{ role }}</span>
 {% endfor %}
 </div>
 </div>
 <div class="text-right">
-<p class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">Active Role</p>
+<p class="edify-text-caption font-bold uppercase tracking-wider text-indigo-300">Active Role</p>
 <p class="text-[14px] font-semibold mt-0.5">{{ member.active_role }}</p>
-<p class="text-[11px] text-indigo-300 mt-1">FY{{ fy }}</p>
+<p class="edify-text-caption text-indigo-300 mt-1">FY{{ fy }}</p>
 </div>
 </div>
 </div>
 
 <!-- Stats Strip -->
 <div class="grid grid-cols-3 gap-4">
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
 <p class="text-[28px] font-semibold text-indigo-600">{{ total_activities }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
 </div>
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
 <p class="text-[28px] font-semibold text-emerald-600">{{ completed }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
 </div>
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
 <p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completion Rate</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completion Rate</p>
 </div>
 </div>
 
 <!-- Account Details -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold">Account Details</h2>
 </div>
@@ -57,7 +57,7 @@
 </div>
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
 <span class="text-[12px] font-semibold text-slate-500">Status</span>
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 edify-text-caption font-bold">
 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
 {{ member.status|title }}
 </span>
@@ -66,7 +66,7 @@
 <span class="text-[12px] font-semibold text-slate-500">Roles</span>
 <div class="flex gap-1.5">
 {% for role in member.roles %}
-<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-bold">{{ role }}</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 edify-text-caption font-bold">{{ role }}</span>
 {% endfor %}
 </div>
 </div>
@@ -75,7 +75,7 @@
 
 <!-- Recent Activity -->
 {% if recent %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold">Recent Activity</h2>
 </div>
@@ -84,9 +84,9 @@
 <li class="px-5 py-3.5 flex items-center justify-between">
 <div>
 <p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-<p class="text-[11px] text-slate-400">{{ act.planned_date|default:"No date" }} · {{ act.status }}</p>
+<p class="edify-text-caption text-slate-400">{{ act.planned_date|default:"No date" }} · {{ act.status }}</p>
 </div>
-<a href="/my-plan/{{ act.id }}" class="text-[11px] text-slate-400 hover:text-indigo-600 transition-colors">→</a>
+<a href="/my-plan/{{ act.id }}" class="edify-text-caption text-slate-400 hover:text-indigo-600 transition-colors">→</a>
 </li>
 {% endfor %}
 </ul>
@@ -95,7 +95,7 @@
 
 <!-- Switch Role -->
 {% if request.user.roles|length > 1 %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm p-5">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm p-5">
 <h2 class="text-[14px] font-semibold mb-3">Switch Active Role</h2>
 <div class="flex flex-wrap gap-2">
 {% for role in request.user.role_enums %}

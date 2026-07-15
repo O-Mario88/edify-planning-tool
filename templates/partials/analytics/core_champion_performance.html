@@ -1,14 +1,14 @@
-<div class="bg-white rounded-xl  p-4 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>Core & Champion Schools</span>
-<span class="text-[11px] text-slate-400 cursor-help" title="Detailed performance split between Core and Champion school categories">ℹ️</span>
+<span class="edify-text-caption text-slate-400 cursor-help" title="Detailed performance split between Core and Champion school categories">ℹ️</span>
 </h3>
-<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Category-based performance metrics</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Category-based performance metrics</p>
 </div>
 
-<select class="bg-slate-50  rounded-lg text-[11px] font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<select class="bg-slate-50  rounded-lg edify-text-caption font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
 <option>This Quarter</option>
 </select>
 </div>
@@ -17,26 +17,26 @@
 <!-- Core Schools Block -->
 <div class="bg-slate-50  rounded-xl p-3 flex items-center justify-between">
 <div>
-<span class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Core Schools</span>
+<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Core Schools</span>
 <p class="text-[18px] font-semibold text-slate-800 mt-0.5">{{ core_champion.core_count }} schools</p>
-<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">Average SSA: {{ core_champion.core_ssa }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">Average SSA: {{ core_champion.core_ssa }}</span>
 </div>
 <div class="text-right">
 <span class="text-[20px] font-semibold text-slate-800">{{ core_champion.core_ssa }}</span>
-<span class="text-[11px] text-emerald-600 font-bold block mt-0.5">▲ +0.28 vs Q1</span>
+<span class="edify-text-caption text-emerald-600 font-bold block mt-0.5">▲ +0.28 vs Q1</span>
 </div>
 </div>
 
 <!-- Champion Schools Block -->
 <div class="bg-slate-50  rounded-xl p-3 flex items-center justify-between">
 <div>
-<span class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Champion Schools</span>
-<p class="text-[18px] font-semibold text-[#2e505f] mt-0.5">{{ core_champion.champion_count }} schools</p>
-<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">Average SSA: {{ core_champion.champion_ssa }}</span>
+<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Champion Schools</span>
+<p class="text-[18px] font-semibold text-[var(--edify-primary)] mt-0.5">{{ core_champion.champion_count }} schools</p>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">Average SSA: {{ core_champion.champion_ssa }}</span>
 </div>
 <div class="text-right">
-<span class="text-[20px] font-semibold text-[#2e505f]">{{ core_champion.champion_ssa }}</span>
-<span class="text-[11px] text-emerald-600 font-bold block mt-0.5">▲ +0.41 vs Q1</span>
+<span class="text-[20px] font-semibold text-[var(--edify-primary)]">{{ core_champion.champion_ssa }}</span>
+<span class="edify-text-caption text-emerald-600 font-bold block mt-0.5">▲ +0.41 vs Q1</span>
 </div>
 </div>
 </div>

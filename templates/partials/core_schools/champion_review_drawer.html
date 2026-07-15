@@ -1,19 +1,19 @@
-<div 
-x-data="{ show: true }" 
-x-show="show" 
+<div
+x-data="{ show: true }"
+x-show="show"
 @keydown.escape.window="show = false"
 class="fixed inset-0 z-50 overflow-hidden select-none"
 >
 <!-- Overlay Backdrop -->
-<div 
+<div
 class="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity"
 @click="show = false"
 ></div>
 
 <!-- Drawer Container -->
 <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
-<div 
-class="w-screen max-w-xl bg-white shadow-2xl flex flex-col"
+<div
+class="w-screen max-w-xl edify-surface shadow-2xl flex flex-col"
 x-transition:enter="transform transition ease-in-out duration-300"
 x-transition:enter-start="translate-x-full"
 x-transition:enter-end="translate-x-0"
@@ -23,12 +23,12 @@ x-transition:leave-end="translate-x-full"
 >
 
 <!-- Drawer Header -->
-<div class="px-6 py-5 bg-[#0f172a] text-white flex items-center justify-between shadow-md">
+<div class="px-6 py-5 bg-[var(--edify-text)] text-white flex items-center justify-between shadow-md">
 <div>
 <h2 class="text-[18px] font-semibold tracking-tight leading-tight">Champion Graduation Review</h2>
-<p class="text-[11px] text-slate-300 font-bold mt-0.5">{{ school.name }}</p>
+<p class="edify-text-caption text-slate-300 font-bold mt-0.5">{{ school.name }}</p>
 </div>
-<button 
+<button
 @click="show = false"
 class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
 >
@@ -40,32 +40,32 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
 
 <!-- Score Circle Hero -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm flex items-center justify-between">
+<div class="edify-surface rounded-xl border border-slate-100 p-5 shadow-sm flex items-center justify-between">
 <div class="space-y-1">
-<span class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Candidate Score</span>
+<span class="edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Candidate Score</span>
 <h3 class="text-[32px] font-semibold text-slate-900 leading-none">{{ metrics.score }}<span class="text-[15px] text-slate-400 font-semibold"> /100</span></h3>
-<span class="inline-flex items-center text-[11px] font-semibold uppercase rounded-lg px-2.5 py-0.5 border {% if metrics.eligible %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-amber-50 text-amber-700 border-amber-100{% endif %}">
+<span class="inline-flex items-center edify-text-caption font-semibold uppercase rounded-lg px-2.5 py-0.5 border {% if metrics.eligible %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-amber-50 text-amber-700 border-amber-100{% endif %}">
 {% if metrics.eligible %}GRADUATION READY{% else %}INSUFFICIENT MARGINS{% endif %}
 </span>
 </div>
 
 <div class="relative w-20 h-20 flex items-center justify-center shrink-0">
 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-<circle cx="18" cy="18" r="16" fill="none" stroke="#f1f5f9" stroke-width="2"></circle>
-<circle cx="18" cy="18" r="16" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="{{ metrics.score }}, 100" stroke-linecap="round"></circle>
+<circle cx="18" cy="18" r="16" fill="none" stroke="var(--edify-surface-muted)" stroke-width="2"></circle>
+<circle cx="18" cy="18" r="16" fill="none" stroke="var(--edify-chart-blue)" stroke-width="2" stroke-dasharray="{{ metrics.score }}, 100" stroke-linecap="round"></circle>
 </svg>
 <span class="absolute text-[14px] font-semibold text-slate-800">{{ metrics.score }}%</span>
 </div>
 </div>
 
 <!-- Official Formula Scoring Breakdown -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
 <h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Graduation Formula Weights</h3>
 
 <div class="space-y-3">
 <!-- 1. Latest SSA -->
 <div class="space-y-1">
-<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<div class="flex justify-between edify-text-caption font-bold text-slate-600">
 <span>Latest SSA Average (40% Weight)</span>
 <span class="text-slate-800 font-semibold">{{ metrics.latest_avg }} / 10.0</span>
 </div>
@@ -76,7 +76,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- 2. Improvement Delta -->
 <div class="space-y-1">
-<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<div class="flex justify-between edify-text-caption font-bold text-slate-600">
 <span>Improvement Delta (25% Weight)</span>
 <span class="text-slate-800 font-semibold">+{{ metrics.delta }} Average Improvement</span>
 </div>
@@ -87,7 +87,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- 3. Lowest Score / Balance -->
 <div class="space-y-1">
-<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<div class="flex justify-between edify-text-caption font-bold text-slate-600">
 <span>Intervention Balance (15% Weight)</span>
 <span class="text-slate-800 font-semibold">Lowest Score: {{ metrics.lowest_score }}</span>
 </div>
@@ -98,7 +98,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- 4. Slots Completed -->
 <div class="space-y-1">
-<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<div class="flex justify-between edify-text-caption font-bold text-slate-600">
 <span>Package Completion (10% Weight)</span>
 <span class="text-slate-800 font-semibold">{{ metrics.completed_slots }} / {{ metrics.total_slots }} Slots Completed</span>
 </div>
@@ -109,7 +109,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- 5. Evidences / Quality -->
 <div class="space-y-1">
-<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<div class="flex justify-between edify-text-caption font-bold text-slate-600">
 <span>Evidence/IA Quality (5% Weight)</span>
 <span class="text-slate-800 font-semibold">{{ metrics.evidence_pct }}% Validated</span>
 </div>
@@ -120,7 +120,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- 6. Repeat Performance -->
 <div class="space-y-1">
-<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<div class="flex justify-between edify-text-caption font-bold text-slate-600">
 <span>Repeat SSA Performance (5% Weight)</span>
 <span class="text-slate-800 font-semibold">{{ metrics.all_ssas }} SSA records</span>
 </div>
@@ -133,7 +133,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 </div>
 
 <!-- Eligibility Checklist Gate -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-3.5">
+<div class="edify-surface rounded-xl border border-slate-100 p-5 shadow-sm space-y-3.5">
 <h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Graduation Gate Checklist</h3>
 
 <ul class="space-y-3 text-[12px] font-bold text-slate-600">
@@ -176,9 +176,9 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="bg-slate-50 border-t border-slate-100 p-6 flex items-center justify-between gap-4">
 <form action="{% url 'frontend:champion_reject_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
-<button 
+<button
 type="submit"
-class="w-full h-10 border border-slate-200 hover:bg-slate-100 bg-white rounded-lg text-slate-700 text-[11px] font-semibold uppercase tracking-wider transition-colors shadow-sm"
+class="w-full h-10 border border-slate-200 hover:bg-slate-100 edify-surface rounded-lg text-slate-700 edify-text-caption font-semibold uppercase tracking-wider transition-colors shadow-sm"
 >
 Reject Candidacy
 </button>
@@ -186,10 +186,10 @@ Reject Candidacy
 
 <form action="{% url 'frontend:champion_approve_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
-<button 
+<button
 type="submit"
 {% if not metrics.eligible %}disabled{% endif %}
-class="w-full h-10 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center
+class="w-full h-10 text-white rounded-lg edify-text-caption font-semibold uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center
 {% if metrics.eligible %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-slate-200 text-slate-400 cursor-not-allowed{% endif %}"
 >
 Approve & Graduate

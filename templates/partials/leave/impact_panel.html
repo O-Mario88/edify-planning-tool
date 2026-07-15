@@ -3,15 +3,15 @@
 <div class="grid grid-cols-1 lg:grid-cols-9 gap-6 items-start"
      x-data="{ coverageModal: false, returnModal: false, rejectModal: false }"
      @keydown.escape.window="coverageModal = false; returnModal = false; rejectModal = false">
-  
+
   <!-- Middle Column: Detailed Request Card (6/9 cols) -->
   <div class="lg:col-span-6 rounded-lg border shadow-sm p-6 space-y-6"
        style="background:var(--edify-surface); border-color:var(--edify-border);">
-    
+
     <!-- Title & Request ID -->
     <div class="flex items-center justify-between border-b pb-3" style="border-color:var(--edify-border);">
       <h3 class="text-sm font-bold text-slate-200">Leave Request Details</h3>
-      <span class="text-[10px] font-bold text-slate-400">Request ID: LR-{{ leave.id|slice:":8"|upper }}</span>
+      <span class="edify-text-caption font-bold text-slate-400">Request ID: LR-{{ leave.id|slice:":8"|upper }}</span>
     </div>
 
     <!-- Employee Profile info -->
@@ -22,15 +22,15 @@
         </div>
         <div>
           <h4 class="font-extrabold text-slate-100 text-sm leading-tight">{{ leave.staff.user.name }}</h4>
-          <p class="text-[10.5px] text-slate-400 mt-0.5 font-semibold">{{ leave.staff.user.active_role }} · {{ leave.staff.user.email }}</p>
+          <p class="edify-text-caption text-slate-400 mt-0.5 font-semibold">{{ leave.staff.user.active_role }} · {{ leave.staff.user.email }}</p>
         </div>
       </div>
-      
+
       <div class="text-right flex flex-col items-end gap-1.5">
-        <span class="px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded-lg text-[9.5px] font-bold uppercase tracking-wider">
+        <span class="px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded-lg edify-text-caption font-bold uppercase tracking-wider">
           {{ leave.type|replace_underscore|title }}
         </span>
-        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-extrabold uppercase tracking-wide
+        <span class="px-1.5 py-0.5 rounded edify-text-caption font-extrabold uppercase tracking-wide
           {% if leave.status == 'pending' %}bg-amber-500/10 text-amber-500
           {% elif leave.status == 'approved' %}bg-emerald-500/10 text-emerald-500
           {% elif leave.status == 'rejected' %}bg-rose-500/10 text-rose-500
@@ -45,30 +45,30 @@
     <div class="grid grid-cols-4 gap-4 p-4 rounded-xl border"
          style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
       <div class="space-y-1">
-        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Start Date</span>
-        <p class="text-[11.5px] font-black text-slate-200">{{ leave.start_date }}</p>
+        <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Start Date</span>
+        <p class="edify-text-caption font-black text-slate-200">{{ leave.start_date }}</p>
       </div>
       <div class="space-y-1">
-        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">End Date</span>
-        <p class="text-[11.5px] font-black text-slate-200">{{ leave.end_date }}</p>
+        <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">End Date</span>
+        <p class="edify-text-caption font-black text-slate-200">{{ leave.end_date }}</p>
       </div>
       <div class="space-y-1">
-        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Working Days</span>
-        <p class="text-[11.5px] font-black text-slate-200">{{ leave.days_charged }} days</p>
+        <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Working Days</span>
+        <p class="edify-text-caption font-black text-slate-200">{{ leave.days_charged }} days</p>
       </div>
       <div class="space-y-1">
-        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Remaining Balance</span>
+        <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Remaining Balance</span>
         {% if impact.balance_remaining is not None %}
-          <p class="text-[11.5px] font-black text-slate-200">{{ impact.balance_remaining }} / {{ impact.balance_entitlement }} days</p>
+          <p class="edify-text-caption font-black text-slate-200">{{ impact.balance_remaining }} / {{ impact.balance_entitlement }} days</p>
         {% else %}
-          <p class="text-[11.5px] font-semibold text-slate-400">Not available</p>
+          <p class="edify-text-caption font-semibold text-slate-400">Not available</p>
         {% endif %}
       </div>
     </div>
 
     <!-- Notes/Reason -->
     <div class="space-y-1.5">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Reason / Notes</span>
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Reason / Notes</span>
       <div class="p-3 rounded-xl border text-xs font-semibold text-slate-300 leading-relaxed"
            style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         {{ leave.reason|default:"No description notes provided." }}
@@ -81,7 +81,7 @@
       <div class="p-4 rounded-xl border flex flex-col justify-between"
            style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div>
-          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Coverage Assignee</span>
+          <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider block">Coverage Assignee</span>
           {% if leave.covering_staff %}
             <div class="flex items-center gap-2.5 mt-2">
               <div class="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs shadow-sm">
@@ -89,11 +89,11 @@
               </div>
               <div>
                 <p class="text-xs font-bold text-slate-200 leading-tight">{{ leave.covering_staff.user.name }}</p>
-                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ leave.covering_staff.user.active_role }}</p>
+                <p class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ leave.covering_staff.user.active_role }}</p>
               </div>
             </div>
-            
-            <span class="mt-3 inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-500">
+
+            <span class="mt-3 inline-flex items-center gap-1 edify-text-caption font-bold text-emerald-500">
               <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
               </svg>
@@ -103,11 +103,11 @@
             <p class="text-xs text-slate-400 mt-2">No coverage assignee proposed.</p>
           {% endif %}
         </div>
-        
+
         {% if eligible_cover_staff %}
         <!-- Reassign Coverage dropdown trigger -->
         <button type="button" @click="coverageModal = true"
-                class="mt-4 px-3 py-1.5 text-[10px] font-extrabold uppercase border rounded-lg hover:bg-slate-50/5 transition text-center tracking-wider"
+                class="mt-4 px-3 py-1.5 edify-text-caption font-extrabold uppercase border rounded-lg hover:bg-slate-50/5 transition text-center tracking-wider"
                 style="border-color:var(--edify-border); color:var(--edify-text);">
           Change Assignee
         </button>
@@ -117,36 +117,36 @@
       <!-- Auto Access Transfer Checklist -->
       <div class="p-4 rounded-xl border"
            style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Auto-Access Transfer</span>
-        
+        <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider block">Auto-Access Transfer</span>
+
         <div class="mt-2.5 space-y-2">
-          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+          <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
               <input type="checkbox" checked disabled class="rounded text-blue-500">
               Dashboards
             </span>
-            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+            <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
           </div>
-          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+          <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
               <input type="checkbox" checked disabled class="rounded text-blue-500">
               Planning
             </span>
-            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+            <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
           </div>
-          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+          <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
               <input type="checkbox" checked disabled class="rounded text-blue-500">
               My Plan
             </span>
-            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+            <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
           </div>
-          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+          <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
               <input type="checkbox" checked disabled class="rounded text-blue-500">
               Clusters
             </span>
-            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+            <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
           </div>
         </div>
       </div>
@@ -154,9 +154,9 @@
 
     <!-- Conflict Check Summary -->
     <div class="space-y-2">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Conflict Check Summary</span>
-      
-      <div class="grid grid-cols-2 gap-2 text-[10.5px] font-bold">
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Conflict Check Summary</span>
+
+      <div class="grid grid-cols-2 gap-2 edify-text-caption font-bold">
         <!-- Holiday -->
         <div class="flex items-center gap-2 p-2 border rounded-xl"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
@@ -187,40 +187,40 @@
     <!-- Affected Work Items grid -->
     <div class="space-y-2.5">
       <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Affected Work Items</span>
-        <span class="text-[10px] font-medium text-slate-500">Live impact analysis</span>
+        <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Affected Work Items</span>
+        <span class="edify-text-caption font-medium text-slate-500">Live impact analysis</span>
       </div>
-      
+
       <div class="grid grid-cols-3 sm:grid-cols-5 gap-3">
         <!-- Scheduled activities -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.activity_count|default:"0" }}</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Activities</span>
+          <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Activities</span>
         </div>
         <!-- Planning items -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.planning_count|default:"0" }}</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Plan Items</span>
+          <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Plan Items</span>
         </div>
         <!-- Partner work -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.partner_count|default:"0" }}</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Partner Work</span>
+          <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Partner Work</span>
         </div>
         <!-- Fund requests -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.fund_count|default:"0" }}</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Fund Requests</span>
+          <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Fund Requests</span>
         </div>
         <!-- My Plan -->
         <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.due_count|default:"0" }}</span>
-          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">My Plan Due</span>
+          <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">My Plan Due</span>
         </div>
       </div>
     </div>
@@ -234,7 +234,7 @@
             Approve Leave
           </button>
         </form>
-        
+
         <button type="button" @click="returnModal = true"
                 class="px-4 py-2 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition"
                 style="border-color:var(--edify-border); color:var(--edify-text);">
@@ -248,7 +248,7 @@
             Escalate to HR
           </button>
         </form>
-        
+
         <button type="button" @click="rejectModal = true"
                 class="px-4 py-2 text-xs font-bold text-rose-500 border rounded-lg hover:bg-rose-50/5 transition"
                 style="border-color:var(--edify-border);">
@@ -264,21 +264,21 @@
     <div class="rounded-lg border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
-        <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Holiday & Blackout Dates</h4>
-        <span class="text-[9.5px] font-medium text-slate-500">Next 5</span>
+        <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Holiday & Blackout Dates</h4>
+        <span class="edify-text-caption font-medium text-slate-500">Next 5</span>
       </div>
-      
+
       <div class="space-y-2.5">
         {% for h in holidays %}
           <div class="flex items-center justify-between text-xs font-semibold">
             <div>
               <p class="text-slate-200 leading-tight">{{ h.name }}</p>
-              <p class="text-[9px] text-slate-400 mt-0.5">{{ h.date }}</p>
+              <p class="edify-text-caption text-slate-400 mt-0.5">{{ h.date }}</p>
             </div>
             <span class="h-2 w-2 rounded-full bg-rose-500"></span>
           </div>
         {% empty %}
-          <p class="text-[11px] text-slate-500">No upcoming public holidays.</p>
+          <p class="edify-text-caption text-slate-500">No upcoming public holidays.</p>
         {% endfor %}
       </div>
     </div>
@@ -287,25 +287,25 @@
     <div class="rounded-lg border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
-        <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Auto-Blocked Conflicts</h4>
-        <span class="text-[9.5px] font-medium text-slate-500">Live check</span>
+        <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Auto-Blocked Conflicts</h4>
+        <span class="edify-text-caption font-medium text-slate-500">Live check</span>
       </div>
 
       <div class="space-y-2.5">
         {% if conflicts_count or selected_leave_conflicts %}
           {% for conf in selected_leave_conflicts %}
-            <div class="p-2.5 rounded-xl border text-[11px] space-y-1.5"
+            <div class="p-2.5 rounded-xl border edify-text-caption space-y-1.5"
                  style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
               <div class="flex items-center gap-1.5 text-rose-400 font-bold uppercase tracking-wider">
                 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
                 {{ conf.conflict_type|replace_underscore|title }}
               </div>
               <p class="text-slate-300 font-semibold leading-relaxed">{{ conf.recommended_action }}</p>
-              <span class="text-[9px] text-slate-400 block font-bold">{{ conf.date_range }}</span>
+              <span class="edify-text-caption text-slate-400 block font-bold">{{ conf.date_range }}</span>
             </div>
           {% endfor %}
         {% else %}
-          <div class="p-3 text-center rounded-xl bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 text-[10.5px]">
+          <div class="p-3 text-center rounded-xl bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 edify-text-caption">
             No conflicts detected for this period.
           </div>
         {% endif %}
@@ -316,13 +316,13 @@
     <div class="rounded-lg border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
-        <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Team Availability</h4>
-        <a href="{% url 'frontend:team_availability' %}" class="text-[9.5px] font-bold text-blue-500 hover:underline text-right">Full report</a>
+        <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Team Availability</h4>
+        <a href="{% url 'frontend:team_availability' %}" class="edify-text-caption font-bold text-blue-500 hover:underline text-right">Full report</a>
       </div>
 
       <div class="space-y-3 pt-1">
         <!-- Timeline column headers -->
-        <div class="grid grid-cols-5 text-[8.5px] font-black text-slate-400 uppercase tracking-widest text-center border-b pb-1.5"
+        <div class="grid grid-cols-5 edify-text-caption font-black text-slate-400 uppercase tracking-widest text-center border-b pb-1.5"
              style="border-color:var(--edify-border);">
           <div class="text-left col-span-2">Staff</div>
           <div>Wk 1</div>
@@ -332,7 +332,7 @@
 
         <div class="space-y-2.5">
           {% for row in heatmap|slice:":5" %}
-            <div class="grid grid-cols-5 items-center text-[10.5px] text-center font-bold">
+            <div class="grid grid-cols-5 items-center edify-text-caption text-center font-bold">
               <div class="text-left text-slate-300 truncate col-span-2 pr-1.5" title="{{ row.staff_name }}">
                 {{ row.staff_name }}
               </div>
@@ -350,7 +350,7 @@
               {% endfor %}
             </div>
           {% empty %}
-            <p class="text-[10.5px] text-slate-500">No availability data mapped.</p>
+            <p class="edify-text-caption text-slate-500">No availability data mapped.</p>
           {% endfor %}
         </div>
       </div>
@@ -359,9 +359,9 @@
     <!-- Approval Rules checklist -->
     <div class="rounded-lg border shadow-sm p-4 space-y-2.5"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Approval Rules Check</h4>
-      
-      <ul class="text-[10px] font-semibold text-slate-400 space-y-2 list-disc pl-3">
+      <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Approval Rules Check</h4>
+
+      <ul class="edify-text-caption font-semibold text-slate-400 space-y-2 list-disc pl-3">
         <li class="leading-relaxed">Count only working days (weekends skipped).</li>
         <li class="leading-relaxed">Coverage must be within matching scope under supervising PL.</li>
         <li class="leading-relaxed">Access delegation terminates automatically when leave ends.</li>
@@ -373,31 +373,31 @@
     <!-- Audit Trail step logs -->
     <div class="rounded-lg border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Audit Trail</h4>
-      
-      <div class="space-y-3 text-[10px] font-bold text-slate-400">
+      <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Audit Trail</h4>
+
+      <div class="space-y-3 edify-text-caption font-bold text-slate-400">
         <div class="flex items-start gap-2">
           <span class="h-2 w-2 rounded-full bg-blue-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Request Submitted</p>
-            <p class="text-[8px] text-slate-500 mt-0.5">{{ leave.created_at|date:"M j, Y \a\t g:i A" }} by {{ leave.staff.user.name }}</p>
+            <p class="edify-text-caption text-slate-500 mt-0.5">{{ leave.created_at|date:"M j, Y \a\t g:i A" }} by {{ leave.staff.user.name }}</p>
           </div>
         </div>
-        
+
         <div class="flex items-start gap-2">
           <span class="h-2 w-2 rounded-full bg-amber-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Under Review</p>
-            <p class="text-[8px] text-slate-500 mt-0.5">{% if leave.status == 'pending' %}Awaiting authorized review{% else %}{{ leave.status|replace_underscore|title }}{% endif %}</p>
+            <p class="edify-text-caption text-slate-500 mt-0.5">{% if leave.status == 'pending' %}Awaiting authorized review{% else %}{{ leave.status|replace_underscore|title }}{% endif %}</p>
           </div>
         </div>
-        
+
         {% if leave.covering_staff %}
         <div class="flex items-start gap-2">
           <span class="h-2 w-2 rounded-full bg-emerald-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Coverage Action</p>
-            <p class="text-[8px] text-slate-500 mt-0.5">Status: {{ leave.coverage_status }}</p>
+            <p class="edify-text-caption text-slate-500 mt-0.5">Status: {{ leave.coverage_status }}</p>
           </div>
         </div>
         {% endif %}
@@ -414,13 +414,13 @@
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
         <h3 id="coverage-modal-title" class="text-sm font-black text-slate-100">Reassign Coverage Assignee</h3>
-        <p class="text-[11px] text-slate-400 mt-0.5">Select a qualified team backup employee to cover during this leave.</p>
+        <p class="edify-text-caption text-slate-400 mt-0.5">Select a qualified team backup employee to cover during this leave.</p>
       </div>
 
       <form method="POST" action="{% url 'frontend:leave_reassign_coverage_action' leave.id %}" class="space-y-4">
         {% csrf_token %}
         <div class="space-y-1">
-          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Coverage Candidate</label>
+          <label class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">Coverage Candidate</label>
           <select name="covering_staff" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none">
             <option value="">No coverage / Clear coverage</option>
             {% for candidate in eligible_cover_staff %}
@@ -453,13 +453,13 @@
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
         <h3 id="return-modal-title" class="text-sm font-black text-slate-100">Return Leave for Clarification</h3>
-        <p class="text-[11px] text-slate-400 mt-0.5 font-semibold">Provide details/reasons on what corrections are needed.</p>
+        <p class="edify-text-caption text-slate-400 mt-0.5 font-semibold">Provide details/reasons on what corrections are needed.</p>
       </div>
 
       <form method="POST" action="{% url 'frontend:leave_return_action' leave.id %}" class="space-y-4">
         {% csrf_token %}
         <div class="space-y-1">
-          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Feedback / Reason</label>
+          <label class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">Feedback / Reason</label>
           <textarea name="reason" rows="3" required placeholder="Describe what handover details or dates are required..."
                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
         </div>
@@ -485,13 +485,13 @@
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
         <h3 id="reject-modal-title" class="text-sm font-black text-slate-100">Reject Leave Request</h3>
-        <p class="text-[11px] text-slate-400 mt-0.5 font-semibold">Please describe the reasons for rejecting this request.</p>
+        <p class="edify-text-caption text-slate-400 mt-0.5 font-semibold">Please describe the reasons for rejecting this request.</p>
       </div>
 
       <form method="POST" action="{% url 'frontend:leave_reject_action' leave.id %}" class="space-y-4">
         {% csrf_token %}
         <div class="space-y-1">
-          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rejection Reason</label>
+          <label class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">Rejection Reason</label>
           <textarea name="reason" rows="3" required placeholder="Describe conflict reasons, capacity shortages, etc..."
                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
         </div>

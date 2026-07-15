@@ -1,15 +1,15 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl  p-4 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>Impact Summary</span>
-<span class="text-[11px] text-slate-400 cursor-help" title="Summary of educational target reach and verified improvements">ℹ️</span>
+<span class="edify-text-caption text-slate-400 cursor-help" title="Summary of educational target reach and verified improvements">ℹ️</span>
 </h3>
-<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Educational footprint and improvement progress</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Educational footprint and improvement progress</p>
 </div>
 
-<select class="bg-slate-50  rounded-lg text-[11px] font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<select class="bg-slate-50  rounded-lg edify-text-caption font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
 <option>This FY</option>
 </select>
 </div>
@@ -17,22 +17,22 @@
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
 <!-- Box 1: Teachers Trained -->
 <div class="bg-slate-50  rounded-xl p-3.5 text-center">
-<span class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Teachers Trained</span>
+<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Teachers Trained</span>
 <p class="text-[20px] font-semibold text-slate-800 mt-1">{{ impact_summary.teachers_trained }}</p>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Workshops & In-School</span>
+<span class="edify-text-caption text-slate-400 font-bold block mt-1">Workshops & In-School</span>
 </div>
 
 <!-- Box 2: School Leaders Trained -->
 <div class="bg-slate-50  rounded-xl p-3.5 text-center">
-<span class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Leaders Trained</span>
+<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Leaders Trained</span>
 <p class="text-[20px] font-semibold text-slate-800 mt-1">{{ impact_summary.leaders_trained }}</p>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Management & Financials</span>
+<span class="edify-text-caption text-slate-400 font-bold block mt-1">Management & Financials</span>
 </div>
 
 <!-- Box 3: Students Impacted -->
 <div class="bg-slate-50  rounded-xl p-3.5 text-center">
-<span class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Students Impacted</span>
-<p class="text-[20px] font-semibold text-[#2e505f] mt-1">
+<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Students Impacted</span>
+<p class="text-[20px] font-semibold text-[var(--edify-primary)] mt-1">
 {% if impact_summary.students_impacted >= 1000000 %}
 {{ impact_summary.students_impacted|divide:1000000|floatformat:2 }}M
 {% elif impact_summary.students_impacted >= 1000 %}
@@ -41,14 +41,14 @@
 {{ impact_summary.students_impacted }}
 {% endif %}
 </p>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Total school enrollment</span>
+<span class="edify-text-caption text-slate-400 font-bold block mt-1">Total school enrollment</span>
 </div>
 
 <!-- Box 4: Schools Improved -->
 <div class="bg-slate-50  rounded-xl p-3.5 text-center">
-<span class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Schools Improved</span>
+<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Schools Improved</span>
 <p class="text-[20px] font-semibold text-emerald-600 mt-1">+{{ impact_summary.schools_improved }}</p>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">>0.05 SSA delta vs prior FY</span>
+<span class="edify-text-caption text-slate-400 font-bold block mt-1">>0.05 SSA delta vs prior FY</span>
 </div>
 </div>
 </div>

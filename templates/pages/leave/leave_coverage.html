@@ -27,22 +27,22 @@
   {% endif %}
 
   <!-- Coverage Assignments List -->
-  <div class="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+  <div class="edify-surface rounded-lg border border-slate-100 shadow-sm overflow-hidden flex flex-col">
     <div class="p-5 border-b border-slate-100">
       <h3 class="text-[15px] font-bold text-slate-800">Coverage Assignments & Auditing</h3>
     </div>
-    
+
     <div class="overflow-x-auto">
       <table class="w-full text-[12px] border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100 text-left">
-            <th class="px-5 py-3.5 text-[11px] font-bold uppercase text-slate-400 tracking-wider">Covering Staff</th>
-            <th class="px-4 py-3.5 text-[11px] font-bold uppercase text-slate-400 tracking-wider">Acting For (Absent)</th>
-            <th class="px-4 py-3.5 text-[11px] font-bold uppercase text-slate-400 tracking-wider">Start Time</th>
-            <th class="px-4 py-3.5 text-[11px] font-bold uppercase text-slate-400 tracking-wider">End Time</th>
-            <th class="px-4 py-3.5 text-[11px] font-bold uppercase text-slate-400 tracking-wider">Permission Scope</th>
-            <th class="px-4 py-3.5 text-[11px] font-bold uppercase text-slate-400 tracking-wider">Status</th>
-            <th class="px-5 py-3.5 text-[11px] font-bold uppercase text-slate-400 tracking-wider text-right">Actions</th>
+            <th class="px-5 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Covering Staff</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Acting For (Absent)</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Start Time</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">End Time</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Permission Scope</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Status</th>
+            <th class="px-5 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 font-medium">
@@ -50,21 +50,21 @@
           <tr class="hover:bg-slate-50/50 transition">
             <td class="px-5 py-4">
               <span class="font-bold text-slate-800 block text-[13px]">{{ cov.covering_staff.user.name }}</span>
-              <span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ cov.covering_staff.user.active_role }}</span>
+              <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ cov.covering_staff.user.active_role }}</span>
             </td>
             <td class="px-4 py-4">
               <span class="font-bold text-slate-800 block text-[13px]">{{ cov.original_staff.user.name }}</span>
-              <span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ cov.original_staff.user.active_role }}</span>
+              <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ cov.original_staff.user.active_role }}</span>
             </td>
             <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.start_datetime|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.end_datetime|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-4">
-              <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+              <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg edify-text-caption font-bold uppercase tracking-wider">
                 {{ cov.scope }}
               </span>
             </td>
             <td class="px-4 py-4">
-              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border tracking-wider
+              <span class="px-2.5 py-0.5 rounded-full edify-text-caption font-bold uppercase border tracking-wider
                 {% if cov.status == 'active' %}bg-indigo-50 text-indigo-700 border-indigo-250
                 {% elif cov.status == 'expired' %}bg-slate-50 text-slate-500 border-slate-200
                 {% else %}bg-rose-50 text-rose-700 border-rose-250{% endif %}">
@@ -75,16 +75,16 @@
               {% if cov.status == 'active' %}
               <form action="{% url 'frontend:revoke_coverage_action' cov.id %}" method="POST" class="inline">
                 {% csrf_token %}
-                <button 
-                  type="submit" 
-                  class="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-600 hover:text-white rounded-lg text-[10px] font-bold uppercase transition"
+                <button
+                  type="submit"
+                  class="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-600 hover:text-white rounded-lg edify-text-caption font-bold uppercase transition"
                   @click="if (!window.confirm('Are you sure you want to revoke delegated access immediately?')) $event.preventDefault()"
                 >
                   Revoke
                 </button>
               </form>
               {% else %}
-              <span class="text-slate-400 font-bold text-[11px]">No actions</span>
+              <span class="text-slate-400 font-bold edify-text-caption">No actions</span>
               {% endif %}
             </td>
           </tr>

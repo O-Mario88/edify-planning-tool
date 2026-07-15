@@ -20,7 +20,7 @@
 {% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/finance/actions/{{ action }}"
 hx-target="#finance-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
@@ -32,10 +32,10 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 
 <!-- Amount -->
 <div>
-<label for="amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Disbursed Amount (UGX)</label>
-<input 
-type="number" 
-name="amount" 
+<label for="amount" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Disbursed Amount (UGX)</label>
+<input
+type="number"
+name="amount"
 id="amount"
 required
 value="{{ item.totalAmount }}"
@@ -45,9 +45,9 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- Method -->
 <div>
-<label for="method" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Disbursement Method</label>
-<select 
-name="method" 
+<label for="method" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Disbursement Method</label>
+<select
+name="method"
 id="method"
 required
 class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
@@ -60,10 +60,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- Reference -->
 <div>
-<label for="reference" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Payment Reference ID / Tx ID</label>
-<input 
-type="text" 
-name="reference" 
+<label for="reference" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Payment Reference ID / Tx ID</label>
+<input
+type="text"
+name="reference"
 id="reference"
 required
 placeholder="e.g. TXN-123456789"
@@ -76,10 +76,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- NetSuite Expense ID -->
 <div>
-<label for="netsuite_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">NetSuite Expense ID / Bill ID</label>
-<input 
-type="text" 
-name="netsuite_id" 
+<label for="netsuite_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">NetSuite Expense ID / Bill ID</label>
+<input
+type="text"
+name="netsuite_id"
 id="netsuite_id"
 required
 placeholder="e.g. EXP-100458"
@@ -89,10 +89,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- Paid Amount -->
 <div>
-<label for="amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Amount Paid (UGX)</label>
-<input 
-type="number" 
-name="amount" 
+<label for="amount" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Amount Paid (UGX)</label>
+<input
+type="number"
+name="amount"
 id="amount"
 required
 value="{{ item.estCostCents }}"
@@ -102,10 +102,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- Reference -->
 <div>
-<label for="reference" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Payment Reference / Bank Ref</label>
-<input 
-type="text" 
-name="reference" 
+<label for="reference" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Payment Reference / Bank Ref</label>
+<input
+type="text"
+name="reference"
 id="reference"
 required
 placeholder="e.g. bank transfer code"
@@ -118,10 +118,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- NetSuite Expense ID -->
 <div>
-<label for="netsuite_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">NetSuite Expense ID</label>
-<input 
-type="text" 
-name="netsuite_id" 
+<label for="netsuite_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">NetSuite Expense ID</label>
+<input
+type="text"
+name="netsuite_id"
 id="netsuite_id"
 required
 placeholder="e.g. EXP-200394"
@@ -131,10 +131,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- Amount -->
 <div>
-<label for="amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Reimbursement Amount (UGX)</label>
-<input 
-type="number" 
-name="amount" 
+<label for="amount" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reimbursement Amount (UGX)</label>
+<input
+type="number"
+name="amount"
 id="amount"
 required
 value="{{ item.amount }}"
@@ -144,10 +144,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 
 <!-- Reference -->
 <div>
-<label for="reference" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Transaction Reference</label>
-<input 
-type="text" 
-name="reference" 
+<label for="reference" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Transaction Reference</label>
+<input
+type="text"
+name="reference"
 id="reference"
 required
 placeholder="e.g. Mobile money tx id"
@@ -173,7 +173,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 {% if item.pendingAdvances %}
 <div class="rounded-xl border border-slate-100 divide-y divide-slate-50">
 {% for adv in item.pendingAdvances %}
-<div class="px-3 py-2 flex items-center justify-between gap-2 text-[11.5px]">
+<div class="px-3 py-2 flex items-center justify-between gap-2 edify-text-caption">
 <span class="font-semibold text-slate-700 truncate">{{ adv.label }}</span>
 <span class="text-slate-500 shrink-0">{{ adv.accounted|ugx }} spent · {{ adv.returned|ugx }} returned · <span class="font-bold text-slate-600">{{ adv.netsuiteId|default:"no code" }}</span></span>
 </div>
@@ -181,7 +181,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 </div>
 {% endif %}
 
-<p class="text-[11px] font-semibold text-slate-400 leading-relaxed">
+<p class="edify-text-caption font-semibold text-slate-400 leading-relaxed">
 Clearing marks this accountability as reviewed and closes the finance loop.
 It is blocked automatically if the NetSuite Code is missing or IA has not
 verified the activity.
@@ -192,22 +192,22 @@ verified the activity.
 
 <!-- Reason -->
 <div>
-<label for="reason" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Reason for Return</label>
-<textarea 
-name="reason" 
+<label for="reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for Return</label>
+<textarea
+name="reason"
 id="reason"
 required
 rows="4"
 placeholder="Explain what needs correction (e.g. missing receipts, incorrect amount)..."
-class="w-full p-2.5 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white placeholder-slate-400"
+class="w-full p-2.5 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 edify-focus-surface placeholder-slate-400"
 ></textarea>
 </div>
 {% endif %}
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="
 if (isDirty) {
 if (confirm('You have unsaved changes. Discard changes?')) {
@@ -221,7 +221,7 @@ class="edify-action-button secondary h-9 transition-colors"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="edify-action-button primary h-9 transition-colors shadow-sm"
 >

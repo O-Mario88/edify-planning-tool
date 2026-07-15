@@ -5,7 +5,7 @@
      class="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[10vh] pb-6"
      aria-modal="true" role="dialog">
   <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-md" x-show="active" x-transition.opacity @click="$dispatch('close-drawer')"></div>
-  <div class="relative z-10 w-full max-w-[480px] bg-white rounded-lg shadow-2xl border border-slate-200 overflow-hidden"
+  <div class="relative z-10 w-full max-w-[480px] edify-surface rounded-lg shadow-2xl border border-slate-200 overflow-hidden"
        x-show="active"
        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-3 scale-[0.98]" x-transition:enter-end="opacity-100 translate-y-0 scale-100">
     <div class="px-5 py-4 border-b border-slate-100 flex items-start gap-3">
@@ -14,7 +14,7 @@
       </div>
       <div>
         <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Return {{ name }}'s Fund Plan</h2>
-        <p class="text-[11.5px] font-semibold text-slate-400">The CCEO is notified and receives a correction To-Do.</p>
+        <p class="edify-text-caption font-semibold text-slate-400">The CCEO is notified and receives a correction To-Do.</p>
       </div>
     </div>
     <form hx-post="/fund-approvals/action" hx-target="#fund-approval-root" hx-swap="innerHTML" class="p-5 space-y-4">
@@ -24,19 +24,19 @@
       <input type="hidden" name="fy" value="{{ fy }}">
       <input type="hidden" name="month" value="{{ month }}">
       <div class="space-y-1">
-        <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Reason <span class="text-rose-500">*</span></label>
-        <select name="reason" required class="w-full h-10 px-3 rounded-xl border border-slate-200 text-[12.5px] font-semibold text-slate-700 bg-slate-50 focus:bg-white focus:border-rose-400 focus:outline-none">
+        <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Reason <span class="text-rose-500">*</span></label>
+        <select name="reason" required class="w-full h-10 px-3 rounded-xl border border-slate-200 text-[12.5px] font-semibold text-slate-700 bg-slate-50 edify-focus-surface focus:border-rose-400 focus:outline-none">
           <option value="">Select a reason…</option>
           {% for r in reasons %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
         </select>
       </div>
       <div class="space-y-1">
-        <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Comment <span class="normal-case text-slate-300">(items to correct)</span></label>
+        <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Comment <span class="normal-case text-slate-300">(items to correct)</span></label>
         <textarea name="comment" rows="3" placeholder="Add specifics for the CCEO to correct before re-submission…"
-                  class="w-full px-3 py-2 rounded-xl border border-slate-200 text-[12.5px] font-medium bg-slate-50 focus:bg-white focus:border-rose-400 focus:outline-none resize-none"></textarea>
+                  class="w-full px-3 py-2 rounded-xl border border-slate-200 text-[12.5px] font-medium bg-slate-50 edify-focus-surface focus:border-rose-400 focus:outline-none resize-none"></textarea>
       </div>
       <div class="flex items-center justify-end gap-2 pt-1">
-        <button type="button" @click="$dispatch('close-drawer')" class="h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-bold text-slate-600 transition-colors">Cancel</button>
+        <button type="button" @click="$dispatch('close-drawer')" class="h-10 px-4 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-600 transition-colors">Cancel</button>
         <button type="submit" class="h-10 px-5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-bold shadow-sm transition-colors">Return for Review</button>
       </div>
     </form>

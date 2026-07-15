@@ -9,7 +9,7 @@
 <a href="/staff" class="text-[12px] text-slate-400 hover:text-[var(--edify-accent)] font-semibold transition-colors">← Staff Directory</a>
 
 <!-- Hero Card -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm">
 <div class="flex items-start gap-5">
 <div class="h-16 w-16 rounded-lg bg-indigo-100 text-indigo-700 font-semibold text-[20px] grid place-items-center shrink-0">{{ initials }}</div>
 <div class="flex-1">
@@ -17,12 +17,12 @@
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">{{ member.email }}</p>
 <div class="flex flex-wrap gap-2 mt-3">
 {% for role in member.roles %}
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold">{{ role }}</span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 edify-text-caption font-bold">{{ role }}</span>
 {% endfor %}
 </div>
 </div>
 <div class="text-right">
-<span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Status</span>
+<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</span>
 <p class="text-[14px] font-semibold text-emerald-600 mt-0.5">{{ member.status|title }}</p>
 </div>
 </div>
@@ -30,23 +30,23 @@
 
 <!-- KPI Strip -->
 <div class="grid grid-cols-3 gap-4">
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
 <p class="text-[28px] font-semibold text-emerald-600">{{ completed_count }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
 </div>
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
 <p class="text-[28px] font-semibold text-rose-500">{{ overdue_count }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Overdue</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Overdue</p>
 </div>
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm text-center">
 <p class="text-[28px] font-semibold text-indigo-600">{{ schools_covered|length }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Schools Covered</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Schools Covered</p>
 </div>
 </div>
 
 <!-- Annual SSA Progress (Assigned Schools) -->
 {% if staff_progress %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
 <h2 class="text-[14px] font-semibold">Annual SSA Progress (Assigned Schools)</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 {% for item in staff_progress %}
@@ -66,7 +66,7 @@
 
 <!-- Upcoming Activities -->
 {% if upcoming %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold">Upcoming Activities</h2>
 </div>
@@ -75,9 +75,9 @@
 <li class="px-5 py-3.5 flex items-center justify-between">
 <div>
 <p class="text-[14px] font-bold text-slate-800">{{ act.activity_type|title }} {% if act.school %}@ {{ act.school.name }}{% endif %}</p>
-<p class="text-[11px] text-slate-400">{{ act.planned_date }}</p>
+<p class="edify-text-caption text-slate-400">{{ act.planned_date }}</p>
 </div>
-<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ act.status }}</span>
+<span class="edify-text-caption font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ act.status }}</span>
 </li>
 {% endfor %}
 </ul>
@@ -86,7 +86,7 @@
 
 <!-- Schools Covered -->
 {% if schools_covered %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold">Schools Covered</h2>
 </div>

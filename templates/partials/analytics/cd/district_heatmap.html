@@ -1,14 +1,14 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
   <div>
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">4. District SSA Heatmap <span class="text-slate-400 font-medium text-[11px]">(Average SSA Score by Intervention)</span></h3>
-    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Verified annual SSA · click a district for the performance drawer</p>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">4. District SSA Heatmap <span class="text-slate-400 font-medium edify-text-caption">(Average SSA Score by Intervention)</span></h3>
+    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified annual SSA · click a district for the performance drawer</p>
   </div>
 
   <div class="overflow-x-auto -mx-1">
-    <table class="w-full text-[10.5px] border-separate border-spacing-y-1">
+    <table class="w-full edify-text-caption border-separate border-spacing-y-1">
       <thead>
-        <tr class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
+        <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
           <th class="text-left font-bold pl-1 pb-1">District</th>
           {% for c in district_heatmap.codes %}<th class="text-center font-bold pb-1 px-1">{{ c }}</th>{% endfor %}
           <th class="text-center font-bold pb-1 pr-1">Avg</th>
@@ -21,7 +21,7 @@
             hx-target="#drawer-container" hx-swap="innerHTML">
           <td class="text-left pl-1 whitespace-nowrap max-w-[130px]">
             <span class="block font-semibold text-slate-700 truncate">{{ row.name }}</span>
-            <span class="block text-[8.5px] font-semibold {% if row.low_coverage %}text-amber-500{% else %}text-slate-300{% endif %}">cov {{ row.coverage }}{% if row.low_coverage %} · low{% endif %}</span>
+            <span class="block edify-text-caption font-semibold {% if row.low_coverage %}text-amber-500{% else %}text-slate-300{% endif %}">cov {{ row.coverage }}{% if row.low_coverage %} · low{% endif %}</span>
           </td>
           {% for cell in row.cells %}
           <td class="text-center font-bold tabular-nums rounded
@@ -48,7 +48,7 @@
       </tbody>
     </table>
   </div>
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[9px] font-semibold text-slate-400">
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 edify-text-caption font-semibold text-slate-400">
     <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-emerald-100 border border-emerald-200"></span>Strong</span>
     <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-lime-100 border border-lime-200"></span>Improving</span>
     <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-amber-100 border border-amber-200"></span>Weak</span>

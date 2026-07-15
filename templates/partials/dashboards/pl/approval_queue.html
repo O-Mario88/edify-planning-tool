@@ -5,14 +5,14 @@
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="inline-flex items-center justify-center rounded-full font-bold shrink-0"
-              style="height:24px;width:24px;font-size:8px;color:#fff;background:var(--edify-primary);">{{ r.staff|slice:":2"|upper }}</span>
+              style="height:24px;width:24px;font-size: 12px;color:var(--edify-surface-raised);background:var(--edify-primary);">{{ r.staff|slice:":2"|upper }}</span>
         <div>
           <p style="font-weight:700;font-size:12px;color:var(--edify-text);">{{ r.staff }}</p>
-          <p style="font-size:10px;color:var(--edify-text-muted);">{{ r.covered }}{% if r.submitted %} · {{ r.submitted|date:"M d" }}{% endif %}</p>
+          <p style="font-size: 12px;color:var(--edify-text-muted);">{{ r.covered }}{% if r.submitted %} · {{ r.submitted|date:"M d" }}{% endif %}</p>
         </div>
       </div>
       {% if r.issues and r.issues != 'Ready' and r.issues != '—' %}
-      <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold"
+      <span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-bold"
             style="background:var(--edify-warning-light);color:var(--edify-warning);">{{ r.issues }}</span>
       {% endif %}
     </div>
@@ -20,13 +20,13 @@
     <div class="flex items-center gap-2 mt-2">
       <button hx-post="/dashboard/pl-approve?kind=weekly_fund&id={{ r.id }}&fy={{ fy }}" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
               class="flex-1 rounded-md font-semibold"
-              style="font-size:11px;padding:6px 14px;border:none;cursor:pointer;background:var(--edify-success);color:#fff;box-shadow:0 1px 2px rgba(16,185,129,.25);">Approve</button>
+              style="font-size: 12px;padding:6px 14px;border:none;cursor:pointer;background:var(--edify-success);color:var(--edify-surface-raised);box-shadow:0 1px 2px rgba(16,185,129,.25);">Approve</button>
       <a href="/fund-requests/weekly?staff={{ r.id }}" class="rounded-md font-semibold"
-         style="font-size:11px;padding:6px 14px;border:1px solid var(--edify-border-strong);color:var(--edify-text);background:var(--edify-surface);">Review</a>
+         style="font-size: 12px;padding:6px 14px;border:1px solid var(--edify-border-strong);color:var(--edify-text);background:var(--edify-surface);">Review</a>
     </div>
     {% else %}
     <a href="/fund-approvals" class="mt-2 inline-flex rounded-md font-semibold"
-       style="font-size:11px;padding:6px 14px;border:1px solid var(--edify-border-strong);color:var(--edify-text);background:var(--edify-surface);">Review Plan</a>
+       style="font-size: 12px;padding:6px 14px;border:1px solid var(--edify-border-strong);color:var(--edify-text);background:var(--edify-surface);">Review Plan</a>
     {% endif %}
   </div>
   {% empty %}
@@ -39,4 +39,4 @@
   </div>
   {% endfor %}
 </div>
-<a href="/fund-approvals" style="font-size:11px;font-weight:600;color:var(--edify-accent);padding:0 16px 8px;display:block;">View all pending approvals &rarr;</a>
+<a href="/fund-approvals" style="font-size: 12px;font-weight:600;color:var(--edify-accent);padding:0 16px 8px;display:block;">View all pending approvals &rarr;</a>

@@ -4,31 +4,31 @@
 {% block title %}School Directory - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div 
+<div
 class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;"
-x-data="{ 
-selectedSchools: [], 
-assignClusterOpen: false, 
-bulkAssignProjectOpen: false, 
-matchStaffOpen: false, 
-addSchoolOpen: false, 
-columnSettingsOpen: false, 
-visibleColumns: { 
-id: true, 
-name: true, 
-district: true, 
-sub_county: true, 
-type: true, 
-staff: true, 
-match_status: true, 
-cluster_status: true, 
-ssa_status: true, 
-readiness: true, 
-partner_type: true, 
-enrollment: true, 
-enrollment_date: true, 
-actions: true 
-} 
+x-data="{
+selectedSchools: [],
+assignClusterOpen: false,
+bulkAssignProjectOpen: false,
+matchStaffOpen: false,
+addSchoolOpen: false,
+columnSettingsOpen: false,
+visibleColumns: {
+id: true,
+name: true,
+district: true,
+sub_county: true,
+type: true,
+staff: true,
+match_status: true,
+cluster_status: true,
+ssa_status: true,
+readiness: true,
+partner_type: true,
+enrollment: true,
+enrollment_date: true,
+actions: true
+}
 }"
 >
 <!-- Page Header -->
@@ -66,7 +66,7 @@ actions: true
 <span>Export</span>
 <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
 </button>
-<div x-show="open" @click.outside="open = false" class="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-[12px] font-semibold" style="display: none;">
+<div x-show="open" @click.outside="open = false" class="absolute right-0 mt-1.5 w-44 edify-surface border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-[12px] font-semibold" style="display: none;">
 <a href="{% querystring export='xlsx' %}" class="block px-4 py-2 hover:bg-slate-50">Export to Excel (.xlsx)</a>
 <a href="{% querystring export='csv' %}" class="block px-4 py-2 hover:bg-slate-50">Export to CSV (.csv)</a>
 </div>
@@ -75,11 +75,11 @@ actions: true
 </div>
 
 <!-- Filters Bar -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-4 shadow-sm ">
-<form 
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-4 shadow-sm ">
+<form
 id="filters-form"
-hx-get="/schools" 
-hx-target="#schools-table-container" 
+hx-get="/schools"
+hx-target="#schools-table-container"
 hx-trigger="change"
 hx-include="#topbar-search-input"
 class="space-y-3"
@@ -173,7 +173,7 @@ class="space-y-3"
 <!-- Roster Workspace -->
 <div class="space-y-6">
 <!-- List Headers, Tabs, and Table Container -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
 <!-- Horizontal Tabs Header -->
 <div class="px-6 py-4 border-b border-[var(--edify-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ">
 <!-- Roster Select Tabs Container -->
@@ -183,8 +183,8 @@ class="space-y-3"
 
 <!-- Column Settings Dropdown wrapper -->
 <div class="relative">
-<button 
-@click="columnSettingsOpen = !columnSettingsOpen" 
+<button
+@click="columnSettingsOpen = !columnSettingsOpen"
 class="h-8 px-3 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-colors shrink-0"
 >
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -194,13 +194,13 @@ class="h-8 px-3 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50
 </button>
 
 <!-- Column Toggle Options Overlay -->
-<div 
-x-show="columnSettingsOpen" 
-@click.outside="columnSettingsOpen = false" 
-class="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg p-3 z-50 text-[12px] font-semibold space-y-2.5"
+<div
+x-show="columnSettingsOpen"
+@click.outside="columnSettingsOpen = false"
+class="absolute right-0 mt-1.5 w-52 edify-surface border border-slate-200 rounded-xl shadow-lg p-3 z-50 text-[12px] font-semibold space-y-2.5"
 style="display: none;"
 >
-<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Toggle columns</h4>
+<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Toggle columns</h4>
 <div class="space-y-1.5 max-h-60 overflow-y-auto">
 <label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.id" class="rounded border-slate-300 text-blue-600">
@@ -260,7 +260,7 @@ style="display: none;"
 </div>
 
 <!-- Schools table -->
-<div 
+<div
 id="schools-table-container"
 hx-get="/schools"
 hx-trigger="schools-updated from:body"
@@ -274,12 +274,12 @@ hx-include="#filters-form"
 <!-- Modals section -->
 
 <!-- Modal 1: Assign to Cluster Modal -->
-<div 
-x-show="assignClusterOpen" 
+<div
+x-show="assignClusterOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="assignClusterOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div @click.outside="assignClusterOpen = false" class="edify-surface rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Assign Cluster to Schools</h3>
 <button @click="assignClusterOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
@@ -290,7 +290,7 @@ style="display: none;"
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
 <select name="cluster_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose Cluster --</option>
 {% for c in clusters %}
@@ -299,7 +299,7 @@ style="display: none;"
 </select>
 </div>
 
-<p class="text-[11px] text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected cluster and update their status to Clustered.</p>
+<p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected cluster and update their status to Clustered.</p>
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
 <button type="button" @click="assignClusterOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
@@ -310,12 +310,12 @@ style="display: none;"
 </div>
 
 <!-- Modal 1.5: Assign Project to Schools Modal -->
-<div 
-x-show="bulkAssignProjectOpen" 
+<div
+x-show="bulkAssignProjectOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="bulkAssignProjectOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div @click.outside="bulkAssignProjectOpen = false" class="edify-surface rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Assign Project to Schools</h3>
 <button @click="bulkAssignProjectOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
@@ -326,7 +326,7 @@ style="display: none;"
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Project</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project</label>
 <select name="project_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose Project --</option>
 {% for p in projects %}
@@ -335,7 +335,7 @@ style="display: none;"
 </select>
 </div>
 
-<p class="text-[11px] text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected project. Duplicate assignments will be skipped automatically.</p>
+<p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected project. Duplicate assignments will be skipped automatically.</p>
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
 <button type="button" @click="bulkAssignProjectOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
@@ -346,12 +346,12 @@ style="display: none;"
 </div>
 
 <!-- Modal 2: Match Staff Modal -->
-<div 
-x-show="matchStaffOpen" 
+<div
+x-show="matchStaffOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="matchStaffOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div @click.outside="matchStaffOpen = false" class="edify-surface rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Match Staff to Schools</h3>
 <button @click="matchStaffOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
@@ -362,7 +362,7 @@ style="display: none;"
 <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
 <select name="staff_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose CCEO --</option>
 {% for sp in staff_profiles %}
@@ -371,7 +371,7 @@ style="display: none;"
 </select>
 </div>
 
-<p class="text-[11px] text-slate-400 font-semibold">This will match <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the designated staff profile and update their ownership state.</p>
+<p class="edify-text-caption text-slate-400 font-semibold">This will match <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the designated staff profile and update their ownership state.</p>
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
 <button type="button" @click="matchStaffOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
@@ -382,12 +382,12 @@ style="display: none;"
 </div>
 
 <!-- Modal 3: Add School Modal -->
-<div 
-x-show="addSchoolOpen" 
+<div
+x-show="addSchoolOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="addSchoolOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div @click.outside="addSchoolOpen = false" class="edify-surface rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Add New School</h3>
 <button @click="addSchoolOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
@@ -397,25 +397,25 @@ style="display: none;"
 {% csrf_token %}
 
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School ID</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School ID</label>
 <input type="text" name="school_id" placeholder="e.g. SCH-1011" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
 </div>
 
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Name</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name</label>
 <input type="text" name="name" placeholder="e.g. Hope Academy" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
 </div>
 
 <div class="grid grid-cols-2 gap-3">
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Type</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Type</label>
 <select name="school_type" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
 <option value="client">Client</option>
 <option value="core">Core</option>
 </select>
 </div>
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
 <select name="district_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose District --</option>
 {% for d in districts %}
@@ -426,7 +426,7 @@ style="display: none;"
 </div>
 
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Enrollment</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment</label>
 <input type="number" name="enrollment" placeholder="e.g. 250" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
 </div>
 

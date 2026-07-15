@@ -12,7 +12,7 @@
       <p class="text-[12px] text-slate-500 font-semibold mt-1">All scheduled special-project activities by week, month, quarter, and fiscal year.</p>
     </div>
     <div class="flex items-center gap-2 shrink-0">
-      <a href="/projects/planning" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors whitespace-nowrap">
+      <a href="/projects/planning" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors whitespace-nowrap">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         Planning
       </a>
@@ -44,10 +44,10 @@
       <div class="card p-5">
         <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight mb-4">Plan Breakdown by Period</h2>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="rounded-xl bg-blue-50/50 border border-blue-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.week }}</p><p class="text-[10.5px] font-semibold text-slate-500 mt-1">This Week</p></div>
-          <div class="rounded-xl bg-emerald-50/50 border border-emerald-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.month }}</p><p class="text-[10.5px] font-semibold text-slate-500 mt-1">This Month</p></div>
-          <div class="rounded-xl bg-violet-50/50 border border-violet-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.quarter }}</p><p class="text-[10.5px] font-semibold text-slate-500 mt-1">This Quarter</p></div>
-          <div class="rounded-xl bg-amber-50/50 border border-amber-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.fy }}</p><p class="text-[10.5px] font-semibold text-slate-500 mt-1">This FY</p></div>
+          <div class="rounded-xl bg-blue-50/50 border border-blue-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.week }}</p><p class="edify-text-caption font-semibold text-slate-500 mt-1">This Week</p></div>
+          <div class="rounded-xl bg-emerald-50/50 border border-emerald-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.month }}</p><p class="edify-text-caption font-semibold text-slate-500 mt-1">This Month</p></div>
+          <div class="rounded-xl bg-violet-50/50 border border-violet-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.quarter }}</p><p class="edify-text-caption font-semibold text-slate-500 mt-1">This Quarter</p></div>
+          <div class="rounded-xl bg-amber-50/50 border border-amber-100 p-3"><p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ breakdown.fy }}</p><p class="edify-text-caption font-semibold text-slate-500 mt-1">This FY</p></div>
         </div>
       </div>
     </div>
@@ -61,7 +61,7 @@
           {% for u in upcoming %}
           <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3">
             <p class="text-[12px] font-bold text-slate-800 leading-tight">{{ u.school }}</p>
-            <p class="text-[10.5px] font-semibold text-slate-400 mt-0.5">{{ u.project }} · {{ u.purpose|truncatechars:28 }}</p>
+            <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ u.project }} · {{ u.purpose|truncatechars:28 }}</p>
           </div>
           {% endfor %}
         </div>
@@ -77,10 +77,10 @@
           {% for a in attention %}
           <div class="flex items-center gap-2 py-1">
             <span class="h-1.5 w-1.5 rounded-full shrink-0 {% if a.tone == 'danger' %}bg-rose-500{% elif a.tone == 'warning' %}bg-amber-500{% else %}bg-blue-500{% endif %}"></span>
-            <span class="text-[11.5px] font-semibold text-slate-600 leading-snug">{{ a.label }}</span>
+            <span class="edify-text-caption font-semibold text-slate-600 leading-snug">{{ a.label }}</span>
           </div>
           {% empty %}
-          <p class="text-[11.5px] font-semibold text-slate-400 py-2 text-center">Nothing needs attention.</p>
+          <p class="edify-text-caption font-semibold text-slate-400 py-2 text-center">Nothing needs attention.</p>
           {% endfor %}
         </div>
       </div>
@@ -90,7 +90,7 @@
         <div class="space-y-1">
           {% for w in workflow %}
           <div class="flex items-center justify-between gap-3 py-1.5">
-            <span class="inline-flex items-center gap-2 text-[11.5px] font-semibold text-slate-600">
+            <span class="inline-flex items-center gap-2 edify-text-caption font-semibold text-slate-600">
               <span class="h-2 w-2 rounded-full shrink-0 {% if w.tone == 'success' %}bg-emerald-500{% elif w.tone == 'warning' %}bg-amber-500{% else %}bg-blue-500{% endif %}"></span>
               {{ w.label }}
             </span>

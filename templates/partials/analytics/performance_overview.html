@@ -19,7 +19,7 @@ const options = {
     width: [0, 0, 2],
     curve: 'smooth'
   },
-  colors: ['#e2e8f0', '#3b82f6', '#10b981'],
+  colors: ['var(--edify-border)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)'],
   plotOptions: {
     bar: {
       columnWidth: '45%',
@@ -33,38 +33,38 @@ const options = {
     axisTicks: { show: false },
     labels: {
       style: {
-        colors: '#94a3b8',
-        fontSize: '10px',
+        colors: 'var(--edify-text-subtle)',
+        fontSize: '12px',
         fontWeight: '500'
       }
     }
   },
   yaxis: [
     {
-      title: { text: 'Activities', style: { color: '#64748b', fontSize: '10px', fontWeight: '500', fontFamily: 'Outfit' } },
+      title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Outfit' } },
       labels: {
-        style: { colors: '#94a3b8', fontSize: '10px' }
+        style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }
       }
     },
     {
       opposite: true,
-      title: { text: 'Achievement %', style: { color: '#64748b', fontSize: '10px', fontWeight: '500', fontFamily: 'Outfit' } },
+      title: { text: 'Achievement %', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Outfit' } },
       max: 100,
       labels: {
         formatter: function (val) { return val + '%'; },
-        style: { colors: '#94a3b8', fontSize: '10px' }
+        style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }
       }
     }
   ],
   grid: {
-    borderColor: '#94a3b833'
+    borderColor: 'var(--edify-chart-grid)'
   },
   legend: {
     position: 'top',
     horizontalAlign: 'right',
-    fontSize: '11px',
+    fontSize: '12px',
     fontWeight: '500',
-    labels: { colors: '#64748b' },
+    labels: { colors: 'var(--edify-text-muted)' },
     markers: { radius: 12 }
   },
   tooltip: {
@@ -76,15 +76,15 @@ this.chart.render();
 }
 }"
 x-init="initChart()"
-class="bg-white rounded-xl p-5 shadow-sm space-y-3"
+class="edify-surface rounded-xl p-5 shadow-sm space-y-3"
 >
 
 <div class="flex items-start justify-between">
   <div>
     <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Performance Overview</h3>
-    <p class="text-[11px] text-slate-400 font-normal mt-0.5">Planned vs Achieved activities across the fiscal year</p>
+    <p class="edify-text-caption text-slate-400 font-normal mt-0.5">Planned vs Achieved activities across the fiscal year</p>
   </div>
-  <select class="bg-slate-50 rounded-md text-[11px] font-medium text-slate-500 py-1 px-2 outline-none cursor-pointer">
+  <select class="bg-slate-50 rounded-md edify-text-caption font-medium text-slate-500 py-1 px-2 outline-none cursor-pointer">
     <option>This FY</option>
   </select>
 </div>

@@ -20,7 +20,7 @@ from apps.activities.services import (
 from apps.activities.salesforce import is_valid_salesforce_id
 from apps.evidence.services import (
     record_upload,
-    list_for_activity,
+    evidence_records_for_activity,
     infer_kind_from_upload,
 )
 from apps.core.enums import SsaIntervention, ActivityStatus
@@ -132,7 +132,7 @@ def activity_detail_view(request, activity_id):
             "Access Denied: You do not have permission to view this activity."
         )
 
-    evidence_list = list_for_activity(activity_id, request.user)
+    evidence_list = evidence_records_for_activity(activity_id, request.user)
 
     # Determine status details
     today = date.today()
@@ -201,7 +201,7 @@ def complete_drawer_view(request, activity_id):
                 status=400,
             )
 
-    evidence_list = list_for_activity(activity_id, request.user)
+    evidence_list = evidence_records_for_activity(activity_id, request.user)
 
     cluster_schools = []
     if a.cluster:
@@ -924,7 +924,7 @@ def evidence_upload_drawer_view(request, activity_id):
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
 
-    evidence_list = list_for_activity(activity_id, request.user)
+    evidence_list = evidence_records_for_activity(activity_id, request.user)
     context = {
         "act": a,
         "evidence_list": evidence_list,
@@ -1160,7 +1160,7 @@ def evidence_packet_view(request, activity_id):
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
 
-    evidence_list = list_for_activity(activity_id, request.user)
+    evidence_list = evidence_records_for_activity(activity_id, request.user)
     logs = AuditLog.objects.filter(
         subject_kind="Activity", subject_id=str(a.id)
     ).order_by("-created_at")
@@ -1442,11 +1442,15 @@ def returned_evidence_view(request):
     return render(request, "pages/evidence/returned.html", context)
 
 
-@require_page_permission("my_plan")
+@require_page_permission("disbursements")
 def accounts_activity_evidence_view(request, activity_id):
-    """Read-only view of activity evidence for Accountants."""
+    """Read-only view of activity evidence for Accountants. Gated by the
+    finance page permission — the previous "my_plan" gate excluded the
+    Accountant role this page exists for. Object-level finance scoping
+    (Accountant reaches only money-movement activities) is enforced inside
+    evidence_records_for_activity."""
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
-    evidence_list = list_for_activity(activity_id, request.user)
+    evidence_list = evidence_records_for_activity(activity_id, request.user)
 
     context = {
         "act": a,

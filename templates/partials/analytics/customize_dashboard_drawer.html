@@ -4,7 +4,7 @@
 {% block drawer_subtitle %}Toggle card visibility and choose layout preferences{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 @submit.prevent="alert('Dashboard customization preferences saved!'); $dispatch('close-drawer');"
 class="space-y-4 text-[12px] "
 >
@@ -13,19 +13,19 @@ class="space-y-4 text-[12px] "
 <div class="space-y-1.5">
 <label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
 <span>Overall Target Achievement</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
+<input type="checkbox" checked class="accent-[var(--edify-primary)]">
 </label>
 <label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
 <span>Teachers & Leaders Trained</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
+<input type="checkbox" checked class="accent-[var(--edify-primary)]">
 </label>
 <label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
 <span>Students & Schools Impacted</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
+<input type="checkbox" checked class="accent-[var(--edify-primary)]">
 </label>
 <label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
 <span>SSA Average Performance</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
+<input type="checkbox" checked class="accent-[var(--edify-primary)]">
 </label>
 </div>
 </div>
@@ -34,11 +34,11 @@ class="space-y-4 text-[12px] "
 <label class="block font-bold text-slate-700">Display Layout Preference</label>
 <div class="space-y-1.5">
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="radio" name="layout" value="grid" checked class="accent-[#2e505f]">
+<input type="radio" name="layout" value="grid" checked class="accent-[var(--edify-primary)]">
 <span>Standard Grid Layout (Mockup reference)</span>
 </label>
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="radio" name="layout" value="compact" class="accent-[#2e505f]">
+<input type="radio" name="layout" value="compact" class="accent-[var(--edify-primary)]">
 <span>Compact Tabular View</span>
 </label>
 </div>
@@ -46,14 +46,14 @@ class="space-y-4 text-[12px] "
 
 <!-- Action buttons -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >

@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
      x-data="{
        chart: null,
        initChart() {
@@ -14,21 +14,21 @@
            ],
            chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
            stroke: { width: [0, 0, 2.5], curve: 'smooth' },
-           colors: ['#bfdbfe', '#2563eb', '#10b981'],
+           colors: ['var(--edify-info-border)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)'],
            plotOptions: { bar: { columnWidth: '55%', borderRadius: 3 } },
            dataLabels: { enabled: false },
            labels: {{ team_performance.labels|safe }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
-                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: '600' } } },
+                    labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
            yaxis: [
-             { seriesName: 'Planned Activities', title: { text: 'Activities', style: { color: '#94a3b8', fontSize: '10px' } },
-               labels: { style: { colors: '#94a3b8', fontSize: '10px' } } },
+             { seriesName: 'Planned Activities', title: { text: 'Activities', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
+               labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
              { seriesName: 'Completed Activities', show: false },
-             { opposite: true, max: 100, min: 0, title: { text: 'Achievement', style: { color: '#94a3b8', fontSize: '10px' } },
-               labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '10px' } } }
+             { opposite: true, max: 100, min: 0, title: { text: 'Achievement', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
+               labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
            ],
-           grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
-           legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+           grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
+           legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' }, markers: { radius: 12 } },
            tooltip: { theme: 'dark', shared: true, intersect: false }
          });
          this.chart.render();
@@ -37,11 +37,11 @@
   <div class="flex items-center justify-between">
     <div>
       <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">A. Team Performance Overview</h3>
-      <p class="text-[11px] text-slate-400 font-medium mt-0.5">Planned vs completed activities & target achievement · FY {{ fy }}</p>
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Planned vs completed activities & target achievement · FY {{ fy }}</p>
     </div>
   </div>
   {% if team_performance.has_target %}{% else %}
-  <p class="text-[10.5px] text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1 inline-block">
+  <p class="edify-text-caption text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1 inline-block">
     Achievement line shows 0 — no annual targets set for this team yet.
   </p>
   {% endif %}

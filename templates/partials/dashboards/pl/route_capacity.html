@@ -1,19 +1,19 @@
 {% load frontend_filters %}
 <div class="grid grid-cols-4 gap-2 mb-3">
   <div class="rounded-lg p-2.5" style="background:var(--edify-surface-muted);border:1px solid var(--edify-border);">
-    <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Route Qlty</p>
-    <p style="font-size:18px;font-weight:800;margin-top:4px;color:{% if route_capacity.route_tone == 'success' %}var(--edify-success){% elif route_capacity.route_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ route_capacity.route_quality }}{% if route_capacity.source == 'route_batches' %}<span style="font-size:11px;color:var(--edify-text-subtle);">/100</span>{% else %}%{% endif %}</p>
+    <p style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Route Qlty</p>
+    <p style="font-size:18px;font-weight:800;margin-top:4px;color:{% if route_capacity.route_tone == 'success' %}var(--edify-success){% elif route_capacity.route_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ route_capacity.route_quality }}{% if route_capacity.source == 'route_batches' %}<span style="font-size: 12px;color:var(--edify-text-subtle);">/100</span>{% else %}%{% endif %}</p>
   </div>
   <div class="rounded-lg p-2.5" style="background:var(--edify-surface-muted);border:1px solid var(--edify-border);">
-    <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Overloaded</p>
+    <p style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Overloaded</p>
     <p style="font-size:18px;font-weight:800;margin-top:4px;color:var(--edify-warning);">{{ route_capacity.overloaded }}</p>
   </div>
   <div class="rounded-lg p-2.5" style="background:var(--edify-surface-muted);border:1px solid var(--edify-border);">
-    <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Leave Confl</p>
+    <p style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Leave Confl</p>
     <p style="font-size:18px;font-weight:800;margin-top:4px;color:var(--edify-text);">{{ route_capacity.leave_conflicts }}</p>
   </div>
   <div class="rounded-lg p-2.5" style="background:var(--edify-surface-muted);border:1px solid var(--edify-border);">
-    <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Travel Eff</p>
+    <p style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Travel Eff</p>
     <p style="font-size:18px;font-weight:800;margin-top:4px;color:var(--edify-text);">{{ route_capacity.travel_efficiency }}%</p>
   </div>
 </div>
@@ -21,7 +21,7 @@
 <div class="overflow-x-auto flex-1">
   <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
     <thead>
-      <tr style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+      <tr style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
         <th style="padding:8px 10px;">CCEO</th>
         <th style="padding:8px 10px;">Route</th>
         <th style="padding:8px 10px;text-align:center;">{% if route_capacity.source == 'route_batches' %}Score{% else %}On-Time{% endif %}</th>
@@ -33,7 +33,7 @@
       <tr style="border-bottom:1px solid var(--edify-border);">
         <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ t.name }}</td>
         <td style="padding:7px 10px;">
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+          <span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-bold"
                 style="background:{% if t.route_tone == 'success' %}var(--edify-success-light){% elif t.route_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
                        color:{% if t.route_tone == 'success' %}var(--edify-success){% elif t.route_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ t.route_quality }}</span>
         </td>
@@ -45,4 +45,4 @@
   </table>
 </div>
 {% endif %}
-<a href="/planning" style="font-size:11px;font-weight:600;color:var(--edify-accent);margin-top:8px;display:block;">View route planner &rarr;</a>
+<a href="/planning" style="font-size: 12px;font-weight:600;color:var(--edify-accent);margin-top:8px;display:block;">View route planner &rarr;</a>

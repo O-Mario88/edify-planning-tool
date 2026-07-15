@@ -1,4 +1,4 @@
-<form 
+<form
 id="core-filters-form"
 hx-get="/core-schools"
 hx-trigger="change delay:100ms"
@@ -6,10 +6,10 @@ hx-target="#core-schools-main-container"
 hx-swap="outerHTML"
 hx-push-url="true"
 @change="if ($event.target.id !== 'core-filters-page-input') { const p = document.getElementById('core-filters-page-input'); if (p) p.value = '1' }"
-class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm "
+class="flex flex-wrap items-center justify-between gap-3 edify-surface p-4 rounded-xl border border-slate-100 shadow-sm "
 >
 <input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}">
-<div class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold text-slate-600">
+<div class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold text-slate-600">
 
 <!-- FY -->
 <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 shadow-sm">
@@ -67,7 +67,7 @@ class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl
 
 <!-- Advanced/More Filters Toggle -->
 <div x-data="{ expanded: false }" class="relative">
-<button 
+<button
 type="button"
 @click="expanded = !expanded"
 class="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 shadow-sm transition-colors text-slate-700"
@@ -77,16 +77,16 @@ More Filters
 </button>
 
 <!-- Dropdown drawer of more filters -->
-<div 
+<div
 x-show="expanded"
 @click.away="expanded = false"
 x-transition
-class="absolute left-0 mt-2 w-72 bg-white rounded-xl  shadow-xl p-4 z-40 space-y-3 text-[12px] font-bold text-slate-600"
+class="absolute left-0 mt-2 w-72 edify-surface rounded-xl  shadow-xl p-4 z-40 space-y-3 text-[12px] font-bold text-slate-600"
 style="display: none;"
 >
 <!-- School Type Filter -->
 <div>
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">School Type</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">School Type</label>
 <select name="school_type_filter" class="w-full h-8 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
 <option value="All" {% if selected_school_type == "All" %}selected{% endif %}>All Types</option>
 <option value="core" {% if selected_school_type == "core" %}selected{% endif %}>Core</option>
@@ -96,7 +96,7 @@ style="display: none;"
 
 <!-- SSA Status Filter -->
 <div>
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">SSA Status</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">SSA Status</label>
 <select name="ssa_status" class="w-full h-8 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
 <option value="All" {% if selected_ssa_status == "All" %}selected{% endif %}>All</option>
 <option value="done" {% if selected_ssa_status == "done" %}selected{% endif %}>Complete</option>
@@ -106,7 +106,7 @@ style="display: none;"
 
 <!-- Partner Assigned status -->
 <div>
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Partner Status</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Partner Status</label>
 <select name="partner_assigned" class="w-full h-8 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none">
 <option value="All" {% if selected_partner_assigned == "All" %}selected{% endif %}>All</option>
 <option value="assigned" {% if selected_partner_assigned == "assigned" %}selected{% endif %}>Partner Assigned</option>
@@ -115,10 +115,10 @@ style="display: none;"
 </div>
 
 <!-- Submit Button for Drawer -->
-<button 
+<button
 type="submit"
 @click="expanded = false"
-class="w-full h-8 btn-premium-primary text-white rounded-lg text-[11px] font-bold mt-2 shadow-sm"
+class="w-full h-8 btn-premium-primary text-white rounded-lg edify-text-caption font-bold mt-2 shadow-sm"
 >
 Apply Advanced Filters
 </button>
@@ -128,7 +128,7 @@ Apply Advanced Filters
 </div>
 
 <div class="flex items-center">
-<button 
+<button
 type="button"
 hx-get="/core-schools/strategy-playbook"
 hx-target="#drawer-container"

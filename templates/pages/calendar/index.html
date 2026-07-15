@@ -11,11 +11,11 @@
   /* Custom premium styles to blend FullCalendar with Edify Design language */
   #fullcalendar-view {
     font-family: 'Outfit', sans-serif;
-    background-color: #ffffff;
+    background-color: var(--edify-surface-raised);
     border-radius: var(--edify-radius-lg, 16px);
   }
   .fc {
-    --fc-border-color: #f1f5f9;
+    --fc-border-color: var(--edify-surface-muted);
     --fc-daygrid-event-dot-width: 6px;
   }
   .fc .fc-toolbar {
@@ -24,39 +24,39 @@
   .fc .fc-toolbar-title {
     font-size: 16px !important;
     font-weight: 600 !important;
-    color: #1e293b !important;
+    color: var(--edify-text) !important;
     font-family: 'Outfit', sans-serif;
   }
   .fc .fc-button-primary {
-    background-color: #2e505f !important;
-    border-color: #2e505f !important;
-    font-size: 11px !important;
+    background-color: var(--edify-primary) !important;
+    border-color: var(--edify-primary) !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
     padding: 0.5rem 0.75rem !important;
     border-radius: 8px !important;
     transition: all 0.15s ease-in-out !important;
-    color: #ffffff !important;
+    color: var(--edify-surface-raised) !important;
   }
   .fc .fc-button-primary:hover {
     opacity: 0.9 !important;
-    background-color: #2e505f !important;
-    border-color: #2e505f !important;
+    background-color: var(--edify-primary) !important;
+    border-color: var(--edify-primary) !important;
   }
   .fc .fc-button-primary:disabled {
     opacity: 0.5 !important;
-    background-color: #2e505f !important;
+    background-color: var(--edify-primary) !important;
   }
   .fc .fc-button-primary:not(:disabled).fc-button-active,
   .fc .fc-button-primary:not(:disabled):active {
-    background-color: #1e293b !important;
-    border-color: #1e293b !important;
+    background-color: var(--edify-text) !important;
+    border-color: var(--edify-text) !important;
   }
   .fc .fc-col-header-cell-cushion {
-    font-size: 11px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
-    color: #94a3b8 !important;
+    color: var(--edify-text-subtle) !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
     padding: 8px 0 !important;
@@ -64,28 +64,28 @@
   .fc .fc-daygrid-day-number {
     font-size: 12px !important;
     font-weight: 500 !important;
-    color: #64748b !important;
+    color: var(--edify-text-muted) !important;
     padding: 6px 8px !important;
   }
   .fc .fc-daygrid-day.fc-day-today {
-    background-color: #f8fafc !important;
+    background-color: var(--edify-surface-muted) !important;
   }
   .fc-event-completed {
-    background-color: #ecfdf5 !important;
-    color: #065f46 !important;
-    border: 1px solid #a7f3d0 !important;
+    background-color: var(--edify-success-light) !important;
+    color: var(--edify-chart-green) !important;
+    border: 1px solid var(--edify-success-border) !important;
     border-radius: 6px !important;
     padding: 3px 6px !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
   }
   .fc-event-planned {
-    background-color: #eff6ff !important;
-    color: #1e40af !important;
-    border: 1px solid #bfdbfe !important;
+    background-color: var(--edify-info-light) !important;
+    color: var(--edify-chart-blue) !important;
+    border: 1px solid var(--edify-info-border) !important;
     border-radius: 6px !important;
     padding: 3px 6px !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
   }
   .fc-event-completed:hover, .fc-event-planned:hover {
@@ -103,7 +103,7 @@
   </div>
 
   <!-- FullCalendar Container -->
-  <div class="bg-white rounded-lg border border-slate-100 p-5 shadow-sm">
+  <div class="edify-surface rounded-lg border border-slate-100 p-5 shadow-sm">
     <div id="fullcalendar-view"></div>
   </div>
 </div>
@@ -131,7 +131,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('fullcalendar-view');
     const eventsData = JSON.parse(document.getElementById('calendar-events-data').textContent);
-    
+
     // Set initial date dynamically based on context month/year if available
     const initialDate = '{{ year }}-{{ month|stringformat:"02d" }}-01';
 

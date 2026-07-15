@@ -17,7 +17,7 @@ Schedule Training
 </div>
 
 <!-- Filters -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-4 shadow-sm">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-4 shadow-sm">
 <form method="get" action="/trainings" class="flex flex-wrap gap-3">
 <input type="text" name="q" value="{{ search }}" placeholder="Search school or cluster..."
 class="flex-1 min-w-48 h-9 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-200">
@@ -31,16 +31,16 @@ class="flex-1 min-w-48 h-9 px-3 rounded-lg border border-[var(--edify-border)] t
 </div>
 
 <!-- Trainings List -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if trainings %}
 <table class="w-full text-[12px]">
 <thead>
 <tr class="bg-slate-50/60 border-b border-slate-100">
-<th class="text-left px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">Training Session</th>
-<th class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">Type</th>
-<th class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">Date</th>
-<th class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">Status</th>
-<th class="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">Attendance</th>
+<th class="text-left px-5 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training Session</th>
+<th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Type</th>
+<th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Date</th>
+<th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</th>
+<th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Attendance</th>
 <th class="px-4 py-3"></th>
 </tr>
 </thead>
@@ -49,14 +49,14 @@ class="flex-1 min-w-48 h-9 px-3 rounded-lg border border-[var(--edify-border)] t
 <tr class="hover:bg-violet-50/30 transition-colors group">
 <td class="px-5 py-3.5">
 <p class="font-bold text-slate-800">{% if t.school %}{{ t.school.name }}{% elif t.cluster %}{{ t.cluster.name }} Cluster{% else %}General Training{% endif %}</p>
-<p class="text-[11px] text-slate-400">{{ t.cluster.name|default:"No cluster" }}</p>
+<p class="edify-text-caption text-slate-400">{{ t.cluster.name|default:"No cluster" }}</p>
 </td>
 <td class="px-4 py-3.5">
-<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 text-[11px] font-bold">{{ t.activity_type|title }}</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 edify-text-caption font-bold">{{ t.activity_type|title }}</span>
 </td>
 <td class="px-4 py-3.5 text-slate-600">{{ t.planned_date|default:"—" }}</td>
 <td class="px-4 py-3.5">
-<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold
+<span class="inline-flex items-center px-2 py-0.5 rounded-full edify-text-caption font-bold
 {% if t.status == 'completed' %}bg-emerald-50 text-emerald-700
 {% elif t.status == 'scheduled' %}bg-blue-50 text-blue-700
 {% else %}bg-slate-100 text-slate-500{% endif %}">
@@ -67,7 +67,7 @@ class="flex-1 min-w-48 h-9 px-3 rounded-lg border border-[var(--edify-border)] t
 {% if t.teachers_attended %}{{ t.teachers_attended }} teachers{% else %}—{% endif %}
 </td>
 <td class="px-4 py-3.5 text-right">
-<a href="/my-plan/{{ t.id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 text-[11px] font-bold text-violet-600 hover:underline transition-opacity">View →</a>
+<a href="/my-plan/{{ t.id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 edify-text-caption font-bold text-violet-600 hover:underline transition-opacity">View →</a>
 </td>
 </tr>
 {% endfor %}

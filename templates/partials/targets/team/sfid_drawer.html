@@ -12,13 +12,13 @@
     <div class="px-3 py-2 flex items-center justify-between gap-2">
       <div class="min-w-0">
         <p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p>
-        <p class="text-[10px] text-slate-400">{{ r.staff }} · {{ r.what }} · {{ r.date|date:"d M Y" }}</p>
+        <p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }} · {{ r.date|date:"d M Y" }}</p>
       </div>
-      <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[9.5px] font-bold shrink-0">Not credited</span>
+      <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 edify-text-caption font-bold shrink-0">Not credited</span>
     </div>
     {% endfor %}
   </div>
-  <p class="text-[9.5px] text-slate-400 font-medium">The Activity SF ID is program proof (separate from the NetSuite accountability code). The responsible CCEO enters it from My Plan — credit lands automatically in the month the work happened.</p>
+  <p class="edify-text-caption text-slate-400 font-medium">The Activity SF ID is program proof (separate from the NetSuite accountability code). The responsible CCEO enters it from My Plan — credit lands automatically in the month the work happened.</p>
   {% else %}
   <div class="rounded-xl border border-slate-100 bg-emerald-50/40 p-4 text-center">
     <p class="text-[12px] font-semibold text-emerald-700">No SF ID backlog — every completed activity is credited.</p>

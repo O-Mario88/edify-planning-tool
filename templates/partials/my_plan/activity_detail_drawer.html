@@ -1,35 +1,36 @@
 {% load frontend_filters %}
 <!-- Activity Detail Floating Drawer with Backdrop Blur -->
-<div 
-x-data="{ activeTab: 'details' }"
+<div
+x-data="{ activeTab: 'details', closeDrawer() { document.getElementById('drawer-container')?.replaceChildren(); document.body.style.overflow = '' } }"
+@keydown.escape.window="closeDrawer()"
 class="fixed inset-0 z-50 flex justify-end"
-aria-labelledby="slide-over-title" 
-role="dialog" 
+aria-labelledby="slide-over-title"
+role="dialog"
 aria-modal="true"
 >
 <!-- Backdrop Blur overlay -->
-<div 
-class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" 
-onclick="document.getElementById('drawer-container').innerHTML = ''; document.body.style.overflow = '';"
+<div
+class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+@click="closeDrawer()"
 ></div>
 
 <!-- Slide-in Container -->
-<div class="relative w-full max-w-xl bg-white shadow-2xl flex flex-col h-full z-10 transition-all duration-300 transform">
+<div class="relative w-full max-w-xl edify-surface shadow-2xl flex flex-col h-full z-10 transition-all duration-300 transform">
 
 <!-- Drawer Header -->
 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
 <div>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 mb-1">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 mb-1">
 Activity Parameters
 </span>
 <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight">
 {{ act.activity_type|title|replace_underscore }}
 </h2>
 </div>
-<button 
-type="button" 
+<button
+type="button"
 class="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-onclick="document.getElementById('drawer-container').innerHTML = ''; document.body.style.overflow = '';"
+@click="closeDrawer()"
 >
 <span class="sr-only">Close panel</span>
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -42,8 +43,8 @@ onclick="document.getElementById('drawer-container').innerHTML = ''; document.bo
 <!-- Basic Meta Parameters -->
 <div class="grid grid-cols-2 gap-4 text-[12px]">
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Target Entity</p>
-<p class="font-semibold text-[#2e505f] mt-0.5">
+<p class="edify-text-caption uppercase font-bold text-slate-400">Target Entity</p>
+<p class="font-semibold text-[var(--edify-primary)] mt-0.5">
 {% if act.school %}
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg> {{ act.school.name }} (ID: {{ act.school.school_id }})
 {% elif act.cluster %}
@@ -52,11 +53,11 @@ onclick="document.getElementById('drawer-container').innerHTML = ''; document.bo
 </p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Planned Date</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Planned Date</p>
 <p class="font-bold text-slate-700 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg> {{ act.planned_date|default:"Unscheduled" }}</p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Responsible User / Partner</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Responsible User / Partner</p>
 <p class="font-bold text-slate-700 mt-0.5">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> {{ act.responsible_staff_name|default:"CCEO User" }}
 {% if act.delivery_type == 'partner' %}
@@ -65,31 +66,31 @@ onclick="document.getElementById('drawer-container').innerHTML = ''; document.bo
 </p>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Intervention Focus</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Intervention Focus</p>
 <p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ act.focus_intervention|default:"General"|replace_underscore }}</p>
 </div>
 </div>
 
 <!-- Segmented Details Tabs -->
 <div class="border-b border-slate-100 flex gap-2">
-<button 
+<button
 @click="activeTab = 'details'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
-:class="activeTab === 'details' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400'"
+:class="activeTab === 'details' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
 >
 Overview & Description
 </button>
-<button 
+<button
 @click="activeTab = 'finance'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
-:class="activeTab === 'finance' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400'"
+:class="activeTab === 'finance' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
 >
 Finance & Budget
 </button>
-<button 
+<button
 @click="activeTab = 'evidence'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
-:class="activeTab === 'evidence' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400'"
+:class="activeTab === 'evidence' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
 >
 Evidence & SF ID ({{ evidence_list|length }})
 </button>
@@ -98,13 +99,13 @@ Evidence & SF ID ({{ evidence_list|length }})
 <!-- Tab Details: Overview & Description -->
 <div x-show="activeTab === 'details'" class="space-y-4" x-transition>
 <div>
-<h4 class="text-[11px] uppercase font-bold text-slate-400">Activity Purpose & Context</h4>
+<h4 class="edify-text-caption uppercase font-bold text-slate-400">Activity Purpose & Context</h4>
 <p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
 {{ act.activity_purpose_text|default:"No purpose description text entered." }}
 </p>
 </div>
 <div>
-<h4 class="text-[11px] uppercase font-bold text-slate-400">Expected Outcome</h4>
+<h4 class="edify-text-caption uppercase font-bold text-slate-400">Expected Outcome</h4>
 <p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
 {{ act.expected_outcome|default:"No expected outcome text entered." }}
 </p>
@@ -112,11 +113,11 @@ Evidence & SF ID ({{ evidence_list|length }})
 
 <!-- Workflow Lifecycle Status tracker -->
 <div class="bg-slate-50 p-4 border border-slate-100 rounded-xl space-y-2.5">
-<h4 class="text-[11px] uppercase font-bold text-slate-400">System Workflow Auditing</h4>
+<h4 class="edify-text-caption uppercase font-bold text-slate-400">System Workflow Auditing</h4>
 <div class="grid grid-cols-2 gap-3 text-[12px] font-semibold">
 <div class="flex items-center gap-1.5">
 <span>Status:</span>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase {{ status_class }}">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-bold uppercase {{ status_class }}">
 {{ status_label }}
 </span>
 </div>
@@ -135,17 +136,17 @@ Evidence & SF ID ({{ evidence_list|length }})
 <!-- Tab Finance: Budget Lines & Fund requests -->
 <div x-show="activeTab === 'finance'" class="space-y-4" x-transition>
 <div class="bg-slate-50 p-4 border border-slate-100 rounded-xl">
-<p class="text-[11px] uppercase font-bold text-slate-400 mb-1">Total Allocated Budget</p>
-<p class="text-[24px] font-semibold text-[#2e505f] leading-none">{{ act.est_cost_cents|ugx }}</p>
-<p class="text-[11px] text-slate-400 font-bold mt-1.5">Created automatically upon planning schedule</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400 mb-1">Total Allocated Budget</p>
+<p class="text-[24px] font-semibold text-[var(--edify-primary)] leading-none">{{ act.est_cost_cents|ugx }}</p>
+<p class="edify-text-caption text-slate-400 font-bold mt-1.5">Created automatically upon planning schedule</p>
 </div>
 
 <div>
-<h4 class="text-[11px] uppercase font-bold text-slate-400 mb-2">Budget Line Verification</h4>
+<h4 class="edify-text-caption uppercase font-bold text-slate-400 mb-2">Budget Line Verification</h4>
 <div class=" rounded-xl overflow-hidden">
 <table class="w-full text-left text-[12px] font-semibold">
 <thead>
-<tr class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b ">
+<tr class="bg-slate-50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
 <th class="px-4 py-2.5">Item</th>
 <th class="px-4 py-2.5 text-center">Qty / Rate</th>
 <th class="px-4 py-2.5 text-center">Status</th>
@@ -159,14 +160,14 @@ Evidence & SF ID ({{ evidence_list|length }})
 <td class="px-4 py-2.5 font-bold text-slate-800">
 {{ line.label }}
 {% if line.description %}
-<span class="block text-[11px] text-slate-400 font-semibold mt-0.5">{{ line.description }}</span>
+<span class="block edify-text-caption text-slate-400 font-semibold mt-0.5">{{ line.description }}</span>
 {% endif %}
 </td>
 <td class="px-4 py-2.5 text-center text-slate-500 font-bold">
 {{ line.quantity }} &times; {{ line.unit_cost|ugx }}
 </td>
 <td class="px-4 py-2.5 text-center">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase bg-blue-50/50 text-blue-700 border /40">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-bold uppercase bg-blue-50/50 text-blue-700 border /40">
 {{ line.finance_status }}
 </span>
 </td>
@@ -191,7 +192,7 @@ No budget lines created.
 <!-- Tab Evidence & Salesforce IDs -->
 <div x-show="activeTab === 'evidence'" class="space-y-4" x-transition>
 <div>
-<h4 class="text-[11px] uppercase font-bold text-slate-400">Activity SF ID</h4>
+<h4 class="edify-text-caption uppercase font-bold text-slate-400">Activity SF ID</h4>
 {% if act.salesforce_activity_id %}
 <p class="text-[14px] font-bold text-slate-800 mt-1.5 flex items-center gap-1.5">
 <span class="text-emerald-500"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span> {{ act.salesforce_activity_id }}
@@ -202,16 +203,16 @@ No budget lines created.
 </div>
 
 <div>
-<h4 class="text-[11px] uppercase font-bold text-slate-400 mb-2">Uploaded Evidence Records</h4>
+<h4 class="edify-text-caption uppercase font-bold text-slate-400 mb-2">Uploaded Evidence Records</h4>
 {% if evidence_list %}
 <div class=" rounded-xl divide-y divide-slate-100 overflow-hidden">
 {% for ev in evidence_list %}
 <div class="px-4 py-3 flex items-center justify-between text-[12px]">
 <div>
 <p class="font-semibold text-slate-800">{{ ev.original_name }}</p>
-<p class="text-[11px] text-slate-400 font-bold capitalize mt-0.5">{{ ev.file_type }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
+<p class="edify-text-caption text-slate-400 font-bold capitalize mt-0.5">{{ ev.file_extension }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>
@@ -229,16 +230,16 @@ No evidence files uploaded yet.
 
 <!-- Drawer Footer Actions -->
 <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-2.5">
-<button 
+<button
 type="button"
 class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"
-onclick="document.getElementById('drawer-container').innerHTML = ''; document.body.style.overflow = '';"
+@click="closeDrawer()"
 >
 Close
 </button>
 
 {% if act.status != 'completed' %}
-<button 
+<button
 hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
@@ -246,7 +247,7 @@ class="btn btn-ghost h-10 text-[12px] text-amber-600 border-amber-200 hover:bg-a
 >
 Reschedule
 </button>
-<button 
+<button
 hx-get="/my-plan/{{ act.id }}/complete-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"

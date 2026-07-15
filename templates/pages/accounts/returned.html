@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-rose-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 edify-text-caption font-semibold uppercase tracking-widest">
 Correction Flow
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Returned Finance Ledger</h1>
@@ -20,10 +20,10 @@ Track finance items returned to staff or partners for correction of receipts, am
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
 <th class="px-6 py-4 text-left">School / Scope</th>
@@ -41,7 +41,7 @@ Track finance items returned to staff or partners for correction of receipts, am
 <!-- ID -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ item.activity.get_activity_type_display }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ item.activity.get_activity_type_display }}</div>
 </td>
 <!-- School -->
 <td class="px-6 py-4">
@@ -61,7 +61,7 @@ Track finance items returned to staff or partners for correction of receipts, am
 </td>
 <!-- Status -->
 <td class="px-6 py-4 text-center">
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-400 border border-slate-200/50">
+<span class="px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-slate-100 text-slate-400 border border-slate-200/50">
 Awaiting Fix
 </span>
 </td>

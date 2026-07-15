@@ -12,7 +12,7 @@
 
 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
 <div class="space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
 Audit & Closure
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Closure Readiness Workspace</h1>
@@ -34,37 +34,37 @@ Blocked Closures
 
 <!-- Tabs Navigation -->
 <div class="flex items-center gap-2 border-b border-slate-100 pb-px">
-<button 
+<button
 @click="activeTab = 'ready'"
-:class="activeTab === 'ready' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'ready' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Ready to Close ({{ ready|length }})
 </button>
-<button 
+<button
 @click="activeTab = 'finance'"
-:class="activeTab === 'finance' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'finance' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Finance Pending ({{ finance_pending|length }})
 </button>
-<button 
+<button
 @click="activeTab = 'accountability'"
-:class="activeTab === 'accountability' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'accountability' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Accountability Pending ({{ accountability_pending|length }})
 </button>
-<button 
+<button
 @click="activeTab = 'analytics'"
-:class="activeTab === 'analytics' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'analytics' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Analytics Pending ({{ analytics_pending|length }})
 </button>
-<button 
+<button
 @click="activeTab = 'blocked'"
-:class="activeTab === 'blocked' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'blocked' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Blocked ({{ blocked|length }})
@@ -72,7 +72,7 @@ Blocked ({{ blocked|length }})
 </div>
 
 <!-- Queue Cards List -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm">
 
 <!-- Tab Panel: Ready -->
 <div x-show="activeTab === 'ready'" class="space-y-4">
@@ -81,13 +81,13 @@ Blocked ({{ blocked|length }})
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }} &bull; Owner: {{ act.responsible_staff_id }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }} &bull; Owner: {{ act.responsible_staff_id }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Ready
 </span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl bg-blue-700 hover:bg-blue-700 text-white text-[11px] font-semibold flex items-center justify-center transition-all shadow-sm">
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl bg-blue-700 hover:bg-blue-700 text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
 Open Workspace
 </a>
 </div>
@@ -105,11 +105,11 @@ Open Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Awaiting Accountant Payout</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Awaiting Accountant Payout</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -127,11 +127,11 @@ Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-semibold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-150 rounded">NetSuite ID Required</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-150 rounded">NetSuite ID Required</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -149,11 +149,11 @@ Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-semibold uppercase text-blue-600 bg-blue-50 px-2 py-0.5 border  rounded">Awaiting Publish</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-blue-600 bg-blue-50 px-2 py-0.5 border  rounded">Awaiting Publish</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -171,11 +171,11 @@ Workspace
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
-<span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
+<span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Blocker Present</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Blocker Present</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>

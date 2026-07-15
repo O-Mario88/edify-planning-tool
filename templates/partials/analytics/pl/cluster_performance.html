@@ -1,10 +1,10 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">D. Cluster Performance</h3>
   <div class="overflow-x-auto -mx-1">
     <table class="w-full text-left border-collapse min-w-[560px]">
       <thead>
-        <tr class="text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+        <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
           <th class="py-2 pl-1 pr-2 w-6">#</th>
           <th class="py-2 px-2">Cluster</th>
           <th class="py-2 px-2 text-center">Avg SSA</th>
@@ -19,10 +19,10 @@
         <tr class="hover:bg-slate-50/60 transition-colors cursor-pointer"
             hx-get="/analytics/program-lead/drilldown?drill=cluster&id={{ c.id }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
             hx-target="#drawer-container" hx-swap="innerHTML">
-          <td class="py-2.5 pl-1 pr-2 text-[11px] font-bold text-slate-400">{{ c.index }}</td>
-          <td class="py-2.5 px-2 text-[11.5px] font-semibold text-slate-700">{{ c.name }}</td>
+          <td class="py-2.5 pl-1 pr-2 edify-text-caption font-bold text-slate-400">{{ c.index }}</td>
+          <td class="py-2.5 px-2 edify-text-caption font-semibold text-slate-700">{{ c.name }}</td>
           <td class="py-2.5 px-2 text-center">
-            <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold tabular-nums
+            <span class="inline-block px-2 py-0.5 rounded edify-text-caption font-bold tabular-nums
               {% if c.ssa_tone == 'success' %}bg-emerald-50 text-emerald-700
               {% elif c.ssa_tone == 'lime' %}bg-lime-50 text-lime-700
               {% elif c.ssa_tone == 'warning' %}bg-amber-50 text-amber-700
@@ -31,12 +31,12 @@
               {% if c.avg_ssa is not None %}{{ c.avg_ssa|floatformat:0 }}%{% else %}—{% endif %}
             </span>
           </td>
-          <td class="py-2.5 px-2 text-[11px] font-medium text-slate-500">
+          <td class="py-2.5 px-2 edify-text-caption font-medium text-slate-500">
             {{ c.weakest_label }}{% if c.weakest_pct is not None %} <span class="text-slate-400">({{ c.weakest_pct|floatformat:0 }}%)</span>{% endif %}
           </td>
-          <td class="py-2.5 px-2 text-center text-[11px] font-semibold text-slate-600 tabular-nums">{{ c.visits_done }} / {{ c.visits_planned }}</td>
-          <td class="py-2.5 px-2 text-center text-[11px] font-semibold text-slate-600 tabular-nums">{{ c.trainings_done }} / {{ c.trainings_planned }}</td>
-          <td class="py-2.5 px-2 text-[10.5px] font-semibold text-blue-600">{{ c.next_action }}</td>
+          <td class="py-2.5 px-2 text-center edify-text-caption font-semibold text-slate-600 tabular-nums">{{ c.visits_done }} / {{ c.visits_planned }}</td>
+          <td class="py-2.5 px-2 text-center edify-text-caption font-semibold text-slate-600 tabular-nums">{{ c.trainings_done }} / {{ c.trainings_planned }}</td>
+          <td class="py-2.5 px-2 edify-text-caption font-semibold text-blue-600">{{ c.next_action }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="7" class="py-8 text-center text-[12px] text-slate-400 font-semibold">No clustered schools in your portfolio yet.</td></tr>

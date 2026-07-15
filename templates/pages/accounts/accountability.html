@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
 Compliance Logs
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Accountability Pending Registry</h1>
@@ -20,10 +20,10 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
 <th class="px-6 py-4 text-left">CCEO / Owner</th>
@@ -43,7 +43,7 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 <!-- ID -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-900 text-[12px]">#{{ rec.activity.id|slice:":8" }}</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ rec.activity.get_activity_type_display }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ rec.activity.get_activity_type_display }}</div>
 </td>
 <!-- CCEO -->
 <td class="px-6 py-4">
@@ -64,13 +64,13 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 {% elif rec.variance > 0 %}
 <span class="text-rose-600 font-semibold">+{{ rec.variance }} UGX</span>
 {% else %}
-<span class="text-[#2563eb] font-semibold">{{ rec.variance }} UGX</span>
+<span class="text-[var(--edify-chart-blue)] font-semibold">{{ rec.variance }} UGX</span>
 {% endif %}
 </td>
 <!-- IA Status -->
 <td class="px-6 py-4 text-center">
 {% if rec.activity.status in "ia_verified,closed,accountant_confirmed" %}
-<span class="inline-flex items-center gap-1 text-emerald-600 font-semibold text-[11px]">Verified</span>
+<span class="inline-flex items-center gap-1 text-emerald-600 font-semibold edify-text-caption">Verified</span>
 {% else %}
 <span class="text-rose-600 font-semibold">Missing IA</span>
 {% endif %}
@@ -78,16 +78,16 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 <!-- NetSuite Expense ID -->
 <td class="px-6 py-4">
 {% if rec.netsuite_expense_id %}
-<span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg text-[11px]">{{ rec.netsuite_expense_id }}</span>
+<span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg edify-text-caption">{{ rec.netsuite_expense_id }}</span>
 {% else %}
-<span class="text-amber-600 font-semibold text-[11px] inline-flex items-center gap-0.5">
+<span class="text-amber-600 font-semibold edify-text-caption inline-flex items-center gap-0.5">
 NetSuite ID Required
 </span>
 {% endif %}
 </td>
 <!-- Status -->
 <td class="px-6 py-4 text-center">
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider 
+<span class="px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider
 {% if rec.status == 'cleared' %}bg-emerald-50 text-emerald-700 border border-emerald-200
 {% elif rec.status == 'variance_review' %}bg-rose-50 text-rose-700 border border-rose-200
 {% else %}bg-slate-100 text-slate-500 border border-slate-200/50{% endif %}">
@@ -97,9 +97,9 @@ NetSuite ID Required
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
-<button 
+<button
 @click="netsuiteOpen = true; selectedAct = '{{ rec.activity.id }}'; budgetSum = {{ rec.actual_spend }}"
-type="button" 
+type="button"
 class="h-8 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >
 Enter NetSuite ID
@@ -128,7 +128,7 @@ Enter NetSuite ID
 </div>
 
 <!-- NETSUITE EXPENSE ID DETAIL DRAWER (Slide-over overlay inside parent) -->
-<div 
+<div
 x-show="netsuiteOpen"
 x-transition:enter="transition ease-out duration-300 transform"
 x-transition:enter-start="translate-x-full"
@@ -136,7 +136,7 @@ x-transition:enter-end="translate-x-0"
 x-transition:leave="transition ease-in duration-200 transform"
 x-transition:leave-start="translate-x-0"
 x-transition:leave-end="translate-x-full"
-class="absolute inset-y-0 right-0 w-96 bg-white z-25 p-6 flex flex-col justify-between shadow-md border-l border-slate-200"
+class="absolute inset-y-0 right-0 w-96 edify-surface z-25 p-6 flex flex-col justify-between shadow-md border-l border-slate-200"
 style="display: none;"
 >
 <div class="space-y-6">
@@ -151,60 +151,60 @@ style="display: none;"
 {% csrf_token %}
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">NetSuite Expense ID</label>
-<input 
-type="text" 
-name="netsuite_expense_id" 
-required 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">NetSuite Expense ID</label>
+<input
+type="text"
+name="netsuite_expense_id"
+required
 placeholder="e.g. EXP-2200115"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
 >
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Amount Entered in NetSuite (UGX)</label>
-<input 
-type="number" 
-name="amount_entered" 
-required 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Amount Entered in NetSuite (UGX)</label>
+<input
+type="number"
+name="amount_entered"
+required
 x-model="budgetSum"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
 >
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Expense Entry Date</label>
-<input 
-type="date" 
-name="expense_date" 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Expense Entry Date</label>
+<input
+type="date"
+name="expense_date"
 required
 value="{% now "Y-m-d" %}"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
 >
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Accountability Notes</label>
-<textarea 
-name="notes" 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Accountability Notes</label>
+<textarea
+name="notes"
 placeholder="Reconciled successfully..."
-class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] focus:bg-white focus:border-blue-500 focus:outline-none h-20 resize-none font-semibold"
+class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] edify-focus-surface focus:border-blue-500 focus:outline-none h-20 resize-none font-semibold"
 ></textarea>
 </div>
 </form>
 </div>
 
-<div class="space-y-2 border-t border-slate-100 pt-4 bg-white">
-<button 
+<div class="space-y-2 border-t border-slate-100 pt-4 edify-surface">
+<button
 form="netsuite-form"
 type="submit"
 class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 shadow-sm transition-all"
 >
 Clear Accountability
 </button>
-<button 
+<button
 @click="netsuiteOpen = false"
-type="button" 
+type="button"
 class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel

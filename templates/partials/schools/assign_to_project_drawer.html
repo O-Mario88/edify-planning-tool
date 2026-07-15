@@ -14,7 +14,7 @@
 
 <!-- School Summary Card -->
 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-<h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">School Details</h3>
+<h3 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">School Details</h3>
 <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
 <div>
 <span class="text-slate-400 font-semibold">School ID:</span>
@@ -55,7 +55,7 @@
 </svg>
 <div class="space-y-1.5">
 <p class="text-[14px] font-semibold text-slate-700">No active projects available.</p>
-<p class="text-[11px] text-slate-400">Create a project before assigning schools.</p>
+<p class="edify-text-caption text-slate-400">Create a project before assigning schools.</p>
 </div>
 <a
 href="/projects"
@@ -75,7 +75,7 @@ class="space-y-4"
 
 <!-- Project Dropdown -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Project <span class="text-rose-500">*</span></label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project <span class="text-rose-500">*</span></label>
 <select
 name="project_id"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -91,7 +91,7 @@ required
 <div class="grid grid-cols-2 gap-3">
 <!-- Project Type -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Type</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Type</label>
 <input
 type="text"
 name="project_type"
@@ -101,7 +101,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-
 </div>
 <!-- Expected Support Type -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Expected Support Type</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Support Type</label>
 <select
 name="participation_type"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -120,7 +120,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semi
 <div class="grid grid-cols-2 gap-3">
 <!-- Project Coordinator -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Coordinator</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Coordinator</label>
 <select
 name="coordinator_id"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -133,7 +133,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semi
 </div>
 <!-- Project Focus Area -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Focus Area</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Focus Area</label>
 <select
 name="support_area"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
@@ -148,7 +148,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semi
 
 <!-- Start Date -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Start Date</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Start Date</label>
 <div
 x-data="{
 open: false,
@@ -243,7 +243,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
+class="absolute left-0 mt-1.5 w-[280px] edify-surface border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -257,14 +257,14 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
-<span class="font-semibold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
 <button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
 </div>
 
 <!-- Weekdays Header -->
-<div class="grid grid-cols-7 gap-y-1 text-center text-[11px] font-bold text-slate-400">
+<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
 <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
 </div>
 
@@ -277,7 +277,7 @@ type="button"
 x-show="day !== null"
 @click="selectDay(day)"
 class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
-:class="isSelected(day) ? 'bg-[#0f172a] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
 </div>
@@ -289,7 +289,7 @@ x-text="day"
 
 <!-- Notes -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Notes / Objectives</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Notes / Objectives</label>
 <textarea
 name="notes"
 rows="3"

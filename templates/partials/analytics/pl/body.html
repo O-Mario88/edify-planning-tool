@@ -7,9 +7,9 @@
     {% if k.link %}
     <button type="button"
        hx-get="/analytics/program-lead/drilldown{{ k.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}" hx-target="#drawer-container" hx-swap="innerHTML"
-       class="w-full text-left bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all group cursor-pointer">
+       class="w-full text-left edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all group cursor-pointer">
     {% else %}
-    <article class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 block">
+    <article class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 block">
     {% endif %}
       <div class="flex items-start justify-between">
         <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0
@@ -23,15 +23,15 @@
           {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
         </div>
         {% if k.trend.value %}
-        <span class="inline-flex items-center gap-0.5 text-[10px] font-bold
+        <span class="inline-flex items-center gap-0.5 edify-text-caption font-bold
           {% if k.trend.direction == 'up' %}text-emerald-600{% elif k.trend.direction == 'down' %}text-rose-600{% else %}text-slate-400{% endif %}">
           {% if k.trend.direction == 'up' %}&#9650;{% elif k.trend.direction == 'down' %}&#9660;{% endif %}{{ k.trend.value }}
         </span>
         {% endif %}
       </div>
-      <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 mt-2.5 leading-tight">{{ k.label }}</p>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mt-2.5 leading-tight">{{ k.label }}</p>
       <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
-      <p class="text-[10px] font-semibold text-slate-400 mt-0.5">{{ k.helper }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ k.helper }}</p>
     {% if k.link %}</button>{% else %}</article>{% endif %}
     {% endfor %}
   </div>

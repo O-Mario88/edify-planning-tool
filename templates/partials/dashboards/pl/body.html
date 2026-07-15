@@ -23,12 +23,12 @@
           {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
         </div>
         <div class="flex-1 min-w-0">
-          <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">{{ k.label }}</p>
+          <p style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">{{ k.label }}</p>
           <p style="font-size:17px;font-weight:800;line-height:1;margin-top:3px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
                     color:{% if k.variant == 'danger' %}var(--edify-danger){% elif k.variant == 'warning' %}var(--edify-warning){% else %}var(--edify-text){% endif %};">
             {{ k.value }}
           </p>
-          <p style="font-size:10px;color:var(--edify-text-subtle);margin-top:2px;">{{ k.helper }}</p>
+          <p style="font-size: 12px;color:var(--edify-text-subtle);margin-top:2px;">{{ k.helper }}</p>
         </div>
       </div>
     {% if k.link %}</a>{% else %}</article>{% endif %}
@@ -61,11 +61,11 @@
                     color:{% if a.tone == 'danger' %}var(--edify-danger)
                     {% elif a.tone == 'success' %}var(--edify-success)
                     {% else %}var(--edify-warning){% endif %};">{{ a.title }}</p>
-          <p style="font-size:11px;color:var(--edify-text-muted);margin-top:4px;line-height:1.4;">{{ a.line1 }}</p>
-          <p style="font-size:11px;color:var(--edify-text-muted);line-height:1.4;">{{ a.line2 }}</p>
+          <p style="font-size: 12px;color:var(--edify-text-muted);margin-top:4px;line-height:1.4;">{{ a.line1 }}</p>
+          <p style="font-size: 12px;color:var(--edify-text-muted);line-height:1.4;">{{ a.line2 }}</p>
           <a href="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}"
              hx-get="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-             style="font-size:11px;font-weight:600;
+             style="font-size: 12px;font-weight:600;
                     color:{% if a.tone == 'danger' %}var(--edify-danger)
                     {% elif a.tone == 'success' %}var(--edify-success)
                     {% else %}var(--edify-warning){% endif %};
@@ -83,7 +83,7 @@
          style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
       <div class="flex items-center justify-between mb-3">
         <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);">Team Performance Overview</h2>
-        <span style="font-size:11px;font-weight:600;color:var(--edify-text-subtle);">FY {{ fy }}</span>
+        <span style="font-size: 12px;font-weight:600;color:var(--edify-text-subtle);">FY {{ fy }}</span>
       </div>
       <div id="plDashPerfChart" class="w-full flex-1" style="min-height:200px;"></div>
     </div>
@@ -94,9 +94,9 @@
         {% for c in personal_targets.cards %}
         <div class="flex items-center gap-2.5 p-2.5 rounded-lg" style="background:var(--edify-surface-muted);">
           <div>
-            <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">{{ c.label }}</p>
-            <p style="font-size:15px;font-weight:800;color:var(--edify-text);font-variant-numeric:tabular-nums;">{{ c.done }}<span style="font-size:10px;font-weight:700;color:var(--edify-text-subtle);">/{{ c.target }}</span></p>
-            <p style="font-size:10px;font-weight:700;color:
+            <p style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">{{ c.label }}</p>
+            <p style="font-size:15px;font-weight:800;color:var(--edify-text);font-variant-numeric:tabular-nums;">{{ c.done }}<span style="font-size: 12px;font-weight:700;color:var(--edify-text-subtle);">/{{ c.target }}</span></p>
+            <p style="font-size: 12px;font-weight:700;color:
               {% if c.pct >= 80 %}var(--edify-success)
               {% elif c.pct >= 60 %}var(--edify-warning)
               {% else %}var(--edify-danger){% endif %};">{{ c.pct }}%</p>
@@ -107,7 +107,7 @@
       {% if personal_targets.has_target %}
       <div class="pt-3 mt-3" style="border-top:1px solid var(--edify-border);">
         <div class="flex items-center justify-between mb-1.5">
-          <span style="font-size:11px;font-weight:700;color:var(--edify-text-muted);">Overall Achievement</span>
+          <span style="font-size: 12px;font-weight:700;color:var(--edify-text-muted);">Overall Achievement</span>
           <span style="font-size:13px;font-weight:700;color:var(--edify-success);">{{ personal_targets.overall_pct }}%</span>
         </div>
         <div class="h-2 w-full rounded-full overflow-hidden" style="background:var(--edify-border);">
@@ -115,7 +115,7 @@
         </div>
       </div>
       {% else %}
-      <p style="font-size:10px;color:var(--edify-text-subtle);margin-top:8px;">No personal targets configured for this period.</p>
+      <p style="font-size: 12px;color:var(--edify-text-subtle);margin-top:8px;">No personal targets configured for this period.</p>
       {% endif %}
     </div>
   </div>
@@ -128,13 +128,13 @@
       <div class="overflow-x-auto flex-1">
         {% include "partials/dashboards/pl/cceo_performance.html" %}
       </div>
-      <div class="p-3 pt-2"><a href="/analytics/program-lead" style="font-size:11px;font-weight:600;color:var(--edify-accent);text-decoration:none;">View all CCEOs performance &rarr;</a></div>
+      <div class="p-3 pt-2"><a href="/analytics/program-lead" style="font-size: 12px;font-weight:600;color:var(--edify-accent);text-decoration:none;">View all CCEOs performance &rarr;</a></div>
     </div>
     <div class="lg:col-span-5 rounded-lg overflow-hidden flex flex-col"
          style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
       <div class="p-4 pb-2 flex items-center justify-between">
         <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);">Approval Queue</h2>
-        {% if approval_queue.total %}<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:var(--edify-warning-light);color:var(--edify-warning);">{{ approval_queue.total }}</span>{% endif %}
+        {% if approval_queue.total %}<span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-bold" style="background:var(--edify-warning-light);color:var(--edify-warning);">{{ approval_queue.total }}</span>{% endif %}
       </div>
       {% include "partials/dashboards/pl/approval_queue.html" %}
     </div>
@@ -145,7 +145,7 @@
     <div class="lg:col-span-5 rounded-lg p-4 flex flex-col"
          style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
       <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:4px;">SSA Intelligence</h2>
-      <p style="font-size:11px;color:var(--edify-text-subtle);margin-bottom:8px;">By cluster (score out of 10)</p>
+      <p style="font-size: 12px;color:var(--edify-text-subtle);margin-bottom:8px;">By cluster (score out of 10)</p>
       {% include "partials/dashboards/pl/ssa_intelligence.html" %}
     </div>
     <div class="lg:col-span-4 rounded-lg p-4 flex flex-col"
@@ -154,7 +154,7 @@
       <div class="overflow-x-auto flex-1">
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead>
-            <tr style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);padding:8px 10px;border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+            <tr style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);padding:8px 10px;border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
               <th style="padding:8px 10px;">School</th>
               <th style="padding:8px 10px;">Issue</th>
               <th style="padding:8px 10px;">Action</th>
@@ -164,8 +164,8 @@
             {% for r in urgent_schools %}
             <tr style="border-bottom:1px solid var(--edify-border);">
               <td style="padding:7px 10px;font-weight:600;color:var(--edify-accent);">{{ r.school }}</td>
-              <td style="padding:7px 10px;"><span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold" style="background:var(--edify-danger-light);color:var(--edify-danger);">{{ r.issue }}</span></td>
-              <td style="padding:7px 10px;font-size:11px;font-weight:600;color:var(--edify-accent);">{{ r.next_action }}</td>
+              <td style="padding:7px 10px;"><span class="inline-flex px-2 py-0.5 rounded edify-text-caption font-bold" style="background:var(--edify-danger-light);color:var(--edify-danger);">{{ r.issue }}</span></td>
+              <td style="padding:7px 10px;font-size: 12px;font-weight:600;color:var(--edify-accent);">{{ r.next_action }}</td>
             </tr>
             {% empty %}
             <tr><td colspan="3" style="padding:16px;text-align:center;font-size:12px;color:var(--edify-text-subtle);font-weight:600;">No urgent schools this period.</td></tr>
@@ -173,7 +173,7 @@
           </tbody>
         </table>
       </div>
-      <a href="/analytics/program-lead" style="font-size:11px;font-weight:600;color:var(--edify-accent);margin-top:8px;display:block;">View all schools at risk &rarr;</a>
+      <a href="/analytics/program-lead" style="font-size: 12px;font-weight:600;color:var(--edify-accent);margin-top:8px;display:block;">View all schools at risk &rarr;</a>
     </div>
     <div class="lg:col-span-3 rounded-lg p-4 flex flex-col"
          style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
@@ -209,7 +209,7 @@
         </span>
         <div>
           <p style="font-size:12px;font-weight:700;color:var(--edify-text);">{{ q.label }}</p>
-          <p style="font-size:10px;color:var(--edify-text-muted);">{{ q.sub }}</p>
+          <p style="font-size: 12px;color:var(--edify-text-muted);">{{ q.sub }}</p>
         </div>
       </a>
       {% endfor %}
@@ -225,8 +225,8 @@
     var isDark = document.documentElement.classList.contains('dark');
     var cs = getComputedStyle(document.documentElement);
     return {
-      text: isDark ? '#5C6878' : '#8B97AB',
-      grid: isDark ? '#222831' : '#F0F4F8',
+      text: isDark ? 'var(--edify-text-muted)' : 'var(--edify-text-subtle)',
+      grid: isDark ? 'var(--edify-text)' : 'var(--edify-surface-muted)',
       isDark: isDark
     };
   }
@@ -242,21 +242,21 @@
       ],
       chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
       stroke: { width: [0,0,0,2.5], curve: 'smooth' },
-      colors: ['#008000', '#2F539B', '#EE9A4D', '#F59E0B'],
+      colors: ['var(--edify-chart-green)', 'var(--edify-steel-600)', 'var(--edify-chart-orange)', 'var(--edify-chart-amber)'],
       fill: { opacity: [0.55, .95, .9, 1] },
       plotOptions: { bar: { columnWidth: '50%', borderRadius: 3 } },
       dataLabels: { enabled: false },
       labels: {{ team_performance.labels|safe }},
-      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: t.text, fontSize: '10px', fontWeight: 600 } } },
+      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: t.text, fontSize: '12px', fontWeight: 600 } } },
       yaxis: [
-        { seriesName: 'Planned', labels: { style: { colors: t.text, fontSize: '10px' } } },
+        { seriesName: 'Planned', labels: { style: { colors: t.text, fontSize: '12px' } } },
         { seriesName: 'Planned', show: false },
         { seriesName: 'Planned', show: false },
-        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: t.text, fontSize: '10px' } } }
+        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: t.text, fontSize: '12px' } } }
       ],
       grid: { borderColor: t.grid, strokeDasharray: 3, padding: { left: 0, right: 0 } },
       legend: { show: false },
-      tooltip: { theme: t.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '11px' } }
+      tooltip: { theme: t.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '12px' } }
     };
   }
 

@@ -27,12 +27,30 @@ from .validation import assert_safe_upload
 
 
 VALID_KINDS = {k.value for k in EvidenceKind}
+# Sources that can be converted into the standardized PDF preview (images are
+# handled separately via Pillow; see prepare_inline_view).
+CONVERTIBLE_EXTENSIONS = {".docx", ".doc", ".xlsx", ".xls", ".csv"}
 logger = logging.getLogger(__name__)
 
 
 def _assert_activity_in_scope(activity: Activity, principal) -> None:
     scope = resolve_user_scope(principal)
     if scope.country_scope:
+        # The Accountant is a country-scope role but its evidence reach is
+        # narrower than its scope: read-only (it holds no EVIDENCE_REVIEW
+        # permission, so review() is already unreachable) and limited to
+        # evidence needed for financial clearance — activities with money
+        # movement. Plain unfunded records stay out of its reach.
+        if getattr(principal, "active_role", "") == "Accountant":
+            has_finance = (
+                activity.payment_status not in ("", "none", None)
+                or activity.advance_requests.exists()
+            )
+            if not has_finance:
+                raise Forbidden(
+                    "Accountant evidence access is limited to activities "
+                    "with financial involvement."
+                )
         return
     if scope.staff_ids and activity.responsible_staff_id in scope.staff_ids:
         return
@@ -166,9 +184,14 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
 
     is_pdf = ext == ".pdf" or mime_type == "application/pdf"
     is_image = mime_type.startswith("image/")
-    is_docx = ext in (".docx", ".doc")
+    # Convertible-to-PDF sources: office docs via LibreOffice, images via
+    # Pillow (§6 mandate: consistent PDF viewing experience — a PDF renders
+    # directly; everything else gets a generated PDF preview on demand,
+    # original always preserved). Images stay "ready" for the native inline
+    # view AND are convertible when the standardized PDF is requested.
+    is_convertible = ext in CONVERTIBLE_EXTENSIONS or is_image
     preview_status = (
-        "ready" if (is_pdf or is_image) else ("pending" if is_docx else "not_required")
+        "ready" if (is_pdf or is_image) else ("pending" if is_convertible else "not_required")
     )
 
     record = EvidenceRecord.objects.create(
@@ -197,6 +220,20 @@ def _chunks(file_obj, chunk_size=64 * 1024):
         if not data:
             break
         yield data
+
+
+def evidence_records_for_activity(activity_id: str, principal):
+    """Scope-checked EvidenceRecord queryset for server-rendered templates.
+
+    Same authorization + quarantine rules as list_for_activity, but returns
+    model instances — templates read snake_case attributes (original_name,
+    file_size, created_at, notes), and feeding them the camelCase API dicts
+    silently rendered every field blank."""
+    activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
+    if not activity:
+        raise NotFoundError("Activity not found.")
+    _assert_activity_in_scope(activity, principal)
+    return EvidenceRecord.objects.filter(activity=activity).exclude(quarantined=True)
 
 
 def list_for_activity(activity_id: str, principal) -> list[dict]:
@@ -267,17 +304,28 @@ def review(record_id: str, data: dict, principal) -> dict:
 
 
 def prepare_inline_view(record_id: str, principal) -> dict:
-    """Trigger/cached DOCX→PDF rendition (headless LibreOffice, if available)."""
+    """Trigger/cached PDF rendition for convertible sources (§6 mandate:
+    standardized PDF preview). Office docs + spreadsheets convert via
+    headless LibreOffice; images via Pillow. The original file is never
+    modified — the rendition is a separate sibling file."""
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record:
         raise NotFoundError("Evidence not found.")
     _assert_activity_in_scope(record.activity, principal)
-    if record.preview_status == "ready":
-        return {"previewStatus": "ready", "viewKind": _view_kind(record)}
-    if record.file_extension not in (".docx", ".doc"):
+    if record.pdf_rendition_storage_key:
+        return {
+            "previewStatus": "ready",
+            "viewKind": "pdf_rendition",
+            "renditionId": record.id,
+        }
+    is_image = (record.mime_type or "").startswith("image/")
+    if record.file_extension == ".pdf":
+        return {"previewStatus": "ready", "viewKind": "pdf"}
+    if record.file_extension not in CONVERTIBLE_EXTENSIONS and not is_image:
         return {"previewStatus": record.preview_status, "viewKind": _view_kind(record)}
-    # Attempt conversion via headless LibreOffice (best-effort).
-    converted = _try_docx_to_pdf(record)
+    converted = (
+        _try_image_to_pdf(record) if is_image else _try_office_to_pdf(record)
+    )
     return {
         "previewStatus": "ready" if converted else record.preview_status,
         "viewKind": "pdf_rendition" if converted else _view_kind(record),
@@ -285,15 +333,35 @@ def prepare_inline_view(record_id: str, principal) -> dict:
     }
 
 
-def _try_docx_to_pdf(record: EvidenceRecord) -> bool:
+def _save_rendition(record: EvidenceRecord, pdf_name: str) -> None:
+    record.pdf_rendition_storage_key = pdf_name
+    record.pdf_rendition_status = "ready"
+    record.preview_status = "ready"
+    record.pdf_rendition_at = timezone.now()
+    record.save(
+        update_fields=[
+            "pdf_rendition_storage_key",
+            "pdf_rendition_status",
+            "preview_status",
+            "pdf_rendition_at",
+        ]
+    )
+
+
+def _fail_rendition(record: EvidenceRecord, error: str) -> None:
+    record.preview_status = "failed"
+    record.pdf_rendition_error = error[:500]
+    record.save(update_fields=["preview_status", "pdf_rendition_error"])
+
+
+def _try_office_to_pdf(record: EvidenceRecord) -> bool:
+    """DOCX/DOC/XLSX/XLS/CSV → PDF via headless LibreOffice (best-effort)."""
     import shutil
     import subprocess
 
     soffice = shutil.which("soffice") or shutil.which("libreoffice")
     if not soffice:
-        record.preview_status = "failed"
-        record.pdf_rendition_error = "LibreOffice not installed"
-        record.save(update_fields=["preview_status", "pdf_rendition_error"])
+        _fail_rendition(record, "LibreOffice not installed")
         return False
     src = os.path.join(evidence_dir(), record.uri)
     out_dir = evidence_dir()
@@ -306,24 +374,34 @@ def _try_docx_to_pdf(record: EvidenceRecord) -> bool:
         )
         pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
         if os.path.exists(os.path.join(out_dir, pdf_name)):
-            record.pdf_rendition_storage_key = pdf_name
-            record.pdf_rendition_status = "ready"
-            record.preview_status = "ready"
-            record.pdf_rendition_at = timezone.now()
-            record.save(
-                update_fields=[
-                    "pdf_rendition_storage_key",
-                    "pdf_rendition_status",
-                    "preview_status",
-                    "pdf_rendition_at",
-                ]
-            )
+            _save_rendition(record, pdf_name)
             return True
     except Exception as exc:  # noqa: BLE001
-        record.preview_status = "failed"
-        record.pdf_rendition_error = str(exc)[:500]
-        record.save(update_fields=["preview_status", "pdf_rendition_error"])
+        _fail_rendition(record, str(exc))
     return False
+
+
+# Kept under its historical name for any external callers/tests.
+_try_docx_to_pdf = _try_office_to_pdf
+
+
+def _try_image_to_pdf(record: EvidenceRecord) -> bool:
+    """JPEG/PNG/WebP → single-page PDF via Pillow (best-effort). The image
+    keeps rendering natively in thumbnails; this provides the standardized
+    PDF view the evidence viewer offers for every document type."""
+    try:
+        from PIL import Image
+
+        src = os.path.join(evidence_dir(), record.uri)
+        pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
+        dest = os.path.join(evidence_dir(), pdf_name)
+        with Image.open(src) as img:
+            img.convert("RGB").save(dest, "PDF")
+        _save_rendition(record, pdf_name)
+        return True
+    except Exception as exc:  # noqa: BLE001
+        _fail_rendition(record, str(exc))
+        return False
 
 
 def rendition_for(record_id: str, principal):

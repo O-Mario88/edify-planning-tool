@@ -22,7 +22,7 @@
           class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-1.5 rounded-md px-2.5 py-1.5"
            style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
-        <span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">FY</span>
+        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">FY</span>
         <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
                 style="color:var(--edify-text);">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
@@ -30,7 +30,7 @@
       </div>
       <div class="flex items-center gap-1.5 rounded-md px-2.5 py-1.5"
            style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
-        <span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Activity</span>
+        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">Activity</span>
         <select name="activity_type" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
                 style="color:var(--edify-text);">
           <option value="">All</option>
@@ -40,7 +40,7 @@
           <option value="partner_activity" {% if filters.activity_type == 'partner_activity' %}selected{% endif %}>Partner</option>
         </select>
       </div>
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold"
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md edify-text-caption font-semibold"
             style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);color:var(--edify-text-muted);">
         <span class="h-1.5 w-1.5 rounded-full" style="background:var(--edify-success);"></span>{{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count }} schools
       </span>

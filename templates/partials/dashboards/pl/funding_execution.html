@@ -11,13 +11,13 @@
   <div class="flex-1 space-y-1.5">
     {% for b in funding_execution.statuses %}
     <div class="flex items-center justify-between">
-      <span style="font-size:11px;font-weight:500;color:var(--edify-text-muted);display:inline-flex;align-items:center;gap:6px;">
+      <span style="font-size: 12px;font-weight:500;color:var(--edify-text-muted);display:inline-flex;align-items:center;gap:6px;">
         <span class="rounded-full" style="height:8px;width:8px;background:{% if b.tone == 'success' %}var(--edify-success){% elif b.tone == 'info' %}var(--edify-info){% elif b.tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};"></span>{{ b.label }}
       </span>
-      <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--edify-text);">{{ b.count }} <span style="font-size:10px;font-weight:400;color:var(--edify-text-subtle);">({{ b.amount }})</span></span>
+      <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--edify-text);">{{ b.count }} <span style="font-size: 12px;font-weight:400;color:var(--edify-text-subtle);">({{ b.amount }})</span></span>
     </div>
     {% endfor %}
   </div>
 </div>
-<p style="font-size:11px;color:var(--edify-text-muted);">{{ funding_execution.disbursed_total }} / {{ funding_execution.approved_total }}</p>
-<a href="/disbursements" style="font-size:11px;font-weight:600;color:var(--edify-accent);margin-top:4px;display:block;">View finance dashboard &rarr;</a>
+<p style="font-size: 12px;color:var(--edify-text-muted);">{{ funding_execution.disbursed_total }} / {{ funding_execution.approved_total }}</p>
+<a href="/disbursements" style="font-size: 12px;font-weight:600;color:var(--edify-accent);margin-top:4px;display:block;">View finance dashboard &rarr;</a>

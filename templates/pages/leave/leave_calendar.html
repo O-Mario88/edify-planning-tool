@@ -16,8 +16,8 @@
   </div>
 
   <!-- Legend -->
-  <div class="flex flex-wrap items-center gap-6 p-4 bg-white border border-slate-100 rounded-lg shadow-sm text-[12px] font-semibold text-slate-600">
-    <span class="text-slate-400 font-bold uppercase tracking-wider text-[11px]">Legend:</span>
+  <div class="flex flex-wrap items-center gap-6 p-4 edify-surface border border-slate-100 rounded-lg shadow-sm text-[12px] font-semibold text-slate-600">
+    <span class="text-slate-400 font-bold uppercase tracking-wider edify-text-caption">Legend:</span>
     <div class="flex items-center gap-2">
       <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
       <span>Approved Leave</span>
@@ -33,7 +33,7 @@
   </div>
 
   <!-- Calendar Container -->
-  <div class="bg-white rounded-lg border border-slate-100 p-6 shadow-sm">
+  <div class="edify-surface rounded-lg border border-slate-100 p-6 shadow-sm">
     <div id="calendar" class="min-h-[600px] text-[13px] font-medium"></div>
   </div>
 
@@ -68,9 +68,9 @@
 <style>
   /* Custom FullCalendar premium styling fixes to match Edify dashboard theme */
   .fc .fc-button-primary {
-    background-color: #6366f1 !important;
-    border-color: #6366f1 !important;
-    font-size: 11px !important;
+    background-color: var(--edify-chart-blue) !important;
+    border-color: var(--edify-chart-blue) !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
@@ -78,33 +78,33 @@
     padding: 6px 12px !important;
   }
   .fc .fc-button-primary:hover {
-    background-color: #4f46e5 !important;
-    border-color: #4f46e5 !important;
+    background-color: var(--edify-chart-blue) !important;
+    border-color: var(--edify-chart-blue) !important;
   }
   .fc .fc-button-primary:disabled {
-    background-color: #cbd5e1 !important;
-    border-color: #cbd5e1 !important;
+    background-color: var(--edify-border) !important;
+    border-color: var(--edify-border) !important;
   }
   .fc .fc-toolbar-title {
     font-size: 16px !important;
     font-weight: 800 !important;
-    color: #1e293b !important;
+    color: var(--edify-text) !important;
   }
   .fc-theme-standard th {
-    background-color: #f8fafc !important;
-    border-color: #f1f5f9 !important;
+    background-color: var(--edify-surface-muted) !important;
+    border-color: var(--edify-surface-muted) !important;
     padding: 8px 0 !important;
-    font-size: 10px !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
-    color: #94a3b8 !important;
+    color: var(--edify-text-subtle) !important;
     letter-spacing: 0.05em !important;
   }
   .fc-theme-standard td, .fc-theme-standard th {
-    border-color: #f1f5f9 !important;
+    border-color: var(--edify-surface-muted) !important;
   }
   .fc .fc-daygrid-day.fc-day-today {
-    background-color: #f5f3ff !important;
+    background-color: var(--edify-purple-light) !important;
   }
 </style>
 {% endblock %}

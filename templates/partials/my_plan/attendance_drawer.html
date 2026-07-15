@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}Record attendance and headcount registers for {{ act.activity_type|title|replace_underscore }}{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/activities/{{ act.id }}/attendance/action"
 hx-encoding="multipart/form-data"
 hx-target="#attendance-errors"
@@ -15,29 +15,29 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 
 <div class="space-y-4">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">1</span>
 Record Participant Headcount
 </h4>
 
 <!-- Counts Grid -->
 <div class="grid grid-cols-2 gap-4">
 <div>
-<label for="teachers_attended" class="block text-[11px] font-bold text-slate-500 uppercase">Teachers Attended</label>
-<input 
-type="number" 
-name="teachers_attended" 
-id="teachers_attended" 
+<label for="teachers_attended" class="block edify-text-caption font-bold text-slate-500 uppercase">Teachers Attended</label>
+<input
+type="number"
+name="teachers_attended"
+id="teachers_attended"
 min="0"
 value="{{ act.teachers_attended|default:0 }}"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
 >
 </div>
 <div>
-<label for="leaders_attended" class="block text-[11px] font-bold text-slate-500 uppercase">Leaders/Proprietors</label>
-<input 
-type="number" 
-name="leaders_attended" 
-id="leaders_attended" 
+<label for="leaders_attended" class="block edify-text-caption font-bold text-slate-500 uppercase">Leaders/Proprietors</label>
+<input
+type="number"
+name="leaders_attended"
+id="leaders_attended"
 min="0"
 value="{{ act.leaders_attended|default:0 }}"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
@@ -47,12 +47,12 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 
 <!-- File Upload -->
 <div class="pt-2">
-<label for="attendance_file" class="block text-[11px] font-bold text-slate-500 uppercase">Upload Signed Attendance Sheet</label>
+<label for="attendance_file" class="block edify-text-caption font-bold text-slate-500 uppercase">Upload Signed Attendance Sheet</label>
 <div class="mt-1.5 p-3 bg-slate-50 rounded-xl border border-slate-200/60">
-<input 
-type="file" 
+<input
+type="file"
 name="attendance_file"
-class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 >
 </div>
 </div>
@@ -61,30 +61,30 @@ class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-l
 {% if cluster_schools %}
 <div class="pt-2 space-y-2">
 <div class="flex items-center justify-between">
-<label class="block text-[11px] font-bold text-slate-500 uppercase">School Attendance Checklist</label>
-<button 
+<label class="block edify-text-caption font-bold text-slate-500 uppercase">School Attendance Checklist</label>
+<button
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.cluster.id }}"
 hx-target="#drawer-container"
-class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5"
+class="edify-text-caption font-semibold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5"
 >
 + Onboard New School
 </button>
 </div>
-<p class="text-[11px] text-slate-400 font-semibold leading-relaxed">Check all schools that attended this training/meeting session:</p>
+<p class="edify-text-caption text-slate-400 font-semibold leading-relaxed">Check all schools that attended this training/meeting session:</p>
 <div class="border border-slate-200 rounded-xl divide-y divide-slate-100 bg-slate-50/50 max-h-48 overflow-y-auto">
 {% for school in cluster_schools %}
 <label class="flex items-center gap-3 px-4 py-2 hover:bg-slate-100/50 cursor-pointer text-[12px] font-semibold text-slate-700">
-<input 
-type="checkbox" 
-name="attended_schools" 
-value="{{ school.id }}" 
+<input
+type="checkbox"
+name="attended_schools"
+value="{{ school.id }}"
 {% if not act.attended_school_ids or school.id in act.attended_school_ids %}checked{% endif %}
 class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
 >
 <div class="flex-1">
 <span class="font-bold text-slate-800 block leading-tight">{{ school.name }}</span>
-<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
 </div>
 </label>
 {% endfor %}
@@ -94,10 +94,10 @@ class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
 
 <!-- Notes -->
 <div>
-<label for="notes" class="block text-[11px] font-bold text-slate-500 uppercase">Optional Notes</label>
-<textarea 
-name="notes" 
-id="notes" 
+<label for="notes" class="block edify-text-caption font-bold text-slate-500 uppercase">Optional Notes</label>
+<textarea
+name="notes"
+id="notes"
 rows="2"
 placeholder="Any additional details on attendance registration..."
 class="w-full p-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-semibold text-slate-700"
@@ -107,14 +107,14 @@ class="w-full p-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-5
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="edify-action-button secondary h-9 transition-colors"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="edify-action-button primary h-9 transition-colors shadow-sm"
 >

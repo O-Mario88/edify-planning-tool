@@ -12,25 +12,25 @@
 {% for log in logs %}
 <div class="relative">
 <!-- Icon marker -->
-<span class="absolute -left-[31px] top-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-white border-2 border-slate-200"></span>
+<span class="absolute -left-[31px] top-0.5 flex items-center justify-center w-4 h-4 rounded-full edify-surface border-2 border-slate-200"></span>
 
 <div class="space-y-1">
 <div class="flex items-center justify-between gap-4">
 <span class="text-[12px] font-semibold text-slate-800 capitalize">{{ log.action|replace_underscore }}</span>
-<span class="text-[11px] text-slate-400 font-semibold">{{ log.created_at|date:"M d, Y H:i" }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold">{{ log.created_at|date:"M d, Y H:i" }}</span>
 </div>
 
-<div class="text-[11px] text-slate-500 font-semibold leading-relaxed">
+<div class="edify-text-caption text-slate-500 font-semibold leading-relaxed">
 {{ log.reason|default:"No notes or details recorded." }}
 </div>
 
 {% if log.payload %}
-<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px] font-mono text-slate-500 overflow-x-auto mt-1 max-w-full">
+<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 edify-text-caption font-mono text-slate-500 overflow-x-auto mt-1 max-w-full">
 {{ log.payload }}
 </div>
 {% endif %}
 
-<div class="text-[11px] text-slate-400 font-semibold flex items-center gap-1 uppercase tracking-wider mt-1">
+<div class="edify-text-caption text-slate-400 font-semibold flex items-center gap-1 uppercase tracking-wider mt-1">
 <span>Actor:</span>
 <span class="text-slate-600">{{ log.actor_role|default:"System" }}</span>
 </div>
@@ -49,8 +49,8 @@
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="edify-action-button secondary h-9 transition-colors w-full"
 >

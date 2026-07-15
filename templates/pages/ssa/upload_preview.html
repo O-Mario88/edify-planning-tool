@@ -26,21 +26,21 @@ Confirm Import ({{ ready_count }} ready)
 
 <!-- Tabs Navigation -->
 <div class="flex border-b  gap-4">
-<button 
+<button
 @click="tab = 'ready'"
 class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
 :class="tab === 'ready' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-600'"
 >
 Ready to Import ({{ ready_count }})
 </button>
-<button 
+<button
 @click="tab = 'unmatched'"
 class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
 :class="tab === 'unmatched' ? 'border-amber-500 text-amber-500' : 'border-transparent text-slate-500 hover:text-slate-600'"
 >
 Unmatched School IDs ({{ unmatched_count }})
 </button>
-<button 
+<button
 @click="tab = 'blocked'"
 class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
 :class="tab === 'blocked' ? 'border-rose-600 text-rose-600' : 'border-transparent text-slate-500 hover:text-slate-600'"
@@ -50,7 +50,7 @@ Blocked Rows ({{ blocked_count }})
 </div>
 
 <!-- Tab Contents -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 
 <!-- Ready Tab -->
@@ -58,10 +58,10 @@ Blocked Rows ({{ blocked_count }})
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Row</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">School ID</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Date of SSA</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Average Score</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Row</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">School ID</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Date of SSA</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Average Score</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
@@ -71,7 +71,7 @@ Blocked Rows ({{ blocked_count }})
 <td class="px-4 py-3.5 text-slate-900 font-bold">ID: {{ r.school_id }}</td>
 <td class="px-4 py-3.5">{{ r.date_of_ssa }}</td>
 <td class="px-4 py-3.5">
-<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[11px] rounded font-bold">
+<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 edify-text-caption rounded font-bold">
 {{ r.scores.values|length }} scores parsed
 </span>
 </td>
@@ -90,10 +90,10 @@ Blocked Rows ({{ blocked_count }})
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Row</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Unknown School ID</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Date of SSA</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Message / Warning</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Row</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Unknown School ID</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Date of SSA</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Message / Warning</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
@@ -118,10 +118,10 @@ Blocked Rows ({{ blocked_count }})
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Row</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">School ID</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Date of SSA</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Errors</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Row</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">School ID</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Date of SSA</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400">Errors</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">

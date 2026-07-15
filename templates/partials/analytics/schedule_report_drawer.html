@@ -4,18 +4,18 @@
 {% block drawer_subtitle %}Configure automatic email notifications and reports export{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 x-data="{ frequency: 'weekly', email: 'director@edify.org' }"
 @submit.prevent="alert('Report delivery schedule updated! A sample preview has been sent to ' + email); $dispatch('close-drawer');"
 class="space-y-4 text-[12px] "
 >
 <div class="space-y-1">
 <label class="block font-bold text-slate-700">Recipient Email Address</label>
-<input 
-type="email" 
+<input
+type="email"
 x-model="email"
 required
-class="w-full bg-slate-50  rounded-lg p-2 text-slate-700 focus:bg-white focus:outline-none"
+class="w-full bg-slate-50  rounded-lg p-2 text-slate-700 edify-focus-surface focus:outline-none"
 >
 </div>
 
@@ -32,11 +32,11 @@ class="w-full bg-slate-50  rounded-lg p-2 text-slate-700 focus:bg-white focus:ou
 <label class="block font-bold text-slate-700">Output Format</label>
 <div class="flex items-center gap-4 mt-1">
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="radio" name="format" value="pdf" checked class="accent-[#2e505f]">
+<input type="radio" name="format" value="pdf" checked class="accent-[var(--edify-primary)]">
 <span>Audited PDF Document</span>
 </label>
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="radio" name="format" value="csv" class="accent-[#2e505f]">
+<input type="radio" name="format" value="csv" class="accent-[var(--edify-primary)]">
 <span>Raw Excel/CSV Sheet</span>
 </label>
 </div>
@@ -46,19 +46,19 @@ class="w-full bg-slate-50  rounded-lg p-2 text-slate-700 focus:bg-white focus:ou
 <label class="block font-bold text-slate-700">Include Analytics Categories</label>
 <div class="grid grid-cols-2 gap-2">
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="checkbox" checked class="accent-[#2e505f]">
+<input type="checkbox" checked class="accent-[var(--edify-primary)]">
 <span>Target Achievement</span>
 </label>
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="checkbox" checked class="accent-[#2e505f]">
+<input type="checkbox" checked class="accent-[var(--edify-primary)]">
 <span>Trained Counts</span>
 </label>
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="checkbox" checked class="accent-[#2e505f]">
+<input type="checkbox" checked class="accent-[var(--edify-primary)]">
 <span>SSA Performance</span>
 </label>
 <label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="checkbox" class="accent-[#2e505f]">
+<input type="checkbox" class="accent-[var(--edify-primary)]">
 <span>Staff Performance</span>
 </label>
 </div>
@@ -66,14 +66,14 @@ class="w-full bg-slate-50  rounded-lg p-2 text-slate-700 focus:bg-white focus:ou
 
 <!-- Action buttons -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >

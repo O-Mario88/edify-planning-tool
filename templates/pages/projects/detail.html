@@ -9,7 +9,7 @@
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2 mb-0.5">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
 Project
 </span>
 <h1 class="text-[21px] font-extrabold tracking-tight leading-tight">{{ project.name }}</h1>
@@ -32,7 +32,7 @@ Project
 <div class="card overflow-hidden">
 <div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
-<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
+<span class="px-2.5 py-0.5 rounded-full edify-text-caption font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
 </div>
 
 <div class="divide-y divide-[var(--edify-border)]">
@@ -65,11 +65,11 @@ View Profile
 <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight mb-4">Project Details</h3>
 <div class="space-y-4">
 <div>
-<p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Project Name</p>
+<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">Project Name</p>
 <p class="text-[14px] font-semibold text-slate-800">{{ project.name }}</p>
 </div>
 <div>
-<p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Description</p>
+<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">Description</p>
 <p class="text-[14px] font-medium text-slate-600 leading-relaxed">Special initiative to track progress and interventions across a selected cohort of schools.</p>
 </div>
 </div>

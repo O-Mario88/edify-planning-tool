@@ -8,13 +8,13 @@
 <div class="space-y-5 text-[12px] font-semibold text-slate-700 ">
 
 <div class="space-y-2">
-<p class="text-[11px] uppercase font-bold text-slate-400">Activity Items ({{ lines|length }})</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Activity Items ({{ lines|length }})</p>
 
 {% if lines %}
 <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-<table class="w-full text-left text-[12px] border-collapse bg-white">
+<table class="w-full text-left text-[12px] border-collapse edify-surface">
 <thead>
-<tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<tr class="bg-slate-50 border-b border-slate-200 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <th class="px-4 py-2.5">Activity Type</th>
 <th class="px-3 py-2.5">Entity / Location</th>
 <th class="px-3 py-2.5 text-center">Planned Date</th>
@@ -28,7 +28,7 @@
 <td class="px-4 py-3 font-semibold text-slate-800 capitalize">
 {{ line.activity.activity_type|replace_underscore }}
 {% if line.activity.salesforce_activity_id %}
-<p class="text-[11px] font-bold text-slate-400 mt-1">SF ID: {{ line.activity.salesforce_activity_id }}</p>
+<p class="edify-text-caption font-bold text-slate-400 mt-1">SF ID: {{ line.activity.salesforce_activity_id }}</p>
 {% endif %}
 </td>
 <td class="px-3 py-3 font-bold text-slate-700">
@@ -44,11 +44,11 @@
 {{ line.activity.planned_date|date:"M j, Y"|default:"Unscheduled" }}
 </td>
 <td class="px-3 py-3 text-center">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase bg-blue-50 text-blue-700 border border-blue-200">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase bg-blue-50 text-blue-700 border border-blue-200">
 {{ line.activity.status|replace_underscore }}
 </span>
 </td>
-<td class="px-4 py-3 text-right font-semibold text-[#2e505f]">{{ line.amount|ugx }}</td>
+<td class="px-4 py-3 text-right font-semibold text-[var(--edify-primary)]">{{ line.amount|ugx }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -63,7 +63,7 @@ No scheduled activity records exist in this category for the selected month.
 
 <!-- Footer Actions -->
 <div class="drawer-footer flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
-<button 
+<button
 type="button"
 @click="$dispatch('close-drawer')"
 class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"

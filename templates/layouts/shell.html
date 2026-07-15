@@ -4,34 +4,34 @@
 
 {% block content %}
 <a href="#main-content" class="edify-skip-link">Skip to main content</a>
-<div 
-x-data="{ sidebarOpen: false, userMenuOpen: false, collapsed: false }" 
+<div
+x-data="{ sidebarOpen: false, userMenuOpen: false, collapsed: false }"
 @keydown.escape.window="sidebarOpen = false; userMenuOpen = false"
 class="edify-shell h-full flex overflow-hidden"
 >
 <!-- Off-canvas mobile menu -->
-<div 
-x-show="sidebarOpen" 
+<div
+x-show="sidebarOpen"
 class="lg:hidden fixed inset-0 flex z-40"
 style="display: none;"
-role="dialog" 
+role="dialog"
 aria-modal="true"
 aria-label="Primary navigation"
 >
-<div 
-x-show="sidebarOpen" 
+<div
+x-show="sidebarOpen"
 x-transition:enter="transition-opacity ease-linear duration-300"
 x-transition:enter-start="opacity-0"
 x-transition:enter-end="opacity-100"
 x-transition:leave="transition-opacity ease-linear duration-300"
 x-transition:leave-start="opacity-100"
 x-transition:leave-end="opacity-0"
-class="fixed inset-0 bg-slate-600/75 backdrop-blur-sm" 
+class="fixed inset-0 bg-slate-600/75 backdrop-blur-sm"
 @click="sidebarOpen = false"
 aria-hidden="true"
 ></div>
 
-<div 
+<div
 x-show="sidebarOpen"
 x-transition:enter="transition ease-in-out duration-300 transform"
 x-transition:enter-start="-translate-x-full"
@@ -43,10 +43,10 @@ class="app-sidebar relative flex-1 flex flex-col max-w-xs w-full text-slate-100"
 style="height: 100%;"
 >
 <div class="absolute top-0 right-0 -mr-12 pt-2">
-<button 
-type="button" 
+<button
+type="button"
 x-ref="mobileSidebarClose"
-class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" 
+class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
 @click="sidebarOpen = false"
 >
 <span class="sr-only">Close sidebar</span>
@@ -62,7 +62,7 @@ class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outlin
 </div>
 
 <!-- Desktop Static Sidebar -->
-<aside 
+<aside
 class="app-sidebar hidden lg:flex"
 :class="collapsed ? 'app-sidebar--collapsed' : ''"
 >
@@ -74,8 +74,8 @@ class="app-sidebar hidden lg:flex"
 <!-- Topbar -->
 <header class="edify-topbar shrink-0 relative z-10">
 <div class="flex items-center gap-4 flex-1">
-<button 
-type="button" 
+<button
+type="button"
 class="lg:hidden h-9 w-9 flex items-center justify-center rounded-lg focus:outline-none"
 style="color:var(--edify-text-muted);"
 @click="sidebarOpen = true; $nextTick(() => $refs.mobileSidebarClose?.focus())"
@@ -169,19 +169,19 @@ style="background:var(--edify-primary);"
 <span>{{ request.user.name|avatar_initials }}</span>
 </button>
 
-<div 
-x-show="open" 
-@click.outside="open = false" 
+<div
+x-show="open"
+@click.outside="open = false"
 class="absolute right-0 mt-2 w-56 rounded-xl shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
 style="display: none; background:var(--edify-surface); border:1px solid var(--edify-border);"
 >
 <div class="px-4 py-2" style="border-bottom:1px solid var(--edify-border);">
 <p class="font-semibold" style="color:var(--edify-text);">{{ request.user.name|default:"District Admin" }}</p>
-<p class="text-[11px] font-semibold truncate" style="color:var(--edify-text-muted);">{{ request.user.email|default:"admin@district.edify.org" }}</p>
+<p class="edify-text-caption font-semibold truncate" style="color:var(--edify-text-muted);">{{ request.user.email|default:"admin@district.edify.org" }}</p>
 </div>
 
 {% if request.user.role_enums|length > 1 %}
-<div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider" style="background:var(--edify-surface-muted); color:var(--edify-text-subtle);">Switch Active Role</div>
+<div class="px-3 py-1 edify-text-caption font-bold uppercase tracking-wider" style="background:var(--edify-surface-muted); color:var(--edify-text-subtle);">Switch Active Role</div>
 {% for r in request.user.role_enums %}
 <form action="/auth/switch-role" method="post" class="m-0">
 {% csrf_token %}

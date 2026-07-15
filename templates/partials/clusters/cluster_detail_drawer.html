@@ -8,13 +8,13 @@
 <!-- Logistics Card -->
 <div class="p-4 bg-slate-50/50 rounded-xl border border-slate-100 grid grid-cols-2 gap-4">
 <div>
-<span class="block text-[11px] uppercase tracking-wider text-slate-400">District / Sub-county</span>
+<span class="block edify-text-caption uppercase tracking-wider text-slate-400">District / Sub-county</span>
 <span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">
 {{ cluster.district.name|default:"Unknown" }} · {{ cluster.subCounty.name|default:"Unknown" }}
 </span>
 </div>
 <div>
-<span class="block text-[11px] uppercase tracking-wider text-slate-400">Assigned Coordinator</span>
+<span class="block edify-text-caption uppercase tracking-wider text-slate-400">Assigned Coordinator</span>
 <span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">
 {{ cluster.assignedStaff|default:"Unassigned" }}
 </span>
@@ -24,25 +24,25 @@
 <!-- Summary stats -->
 <div class="grid grid-cols-2 gap-3 text-center">
 <div class="p-3 bg-blue-50/40 border border-blue-100 rounded-xl">
-<span class="text-[11px] uppercase font-bold text-blue-600 block">Schools Enrolled</span>
+<span class="edify-text-caption uppercase font-bold text-blue-600 block">Schools Enrolled</span>
 <span class="text-[20px] font-semibold text-blue-800 block mt-1">{{ cluster.schoolCount }}</span>
 </div>
 <div class="p-3 bg-emerald-50/40 border border-emerald-100 rounded-xl flex flex-col justify-center items-center">
-<span class="text-[11px] uppercase font-bold text-emerald-600 block leading-none">Status</span>
+<span class="edify-text-caption uppercase font-bold text-emerald-600 block leading-none">Status</span>
 <span class="text-[14px] font-semibold text-emerald-700 block mt-1.5 leading-none capitalize">{{ cluster.status }}</span>
 </div>
 </div>
 
 <!-- Sticky footer actions -->
 <div class="drawer-footer mt-6">
-<button 
-type="button" 
-@click="$dispatch('close-drawer')" 
+<button
+type="button"
+@click="$dispatch('close-drawer')"
 class="edify-action-button secondary h-9 transition-colors"
 >
 Close Details
 </button>
-<button 
+<button
 hx-get="/clusters/planner-drawer?cluster_id={{ cluster.id }}&fixed_cluster=true"
 hx-target="#drawer-container"
 hx-swap="innerHTML"

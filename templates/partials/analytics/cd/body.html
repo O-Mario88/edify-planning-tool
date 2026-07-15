@@ -4,7 +4,7 @@
   {# ── KPI strip: 10 country-health cards ───────────────────────────────── #}
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
     {% for k in kpi_strip_items %}
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 block">
+    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 block">
       <div class="flex items-start justify-between">
         <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50 text-blue-600
@@ -18,9 +18,9 @@
           {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
         </div>
       </div>
-      <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 mt-2.5 leading-tight">{{ k.label }}</p>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mt-2.5 leading-tight">{{ k.label }}</p>
       <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
-      <p class="text-[10px] font-semibold text-slate-400 mt-0.5">{{ k.helper }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ k.helper }}</p>
     </div>
     {% endfor %}
   </div>

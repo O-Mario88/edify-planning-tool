@@ -4,14 +4,14 @@
 <tr id="cost-setting-row-{{ c.key }}" class="bg-indigo-50/50">
 <td class="px-4 py-3 font-bold text-slate-800 align-middle">
 {{ c.label }}
-<span class="block text-[11px] text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
+<span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
 <td class="px-4 py-3 align-middle" colspan="2">
 <form hx-post="/cost-settings/row/{{ c.key }}" hx-target="#cost-setting-row-{{ c.key }}" hx-swap="outerHTML" class="m-0 flex items-center gap-2">
 {% csrf_token %}
 <div class="relative rounded-lg shadow-sm max-w-[155px]">
 <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-<span class="text-[11px] font-bold text-slate-400">UGX</span>
+<span class="edify-text-caption font-bold text-slate-400">UGX</span>
 </div>
 <input
 type="text"
@@ -22,7 +22,7 @@ class="block w-full h-8 pl-9 pr-2 rounded-lg border border-indigo-200 text-[12px
 >
 </div>
 
-<button type="submit" class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold flex items-center justify-center transition-colors">
+<button type="submit" class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white edify-text-caption font-semibold flex items-center justify-center transition-colors">
 Save
 </button>
 <button
@@ -30,7 +30,7 @@ type="button"
 hx-get="/cost-settings/row/{{ c.key }}?mode=view"
 hx-target="#cost-setting-row-{{ c.key }}"
 hx-swap="outerHTML"
-class="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-[11px] font-bold flex items-center justify-center transition-colors"
+class="h-8 px-3 rounded-lg border border-slate-200 edify-surface hover:bg-slate-50 text-slate-600 edify-text-caption font-bold flex items-center justify-center transition-colors"
 >
 Cancel
 </button>
@@ -41,7 +41,7 @@ Cancel
 <tr id="cost-setting-row-{{ c.key }}" class="hover:bg-slate-50/60 transition-colors">
 <td class="px-4 py-3 font-bold text-slate-800 align-middle">
 {{ c.label }}
-<span class="block text-[11px] text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
+<span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
 <td class="px-4 py-3 font-semibold text-indigo-600 align-middle">
 UGX {{ c.unit_cost|currency }}
@@ -51,7 +51,7 @@ UGX {{ c.unit_cost|currency }}
 hx-get="/cost-settings/row/{{ c.key }}?mode=edit"
 hx-target="#cost-setting-row-{{ c.key }}"
 hx-swap="outerHTML"
-class="h-7 px-2.5 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50 text-[11px] font-bold text-slate-600 flex items-center justify-center gap-1 transition-colors ml-auto"
+class="h-7 px-2.5 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50 edify-text-caption font-bold text-slate-600 flex items-center justify-center gap-1 transition-colors ml-auto"
 >
 <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />

@@ -15,7 +15,18 @@ from . import services
 
 UPLOAD = [Permission.ACTIVITY_COMPLETE.value]
 REVIEW = [Permission.EVIDENCE_REVIEW.value]
-VIEW = [Permission.PLANNING_VIEW.value]
+# Read access is any-of (RequirePermissions semantics): field roles hold
+# PLANNING_VIEW, IA holds EVIDENCE_REVIEW, the Accountant holds PAYMENT_ACT.
+# IA previously 403'd here, which is what pushed templates into linking raw
+# /uploads/ paths that bypassed authorization entirely — never re-narrow this
+# without fixing every template link. Object-level scope (including the
+# Accountant's finance-only restriction) is enforced in services.file_for /
+# list_for_activity, not here.
+VIEW = [
+    Permission.PLANNING_VIEW.value,
+    Permission.EVIDENCE_REVIEW.value,
+    Permission.PAYMENT_ACT.value,
+]
 
 
 class EvidenceUploadView(APIView):

@@ -34,14 +34,14 @@
     {% if required == 'true' %}required{% endif %}
     {% if autofocus == 'true' %}autofocus{% endif %}
     {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
-    class="w-full h-9 px-3 rounded-[6px] border bg-white text-[14px] text-slate-800 placeholder-slate-400 outline-none transition-colors
+    class="w-full h-9 px-3 rounded-[6px] border edify-surface text-[14px] text-slate-800 placeholder-slate-400 outline-none transition-colors
            {% if error %}border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100
            {% else %}border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100{% endif %}
            {{ extra_attrs|default:'' }}"
   />
   {% if error %}
-    <p class="text-[11px] font-semibold text-rose-600">{{ error }}</p>
+    <p class="edify-text-caption font-semibold text-rose-600">{{ error }}</p>
   {% elif hint %}
-    <p class="text-[11px] font-medium text-slate-400">{{ hint }}</p>
+    <p class="edify-text-caption font-medium text-slate-400">{{ hint }}</p>
   {% endif %}
 </div>

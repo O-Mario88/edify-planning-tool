@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
 Traceability Ledger
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Finance Approval History</h1>
@@ -20,10 +20,10 @@ Audit trail of fund requests routing through PL, CD, RVP, and accountant sign-of
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Fund Request / ID</th>
 <th class="px-6 py-4 text-left">Submitted By</th>
@@ -41,7 +41,7 @@ Audit trail of fund requests routing through PL, CD, RVP, and accountant sign-of
 <!-- ID -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-900 text-[12px]">Request: {{ req.week_start_date|date:"Y-\WW" }}</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">Amount: {{ req.total_amount }} UGX</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">Amount: {{ req.total_amount }} UGX</div>
 </td>
 <!-- Owner -->
 <td class="px-6 py-4">
@@ -61,13 +61,13 @@ Audit trail of fund requests routing through PL, CD, RVP, and accountant sign-of
 </td>
 <!-- Status -->
 <td class="px-6 py-4 text-center">
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white border border-slate-950">
+<span class="px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-slate-900 text-white border border-slate-950">
 {{ req.status|title }}
 </span>
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
-<a href="/accounts/weekly-requests/" class="h-8 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 hover:text-slate-800 text-[11px] font-semibold flex items-center justify-center transition-colors border border-slate-200/60 shadow-sm">
+<a href="/accounts/weekly-requests/" class="h-8 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 hover:text-slate-800 edify-text-caption font-semibold flex items-center justify-center transition-colors border border-slate-200/60 shadow-sm">
 Review Request
 </a>
 </td>

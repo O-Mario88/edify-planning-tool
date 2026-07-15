@@ -1,18 +1,18 @@
 <div class="space-y-6 text-slate-700 select-none">
 
 <!-- Card A: Core Planning Rules -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
 <div class="flex flex-col items-center text-center pb-3 border-b border-slate-100 space-y-3">
 <!-- Large Brand Shield Icon -->
-<div class="h-16 w-16 rounded-full bg-[#2e505f]/5 border border-[#2e505f]/15 flex items-center justify-center text-[#2e505f] shadow-inner">
-<svg class="h-8 w-8 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<div class="h-16 w-16 rounded-full bg-[var(--edify-primary)]/5 border border-[var(--edify-primary)]/15 flex items-center justify-center text-[var(--edify-primary)] shadow-inner">
+<svg class="h-8 w-8 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
 </svg>
 </div>
 <h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Core Planning Rules</h3>
 </div>
 
-<ul class="space-y-3 text-[11px] font-bold text-slate-500 leading-relaxed">
+<ul class="space-y-3 edify-text-caption font-bold text-slate-500 leading-relaxed">
 <li class="flex items-start gap-2.5">
 <span class="text-emerald-500 font-semibold shrink-0 text-[12px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
 <span>Every core school requires 4 Visits + 4 Trainings per FY.</span>
@@ -28,14 +28,14 @@
 </ul>
 
 <div class="pt-2.5 border-t border-slate-100">
-<a href="/help" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider hover:underline block text-center transition-colors">
+<a href="/help" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 uppercase tracking-wider hover:underline block text-center transition-colors">
 View Full Guidelines
 </a>
 </div>
 </div>
 
 <!-- Card B: Attention Needed -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <div class="flex items-center gap-2">
 <div class="h-7 w-7 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
@@ -45,14 +45,14 @@ View Full Guidelines
 </div>
 <h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Attention Needed</h3>
 </div>
-<span class="px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-150 text-rose-700 text-[11px] font-semibold shadow-2xs">{{ reco_data.attention_count }}</span>
+<span class="px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-150 text-rose-700 edify-text-caption font-semibold shadow-2xs">{{ reco_data.attention_count }}</span>
 </div>
 
 <div class="divide-y divide-slate-100 max-h-[290px] overflow-y-auto pr-0.5 scrollbar-thin">
 {% for school in reco_data.attention_needed %}
 <div class="py-3 space-y-1 hover:bg-slate-50/30 transition-colors rounded-lg px-1">
 <p class="text-[12px] font-semibold text-slate-800 leading-tight">{{ school.name }}</p>
-<p class="text-[11px] text-rose-600 font-bold flex items-center gap-1.5">
+<p class="edify-text-caption text-rose-600 font-bold flex items-center gap-1.5">
 <span class="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
 <span>
 {% if school.visits_missing > 0 %}{{ school.visits_missing }} visits{% endif %}
@@ -62,7 +62,7 @@ View Full Guidelines
 </p>
 </div>
 {% empty %}
-<div class="py-6 text-center text-[11px] text-slate-400 font-semibold">
+<div class="py-6 text-center edify-text-caption text-slate-400 font-semibold">
 All schools have full support planned.
 </div>
 {% endfor %}
@@ -70,7 +70,7 @@ All schools have full support planned.
 </div>
 
 <!-- Card C: Recommended Strategy -->
-<div class="bg-white rounded-xl border border-emerald-100 p-5 shadow-sm space-y-3 hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-xl border border-emerald-100 p-5 shadow-sm space-y-3 hover:shadow-md transition-shadow">
 <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
 <div class="h-7 w-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
@@ -79,11 +79,11 @@ All schools have full support planned.
 </div>
 <p class="text-[12px] text-slate-600 font-medium leading-relaxed">{{ reco_data.recommended_strategy }}</p>
 <button type="button" hx-get="/core-schools/strategy-playbook" hx-target="#drawer-container" hx-swap="innerHTML"
-        class="w-full h-9 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-[11.5px] font-bold hover:bg-emerald-100 transition-colors">View Strategy Playbook</button>
+        class="w-full h-9 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 edify-text-caption font-bold hover:bg-emerald-100 transition-colors">View Strategy Playbook</button>
 </div>
 
 <!-- Card D: Next Action -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-3 hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-xl border border-slate-100 p-5 shadow-sm space-y-3 hover:shadow-md transition-shadow">
 <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
 <div class="h-7 w-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -92,14 +92,14 @@ All schools have full support planned.
 </div>
 <div class="space-y-2">
 {% for na in reco_data.next_actions %}
-<a href="{{ na.url }}" class="flex items-start gap-2 text-[11.5px] font-semibold text-slate-600 hover:text-blue-700 transition-colors">
+<a href="{{ na.url }}" class="flex items-start gap-2 edify-text-caption font-semibold text-slate-600 hover:text-blue-700 transition-colors">
 <span class="mt-1 h-3.5 w-3.5 rounded-full border-2 border-slate-300 shrink-0"></span>{{ na.label }}
 </a>
 {% empty %}
-<p class="text-[11px] text-slate-400 font-semibold">Every core package is fully planned — nothing waiting.</p>
+<p class="edify-text-caption text-slate-400 font-semibold">Every core package is fully planned — nothing waiting.</p>
 {% endfor %}
 </div>
-<a href="/my-plan" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11.5px] font-bold transition-colors flex items-center justify-center gap-1.5">Go to My Plan <span>&rarr;</span></a>
+<a href="/my-plan" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold transition-colors flex items-center justify-center gap-1.5">Go to My Plan <span>&rarr;</span></a>
 </div>
 
 <!-- Card E: System Note -->
@@ -108,9 +108,9 @@ All schools have full support planned.
 <svg class="h-4 w-4 text-slate-500 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3m0 0l3 3m-3-3v12" />
 </svg>
-<h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">System Note</h4>
+<h4 class="edify-text-caption font-semibold uppercase tracking-wider text-slate-500">System Note</h4>
 </div>
-<p class="text-[11px] text-slate-400 font-semibold leading-relaxed">
+<p class="edify-text-caption text-slate-400 font-semibold leading-relaxed">
 All core activities are synced to My Plan in real time.
 </p>
 </div>

@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}Complete and submit evidence for {{ act.activityType|title|replace_underscore }}{% if act.school %} @ {{ act.school.name }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/my-plan/{{ act.id }}/complete"
 hx-encoding="multipart/form-data"
 hx-target="#complete-errors"
@@ -16,30 +16,30 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 <!-- Step 1: Upload Evidence -->
 <div class="space-y-2.5">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">1</span>
 Upload Verification Evidence
 </h4>
-<p class="text-[11px] text-slate-500 font-semibold leading-normal">
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
 Upload a photo of the meeting, participant list, stamp, or report. This is required to complete verification.
 </p>
 
 <div class="mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
-<input 
-type="file" 
+<input
+type="file"
 name="evidence_file"
-class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 >
 </div>
 
 <!-- Listed uploaded evidence files if any exist -->
 {% if evidence_list %}
 <div class="space-y-1.5 pt-2">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
+<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
 <div class="space-y-1">
 {% for ev in evidence_list %}
-<div class="flex items-center justify-between text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-2">
+<div class="flex items-center justify-between edify-text-caption bg-slate-50 border border-slate-100 rounded-lg p-2">
 <span class="font-bold text-slate-700 truncate max-w-[200px]">{{ ev.original_name }}</span>
-<span class="text-[11px] text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
 </div>
 {% endfor %}
 </div>
@@ -51,10 +51,10 @@ class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-l
 <hr class="border-slate-100">
 <div class="space-y-3" x-data="{ ssaCollected: true }">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#3b82f6] text-white text-[11px] font-bold">1.5</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--edify-chart-blue)] text-white edify-text-caption font-bold">1.5</span>
 SSA Assessment Collection
 </h4>
-<p class="text-[11px] text-slate-500 font-semibold leading-normal">
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
 An SSA baseline collection was expected for this activity. Please enter the scores below or select a reason if you were unable to collect it.
 </p>
 
@@ -71,19 +71,19 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 
 <!-- SSA Scores Grid (data-driven from SsaIntervention enum) -->
 <div x-show="ssaCollected" class="bg-slate-50 p-4 rounded-xl grid grid-cols-2 gap-3 mt-2">
-<p class="col-span-2 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Intervention Scores (0 - 10)</p>
+<p class="col-span-2 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Intervention Scores (0 - 10)</p>
 {% for code, label in interventions %}
 <div>
-<label class="block text-[11px] font-semibold text-slate-600">{{ label }}</label>
-<input type="number" step="0.1" min="0" max="10" name="score_{{ code }}" class="w-full h-8 px-2 rounded-md border border-slate-200 text-[12px] bg-white mt-1">
+<label class="block edify-text-caption font-semibold text-slate-600">{{ label }}</label>
+<input type="number" step="0.1" min="0" max="10" name="score_{{ code }}" class="w-full h-8 px-2 rounded-md border border-slate-200 text-[12px] edify-surface mt-1">
 </div>
 {% endfor %}
 </div>
 
 <!-- SSA Bypass Reason -->
 <div x-show="!ssaCollected" class="bg-rose-50 p-4 rounded-xl border border-rose-200 mt-2 space-y-2">
-<label for="ssa_not_collected_reason" class="block text-[11px] font-bold uppercase text-rose-800">Reason for not collecting SSA</label>
-<select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="w-full h-10 px-3 rounded-lg border border-rose-200 bg-white text-[12px] focus:outline-none">
+<label for="ssa_not_collected_reason" class="block edify-text-caption font-bold uppercase text-rose-800">Reason for not collecting SSA</label>
+<select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="w-full h-10 px-3 rounded-lg border border-rose-200 edify-surface text-[12px] focus:outline-none">
 <option value="">-- Choose reason --</option>
 <option value="School leader unavailable">School leader unavailable</option>
 <option value="Assessment not completed">Assessment not completed</option>
@@ -101,16 +101,16 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 <!-- Step 2: Finalize Completion -->
 <div class="space-y-4">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">2</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">2</span>
 Finalize details
 </h4>
 
 <!-- Salesforce ID -->
 <div>
-<label for="salesforce_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Salesforce Activity ID</label>
-<input 
-type="text" 
-name="salesforce_id" 
+<label for="salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce Activity ID</label>
+<input
+type="text"
+name="salesforce_id"
 id="salesforce_id"
 required
 placeholder="e.g. SV-11223344 or TS-998877"
@@ -123,9 +123,9 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
      it does not close accountability itself (see advance_service.approve_accountability). -->
 {% if needs_netsuite_id %}
 <div class="space-y-3 p-3 rounded-lg bg-amber-50/40 border border-amber-100">
-<p class="text-[11px] text-slate-500 font-semibold">This activity was disbursed{% if disbursed_amount %} (UGX {{ disbursed_amount }}){% endif %} and requires accountability before the Accountant can clear it.</p>
+<p class="edify-text-caption text-slate-500 font-semibold">This activity was disbursed{% if disbursed_amount %} (UGX {{ disbursed_amount }}){% endif %} and requires accountability before the Accountant can clear it.</p>
 <div>
-<label for="netsuite_id" class="block text-[11px] font-bold uppercase tracking-wider text-amber-600">NetSuite Expense ID <span class="text-rose-500">*</span></label>
+<label for="netsuite_id" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-600">NetSuite Expense ID <span class="text-rose-500">*</span></label>
 <input
 type="text"
 name="netsuite_id"
@@ -138,7 +138,7 @@ class="w-full h-10 px-3 rounded-lg border border-amber-200 text-[12px] mt-1 bg-a
 </div>
 <div class="grid grid-cols-2 gap-3">
 <div>
-<label for="amount_spent" class="block text-[11px] font-bold uppercase tracking-wider text-amber-600">Amount Spent (UGX) <span class="text-rose-500">*</span></label>
+<label for="amount_spent" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-600">Amount Spent (UGX) <span class="text-rose-500">*</span></label>
 <input
 type="number"
 name="amount_spent"
@@ -150,7 +150,7 @@ class="w-full h-10 px-3 rounded-lg border border-amber-200 text-[12px] mt-1 bg-a
 >
 </div>
 <div>
-<label for="amount_returned" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Amount Returned (UGX)</label>
+<label for="amount_returned" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Amount Returned (UGX)</label>
 <input
 type="number"
 name="amount_returned"
@@ -162,7 +162,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 </div>
 </div>
 <div>
-<label for="variance_note" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Variance Explanation <span class="text-slate-300 normal-case">(required if spend + returned ≠ disbursed)</span></label>
+<label for="variance_note" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Variance Explanation <span class="text-slate-300 normal-case">(required if spend + returned ≠ disbursed)</span></label>
 <textarea name="variance_note" id="variance_note" rows="2"
 placeholder="Explain any difference between disbursed and accounted amounts"
 class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
@@ -174,10 +174,10 @@ class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 {% if act.activityType == 'training' or act.activityType == 'cluster_training' or act.activityType == 'cluster_meeting' or act.activityType == 'core_training' %}
 <div class="grid grid-cols-2 gap-4">
 <div>
-<label for="teachers_attended" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Teachers Attended <span class="text-rose-500">*</span></label>
-<input 
-type="number" 
-name="teachers_attended" 
+<label for="teachers_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Teachers Attended <span class="text-rose-500">*</span></label>
+<input
+type="number"
+name="teachers_attended"
 id="teachers_attended"
 min="0"
 value="{{ act.teachersAttended|default:0 }}"
@@ -185,10 +185,10 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 >
 </div>
 <div>
-<label for="leaders_attended" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Leaders Attended <span class="text-rose-500">*</span></label>
-<input 
-type="number" 
-name="leaders_attended" 
+<label for="leaders_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Leaders Attended <span class="text-rose-500">*</span></label>
+<input
+type="number"
+name="leaders_attended"
 id="leaders_attended"
 min="0"
 value="{{ act.leadersAttended|default:0 }}"
@@ -201,24 +201,24 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 {% if cluster_schools %}
 <div class="space-y-2 mt-4" x-data="{ openDropdown: false }">
 <div class="flex items-center justify-between">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Attendance Checklist</label>
-<button 
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Attendance Checklist</label>
+<button
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.clusterId }}"
 hx-target="#drawer-container"
-class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+class="edify-text-caption font-semibold text-blue-600 hover:text-blue-800 hover:underline"
 >
 + Onboard New School
 </button>
 </div>
-<p class="text-[11px] text-slate-400 font-semibold leading-relaxed">Select which schools from the cluster were present at the session.</p>
+<p class="edify-text-caption text-slate-400 font-semibold leading-relaxed">Select which schools from the cluster were present at the session.</p>
 
 <!-- Dropdown Trigger Button -->
 <div class="relative">
-<button 
+<button
 type="button"
 @click="openDropdown = !openDropdown"
-class="w-full h-10 px-4 rounded-lg border border-slate-200 bg-white text-left text-[12px] font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
+class="w-full h-10 px-4 rounded-lg border border-slate-200 edify-surface text-left text-[12px] font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
 >
 <span>Click to view/select schools</span>
 <svg class="h-4 w-4 text-slate-400 transition-transform" :class="openDropdown ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -227,25 +227,25 @@ class="w-full h-10 px-4 rounded-lg border border-slate-200 bg-white text-left te
 </button>
 
 <!-- Collapsible Checklist Dropdown -->
-<div 
+<div
 x-show="openDropdown"
 @click.away="openDropdown = false"
-class="absolute left-0 right-0 mt-1 z-20 border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white shadow-lg max-h-48 overflow-y-auto"
+class="absolute left-0 right-0 mt-1 z-20 border border-slate-200 rounded-xl divide-y divide-slate-100 edify-surface shadow-lg max-h-48 overflow-y-auto"
 x-transition
 x-cloak
 >
 {% for school in cluster_schools %}
 <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">
-<input 
-type="checkbox" 
-name="attended_school_ids" 
-value="{{ school.id }}" 
+<input
+type="checkbox"
+name="attended_school_ids"
+value="{{ school.id }}"
 {% if not act.attendedSchoolIds or school.id in act.attendedSchoolIds %}checked{% endif %}
 class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
 >
 <div class="flex-1">
 <span class="font-bold text-slate-800 block leading-tight">{{ school.name }}</span>
-<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
 </div>
 </label>
 {% endfor %}
@@ -258,8 +258,8 @@ class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="
 if (isDirty) {
 if (confirm('You have unsaved changes. Discard changes?')) {
@@ -273,7 +273,7 @@ class="edify-action-button secondary h-9 transition-colors"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="edify-action-button primary h-9 transition-colors shadow-sm"
 >

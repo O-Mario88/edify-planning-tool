@@ -28,30 +28,30 @@
 
 <!-- Tab Headers -->
 <div class="flex items-center gap-2 border-b border-slate-100 pb-px">
-<button 
+<button
 @click="activeTab = 'matrix'"
-:class="activeTab === 'matrix' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'matrix' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
 >
 Core Service Package Matrix
 </button>
-<button 
+<button
 @click="activeTab = 'queue'"
-:class="activeTab === 'queue' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'queue' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
 >
 Core Planning Queue
 </button>
-<button 
+<button
 @click="activeTab = 'impact'"
-:class="activeTab === 'impact' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'impact' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
 >
 Intervention Impact Tracker
 </button>
-<button 
+<button
 @click="activeTab = 'performance'"
-:class="activeTab === 'performance' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+:class="activeTab === 'performance' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
 >
 Staff vs Partner Performance
@@ -59,7 +59,7 @@ Staff vs Partner Performance
 </div>
 
 <!-- Tab Content Cards -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-6">
 
 <!-- Tab: Matrix -->
 <div x-show="activeTab === 'matrix'" id="core-schools-table-container">

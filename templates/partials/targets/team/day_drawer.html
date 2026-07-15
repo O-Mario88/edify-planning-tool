@@ -9,12 +9,12 @@
 
   {% if completed %}
   <div>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-1.5">Valid completed ({{ completed|length }})</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-emerald-600 mb-1.5">Valid completed ({{ completed|length }})</p>
     <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
       {% for r in completed %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
-        <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="text-[10px] text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
-        <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9.5px] font-bold shrink-0">{{ r.status }}</span>
+        <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
+        <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 edify-text-caption font-bold shrink-0">{{ r.status }}</span>
       </div>
       {% endfor %}
     </div>
@@ -23,10 +23,10 @@
 
   {% if pending_sf %}
   <div>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-1.5">Completed — Activity SF ID missing ({{ pending_sf|length }})</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600 mb-1.5">Completed — Activity SF ID missing ({{ pending_sf|length }})</p>
     <div class="divide-y divide-slate-50 rounded-xl border border-amber-100 bg-amber-50/40">
       {% for r in pending_sf %}
-      <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="text-[10px] text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
+      <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
       {% endfor %}
     </div>
   </div>
@@ -34,12 +34,12 @@
 
   {% if planned %}
   <div>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Planned / scheduled ({{ planned|length }})</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Planned / scheduled ({{ planned|length }})</p>
     <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
       {% for r in planned %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
-        <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="text-[10px] text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
-        <span class="px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 text-[9.5px] font-bold shrink-0">{{ r.status }}</span>
+        <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
+        <span class="px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 edify-text-caption font-bold shrink-0">{{ r.status }}</span>
       </div>
       {% endfor %}
     </div>

@@ -1,5 +1,32 @@
 /* Edify Design System Components - Semantic classes powered by Design System Tokens */
 
+/* Semantic density primitives. The product previously accumulated thousands
+   of one-off 8–11px labels and literal white panels. These primitives keep the
+   compact enterprise rhythm while preserving a 12px readable floor and make
+   every surface participate in Light, Blue, Dark and System themes. */
+.edify-text-caption {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+}
+
+.edify-surface {
+  background-color: var(--edify-surface) !important;
+}
+
+.edify-surface-translucent {
+  background-color: color-mix(in srgb, var(--edify-surface) 72%, transparent) !important;
+}
+
+.edify-hover-surface:hover,
+.edify-focus-surface:focus {
+  background-color: var(--edify-surface) !important;
+}
+
+/* Weight discipline: operational interfaces need hierarchy, not shouting. */
+.font-bold { font-weight: 600 !important; }
+.font-extrabold,
+.font-black { font-weight: 700 !important; }
+
 /* ── Theme Toggle (segmented control in topbar) ─────────────────────────── */
 .theme-toggle {
   display: inline-flex; align-items: center; gap: 3px;

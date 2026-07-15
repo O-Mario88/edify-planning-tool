@@ -11,7 +11,7 @@
 <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 space-y-2">
-<div class="platform-hero__eyebrow inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-widest">
+<div class="platform-hero__eyebrow inline-flex items-center gap-2 px-3 py-1 rounded-full border edify-text-caption font-semibold uppercase tracking-widest">
 System Monitor
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">System Health &amp; Integrity</h1>
@@ -28,7 +28,7 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 <div class="space-y-6">
 
 <!-- Security Leakage audit -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">Data Leakage Scan</h3>
 
 {% if health.mockDataLeakage.clean %}
@@ -48,7 +48,7 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 </div>
 
 <!-- RBAC audit -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">RBAC Gating Scan</h3>
 
 {% if health.permissionAudit.clean %}
@@ -58,9 +58,9 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 {% else %}
 <div class="p-4 bg-rose-50 text-rose-700 rounded-xl text-[12px] font-semibold border border-rose-150 space-y-2">
 <span class="font-semibold block text-rose-800">Unguarded Views ({{ health.permissionAudit.unguardedCount }}):</span>
-<div class="max-h-60 overflow-y-auto space-y-2 text-[11px] font-mono">
+<div class="max-h-60 overflow-y-auto space-y-2 edify-text-caption font-mono">
 {% for route in health.permissionAudit.unguardedRoutes %}
-<div class="p-2 bg-white border border-rose-200 rounded-lg">
+<div class="p-2 edify-surface border border-rose-200 rounded-lg">
 <div class="font-semibold text-rose-800">{{ route.route }}</div>
 <div class="text-slate-500 mt-0.5">{{ route.view_name }}</div>
 </div>
@@ -71,7 +71,7 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 </div>
 
 <!-- Audit log tamper-evidence -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">Audit Chain Integrity</h3>
 
 {% if health.auditChainIntegrity.clean %}
@@ -90,14 +90,14 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Background Automation (scheduler + jobs) health -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">Background Automation</h3>
 <div class="space-y-2">
 {% for c in health.backgroundAutomation.checks %}
 <div class="p-3 rounded-lg {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="text-[11px] text-slate-500 mt-0.5">{{ c.current_state }}</div>
-{% if c.severity != 'ok' %}<div class="text-[11px] text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
@@ -106,14 +106,14 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Authentication Lockout unification health (Issue 3) -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">Authentication Lockout</h3>
 <div class="space-y-2">
 {% for c in health.authLockout.checks %}
 <div class="p-3 rounded-lg {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="text-[11px] text-slate-500 mt-0.5">{{ c.current_state }}</div>
-{% if c.severity != 'ok' %}<div class="text-[11px] text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
@@ -122,14 +122,14 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 
 <!-- Unmatched SSA queue health (Issue 5) -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">Unmatched SSA Queue</h3>
 <div class="space-y-2">
 {% for c in health.unmatchedSsa.checks %}
 <div class="p-3 rounded-lg {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
 <div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
-<div class="text-[11px] text-slate-500 mt-0.5">{{ c.current_state }}</div>
-{% if c.severity != 'ok' %}<div class="text-[11px] text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
 </div>
 {% empty %}
 <div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
@@ -143,10 +143,10 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <div class="lg:col-span-2 space-y-6">
 
 <!-- Core workflow breaks checklist -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[21px] font-extrabold tracking-tight">Operational Exception Ledger</h3>
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-slate-900 text-white">
 {{ health.fy }} Checks
 </span>
 </div>
@@ -767,10 +767,10 @@ data quality, district-rule violations, working-day overloads. -->
 
 <!-- Gold Standard UI quality lints (42+): computed live from template/CSS
 source — mock data, emojis, dead links, static charts, theme/responsive. -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[21px] font-extrabold tracking-tight">Design System Quality Lints</h3>
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white">Gold Standard</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-slate-900 text-white">Gold Standard</span>
 </div>
 <div class="divide-y divide-slate-100 space-y-3.5">
 {% for c in health.uiQuality.checks %}
@@ -789,7 +789,7 @@ source — mock data, emojis, dead links, static charts, theme/responsive. -->
 </div>
 </div>
 {% if c.items %}
-<div class="mt-1.5 text-[11px] text-slate-400 font-medium space-y-0.5">
+<div class="mt-1.5 edify-text-caption text-slate-400 font-medium space-y-0.5">
 {% for it in c.items|slice:":5" %}<p class="truncate">{{ it }}</p>{% endfor %}
 </div>
 {% endif %}
@@ -800,7 +800,7 @@ source — mock data, emojis, dead links, static charts, theme/responsive. -->
 
 <!-- Professional Development checks (48+): certificate/NetSuite closure
 gates, self-approval/signoff leaks, stale-queue backlogs — mandate §36. -->
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
+<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[21px] font-extrabold tracking-tight">Professional Development</h3>
 </div>
@@ -821,7 +821,7 @@ gates, self-approval/signoff leaks, stale-queue backlogs — mandate §36. -->
 </div>
 </div>
 {% if c.items %}
-<div class="mt-1.5 text-[11px] text-slate-400 font-medium space-y-0.5">
+<div class="mt-1.5 edify-text-caption text-slate-400 font-medium space-y-0.5">
 {% for it in c.items|slice:":5" %}<p class="truncate">{{ it }}</p>{% endfor %}
 </div>
 {% endif %}

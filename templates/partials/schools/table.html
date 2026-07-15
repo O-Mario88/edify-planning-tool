@@ -4,16 +4,16 @@
 <!-- Premium Select-All Header Bar -->
 <div class="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-[12px] font-bold text-slate-500">
 <div class="flex items-center gap-2.5">
-<input 
-type="checkbox" 
+<input
+type="checkbox"
 id="select-all-schools"
 @change="if ($event.target.checked) { selectedSchools = [{% for school in view_models %}'{{ school.id }}',{% endfor %}] } else { selectedSchools = [] }"
 :checked="selectedSchools.length === {% if view_models %}{{ view_models|length }}{% else %}0{% endif %} && selectedSchools.length > 0"
-class="rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f]"
+class="rounded border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)]"
 >
 <label for="select-all-schools" class="cursor-pointer select-none font-bold text-slate-700">Select All Page Schools</label>
 </div>
-<div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+<div class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
 {{ view_models|length }} Schools listed
 </div>
 </div>
@@ -31,8 +31,8 @@ class="rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f]"
         <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <p class="text-[14px] font-semibold text-slate-500">No schools uploaded yet.</p>
-      <p class="text-[11px] text-slate-400">Upload schools to build the directory registry.</p>
-      <a href="/schools/upload" style="background-color:var(--edify-primary); color: #ffffff;" class="inline-flex h-8 px-4 rounded-xl text-white text-[12px] font-semibold items-center justify-center shadow-sm hover:opacity-90 transition-all">Upload Schools</a>
+      <p class="edify-text-caption text-slate-400">Upload schools to build the directory registry.</p>
+      <a href="/schools/upload" style="background-color:var(--edify-primary); color: var(--edify-surface-raised);" class="inline-flex h-8 px-4 rounded-xl text-white text-[12px] font-semibold items-center justify-center shadow-sm hover:opacity-90 transition-all">Upload Schools</a>
     </div>
   </div>
 {% endif %}
@@ -49,7 +49,7 @@ Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.pa
 <!-- Rows per page info selector mirroring mockup -->
 <div class="flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
 <span>Rows per page:</span>
-<select class="h-7 px-1 rounded border border-slate-200 text-[12px] bg-white font-bold focus:outline-none">
+<select class="h-7 px-1 rounded border border-slate-200 text-[12px] edify-surface font-bold focus:outline-none">
 <option>15</option>
 <option>25</option>
 <option>50</option>
@@ -57,10 +57,10 @@ Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.pa
 </div>
 
 {% if page_obj.has_previous %}
-<button 
+<button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-class="h-8 px-3 rounded-lg border border-[var(--edify-border)] hover:bg-white text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
+class="h-8 px-3 rounded-lg border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
 >
 Previous
 </button>
@@ -74,7 +74,7 @@ Previous
 {% elif num == page_obj.number %}
 <span class="h-8 w-8 rounded-lg btn-premium-primary text-white font-semibold flex items-center justify-center shadow-sm" style="background-color:var(--edify-primary);">{{ num }}</span>
 {% else %}
-<button 
+<button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
 class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors"
@@ -86,10 +86,10 @@ class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-700 font-bold flex items
 </div>
 
 {% if page_obj.has_next %}
-<button 
+<button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-class="h-8 px-3 rounded-lg border border-[var(--edify-border)] hover:bg-white text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
+class="h-8 px-3 rounded-lg border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
 >
 Next
 </button>

@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}Link the Salesforce execution record to {{ act.activity_type|title|replace_underscore }}{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/activities/{{ act.id }}/salesforce-id/action"
 hx-target="#sf-errors"
 class="space-y-5 text-[12px] font-bold text-slate-600"
@@ -14,19 +14,19 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 
 <div class="space-y-4">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">1</span>
 Salesforce Integration
 </h4>
-<p class="text-[11px] text-slate-500 font-semibold leading-normal">
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
 Enter the unique Salesforce Activity ID. This proves that program operations have been logged in the global program repository.
 </p>
 
 <!-- Salesforce ID -->
 <div>
-<label for="salesforce_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Salesforce Activity ID</label>
-<input 
-type="text" 
-name="salesforce_id" 
+<label for="salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce Activity ID</label>
+<input
+type="text"
+name="salesforce_id"
 id="salesforce_id"
 required
 placeholder="e.g. SV-11223344 or TS-998877"
@@ -38,14 +38,14 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="edify-action-button secondary h-9 transition-colors"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="edify-action-button primary h-9 transition-colors shadow-sm"
 >

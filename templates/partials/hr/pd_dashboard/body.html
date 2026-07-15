@@ -10,7 +10,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
     <div class="rounded-xl border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
-        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
+        <span class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
         <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50/10 text-blue-400 border border-blue-500/20
           {% elif k.variant == 'success' %}bg-emerald-50/10 text-emerald-400 border border-emerald-500/20
@@ -23,7 +23,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
       <div class="flex items-baseline gap-1 mt-2.5">
         <span class="text-[17px] font-black tracking-tight tabular-nums leading-none" style="color:var(--edify-text);">{{ k.value }}</span>
       </div>
-      <span class="text-[9.5px] font-semibold text-slate-400 mt-1 block leading-tight">{{ k.helper }}</span>
+      <span class="edify-text-caption font-semibold text-slate-400 mt-1 block leading-tight">{{ k.helper }}</span>
     </div>
     {% endfor %}
   </div>
@@ -32,7 +32,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
   <div class="rounded-xl border p-5 space-y-4" style="background:var(--edify-surface); border-color:var(--edify-border);">
     <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">1. Staff Professional Development Tracker</h2>
-      <span class="text-[10px] text-slate-400 font-semibold">{{ tracker_total }} request{{ tracker_total|pluralize }}</span>
+      <span class="edify-text-caption text-slate-400 font-semibold">{{ tracker_total }} request{{ tracker_total|pluralize }}</span>
     </div>
     <div id="pd-tracker-wrap">
       {% include "partials/hr/pd_dashboard/tracker_table.html" %}
@@ -46,43 +46,43 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
       {% for g in action_center %}
       <div class="rounded-lg border p-3 space-y-2" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 leading-tight">{{ g.label }}</span>
-          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black tabular-nums shrink-0
+          <span class="edify-text-caption font-extrabold uppercase tracking-wide text-slate-400 leading-tight">{{ g.label }}</span>
+          <span class="px-1.5 py-0.5 rounded-full edify-text-caption font-black tabular-nums shrink-0
             {% if g.count %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ g.count }}</span>
         </div>
         {% if g.items %}
         <div class="space-y-1.5">
           {% for it in g.items %}
-          <div class="flex items-center justify-between gap-1.5 text-[10.5px]">
+          <div class="flex items-center justify-between gap-1.5 edify-text-caption">
             <div class="min-w-0">
               <span class="block truncate font-bold" style="color:var(--edify-text);">{{ it.staff_name }}</span>
               <span class="block truncate text-slate-400">{{ it.course_name }}</span>
-              <span class="block truncate text-slate-500 text-[9.5px]">{{ it.due_label }}</span>
+              <span class="block truncate text-slate-500 edify-text-caption">{{ it.due_label }}</span>
             </div>
             <form method="post" action="/cpd-learning/action" class="shrink-0">
               {% csrf_token %}
               <input type="hidden" name="action" value="{{ it.action }}">
               <input type="hidden" name="request_id" value="{{ it.id }}">
               <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="country" value="{{ country }}">
-              <button type="submit" class="px-2 py-1 rounded text-[9.5px] font-extrabold whitespace-nowrap transition-colors
+              <button type="submit" class="px-2 py-1 rounded edify-text-caption font-extrabold whitespace-nowrap transition-colors
                 {% if it.action == 'sign_off' %}bg-emerald-600 hover:bg-emerald-700 text-white{% else %}border hover:bg-slate-500/10{% endif %}"
                 {% if it.action != 'sign_off' %}style="border-color:var(--edify-border); color:var(--edify-text);"{% endif %}>{{ it.action_label }}</button>
             </form>
           </div>
           {% endfor %}
         </div>
-        {% if g.count > 3 %}<p class="text-[9.5px] text-slate-400 font-semibold">+{{ g.count|add:"-3" }} more</p>{% endif %}
+        {% if g.count > 3 %}<p class="edify-text-caption text-slate-400 font-semibold">+{{ g.count|add:"-3" }} more</p>{% endif %}
         {% if g.key != 'ready_signoff' %}
         <form method="post" action="/cpd-learning/action" class="pt-1">
           {% csrf_token %}
           <input type="hidden" name="action" value="bulk_send_reminders">
           <input type="hidden" name="bucket" value="{{ g.key }}">
           <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="country" value="{{ country }}">
-          <button type="submit" class="w-full h-7 rounded text-[9.5px] font-extrabold border hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">Remind All ({{ g.count }})</button>
+          <button type="submit" class="w-full h-7 rounded edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">Remind All ({{ g.count }})</button>
         </form>
         {% endif %}
         {% else %}
-        <p class="text-[10.5px] text-slate-400 font-semibold py-2">Nothing here right now.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold py-2">Nothing here right now.</p>
         {% endif %}
       </div>
       {% endfor %}
@@ -93,17 +93,17 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
   <div id="pd-role-settings" class="rounded-xl border p-5 space-y-4" style="background:var(--edify-surface); border-color:var(--edify-border);">
     <div class="flex items-center justify-between pb-3 border-b flex-wrap gap-2" style="border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">3. Role-Based PD Allocation Settings</h2>
-      <span class="text-[10px] text-slate-400 font-semibold">{{ country|default:"Uganda" }} · {{ role_settings.total_staff }} staff · {{ currency }} {{ role_settings.total_allocated }} total FY {{ fy }} allocation</span>
+      <span class="edify-text-caption text-slate-400 font-semibold">{{ country|default:"Uganda" }} · {{ role_settings.total_staff }} staff · {{ currency }} {{ role_settings.total_allocated }} total FY {{ fy }} allocation</span>
     </div>
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-[11px] font-semibold">
+      <table class="w-full text-left edify-text-caption font-semibold">
         <thead>
           <tr class="border-b" style="border-color:var(--edify-border);">
-            <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">Role</th>
-            <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase text-right">Per Staff / Year</th>
-            <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase text-center">Staff Count</th>
-            <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase text-right">Total Allocated</th>
-            <th class="py-2 text-[10px] text-slate-400 font-extrabold uppercase text-right">Action</th>
+            <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Role</th>
+            <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Per Staff / Year</th>
+            <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Staff Count</th>
+            <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Total Allocated</th>
+            <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y" style="border-color:var(--edify-border);">
@@ -115,7 +115,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
             <td class="py-2.5 pr-3 text-right tabular-nums" style="color:var(--edify-text);">{{ row.total_allocated }}</td>
             <td class="py-2.5 text-right">
               <button type="button" hx-get="/cpd-learning/adjust-allocation?role={{ row.role }}&fy={{ fy }}&country={{ country|default:'Uganda' }}" hx-target="#pd-drawer-root" hx-swap="innerHTML"
-                class="px-2.5 py-1 rounded text-[10px] font-extrabold border hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">Adjust</button>
+                class="px-2.5 py-1 rounded edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">Adjust</button>
             </td>
           </tr>
           {% empty %}
@@ -139,11 +139,11 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
                series: [{% for s in status_distribution %}{{ s.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
                labels: [{% for s in status_distribution %}'{{ s.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                chart: { type: 'donut', height: 220, fontFamily: 'Outfit, sans-serif' },
-               colors: ['#94a3b8', '#3b82f6', '#f59e0b', '#8b5cf6', '#10b981'],
-               legend: { position: 'right', fontSize: '10.5px', fontWeight: 600, labels: { colors: '#94a3b8' } },
+               colors: ['var(--edify-text-subtle)', 'var(--edify-chart-blue)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-green)'],
+               legend: { position: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
                plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
-                 total: { show: true, label: 'Total', fontSize: '10px', color: '#94a3b8', formatter: () => '{{ status_distribution_total }}' } } } } },
+                 total: { show: true, label: 'Total', fontSize: '12px', color: 'var(--edify-text-subtle)', formatter: () => '{{ status_distribution_total }}' } } } } },
                stroke: { width: 0 },
                tooltip: { theme: 'dark' }
              });
@@ -154,7 +154,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
       {% if status_distribution_total %}
       <div id="pdStatusDonut"></div>
       {% else %}
-      <p class="text-[11.5px] text-slate-400 font-medium py-10 text-center">No Professional Development requests yet for FY {{ fy }}.</p>
+      <p class="edify-text-caption text-slate-400 font-medium py-10 text-center">No Professional Development requests yet for FY {{ fy }}.</p>
       {% endif %}
     </div>
 
@@ -169,11 +169,11 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
                series: [{{ fund_utilization.accounted }}, {{ fund_utilization.committed_not_accounted }}, {{ fund_utilization.uncommitted }}],
                labels: ['Accounted For', 'Committed, Not Accounted', 'Uncommitted'],
                chart: { type: 'donut', height: 220, fontFamily: 'Outfit, sans-serif' },
-               colors: ['#10b981', '#f59e0b', '#64748b'],
-               legend: { position: 'right', fontSize: '10.5px', fontWeight: 600, labels: { colors: '#94a3b8' } },
+               colors: ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-text-muted)'],
+               legend: { position: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
                plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
-                 total: { show: true, label: 'Accounted', fontSize: '10px', color: '#94a3b8', formatter: () => '{{ fund_utilization.accounted_pct }}%' } } } } },
+                 total: { show: true, label: 'Accounted', fontSize: '12px', color: 'var(--edify-text-subtle)', formatter: () => '{{ fund_utilization.accounted_pct }}%' } } } } },
                stroke: { width: 0 },
                tooltip: { theme: 'dark' }
              });
@@ -184,7 +184,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
       {% if fund_utilization.total %}
       <div id="pdFundDonut"></div>
       {% else %}
-      <p class="text-[11.5px] text-slate-400 font-medium py-10 text-center">No PD allocation set for FY {{ fy }} yet — use section 3 to set one.</p>
+      <p class="edify-text-caption text-slate-400 font-medium py-10 text-center">No PD allocation set for FY {{ fy }} yet — use section 3 to set one.</p>
       {% endif %}
     </div>
   </div>
@@ -195,41 +195,41 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
       <div class="rounded-lg border p-3 space-y-1.5" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div class="flex items-center gap-1.5">
-          <span class="h-5 w-5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center text-[9.5px] font-black shrink-0">1</span>
-          <span class="text-[10.5px] font-extrabold" style="color:var(--edify-text);">Pre-Course Reminder</span>
+          <span class="h-5 w-5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center edify-text-caption font-black shrink-0">1</span>
+          <span class="edify-text-caption font-extrabold" style="color:var(--edify-text);">Pre-Course Reminder</span>
         </div>
-        <p class="text-[9.5px] text-slate-400 font-semibold leading-snug">7, 3, and 1 day before the course start date — to the employee.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold leading-snug">7, 3, and 1 day before the course start date — to the employee.</p>
       </div>
       <div class="rounded-lg border p-3 space-y-1.5" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div class="flex items-center gap-1.5">
-          <span class="h-5 w-5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center text-[9.5px] font-black shrink-0">2</span>
-          <span class="text-[10.5px] font-extrabold" style="color:var(--edify-text);">In-Progress Check-In</span>
+          <span class="h-5 w-5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center edify-text-caption font-black shrink-0">2</span>
+          <span class="edify-text-caption font-extrabold" style="color:var(--edify-text);">In-Progress Check-In</span>
         </div>
-        <p class="text-[9.5px] text-slate-400 font-semibold leading-snug">Daily, while the course is under way — to the employee.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold leading-snug">Daily, while the course is under way — to the employee.</p>
       </div>
       <div class="rounded-lg border p-3 space-y-1.5" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div class="flex items-center gap-1.5">
-          <span class="h-5 w-5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-[9.5px] font-black shrink-0">3</span>
-          <span class="text-[10.5px] font-extrabold" style="color:var(--edify-text);">Mark Complete Prompt</span>
+          <span class="h-5 w-5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center edify-text-caption font-black shrink-0">3</span>
+          <span class="edify-text-caption font-extrabold" style="color:var(--edify-text);">Mark Complete Prompt</span>
         </div>
-        <p class="text-[9.5px] text-slate-400 font-semibold leading-snug">Once the end date passes, until marked complete — to the employee.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold leading-snug">Once the end date passes, until marked complete — to the employee.</p>
       </div>
       <div class="rounded-lg border p-3 space-y-1.5" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div class="flex items-center gap-1.5">
-          <span class="h-5 w-5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-[9.5px] font-black shrink-0">4</span>
-          <span class="text-[10.5px] font-extrabold" style="color:var(--edify-text);">Overdue Escalation</span>
+          <span class="h-5 w-5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center edify-text-caption font-black shrink-0">4</span>
+          <span class="edify-text-caption font-extrabold" style="color:var(--edify-text);">Overdue Escalation</span>
         </div>
-        <p class="text-[9.5px] text-slate-400 font-semibold leading-snug">7, 14, and 30 days overdue and still not marked complete — to the employee.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold leading-snug">7, 14, and 30 days overdue and still not marked complete — to the employee.</p>
       </div>
       <div class="rounded-lg border p-3 space-y-1.5" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div class="flex items-center gap-1.5">
-          <span class="h-5 w-5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center text-[9.5px] font-black shrink-0">5</span>
-          <span class="text-[10.5px] font-extrabold" style="color:var(--edify-text);">Supervisor + HR Escalation</span>
+          <span class="h-5 w-5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center edify-text-caption font-black shrink-0">5</span>
+          <span class="edify-text-caption font-extrabold" style="color:var(--edify-text);">Supervisor + HR Escalation</span>
         </div>
-        <p class="text-[9.5px] text-slate-400 font-semibold leading-snug">From 14 days overdue onward — to the supervisor and HR too.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold leading-snug">From 14 days overdue onward — to the supervisor and HR too.</p>
       </div>
     </div>
-    <p class="text-[10px] text-slate-400 font-semibold">Reminders are computed and sent by a daily scheduled job (<code>send_pd_reminders</code>). Every reminder is deduplicated, so no one is notified twice for the same milestone on the same day.</p>
+    <p class="edify-text-caption text-slate-400 font-semibold">Reminders are computed and sent by a daily scheduled job (<code>send_pd_reminders</code>). Every reminder is deduplicated, so no one is notified twice for the same milestone on the same day.</p>
   </div>
 
   <!-- 6. Completed Courses & HR Sign-Off Snapshot -->
@@ -238,19 +238,19 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="rounded-lg border p-3 text-center" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <span class="block text-[20px] font-black tabular-nums" style="color:var(--edify-text);">{{ completed_this_fy }}</span>
-        <span class="block text-[9.5px] font-bold text-slate-400 uppercase tracking-wide mt-1">Signed Off, FY {{ fy }}</span>
+        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">Signed Off, FY {{ fy }}</span>
       </div>
       <div class="rounded-lg border p-3 text-center" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <span class="block text-[20px] font-black tabular-nums" style="color:var(--edify-text);">{{ certs_verified }}</span>
-        <span class="block text-[9.5px] font-bold text-slate-400 uppercase tracking-wide mt-1">Certificates Verified</span>
+        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">Certificates Verified</span>
       </div>
       <div class="rounded-lg border p-3 text-center" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <span class="block text-[20px] font-black tabular-nums" style="color:var(--edify-text);">{{ bamboo_confirmed }}</span>
-        <span class="block text-[9.5px] font-bold text-slate-400 uppercase tracking-wide mt-1">BambooHR Confirmed</span>
+        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">BambooHR Confirmed</span>
       </div>
       <div class="rounded-lg border p-3 text-center" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <span class="block text-[20px] font-black tabular-nums" style="color:var(--edify-text);">{{ signoff_rate }}%</span>
-        <span class="block text-[9.5px] font-bold text-slate-400 uppercase tracking-wide mt-1">Sign-Off Rate</span>
+        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">Sign-Off Rate</span>
       </div>
     </div>
   </div>
@@ -261,40 +261,40 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <div>
         <div class="flex items-center justify-between mb-2">
-          <span class="text-[10.5px] font-extrabold uppercase text-slate-400">Starting in 30 Days</span>
-          <span class="text-[10px] font-black text-blue-400">{{ upcoming_30d_count }}</span>
+          <span class="edify-text-caption font-extrabold uppercase text-slate-400">Starting in 30 Days</span>
+          <span class="edify-text-caption font-black text-blue-400">{{ upcoming_30d_count }}</span>
         </div>
         <div class="space-y-2">
           {% for r in upcoming_30d %}
-          <div class="text-[10.5px]"><span class="font-bold" style="color:var(--edify-text);">{{ r.staff_name }}</span><br><span class="text-slate-400">{{ r.course_name }} · starts {{ r.start_date|date:"d M" }}</span></div>
+          <div class="edify-text-caption"><span class="font-bold" style="color:var(--edify-text);">{{ r.staff_name }}</span><br><span class="text-slate-400">{{ r.course_name }} · starts {{ r.start_date|date:"d M" }}</span></div>
           {% empty %}
-          <p class="text-[10.5px] text-slate-400 font-semibold">Nothing starting soon.</p>
+          <p class="edify-text-caption text-slate-400 font-semibold">Nothing starting soon.</p>
           {% endfor %}
         </div>
       </div>
       <div>
         <div class="flex items-center justify-between mb-2">
-          <span class="text-[10.5px] font-extrabold uppercase text-slate-400">Overdue — No Certificate</span>
-          <span class="text-[10px] font-black text-amber-400">{{ overdue_no_cert_count }}</span>
+          <span class="edify-text-caption font-extrabold uppercase text-slate-400">Overdue — No Certificate</span>
+          <span class="edify-text-caption font-black text-amber-400">{{ overdue_no_cert_count }}</span>
         </div>
         <div class="space-y-2">
           {% for r in overdue_no_cert %}
-          <div class="text-[10.5px]"><span class="font-bold" style="color:var(--edify-text);">{{ r.staff_name }}</span><br><span class="text-slate-400">{{ r.course_name }} · ended {{ r.end_date|date:"d M" }}</span></div>
+          <div class="edify-text-caption"><span class="font-bold" style="color:var(--edify-text);">{{ r.staff_name }}</span><br><span class="text-slate-400">{{ r.course_name }} · ended {{ r.end_date|date:"d M" }}</span></div>
           {% empty %}
-          <p class="text-[10.5px] text-slate-400 font-semibold">Nothing overdue.</p>
+          <p class="edify-text-caption text-slate-400 font-semibold">Nothing overdue.</p>
           {% endfor %}
         </div>
       </div>
       <div>
         <div class="flex items-center justify-between mb-2">
-          <span class="text-[10.5px] font-extrabold uppercase text-slate-400">Overdue — Accountability</span>
-          <span class="text-[10px] font-black text-rose-400">{{ overdue_accountability_count }}</span>
+          <span class="edify-text-caption font-extrabold uppercase text-slate-400">Overdue — Accountability</span>
+          <span class="edify-text-caption font-black text-rose-400">{{ overdue_accountability_count }}</span>
         </div>
         <div class="space-y-2">
           {% for r in overdue_accountability %}
-          <div class="text-[10.5px]"><span class="font-bold" style="color:var(--edify-text);">{{ r.staff_name }}</span><br><span class="text-slate-400">{{ r.course_name }}</span></div>
+          <div class="edify-text-caption"><span class="font-bold" style="color:var(--edify-text);">{{ r.staff_name }}</span><br><span class="text-slate-400">{{ r.course_name }}</span></div>
           {% empty %}
-          <p class="text-[10.5px] text-slate-400 font-semibold">Nothing overdue.</p>
+          <p class="edify-text-caption text-slate-400 font-semibold">Nothing overdue.</p>
           {% endfor %}
         </div>
       </div>
@@ -312,7 +312,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
         <button type="submit" class="w-full rounded-xl border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5"
                 style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">{% include "partials/analytics/pl/_icon.html" with name="clock" %}</span>
-          <span class="text-[11px] font-extrabold leading-tight" style="color:var(--edify-text);">Remind Not-Started</span>
+          <span class="edify-text-caption font-extrabold leading-tight" style="color:var(--edify-text);">Remind Not-Started</span>
         </button>
       </form>
       <form method="post" action="/cpd-learning/action">
@@ -322,7 +322,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
         <button type="submit" class="w-full rounded-xl border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5"
                 style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">{% include "partials/analytics/pl/_icon.html" with name="certificate" %}</span>
-          <span class="text-[11px] font-extrabold leading-tight" style="color:var(--edify-text);">Remind Pending Certificate</span>
+          <span class="edify-text-caption font-extrabold leading-tight" style="color:var(--edify-text);">Remind Pending Certificate</span>
         </button>
       </form>
       <form method="post" action="/cpd-learning/action">
@@ -332,13 +332,13 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
         <button type="submit" class="w-full rounded-xl border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5"
                 style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center">{% include "partials/analytics/pl/_icon.html" with name="accountability" %}</span>
-          <span class="text-[11px] font-extrabold leading-tight" style="color:var(--edify-text);">Remind Pending Accountability</span>
+          <span class="edify-text-caption font-extrabold leading-tight" style="color:var(--edify-text);">Remind Pending Accountability</span>
         </button>
       </form>
       <a href="#pd-role-settings" class="rounded-xl border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5"
          style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <span class="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">{% include "partials/analytics/pl/_icon.html" with name="currency" %}</span>
-        <span class="text-[11px] font-extrabold leading-tight" style="color:var(--edify-text);">Adjust Allocations</span>
+        <span class="edify-text-caption font-extrabold leading-tight" style="color:var(--edify-text);">Adjust Allocations</span>
       </a>
     </div>
   </div>

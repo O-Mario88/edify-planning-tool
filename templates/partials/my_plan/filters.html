@@ -1,17 +1,17 @@
 <!-- Filters Form for My Plan -->
 <form id="filters-form" method="GET" action="/my-plan"
-hx-get="/my-plan" 
-hx-target="#my-plan-workspace" 
+hx-get="/my-plan"
+hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
 hx-push-url="true"
-class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 rounded-xl shadow-sm"
+class="flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate-200 rounded-xl shadow-sm"
 >
 <!-- Keep period and other tabs active state -->
 <input type="hidden" name="period" value="{{ period }}">
 
 <!-- FY Filter -->
 <div class="flex flex-col min-w-[90px]">
-<select name="fy" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="fy" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 <option value="2023" {% if fy == "2023" %}selected{% endif %}>FY 2023</option>
 <option value="2024" {% if fy == "2024" %}selected{% endif %}>FY 2024</option>
 <option value="2025" {% if fy == "2025" %}selected{% endif %}>FY 2025</option>
@@ -21,7 +21,7 @@ class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 
 
 <!-- Quarter Filter -->
 <div class="flex flex-col min-w-[100px]">
-<select name="quarter" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="quarter" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 {% for q in quarters %}
 <option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>Quarter: {{ q }}</option>
 {% endfor %}
@@ -30,7 +30,7 @@ class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 
 
 <!-- Month Filter -->
 <div class="flex flex-col min-w-[110px]">
-<select name="month" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="month" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 {% for m in months %}
 <option value="{{ m.val }}" {% if selected_month == m.val %}selected{% endif %}>Month: {{ m.label }}</option>
 {% endfor %}
@@ -39,7 +39,7 @@ class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 
 
 <!-- Week Filter -->
 <div class="flex flex-col min-w-[160px]">
-<select name="week" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="week" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 {% for w in weeks %}
 <option value="{{ w.val }}" {% if selected_week == w.val %}selected{% endif %}>Week: {{ w.label }}</option>
 {% endfor %}
@@ -48,7 +48,7 @@ class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 
 
 <!-- District Filter -->
 <div class="flex flex-col min-w-[120px]">
-<select name="district" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="district" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 <option value="all">District: All</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
@@ -58,7 +58,7 @@ class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 
 
 <!-- Staff Filter -->
 <div class="flex flex-col min-w-[130px]">
-<select name="staff" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="staff" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 <option value="all">Staff: All</option>
 {% for s in staff_users %}
 <option value="{{ s.id }}" {% if selected_staff == s.id %}selected{% endif %}>{{ s.name }}</option>
@@ -68,7 +68,7 @@ class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 
 
 <!-- Activity Type Filter -->
 <div class="flex flex-col min-w-[140px]">
-<select name="activity_type" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="activity_type" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 <option value="all" {% if not selected_activity_type or selected_activity_type == 'all' %}selected{% endif %}>Activity Type: All</option>
 <option value="school_visit" {% if selected_activity_type == 'school_visit' %}selected{% endif %}>School Visit</option>
 <option value="cluster_training" {% if selected_activity_type == 'cluster_training' %}selected{% endif %}>Cluster Training</option>
@@ -78,7 +78,7 @@ class="flex flex-wrap items-center gap-2.5 bg-white p-3 border border-slate-200 
 
 <!-- Status Filter -->
 <div class="flex flex-col min-w-[120px]">
-<select name="status" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none transition-all">
+<select name="status" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-lg edify-focus-surface focus:outline-none transition-all">
 <option value="all" {% if not selected_status or selected_status == 'all' %}selected{% endif %}>Status: All</option>
 <option value="scheduled" {% if selected_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
 <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>

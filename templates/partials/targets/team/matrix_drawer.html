@@ -8,19 +8,19 @@
 <div class="space-y-3 text-slate-700">
   {% if rows %}
   <div class="overflow-x-auto rounded-xl border border-slate-100">
-    <table class="w-full min-w-[900px] text-[11px]">
+    <table class="w-full min-w-[900px] edify-text-caption">
       <thead>
-        <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[9.5px]">
-          <th class="py-2 px-3 text-left sticky left-0 bg-white z-10">Staff · Target Area</th>
+        <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
+          <th class="py-2 px-3 text-left sticky left-0 edify-surface z-10">Staff · Target Area</th>
           {% for h in heads %}
           <th class="py-2 px-2 text-center border-l border-slate-100{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}" colspan="3">
             <span class="block text-slate-600 font-bold">{{ h.label }}</span>
-            <span class="block text-[8px] text-slate-400 normal-case">{{ h.sub }}{% if h.key == quarter %} · Current quarter{% endif %}</span>
+            <span class="block edify-text-caption text-slate-400 normal-case">{{ h.sub }}{% if h.key == quarter %} · Current quarter{% endif %}</span>
           </th>
           {% endfor %}
         </tr>
-        <tr class="border-b border-slate-100 text-slate-400 font-bold text-[9px] uppercase">
-          <th class="py-1 px-3 sticky left-0 bg-white z-10"></th>
+        <tr class="border-b border-slate-100 text-slate-400 font-bold edify-text-caption uppercase">
+          <th class="py-1 px-3 sticky left-0 edify-surface z-10"></th>
           {% for h in heads %}
           <th class="py-1 text-center border-l border-slate-100{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">Tgt</th><th class="py-1 text-center{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">Ach</th><th class="py-1 text-center{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">%</th>
           {% endfor %}
@@ -29,7 +29,7 @@
       <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
         {% for r in rows %}
         <tr class="hover:bg-slate-50/50">
-          <td class="py-1.5 px-3 sticky left-0 bg-white z-10 whitespace-nowrap">{{ r.staff }} <span class="text-slate-400 font-medium">· {{ r.area }}</span></td>
+          <td class="py-1.5 px-3 sticky left-0 edify-surface z-10 whitespace-nowrap">{{ r.staff }} <span class="text-slate-400 font-medium">· {{ r.area }}</span></td>
           {% for c in r.cells %}
           <td class="py-1.5 text-center tabular-nums border-l border-slate-50{% if c.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">{{ c.t }}</td>
           <td class="py-1.5 text-center tabular-nums text-emerald-600{% if c.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">{{ c.a }}</td>
@@ -40,7 +40,7 @@
       </tbody>
     </table>
   </div>
-  <p class="text-[9.5px] text-slate-400 font-medium">Quarter and FY values are derived sums of monthly targets and validated achievements — never entered directly.</p>
+  <p class="edify-text-caption text-slate-400 font-medium">Quarter and FY values are derived sums of monthly targets and validated achievements — never entered directly.</p>
   {% else %}
   <div class="rounded-xl border border-slate-100 bg-slate-50 p-5 text-center">
     <p class="text-[12px] font-semibold text-slate-500">No supervised staff to display.</p>

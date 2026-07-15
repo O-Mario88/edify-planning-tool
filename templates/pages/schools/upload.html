@@ -7,14 +7,14 @@
 <div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 <!-- Page Header -->
 <div>
-<a href="/schools" class="text-[11px] font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
+<a href="/schools" class="edify-text-caption font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
 <h1 class="text-[21px] font-extrabold tracking-tight mt-2">Data Intake Portal</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Upload onboarding school roster spreadsheet files or school self-assessment (SSA) reports.</p>
 </div>
 
 <div class="grid md:grid-cols-2 gap-6">
 <!-- School Upload Panel -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <div>
 <h3 class="text-[15px] font-semibold text-slate-800">School Directory Upload</h3>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Upload a CSV or Excel sheet containing new schools, district definitions, and account owners.</p>
@@ -25,19 +25,19 @@
 Download School Template
 </a>
 
-<form 
-hx-post="/schools/upload" 
-hx-encoding="multipart/form-data" 
-hx-target="#upload-results" 
+<form
+hx-post="/schools/upload"
+hx-encoding="multipart/form-data"
+hx-target="#upload-results"
 hx-indicator="#schools-indicator"
 class="space-y-4"
 >
 {% csrf_token %}
 <div>
-<label for="schools_file" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Roster File (CSV / XLSX)</label>
-<input 
-type="file" 
-name="schools_file" 
+<label for="schools_file" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Roster File (CSV / XLSX)</label>
+<input
+type="file"
+name="schools_file"
 id="schools_file"
 accept=".csv, .xlsx"
 required
@@ -46,10 +46,10 @@ class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:roun
 </div>
 
 <div class="flex items-center">
-<input 
-id="update_existing" 
-name="update_existing" 
-type="checkbox" 
+<input
+id="update_existing"
+name="update_existing"
+type="checkbox"
 class="h-4 w-4 text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300 rounded"
 >
 <label for="update_existing" class="ml-2 block text-[12px] text-slate-500 font-semibold select-none">
@@ -58,8 +58,8 @@ Update existing school records
 </div>
 
 <div class="flex items-center gap-3">
-<button 
-type="submit" 
+<button
+type="submit"
 class="h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-all"
 >
 Upload Schools
@@ -78,7 +78,7 @@ Upload Schools
 </div>
 
 <!-- SSA Upload Panel -->
-<div class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <div>
 <h3 class="text-[15px] font-semibold text-slate-800">School Self-Assessment (SSA)</h3>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Upload verified SSA scores for the current fiscal year. School planning is locked until current SSA is recorded.</p>
@@ -89,19 +89,19 @@ Upload Schools
 Download SSA Template
 </a>
 
-<form 
-hx-post="/schools/upload" 
-hx-encoding="multipart/form-data" 
-hx-target="#upload-results" 
+<form
+hx-post="/schools/upload"
+hx-encoding="multipart/form-data"
+hx-target="#upload-results"
 hx-indicator="#ssa-indicator"
 class="space-y-4"
 >
 {% csrf_token %}
 <div>
-<label for="ssa_file" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Assessment File (CSV / XLSX)</label>
-<input 
-type="file" 
-name="ssa_file" 
+<label for="ssa_file" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assessment File (CSV / XLSX)</label>
+<input
+type="file"
+name="ssa_file"
 id="ssa_file"
 accept=".csv, .xlsx"
 required
@@ -110,8 +110,8 @@ class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:roun
 </div>
 
 <div class="flex items-center gap-3">
-<button 
-type="submit" 
+<button
+type="submit"
 class="h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-all"
 >
 Upload SSA

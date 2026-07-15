@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 edify-text-caption font-semibold uppercase tracking-widest">
 Expense Claims
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Reimbursement Claim Queue</h1>
@@ -20,10 +20,10 @@ Review and process staff reimbursement claims. Reimbursements appear here only a
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Staff / CCEO</th>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -46,7 +46,7 @@ Review and process staff reimbursement claims. Reimbursements appear here only a
 <!-- ID -->
 <td class="px-6 py-4">
 <div class="font-semibold text-slate-900">#{{ claim.activity.id|slice:":8" }}</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ claim.activity.get_activity_type_display }}</div>
+<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ claim.activity.get_activity_type_display }}</div>
 </td>
 <!-- Approved Budget -->
 <td class="px-6 py-4 text-center">
@@ -66,16 +66,16 @@ Review and process staff reimbursement claims. Reimbursements appear here only a
 </td>
 <!-- IA Status -->
 <td class="px-6 py-4 text-center">
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Verified
 </span>
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
-<button 
+<button
 @click="claimOpen = true; selectedClaim = '{{ claim.id }}'; claimAmount = {{ claim.reimbursement_amount }}"
-type="button" 
+type="button"
 class="h-8 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >
 Process Payout
@@ -104,7 +104,7 @@ Process Payout
 </div>
 
 <!-- REIMBURSEMENT PAYOUT DETAIL DRAWER (Slide-over overlay inside parent) -->
-<div 
+<div
 x-show="claimOpen"
 x-transition:enter="transition ease-out duration-300 transform"
 x-transition:enter-start="translate-x-full"
@@ -112,7 +112,7 @@ x-transition:enter-end="translate-x-0"
 x-transition:leave="transition ease-in duration-200 transform"
 x-transition:leave-start="translate-x-0"
 x-transition:leave-end="translate-x-full"
-class="absolute inset-y-0 right-0 w-96 bg-white z-25 p-6 flex flex-col justify-between shadow-md border-l border-slate-200"
+class="absolute inset-y-0 right-0 w-96 edify-surface z-25 p-6 flex flex-col justify-between shadow-md border-l border-slate-200"
 style="display: none;"
 >
 <div class="space-y-6">
@@ -127,13 +127,13 @@ style="display: none;"
 {% csrf_token %}
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Reimbursement Payout Amount</label>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Reimbursement Payout Amount</label>
 <div class="w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[14px] font-semibold text-slate-800 p-2.5 shadow-inner" x-text="claimAmount.toLocaleString() + ' UGX'"></div>
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Payment Method</label>
-<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-amber-500 focus:outline-none transition-all">
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Method</label>
+<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-amber-500 focus:outline-none transition-all">
 {% for m in methods %}
 <option value="{{ m }}">{{ m }}</option>
 {% endfor %}
@@ -141,29 +141,29 @@ style="display: none;"
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Payment Reference</label>
-<input 
-type="text" 
-name="payment_reference" 
-required 
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Reference</label>
+<input
+type="text"
+name="payment_reference"
+required
 placeholder="e.g. TXN-8800115"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3.5 focus:bg-white focus:border-amber-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3.5 edify-focus-surface focus:border-amber-500 focus:outline-none transition-all"
 >
 </div>
 </form>
 </div>
 
-<div class="space-y-2 border-t border-slate-100 pt-4 bg-white">
-<button 
+<div class="space-y-2 border-t border-slate-100 pt-4 edify-surface">
+<button
 form="claim-form"
 type="submit"
 class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-center justify-center bg-amber-600 hover:bg-amber-700 shadow-sm transition-all"
 >
 Confirm Payout
 </button>
-<button 
+<button
 @click="claimOpen = false"
-type="button" 
+type="button"
 class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel

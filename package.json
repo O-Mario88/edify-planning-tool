@@ -1,10 +1,10 @@
 {
   "name": "edify-planning-tool",
   "private": true,
-  "description": "CSS build pipeline: compiles static/css/tailwind.source.css (Tailwind v4 + custom.css) into the committed bundle static/css/main.css. Never edit main.css by hand.",
+  "description": "CSS build pipeline: compiles assets/css/tailwind.source.css (Tailwind v4 + custom.css) into the committed bundle static/css/main.css. Never edit main.css by hand.",
   "scripts": {
-    "build:css": "tailwindcss -i static/css/tailwind.source.css -o static/css/main.css",
-    "watch:css": "tailwindcss -i static/css/tailwind.source.css -o static/css/main.css --watch"
+    "build:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css",
+    "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.2",

@@ -5,12 +5,12 @@
 {% block drawer_subtitle %}Bulk assign unclustered schools located in this cluster's covered sub-counties.{% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-6 text-slate-700" 
-x-data="{ 
-search: '', 
-selectedCount: 0, 
-totalEnrollment: 0, 
-ssaSum: 0.0, 
+<div class="space-y-6 text-slate-700"
+x-data="{
+search: '',
+selectedCount: 0,
+totalEnrollment: 0,
+ssaSum: 0.0,
 ssaCount: 0,
 updateMetrics() {
 let count = 0;
@@ -53,30 +53,30 @@ this.updateMetrics();
 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 </svg>
 </div>
-<input 
-type="text" 
-placeholder="Search schools by name or ID..." 
+<input
+type="text"
+placeholder="Search schools by name or ID..."
 x-model="search"
-class="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 placeholder-slate-400"
+class="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 placeholder-slate-400"
 >
 </div>
 
 <!-- Bulk Select Actions -->
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
 <label class="flex items-center gap-2 text-[12px] font-bold text-slate-500 cursor-pointer">
-<input 
-type="checkbox" 
+<input
+type="checkbox"
 @change="toggleAll($event.target.checked)"
-class="rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f]"
+class="rounded border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)]"
 >
 <span>Select All Visible Schools</span>
 </label>
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Candidate List</span>
+<span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wide">Candidate List</span>
 </div>
 
 <!-- Grouped Checklist -->
-<form 
-hx-post="/clusters/{{ cluster.id }}/bulk-assign-drawer" 
+<form
+hx-post="/clusters/{{ cluster.id }}/bulk-assign-drawer"
 hx-target="#drawer-container"
 class="space-y-6"
 >
@@ -85,41 +85,41 @@ class="space-y-6"
 {% regroup schools by sub_county as sub_county_list %}
 {% for item in sub_county_list %}
 <div class="space-y-2">
-<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded">
+<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded">
 {{ item.grouper.name }} Sub-county
 </h4>
 <div class="space-y-1.5">
 {% for s in item.list %}
-<div 
-class="school-row flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-slate-200 bg-white hover:bg-slate-50/20 transition-all shadow-sm"
+<div
+class="school-row flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-slate-200 edify-surface hover:bg-slate-50/20 transition-all shadow-sm"
 x-data="{ name: '{{ s.name|escapejs }}', schoolId: '{{ s.school_id|escapejs }}' }"
 x-show="search === '' || name.toLowerCase().includes(search.toLowerCase()) || schoolId.toLowerCase().includes(search.toLowerCase())"
 >
 <div class="flex items-center gap-3">
-<input 
-type="checkbox" 
-name="school_ids" 
-value="{{ s.id }}" 
+<input
+type="checkbox"
+name="school_ids"
+value="{{ s.id }}"
 data-enrollment="{{ s.enrollment|default:0 }}"
 data-ssa="{{ s.current_ssa_average|default:0 }}"
 @change="updateMetrics()"
-class="school-checkbox rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f] h-4 w-4 cursor-pointer"
+class="school-checkbox rounded border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)] h-4 w-4 cursor-pointer"
 >
 <div class="text-[12px] font-semibold text-slate-800">
 <p class="font-semibold text-slate-900 leading-snug">{{ s.name }}</p>
-<p class="text-[11px] text-slate-400 font-mono mt-0.5">{{ s.school_id }}</p>
+<p class="edify-text-caption text-slate-400 font-mono mt-0.5">{{ s.school_id }}</p>
 </div>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] px-2 py-0.5 rounded font-semibold border {% if s.school_type == 'client' %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-purple-50 text-purple-700 border-purple-100{% endif %}">
+<span class="edify-text-caption px-2 py-0.5 rounded font-semibold border {% if s.school_type == 'client' %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-purple-50 text-purple-700 border-purple-100{% endif %}">
 {{ s.get_school_type_display }}
 </span>
 {% if s.current_ssa_average %}
-<span class="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-100 flex items-center gap-1">
+<span class="edify-text-caption font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-100 flex items-center gap-1">
 SSA: {{ s.current_ssa_average|floatformat:1 }}
 </span>
 {% else %}
-<span class="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 italic">No SSA</span>
+<span class="edify-text-caption font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 italic">No SSA</span>
 {% endif %}
 </div>
 </div>
@@ -130,39 +130,39 @@ SSA: {{ s.current_ssa_average|floatformat:1 }}
 </div>
 
 <!-- Planning Footprint Summary Panel -->
-<div 
+<div
 class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 text-[12px] font-bold text-slate-600 shadow-sm"
 x-show="selectedCount > 0"
 style="display: none;"
 >
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-200/60 pb-1 mb-1.5">Selected Footprint Impact</p>
+<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-200/60 pb-1 mb-1.5">Selected Footprint Impact</p>
 <div class="grid grid-cols-3 gap-2 text-center">
 <div>
-<span class="text-slate-400 text-[11px] block uppercase">Schools</span>
-<span class="text-[14px] font-semibold text-[#2e505f]" x-text="selectedCount">0</span>
+<span class="text-slate-400 edify-text-caption block uppercase">Schools</span>
+<span class="text-[14px] font-semibold text-[var(--edify-primary)]" x-text="selectedCount">0</span>
 </div>
 <div>
-<span class="text-slate-400 text-[11px] block uppercase">Enrollment</span>
-<span class="text-[14px] font-semibold text-[#2e505f]" x-text="totalEnrollment">0</span>
+<span class="text-slate-400 edify-text-caption block uppercase">Enrollment</span>
+<span class="text-[14px] font-semibold text-[var(--edify-primary)]" x-text="totalEnrollment">0</span>
 </div>
 <div>
-<span class="text-slate-400 text-[11px] block uppercase">Avg SSA</span>
-<span class="text-[14px] font-semibold text-[#2e505f]" x-text="ssaCount > 0 ? (ssaSum / ssaCount).toFixed(1) : '—'">—</span>
+<span class="text-slate-400 edify-text-caption block uppercase">Avg SSA</span>
+<span class="text-[14px] font-semibold text-[var(--edify-primary)]" x-text="ssaCount > 0 ? (ssaSum / ssaCount).toFixed(1) : '—'">—</span>
 </div>
 </div>
 </div>
 
 <!-- Footer Buttons -->
 <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="px-5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
 >
 Cancel
 </button>
-<button 
-type="submit" 
+<button
+type="submit"
 class="px-6 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
 :disabled="selectedCount === 0"
 :class="selectedCount === 0 ? 'opacity-50 cursor-not-allowed' : ''"
@@ -179,7 +179,7 @@ class="px-6 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] 
 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 </svg>
 <p class="text-[14px] font-semibold text-slate-500 leading-snug">All Schools Clustered</p>
-<p class="text-[11px] text-slate-400 leading-normal">All candidate schools inside the sub-counties covered by this cluster have already been assigned.</p>
+<p class="edify-text-caption text-slate-400 leading-normal">All candidate schools inside the sub-counties covered by this cluster have already been assigned.</p>
 </div>
 </div>
 {% endif %}

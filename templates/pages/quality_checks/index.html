@@ -13,7 +13,7 @@
 </div>
 
 {% if can_raise %}
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm p-5">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm p-5">
 <h2 class="text-[13px] font-extrabold text-slate-800 mb-3">Raise a Flag</h2>
 <form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-semibold text-[12px] text-slate-600">
 {% csrf_token %}
@@ -44,21 +44,21 @@
 </div>
 {% endif %}
 
-<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
+<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm">
 {% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between gap-3">
 <div class="min-w-0">
 <p class="text-[14px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p>
-<p class="text-[11.5px] text-slate-500 mt-0.5">{{ f.note }}</p>
-<p class="text-[11px] text-slate-400 mt-0.5">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p>
+<p class="edify-text-caption text-slate-500 mt-0.5">{{ f.note }}</p>
+<p class="edify-text-caption text-slate-400 mt-0.5">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p>
 </div>
 <div class="flex items-center gap-2 shrink-0">
-<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span>
+<span class="edify-text-caption font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span>
 {% if can_act and f.assigned_to_user_id == current_user_id and f.status != "resolved" %}
 <form method="POST" class="inline">
 {% csrf_token %}
 <input type="hidden" name="action" value="{% if f.status == 'open' %}acknowledge{% else %}resolve{% endif %}">
 <input type="hidden" name="flag_id" value="{{ f.id }}">
-<button type="submit" class="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50">
+<button type="submit" class="edify-text-caption font-bold px-2.5 py-1 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50">
 {% if f.status == "open" %}Acknowledge{% else %}Resolve{% endif %}
 </button>
 </form>

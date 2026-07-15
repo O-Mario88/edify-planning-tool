@@ -1,13 +1,13 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
   <div class="flex items-start justify-between">
     <div>
       <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">2. SSA Performance by Intervention</h3>
-      <p class="text-[11px] text-slate-400 font-medium mt-0.5">
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">
         {% if ssa_interventions.has_data %}Latest verified annual cycle FY {{ ssa_interventions.latest_fy }}{% if ssa_interventions.prev_fy %} vs FY {{ ssa_interventions.prev_fy }}{% endif %}{% else %}No verified annual SSA yet{% endif %}
       </p>
     </div>
-    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Δ vs PY</span>
+    <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Δ vs PY</span>
   </div>
 
   <div class="space-y-2 pt-1">
@@ -16,24 +16,24 @@
        hx-get="/analytics/country-director/drilldown?drill=ssa&intervention={{ r.value }}&fy={{ fy }}"
        hx-target="#drawer-container" hx-swap="innerHTML"
        class="flex items-center gap-2 group cursor-pointer">
-      <span class="w-[132px] shrink-0 text-[11px] font-semibold text-slate-600 truncate group-hover:text-slate-800">{{ r.label }} <span class="text-slate-400">({{ r.code }})</span></span>
+      <span class="w-[132px] shrink-0 edify-text-caption font-semibold text-slate-600 truncate group-hover:text-slate-800">{{ r.label }} <span class="text-slate-400">({{ r.code }})</span></span>
       <div class="flex-1 h-[18px] bg-slate-50 rounded-md overflow-hidden relative">
         {% if r.pct is not None %}
         <div class="h-full rounded-md transition-all" style="width: {{ r.pct }}%; background: {{ r.color }};"></div>
         {% endif %}
       </div>
-      <span class="w-[38px] shrink-0 text-right text-[11.5px] font-bold text-slate-700 tabular-nums">{% if r.pct is not None %}{{ r.pct }}%{% else %}—{% endif %}</span>
-      <span class="w-[42px] shrink-0 text-right text-[10.5px] font-bold tabular-nums {% if r.delta > 0 %}text-emerald-600{% elif r.delta < 0 %}text-rose-600{% else %}text-slate-300{% endif %}">
+      <span class="w-[38px] shrink-0 text-right edify-text-caption font-bold text-slate-700 tabular-nums">{% if r.pct is not None %}{{ r.pct }}%{% else %}—{% endif %}</span>
+      <span class="w-[42px] shrink-0 text-right edify-text-caption font-bold tabular-nums {% if r.delta > 0 %}text-emerald-600{% elif r.delta < 0 %}text-rose-600{% else %}text-slate-300{% endif %}">
         {% if r.delta is not None %}{% if r.delta > 0 %}▲{% elif r.delta < 0 %}▼{% endif %}{{ r.delta }}{% else %}—{% endif %}
       </span>
     </a>
     {% endfor %}
   </div>
 
-  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 border-t border-slate-50 text-[9.5px] font-semibold text-slate-400">
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:#16a34a"></span>Strong (≥80%)</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:#84cc16"></span>Improving (60–79%)</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:#f59e0b"></span>Weak (40–59%)</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:#dc2626"></span>Critical (&lt;40%)</span>
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 border-t border-slate-50 edify-text-caption font-semibold text-slate-400">
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:var(--edify-chart-green)"></span>Strong (≥80%)</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:var(--edify-chart-lime)"></span>Improving (60–79%)</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:var(--edify-chart-amber)"></span>Weak (40–59%)</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm" style="background:var(--edify-chart-red)"></span>Critical (&lt;40%)</span>
   </div>
 </div>

@@ -1,16 +1,16 @@
 <!-- Cluster Impact Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 " id="cluster-impact-container">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 " id="cluster-impact-container">
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
 <div class="flex items-center gap-1">
 <h3 class="text-[14px] font-semibold text-slate-800">Cluster Impact</h3>
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 </div>
-<select 
+<select
 name="focus_intervention"
-hx-get="/clusters/impact/{{ selected_cluster.id }}" 
-hx-target="#cluster-impact-container" 
+hx-get="/clusters/impact/{{ selected_cluster.id }}"
+hx-target="#cluster-impact-container"
 hx-swap="outerHTML"
-class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold px-1.5 py-0.5 focus:outline-none text-slate-600 cursor-pointer"
+class="bg-slate-50 border border-slate-200 rounded-lg edify-text-caption font-bold px-1.5 py-0.5 focus:outline-none text-slate-600 cursor-pointer"
 >
 {% for code, label in interventions %}
 <option value="{{ code }}" {% if focus_intervention == code %}selected{% endif %}>{{ label }}</option>
@@ -25,32 +25,32 @@ class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold px-1
 <span class="text-[12px] font-semibold text-slate-800 block">{{ impact_data.focus_intervention }}</span>
 <div class="grid grid-cols-5 gap-1.5 text-center">
 <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-<span class="text-[11px] uppercase font-bold text-slate-400 block">Before Avg</span>
+<span class="edify-text-caption uppercase font-bold text-slate-400 block">Before Avg</span>
 <span class="text-[12px] font-bold text-slate-700 block mt-0.5">{{ impact_data.before_avg|floatformat:1 }}</span>
 </div>
 <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-<span class="text-[11px] uppercase font-bold text-slate-400 block">After Avg</span>
+<span class="edify-text-caption uppercase font-bold text-slate-400 block">After Avg</span>
 <span class="text-[12px] font-bold text-slate-700 block mt-0.5">{{ impact_data.after_avg|floatformat:1 }}</span>
 </div>
 <div class="bg-emerald-50/50 p-1.5 rounded-lg border border-emerald-100 flex flex-col justify-center items-center">
-<span class="text-[11px] uppercase font-bold text-emerald-600 block leading-none">Delta</span>
+<span class="edify-text-caption uppercase font-bold text-emerald-600 block leading-none">Delta</span>
 <span class="text-[12px] font-semibold text-emerald-700 block mt-0.5 leading-none">
 {% if impact_data.delta >= 0 %}+{% endif %}{{ impact_data.delta|floatformat:1 }}
 </span>
 </div>
 <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-<span class="text-[11px] font-bold text-slate-400 block leading-none">Schools Improved</span>
+<span class="edify-text-caption font-bold text-slate-400 block leading-none">Schools Improved</span>
 <span class="text-[12px] font-semibold text-emerald-600 block mt-0.5 leading-none">{{ impact_data.improved }}</span>
 </div>
 <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-<span class="text-[11px] font-bold text-slate-400 block leading-none">Schools Declined</span>
+<span class="edify-text-caption font-bold text-slate-400 block leading-none">Schools Declined</span>
 <span class="text-[12px] font-semibold text-rose-500 block mt-0.5 leading-none">{{ impact_data.declined }}</span>
 </div>
 </div>
 </div>
 </div>
 {% else %}
-<p class="text-center text-slate-400 text-[11px] font-semibold py-8 bg-slate-50/10 rounded-xl border border-dashed border-slate-100">
+<p class="text-center text-slate-400 edify-text-caption font-semibold py-8 bg-slate-50/10 rounded-xl border border-dashed border-slate-100">
 Impact will appear after follow-up SSA is uploaded.
 </p>
 {% endif %}
@@ -61,7 +61,7 @@ type="button"
 hx-get="/clusters/impact-drawer/{{ cluster_id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="text-[12px] font-bold text-[#2563eb] hover:underline flex items-center gap-0.5"
+class="text-[12px] font-bold text-[var(--edify-chart-blue)] hover:underline flex items-center gap-0.5"
 >
 <span>View full intervention impact report</span>
 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>

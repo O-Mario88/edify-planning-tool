@@ -10,25 +10,25 @@
 <div>
 <h1 class="text-[21px] font-extrabold tracking-tight flex items-center gap-2">
 <span>Admin Dashboard</span>
-<span class="bg-blue-100 text-blue-800 font-semibold text-[11px] px-2 py-0.5 rounded-full">System Control</span>
+<span class="bg-blue-100 text-blue-800 font-semibold edify-text-caption px-2 py-0.5 rounded-full">System Control</span>
 </h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Platform configuration, user directories, and data integrity center</p>
 </div>
 
 <!-- Action buttons -->
 <div class="flex items-center gap-2">
-<a 
-href="/admin-panel/users" 
-class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+<a
+href="/admin-panel/users"
+class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 </svg>
 <span>Add User</span>
 </a>
-<a 
-href="/admin-panel/staff-setup-queue" 
-class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition-all focus:outline-none"
+<a
+href="/admin-panel/staff-setup-queue"
+class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hover:text-slate-800 edify-text-caption font-semibold uppercase tracking-wider rounded-lg transition-all focus:outline-none"
 >
 <span>Review Staff Queue</span>
 </a>
@@ -39,7 +39,7 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
 <!-- User Health Card -->
-<div class="bg-white rounded-xl  p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-5 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">User Directory Health</h3>
 <div class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -51,11 +51,11 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <div class="grid grid-cols-2 gap-3 text-center">
 <div class="bg-slate-50 rounded-lg p-2.5">
 <p class="text-[21px] font-extrabold tracking-tight">{{ user_count }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase mt-0.5">Total Users</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase mt-0.5">Total Users</p>
 </div>
 <div class="bg-emerald-50/50 rounded-lg p-2.5">
 <p class="text-[21px] font-extrabold tracking-tight text-emerald-700">{{ active_users }}</p>
-<p class="text-[11px] font-bold text-emerald-600 uppercase mt-0.5">Active</p>
+<p class="edify-text-caption font-bold text-emerald-600 uppercase mt-0.5">Active</p>
 </div>
 </div>
 <div class="text-[12px] font-bold text-slate-500 flex justify-between">
@@ -65,7 +65,7 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 
 <!-- Data Quality Card -->
-<div class="bg-white rounded-xl  p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-5 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Data Quality Snapshot</h3>
 <div class="h-6 w-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -77,18 +77,18 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <div class="grid grid-cols-2 gap-3 text-center">
 <a href="/admin-panel/staff-setup-queue" class="bg-amber-50/50 rounded-lg p-2.5 hover:bg-amber-100/50 transition-all block">
 <p class="text-[21px] font-extrabold tracking-tight text-amber-700">Pending</p>
-<p class="text-[11px] font-bold text-amber-600 uppercase mt-0.5">Unmatched Staff</p>
+<p class="edify-text-caption font-bold text-amber-600 uppercase mt-0.5">Unmatched Staff</p>
 </a>
 <a href="/admin-panel/data-quality-center" class="bg-rose-50/50 rounded-lg p-2.5 hover:bg-rose-100/50 transition-all block">
 <p class="text-[21px] font-extrabold tracking-tight text-rose-700">Scanner</p>
-<p class="text-[11px] font-bold text-rose-600 uppercase mt-0.5">Quality Center</p>
+<p class="edify-text-caption font-bold text-rose-600 uppercase mt-0.5">Quality Center</p>
 </a>
 </div>
-<p class="text-[11px] text-slate-400 font-semibold text-center leading-normal">Resolve unmatched staff names from file imports to unlock planning routes.</p>
+<p class="edify-text-caption text-slate-400 font-semibold text-center leading-normal">Resolve unmatched staff names from file imports to unlock planning routes.</p>
 </div>
 
 <!-- Workflow Health Card -->
-<div class="bg-white rounded-xl  p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-5 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Workflow Rules Health</h3>
 <div class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -100,14 +100,14 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <div class="grid grid-cols-2 gap-3 text-center">
 <a href="/admin-panel/workflow-rules" class="bg-emerald-50/50 rounded-lg p-2.5 hover:bg-emerald-100/50 transition-all block">
 <p class="text-[21px] font-extrabold tracking-tight text-emerald-700">Active</p>
-<p class="text-[11px] font-bold text-emerald-600 uppercase mt-0.5">Workflow Rules</p>
+<p class="edify-text-caption font-bold text-emerald-600 uppercase mt-0.5">Workflow Rules</p>
 </a>
 <a href="/system-health" class="bg-blue-50/50 rounded-lg p-2.5 hover:bg-blue-100/50 transition-all block">
 <p class="text-[21px] font-extrabold tracking-tight text-blue-700">Integrity</p>
-<p class="text-[11px] font-bold text-blue-600 uppercase mt-0.5">System Health</p>
+<p class="edify-text-caption font-bold text-blue-600 uppercase mt-0.5">System Health</p>
 </a>
 </div>
-<p class="text-[11px] text-slate-400 font-semibold text-center leading-normal">System health scanners run continuously to flag broken relations and orphan records.</p>
+<p class="edify-text-caption text-slate-400 font-semibold text-center leading-normal">System health scanners run continuously to flag broken relations and orphan records.</p>
 </div>
 
 </div>
@@ -117,12 +117,12 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 
 <!-- Primary Control Grid Links -->
 <div class="lg:col-span-2 space-y-6">
-<div class="bg-white rounded-xl  p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-5 shadow-sm space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight border-b border-slate-50 pb-2">Administrative Actions Center</h3>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <!-- Roles & Permissions Matrix Link -->
-<a href="/admin-panel/roles-permissions" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group bg-white">
+<a href="/admin-panel/roles-permissions" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group edify-surface">
 <div class="h-10 w-10 rounded-lg bg-blue-50 group-hover:bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -130,12 +130,12 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 <div>
 <p class="text-[14px] font-semibold text-slate-800">Roles & Permissions</p>
-<p class="text-[11px] text-slate-400 font-semibold mt-1">Manage feature gates, permission matrices, and user access levels</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Manage feature gates, permission matrices, and user access levels</p>
 </div>
 </a>
 
 <!-- Page Access Matrix Link -->
-<a href="/admin-panel/page-access-matrix" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group bg-white">
+<a href="/admin-panel/page-access-matrix" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group edify-surface">
 <div class="h-10 w-10 rounded-lg bg-indigo-50 group-hover:bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
@@ -143,12 +143,12 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 <div>
 <p class="text-[14px] font-semibold text-slate-800">Page Access Matrix</p>
-<p class="text-[11px] text-slate-400 font-semibold mt-1">Verify role-specific route parameters and security groups</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Verify role-specific route parameters and security groups</p>
 </div>
 </a>
 
 <!-- School Upload History Link -->
-<a href="/admin-panel/school-upload-history" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group bg-white">
+<a href="/admin-panel/school-upload-history" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group edify-surface">
 <div class="h-10 w-10 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -156,12 +156,12 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 <div>
 <p class="text-[14px] font-semibold text-slate-800">School Upload History</p>
-<p class="text-[11px] text-slate-400 font-semibold mt-1">Audit school and SSA file batch imports with rollback triggers</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Audit school and SSA file batch imports with rollback triggers</p>
 </div>
 </a>
 
 <!-- Region & District Setup Link -->
-<a href="/admin-panel/region-district-setup" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group bg-white">
+<a href="/admin-panel/region-district-setup" class="flex gap-4 p-4  hover:border-blue-500 rounded-xl hover:shadow-md transition-all group edify-surface">
 <div class="h-10 w-10 rounded-lg bg-rose-50 group-hover:bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -170,7 +170,7 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 <div>
 <p class="text-[14px] font-semibold text-slate-800">District & Region Setup</p>
-<p class="text-[11px] text-slate-400 font-semibold mt-1">Define geographical coordinates, regions, and regional bounds</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Define geographical coordinates, regions, and regional bounds</p>
 </div>
 </a>
 </div>
@@ -180,10 +180,10 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 
 <!-- Right Side Panel: System Logs & Health Alerts -->
 <div class="space-y-6">
-<div class="bg-white rounded-xl  p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-xl  p-5 shadow-sm space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-50 pb-2 flex items-center justify-between">
 <span>System Alerts</span>
-<span class="bg-rose-100 text-rose-800 font-semibold text-[11px] px-1.5 py-0.5 rounded-full animate-pulse">Live</span>
+<span class="bg-rose-100 text-rose-800 font-semibold edify-text-caption px-1.5 py-0.5 rounded-full animate-pulse">Live</span>
 </h3>
 
 <div class="space-y-3">
@@ -194,8 +194,8 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 </svg>
 <div>
-<p class="text-[11px] font-semibold text-rose-800">Unmatched staff queue pending</p>
-<p class="text-[11px] text-rose-600 font-semibold mt-0.5">{{ unmatched_staff_schools }} school{{ unmatched_staff_schools|pluralize }} with unmatched staff. Please review the setup queue to link school files with real users.</p>
+<p class="edify-text-caption font-semibold text-rose-800">Unmatched staff queue pending</p>
+<p class="edify-text-caption text-rose-600 font-semibold mt-0.5">{{ unmatched_staff_schools }} school{{ unmatched_staff_schools|pluralize }} with unmatched staff. Please review the setup queue to link school files with real users.</p>
 </div>
 </div>
 {% endif %}
@@ -207,8 +207,8 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 </svg>
 <div>
-<p class="text-[11px] font-semibold text-amber-800">Broken workflow warning</p>
-<p class="text-[11px] text-amber-600 font-semibold mt-0.5">{{ missing_cost_lines }} activit{{ missing_cost_lines|pluralize:"y,ies" }} scheduled are currently missing cost catalogue entries.</p>
+<p class="edify-text-caption font-semibold text-amber-800">Broken workflow warning</p>
+<p class="edify-text-caption text-amber-600 font-semibold mt-0.5">{{ missing_cost_lines }} activit{{ missing_cost_lines|pluralize:"y,ies" }} scheduled are currently missing cost catalogue entries.</p>
 </div>
 </div>
 {% endif %}
@@ -219,16 +219,16 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
 </svg>
 <div>
-<p class="text-[11px] font-semibold text-emerald-800">No active alerts</p>
-<p class="text-[11px] text-emerald-600 font-semibold mt-0.5">Staff matching and cost catalogue coverage are both clean.</p>
+<p class="edify-text-caption font-semibold text-emerald-800">No active alerts</p>
+<p class="edify-text-caption text-emerald-600 font-semibold mt-0.5">Staff matching and cost catalogue coverage are both clean.</p>
 </div>
 </div>
 {% endif %}
 </div>
 
-<a 
-href="/admin-panel/audit-log" 
-class="block w-full bg-slate-50 hover:bg-slate-100 text-slate-600 text-center py-2 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-all"
+<a
+href="/admin-panel/audit-log"
+class="block w-full bg-slate-50 hover:bg-slate-100 text-slate-600 text-center py-2 rounded-lg edify-text-caption font-semibold uppercase tracking-wider transition-all"
 >
 View System Audit Trail
 </a>

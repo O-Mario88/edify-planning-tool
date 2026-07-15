@@ -11,14 +11,14 @@
       <h1 class="text-[21px] font-extrabold tracking-tight">Team Availability Heatmap</h1>
       <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Track workload, approved leaves, and calendar blockages for your team over the next 4 weeks</p>
     </div>
-    
-    <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-xl">
+
+    <div class="flex items-center gap-2 edify-text-caption font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-xl">
       <span>Scoping: {{ role }}</span>
     </div>
   </div>
 
   <!-- Legend & Overview -->
-  <div class="bg-white rounded-lg border border-slate-100 p-5 shadow-sm space-y-4">
+  <div class="edify-surface rounded-lg border border-slate-100 p-5 shadow-sm space-y-4">
     <h3 class="text-[14px] font-bold text-slate-850">Availability Status Legend</h3>
     <div class="flex flex-wrap gap-4 text-[12px] font-semibold">
       <div class="flex items-center gap-2">
@@ -45,18 +45,18 @@
   </div>
 
   <!-- Heatmap Matrix Grid -->
-  <div class="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
+  <div class="edify-surface rounded-lg border border-slate-100 shadow-sm overflow-hidden">
     <div class="p-5 border-b border-slate-100">
       <h3 class="text-[16px] font-bold text-slate-850">4-Week Heatmap Matrix</h3>
     </div>
-    
+
     <div class="overflow-x-auto">
       <table class="w-full text-[12px] border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100 text-left text-slate-400">
-            <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-wider w-1/3">Staff Member & Role</th>
+            <th class="px-6 py-4 edify-text-caption font-bold uppercase tracking-wider w-1/3">Staff Member & Role</th>
             {% for header in weeks_headers %}
-            <th class="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-center w-1/6">{{ header }}</th>
+            <th class="px-4 py-4 edify-text-caption font-bold uppercase tracking-wider text-center w-1/6">{{ header }}</th>
             {% endfor %}
           </tr>
         </thead>
@@ -65,17 +65,17 @@
           <tr class="hover:bg-slate-50/50 transition">
             <td class="px-6 py-4">
               <span class="font-bold text-slate-800 block text-[13px]">{{ row.staff_name }}</span>
-              <span class="text-[11px] text-slate-400 font-semibold block mt-0.5">{{ row.role }}</span>
+              <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ row.role }}</span>
             </td>
-            
+
             {% for wk in row.weeks %}
             <td class="px-4 py-4 text-center">
-              <div 
+              <div
                 class="inline-flex flex-col items-center justify-center p-3 rounded-lg text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
-                style="background-color: {% if wk.status == 'Available' %}#10b981{% elif wk.status == 'On Leave' %}#3b82f6{% elif wk.status == 'Blocked' %}#475569{% elif wk.status == 'Conference Week' %}#a855f7{% else %}#f59e0b{% endif %};"
+                style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-text-muted){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
               >
                 <span class="text-[12px] font-extrabold">{{ wk.status }}</span>
-                <span class="text-[10px] opacity-90 font-bold mt-1">{{ wk.act_count }} activities</span>
+                <span class="edify-text-caption opacity-90 font-bold mt-1">{{ wk.act_count }} activities</span>
               </div>
             </td>
             {% endfor %}

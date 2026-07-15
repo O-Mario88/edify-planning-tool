@@ -10,7 +10,7 @@
   border-radius: 20px !important;
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
   background-color: white !important;
-  border: 1px solid #cbd5e1 !important;
+  border: 1px solid var(--edify-border) !important;
 }
 .drawer-header {
   border-bottom: none !important;
@@ -20,33 +20,33 @@
 .drawer-header h3 {
   font-size: 19px !important;
   font-weight: 700 !important;
-  color: #0f172a !important;
+  color: var(--edify-text) !important;
   letter-spacing: -0.025em !important;
 }
 .drawer-header p {
   font-size: 13px !important;
   font-weight: 400 !important;
-  color: #64748b !important;
+  color: var(--edify-text-muted) !important;
   margin-top: 6px !important;
   line-height: 1.5 !important;
 }
 .drawer-close-btn {
-  border: 1.5px solid #cbd5e1 !important;
+  border: 1.5px solid var(--edify-border) !important;
   border-radius: 10px !important;
   padding: 7px !important;
-  color: #475569 !important;
+  color: var(--edify-text-muted) !important;
   background: white !important;
   transition: all 0.2s !important;
 }
 .drawer-close-btn:hover {
-  background: #f8fafc !important;
-  border-color: #94a3b8 !important;
+  background: var(--edify-surface-muted) !important;
+  border-color: var(--edify-text-subtle) !important;
 }
 .drawer-body {
   padding: 4px 28px 28px 28px !important;
 }
 </style>
-<div 
+<div
   x-data='{
     selectedDistrictId: "{{ cluster.district_id|default:"" }}",
     subCounties: {{ sub_counties_json|safe }},
@@ -65,9 +65,9 @@
   }'
   class="space-y-4 text-[12px] font-bold text-slate-600"
 >
-  <form 
-    action="{% url 'frontend:edit_cluster' cluster.id %}" 
-    method="post" 
+  <form
+    action="{% url 'frontend:edit_cluster' cluster.id %}"
+    method="post"
     class="space-y-5"
     @submit="$dispatch('close-drawer')"
   >
@@ -75,23 +75,23 @@
 
     <!-- Cluster Name Input -->
     <div class="space-y-1.5">
-      <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Cluster name <span class="text-rose-500">*</span></label>
-      <input 
-        type="text" 
-        name="name" 
+      <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster name <span class="text-rose-500">*</span></label>
+      <input
+        type="text"
+        name="name"
         x-model="clusterName"
-        placeholder="e.g. Mukono Central Cluster" 
-        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500" 
+        placeholder="e.g. Mukono Central Cluster"
+        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500"
         required
       >
     </div>
 
     <!-- Cluster Type Selection -->
     <div class="space-y-1">
-      <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Cluster Type</label>
-      <select 
-        name="cluster_type" 
-        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+      <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Type</label>
+      <select
+        name="cluster_type"
+        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
       >
         <option value="mixed" {% if cluster.cluster_type == 'mixed' %}selected{% endif %}>Mixed (Default)</option>
         <option value="primary" {% if cluster.cluster_type == 'primary' %}selected{% endif %}>Primary Only</option>
@@ -101,16 +101,16 @@
 
     <!-- District Selection -->
     <div class="space-y-1">
-      <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District <span class="text-rose-500">*</span></label>
-      <select 
-        name="district_id" 
+      <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District <span class="text-rose-500">*</span></label>
+      <select
+        name="district_id"
         id="district-select"
         x-model="selectedDistrictId"
         @change="selectedSubCounties = []"
         hx-get="{% url 'frontend:eligible_staff_options' %}"
         hx-trigger="change"
         hx-target="#responsible-staff-select"
-        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer" 
+        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
         required
       >
         <option value="">-- Select District --</option>
@@ -122,11 +122,11 @@
 
     <!-- Assigned Staff Selection (Dynamic) -->
     <div class="space-y-1">
-      <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Assigned Staff</label>
-      <select 
-        name="responsible_staff_id" 
+      <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assigned Staff</label>
+      <select
+        name="responsible_staff_id"
         id="responsible-staff-select"
-        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
       >
         <option value="">-- No Assigned Staff --</option>
         {% for sp in staff %}
@@ -135,16 +135,16 @@
           </option>
         {% endfor %}
       </select>
-      <p class="text-[11px] text-slate-400 font-semibold mt-1">Automatically displays CCEOs or PLs assigned to schools in this district.</p>
+      <p class="edify-text-caption text-slate-400 font-semibold mt-1">Automatically displays CCEOs or PLs assigned to schools in this district.</p>
     </div>
 
     <!-- Sub-counties Selection Checklist -->
     <div class="space-y-1.5">
-      <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+      <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
         Sub-counties covered <span class="text-slate-400 font-normal">(Optional)</span> (<span x-text="selectedSubCounties.length">0</span> selected)
       </label>
-      <p class="text-[10px] text-slate-400 font-normal -mt-0.5">Select all sub-counties this cluster covers.</p>
-      <div class="border border-slate-200 rounded-lg max-h-48 overflow-y-auto divide-y divide-slate-100 bg-white">
+      <p class="edify-text-caption text-slate-400 font-normal -mt-0.5">Select all sub-counties this cluster covers.</p>
+      <div class="border border-slate-200 rounded-lg max-h-48 overflow-y-auto divide-y divide-slate-100 edify-surface">
         <template x-for="sc in subCounties.filter(sc => sc.district_id === selectedDistrictId)" :key="sc.id">
           <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-medium text-slate-700">
             <input
@@ -164,7 +164,7 @@
     </div>
 
     <!-- Cluster Leader Card Section -->
-    <div class="border border-slate-200 rounded-xl p-4 bg-white space-y-3.5">
+    <div class="border border-slate-200 rounded-xl p-4 edify-surface space-y-3.5">
       <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
         <svg class="text-slate-500 shrink-0" style="height: 18px; width: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -174,23 +174,23 @@
 
       <div class="grid grid-cols-2 gap-3.5">
         <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Leader name</label>
-          <input 
-            type="text" 
-            name="cluster_leader_name" 
+          <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Leader name</label>
+          <input
+            type="text"
+            name="cluster_leader_name"
             value="{{ cluster.cluster_leader_name|default:"" }}"
-            placeholder="e.g. Esther Naluwu" 
-            class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="e.g. Esther Naluwu"
+            class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
         </div>
         <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Leader phone</label>
-          <input 
-            type="text" 
-            name="cluster_leader_phone" 
+          <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Leader phone</label>
+          <input
+            type="text"
+            name="cluster_leader_phone"
             value="{{ cluster.cluster_leader_phone|default:"" }}"
-            placeholder="e.g. +256 772 000 000" 
-            class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="e.g. +256 772 000 000"
+            class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
         </div>
       </div>
@@ -198,15 +198,15 @@
 
     <!-- Footer buttons -->
     <div class="border-t border-slate-100 pt-4 flex items-center justify-end gap-3">
-      <button 
-        type="button" 
+      <button
+        type="button"
         @click="$dispatch('close-drawer')"
         class="px-5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
       >
         Cancel
       </button>
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         class="px-6 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
       >
         Save Changes

@@ -52,7 +52,7 @@ _API_RE = re.compile(r"[\"'](/api/[^\"']+)[\"']")
 _INLINE_EVENT_RE = re.compile(
     r"\bon(?:click|change|input|submit|mouseover|mouseout)=", re.I
 )
-_RAW_HEX_RE = re.compile(r"#[0-9a-fA-F]{3,8}\b")
+_RAW_HEX_RE = re.compile(r"(?<!&)#[0-9a-fA-F]{3,8}\b")
 _EMOJI_RE = re.compile(
     "["
     "\U0001f300-\U0001f5ff"

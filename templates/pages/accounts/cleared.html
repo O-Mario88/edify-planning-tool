@@ -10,7 +10,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 edify-text-caption font-semibold uppercase tracking-widest">
 Permanent Record
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Cleared / Closed Finance Ledger</h1>
@@ -21,10 +21,10 @@ Archive of all financially closed activities. These records have passed program 
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
 <th class="px-6 py-4 text-left">Owner / Staff</th>
@@ -52,7 +52,7 @@ Archive of all financially closed activities. These records have passed program 
 </td>
 <!-- Type -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
+<span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
 {{ act.get_activity_type_display }}
 </span>
 </td>
@@ -75,7 +75,7 @@ Archive of all financially closed activities. These records have passed program 
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center">
 {% if act.completed_snapshot.netsuite_expense_id %}
-<span class="font-mono text-slate-800 bg-slate-50 px-2.5 py-0.5 border border-slate-200 rounded-lg text-[11px]">
+<span class="font-mono text-slate-800 bg-slate-50 px-2.5 py-0.5 border border-slate-200 rounded-lg edify-text-caption">
 {{ act.completed_snapshot.netsuite_expense_id }}
 </span>
 {% else %}&mdash;{% endif %}

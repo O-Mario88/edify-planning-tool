@@ -1,13 +1,13 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
   <div>
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">6. Performance by Cluster</h3>
-    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Cluster-school SSA average & weakest intervention</p>
+    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Cluster-school SSA average & weakest intervention</p>
   </div>
   <div class="overflow-x-auto -mx-1 max-h-[280px] overflow-y-auto">
-    <table class="w-full text-[11px]">
-      <thead class="sticky top-0 bg-white">
-        <tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+    <table class="w-full edify-text-caption">
+      <thead class="sticky top-0 edify-surface">
+        <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
           <th class="text-left font-bold py-1.5 pl-1">Cluster</th>
           <th class="text-right font-bold py-1.5">Avg SSA</th>
           <th class="text-left font-bold py-1.5 pl-2">Weakest</th>
@@ -23,13 +23,13 @@
           <td class="text-left font-semibold text-slate-700 py-1.5 pl-1 max-w-[110px] truncate">{{ r.name }}</td>
           <td class="text-right py-1.5">
             {% if r.avg_ssa is not None %}
-            <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums
+            <span class="inline-block px-1.5 py-0.5 rounded edify-text-caption font-bold tabular-nums
               {% if r.ssa_tone == 'success' %}bg-emerald-50 text-emerald-700
               {% elif r.ssa_tone == 'lime' %}bg-lime-50 text-lime-700
               {% elif r.ssa_tone == 'warning' %}bg-amber-50 text-amber-700
               {% elif r.ssa_tone == 'danger' %}bg-rose-50 text-rose-700
               {% else %}bg-slate-100 text-slate-400{% endif %}">{{ r.avg_ssa|floatformat:0 }}%</span>
-            {% else %}<span class="text-slate-300 text-[10px] font-semibold">—</span>{% endif %}
+            {% else %}<span class="text-slate-300 edify-text-caption font-semibold">—</span>{% endif %}
           </td>
           <td class="text-left text-slate-500 py-1.5 pl-2 max-w-[90px] truncate">{{ r.weakest_label }}{% if r.weakest_pct is not None %} <span class="text-slate-400">({{ r.weakest_pct|floatformat:0 }}%)</span>{% endif %}</td>
           <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.trainings }}</td>
@@ -42,6 +42,6 @@
     </table>
   </div>
   {% if cluster_performance.unclustered %}
-  <p class="text-[9.5px] text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2 py-1">{{ cluster_performance.unclustered|intcomma }} schools not yet clustered — cluster SSA shows only where membership exists.</p>
+  <p class="edify-text-caption text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2 py-1">{{ cluster_performance.unclustered|intcomma }} schools not yet clustered — cluster SSA shows only where membership exists.</p>
   {% endif %}
 </div>

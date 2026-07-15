@@ -1,57 +1,57 @@
 <!-- Roster Select Tabs -->
 <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
 <!-- All Schools -->
-<button 
-hx-get="/schools?tab=all" 
+<button
+hx-get="/schools?tab=all"
 hx-target="#schools-table-container"
 hx-include="#filters-form"
 hx-push-url="true"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'all' or not active_tab %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-All Schools <span class="ml-1.5 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[11px] font-semibold">{{ all_count }}</span>
+All Schools <span class="ml-1.5 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 edify-text-caption font-semibold">{{ all_count }}</span>
 </button>
 
 <!-- Unclustered -->
-<button 
-hx-get="/schools?tab=unclustered" 
+<button
+hx-get="/schools?tab=unclustered"
 hx-target="#schools-table-container"
 hx-include="#filters-form"
 hx-push-url="true"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'unclustered' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Unclustered <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-bold">{{ unclustered_count }}</span>
+Unclustered <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ unclustered_count }}</span>
 </button>
 
 <!-- Clustered -->
-<button 
-hx-get="/schools?tab=clustered" 
+<button
+hx-get="/schools?tab=clustered"
 hx-target="#schools-table-container"
 hx-include="#filters-form"
 hx-push-url="true"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'clustered' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Clustered <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-bold">{{ clustered_count }}</span>
+Clustered <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ clustered_count }}</span>
 </button>
 
 <!-- Not Assigned to Project -->
-<button 
-hx-get="/schools?tab=not_assigned" 
+<button
+hx-get="/schools?tab=not_assigned"
 hx-target="#schools-table-container"
 hx-include="#filters-form"
 hx-push-url="true"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'not_assigned' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Not Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-bold">{{ not_assigned_count }}</span>
+Not Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ not_assigned_count }}</span>
 </button>
 
 <!-- Assigned to Project -->
-<button 
-hx-get="/schools?tab=assigned" 
+<button
+hx-get="/schools?tab=assigned"
 hx-target="#schools-table-container"
 hx-include="#filters-form"
 hx-push-url="true"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'assigned' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-bold">{{ assigned_count }}</span>
+Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ assigned_count }}</span>
 </button>
 </div>

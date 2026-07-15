@@ -1,9 +1,9 @@
 <input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}" hx-swap-oob="true">
 <div class="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-[12px] font-bold text-slate-500 rounded-t-xl select-none">
   <div class="flex items-center gap-2">
-    <span class="text-slate-700 font-semibold uppercase text-[11px] tracking-wider">Core Schools Matrix ({{ matrix_rows|length }} Schools)</span>
+    <span class="text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">Core Schools Matrix ({{ matrix_rows|length }} Schools)</span>
   </div>
-  <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+  <div class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
     Click chevron to view package status &amp; actions
   </div>
 </div>
@@ -25,16 +25,16 @@
           <!-- Rows per page selector -->
           <div class="flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
             <span>Rows per page:</span>
-            <select class="h-7 px-1 rounded border border-slate-200 text-[12px] bg-white font-bold focus:outline-none">
+            <select class="h-7 px-1 rounded border border-slate-200 text-[12px] edify-surface font-bold focus:outline-none">
               <option>10</option>
             </select>
           </div>
 
           {% if page_obj.has_previous %}
-            <button 
+            <button
               type="button"
               @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-              class="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
+              class="h-8 px-3 rounded-lg border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
             >
               Previous
             </button>
@@ -48,7 +48,7 @@
               {% elif num == page_obj.number %}
                 <span class="h-8 w-8 rounded-lg text-white font-semibold flex items-center justify-center shadow-sm select-none" style="background-color:var(--edify-primary);">{{ num }}</span>
               {% else %}
-                <button 
+                <button
                   type="button"
                   @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
                   class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
@@ -60,10 +60,10 @@
           </div>
 
           {% if page_obj.has_next %}
-            <button 
+            <button
               type="button"
               @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-              class="h-8 px-3 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
+              class="h-8 px-3 rounded-lg border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
             >
               Next
             </button>
@@ -73,10 +73,10 @@
     {% endif %}
 
   {% else %}
-    <div class="p-10 text-center select-none bg-white rounded-xl">
+    <div class="p-10 text-center select-none edify-surface rounded-xl">
       <span class="text-[32px] block mb-2">⭐</span>
-      <p class="text-[14px] font-semibold text-[#2e505f]">No Core Schools Found</p>
-      <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Please check your filters or search keywords.</p>
+      <p class="text-[14px] font-semibold text-[var(--edify-primary)]">No Core Schools Found</p>
+      <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Please check your filters or search keywords.</p>
     </div>
   {% endif %}
 </div>

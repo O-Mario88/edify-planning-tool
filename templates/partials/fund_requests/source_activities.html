@@ -1,8 +1,8 @@
 <!-- Source Activities Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700" id="fund-requests-source-activities">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700" id="fund-requests-source-activities">
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800">Source Activities from My Plan</h3>
-<a href="/my-plan" class="text-[12px] font-bold text-[#2563eb] hover:underline">View All</a>
+<a href="/my-plan" class="text-[12px] font-bold text-[var(--edify-chart-blue)] hover:underline">View All</a>
 </div>
 
 <div class="space-y-4">
@@ -21,15 +21,15 @@
 <div class="flex-1 min-w-0">
 <div class="flex items-center justify-between gap-2">
 <p class="text-[12px] font-semibold text-slate-800 truncate">{{ act.title }}</p>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-bold uppercase tracking-wider
 {% if act.status == 'completed' %}bg-emerald-50 text-emerald-700 border border-emerald-100
 {% elif act.status == 'cancelled' %}bg-rose-50 text-rose-700 border border-rose-100
 {% else %}bg-blue-50 text-blue-700 border border-blue-100{% endif %}">
 {{ act.status|title }}
 </span>
 </div>
-<p class="text-[11px] text-slate-400 font-bold">{{ act.location }} &bull; {{ act.date_str }}</p>
-<p class="text-[11px] text-slate-500 font-semibold mt-0.5">{{ act.purpose }}</p>
+<p class="edify-text-caption text-slate-400 font-bold">{{ act.location }} &bull; {{ act.date_str }}</p>
+<p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ act.purpose }}</p>
 </div>
 </div>
 {% endfor %}
@@ -42,7 +42,7 @@ No activities scheduled in this week.
 
 <div class="border-t border-slate-100 pt-3 flex justify-between items-center text-[12px] font-bold">
 <span class="text-slate-400 font-semibold">Showing {{ source_activities|length }} of {{ source_activities|length }} source activities</span>
-<a href="/my-plan" class="text-[#2563eb] hover:underline flex items-center gap-0.5">
+<a href="/my-plan" class="text-[var(--edify-chart-blue)] hover:underline flex items-center gap-0.5">
 Open My Plan
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
 </a>

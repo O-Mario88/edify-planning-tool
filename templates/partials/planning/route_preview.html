@@ -4,15 +4,15 @@
 <div class="rounded-xl border {% if preview.status == 'excellent' %}border-emerald-200 bg-emerald-50/40{% elif preview.status == 'good' %}border-sky-200 bg-sky-50/40{% elif preview.status == 'risky' %}border-amber-200 bg-amber-50/40{% elif preview.status == 'blocked' %}border-rose-300 bg-rose-50/60{% else %}border-rose-200 bg-rose-50/40{% endif %} p-3 space-y-2 text-left">
 
   <div class="flex items-center justify-between">
-    <span class="inline-flex items-center gap-1.5 text-[11px] font-bold
+    <span class="inline-flex items-center gap-1.5 edify-text-caption font-bold
       {% if preview.status == 'excellent' %}text-emerald-700{% elif preview.status == 'good' %}text-sky-700{% elif preview.status == 'risky' %}text-amber-700{% else %}text-rose-700{% endif %}">
       <span class="h-2 w-2 rounded-full {% if preview.status == 'excellent' %}bg-emerald-500{% elif preview.status == 'good' %}bg-sky-500{% elif preview.status == 'risky' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>
       Route Quality: {% if preview.status == 'excellent' %}Excellent{% elif preview.status == 'good' %}Good{% elif preview.status == 'risky' %}Risky{% elif preview.status == 'blocked' %}Blocked{% else %}Not Feasible{% endif %}
     </span>
-    <span class="text-[10px] font-bold text-slate-400 tabular-nums">Score {{ preview.score }}/100</span>
+    <span class="edify-text-caption font-bold text-slate-400 tabular-nums">Score {{ preview.score }}/100</span>
   </div>
 
-  <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[10.5px] font-semibold text-slate-600">
+  <div class="grid grid-cols-2 gap-x-3 gap-y-1 edify-text-caption font-semibold text-slate-600">
     <span>Schools selected: <b class="tabular-nums">{{ preview.school_count }}</b>{% if preview.target %} <span class="text-slate-400">/ target {{ preview.target }}</span>{% endif %}</span>
     <span class="truncate">Detected area: <b>{{ preview.detected_area }}</b></span>
     <span>Travel: <b class="tabular-nums">{{ preview.travel_label }}</b>{% if preview.est_distance_km %} <span class="text-slate-400">(~{{ preview.est_distance_km }} km)</span>{% endif %}</span>
@@ -22,26 +22,26 @@
   </div>
 
   {% if preview.confidence == 'low' or preview.confidence == 'needs_cleanup' %}
-  <p class="text-[10px] font-bold text-amber-700 bg-amber-100/70 rounded-md px-2 py-1">
+  <p class="edify-text-caption font-bold text-amber-700 bg-amber-100/70 rounded-md px-2 py-1">
     Location confidence low — verify sub-county before route approval.
   </p>
   {% endif %}
 
   {% for w in preview.warnings %}
-  <p class="text-[10px] font-semibold {% if preview.blocked %}text-rose-700{% else %}text-amber-700{% endif %} flex gap-1.5">
+  <p class="edify-text-caption font-semibold {% if preview.blocked %}text-rose-700{% else %}text-amber-700{% endif %} flex gap-1.5">
     <svg class="h-3 w-3 shrink-0 mt-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg>
     {{ w }}
   </p>
   {% endfor %}
 
   {% for r in preview.recommendations %}
-  <p class="text-[10px] font-semibold text-blue-700 bg-blue-50 rounded-md px-2 py-1 flex gap-1.5">
+  <p class="edify-text-caption font-semibold text-blue-700 bg-blue-50 rounded-md px-2 py-1 flex gap-1.5">
     <svg class="h-3 w-3 shrink-0 mt-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.7 17h4.6M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1.2 2.1h4.6c.2-.9.6-1.6 1.2-2.1A6 6 0 0012 3z"/></svg>
     Recommended: {{ r.message }}
   </p>
   {% endfor %}
 </div>
 {% else %}
-<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[10.5px] font-semibold text-slate-500">{{ preview.error }}</div>
+<div class="rounded-xl border border-slate-200 bg-slate-50 p-3 edify-text-caption font-semibold text-slate-500">{{ preview.error }}</div>
 {% endif %}
 {% endif %}

@@ -9,7 +9,7 @@
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 edify-text-caption font-semibold uppercase tracking-widest">
 Permanent Archive
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Completed Activities ledger</h1>
@@ -20,10 +20,10 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
 <th class="px-6 py-4 text-left">School / Cluster</th>
@@ -53,7 +53,7 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 </td>
 <!-- Type -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
+<span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
 {{ act.get_activity_type_display }}
 </span>
 </td>
@@ -70,12 +70,12 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 {% endif %}
 </td>
 <!-- NetSuite ID -->
-<td class="px-6 py-4 text-center font-mono text-[11px] text-slate-800">
+<td class="px-6 py-4 text-center font-mono edify-text-caption text-slate-800">
 {{ act.completed_snapshot.netsuite_expense_id|default:"—" }}
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
-<a href="/completed-activities/{{ act.id }}/" class="h-8 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 hover:text-slate-800 text-[11px] font-semibold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors">
+<a href="/completed-activities/{{ act.id }}/" class="h-8 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 hover:text-slate-800 edify-text-caption font-semibold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors">
 View Record
 </a>
 </td>

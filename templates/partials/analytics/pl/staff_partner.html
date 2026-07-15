@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
      x-data="{
        chart: null,
        initChart() {
@@ -12,21 +12,21 @@
              { name: 'Partners', data: {{ staff_partner.partner|safe }} }
            ],
            chart: { height: 240, type: 'bar', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
-           colors: ['#2563eb', '#93c5fd'],
+           colors: ['var(--edify-chart-blue)', 'var(--edify-chart-blue-soft)'],
            plotOptions: { bar: { columnWidth: '58%', borderRadius: 3, dataLabels: { position: 'top' } } },
-           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '9px', colors: ['#64748b'], fontWeight: 700 } },
+           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '12px', colors: ['var(--edify-text-muted)'], fontWeight: 700 } },
            labels: {{ staff_partner.labels|safe }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
-                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 600 } } },
-           yaxis: { labels: { style: { colors: '#94a3b8', fontSize: '10px' } } },
-           grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
-           legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+                    labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: 600 } } },
+           yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
+           grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
+           legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' }, markers: { radius: 12 } },
            tooltip: { theme: 'dark', shared: true, intersect: false }
          });
          this.chart.render();
        }
      }" x-init="$nextTick(() => initChart())">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">I. Staff &amp; Partner Performance</h3>
-  <p class="text-[11px] text-slate-400 font-medium -mt-1">Completed activities: team staff vs partners</p>
+  <p class="edify-text-caption text-slate-400 font-medium -mt-1">Completed activities: team staff vs partners</p>
   <div class="h-[240px] w-full" id="plStaffPartnerChart"></div>
 </div>

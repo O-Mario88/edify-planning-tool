@@ -6,12 +6,12 @@
   </div>
   <div class="min-w-0 flex-1">
     <p class="text-[12.5px] font-bold text-slate-800 truncate leading-tight">{{ t.title }}</p>
-    <p class="text-[10.5px] font-semibold text-slate-400 truncate">{{ t.linked }}</p>
+    <p class="edify-text-caption font-semibold text-slate-400 truncate">{{ t.linked }}</p>
   </div>
-  <span class="hidden sm:inline-flex items-center px-2 h-5 rounded-md text-[10px] font-bold uppercase tracking-wide shrink-0
+  <span class="hidden sm:inline-flex items-center px-2 h-5 rounded-md edify-text-caption font-bold uppercase tracking-wide shrink-0
     {% if t.priority == 'critical' %}bg-rose-50 text-rose-600{% elif t.priority == 'high' %}bg-amber-50 text-amber-700{% elif t.priority == 'medium' %}bg-blue-50 text-blue-600{% else %}bg-slate-100 text-slate-500{% endif %}">{{ t.priority_label }}</span>
-  <span class="hidden md:inline text-[10.5px] font-bold tabular-nums shrink-0 w-14 text-right
+  <span class="hidden md:inline edify-text-caption font-bold tabular-nums shrink-0 w-14 text-right
     {% if t.due_tone == 'danger' %}text-rose-600{% elif t.due_tone == 'warning' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ t.due_label }}</span>
-  <a href="{{ t.action_url }}" class="shrink-0 inline-flex items-center justify-center h-7 px-3 rounded-lg text-[11px] font-bold transition-colors
-    {% if t.actionable %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% else %}border border-slate-200 bg-white hover:bg-slate-50 text-slate-500{% endif %}">{{ t.action_label }}</a>
+  <a href="{{ t.action_url }}" class="shrink-0 inline-flex items-center justify-center h-7 px-3 rounded-lg edify-text-caption font-bold transition-colors
+    {% if t.actionable %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% else %}border border-slate-200 edify-surface hover:bg-slate-50 text-slate-500{% endif %}">{{ t.action_label }}</a>
 </div>

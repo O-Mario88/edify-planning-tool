@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}Provide verification evidence for {{ act.activity_type|title|replace_underscore }}{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/activities/{{ act.id }}/evidence/action"
 hx-encoding="multipart/form-data"
 hx-target="#evidence-errors"
@@ -15,31 +15,31 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 
 <div class="space-y-3">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">1</span>
 Select Evidence File
 </h4>
-<p class="text-[11px] text-slate-500 font-semibold leading-normal">
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
 Upload photos, signed attendance sheets, or completed school visit forms confirming the execution.
 </p>
 
 <div class="mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
-<input 
-type="file" 
+<input
+type="file"
 name="evidence_file"
 required
-class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 >
 </div>
 
 <!-- Listed uploaded evidence files if any exist -->
 {% if evidence_list %}
 <div class="space-y-1.5 pt-2">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
+<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
 <div class="space-y-1">
 {% for ev in evidence_list %}
-<div class="flex items-center justify-between text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-2">
+<div class="flex items-center justify-between edify-text-caption bg-slate-50 border border-slate-100 rounded-lg p-2">
 <span class="font-bold text-slate-700 truncate max-w-[200px]">{{ ev.original_name }}</span>
-<span class="text-[11px] text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
 </div>
 {% endfor %}
 </div>
@@ -49,14 +49,14 @@ class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-l
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="edify-action-button secondary h-9 transition-colors"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="edify-action-button primary h-9 transition-colors shadow-sm"
 >

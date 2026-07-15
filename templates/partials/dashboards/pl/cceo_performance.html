@@ -2,7 +2,7 @@
 <div class="overflow-x-auto">
   <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
     <thead>
-      <tr style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+      <tr style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
         <th style="padding:8px 10px;">CCEO</th>
         <th style="padding:8px 10px;">Region</th>
         <th style="padding:8px 10px;text-align:center;">Sch</th>
@@ -22,23 +22,23 @@
         <td style="padding:7px 10px;">
           <div class="flex items-center gap-1.5">
             <span class="inline-flex items-center justify-center rounded-full font-bold shrink-0"
-                  style="height:24px;width:24px;font-size:8px;color:#fff;background:var(--edify-primary);">{{ c.initials }}</span>
+                  style="height:24px;width:24px;font-size: 12px;color:var(--edify-surface-raised);background:var(--edify-primary);">{{ c.initials }}</span>
             <span style="font-weight:600;color:var(--edify-text);">{{ c.name }}</span>
           </div>
         </td>
-        <td style="padding:7px 10px;font-size:11px;color:var(--edify-text-muted);">{{ c.region }}</td>
+        <td style="padding:7px 10px;font-size: 12px;color:var(--edify-text-muted);">{{ c.region }}</td>
         <td style="padding:7px 10px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:var(--edify-text);">{{ c.schools_managed }}</td>
         <td style="padding:7px 10px;text-align:center;font-variant-numeric:tabular-nums;color:var(--edify-text);">{{ c.planned }}</td>
         <td style="padding:7px 10px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:var(--edify-success);">{{ c.verified }} ({{ c.verified_pct }}%)</td>
         <td style="padding:7px 10px;text-align:center;font-variant-numeric:tabular-nums;color:{% if c.sf_pending %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.sf_pending }}</td>
         <td style="padding:7px 10px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:{% if c.backlog >= 4 %}var(--edify-danger){% elif c.backlog >= 2 %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.backlog }}</td>
         <td style="padding:7px 10px;text-align:center;">
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+          <span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-bold"
                 style="background:{% if c.route_tone == 'success' %}var(--edify-success-light){% elif c.route_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
                        color:{% if c.route_tone == 'success' %}var(--edify-success){% elif c.route_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.route_quality }}</span>
         </td>
         <td style="padding:7px 10px;text-align:center;">
-          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+          <span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-bold"
                 style="background:{% if c.risk_tone == 'success' %}var(--edify-success-light){% elif c.risk_tone == 'amber' %}var(--edify-warning-light){% elif c.risk_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
                        color:{% if c.risk_tone == 'success' %}var(--edify-success){% elif c.risk_tone == 'amber' %}var(--edify-warning){% elif c.risk_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.risk }}</span>
         </td>

@@ -13,7 +13,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
   {% endif %}
 
   <!-- Breadcrumb -->
-  <p class="text-[11.5px] font-semibold text-slate-400">Finance <span class="mx-1 text-slate-300">&rsaquo;</span> <span class="text-slate-500">Country Monthly Budget</span></p>
+  <p class="edify-text-caption font-semibold text-slate-400">Finance <span class="mx-1 text-slate-300">&rsaquo;</span> <span class="text-slate-500">Country Monthly Budget</span></p>
 
   <!-- Header -->
   <div class="platform-page-header">
@@ -30,8 +30,8 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
   <form id="cb-filters" hx-get="/country-budget" hx-target="#country-budget-root" hx-swap="innerHTML"
         class="platform-filter-bar">
       <label class="block">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Month</span>
-        <select name="month" class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-700 bg-white focus:outline-none">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
+        <select name="month" class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-700 edify-surface focus:outline-none">
           <option value="1" {% if month == 1 %}selected{% endif %}>January {{ fy }}</option>
           <option value="2" {% if month == 2 %}selected{% endif %}>February {{ fy }}</option>
           <option value="3" {% if month == 3 %}selected{% endif %}>March {{ fy }}</option>
@@ -47,38 +47,38 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
         </select>
       </label>
       <label class="block">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
-        <select name="fy" class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-700 bg-white focus:outline-none">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+        <select name="fy" class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-700 edify-surface focus:outline-none">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </label>
       <label class="block">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Country / Region</span>
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country / Region</span>
         <select disabled class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-500 bg-slate-50 focus:outline-none">
           <option>Uganda</option>
         </select>
       </label>
       <label class="block">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Team Scope</span>
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Team Scope</span>
         <select disabled class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-500 bg-slate-50 focus:outline-none">
           <option>All Teams</option>
         </select>
       </label>
       <label class="block platform-filter-search">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">&nbsp;</span>
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">&nbsp;</span>
         <input type="search" name="q" value="{{ q|default:'' }}" hx-trigger="keyup changed delay:300ms" placeholder="Search staff, activity, school…"
-               class="mt-1 h-9 w-56 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none">
+               class="mt-1 h-9 w-56 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none">
       </label>
   </form>
 
   <!-- Top actions -->
   <div class="platform-page-actions -mt-2">
-    <a href="/country-budget?export=csv&fy={{ fy }}&month={{ month }}" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+    <a href="/country-budget?export=csv&fy={{ fy }}&month={{ month }}" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
       Export
     </a>
     <button hx-get="/country-budget/plan-sources?fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       View Plan Sources
     </button>
@@ -98,7 +98,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
       Approve
     </button>
     <button hx-get="/country-budget/return?budget_id={{ budget_id }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-rose-200 bg-white hover:bg-rose-50 text-[12px] font-bold text-rose-600 shadow-sm transition-colors">
+            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-rose-200 edify-surface hover:bg-rose-50 text-[12px] font-bold text-rose-600 shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
       Return
     </button>
@@ -121,15 +121,15 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
           {% include "partials/finance/country_budget/_kpi_icon.html" with variant=k.variant %}
         </div>
         {% if k.trend_pct is not None %}
-        <span class="inline-flex items-center gap-0.5 text-[10.5px] font-bold {% if k.trend_up %}text-emerald-600{% else %}text-rose-600{% endif %}">
+        <span class="inline-flex items-center gap-0.5 edify-text-caption font-bold {% if k.trend_up %}text-emerald-600{% else %}text-rose-600{% endif %}">
           {% if k.trend_up %}&#9650;{% else %}&#9660;{% endif %}{{ k.trend_pct }}%
         </span>
         {% endif %}
       </div>
-      <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-2.5">{{ k.label }}</p>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mt-2.5">{{ k.label }}</p>
       <p class="text-[18px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
       <div class="flex items-center justify-between mt-1.5">
-        <span class="text-[10.5px] font-semibold text-slate-400">{{ k.helper }}</span>
+        <span class="edify-text-caption font-semibold text-slate-400">{{ k.helper }}</span>
         {% if k.sparkline %}
         <svg class="h-5 w-16 shrink-0" viewBox="0 0 60 20" preserveAspectRatio="none">
           <polyline points="{{ k.sparkline }}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
@@ -149,7 +149,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="text-[10px] uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+            <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
               <th class="px-3 py-2 sticky left-0 bg-slate-50/60 z-10" rowspan="2">Staff</th>
               <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Staff Visits</th>
               <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Partner Visits</th>
@@ -161,7 +161,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
               <th class="px-3 py-2 text-right border-l border-slate-100" rowspan="2">Total Monthly<br>Allocation</th>
               <th class="px-3 py-2 text-center border-l border-slate-100" rowspan="2">Plan Source<br>Status</th>
             </tr>
-            <tr class="text-[9.5px] uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+            <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
               {% for cat in category_order %}
               <th class="px-2 py-1.5 text-center border-l border-slate-100">#</th>
               <th class="px-2 py-1.5 text-center">Cost</th>
@@ -174,8 +174,8 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
           </thead>
           <tbody class="divide-y divide-slate-50">
             {% for row in staff_rows %}
-            <tr class="hover:bg-slate-50/50 text-[11.5px]">
-              <td class="px-3 py-2 font-bold text-slate-800 sticky left-0 bg-white whitespace-nowrap">{{ row.name }}</td>
+            <tr class="hover:bg-slate-50/50 edify-text-caption">
+              <td class="px-3 py-2 font-bold text-slate-800 sticky left-0 edify-surface whitespace-nowrap">{{ row.name }}</td>
               {% for cat in category_order %}
               <td class="px-2 py-2 text-center text-slate-500 tabular-nums border-l border-slate-50">{{ row.cats|lookup:cat|lookup:"qty"|default:"—" }}</td>
               <td class="px-2 py-2 text-center text-slate-500 tabular-nums">{{ row.cats|lookup:cat|lookup:"unit_cost" }}</td>
@@ -194,7 +194,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
             {% endfor %}
 
             <!-- CD Admin Plan row — the only non-activity budget item -->
-            <tr class="text-[11.5px] bg-violet-50/30">
+            <tr class="edify-text-caption bg-violet-50/30">
               <td class="px-3 py-2 font-bold text-violet-800 sticky left-0 bg-violet-50/30 whitespace-nowrap">CD Admin Plan</td>
               <td class="px-2 py-2 text-center text-slate-300 border-l border-slate-50" colspan="18">—</td>
               <td class="px-2 py-2 text-center text-slate-300">—</td>
@@ -237,7 +237,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
           <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-blue-500" style="width: {{ progress_pct }}%"></div></div>
           <span class="text-[12px] font-bold text-slate-700 tabular-nums">{{ progress_pct }}%</span>
         </div>
-        <p class="text-[11px] font-semibold text-slate-400 mt-1.5">
+        <p class="edify-text-caption font-semibold text-slate-400 mt-1.5">
           {% if status == 'submitted_to_rvp' %}Awaiting RVP review.
           {% elif status == 'returned_by_rvp' %}Fix the issues below and resubmit.
           {% elif status == 'approved_by_rvp' or status == 'sent_to_accountant' or status == 'disbursed' %}Approved — ready for disbursement.
@@ -249,7 +249,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
         <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Budget Integrity Checks</h3>
         <ul class="space-y-1.5">
           {% for c in checks %}
-          <li class="flex items-start gap-1.5 text-[11.5px] font-semibold">
+          <li class="flex items-start gap-1.5 edify-text-caption font-semibold">
             {% if c.status == 'passed' %}<span class="text-emerald-500 shrink-0 mt-0.5">&check;</span><span class="text-slate-600">{{ c.label }}</span>
             {% elif c.status == 'warning' %}<span class="text-amber-500 shrink-0 mt-0.5">&#9888;</span><span class="text-amber-700">{{ c.label }}{% if c.detail %} — {{ c.detail }}{% endif %}</span>
             {% else %}<span class="text-rose-500 shrink-0 mt-0.5">&times;</span><span class="text-rose-700">{{ c.label }}{% if c.detail %} — {{ c.detail }}{% endif %}</span>{% endif %}
@@ -259,7 +259,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
       </div>
 
       <div class="rounded-xl bg-blue-50 border border-blue-100 p-3.5">
-        <p class="text-[11.5px] font-bold text-blue-800 flex items-start gap-1.5">
+        <p class="edify-text-caption font-bold text-blue-800 flex items-start gap-1.5">
           <svg class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span><span class="block mb-0.5">Budgeting Rules</span><span class="font-semibold text-blue-700">Only plan-backed items are included in the monthly budget. CD Admin Budget is the only non-activity exception and must come from your CD Monthly Admin Plan.</span></span>
         </p>
@@ -268,10 +268,10 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
       <div class="card p-4">
         <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Month Summary</h3>
         <div class="grid grid-cols-2 gap-2">
-          <div class="rounded-lg bg-amber-50 border border-amber-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-amber-600">Awaiting Approval</p><p class="text-[13px] font-bold text-amber-800 tabular-nums mt-0.5">{{ month_summary.awaiting_approval }}</p></div>
-          <div class="rounded-lg bg-emerald-50 border border-emerald-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-emerald-600">Plan-Backed Cost</p><p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ month_summary.plan_backed_cost }}</p><p class="text-[9.5px] font-semibold text-emerald-500">({{ month_summary.plan_backed_pct }}%)</p></div>
-          <div class="rounded-lg bg-rose-50 border border-rose-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-rose-600">Admin Budget</p><p class="text-[13px] font-bold text-rose-800 tabular-nums mt-0.5">{{ month_summary.admin_budget }}</p><p class="text-[9.5px] font-semibold text-rose-500">({{ month_summary.admin_pct }}%)</p></div>
-          <div class="rounded-lg bg-slate-50 border border-slate-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-slate-500">Staff Included</p><p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ month_summary.staff_included }} Staff</p></div>
+          <div class="rounded-lg bg-amber-50 border border-amber-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-amber-600">Awaiting Approval</p><p class="text-[13px] font-bold text-amber-800 tabular-nums mt-0.5">{{ month_summary.awaiting_approval }}</p></div>
+          <div class="rounded-lg bg-emerald-50 border border-emerald-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-emerald-600">Plan-Backed Cost</p><p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ month_summary.plan_backed_cost }}</p><p class="edify-text-caption font-semibold text-emerald-500">({{ month_summary.plan_backed_pct }}%)</p></div>
+          <div class="rounded-lg bg-rose-50 border border-rose-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-rose-600">Admin Budget</p><p class="text-[13px] font-bold text-rose-800 tabular-nums mt-0.5">{{ month_summary.admin_budget }}</p><p class="edify-text-caption font-semibold text-rose-500">({{ month_summary.admin_pct }}%)</p></div>
+          <div class="rounded-lg bg-slate-50 border border-slate-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-slate-500">Staff Included</p><p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ month_summary.staff_included }} Staff</p></div>
         </div>
       </div>
 
@@ -284,7 +284,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
               {% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}
             </div>
             <p class="text-[13px] font-bold text-slate-800 tabular-nums leading-none">{{ s.value }}</p>
-            <p class="text-[8.5px] font-semibold text-slate-400 leading-tight">{{ s.label }}</p>
+            <p class="edify-text-caption font-semibold text-slate-400 leading-tight">{{ s.label }}</p>
           </div>
           {% endfor %}
         </div>
@@ -300,17 +300,17 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
         <div class="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
           {% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}
         </div>
-        <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 leading-tight">{{ s.label }}</p>
+        <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 leading-tight">{{ s.label }}</p>
       </div>
       <p class="text-[15px] font-bold text-slate-800 mt-2 truncate">{{ s.value }}</p>
-      <p class="text-[10.5px] font-semibold text-slate-400">{{ s.sub }}</p>
-      {% if s.helper %}<p class="text-[10px] font-semibold text-slate-300 mt-0.5">{{ s.helper }}</p>{% endif %}
+      <p class="edify-text-caption font-semibold text-slate-400">{{ s.sub }}</p>
+      {% if s.helper %}<p class="edify-text-caption font-semibold text-slate-300 mt-0.5">{{ s.helper }}</p>{% endif %}
     </div>
     {% endfor %}
   </div>
 
   <!-- Footer -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-slate-100 text-[10.5px] font-semibold text-slate-400">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-slate-100 edify-text-caption font-semibold text-slate-400">
     <p class="flex items-center gap-1"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>All amounts are in UGX. All budgeted items must originate from planned activities, except CD Admin Budget which is sourced from the CD Monthly Admin Plan.</p>
     <p>Last updated: {{ last_updated|date:"M j, Y g:i A" }}</p>
   </div>

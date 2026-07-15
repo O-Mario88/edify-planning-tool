@@ -16,14 +16,14 @@
 </div>
 
 <!-- Matrix Card Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider w-[240px]">Permission</th>
+<th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider w-[240px]">Permission</th>
 {% for role in roles %}
-<th class="px-3 py-3.5 text-center text-[11px] font-semibold uppercase text-slate-500 tracking-wider" title="{{ role.value }}">
+<th class="px-3 py-3.5 text-center edify-text-caption font-semibold uppercase text-slate-500 tracking-wider" title="{{ role.value }}">
 {{ role.label }}
 </th>
 {% endfor %}
@@ -32,7 +32,7 @@
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for group in permission_groups %}
 <tr class="bg-slate-50/70">
-<td colspan="{{ roles|length|add:1 }}" class="px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+<td colspan="{{ roles|length|add:1 }}" class="px-5 py-2 edify-text-caption font-semibold uppercase tracking-wider text-slate-500">
 {{ group.name }}
 </td>
 </tr>

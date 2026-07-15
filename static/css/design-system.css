@@ -73,6 +73,21 @@
   --edify-teal-light: #f0fdfa;
   --edify-teal-border: #99f6e4;
 
+  /* Data-visualization palette. Charts consume semantic variables so their
+     axes, series and annotations remain legible when the workspace theme
+     changes without rebuilding the chart configuration. */
+  --edify-chart-blue: var(--edify-info);
+  --edify-chart-blue-soft: var(--edify-info-border);
+  --edify-chart-green: var(--edify-success);
+  --edify-chart-amber: var(--edify-warning);
+  --edify-chart-red: var(--edify-danger);
+  --edify-chart-purple: var(--edify-purple);
+  --edify-chart-teal: var(--edify-teal);
+  --edify-chart-orange: #ea580c;
+  --edify-chart-pink: #ec4899;
+  --edify-chart-lime: #84cc16;
+  --edify-chart-grid: color-mix(in srgb, var(--edify-border) 72%, transparent);
+
   /* Notifications intentionally use a warm orange so urgency is visible
      without borrowing the red reserved for destructive/error states. */
   --edify-notification: #d85b13;

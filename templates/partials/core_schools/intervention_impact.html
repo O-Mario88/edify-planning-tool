@@ -2,7 +2,7 @@
 {% if intervention_impact %}
 <table class="w-full border-collapse text-[12px] text-slate-700">
 <thead>
-<tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-semibold uppercase text-slate-400 tracking-wider text-left">
+<tr class="border-b border-slate-100 bg-slate-50/50 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider text-left">
 <th class="px-4 py-3 font-semibold">Intervention</th>
 <th class="px-4 py-3 font-semibold">Schools Supported</th>
 <th class="px-4 py-3 font-semibold">Avg. Improvement</th>
@@ -23,7 +23,7 @@
 <div class="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
 <div class="bg-blue-600 h-full rounded-full" style="width: {% widthratio row.supported_count 10 100 %}%;"></div>
 </div>
-<span class="text-[11px] font-semibold text-slate-700 shrink-0">{{ row.supported_count }}</span>
+<span class="edify-text-caption font-semibold text-slate-700 shrink-0">{{ row.supported_count }}</span>
 </div>
 </td>
 
@@ -35,7 +35,7 @@
 <!-- Top Supporting Owner -->
 <td class="px-4 py-3 font-semibold text-slate-700">
 <div class="flex items-center gap-1.5">
-<span class="h-5 w-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[11px] font-semibold uppercase">
+<span class="h-5 w-5 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center edify-text-caption font-semibold uppercase">
 {{ row.top_owner|slice:":2" }}
 </span>
 <span>{{ row.top_owner }}</span>
@@ -44,7 +44,7 @@
 
 <!-- Staff vs Partner delta status -->
 <td class="px-4 py-3">
-<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border
+<span class="inline-flex items-center px-1.5 py-0.5 rounded edify-text-caption font-semibold border
 {% if 'Staff' in row.comparison %}
 bg-emerald-50 text-emerald-700 border-emerald-150/60
 {% else %}
@@ -60,10 +60,10 @@ bg-indigo-50 text-indigo-700 border-indigo-150/60
 <div class="inline-block h-[20px] w-[60px]">
 {% if row.trend_path %}
 <svg class="h-full w-full" viewBox="0 0 60 20">
-<path d="{{ row.trend_path }}" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+<path d="{{ row.trend_path }}" fill="none" stroke="var(--edify-chart-green)" stroke-width="2" stroke-linecap="round"/>
 </svg>
 {% else %}
-<span class="text-[10px] text-slate-300 font-semibold">Not enough data</span>
+<span class="edify-text-caption text-slate-300 font-semibold">Not enough data</span>
 {% endif %}
 </div>
 </td>

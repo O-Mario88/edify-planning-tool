@@ -9,7 +9,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
     <div class="rounded-xl border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
-        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
+        <span class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
         <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50/10 text-blue-400 border border-blue-500/20
           {% elif k.variant == 'success' %}bg-emerald-50/10 text-emerald-400 border border-emerald-500/20
@@ -23,11 +23,11 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
         <span class="text-[19px] font-black tracking-tight tabular-nums leading-none" style="color:var(--edify-text);">{{ k.value }}</span>
       </div>
       {% if k.trend %}
-      <span class="text-[9.5px] font-bold mt-1 block leading-tight {% if k.trend.direction == 'up' %}text-emerald-400{% elif k.trend.direction == 'down' %}text-rose-400{% else %}text-slate-400{% endif %}">
+      <span class="edify-text-caption font-bold mt-1 block leading-tight {% if k.trend.direction == 'up' %}text-emerald-400{% elif k.trend.direction == 'down' %}text-rose-400{% else %}text-slate-400{% endif %}">
         {% if k.trend.direction == 'up' %}&uarr;{% elif k.trend.direction == 'down' %}&darr;{% endif %} {{ k.trend.value }} vs prior period
       </span>
       {% else %}
-      <span class="text-[9.5px] font-semibold mt-1 block leading-tight text-slate-500">No prior-period data</span>
+      <span class="edify-text-caption font-semibold mt-1 block leading-tight text-slate-500">No prior-period data</span>
       {% endif %}
     </div>
     {% endfor %}
@@ -51,11 +51,11 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
                ],
                chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
                stroke: { width: [2.5, 2, 2, 2], curve: 'smooth' },
-               colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+               colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
                markers: { size: 0 },
-               xaxis: { categories: {{ trend.labels|safe }}, labels: { style: { colors: '#94a3b8', fontSize: '9.5px' }, rotate: -45 } },
-               yaxis: { labels: { style: { colors: '#94a3b8' }, formatter: v => Math.round(v) } },
-               legend: { position: 'top', horizontalAlign: 'left', fontSize: '10.5px', fontWeight: 600, labels: { colors: '#94a3b8' } },
+               xaxis: { categories: {{ trend.labels|safe }}, labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }, rotate: -45 } },
+               yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)' }, formatter: v => Math.round(v) } },
+               legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                grid: { borderColor: 'rgba(148, 163, 184, 0.1)' },
                tooltip: { theme: 'dark' }
              });
@@ -77,11 +77,11 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
                series: {{ activity_donut.counts|safe }},
                labels: [{% for l in activity_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                chart: { type: 'donut', height: 260, fontFamily: 'Outfit, sans-serif' },
-               colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'],
-               legend: { position: 'bottom', fontSize: '10px', fontWeight: 600, labels: { colors: '#94a3b8' } },
+               colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-pink)', 'var(--edify-text-muted)'],
+               legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
                plotOptions: { pie: { donut: { size: '70%', labels: { show: true,
-                 total: { show: true, label: 'Total', fontSize: '10px', color: '#94a3b8', formatter: () => '{{ activity_donut.total }}' } } } } },
+                 total: { show: true, label: 'Total', fontSize: '12px', color: 'var(--edify-text-subtle)', formatter: () => '{{ activity_donut.total }}' } } } } },
                stroke: { width: 0 }, tooltip: { theme: 'dark' }
              });
              this.chart.render();
@@ -89,7 +89,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">Debriefs by Activity Type</h2>
       {% if activity_donut.total %}<div id="debriefActivityDonut"></div>
-      {% else %}<p class="text-[11.5px] text-slate-400 font-medium py-10 text-center">No linked activities in this period.</p>{% endif %}
+      {% else %}<p class="edify-text-caption text-slate-400 font-medium py-10 text-center">No linked activities in this period.</p>{% endif %}
     </div>
   </div>
 
@@ -99,12 +99,12 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Top Challenges Reported</h2>
       <div class="space-y-2.5">
         {% for c in top_challenges %}
-        <div class="flex items-center justify-between text-[11.5px] font-semibold">
+        <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400 truncate pr-2">{{ c.label }}</span>
-          <span class="shrink-0" style="color:var(--edify-text);">{{ c.count }} <span class="text-slate-500 text-[10px]">({{ c.pct }}%)</span></span>
+          <span class="shrink-0" style="color:var(--edify-text);">{{ c.count }} <span class="text-slate-500 edify-text-caption">({{ c.pct }}%)</span></span>
         </div>
         {% empty %}
-        <p class="text-[11.5px] text-slate-400 font-medium py-4">No challenges reported this period.</p>
+        <p class="edify-text-caption text-slate-400 font-medium py-4">No challenges reported this period.</p>
         {% endfor %}
       </div>
     </div>
@@ -112,28 +112,28 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
     <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Action Center</h2>
       <div class="space-y-2">
-        <div class="flex items-center justify-between text-[11.5px] font-semibold">
+        <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Debriefs Requiring My Action</span>
-          <span class="px-2 py-0.5 rounded-full text-[10.5px] font-black tabular-nums {% if action_center.action_required %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.action_required }}</span>
+          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.action_required %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.action_required }}</span>
         </div>
-        <div class="flex items-center justify-between text-[11.5px] font-semibold">
+        <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Escalations to Review</span>
-          <span class="px-2 py-0.5 rounded-full text-[10.5px] font-black tabular-nums {% if action_center.escalations %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.escalations }}</span>
+          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.escalations %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.escalations }}</span>
         </div>
-        <div class="flex items-center justify-between text-[11.5px] font-semibold">
+        <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Clarifications Requested</span>
-          <span class="px-2 py-0.5 rounded-full text-[10.5px] font-black tabular-nums {% if action_center.clarifications %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.clarifications }}</span>
+          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.clarifications %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.clarifications }}</span>
         </div>
-        <div class="flex items-center justify-between text-[11.5px] font-semibold">
+        <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Overdue Actions</span>
-          <span class="px-2 py-0.5 rounded-full text-[10.5px] font-black tabular-nums {% if action_center.overdue %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.overdue }}</span>
+          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.overdue %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.overdue }}</span>
         </div>
-        <div class="flex items-center justify-between text-[11.5px] font-semibold">
+        <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Open Commitments</span>
-          <span class="px-2 py-0.5 rounded-full text-[10.5px] font-black tabular-nums bg-blue-500/10 text-blue-400 border border-blue-500/20">{{ action_center.open_commitments }}</span>
+          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums bg-blue-500/10 text-blue-400 border border-blue-500/20">{{ action_center.open_commitments }}</span>
         </div>
       </div>
-      <a href="/debriefs?tab=escalated" class="block w-full text-center h-9 leading-9 rounded-lg border text-[11.5px] font-bold hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">View Action Center &rarr;</a>
+      <a href="/debriefs?tab=escalated" class="block w-full text-center h-9 leading-9 rounded-lg border edify-text-caption font-bold hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">View Action Center &rarr;</a>
     </div>
   </div>
 
@@ -150,13 +150,13 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Recent Activity</h2>
       <div class="space-y-3">
         {% for a in recent_activity %}
-        <div class="text-[11px]">
+        <div class="edify-text-caption">
           <span class="font-bold" style="color:var(--edify-text);">{{ a.name }}</span>
           <span class="text-slate-400"> {{ a.verb }}</span>
-          <span class="block text-slate-500 text-[10px] truncate">{{ a.title }} · {{ a.at|timesince }} ago</span>
+          <span class="block text-slate-500 edify-text-caption truncate">{{ a.title }} · {{ a.at|timesince }} ago</span>
         </div>
         {% empty %}
-        <p class="text-[11px] text-slate-400 font-semibold">No recent activity.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold">No recent activity.</p>
         {% endfor %}
       </div>
     </div>
@@ -167,16 +167,16 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
     <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
         <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">Recent Peer Solutions</h2>
-        <a href="/debriefs?tab=peer_solutions" class="text-[10.5px] font-bold" style="color:var(--edify-accent, #2563eb);">View all &rarr;</a>
+        <a href="/debriefs?tab=peer_solutions" class="edify-text-caption font-bold" style="color:var(--edify-accent, var(--edify-chart-blue));">View all &rarr;</a>
       </div>
       <div class="space-y-3">
         {% for s in peer_solutions %}
-        <div class="text-[11px] pb-2.5 border-b last:border-0" style="border-color:var(--edify-border);">
+        <div class="edify-text-caption pb-2.5 border-b last:border-0" style="border-color:var(--edify-border);">
           <a href="/debriefs/{{ s.debrief_id }}" class="font-bold hover:underline block truncate" style="color:var(--edify-text);">{{ s.suggestion|truncatechars:80 }}</a>
-          <span class="text-slate-400 text-[10px]">{{ s.author }} · {{ s.created_at|timesince }} ago · {{ s.endorsements }} endorsement{{ s.endorsements|pluralize }}</span>
+          <span class="text-slate-400 edify-text-caption">{{ s.author }} · {{ s.created_at|timesince }} ago · {{ s.endorsements }} endorsement{{ s.endorsements|pluralize }}</span>
         </div>
         {% empty %}
-        <p class="text-[11px] text-slate-400 font-semibold">No peer solutions yet this period.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold">No peer solutions yet this period.</p>
         {% endfor %}
       </div>
     </div>
@@ -192,8 +192,8 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
                series: {{ risk_donut.counts|safe }},
                labels: [{% for l in risk_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                chart: { type: 'donut', height: 220, fontFamily: 'Outfit, sans-serif' },
-               colors: ['#64748b', '#3b82f6', '#8b5cf6', '#f59e0b', '#f59e0b', '#f59e0b', '#f59e0b', '#ef4444'],
-               legend: { position: 'bottom', fontSize: '9.5px', fontWeight: 600, labels: { colors: '#94a3b8' } },
+               colors: ['var(--edify-text-muted)', 'var(--edify-chart-blue)', 'var(--edify-chart-purple)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
+               legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
                plotOptions: { pie: { donut: { size: '70%' } } },
                stroke: { width: 0 }, tooltip: { theme: 'dark' }
@@ -203,29 +203,29 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">Debriefs by Risk Level</h2>
       {% if risk_donut.total %}<div id="debriefRiskDonut"></div>
-      {% else %}<p class="text-[11.5px] text-slate-400 font-medium py-10 text-center">No debriefs in this period.</p>{% endif %}
+      {% else %}<p class="edify-text-caption text-slate-400 font-medium py-10 text-center">No debriefs in this period.</p>{% endif %}
     </div>
 
     <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Debrief Intelligence Highlights</h2>
       <div class="space-y-2.5">
         {% for h in highlights %}
-        <div class="flex items-start gap-2 text-[11px] font-semibold text-slate-400">
+        <div class="flex items-start gap-2 edify-text-caption font-semibold text-slate-400">
           <span class="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0"></span>
           <span class="flex-1">{{ h.text }}</span>
           {% if h.insight_id and can_manage_insights %}
           <div class="flex items-center gap-1 shrink-0">
             <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="acknowledge_insight"><input type="hidden" name="insight_id" value="{{ h.insight_id }}">
-              <button type="submit" class="h-6 px-1.5 rounded border text-[9px] font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Ack</button>
+              <button type="submit" class="h-6 px-1.5 rounded border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Ack</button>
             </form>
             <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="dismiss_insight"><input type="hidden" name="insight_id" value="{{ h.insight_id }}">
-              <button type="submit" class="h-6 px-1.5 rounded border text-[9px] font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Dismiss</button>
+              <button type="submit" class="h-6 px-1.5 rounded border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Dismiss</button>
             </form>
           </div>
           {% endif %}
         </div>
         {% empty %}
-        <p class="text-[11px] text-slate-400 font-semibold">No notable patterns detected this period.</p>
+        <p class="edify-text-caption text-slate-400 font-semibold">No notable patterns detected this period.</p>
         {% endfor %}
       </div>
     </div>

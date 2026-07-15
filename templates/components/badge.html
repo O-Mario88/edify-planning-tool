@@ -12,7 +12,7 @@
     dot  — "true" → prepend a 6px status dot
 {% endcomment %}
 {% load frontend_filters %}
-<span class="inline-flex items-center gap-1 {% if size == 'md' %}px-2.5 py-0.5 text-[12px]{% else %}px-1.5 py-0.5 text-[11px]{% endif %} font-semibold rounded-full border whitespace-nowrap
+<span class="inline-flex items-center gap-1 {% if size == 'md' %}px-2.5 py-0.5 text-[12px]{% else %}px-1.5 py-0.5 edify-text-caption{% endif %} font-semibold rounded-full border whitespace-nowrap
   {% if tone == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200
   {% elif tone == 'warning' %}bg-amber-50 text-amber-700 border-amber-200
   {% elif tone == 'danger' %}bg-rose-50 text-rose-700 border-rose-200

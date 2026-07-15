@@ -12,15 +12,15 @@
       <h1 class="text-2xl font-black tracking-tight" style="color:var(--edify-text);">Leave Approvals</h1>
       <p class="text-xs text-slate-400 font-semibold mt-0.5">Review leave requests, approve coverage, manage conflicts, and keep team operations running.</p>
     </div>
-    
+
     <!-- Search & Filters -->
     <form method="GET" class="flex flex-wrap items-center gap-3">
       <div class="relative">
-        <input 
-          type="text" 
-          name="q" 
-          value="{{ search_q|default:'' }}" 
-          placeholder="Search staff, reason..." 
+        <input
+          type="text"
+          name="q"
+          value="{{ search_q|default:'' }}"
+          placeholder="Search staff, reason..."
           class="pl-8 pr-4 py-1.5 text-xs rounded-lg border font-semibold w-60 transition"
           style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
         >
@@ -30,9 +30,9 @@
           </svg>
         </span>
       </div>
-      
-      <select 
-        name="type" 
+
+      <select
+        name="type"
         class="px-3 py-1.5 text-xs rounded-lg border font-bold transition"
         style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
         @change="$el.form.requestSubmit()"
@@ -45,8 +45,8 @@
         <option value="bereavement_leave" {% if selected_type == 'bereavement_leave' %}selected{% endif %}>Bereavement Leave</option>
       </select>
 
-      <select 
-        name="status" 
+      <select
+        name="status"
         class="px-3 py-1.5 text-xs rounded-lg border font-bold transition"
         style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
         @change="$el.form.requestSubmit()"
@@ -84,23 +84,23 @@
     <!-- KPI 1 -->
     <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Pending Approvals</span>
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Pending Approvals</span>
       <div class="flex items-baseline gap-2 mt-2">
         <span class="text-2xl font-black">{{ kpis.pending }}</span>
-        <span class="text-[10px] text-emerald-500 font-bold flex items-center">&uarr; 2 this wk</span>
+        <span class="edify-text-caption text-emerald-500 font-bold flex items-center">&uarr; 2 this wk</span>
       </div>
       <div class="w-full h-1 bg-amber-500/10 rounded-full mt-3 overflow-hidden">
         <div class="h-full bg-amber-500" style="width: 65%;"></div>
       </div>
     </div>
-    
+
     <!-- KPI 2 -->
     <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Approved This Week</span>
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Approved This Week</span>
       <div class="flex items-baseline gap-2 mt-2">
         <span class="text-2xl font-black">{{ kpis.approved_this_week }}</span>
-        <span class="text-[10px] text-emerald-500 font-bold flex items-center">&uarr; 8 this wk</span>
+        <span class="edify-text-caption text-emerald-500 font-bold flex items-center">&uarr; 8 this wk</span>
       </div>
       <div class="w-full h-1 bg-emerald-500/10 rounded-full mt-3 overflow-hidden">
         <div class="h-full bg-emerald-500" style="width: 82%;"></div>
@@ -110,10 +110,10 @@
     <!-- KPI 3 -->
     <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Coverage Assigned</span>
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Coverage Assigned</span>
       <div class="flex items-baseline gap-2 mt-2">
         <span class="text-2xl font-black">{{ kpis.coverage_assigned }}</span>
-        <span class="text-[10px] text-slate-400 font-bold">88% of requests</span>
+        <span class="edify-text-caption text-slate-400 font-bold">88% of requests</span>
       </div>
       <div class="w-full h-1 bg-blue-500/10 rounded-full mt-3 overflow-hidden">
         <div class="h-full bg-blue-500" style="width: 88%;"></div>
@@ -123,10 +123,10 @@
     <!-- KPI 4 -->
     <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Conflicts Detected</span>
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Conflicts Detected</span>
       <div class="flex items-baseline gap-2 mt-2">
         <span class="text-2xl font-black text-rose-500">{{ kpis.conflicts_detected }}</span>
-        <span class="text-[10px] text-emerald-500 font-bold">&darr; 3 from last wk</span>
+        <span class="edify-text-caption text-emerald-500 font-bold">&darr; 3 from last wk</span>
       </div>
       <div class="w-full h-1 bg-rose-500/10 rounded-full mt-3 overflow-hidden">
         <div class="h-full bg-rose-500" style="width: 33%;"></div>
@@ -136,10 +136,10 @@
     <!-- KPI 5 -->
     <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Staff On Leave This Week</span>
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Staff On Leave This Week</span>
       <div class="flex items-baseline gap-2 mt-2">
         <span class="text-2xl font-black">{{ kpis.staff_on_leave }}</span>
-        <span class="text-[10px] text-blue-500 font-bold">&uarr; 2 from last wk</span>
+        <span class="edify-text-caption text-blue-500 font-bold">&uarr; 2 from last wk</span>
       </div>
       <div class="w-full h-1 bg-blue-500/10 rounded-full mt-3 overflow-hidden">
         <div class="h-full bg-blue-500" style="width: 45%;"></div>
@@ -149,10 +149,10 @@
     <!-- KPI 6 -->
     <div class="p-4 rounded-xl border flex flex-col justify-between shadow-sm relative overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
-      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Leave Balance Alerts</span>
+      <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Leave Balance Alerts</span>
       <div class="flex items-baseline gap-2 mt-2">
         <span class="text-2xl font-black text-amber-500">{{ kpis.balance_alerts }}</span>
-        <span class="text-[10px] text-slate-400 font-bold">requires attention</span>
+        <span class="edify-text-caption text-slate-400 font-bold">requires attention</span>
       </div>
       <div class="w-full h-1 bg-amber-500/10 rounded-full mt-3 overflow-hidden">
         <div class="h-full bg-amber-500" style="width: 50%;"></div>
@@ -162,15 +162,15 @@
 
   <!-- Main Grid: Left queue (3 cols), Right detail placeholder (9 cols) -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-    
+
     <!-- Left Column: Queue (3/12 cols) -->
     <div class="lg:col-span-3 rounded-lg border flex flex-col shadow-sm overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--edify-border);">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Approval Queue ({{ requests|length }})</h3>
-        <span class="text-[10px] font-bold text-slate-400">Sort: Oldest First</span>
+        <span class="edify-text-caption font-bold text-slate-400">Sort: Oldest First</span>
       </div>
-      
+
       <div class="divide-y overflow-y-auto max-h-[700px]" style="divide-color:var(--edify-border);">
         {% for r in requests %}
         <article
@@ -190,11 +190,11 @@
             <div class="h-9 w-9 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-bold text-blue-500 text-xs shadow-sm">
               {{ r.staff.user.name|slice:":2"|upper }}
             </div>
-            
+
             <div class="flex-1 space-y-1">
               <div class="flex items-center justify-between">
                 <span class="font-bold text-slate-200 text-xs group-hover:text-blue-400 transition">{{ r.staff.user.name }}</span>
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider
+                <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold uppercase tracking-wider
                   {% if r.status == 'pending' %}bg-amber-500/10 text-amber-500
                   {% elif r.status == 'approved' %}bg-emerald-500/10 text-emerald-500
                   {% elif r.status == 'rejected' %}bg-rose-500/10 text-rose-500
@@ -203,18 +203,18 @@
                   {{ r.status }}
                 </span>
               </div>
-              <p class="text-[10px] text-slate-400 font-semibold">{{ r.staff.user.active_role }} · {{ r.staff.country }}</p>
-              
+              <p class="edify-text-caption text-slate-400 font-semibold">{{ r.staff.user.active_role }} · {{ r.staff.country }}</p>
+
               <div class="flex items-center gap-1.5 pt-1">
-                <span class="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                <span class="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-md edify-text-caption font-bold uppercase tracking-wider">
                   {{ r.type|replace_underscore|title }}
                 </span>
-                <span class="text-[10.5px] text-slate-400 font-semibold">
+                <span class="edify-text-caption text-slate-400 font-semibold">
                   {{ r.start_date|slice:"5:" }} → {{ r.end_date|slice:"5:" }}
                 </span>
               </div>
-              
-              <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+
+              <div class="flex items-center justify-between edify-text-caption text-slate-400 pt-1">
                 <span>Days: <b class="text-slate-200">{{ r.days_charged }} working</b></span>
                 {% if r.covering_staff %}
                 <span class="flex items-center gap-1">
@@ -230,7 +230,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Hover bar -->
           <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-500 opacity-0 group-hover:opacity-100 transition"></div>
         </article>
@@ -242,7 +242,7 @@
             </svg>
           </div>
           <p class="text-xs font-bold mt-2">All Caught Up</p>
-          <p class="text-[11px] text-slate-500 mt-1">No leave requests awaiting approval.</p>
+          <p class="edify-text-caption text-slate-500 mt-1">No leave requests awaiting approval.</p>
         </div>
         {% endfor %}
       </div>
@@ -274,13 +274,13 @@
        style="background:var(--edify-surface); border-color:var(--edify-border);">
     <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--edify-border);">
       <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Approval Activity</h3>
-      <span class="text-[10px] font-medium text-slate-500">Latest 10 decisions</span>
+      <span class="edify-text-caption font-medium text-slate-500">Latest 10 decisions</span>
     </div>
-    
+
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="border-b text-[10px] font-bold uppercase tracking-wider text-slate-400"
+          <tr class="border-b edify-text-caption font-bold uppercase tracking-wider text-slate-400"
               style="border-color:var(--edify-border); background:var(--edify-surface-muted);">
             <th class="px-4 py-3">Date & Time</th>
             <th class="px-4 py-3">Staff Profile</th>
@@ -297,7 +297,7 @@
             <td class="px-4 py-3 text-slate-400">{{ act.datetime|date:"N j, Y H:i" }}</td>
             <td class="px-4 py-3 text-slate-200">{{ act.staff.name }}</td>
             <td class="px-4 py-3">
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase
+              <span class="px-2 py-0.5 rounded-full edify-text-caption font-extrabold uppercase
                 {% if act.action == 'Approved' %}bg-emerald-500/10 text-emerald-400
                 {% elif act.action == 'Rejected' %}bg-rose-500/10 text-rose-400
                 {% else %}bg-amber-500/10 text-amber-400{% endif %}"

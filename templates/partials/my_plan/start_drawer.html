@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}Mark execution started for {{ act.activity_type|title|replace_underscore }}{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/activities/{{ act.id }}/start/action"
 hx-target="#start-errors"
 class="space-y-5 text-[12px] font-bold text-slate-600"
@@ -14,18 +14,18 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 
 <div class="space-y-3">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">1</span>
 Confirm Execution Start
 </h4>
-<p class="text-[11px] text-slate-500 font-semibold leading-normal">
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
 This will move the activity state to <strong>Started (In Progress)</strong>, confirming to the team that execution has officially commenced.
 </p>
 
 <!-- Optional Notes -->
 <div class="pt-2">
-<label for="notes" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Execution / Location Notes (Optional)</label>
-<textarea 
-name="notes" 
+<label for="notes" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Execution / Location Notes (Optional)</label>
+<textarea
+name="notes"
 id="notes"
 rows="3"
 placeholder="e.g., Arrived at the school, meeting with the headteacher..."
@@ -36,14 +36,14 @@ class="w-full p-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-5
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="edify-action-button secondary h-9 transition-colors"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="edify-action-button primary h-9 transition-colors shadow-sm"
 >

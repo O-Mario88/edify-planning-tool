@@ -8,7 +8,7 @@
 <div class="space-y-4 text-slate-700">
 
   <div>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-1.5">Monthly Country Budgets awaiting decision ({{ monthly_pending|length }})</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600 mb-1.5">Monthly Country Budgets awaiting decision ({{ monthly_pending|length }})</p>
     {% if monthly_pending %}
     <div class="divide-y divide-slate-50 rounded-xl border border-amber-100 bg-amber-50/30">
       {% for b in monthly_pending %}
@@ -16,21 +16,21 @@
         <div class="flex items-center justify-between gap-2">
           <div class="min-w-0">
             <p class="text-[12px] font-semibold text-slate-700">{{ b.month }} · {{ b.total }}</p>
-            <p class="text-[10px] text-slate-400">{{ b.activities }} plan-backed activities · program {{ b.program }} · admin {{ b.admin }}{% if b.submitted %} · submitted {{ b.submitted|date:"d M" }}{% endif %}</p>
+            <p class="edify-text-caption text-slate-400">{{ b.activities }} plan-backed activities · program {{ b.program }} · admin {{ b.admin }}{% if b.submitted %} · submitted {{ b.submitted|date:"d M" }}{% endif %}</p>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
             <form method="post" action="/country-budget/action">{% csrf_token %}
               <input type="hidden" name="action" value="approve">
               <input type="hidden" name="budget_id" value="{{ b.id }}">
               <input type="hidden" name="fy" value="{{ fy }}">
-              <button type="submit" class="h-7 px-2.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold hover:bg-emerald-700">Approve</button>
+              <button type="submit" class="h-7 px-2.5 rounded-lg bg-emerald-600 text-white edify-text-caption font-bold hover:bg-emerald-700">Approve</button>
             </form>
             <form method="post" action="/country-budget/action" class="flex items-center gap-1">{% csrf_token %}
               <input type="hidden" name="action" value="return">
               <input type="hidden" name="budget_id" value="{{ b.id }}">
               <input type="hidden" name="fy" value="{{ fy }}">
-              <input type="text" name="reason" required placeholder="Reason…" class="h-7 px-2 rounded-lg border border-slate-200 text-[10px] w-24">
-              <button type="submit" class="h-7 px-2 rounded-lg border border-slate-200 text-slate-600 text-[10px] font-bold hover:bg-slate-50">Return</button>
+              <input type="text" name="reason" required placeholder="Reason…" class="h-7 px-2 rounded-lg border border-slate-200 edify-text-caption w-24">
+              <button type="submit" class="h-7 px-2 rounded-lg border border-slate-200 text-slate-600 edify-text-caption font-bold hover:bg-slate-50">Return</button>
             </form>
           </div>
         </div>
@@ -38,30 +38,30 @@
       {% endfor %}
     </div>
     {% else %}
-    <p class="text-[11px] text-slate-400 font-medium">No monthly budgets awaiting you.</p>
+    <p class="edify-text-caption text-slate-400 font-medium">No monthly budgets awaiting you.</p>
     {% endif %}
   </div>
 
   <div>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-blue-600 mb-1.5">Annual Country Budgets ({{ annuals|length }})</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-blue-600 mb-1.5">Annual Country Budgets ({{ annuals|length }})</p>
     {% if annuals %}
     <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
       {% for a in annuals %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
         <div class="min-w-0">
-          <p class="text-[12px] font-semibold text-slate-700">FY {{ a.fy }} · {{ a.total }}{% if a.locked %} <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9px] font-bold">Baseline Locked</span>{% endif %}</p>
-          <p class="text-[10px] text-slate-400">program {{ a.program }} · admin {{ a.admin }} · projects {{ a.projects }} · {{ a.status }}</p>
+          <p class="text-[12px] font-semibold text-slate-700">FY {{ a.fy }} · {{ a.total }}{% if a.locked %} <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 edify-text-caption font-bold">Baseline Locked</span>{% endif %}</p>
+          <p class="edify-text-caption text-slate-400">program {{ a.program }} · admin {{ a.admin }} · projects {{ a.projects }} · {{ a.status }}</p>
         </div>
         {% if a.status_key == 'submitted_to_rvp' %}
         <div class="flex items-center gap-1.5 shrink-0">
           <form method="post" action="/rvp/annual/{{ a.id }}/action">{% csrf_token %}
             <input type="hidden" name="action" value="approve">
-            <button type="submit" class="h-7 px-2.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold hover:bg-emerald-700">Approve &amp; Lock</button>
+            <button type="submit" class="h-7 px-2.5 rounded-lg bg-emerald-600 text-white edify-text-caption font-bold hover:bg-emerald-700">Approve &amp; Lock</button>
           </form>
           <form method="post" action="/rvp/annual/{{ a.id }}/action" class="flex items-center gap-1">{% csrf_token %}
             <input type="hidden" name="action" value="return">
-            <input type="text" name="note" required placeholder="Reason…" class="h-7 px-2 rounded-lg border border-slate-200 text-[10px] w-24">
-            <button type="submit" class="h-7 px-2 rounded-lg border border-slate-200 text-slate-600 text-[10px] font-bold hover:bg-slate-50">Return</button>
+            <input type="text" name="note" required placeholder="Reason…" class="h-7 px-2 rounded-lg border border-slate-200 edify-text-caption w-24">
+            <button type="submit" class="h-7 px-2 rounded-lg border border-slate-200 text-slate-600 edify-text-caption font-bold hover:bg-slate-50">Return</button>
           </form>
         </div>
         {% endif %}
@@ -69,31 +69,31 @@
       {% endfor %}
     </div>
     {% else %}
-    <p class="text-[11px] text-slate-400 font-medium">No annual budget prepared for FY {{ fy }} yet.</p>
+    <p class="edify-text-caption text-slate-400 font-medium">No annual budget prepared for FY {{ fy }} yet.</p>
     {% endif %}
   </div>
 
   {% if monthly_returned %}
   <div>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-rose-600 mb-1.5">Returned — with the Country Director ({{ monthly_returned|length }})</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-rose-600 mb-1.5">Returned — with the Country Director ({{ monthly_returned|length }})</p>
     <div class="divide-y divide-slate-50 rounded-xl border border-rose-100 bg-rose-50/30">
       {% for b in monthly_returned %}
-      <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700">{{ b.month }} · {{ b.total }}</p><p class="text-[10px] text-slate-400">{{ b.status }}</p></div>
+      <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700">{{ b.month }} · {{ b.total }}</p><p class="edify-text-caption text-slate-400">{{ b.status }}</p></div>
       {% endfor %}
     </div>
   </div>
   {% endif %}
 
   <div>
-    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Decision history</p>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Decision history</p>
     <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
       {% for d in history %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
-        <div class="min-w-0"><p class="text-[11.5px] font-semibold text-slate-700 truncate">{{ d.subject_label }}</p><p class="text-[9.5px] text-slate-400">{{ d.created_at|date:"d M Y H:i" }}{% if d.reason %} · {{ d.reason|truncatechars:60 }}{% endif %}</p></div>
-        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {% if d.action == 'approve' or d.action == 'scale' %}bg-emerald-50 text-emerald-700{% elif d.action == 'return' or d.action == 'close' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-600{% endif %}">{{ d.action|title }}</span>
+        <div class="min-w-0"><p class="edify-text-caption font-semibold text-slate-700 truncate">{{ d.subject_label }}</p><p class="edify-text-caption text-slate-400">{{ d.created_at|date:"d M Y H:i" }}{% if d.reason %} · {{ d.reason|truncatechars:60 }}{% endif %}</p></div>
+        <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold shrink-0 {% if d.action == 'approve' or d.action == 'scale' %}bg-emerald-50 text-emerald-700{% elif d.action == 'return' or d.action == 'close' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-600{% endif %}">{{ d.action|title }}</span>
       </div>
       {% empty %}
-      <p class="px-3 py-3 text-[11px] text-slate-400 font-medium">No decisions recorded yet.</p>
+      <p class="px-3 py-3 edify-text-caption text-slate-400 font-medium">No decisions recorded yet.</p>
       {% endfor %}
     </div>
   </div>

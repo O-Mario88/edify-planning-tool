@@ -13,7 +13,7 @@
         Oversee course tracking, fund accountability, and HR sign-off across every staff member's PD plan — FY {{ fy }}{% if locked_country %} · {{ locked_country }}{% endif %}.
       </p>
     </div>
-    <span class="text-[10.5px] font-semibold text-slate-400">Last refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
+    <span class="edify-text-caption font-semibold text-slate-400">Last refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
   </div>
 
   <!-- Messages notifications -->
@@ -34,14 +34,14 @@
         class="rounded-xl border p-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5"
         style="background:var(--edify-surface); border-color:var(--edify-border);">
     <label class="block">
-      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
       <select name="fy" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
               style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
         {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
-      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Country</span>
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country</span>
       {% if locked_country %}
       <div class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold flex items-center"
            style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">{{ locked_country }}</div>
@@ -54,7 +54,7 @@
       {% endif %}
     </label>
     <label class="block">
-      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Role</span>
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Role</span>
       <select name="role" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
               style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
         <option value="">All Roles</option>
@@ -62,7 +62,7 @@
       </select>
     </label>
     <label class="block">
-      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Course Status</span>
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Course Status</span>
       <select name="status" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
               style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
         <option value="">All Statuses</option>
@@ -70,7 +70,7 @@
       </select>
     </label>
     <label class="block">
-      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Reminder Status</span>
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reminder Status</span>
       <select name="reminder" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
               style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
         <option value="">Any</option>
@@ -78,7 +78,7 @@
       </select>
     </label>
     <label class="block">
-      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Search</span>
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Search</span>
       <input type="search" name="q" value="{{ search|default:'' }}" placeholder="Staff or course…"
              class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px] font-semibold focus:outline-none"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">

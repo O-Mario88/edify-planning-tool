@@ -1,8 +1,8 @@
-<div id="directory-intelligence-container" class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
+<div id="directory-intelligence-container" class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
 <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
 <div>
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight ">Directory Intelligence</h3>
-<p class="text-[11px] text-slate-400 font-semibold mt-0.5 uppercase tracking-wider ">Selected School</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5 uppercase tracking-wider ">Selected School</p>
 </div>
 </div>
 
@@ -11,33 +11,33 @@
 <div>
 <h4 class="font-semibold text-slate-800 text-[14px] leading-snug">{{ intelligence.school.name }}</h4>
 <div class="flex flex-wrap items-center gap-2 mt-1.5">
-<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-bold {% if intelligence.school.school_type == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
+<span class="inline-flex items-center rounded px-2 py-0.5 edify-text-caption font-bold {% if intelligence.school.school_type == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
 {{ intelligence.school.get_school_type_display }}
 </span>
 {% if can_toggle_core %}
 <div x-data="{ editing: false }" class="inline-block">
-<button 
-@click="editing = !editing" 
-class="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-0.5 focus:outline-none"
+<button
+@click="editing = !editing"
+class="edify-text-caption font-bold text-blue-600 hover:underline flex items-center gap-0.5 focus:outline-none"
 >
 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
 <span>Edit</span>
 </button>
-<div 
-x-show="editing" 
-class="absolute left-4 right-4 mt-2 p-3 bg-white border border-slate-200 rounded-xl shadow-xl z-50 space-y-2 text-slate-700 "
+<div
+x-show="editing"
+class="absolute left-4 right-4 mt-2 p-3 edify-surface border border-slate-200 rounded-xl shadow-xl z-50 space-y-2 text-slate-700 "
 style="display: none;"
 @click.outside="editing = false"
 >
-<p class="text-[11px] font-semibold uppercase text-slate-400">Change School Type</p>
-<form 
+<p class="edify-text-caption font-semibold uppercase text-slate-400">Change School Type</p>
+<form
 hx-post="/schools/{{ intelligence.school.id }}/change-type"
 class="flex items-center gap-2"
 >
 {% csrf_token %}
-<select 
-name="school_type" 
-class="h-8 px-2 bg-white border border-slate-200 rounded text-[12px] font-bold focus:outline-none flex-1"
+<select
+name="school_type"
+class="h-8 px-2 edify-surface border border-slate-200 rounded text-[12px] font-bold focus:outline-none flex-1"
 >
 <option value="client" {% if intelligence.school.school_type == 'client' %}selected{% endif %}>Client School</option>
 <option value="core" {% if intelligence.school.school_type == 'core' %}selected{% endif %}>Core School</option>
@@ -46,9 +46,9 @@ class="h-8 px-2 bg-white border border-slate-200 rounded text-[12px] font-bold f
 <option value="potential_champion" {% if intelligence.school.school_type == 'potential_champion' %}selected{% endif %}>Potential Champion</option>
 <option value="other" {% if intelligence.school.school_type == 'other' %}selected{% endif %}>Other</option>
 </select>
-<button 
+<button
 type="submit"
-class="h-8 px-3 rounded bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-all shadow-sm"
+class="h-8 px-3 rounded bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-bold transition-all shadow-sm"
 >
 Save
 </button>
@@ -69,7 +69,7 @@ Save
 </svg>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">District</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">District</p>
 <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.district.name }}</p>
 </div>
 </div>
@@ -81,7 +81,7 @@ Save
 </svg>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Sub-county</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Sub-county</p>
 <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.sub_county.name|default:"Not specified" }}</p>
 </div>
 </div>
@@ -93,7 +93,7 @@ Save
 </svg>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Cluster</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Cluster</p>
 <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.cluster_name }}</p>
 </div>
 </div>
@@ -105,7 +105,7 @@ Save
 </svg>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Project Assignment</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Project Assignment</p>
 <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.project_text }}</p>
 </div>
 </div>
@@ -117,7 +117,7 @@ Save
 </svg>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Enrolment</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Enrolment</p>
 <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.enrollment|default:"0" }}</p>
 </div>
 </div>
@@ -129,7 +129,7 @@ Save
 </svg>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">Phone</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Phone</p>
 <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.school_phone|default:"—" }}</p>
 </div>
 </div>
@@ -141,7 +141,7 @@ Save
 </svg>
 </div>
 <div>
-<p class="text-[11px] uppercase font-bold text-slate-400">School Contact</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">School Contact</p>
 <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school_contact }}</p>
 </div>
 </div>
@@ -163,8 +163,8 @@ Save
 </div>
 
 {% if intelligence.next_step_action == 'add_to_cluster' %}
-<button 
-hx-get="/schools/{{ intelligence.school.id }}/add-to-cluster" 
+<button
+hx-get="/schools/{{ intelligence.school.id }}/add-to-cluster"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="w-full h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors"
@@ -172,8 +172,8 @@ class="w-full h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px
 {{ intelligence.next_step_button }}
 </button>
 {% elif intelligence.next_step_action == 'assign_to_project' %}
-<button 
-hx-get="/schools/{{ intelligence.school.id }}/assign-to-project" 
+<button
+hx-get="/schools/{{ intelligence.school.id }}/assign-to-project"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-bold flex items-center justify-center transition-colors"
@@ -181,14 +181,14 @@ class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12
 {{ intelligence.next_step_button }}
 </button>
 {% elif intelligence.next_step_action == 'view_core_planning' %}
-<a 
+<a
 href="/core-schools"
 class="w-full h-9 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors shadow-sm"
 >
 {{ intelligence.next_step_button }}
 </a>
 {% else %}
-<button 
+<button
 disabled
 class="w-full h-9 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 text-[12px] font-bold flex items-center justify-center cursor-not-allowed opacity-60"
 >

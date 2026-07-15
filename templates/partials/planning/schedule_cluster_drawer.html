@@ -26,8 +26,8 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 
 <!-- Date -->
 <div>
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Scheduled Date</label>
-<div 
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Scheduled Date</label>
+<div
 x-data="{
 open: false,
 selectedDate: '',
@@ -91,15 +91,15 @@ return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'nu
 isSelected(day) {
 if (!day || !this.selectedDate) return false;
 let parts = this.selectedDate.split('-');
-return parseInt(parts[0]) === this.currentYear && 
-(parseInt(parts[1]) - 1) === this.currentMonth && 
+return parseInt(parts[0]) === this.currentYear &&
+(parseInt(parts[1]) - 1) === this.currentMonth &&
 parseInt(parts[2]) === day;
 }
 }"
 class="relative "
 >
 <!-- Dropdown Trigger button -->
-<button 
+<button
 type="button"
 @click="open = !open"
 class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
@@ -118,10 +118,10 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <input type="hidden" name="scheduled_date" :value="selectedDate" required>
 
 <!-- Calendar Popover Card -->
-<div 
+<div
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
+class="absolute left-0 mt-1.5 w-[280px] edify-surface border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -135,14 +135,14 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
-<span class="font-semibold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
 <button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
 </div>
 
 <!-- Weekdays Header -->
-<div class="grid grid-cols-7 gap-y-1 text-center text-[11px] font-bold text-slate-400">
+<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
 <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
 </div>
 
@@ -150,12 +150,12 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
 <template x-for="(day, index) in days" :key="index">
 <div>
-<button 
+<button
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
 class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
-:class="isSelected(day) ? 'bg-[#0f172a] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
 </div>
@@ -167,10 +167,10 @@ x-text="day"
 
 <!-- Expected Participants -->
 <div>
-<label for="expected_participants" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Expected Participant Count</label>
-<input 
-type="number" 
-name="expected_participants" 
+<label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participant Count</label>
+<input
+type="number"
+name="expected_participants"
 id="expected_participants"
 required
 min="1"
@@ -181,9 +181,9 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 
 <!-- Delivery Type selection -->
 <div x-data="{ delivery: 'staff' }">
-<label for="delivery_type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
-<select 
-name="delivery_type" 
+<label for="delivery_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
+<select
+name="delivery_type"
 id="delivery_type"
 x-model="delivery"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
@@ -194,9 +194,9 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 
 <!-- Partner dropdown if selected -->
 <div x-show="delivery === 'partner'" class="mt-3" style="display: none;">
-<label for="assigned_partner_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Assigned Partner Agency</label>
-<select 
-name="assigned_partner_id" 
+<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assigned Partner Agency</label>
+<select
+name="assigned_partner_id"
 id="assigned_partner_id"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
 >
@@ -211,7 +211,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 {% if action != 'meeting' %}
 <!-- Focus Intervention (required for training; meetings default to operational/admin) -->
 <div>
-<label for="focus_intervention" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
+<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
 <select
 name="focus_intervention"
 id="focus_intervention"
@@ -228,7 +228,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 
 <!-- Activity Goal -->
 <div>
-<label for="activity_goal" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
+<label for="activity_goal" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
 <textarea
 name="activity_goal"
 id="activity_goal"
@@ -241,9 +241,9 @@ class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:ou
 
 <!-- Expected Outcome -->
 <div>
-<label for="expected_outcome" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Expected Outcome / Goal</label>
-<textarea 
-name="expected_outcome" 
+<label for="expected_outcome" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Outcome / Goal</label>
+<textarea
+name="expected_outcome"
 id="expected_outcome"
 required
 rows="2"
@@ -254,14 +254,14 @@ class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:ou
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >

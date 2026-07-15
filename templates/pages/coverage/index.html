@@ -18,23 +18,23 @@
   </div>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5">
-      <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Total Schools</p>
+    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total Schools</p>
       <p class="text-[19px] font-bold text-slate-800 tabular-nums mt-0.5">{{ total_schools|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-400">active in program</p>
+      <p class="edify-text-caption font-semibold text-slate-400">active in program</p>
     </div>
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5">
-      <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Visited</p>
+    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Visited</p>
       <p class="text-[19px] font-bold text-emerald-600 tabular-nums mt-0.5">{{ visited|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-400">≥1 completed visit</p>
+      <p class="edify-text-caption font-semibold text-slate-400">≥1 completed visit</p>
     </div>
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5">
-      <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Not Yet Visited</p>
+    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Not Yet Visited</p>
       <p class="text-[19px] font-bold text-rose-600 tabular-nums mt-0.5">{{ unvisited|intcomma }}</p>
-      <p class="text-[10px] font-semibold text-slate-400">awaiting first visit</p>
+      <p class="edify-text-caption font-semibold text-slate-400">awaiting first visit</p>
     </div>
-    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5">
-      <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Coverage Rate</p>
+    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Coverage Rate</p>
       <p class="text-[19px] font-bold tabular-nums mt-0.5 {% if coverage_pct >= 70 %}text-emerald-600{% elif coverage_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ coverage_pct }}%</p>
       <div class="h-[6px] bg-slate-100 rounded-full overflow-hidden mt-1.5">
         <div class="h-full rounded-full {% if coverage_pct >= 70 %}bg-emerald-500{% elif coverage_pct >= 40 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ coverage_pct }}%"></div>
@@ -42,13 +42,13 @@
     </div>
   </div>
 
-  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Clusters</h2>
     {% if clusters %}
     <div class="overflow-x-auto -mx-1">
-      <table class="w-full text-[11.5px]">
+      <table class="w-full edify-text-caption">
         <thead>
-          <tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
             <th class="text-left font-bold py-2 pl-1">Cluster</th>
             <th class="text-left font-bold py-2">District</th>
             <th class="text-right font-bold py-2">Schools</th>
@@ -62,7 +62,7 @@
             <td class="text-left text-slate-500 py-2.5">{{ c.district.name|default:"—" }}</td>
             <td class="text-right tabular-nums text-slate-500 py-2.5">{{ c.school_count }}</td>
             <td class="text-right py-2.5 pr-1">
-              <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if c.status == 'active' %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ c.status|title }}</span>
+              <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if c.status == 'active' %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ c.status|title }}</span>
             </td>
           </tr>
           {% endfor %}

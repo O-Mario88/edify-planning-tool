@@ -3,21 +3,21 @@
 <div class="border-b border-slate-200 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>Recommended Actions</span>
-<span class="bg-blue-100 text-blue-800 font-semibold text-[11px] px-1.5 py-0.5 rounded-full">AI Insights</span>
+<span class="bg-blue-100 text-blue-800 font-semibold edify-text-caption px-1.5 py-0.5 rounded-full">AI Insights</span>
 </h3>
-<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Automated risk detection from live data stream</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Automated risk detection from live data stream</p>
 </div>
 
 <!-- Insights cards stack -->
 <div class="space-y-3">
 {% for insight in insights %}
-<div 
-class="border rounded-xl p-3 shadow-sm hover:shadow-md transition-all cursor-pointer bg-white {{ insight.color }}"
+<div
+class="border rounded-xl p-3 shadow-sm hover:shadow-md transition-all cursor-pointer edify-surface {{ insight.color }}"
 hx-get="/analytics/drilldown?metric={{ insight.key }}&fy={{ filters.selected_fy }}&quarter={{ filters.selected_quarter }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 >
-<div class="flex items-center justify-between gap-2 font-semibold text-[11px] uppercase tracking-wider">
+<div class="flex items-center justify-between gap-2 font-semibold edify-text-caption uppercase tracking-wider">
 <span class="flex items-center gap-2 min-w-0 flex-1">
 <div class="h-6 w-6 rounded-full flex items-center justify-center shrink-0 {% if insight.key == 'no_ssa' or insight.key == 'high_risk_districts' %}bg-rose-100/60{% elif insight.key == 'not_visited' %}bg-amber-100/60{% elif insight.key == 'not_trained' %}bg-blue-100/60{% else %}bg-purple-100/60{% endif %}">
 {% if insight.key == 'no_ssa' %}
@@ -46,14 +46,14 @@ hx-swap="innerHTML"
 </span>
 <span class="text-[14px] font-semibold">{{ insight.count }}</span>
 </div>
-<p class="text-[11px] font-bold opacity-75 mt-1 leading-snug">{{ insight.description }}</p>
+<p class="edify-text-caption font-bold opacity-75 mt-1 leading-snug">{{ insight.description }}</p>
 </div>
 {% endfor %}
 </div>
 
 <!-- Focus card callout -->
-<div class="btn-premium-primary text-white border border-[#213a45] rounded-xl p-4 shadow-sm hover:shadow-md transition-all mt-2 space-y-3">
-<div class="flex items-center gap-2 text-[11px] font-semibold uppercase text-amber-300 tracking-wider">
+<div class="btn-premium-primary text-white border border-[var(--edify-primary-hover)] rounded-xl p-4 shadow-sm hover:shadow-md transition-all mt-2 space-y-3">
+<div class="flex items-center gap-2 edify-text-caption font-semibold uppercase text-amber-300 tracking-wider">
 <div class="h-5 w-5 rounded-full bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0">
 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -61,13 +61,13 @@ hx-swap="innerHTML"
 </div>
 <span>Recommended Strategy</span>
 </div>
-<p class="text-[11px] font-bold leading-relaxed text-slate-200">
+<p class="edify-text-caption font-bold leading-relaxed text-slate-200">
 Focus training efforts on Leadership & Teaching/Learning interventions in districts with low SSA average scores to maximize donor investment efficiency.
 </p>
 
 <a
 href="/planning"
-class="w-full bg-amber-400 text-slate-900 hover:bg-amber-500 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider text-center transition-all block focus:outline-none"
+class="w-full bg-amber-400 text-slate-900 hover:bg-amber-500 py-1.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider text-center transition-all block focus:outline-none"
 >
 View Action Plan
 </a>

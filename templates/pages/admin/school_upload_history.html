@@ -14,16 +14,16 @@
 </div>
 
 <!-- Listings Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">File Metadata</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Type / Source</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Row Breakdown</th>
-<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Status</th>
-<th class="px-5 py-3.5 text-right text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Rollback</th>
+<th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">File Metadata</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Type / Source</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Row Breakdown</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Status</th>
+<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Rollback</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
@@ -31,21 +31,21 @@
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-800 block">{{ batch.file_name|default:batch.original_file_name }}</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Uploaded at {{ batch.created_at|date:"M d, Y H:i" }} by User ID: {{ batch.uploaded_by }}</span>
+<span class="edify-text-caption text-slate-400 font-bold block mt-0.5">Uploaded at {{ batch.created_at|date:"M d, Y H:i" }} by User ID: {{ batch.uploaded_by }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold">
-<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100">
+<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-slate-100">
 {{ batch.upload_type }}
 </span>
-<span class="block text-[11px] text-slate-400 mt-1">Source: {{ batch.source }}</span>
+<span class="block edify-text-caption text-slate-400 mt-1">Source: {{ batch.source }}</span>
 </td>
 <td class="px-4 py-4 font-semibold">
 <div class="space-y-1">
-<div class="flex gap-2 text-[11px]">
+<div class="flex gap-2 edify-text-caption">
 <span class="text-slate-500">Total:</span>
 <span class="text-slate-800 font-semibold">{{ batch.total_rows }}</span>
 </div>
-<div class="flex gap-2 text-[11px]">
+<div class="flex gap-2 edify-text-caption">
 <span class="text-emerald-600">Created: {{ batch.created_rows }}</span>
 <span class="text-blue-600">Updated: {{ batch.updated_rows }}</span>
 <span class="text-rose-600">Failed: {{ batch.failed_rows }}</span>
@@ -54,23 +54,23 @@
 </td>
 <td class="px-4 py-4">
 {% if batch.status == 'completed' %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-emerald-50 text-emerald-700">
 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
 <span>Completed</span>
 </span>
 {% elif batch.status == 'failed' %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-rose-50 text-rose-700">
 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
 <span>Failed / Rolled Back</span>
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-blue-50 text-blue-700">
 <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
 <span>{{ batch.status|capfirst }}</span>
 </span>
 {% endif %}
 {% if batch.error_summary %}
-<p class="text-[11px] text-slate-400 font-bold mt-1 max-w-[240px] truncate" title="{{ batch.error_summary }}">
+<p class="edify-text-caption text-slate-400 font-bold mt-1 max-w-[240px] truncate" title="{{ batch.error_summary }}">
 {{ batch.error_summary }}
 </p>
 {% endif %}
@@ -80,15 +80,15 @@
 <form method="post" action="/admin/school-upload-history" @submit="if (!window.confirm('Are you sure you want to rollback all rows created by this file? This will restore original database records.')) $event.preventDefault()">
 {% csrf_token %}
 <input type="hidden" name="rollback_id" value="{{ batch.id }}">
-<button 
-type="submit" 
-class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
+<button
+type="submit"
+class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Rollback
 </button>
 </form>
 {% else %}
-<span class="text-[11px] text-slate-300 font-bold uppercase tracking-wider">Locked</span>
+<span class="edify-text-caption text-slate-300 font-bold uppercase tracking-wider">Locked</span>
 {% endif %}
 </td>
 </tr>
