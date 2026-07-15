@@ -119,13 +119,34 @@ class SsaCollectorType(models.TextChoices):
 
 class SsaIntervention(models.TextChoices):
     CHRISTLIKE_BEHAVIOUR = "christlike_behaviour", "Christlike Behaviour"
-    EXPOSURE_TO_WORD_OF_GOD = "exposure_to_word_of_god", "Exposure to Word of God"
+    EXPOSURE_TO_WORD_OF_GOD = (
+        "exposure_to_word_of_god",
+        "Exposure to the Word of God",
+    )
     FINANCIAL_HEALTH = "financial_health", "Financial Health"
     LEADERSHIP = "leadership", "Leadership"
     LEARNING_ENVIRONMENT = "learning_environment", "Learning Environment"
     GOVERNMENT_REQUIREMENT = "government_requirement", "Government Requirement"
     TEACHING_ENVIRONMENT = "teaching_environment", "Teaching Environment"
-    ENROLMENT = "enrolment", "Enrolment"
+    ENROLMENT = "enrolment", "Enrollment Score"
+
+
+# Canonical SSA status bands on the 0-10 intervention/average score. This is
+# the single source of truth (§5): Critical 0-4.9 / Warning 5-6.9 /
+# Improving 7-7.9 / Strong 8-10. Everything that classifies an SSA score
+# (dashboards, analytics, services) must derive from here — never redefine
+# thresholds locally.
+def ssa_score_band(score: float | None) -> tuple[str, str, str]:
+    """Classify a 0-10 SSA score into (label, hex, tone)."""
+    if score is None:
+        return ("No SSA", "#94a3b8", "neutral")
+    if score >= 8.0:
+        return ("Strong", "#16a34a", "success")
+    if score >= 7.0:
+        return ("Improving", "#84cc16", "lime")
+    if score >= 5.0:
+        return ("Warning", "#f59e0b", "warning")
+    return ("Critical", "#dc2626", "danger")
 
 
 # ── Activities ────────────────────────────────────────────────────────────────

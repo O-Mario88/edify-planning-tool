@@ -448,207 +448,402 @@ def pd_dashboard_action_view(request):
 
 @require_page_permission("succession_planning")
 def succession_planning_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    candidates = SuccessionCandidate.objects.filter(staff_successor_id__in=visible_ids).select_related("staff_successor__user")
+    if query:
+        candidates = candidates.filter(Q(position_name__icontains=query) | Q(staff_successor__user__name__icontains=query) | Q(readiness__icontains=query))
+    rows = [{"cells": [
+        _cell("Critical position", candidate.position_name, primary=True),
+        _cell("Successor", candidate.staff_successor.user.name),
+        _cell("Current role", candidate.staff_successor.title),
+        _cell("Country", candidate.staff_successor.country),
+        _cell("Readiness", candidate.readiness, status=True),
+        _cell("Updated", candidate.updated_at.date()),
+    ]} for candidate in candidates.order_by("position_name", "staff_successor__user__name")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Succession Planning",
-            "capabilities": [
-                "Critical roles dependency risk map.",
-                "Potential successor profiles and readiness states.",
-                "Individual development roadmaps.",
-            ],
-        },
+        title="Succession Planning",
+        description="Critical-position continuity built from named successors and explicit readiness assessments—not inferred talent labels.",
+        metrics=[
+            _metric("Nominations", candidates.count(), "successor records in scope"),
+            _metric("Ready now", candidates.filter(readiness="Ready Now").count(), "immediate successors", "success"),
+            _metric("6–12 months", candidates.filter(readiness="Ready in 6-12 Months").count(), "near-term pipeline", "info"),
+            _metric("Development required", candidates.filter(readiness="Development Required").count(), "requires action", "warning"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review Professional Development", "href": "/cpd-learning"},
+        empty_title="No succession nominations in this scope",
     )
 
 
 @require_page_permission("performance_reviews")
 def performance_reviews_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    reviews = PerformanceReview.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    if query:
+        reviews = reviews.filter(Q(staff__user__name__icontains=query) | Q(period__icontains=query) | Q(review_type__icontains=query) | Q(status__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", review.staff.user.name, primary=True),
+        _cell("Period", review.period),
+        _cell("Review type", review.review_type),
+        _cell("Due", review.due_date),
+        _cell("Score", f"{review.score:.0f}%"),
+        _cell("Status", review.status, status=True),
+    ]} for review in reviews.order_by("due_date", "staff__user__name")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Performance Reviews",
-            "capabilities": [
-                "Periodic review cycles setup and schedules.",
-                "Self-assessments and manager feedback calibration.",
-                "Target achievement scores rollup.",
-            ],
-        },
+        title="Performance Reviews",
+        description="A period-aware review register connected to staff identity, due dates, calibrated scores, and review state.",
+        metrics=[
+            _metric("Reviews", reviews.count(), "records in access scope"),
+            _metric("Completed", reviews.filter(status__in=["Completed", "Closed"]).count(), "finished reviews", "success"),
+            _metric("Manager pending", reviews.filter(status="Manager Review Pending").count(), "awaiting supervisor", "warning"),
+            _metric("Average score", f"{(sum(r.score for r in reviews) / reviews.count()):.0f}%" if reviews.count() else "0%", "across visible reviews", "info"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open Team Targets", "href": "/team-targets/"},
+        empty_title="No performance reviews in this scope",
     )
 
 
 @require_page_permission("recovery_plans")
 def recovery_plans_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    plans = PerformanceImprovementPlan.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    if query:
+        plans = plans.filter(Q(staff__user__name__icontains=query) | Q(cause__icontains=query) | Q(status__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", plan.staff.user.name, primary=True),
+        _cell("Cause", plan.cause),
+        _cell("Start", plan.start_date),
+        _cell("Review by", plan.end_date),
+        _cell("Status", plan.status, status=True),
+    ]} for plan in plans.order_by("end_date")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Performance Recovery Plans",
-            "capabilities": [
-                "Performance Improvement Plans (PIP) registration.",
-                "Recovery milestones tracking and actions logging.",
-                "PIP completion and escalation workflows.",
-            ],
-        },
+        title="Performance Recovery Plans",
+        description="Active and completed improvement plans with explicit causes, time windows, and escalation state.",
+        metrics=[
+            _metric("Plans", plans.count(), "visible recovery records"),
+            _metric("Active", plans.filter(status__in=["Active", "Progress Review"]).count(), "under active review", "warning"),
+            _metric("Escalated", plans.filter(status="Escalated").count(), "requiring leadership", "danger"),
+            _metric("Completed", plans.filter(status__in=["Successfully Completed", "Closed"]).count(), "closed outcomes", "success"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review Team Performance", "href": "/team-targets/"},
+        empty_title="No recovery plans in this scope",
     )
 
 
 @require_page_permission("culture_engagement")
 def culture_engagement_view(request):
-    return render(
+    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
+    grouped = profiles.values("department", "country").annotate(
+        people=Count("id"), active=Count("id", filter=Q(onboarding_state="active"))
+    ).order_by("country", "department")
+    rows = [{"cells": [
+        _cell("Team", item["department"] or "Unassigned", primary=True),
+        _cell("Country", item["country"]),
+        _cell("People", item["people"]),
+        _cell("Active", item["active"]),
+        _cell("Activation", f"{round(item['active'] / item['people'] * 100) if item['people'] else 0}%", status=True),
+    ]} for item in grouped]
+    relations = EmployeeRelationsCase.objects.all()
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Culture & Engagement",
-            "capabilities": [
-                "Staff satisfaction surveys and eNPS trackers.",
-                "Recognition and reward nominations.",
-                "Regional culture events registry.",
-            ],
-        },
+        title="Culture & Engagement",
+        description="A conservative workforce-experience view using real activation and employee-relations signals. Survey and eNPS values are intentionally absent until a survey workflow exists.",
+        metrics=[
+            _metric("People", profiles.count(), "in the visible workforce"),
+            _metric("Active", profiles.filter(onboarding_state="active").count(), "activated team members", "success"),
+            _metric("Open relations cases", relations.exclude(status__in=["Resolved", "Closed"]).count(), "confidential follow-up", "warning"),
+            _metric("Critical cases", relations.filter(severity="critical").exclude(status__in=["Resolved", "Closed"]).count(), "leadership attention", "danger"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open People Directory", "href": "/staff"},
+        empty_title="No workforce experience data in this scope",
     )
 
 
 @require_page_permission("employee_relations")
 def employee_relations_view(request):
-    return render(
+    query = (request.GET.get("q") or "").strip()
+    cases = EmployeeRelationsCase.objects.select_related("case_owner")
+    if query:
+        cases = cases.filter(Q(case_type__icontains=query) | Q(status__icontains=query) | Q(severity__icontains=query) | Q(case_owner__name__icontains=query))
+    rows = [{"cells": [
+        _cell("Case type", case.case_type, primary=True),
+        _cell("Severity", case.severity.title(), status=True),
+        _cell("Owner", case.case_owner.name if case.case_owner else "Unassigned"),
+        _cell("Confidentiality", "Restricted" if case.is_confidential else "Standard"),
+        _cell("Updated", case.updated_at.date()),
+        _cell("Status", case.status, status=True),
+    ]} for case in cases.order_by("-updated_at")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Employee Relations Cases",
-            "capabilities": [
-                "Confidential grievance logging and triage workflows.",
-                "Disciplinary hearings and findings register.",
-                "Safeguarding and whistleblowing escalation channels.",
-            ],
-        },
+        title="Employee Relations Cases",
+        description="A restricted case register for grievances, conduct, safeguarding, and whistleblowing—details remain protected from the overview surface.",
+        metrics=[
+            _metric("Open cases", cases.exclude(status__in=["Resolved", "Closed"]).count(), "requiring case ownership"),
+            _metric("Triage", cases.filter(status__in=["Submitted", "Triage"]).count(), "awaiting assessment", "warning"),
+            _metric("Critical", cases.filter(severity="critical").exclude(status__in=["Resolved", "Closed"]).count(), "urgent restricted cases", "danger"),
+            _metric("Resolved", cases.filter(status__in=["Resolved", "Closed"]).count(), "closed case records", "success"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review HR Dashboard", "href": "/dashboard"},
+        empty_title="No employee-relations cases",
+        empty_body="No confidential case records are visible in your current scope.",
     )
 
 
 @require_page_permission("wellness")
 def wellness_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    leaves = Leave.objects.filter(staff_id__in=visible_ids).select_related("staff__user", "covering_staff__user")
+    if query:
+        leaves = leaves.filter(Q(staff__user__name__icontains=query) | Q(type__icontains=query) | Q(status__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", leave.staff.user.name, primary=True),
+        _cell("Leave type", leave.type.replace("_", " ").title()),
+        _cell("Dates", f"{leave.start_date} – {leave.end_date}"),
+        _cell("Days", leave.days_charged if leave.days_charged is not None else leave.days),
+        _cell("Coverage", leave.covering_staff.user.name if leave.covering_staff else leave.coverage_status, status=True),
+        _cell("Status", leave.status.title(), status=True),
+    ]} for leave in leaves.order_by("-created_at")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Staff Wellness & Support",
-            "capabilities": [
-                "Work-life balance metrics monitoring.",
-                "Counseling and employee assistance resources.",
-                "Health & safety incident reports.",
-            ],
-        },
+        title="Staff Wellness & Support",
+        description="Real leave, workload-continuity, and coverage signals. Clinical or counseling data is not collected on this platform.",
+        metrics=[
+            _metric("Leave records", leaves.count(), "visible requests"),
+            _metric("Pending", leaves.filter(status="pending").count(), "awaiting a decision", "warning"),
+            _metric("Approved", leaves.filter(status="approved").count(), "confirmed time away", "success"),
+            _metric("Coverage gaps", leaves.filter(covering_staff__isnull=True).exclude(status__in=["rejected", "cancelled"]).count(), "without a named cover", "danger"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open Personal Time Off", "href": "/personal-time-off/"},
+        empty_title="No leave or coverage records in this scope",
     )
 
 
 @require_page_permission("compensation_benefits")
 def compensation_benefits_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    records = CompensationRecord.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    if query:
+        records = records.filter(Q(staff__user__name__icontains=query) | Q(salary_band__icontains=query) | Q(benefits_tier__icontains=query) | Q(status__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", record.staff.user.name, primary=True),
+        _cell("Role", record.staff.title or record.staff.user.active_role),
+        _cell("Country", record.staff.country),
+        _cell("Salary band", record.salary_band),
+        _cell("Benefits tier", record.benefits_tier),
+        _cell("Status", record.status, status=True),
+    ]} for record in records.order_by("staff__user__name")]
+    profiles = _profile_scope(request)
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Compensation & Benefits",
-            "capabilities": [
-                "Grade structure and salary bands configuration.",
-                "Allowance items and health insurance tier mapping.",
-                "Staff bank details vault.",
-            ],
-        },
+        title="Compensation & Benefits",
+        description="A privacy-conscious readiness register for pay bands and benefits tiers. Bank accounts and salary amounts are deliberately excluded from this overview.",
+        metrics=[
+            _metric("Compensation profiles", records.count(), "configured records"),
+            _metric("Approved", records.filter(status="Approved").count(), "completed HR review", "success"),
+            _metric("In review", records.exclude(status="Approved").count(), "requiring HR action", "warning"),
+            _metric("Missing profiles", max(profiles.count() - records.count(), 0), "staff without a record", "danger"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open People Directory", "href": "/staff"},
+        empty_title="No compensation profiles in this scope",
     )
 
 
 @require_page_permission("payroll_readiness")
 def payroll_readiness_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    records = PayrollReadinessRecord.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    if query:
+        records = records.filter(Q(staff__user__name__icontains=query) | Q(payroll_period__icontains=query) | Q(exception_notes__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", record.staff.user.name, primary=True),
+        _cell("Role", record.staff.title or record.staff.user.active_role),
+        _cell("Country", record.staff.country),
+        _cell("Payroll period", record.payroll_period),
+        _cell("Exceptions", "Yes" if record.has_exceptions else "None", status=record.has_exceptions),
+        _cell("Readiness", "Ready" if record.is_payroll_ready else "Pending", status=True),
+    ]} for record in records.order_by("-payroll_period", "staff__user__name")]
+    latest_period = records.order_by("-payroll_period").values_list("payroll_period", flat=True).first()
+    latest = records.filter(payroll_period=latest_period) if latest_period else records.none()
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Payroll Readiness",
-            "capabilities": [
-                "Monthly payroll adjustments register (new joins, exits, leaves).",
-                "Disbursement details verification checklists.",
-                "Pay slip generation and bank upload sheets.",
-            ],
-        },
+        title="Payroll Readiness",
+        description="Period-specific payroll checks that expose exceptions and readiness without revealing banking or salary details.",
+        metrics=[
+            _metric("Current period", latest_period or "—", "latest configured payroll run"),
+            _metric("Staff checked", latest.count(), "records in latest period"),
+            _metric("Ready", latest.filter(is_payroll_ready=True).count(), "cleared for payroll", "success"),
+            _metric("Exceptions", latest.filter(has_exceptions=True).count(), "requiring resolution", "danger"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review Finance Operations", "href": "/finance-operations"},
+        empty_title="No payroll-readiness checks in this scope",
     )
 
 
 @require_page_permission("compliance_register")
 def compliance_register_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    records = EmployeeComplianceRecord.objects.filter(staff_id__in=visible_ids).select_related("staff__user", "requirement", "verified_by")
+    if query:
+        records = records.filter(Q(staff__user__name__icontains=query) | Q(requirement__name__icontains=query) | Q(requirement__country__icontains=query) | Q(status__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", record.staff.user.name, primary=True),
+        _cell("Requirement", record.requirement.name),
+        _cell("Jurisdiction", record.requirement.country),
+        _cell("Expiry", record.expiry_date),
+        _cell("Verified by", record.verified_by.name if record.verified_by else "Not verified"),
+        _cell("Status", record.status, status=True),
+    ]} for record in records.order_by("expiry_date", "staff__user__name")]
+    requirements = ComplianceRequirement.objects.all()
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Compliance Register",
-            "capabilities": [
-                "Mandatory compliance requirements configuration by country.",
-                "Staff compliance records tracking (contracts, permits, training).",
-                "Expirations alerting and audit readiness status.",
-            ],
-        },
+        title="Compliance Register",
+        description="Employee compliance evidence connected to jurisdictional requirements, expiry dates, and named verification authority.",
+        metrics=[
+            _metric("Requirements", requirements.count(), "configured controls"),
+            _metric("Compliant", records.filter(status="Compliant").count(), "verified records", "success"),
+            _metric("Due soon", records.filter(status="Due Soon").count(), "approaching expiry", "warning"),
+            _metric("Missing or expired", records.filter(status__in=["Missing", "Expired"]).count(), "requiring remediation", "danger"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review Policies", "href": "/policies"},
+        empty_title="No employee compliance records in this scope",
     )
 
 
 @require_page_permission("policies")
 def policies_view(request):
-    return render(
+    query = (request.GET.get("q") or "").strip()
+    requirements = ComplianceRequirement.objects.annotate(record_count=Count("employeecompliancerecord"))
+    if query:
+        requirements = requirements.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(country__icontains=query))
+    rows = [{"cells": [
+        _cell("Policy or requirement", requirement.name, primary=True),
+        _cell("Jurisdiction", requirement.country),
+        _cell("Mandatory", "Mandatory" if requirement.is_mandatory else "Optional", status=True),
+        _cell("Employee records", requirement.record_count),
+        _cell("Updated", requirement.updated_at.date()),
+    ]} for requirement in requirements.order_by("country", "name")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Policies & Core Documents",
-            "capabilities": [
-                "Organizational policy documents center.",
-                "Mandatory policy acknowledgement tracking.",
-                "Local labor regulation compliance standards.",
-            ],
-        },
+        title="Policies & Core Documents",
+        description="The configured compliance-policy register. Document acknowledgements are not claimed until a dedicated acknowledgement model exists.",
+        metrics=[
+            _metric("Configured", requirements.count(), "policy and compliance controls"),
+            _metric("Mandatory", requirements.filter(is_mandatory=True).count(), "required controls", "warning"),
+            _metric("Optional", requirements.filter(is_mandatory=False).count(), "advisory controls", "info"),
+            _metric("Jurisdictions", requirements.values("country").distinct().count(), "countries or global scope"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open Compliance Register", "href": "/compliance-register"},
+        empty_title="No policies or compliance controls configured",
     )
 
 
 @require_page_permission("offboarding")
 def offboarding_view(request):
-    return render(
+    visible_ids = _profile_scope(request).values("id")
+    query = (request.GET.get("q") or "").strip()
+    plans = OffboardingPlan.objects.filter(staff_id__in=visible_ids).select_related("staff__user", "handover_owner__user")
+    if query:
+        plans = plans.filter(Q(staff__user__name__icontains=query) | Q(status__icontains=query) | Q(handover_owner__user__name__icontains=query))
+    rows = [{"cells": [
+        _cell("Team member", plan.staff.user.name, primary=True),
+        _cell("Role", plan.staff.title or plan.staff.user.active_role),
+        _cell("Last working day", plan.last_working_day),
+        _cell("Handover owner", plan.handover_owner.user.name if plan.handover_owner else "Unassigned"),
+        _cell("Clearance", "Completed" if plan.clearance_completed else "Pending", status=True),
+        _cell("Status", plan.status, status=True),
+    ]} for plan in plans.order_by("last_working_day")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "Staff Offboarding",
-            "capabilities": [
-                "Resignation and termination workflow checklist.",
-                "Handover ownership assignment and equipment return checks.",
-                "Exit interviews logging and finance clearance signoffs.",
-            ],
-        },
+        title="Staff Offboarding",
+        description="A controlled transition register covering handover ownership, final working dates, clearance, and closure state.",
+        metrics=[
+            _metric("Plans", plans.count(), "offboarding records in scope"),
+            _metric("In progress", plans.exclude(status="Closed").count(), "active transitions", "warning"),
+            _metric("Handover gaps", plans.filter(handover_owner__isnull=True).exclude(status="Closed").count(), "without a named owner", "danger"),
+            _metric("Closed", plans.filter(status="Closed").count(), "completed transitions", "success"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open People Directory", "href": "/staff"},
+        empty_title="No offboarding plans in this scope",
     )
 
 
 @require_page_permission("hr_analytics")
 def hr_analytics_view(request):
-    return render(
+    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
+    grouped = profiles.values("country", "department").annotate(
+        headcount=Count("id"), active=Count("id", filter=Q(onboarding_state="active")), pending=Count("id", filter=Q(onboarding_state="pending"))
+    ).order_by("country", "department")
+    rows = [{"cells": [
+        _cell("Country", item["country"], primary=True),
+        _cell("Department", item["department"] or "Unassigned"),
+        _cell("Headcount", item["headcount"]),
+        _cell("Active", item["active"]),
+        _cell("Pending", item["pending"], status=item["pending"] > 0),
+        _cell("Activation rate", f"{round(item['active'] / item['headcount'] * 100) if item['headcount'] else 0}%"),
+    ]} for item in grouped]
+    reviews = PerformanceReview.objects.filter(staff_id__in=profiles.values("id"))
+    compliance = EmployeeComplianceRecord.objects.filter(staff_id__in=profiles.values("id"))
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "HR Analytics & Workforce Insights",
-            "capabilities": [
-                "Workforce demographics and gender balance reports.",
-                "Attrition and retention trends analytics.",
-                "Target achievement vs. salary correlations.",
-            ],
-        },
+        title="HR Analytics & Workforce Insights",
+        description="Live workforce, review, and compliance signals computed from current operational records. Unsupported demographic and salary-correlation claims are intentionally excluded.",
+        metrics=[
+            _metric("Headcount", profiles.count(), "people in scope"),
+            _metric("Countries", profiles.values("country").distinct().count(), "operating footprint"),
+            _metric("Reviews due", reviews.exclude(status__in=["Completed", "Closed"]).count(), "open review workload", "warning"),
+            _metric("Compliance gaps", compliance.filter(status__in=["Missing", "Expired"]).count(), "missing or expired evidence", "danger"),
+        ],
+        rows=rows,
+        primary_action={"label": "Review HR Dashboard", "href": "/dashboard"},
+        empty_title="No workforce analytics in this scope",
     )
 
 
 @require_page_permission("hr_audit_log")
 def hr_audit_log_view(request):
-    return render(
+    query = (request.GET.get("q") or "").strip()
+    events = HRAuditEvent.objects.select_related("actor")
+    if query:
+        events = events.filter(Q(actor__name__icontains=query) | Q(action__icontains=query) | Q(role__icontains=query) | Q(record_id__icontains=query))
+    rows = [{"cells": [
+        _cell("Action", event.action, primary=True),
+        _cell("Actor", event.actor.name if event.actor else "System"),
+        _cell("Role", event.role),
+        _cell("Record", event.record_id),
+        _cell("Timestamp", event.created_at.strftime("%d %b %Y, %H:%M")),
+    ]} for event in events.order_by("-created_at")]
+    return _render_workspace(
         request,
-        "pages/hr/placeholder.html",
-        {
-            "title": "HR System Audit Log",
-            "capabilities": [
-                "Auditable logs of sensitive PII data modifications.",
-                "Role reassignment and permissions changes tracking.",
-                "Compliance override logging.",
-            ],
-        },
+        title="HR System Audit Log",
+        description="An append-style accountability view for sensitive HR actions. Event payload details remain out of the list to reduce incidental PII exposure.",
+        metrics=[
+            _metric("Events", events.count(), "matching audit records"),
+            _metric("Human actors", events.exclude(actor__isnull=True).values("actor").distinct().count(), "distinct users"),
+            _metric("System events", events.filter(actor__isnull=True).count(), "automated actions", "info"),
+            _metric("Roles", events.values("role").distinct().count(), "acting roles represented"),
+        ],
+        rows=rows,
+        primary_action={"label": "Open System Health", "href": "/system-health"},
+        empty_title="No HR audit events recorded",
+        empty_body="Sensitive HR actions will appear here after they are written to the HR audit trail.",
     )

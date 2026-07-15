@@ -136,19 +136,16 @@ MONTHS_SHORT = {
 }
 
 
-# ── SSA banding (design legend: Strong 80-100, Improving 60-79, Watch 40-59) ──
+# ── SSA banding — the canonical mandate bands (§5): Critical 0-4.9 /
+# Warning 5-6.9 / Improving 7-7.9 / Strong 8-10 on the 0-10 score. This
+# wrapper takes the normalized 0-100 percentage the analytics layer works in
+# and delegates to the single source of truth in apps.core.enums.
 def ssa_band(pct: float | None):
-    """Classify a normalized SSA percentage into the design's 4 bands.
+    """Classify a normalized SSA percentage into the canonical 4 bands.
     Returns (label, hex, tone). `None`/no-data → a neutral "No SSA" band."""
-    if pct is None:
-        return ("No SSA", "#94a3b8", "neutral")
-    if pct >= 80:
-        return ("Strong", "#16a34a", "success")
-    if pct >= 60:
-        return ("Improving", "#84cc16", "lime")
-    if pct >= 40:
-        return ("Watch", "#f59e0b", "warning")
-    return ("Critical", "#dc2626", "danger")
+    from apps.core.enums import ssa_score_band
+
+    return ssa_score_band(None if pct is None else pct / 10.0)
 
 
 def _norm(score: float | None) -> float | None:

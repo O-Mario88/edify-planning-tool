@@ -131,3 +131,29 @@ class SsaUploadTest(APITestCase):
         self.assertEqual(data["createdRows"], 2)
         self.assertEqual(data["failedRows"], 1)
         self.assertEqual(SsaRecord.objects.count(), 2)
+
+
+class SsaScoreBandTest(APITestCase):
+    """§5 canonical SSA status bands on the 0-10 score:
+    Critical 0-4.9 / Warning 5-6.9 / Improving 7-7.9 / Strong 8-10."""
+
+    def test_bands_match_mandate_thresholds(self):
+        from apps.core.enums import ssa_score_band
+
+        self.assertEqual(ssa_score_band(None)[0], "No SSA")
+        self.assertEqual(ssa_score_band(0.0)[0], "Critical")
+        self.assertEqual(ssa_score_band(4.9)[0], "Critical")
+        self.assertEqual(ssa_score_band(5.0)[0], "Warning")
+        self.assertEqual(ssa_score_band(6.9)[0], "Warning")
+        self.assertEqual(ssa_score_band(7.0)[0], "Improving")
+        self.assertEqual(ssa_score_band(7.9)[0], "Improving")
+        self.assertEqual(ssa_score_band(8.0)[0], "Strong")
+        self.assertEqual(ssa_score_band(10.0)[0], "Strong")
+
+    def test_pl_analytics_ssa_band_delegates_to_canonical(self):
+        from apps.analytics.pl_analytics_service import ssa_band
+
+        # ssa_band takes a 0-100 percentage; 65% == score 6.5 == Warning.
+        self.assertEqual(ssa_band(65.0)[0], "Warning")
+        self.assertEqual(ssa_band(75.0)[0], "Improving")
+        self.assertEqual(ssa_band(None)[0], "No SSA")
