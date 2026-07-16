@@ -199,7 +199,11 @@ def reserve_salesforce_id(
         locked.salesforce_activity_id = normalized
         locked.salesforce_activity_type = kind
         locked.save(
-            update_fields=["salesforce_activity_id", "salesforce_activity_type", "updated_at"]
+            update_fields=[
+                "salesforce_activity_id",
+                "salesforce_activity_type",
+                "updated_at",
+            ]
         )
 
     try:

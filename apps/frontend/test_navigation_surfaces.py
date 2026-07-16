@@ -41,4 +41,3 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
                     (200, 301, 302),
                     f"Sidebar destination {url} returned {response.status_code}",
                 )
-

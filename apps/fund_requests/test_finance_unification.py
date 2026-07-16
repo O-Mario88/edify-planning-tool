@@ -20,7 +20,11 @@ from apps.activities.closure_services import (
     ActivityClosureService,
     ClosureEligibilityService,
 )
-from apps.activities.models import Activity, ActivityScheduleCostLine, CompletedActivitySnapshot
+from apps.activities.models import (
+    Activity,
+    ActivityScheduleCostLine,
+    CompletedActivitySnapshot,
+)
 from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
@@ -39,7 +43,9 @@ from apps.schools.models import School
 User = get_user_model()
 
 
-def _make_activity_and_advance(school, cceo, amount=100_000, advance_type="advance", status=None):
+def _make_activity_and_advance(
+    school, cceo, amount=100_000, advance_type="advance", status=None
+):
     activity = Activity.objects.create(
         school=school,
         activity_type="school_visit",
@@ -117,7 +123,9 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
     reimbursement — the employee never files a second, manual claim."""
 
     def test_overspend_routes_to_reimbursement_not_accounted(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-OVER-1"},
@@ -131,7 +139,9 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         self.assertNotEqual(adv.status, AdvanceRequestStatus.ACCOUNTED)
 
     def test_reimbursement_amount_is_the_variance_not_the_full_spend(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-OVER-2"},
@@ -142,7 +152,9 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         adv.refresh_from_db()
 
         result = reimburse(
-            adv.id, {"method": "bank_transfer", "reference": "BANK-OVER-2"}, self.accountant
+            adv.id,
+            {"method": "bank_transfer", "reference": "BANK-OVER-2"},
+            self.accountant,
         )
         # Variance = 150,000 - 100,000 = 50,000 — not the full 150,000 spend,
         # and the original advance's own disbursed_amount is untouched.
@@ -152,7 +164,9 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         self.assertEqual(adv.status, AdvanceRequestStatus.REIMBURSEMENT_DISBURSED)
 
     def test_double_click_disburse_reimbursement_does_not_duplicate(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-DUP-1"},
@@ -172,7 +186,9 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         """A second approve_accountability() call after the first already
         routed to REIMBURSEMENT_SUBMITTED must be rejected, not silently
         re-create a second reimbursement claim."""
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-TWICE-1"},
@@ -184,7 +200,9 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
             approve_accountability(adv.id, self.accountant)
 
     def test_employee_must_confirm_reimbursement_receipt_before_cleared(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-RCPT-1"},
@@ -192,7 +210,9 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         )
         self._ia_verify(activity)
         approve_accountability(adv.id, self.accountant)
-        reimburse(adv.id, {"method": "cash", "reference": "REF-RCPT-1"}, self.accountant)
+        reimburse(
+            adv.id, {"method": "cash", "reference": "REF-RCPT-1"}, self.accountant
+        )
 
         adv.refresh_from_db()
         self.assertEqual(adv.status, AdvanceRequestStatus.REIMBURSEMENT_DISBURSED)
@@ -242,10 +262,16 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
     enough."""
 
     def test_cannot_clear_underspend_without_verifying_return(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
-            {"amountSpent": 70_000, "amountReturned": 30_000, "netsuiteId": "EXP-UND-1"},
+            {
+                "amountSpent": 70_000,
+                "amountReturned": 30_000,
+                "netsuiteId": "EXP-UND-1",
+            },
             self.cceo,
         )
         self._ia_verify(activity)
@@ -255,10 +281,16 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
         self.assertEqual(adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PENDING)
 
     def test_verify_return_then_clear_succeeds(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
-            {"amountSpent": 70_000, "amountReturned": 30_000, "netsuiteId": "EXP-UND-2"},
+            {
+                "amountSpent": 70_000,
+                "amountReturned": 30_000,
+                "netsuiteId": "EXP-UND-2",
+            },
             self.cceo,
         )
         self._ia_verify(activity)
@@ -272,7 +304,9 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
         self.assertEqual(adv.status, AdvanceRequestStatus.ACCOUNTED)
 
     def test_exact_spend_clears_without_return_verification(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         submit_accountability(
             adv.id,
             {"amountSpent": 100_000, "amountReturned": 0, "netsuiteId": "EXP-EXACT-1"},
@@ -284,11 +318,17 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
         self.assertEqual(adv.status, AdvanceRequestStatus.ACCOUNTED)
 
     def test_returned_amount_rejected_on_overspend(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         with self.assertRaises(BadRequest):
             submit_accountability(
                 adv.id,
-                {"amountSpent": 120_000, "amountReturned": 5_000, "netsuiteId": "EXP-BAD-1"},
+                {
+                    "amountSpent": 120_000,
+                    "amountReturned": 5_000,
+                    "netsuiteId": "EXP-BAD-1",
+                },
                 self.cceo,
             )
 
@@ -328,7 +368,9 @@ class LegacyEntryPointRetiredTest(FinanceUnificationBaseTest):
         self.assertNotEqual(activity.payment_status, "disbursed")
 
     def test_netsuite_id_action_no_longer_lets_accountant_originate_id(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         self.client.force_login(self.accountant)
 
         resp = self.client.post(
@@ -359,7 +401,9 @@ class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest
     which never creates a legacy Disbursement (System A) row."""
 
     def test_snapshot_disbursed_amount_reflects_advance_request_only(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         EvidenceRecord.objects.create(
             activity=activity, kind="photo", uri="p.jpg", uploaded_by=self.cceo.id
         )
@@ -387,7 +431,9 @@ class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest
         self.assertEqual(snapshot.netsuite_expense_id, "EXP-SNAP-1")
 
     def test_snapshot_includes_reimbursement_leg_for_overspend(self):
-        activity, adv = _make_activity_and_advance(self.school, self.cceo, amount=100_000)
+        activity, adv = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
         EvidenceRecord.objects.create(
             activity=activity, kind="photo", uri="p2.jpg", uploaded_by=self.cceo.id
         )
@@ -401,7 +447,9 @@ class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest
             self.cceo,
         )
         approve_accountability(adv.id, self.accountant)
-        reimburse(adv.id, {"method": "cash", "reference": "REF-SNAP-2"}, self.accountant)
+        reimburse(
+            adv.id, {"method": "cash", "reference": "REF-SNAP-2"}, self.accountant
+        )
         confirm_reimbursement_receipt(adv.id, {"amount": 50_000}, self.cceo)
 
         self.assertTrue(ClosureEligibilityService.is_eligible(activity))

@@ -319,9 +319,7 @@ def _unsafe_inline_style(source: str) -> bool:
             declaration = declaration.strip()
             if not declaration or ":" not in declaration:
                 continue
-            property_name, value = (
-                part.strip() for part in declaration.split(":", 1)
-            )
+            property_name, value = (part.strip() for part in declaration.split(":", 1))
             if property_name.startswith("--"):
                 continue
             if "var(" in value or "{{" in value or "{%" in value:

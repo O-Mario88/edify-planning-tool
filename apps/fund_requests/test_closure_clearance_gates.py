@@ -52,8 +52,12 @@ class SystemAClearanceGateTest(TestCase):
             name="Clr School", region=region, district=district
         )
         self.cceo = User.objects.create(
-            id="cceo-clr", email="cceo-clr@edify.org", name="Clr CCEO",
-            roles=["CCEO"], active_role="CCEO", is_active=True,
+            id="cceo-clr",
+            email="cceo-clr@edify.org",
+            name="Clr CCEO",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
         )
         self.activity = Activity.objects.create(
             school=self.school,
@@ -91,11 +95,15 @@ class SystemAClearanceGateTest(TestCase):
 
     def _disburse_and_submit(self, spend=450000):
         AdvanceDisbursementService.disburse_advance(
-            activity=self.activity, amount=450000, method="Cash",
-            reference="TXN-CLR", user_id="acct",
+            activity=self.activity,
+            amount=450000,
+            method="Cash",
+            reference="TXN-CLR",
+            user_id="acct",
         )
         AccountabilityService.submit_accountability(
-            activity=self.activity, actual_spend=spend,
+            activity=self.activity,
+            actual_spend=spend,
             variance_reason="ok" if spend == 450000 else "overspend",
             staff_id="cceo-clr",
         )
@@ -111,8 +119,11 @@ class SystemAClearanceGateTest(TestCase):
     def test_netsuite_entry_clears_and_closes(self):
         self._disburse_and_submit()
         NetSuiteExpenseService.enter_netsuite_id(
-            activity=self.activity, netsuite_id="EXP-CLR-1", amount=450000,
-            expense_date=date(2026, 7, 16), user_id="acct",
+            activity=self.activity,
+            netsuite_id="EXP-CLR-1",
+            amount=450000,
+            expense_date=date(2026, 7, 16),
+            user_id="acct",
         )
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, "closed")
@@ -121,8 +132,11 @@ class SystemAClearanceGateTest(TestCase):
         self._disburse_and_submit()
         with self.assertRaises(ValueError):
             NetSuiteExpenseService.enter_netsuite_id(
-                activity=self.activity, netsuite_id="   ", amount=450000,
-                expense_date=date(2026, 7, 16), user_id="acct",
+                activity=self.activity,
+                netsuite_id="   ",
+                amount=450000,
+                expense_date=date(2026, 7, 16),
+                user_id="acct",
             )
 
     def test_variance_resolved_at_clearance_no_dead_end(self):
@@ -130,8 +144,11 @@ class SystemAClearanceGateTest(TestCase):
         # NetSuite entry resolves it and clears — never a dead end.
         self._disburse_and_submit(spend=500000)
         NetSuiteExpenseService.enter_netsuite_id(
-            activity=self.activity, netsuite_id="EXP-VAR-1", amount=500000,
-            expense_date=date(2026, 7, 16), user_id="acct",
+            activity=self.activity,
+            netsuite_id="EXP-VAR-1",
+            amount=500000,
+            expense_date=date(2026, 7, 16),
+            user_id="acct",
         )
         from apps.fund_requests.finance_models import VarianceReview
 
@@ -146,12 +163,18 @@ class SystemAClearanceGateTest(TestCase):
     def test_cleared_record_is_immutable_after_close(self):
         self._disburse_and_submit()
         NetSuiteExpenseService.enter_netsuite_id(
-            activity=self.activity, netsuite_id="EXP-IMM-1", amount=450000,
-            expense_date=date(2026, 7, 16), user_id="acct",
+            activity=self.activity,
+            netsuite_id="EXP-IMM-1",
+            amount=450000,
+            expense_date=date(2026, 7, 16),
+            user_id="acct",
         )
         # Re-entering after the activity is closed must be refused.
         with self.assertRaises(ValueError):
             NetSuiteExpenseService.enter_netsuite_id(
-                activity=self.activity, netsuite_id="EXP-IMM-2", amount=450000,
-                expense_date=date(2026, 7, 16), user_id="acct",
+                activity=self.activity,
+                netsuite_id="EXP-IMM-2",
+                amount=450000,
+                expense_date=date(2026, 7, 16),
+                user_id="acct",
             )

@@ -38,9 +38,7 @@ class SeedSuperAdminTest(TestCase):
         with override_settings(SUPER_ADMIN_PASSWORD="rotated-day2-secret"):
             call_command("seed")
 
-        self.assertEqual(
-            User.objects.filter(email="ops-boot@edify.org").count(), 1
-        )
+        self.assertEqual(User.objects.filter(email="ops-boot@edify.org").count(), 1)
         self.assertIsNotNone(
             authenticate(email="ops-boot@edify.org", password="rotated-day2-secret")
         )

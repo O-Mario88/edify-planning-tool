@@ -100,7 +100,12 @@ class CDAnalyticsTest(TestCase):
             self.a1_sp.id, self.sch_a1, "school_visit", "ia_verified", sf="SV-A1"
         )
         self.act_a1_train = self._act(
-            self.a1_sp.id, self.sch_a1, "training", "ia_verified", teachers=10, leaders=3
+            self.a1_sp.id,
+            self.sch_a1,
+            "training",
+            "ia_verified",
+            teachers=10,
+            leaders=3,
         )
         self._act(self.b1_sp.id, self.sch_b1, "school_visit", "ia_verified", sf="SV-B1")
 

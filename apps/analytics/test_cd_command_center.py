@@ -382,8 +382,12 @@ class CDTargetCreditConvergenceTest(TestCase):
         # 2 completed visits with an Activity SF ID (validated) + 1 without
         # (provisional — must never silently count, unlike the old raw
         # completed-status count which counted all 3).
-        self._act(self.cceo_sp.id, self.school, "school_visit", "ia_verified", sf="SV-1")
-        self._act(self.cceo_sp.id, self.school, "school_visit", "ia_verified", sf="SV-2")
+        self._act(
+            self.cceo_sp.id, self.school, "school_visit", "ia_verified", sf="SV-1"
+        )
+        self._act(
+            self.cceo_sp.id, self.school, "school_visit", "ia_verified", sf="SV-2"
+        )
         self._act(self.cceo_sp.id, self.school, "school_visit", "completed", sf="")
 
     def _staff(self, email, name, role):

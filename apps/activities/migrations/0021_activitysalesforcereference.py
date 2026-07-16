@@ -7,30 +7,63 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0020_activity_submitted_to_ia_at'),
+        ("activities", "0020_activity_submitted_to_ia_at"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ActivitySalesforceReference',
+            name="ActivitySalesforceReference",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('raw_value', models.CharField(max_length=128)),
-                ('normalized_value', models.CharField(max_length=128, unique=True)),
-                ('activity_type', models.CharField(max_length=48)),
-                ('expected_prefix', models.CharField(max_length=8)),
-                ('entry_source', models.CharField(choices=[('staff_self_entry', 'Staff self-entry'), ('managing_staff_for_partner', 'Managing staff (for Partner activity)'), ('legacy_import', 'Legacy import'), ('admin_exception', 'Admin exception')], max_length=32)),
-                ('entered_by', models.CharField(max_length=30)),
-                ('entered_at', models.DateTimeField()),
-                ('activity', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='salesforce_reference', to='activities.activity')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("raw_value", models.CharField(max_length=128)),
+                ("normalized_value", models.CharField(max_length=128, unique=True)),
+                ("activity_type", models.CharField(max_length=48)),
+                ("expected_prefix", models.CharField(max_length=8)),
+                (
+                    "entry_source",
+                    models.CharField(
+                        choices=[
+                            ("staff_self_entry", "Staff self-entry"),
+                            (
+                                "managing_staff_for_partner",
+                                "Managing staff (for Partner activity)",
+                            ),
+                            ("legacy_import", "Legacy import"),
+                            ("admin_exception", "Admin exception"),
+                        ],
+                        max_length=32,
+                    ),
+                ),
+                ("entered_by", models.CharField(max_length=30)),
+                ("entered_at", models.DateTimeField()),
+                (
+                    "activity",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="salesforce_reference",
+                        to="activities.activity",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'activity_salesforce_reference',
-                'indexes': [models.Index(fields=['normalized_value'], name='activity_sa_normali_1146c3_idx')],
+                "db_table": "activity_salesforce_reference",
+                "indexes": [
+                    models.Index(
+                        fields=["normalized_value"],
+                        name="activity_sa_normali_1146c3_idx",
+                    )
+                ],
             },
         ),
     ]

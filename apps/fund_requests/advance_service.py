@@ -315,7 +315,9 @@ def verify_return(advance_id: str, data: dict, principal) -> dict:
         if not adv:
             raise NotFoundError("Advance request not found.")
         if adv.status != AdvanceRequestStatus.ACCOUNTABILITY_PENDING:
-            raise BadRequest("Only a submitted accountability's return can be verified.")
+            raise BadRequest(
+                "Only a submitted accountability's return can be verified."
+            )
         if not adv.returned_amount:
             raise BadRequest("No returned amount was declared on this accountability.")
         adv.return_verified_at = timezone.now()

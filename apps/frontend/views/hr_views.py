@@ -25,9 +25,36 @@ from apps.hr.models import (
 )
 
 
-SUCCESS_TERMS = ("active", "approved", "closed", "completed", "compliant", "hired", "open", "ready", "resolved", "verified")
-DANGER_TERMS = ("critical", "escalated", "expired", "missing", "overdue", "rejected", "suspended")
-WARNING_TERMS = ("draft", "pending", "review", "screen", "triage", "progress", "submitted")
+SUCCESS_TERMS = (
+    "active",
+    "approved",
+    "closed",
+    "completed",
+    "compliant",
+    "hired",
+    "open",
+    "ready",
+    "resolved",
+    "verified",
+)
+DANGER_TERMS = (
+    "critical",
+    "escalated",
+    "expired",
+    "missing",
+    "overdue",
+    "rejected",
+    "suspended",
+)
+WARNING_TERMS = (
+    "draft",
+    "pending",
+    "review",
+    "screen",
+    "triage",
+    "progress",
+    "submitted",
+)
 
 
 def _status_tone(value) -> str:
@@ -93,7 +120,17 @@ def _search_profiles(profiles, query: str):
     )
 
 
-def _render_workspace(request, *, title, description, metrics, rows, primary_action, empty_title="No records in this scope", empty_body="New records will appear here as the connected workflow progresses."):
+def _render_workspace(
+    request,
+    *,
+    title,
+    description,
+    metrics,
+    rows,
+    primary_action,
+    empty_title="No records in this scope",
+    empty_body="New records will appear here as the connected workflow progresses.",
+):
     paginator = Paginator(rows, 25)
     page = paginator.get_page(request.GET.get("page") or 1)
     context = {
@@ -112,15 +149,19 @@ def _render_workspace(request, *, title, description, metrics, rows, primary_act
 
 @require_page_permission("org_structure")
 def org_structure_view(request):
-    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
+    profiles = _search_profiles(
+        _profile_scope(request), (request.GET.get("q") or "").strip()
+    )
     rows = [
-        {"cells": [
-            _cell("Team member", profile.user.name, primary=True),
-            _cell("Role", profile.title or profile.user.active_role),
-            _cell("Department", profile.department),
-            _cell("Country", profile.country),
-            _cell("Lifecycle", profile.get_onboarding_state_display(), status=True),
-        ]}
+        {
+            "cells": [
+                _cell("Team member", profile.user.name, primary=True),
+                _cell("Role", profile.title or profile.user.active_role),
+                _cell("Department", profile.department),
+                _cell("Country", profile.country),
+                _cell("Lifecycle", profile.get_onboarding_state_display(), status=True),
+            ]
+        }
         for profile in profiles.order_by("department", "user__name")
     ]
     return _render_workspace(
@@ -128,10 +169,32 @@ def org_structure_view(request):
         title="Organization Structure",
         description="A live, role-scoped directory of reporting capacity, departments, countries, and staff lifecycle state.",
         metrics=[
-            _metric("People in scope", profiles.count(), "active and onboarding profiles", "info"),
-            _metric("Active", profiles.filter(onboarding_state="active").count(), "fully activated staff", "success"),
-            _metric("Departments", profiles.exclude(department__isnull=True).exclude(department="").values("department").distinct().count(), "represented in this scope"),
-            _metric("Countries", profiles.values("country").distinct().count(), "operating footprint"),
+            _metric(
+                "People in scope",
+                profiles.count(),
+                "active and onboarding profiles",
+                "info",
+            ),
+            _metric(
+                "Active",
+                profiles.filter(onboarding_state="active").count(),
+                "fully activated staff",
+                "success",
+            ),
+            _metric(
+                "Departments",
+                profiles.exclude(department__isnull=True)
+                .exclude(department="")
+                .values("department")
+                .distinct()
+                .count(),
+                "represented in this scope",
+            ),
+            _metric(
+                "Countries",
+                profiles.values("country").distinct().count(),
+                "operating footprint",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Open People Directory", "href": "/staff"},
@@ -140,28 +203,58 @@ def org_structure_view(request):
 
 @require_page_permission("workforce_planning")
 def workforce_planning_view(request):
-    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
-    grouped = profiles.values("department", "country").annotate(
-        headcount=Count("id"),
-        active=Count("id", filter=Q(onboarding_state="active")),
-        pending=Count("id", filter=Q(onboarding_state="pending")),
-    ).order_by("country", "department")
-    rows = [{"cells": [
-        _cell("Department", item["department"] or "Unassigned", primary=True),
-        _cell("Country", item["country"]),
-        _cell("Headcount", item["headcount"]),
-        _cell("Active", item["active"]),
-        _cell("Pending activation", item["pending"], status=item["pending"] > 0),
-    ]} for item in grouped]
+    profiles = _search_profiles(
+        _profile_scope(request), (request.GET.get("q") or "").strip()
+    )
+    grouped = (
+        profiles.values("department", "country")
+        .annotate(
+            headcount=Count("id"),
+            active=Count("id", filter=Q(onboarding_state="active")),
+            pending=Count("id", filter=Q(onboarding_state="pending")),
+        )
+        .order_by("country", "department")
+    )
+    rows = [
+        {
+            "cells": [
+                _cell("Department", item["department"] or "Unassigned", primary=True),
+                _cell("Country", item["country"]),
+                _cell("Headcount", item["headcount"]),
+                _cell("Active", item["active"]),
+                _cell(
+                    "Pending activation", item["pending"], status=item["pending"] > 0
+                ),
+            ]
+        }
+        for item in grouped
+    ]
     return _render_workspace(
         request,
         title="Workforce Planning & Capacity",
         description="A truthful headcount and activation view derived from the current people directory—without forecast or budget values that have not been configured.",
         metrics=[
             _metric("Headcount", profiles.count(), "people in your access scope"),
-            _metric("Active", profiles.filter(onboarding_state="active").count(), "available workforce", "success"),
-            _metric("Pending", profiles.filter(onboarding_state="pending").count(), "awaiting activation", "warning"),
-            _metric("Vacancies", Vacancy.objects.filter(status__in=["Approved", "Open", "Screening"]).count(), "approved or recruiting", "info"),
+            _metric(
+                "Active",
+                profiles.filter(onboarding_state="active").count(),
+                "available workforce",
+                "success",
+            ),
+            _metric(
+                "Pending",
+                profiles.filter(onboarding_state="pending").count(),
+                "awaiting activation",
+                "warning",
+            ),
+            _metric(
+                "Vacancies",
+                Vacancy.objects.filter(
+                    status__in=["Approved", "Open", "Screening"]
+                ).count(),
+                "approved or recruiting",
+                "info",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Review Recruitment", "href": "/recruitment"},
@@ -172,32 +265,70 @@ def workforce_planning_view(request):
 @require_page_permission("recruitment")
 def recruitment_view(request):
     query = (request.GET.get("q") or "").strip()
-    vacancies = Vacancy.objects.select_related("reporting_manager").annotate(application_count=Count("applications"))
+    vacancies = Vacancy.objects.select_related("reporting_manager").annotate(
+        application_count=Count("applications")
+    )
     viewer = getattr(request.user, "staff_profile", None)
     if request.user.active_role != "Admin":
-        vacancies = vacancies.filter(country=getattr(viewer, "country", "")) if viewer else vacancies.none()
+        vacancies = (
+            vacancies.filter(country=getattr(viewer, "country", ""))
+            if viewer
+            else vacancies.none()
+        )
     if query:
-        vacancies = vacancies.filter(Q(role__icontains=query) | Q(department__icontains=query) | Q(country__icontains=query) | Q(status__icontains=query))
-    rows = [{"cells": [
-        _cell("Vacancy", vacancy.role, primary=True),
-        _cell("Department", vacancy.department),
-        _cell("Country", vacancy.country),
-        _cell("Applications", vacancy.application_count),
-        _cell("Target start", vacancy.target_start_date),
-        _cell("Status", vacancy.status, status=True),
-    ]} for vacancy in vacancies.order_by("-created_at")]
+        vacancies = vacancies.filter(
+            Q(role__icontains=query)
+            | Q(department__icontains=query)
+            | Q(country__icontains=query)
+            | Q(status__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Vacancy", vacancy.role, primary=True),
+                _cell("Department", vacancy.department),
+                _cell("Country", vacancy.country),
+                _cell("Applications", vacancy.application_count),
+                _cell("Target start", vacancy.target_start_date),
+                _cell("Status", vacancy.status, status=True),
+            ]
+        }
+        for vacancy in vacancies.order_by("-created_at")
+    ]
     return _render_workspace(
         request,
         title="Recruitment & Vacancies",
         description="Approved and active vacancies connected to the real candidate pipeline, reporting owners, and target start dates.",
         metrics=[
-            _metric("Open", vacancies.filter(status="Open").count(), "accepting candidates", "success"),
-            _metric("Pending approval", vacancies.filter(status="Pending Approval").count(), "requiring decision", "warning"),
-            _metric("In screening", vacancies.filter(status="Screening").count(), "active selection", "info"),
-            _metric("Applications", Application.objects.filter(vacancy__in=vacancies).count(), "across visible vacancies"),
+            _metric(
+                "Open",
+                vacancies.filter(status="Open").count(),
+                "accepting candidates",
+                "success",
+            ),
+            _metric(
+                "Pending approval",
+                vacancies.filter(status="Pending Approval").count(),
+                "requiring decision",
+                "warning",
+            ),
+            _metric(
+                "In screening",
+                vacancies.filter(status="Screening").count(),
+                "active selection",
+                "info",
+            ),
+            _metric(
+                "Applications",
+                Application.objects.filter(vacancy__in=vacancies).count(),
+                "across visible vacancies",
+            ),
         ],
         rows=rows,
-        primary_action={"label": "Open Candidate Pipeline", "href": "/candidate-pipeline"},
+        primary_action={
+            "label": "Open Candidate Pipeline",
+            "href": "/candidate-pipeline",
+        },
         empty_title="No vacancies have been created",
         empty_body="Approved job openings will appear here once HR starts the recruitment workflow.",
     )
@@ -209,25 +340,61 @@ def candidate_pipeline_view(request):
     applications = Application.objects.select_related("candidate", "vacancy")
     viewer = getattr(request.user, "staff_profile", None)
     if request.user.active_role != "Admin":
-        applications = applications.filter(vacancy__country=getattr(viewer, "country", "")) if viewer else applications.none()
+        applications = (
+            applications.filter(vacancy__country=getattr(viewer, "country", ""))
+            if viewer
+            else applications.none()
+        )
     if query:
-        applications = applications.filter(Q(candidate__name__icontains=query) | Q(candidate__email__icontains=query) | Q(vacancy__role__icontains=query) | Q(stage__icontains=query))
-    rows = [{"cells": [
-        _cell("Candidate", application.candidate.name, primary=True),
-        _cell("Vacancy", application.vacancy.role),
-        _cell("Country", application.vacancy.country),
-        _cell("Stage", application.stage, status=True),
-        _cell("Updated", application.updated_at.date()),
-    ]} for application in applications.order_by("-updated_at")]
+        applications = applications.filter(
+            Q(candidate__name__icontains=query)
+            | Q(candidate__email__icontains=query)
+            | Q(vacancy__role__icontains=query)
+            | Q(stage__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Candidate", application.candidate.name, primary=True),
+                _cell("Vacancy", application.vacancy.role),
+                _cell("Country", application.vacancy.country),
+                _cell("Stage", application.stage, status=True),
+                _cell("Updated", application.updated_at.date()),
+            ]
+        }
+        for application in applications.order_by("-updated_at")
+    ]
     return _render_workspace(
         request,
         title="Candidate Pipeline",
         description="Every candidate application, scoped to visible vacancies and grouped by its current evidence-backed selection stage.",
         metrics=[
             _metric("Applications", applications.count(), "visible candidate records"),
-            _metric("Screening", applications.filter(stage__in=["Screened", "Shortlisted"]).count(), "in early assessment", "info"),
-            _metric("Interviews", applications.filter(stage__in=["Interview 1", "Interview 2", "Assessment", "Reference Check"]).count(), "in active selection", "warning"),
-            _metric("Hired", applications.filter(stage="Hired").count(), "accepted candidates", "success"),
+            _metric(
+                "Screening",
+                applications.filter(stage__in=["Screened", "Shortlisted"]).count(),
+                "in early assessment",
+                "info",
+            ),
+            _metric(
+                "Interviews",
+                applications.filter(
+                    stage__in=[
+                        "Interview 1",
+                        "Interview 2",
+                        "Assessment",
+                        "Reference Check",
+                    ]
+                ).count(),
+                "in active selection",
+                "warning",
+            ),
+            _metric(
+                "Hired",
+                applications.filter(stage="Hired").count(),
+                "accepted candidates",
+                "success",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Review Vacancies", "href": "/recruitment"},
@@ -239,28 +406,57 @@ def candidate_pipeline_view(request):
 def onboarding_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    plans = OnboardingPlan.objects.filter(staff_id__in=visible_ids).select_related("staff__user").annotate(
-        total_tasks=Count("tasks"), completed_tasks=Count("tasks", filter=Q(tasks__is_completed=True))
+    plans = (
+        OnboardingPlan.objects.filter(staff_id__in=visible_ids)
+        .select_related("staff__user")
+        .annotate(
+            total_tasks=Count("tasks"),
+            completed_tasks=Count("tasks", filter=Q(tasks__is_completed=True)),
+        )
     )
     if query:
-        plans = plans.filter(Q(staff__user__name__icontains=query) | Q(staff__country__icontains=query) | Q(status__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", plan.staff.user.name, primary=True),
-        _cell("Role", plan.staff.title or plan.staff.user.active_role),
-        _cell("Country", plan.staff.country),
-        _cell("Start date", plan.start_date),
-        _cell("Checklist", f"{plan.completed_tasks} of {plan.total_tasks}"),
-        _cell("Status", plan.status, status=True),
-    ]} for plan in plans.order_by("-created_at")]
+        plans = plans.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(staff__country__icontains=query)
+            | Q(status__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", plan.staff.user.name, primary=True),
+                _cell("Role", plan.staff.title or plan.staff.user.active_role),
+                _cell("Country", plan.staff.country),
+                _cell("Start date", plan.start_date),
+                _cell("Checklist", f"{plan.completed_tasks} of {plan.total_tasks}"),
+                _cell("Status", plan.status, status=True),
+            ]
+        }
+        for plan in plans.order_by("-created_at")
+    ]
     return _render_workspace(
         request,
         title="Staff Onboarding",
         description="New-hire activation plans with live checklist completion, start dates, and ownership context.",
         metrics=[
             _metric("Plans", plans.count(), "onboarding records in scope"),
-            _metric("Active", plans.filter(status="Active").count(), "fully activated", "success"),
-            _metric("In progress", plans.exclude(status__in=["Active", "Overdue"]).count(), "moving through checklist", "info"),
-            _metric("Overdue", plans.filter(status="Overdue").count(), "requiring intervention", "danger"),
+            _metric(
+                "Active",
+                plans.filter(status="Active").count(),
+                "fully activated",
+                "success",
+            ),
+            _metric(
+                "In progress",
+                plans.exclude(status__in=["Active", "Overdue"]).count(),
+                "moving through checklist",
+                "info",
+            ),
+            _metric(
+                "Overdue",
+                plans.filter(status="Overdue").count(),
+                "requiring intervention",
+                "danger",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Open People Directory", "href": "/staff"},
@@ -450,29 +646,60 @@ def pd_dashboard_action_view(request):
 def succession_planning_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    candidates = SuccessionCandidate.objects.filter(staff_successor_id__in=visible_ids).select_related("staff_successor__user")
+    candidates = SuccessionCandidate.objects.filter(
+        staff_successor_id__in=visible_ids
+    ).select_related("staff_successor__user")
     if query:
-        candidates = candidates.filter(Q(position_name__icontains=query) | Q(staff_successor__user__name__icontains=query) | Q(readiness__icontains=query))
-    rows = [{"cells": [
-        _cell("Critical position", candidate.position_name, primary=True),
-        _cell("Successor", candidate.staff_successor.user.name),
-        _cell("Current role", candidate.staff_successor.title),
-        _cell("Country", candidate.staff_successor.country),
-        _cell("Readiness", candidate.readiness, status=True),
-        _cell("Updated", candidate.updated_at.date()),
-    ]} for candidate in candidates.order_by("position_name", "staff_successor__user__name")]
+        candidates = candidates.filter(
+            Q(position_name__icontains=query)
+            | Q(staff_successor__user__name__icontains=query)
+            | Q(readiness__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Critical position", candidate.position_name, primary=True),
+                _cell("Successor", candidate.staff_successor.user.name),
+                _cell("Current role", candidate.staff_successor.title),
+                _cell("Country", candidate.staff_successor.country),
+                _cell("Readiness", candidate.readiness, status=True),
+                _cell("Updated", candidate.updated_at.date()),
+            ]
+        }
+        for candidate in candidates.order_by(
+            "position_name", "staff_successor__user__name"
+        )
+    ]
     return _render_workspace(
         request,
         title="Succession Planning",
         description="Critical-position continuity built from named successors and explicit readiness assessments—not inferred talent labels.",
         metrics=[
             _metric("Nominations", candidates.count(), "successor records in scope"),
-            _metric("Ready now", candidates.filter(readiness="Ready Now").count(), "immediate successors", "success"),
-            _metric("6–12 months", candidates.filter(readiness="Ready in 6-12 Months").count(), "near-term pipeline", "info"),
-            _metric("Development required", candidates.filter(readiness="Development Required").count(), "requires action", "warning"),
+            _metric(
+                "Ready now",
+                candidates.filter(readiness="Ready Now").count(),
+                "immediate successors",
+                "success",
+            ),
+            _metric(
+                "6–12 months",
+                candidates.filter(readiness="Ready in 6-12 Months").count(),
+                "near-term pipeline",
+                "info",
+            ),
+            _metric(
+                "Development required",
+                candidates.filter(readiness="Development Required").count(),
+                "requires action",
+                "warning",
+            ),
         ],
         rows=rows,
-        primary_action={"label": "Review Professional Development", "href": "/cpd-learning"},
+        primary_action={
+            "label": "Review Professional Development",
+            "href": "/cpd-learning",
+        },
         empty_title="No succession nominations in this scope",
     )
 
@@ -481,26 +708,55 @@ def succession_planning_view(request):
 def performance_reviews_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    reviews = PerformanceReview.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    reviews = PerformanceReview.objects.filter(staff_id__in=visible_ids).select_related(
+        "staff__user"
+    )
     if query:
-        reviews = reviews.filter(Q(staff__user__name__icontains=query) | Q(period__icontains=query) | Q(review_type__icontains=query) | Q(status__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", review.staff.user.name, primary=True),
-        _cell("Period", review.period),
-        _cell("Review type", review.review_type),
-        _cell("Due", review.due_date),
-        _cell("Score", f"{review.score:.0f}%"),
-        _cell("Status", review.status, status=True),
-    ]} for review in reviews.order_by("due_date", "staff__user__name")]
+        reviews = reviews.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(period__icontains=query)
+            | Q(review_type__icontains=query)
+            | Q(status__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", review.staff.user.name, primary=True),
+                _cell("Period", review.period),
+                _cell("Review type", review.review_type),
+                _cell("Due", review.due_date),
+                _cell("Score", f"{review.score:.0f}%"),
+                _cell("Status", review.status, status=True),
+            ]
+        }
+        for review in reviews.order_by("due_date", "staff__user__name")
+    ]
     return _render_workspace(
         request,
         title="Performance Reviews",
         description="A period-aware review register connected to staff identity, due dates, calibrated scores, and review state.",
         metrics=[
             _metric("Reviews", reviews.count(), "records in access scope"),
-            _metric("Completed", reviews.filter(status__in=["Completed", "Closed"]).count(), "finished reviews", "success"),
-            _metric("Manager pending", reviews.filter(status="Manager Review Pending").count(), "awaiting supervisor", "warning"),
-            _metric("Average score", f"{(sum(r.score for r in reviews) / reviews.count()):.0f}%" if reviews.count() else "0%", "across visible reviews", "info"),
+            _metric(
+                "Completed",
+                reviews.filter(status__in=["Completed", "Closed"]).count(),
+                "finished reviews",
+                "success",
+            ),
+            _metric(
+                "Manager pending",
+                reviews.filter(status="Manager Review Pending").count(),
+                "awaiting supervisor",
+                "warning",
+            ),
+            _metric(
+                "Average score",
+                f"{(sum(r.score for r in reviews) / reviews.count()):.0f}%"
+                if reviews.count()
+                else "0%",
+                "across visible reviews",
+                "info",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Open Team Targets", "href": "/team-targets/"},
@@ -512,25 +768,51 @@ def performance_reviews_view(request):
 def recovery_plans_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    plans = PerformanceImprovementPlan.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    plans = PerformanceImprovementPlan.objects.filter(
+        staff_id__in=visible_ids
+    ).select_related("staff__user")
     if query:
-        plans = plans.filter(Q(staff__user__name__icontains=query) | Q(cause__icontains=query) | Q(status__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", plan.staff.user.name, primary=True),
-        _cell("Cause", plan.cause),
-        _cell("Start", plan.start_date),
-        _cell("Review by", plan.end_date),
-        _cell("Status", plan.status, status=True),
-    ]} for plan in plans.order_by("end_date")]
+        plans = plans.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(cause__icontains=query)
+            | Q(status__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", plan.staff.user.name, primary=True),
+                _cell("Cause", plan.cause),
+                _cell("Start", plan.start_date),
+                _cell("Review by", plan.end_date),
+                _cell("Status", plan.status, status=True),
+            ]
+        }
+        for plan in plans.order_by("end_date")
+    ]
     return _render_workspace(
         request,
         title="Performance Recovery Plans",
         description="Active and completed improvement plans with explicit causes, time windows, and escalation state.",
         metrics=[
             _metric("Plans", plans.count(), "visible recovery records"),
-            _metric("Active", plans.filter(status__in=["Active", "Progress Review"]).count(), "under active review", "warning"),
-            _metric("Escalated", plans.filter(status="Escalated").count(), "requiring leadership", "danger"),
-            _metric("Completed", plans.filter(status__in=["Successfully Completed", "Closed"]).count(), "closed outcomes", "success"),
+            _metric(
+                "Active",
+                plans.filter(status__in=["Active", "Progress Review"]).count(),
+                "under active review",
+                "warning",
+            ),
+            _metric(
+                "Escalated",
+                plans.filter(status="Escalated").count(),
+                "requiring leadership",
+                "danger",
+            ),
+            _metric(
+                "Completed",
+                plans.filter(status__in=["Successfully Completed", "Closed"]).count(),
+                "closed outcomes",
+                "success",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Review Team Performance", "href": "/team-targets/"},
@@ -540,17 +822,32 @@ def recovery_plans_view(request):
 
 @require_page_permission("culture_engagement")
 def culture_engagement_view(request):
-    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
-    grouped = profiles.values("department", "country").annotate(
-        people=Count("id"), active=Count("id", filter=Q(onboarding_state="active"))
-    ).order_by("country", "department")
-    rows = [{"cells": [
-        _cell("Team", item["department"] or "Unassigned", primary=True),
-        _cell("Country", item["country"]),
-        _cell("People", item["people"]),
-        _cell("Active", item["active"]),
-        _cell("Activation", f"{round(item['active'] / item['people'] * 100) if item['people'] else 0}%", status=True),
-    ]} for item in grouped]
+    profiles = _search_profiles(
+        _profile_scope(request), (request.GET.get("q") or "").strip()
+    )
+    grouped = (
+        profiles.values("department", "country")
+        .annotate(
+            people=Count("id"), active=Count("id", filter=Q(onboarding_state="active"))
+        )
+        .order_by("country", "department")
+    )
+    rows = [
+        {
+            "cells": [
+                _cell("Team", item["department"] or "Unassigned", primary=True),
+                _cell("Country", item["country"]),
+                _cell("People", item["people"]),
+                _cell("Active", item["active"]),
+                _cell(
+                    "Activation",
+                    f"{round(item['active'] / item['people'] * 100) if item['people'] else 0}%",
+                    status=True,
+                ),
+            ]
+        }
+        for item in grouped
+    ]
     relations = EmployeeRelationsCase.objects.all()
     return _render_workspace(
         request,
@@ -558,9 +855,26 @@ def culture_engagement_view(request):
         description="A conservative workforce-experience view using real activation and employee-relations signals. Survey and eNPS values are intentionally absent until a survey workflow exists.",
         metrics=[
             _metric("People", profiles.count(), "in the visible workforce"),
-            _metric("Active", profiles.filter(onboarding_state="active").count(), "activated team members", "success"),
-            _metric("Open relations cases", relations.exclude(status__in=["Resolved", "Closed"]).count(), "confidential follow-up", "warning"),
-            _metric("Critical cases", relations.filter(severity="critical").exclude(status__in=["Resolved", "Closed"]).count(), "leadership attention", "danger"),
+            _metric(
+                "Active",
+                profiles.filter(onboarding_state="active").count(),
+                "activated team members",
+                "success",
+            ),
+            _metric(
+                "Open relations cases",
+                relations.exclude(status__in=["Resolved", "Closed"]).count(),
+                "confidential follow-up",
+                "warning",
+            ),
+            _metric(
+                "Critical cases",
+                relations.filter(severity="critical")
+                .exclude(status__in=["Resolved", "Closed"])
+                .count(),
+                "leadership attention",
+                "danger",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Open People Directory", "href": "/staff"},
@@ -573,24 +887,60 @@ def employee_relations_view(request):
     query = (request.GET.get("q") or "").strip()
     cases = EmployeeRelationsCase.objects.select_related("case_owner")
     if query:
-        cases = cases.filter(Q(case_type__icontains=query) | Q(status__icontains=query) | Q(severity__icontains=query) | Q(case_owner__name__icontains=query))
-    rows = [{"cells": [
-        _cell("Case type", case.case_type, primary=True),
-        _cell("Severity", case.severity.title(), status=True),
-        _cell("Owner", case.case_owner.name if case.case_owner else "Unassigned"),
-        _cell("Confidentiality", "Restricted" if case.is_confidential else "Standard"),
-        _cell("Updated", case.updated_at.date()),
-        _cell("Status", case.status, status=True),
-    ]} for case in cases.order_by("-updated_at")]
+        cases = cases.filter(
+            Q(case_type__icontains=query)
+            | Q(status__icontains=query)
+            | Q(severity__icontains=query)
+            | Q(case_owner__name__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Case type", case.case_type, primary=True),
+                _cell("Severity", case.severity.title(), status=True),
+                _cell(
+                    "Owner", case.case_owner.name if case.case_owner else "Unassigned"
+                ),
+                _cell(
+                    "Confidentiality",
+                    "Restricted" if case.is_confidential else "Standard",
+                ),
+                _cell("Updated", case.updated_at.date()),
+                _cell("Status", case.status, status=True),
+            ]
+        }
+        for case in cases.order_by("-updated_at")
+    ]
     return _render_workspace(
         request,
         title="Employee Relations Cases",
         description="A restricted case register for grievances, conduct, safeguarding, and whistleblowing—details remain protected from the overview surface.",
         metrics=[
-            _metric("Open cases", cases.exclude(status__in=["Resolved", "Closed"]).count(), "requiring case ownership"),
-            _metric("Triage", cases.filter(status__in=["Submitted", "Triage"]).count(), "awaiting assessment", "warning"),
-            _metric("Critical", cases.filter(severity="critical").exclude(status__in=["Resolved", "Closed"]).count(), "urgent restricted cases", "danger"),
-            _metric("Resolved", cases.filter(status__in=["Resolved", "Closed"]).count(), "closed case records", "success"),
+            _metric(
+                "Open cases",
+                cases.exclude(status__in=["Resolved", "Closed"]).count(),
+                "requiring case ownership",
+            ),
+            _metric(
+                "Triage",
+                cases.filter(status__in=["Submitted", "Triage"]).count(),
+                "awaiting assessment",
+                "warning",
+            ),
+            _metric(
+                "Critical",
+                cases.filter(severity="critical")
+                .exclude(status__in=["Resolved", "Closed"])
+                .count(),
+                "urgent restricted cases",
+                "danger",
+            ),
+            _metric(
+                "Resolved",
+                cases.filter(status__in=["Resolved", "Closed"]).count(),
+                "closed case records",
+                "success",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Review HR Dashboard", "href": "/dashboard"},
@@ -603,29 +953,71 @@ def employee_relations_view(request):
 def wellness_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    leaves = Leave.objects.filter(staff_id__in=visible_ids).select_related("staff__user", "covering_staff__user")
+    leaves = Leave.objects.filter(staff_id__in=visible_ids).select_related(
+        "staff__user", "covering_staff__user"
+    )
     if query:
-        leaves = leaves.filter(Q(staff__user__name__icontains=query) | Q(type__icontains=query) | Q(status__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", leave.staff.user.name, primary=True),
-        _cell("Leave type", leave.type.replace("_", " ").title()),
-        _cell("Dates", f"{leave.start_date} – {leave.end_date}"),
-        _cell("Days", leave.days_charged if leave.days_charged is not None else leave.days),
-        _cell("Coverage", leave.covering_staff.user.name if leave.covering_staff else leave.coverage_status, status=True),
-        _cell("Status", leave.status.title(), status=True),
-    ]} for leave in leaves.order_by("-created_at")]
+        leaves = leaves.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(type__icontains=query)
+            | Q(status__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", leave.staff.user.name, primary=True),
+                _cell("Leave type", leave.type.replace("_", " ").title()),
+                _cell("Dates", f"{leave.start_date} – {leave.end_date}"),
+                _cell(
+                    "Days",
+                    leave.days_charged
+                    if leave.days_charged is not None
+                    else leave.days,
+                ),
+                _cell(
+                    "Coverage",
+                    leave.covering_staff.user.name
+                    if leave.covering_staff
+                    else leave.coverage_status,
+                    status=True,
+                ),
+                _cell("Status", leave.status.title(), status=True),
+            ]
+        }
+        for leave in leaves.order_by("-created_at")
+    ]
     return _render_workspace(
         request,
         title="Staff Wellness & Support",
         description="Real leave, workload-continuity, and coverage signals. Clinical or counseling data is not collected on this platform.",
         metrics=[
             _metric("Leave records", leaves.count(), "visible requests"),
-            _metric("Pending", leaves.filter(status="pending").count(), "awaiting a decision", "warning"),
-            _metric("Approved", leaves.filter(status="approved").count(), "confirmed time away", "success"),
-            _metric("Coverage gaps", leaves.filter(covering_staff__isnull=True).exclude(status__in=["rejected", "cancelled"]).count(), "without a named cover", "danger"),
+            _metric(
+                "Pending",
+                leaves.filter(status="pending").count(),
+                "awaiting a decision",
+                "warning",
+            ),
+            _metric(
+                "Approved",
+                leaves.filter(status="approved").count(),
+                "confirmed time away",
+                "success",
+            ),
+            _metric(
+                "Coverage gaps",
+                leaves.filter(covering_staff__isnull=True)
+                .exclude(status__in=["rejected", "cancelled"])
+                .count(),
+                "without a named cover",
+                "danger",
+            ),
         ],
         rows=rows,
-        primary_action={"label": "Open Personal Time Off", "href": "/personal-time-off/"},
+        primary_action={
+            "label": "Open Personal Time Off",
+            "href": "/personal-time-off/",
+        },
         empty_title="No leave or coverage records in this scope",
     )
 
@@ -634,17 +1026,29 @@ def wellness_view(request):
 def compensation_benefits_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    records = CompensationRecord.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    records = CompensationRecord.objects.filter(
+        staff_id__in=visible_ids
+    ).select_related("staff__user")
     if query:
-        records = records.filter(Q(staff__user__name__icontains=query) | Q(salary_band__icontains=query) | Q(benefits_tier__icontains=query) | Q(status__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", record.staff.user.name, primary=True),
-        _cell("Role", record.staff.title or record.staff.user.active_role),
-        _cell("Country", record.staff.country),
-        _cell("Salary band", record.salary_band),
-        _cell("Benefits tier", record.benefits_tier),
-        _cell("Status", record.status, status=True),
-    ]} for record in records.order_by("staff__user__name")]
+        records = records.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(salary_band__icontains=query)
+            | Q(benefits_tier__icontains=query)
+            | Q(status__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", record.staff.user.name, primary=True),
+                _cell("Role", record.staff.title or record.staff.user.active_role),
+                _cell("Country", record.staff.country),
+                _cell("Salary band", record.salary_band),
+                _cell("Benefits tier", record.benefits_tier),
+                _cell("Status", record.status, status=True),
+            ]
+        }
+        for record in records.order_by("staff__user__name")
+    ]
     profiles = _profile_scope(request)
     return _render_workspace(
         request,
@@ -652,9 +1056,24 @@ def compensation_benefits_view(request):
         description="A privacy-conscious readiness register for pay bands and benefits tiers. Bank accounts and salary amounts are deliberately excluded from this overview.",
         metrics=[
             _metric("Compensation profiles", records.count(), "configured records"),
-            _metric("Approved", records.filter(status="Approved").count(), "completed HR review", "success"),
-            _metric("In review", records.exclude(status="Approved").count(), "requiring HR action", "warning"),
-            _metric("Missing profiles", max(profiles.count() - records.count(), 0), "staff without a record", "danger"),
+            _metric(
+                "Approved",
+                records.filter(status="Approved").count(),
+                "completed HR review",
+                "success",
+            ),
+            _metric(
+                "In review",
+                records.exclude(status="Approved").count(),
+                "requiring HR action",
+                "warning",
+            ),
+            _metric(
+                "Missing profiles",
+                max(profiles.count() - records.count(), 0),
+                "staff without a record",
+                "danger",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Open People Directory", "href": "/staff"},
@@ -666,31 +1085,73 @@ def compensation_benefits_view(request):
 def payroll_readiness_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    records = PayrollReadinessRecord.objects.filter(staff_id__in=visible_ids).select_related("staff__user")
+    records = PayrollReadinessRecord.objects.filter(
+        staff_id__in=visible_ids
+    ).select_related("staff__user")
     if query:
-        records = records.filter(Q(staff__user__name__icontains=query) | Q(payroll_period__icontains=query) | Q(exception_notes__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", record.staff.user.name, primary=True),
-        _cell("Role", record.staff.title or record.staff.user.active_role),
-        _cell("Country", record.staff.country),
-        _cell("Payroll period", record.payroll_period),
-        _cell("Exceptions", "Yes" if record.has_exceptions else "None", status=record.has_exceptions),
-        _cell("Readiness", "Ready" if record.is_payroll_ready else "Pending", status=True),
-    ]} for record in records.order_by("-payroll_period", "staff__user__name")]
-    latest_period = records.order_by("-payroll_period").values_list("payroll_period", flat=True).first()
-    latest = records.filter(payroll_period=latest_period) if latest_period else records.none()
+        records = records.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(payroll_period__icontains=query)
+            | Q(exception_notes__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", record.staff.user.name, primary=True),
+                _cell("Role", record.staff.title or record.staff.user.active_role),
+                _cell("Country", record.staff.country),
+                _cell("Payroll period", record.payroll_period),
+                _cell(
+                    "Exceptions",
+                    "Yes" if record.has_exceptions else "None",
+                    status=record.has_exceptions,
+                ),
+                _cell(
+                    "Readiness",
+                    "Ready" if record.is_payroll_ready else "Pending",
+                    status=True,
+                ),
+            ]
+        }
+        for record in records.order_by("-payroll_period", "staff__user__name")
+    ]
+    latest_period = (
+        records.order_by("-payroll_period")
+        .values_list("payroll_period", flat=True)
+        .first()
+    )
+    latest = (
+        records.filter(payroll_period=latest_period)
+        if latest_period
+        else records.none()
+    )
     return _render_workspace(
         request,
         title="Payroll Readiness",
         description="Period-specific payroll checks that expose exceptions and readiness without revealing banking or salary details.",
         metrics=[
-            _metric("Current period", latest_period or "—", "latest configured payroll run"),
+            _metric(
+                "Current period", latest_period or "—", "latest configured payroll run"
+            ),
             _metric("Staff checked", latest.count(), "records in latest period"),
-            _metric("Ready", latest.filter(is_payroll_ready=True).count(), "cleared for payroll", "success"),
-            _metric("Exceptions", latest.filter(has_exceptions=True).count(), "requiring resolution", "danger"),
+            _metric(
+                "Ready",
+                latest.filter(is_payroll_ready=True).count(),
+                "cleared for payroll",
+                "success",
+            ),
+            _metric(
+                "Exceptions",
+                latest.filter(has_exceptions=True).count(),
+                "requiring resolution",
+                "danger",
+            ),
         ],
         rows=rows,
-        primary_action={"label": "Review Finance Operations", "href": "/finance/fund-allocation"},
+        primary_action={
+            "label": "Review Finance Operations",
+            "href": "/finance/fund-allocation",
+        },
         empty_title="No payroll-readiness checks in this scope",
     )
 
@@ -699,17 +1160,32 @@ def payroll_readiness_view(request):
 def compliance_register_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    records = EmployeeComplianceRecord.objects.filter(staff_id__in=visible_ids).select_related("staff__user", "requirement", "verified_by")
+    records = EmployeeComplianceRecord.objects.filter(
+        staff_id__in=visible_ids
+    ).select_related("staff__user", "requirement", "verified_by")
     if query:
-        records = records.filter(Q(staff__user__name__icontains=query) | Q(requirement__name__icontains=query) | Q(requirement__country__icontains=query) | Q(status__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", record.staff.user.name, primary=True),
-        _cell("Requirement", record.requirement.name),
-        _cell("Jurisdiction", record.requirement.country),
-        _cell("Expiry", record.expiry_date),
-        _cell("Verified by", record.verified_by.name if record.verified_by else "Not verified"),
-        _cell("Status", record.status, status=True),
-    ]} for record in records.order_by("expiry_date", "staff__user__name")]
+        records = records.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(requirement__name__icontains=query)
+            | Q(requirement__country__icontains=query)
+            | Q(status__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", record.staff.user.name, primary=True),
+                _cell("Requirement", record.requirement.name),
+                _cell("Jurisdiction", record.requirement.country),
+                _cell("Expiry", record.expiry_date),
+                _cell(
+                    "Verified by",
+                    record.verified_by.name if record.verified_by else "Not verified",
+                ),
+                _cell("Status", record.status, status=True),
+            ]
+        }
+        for record in records.order_by("expiry_date", "staff__user__name")
+    ]
     requirements = ComplianceRequirement.objects.all()
     return _render_workspace(
         request,
@@ -717,9 +1193,24 @@ def compliance_register_view(request):
         description="Employee compliance evidence connected to jurisdictional requirements, expiry dates, and named verification authority.",
         metrics=[
             _metric("Requirements", requirements.count(), "configured controls"),
-            _metric("Compliant", records.filter(status="Compliant").count(), "verified records", "success"),
-            _metric("Due soon", records.filter(status="Due Soon").count(), "approaching expiry", "warning"),
-            _metric("Missing or expired", records.filter(status__in=["Missing", "Expired"]).count(), "requiring remediation", "danger"),
+            _metric(
+                "Compliant",
+                records.filter(status="Compliant").count(),
+                "verified records",
+                "success",
+            ),
+            _metric(
+                "Due soon",
+                records.filter(status="Due Soon").count(),
+                "approaching expiry",
+                "warning",
+            ),
+            _metric(
+                "Missing or expired",
+                records.filter(status__in=["Missing", "Expired"]).count(),
+                "requiring remediation",
+                "danger",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Review Policies", "href": "/policies"},
@@ -730,28 +1221,62 @@ def compliance_register_view(request):
 @require_page_permission("policies")
 def policies_view(request):
     query = (request.GET.get("q") or "").strip()
-    requirements = ComplianceRequirement.objects.annotate(record_count=Count("employeecompliancerecord"))
+    requirements = ComplianceRequirement.objects.annotate(
+        record_count=Count("employeecompliancerecord")
+    )
     if query:
-        requirements = requirements.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(country__icontains=query))
-    rows = [{"cells": [
-        _cell("Policy or requirement", requirement.name, primary=True),
-        _cell("Jurisdiction", requirement.country),
-        _cell("Mandatory", "Mandatory" if requirement.is_mandatory else "Optional", status=True),
-        _cell("Employee records", requirement.record_count),
-        _cell("Updated", requirement.updated_at.date()),
-    ]} for requirement in requirements.order_by("country", "name")]
+        requirements = requirements.filter(
+            Q(name__icontains=query)
+            | Q(description__icontains=query)
+            | Q(country__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Policy or requirement", requirement.name, primary=True),
+                _cell("Jurisdiction", requirement.country),
+                _cell(
+                    "Mandatory",
+                    "Mandatory" if requirement.is_mandatory else "Optional",
+                    status=True,
+                ),
+                _cell("Employee records", requirement.record_count),
+                _cell("Updated", requirement.updated_at.date()),
+            ]
+        }
+        for requirement in requirements.order_by("country", "name")
+    ]
     return _render_workspace(
         request,
         title="Policies & Core Documents",
         description="The configured compliance-policy register. Document acknowledgements are not claimed until a dedicated acknowledgement model exists.",
         metrics=[
-            _metric("Configured", requirements.count(), "policy and compliance controls"),
-            _metric("Mandatory", requirements.filter(is_mandatory=True).count(), "required controls", "warning"),
-            _metric("Optional", requirements.filter(is_mandatory=False).count(), "advisory controls", "info"),
-            _metric("Jurisdictions", requirements.values("country").distinct().count(), "countries or global scope"),
+            _metric(
+                "Configured", requirements.count(), "policy and compliance controls"
+            ),
+            _metric(
+                "Mandatory",
+                requirements.filter(is_mandatory=True).count(),
+                "required controls",
+                "warning",
+            ),
+            _metric(
+                "Optional",
+                requirements.filter(is_mandatory=False).count(),
+                "advisory controls",
+                "info",
+            ),
+            _metric(
+                "Jurisdictions",
+                requirements.values("country").distinct().count(),
+                "countries or global scope",
+            ),
         ],
         rows=rows,
-        primary_action={"label": "Open Compliance Register", "href": "/compliance-register"},
+        primary_action={
+            "label": "Open Compliance Register",
+            "href": "/compliance-register",
+        },
         empty_title="No policies or compliance controls configured",
     )
 
@@ -760,26 +1285,63 @@ def policies_view(request):
 def offboarding_view(request):
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    plans = OffboardingPlan.objects.filter(staff_id__in=visible_ids).select_related("staff__user", "handover_owner__user")
+    plans = OffboardingPlan.objects.filter(staff_id__in=visible_ids).select_related(
+        "staff__user", "handover_owner__user"
+    )
     if query:
-        plans = plans.filter(Q(staff__user__name__icontains=query) | Q(status__icontains=query) | Q(handover_owner__user__name__icontains=query))
-    rows = [{"cells": [
-        _cell("Team member", plan.staff.user.name, primary=True),
-        _cell("Role", plan.staff.title or plan.staff.user.active_role),
-        _cell("Last working day", plan.last_working_day),
-        _cell("Handover owner", plan.handover_owner.user.name if plan.handover_owner else "Unassigned"),
-        _cell("Clearance", "Completed" if plan.clearance_completed else "Pending", status=True),
-        _cell("Status", plan.status, status=True),
-    ]} for plan in plans.order_by("last_working_day")]
+        plans = plans.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(status__icontains=query)
+            | Q(handover_owner__user__name__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", plan.staff.user.name, primary=True),
+                _cell("Role", plan.staff.title or plan.staff.user.active_role),
+                _cell("Last working day", plan.last_working_day),
+                _cell(
+                    "Handover owner",
+                    plan.handover_owner.user.name
+                    if plan.handover_owner
+                    else "Unassigned",
+                ),
+                _cell(
+                    "Clearance",
+                    "Completed" if plan.clearance_completed else "Pending",
+                    status=True,
+                ),
+                _cell("Status", plan.status, status=True),
+            ]
+        }
+        for plan in plans.order_by("last_working_day")
+    ]
     return _render_workspace(
         request,
         title="Staff Offboarding",
         description="A controlled transition register covering handover ownership, final working dates, clearance, and closure state.",
         metrics=[
             _metric("Plans", plans.count(), "offboarding records in scope"),
-            _metric("In progress", plans.exclude(status="Closed").count(), "active transitions", "warning"),
-            _metric("Handover gaps", plans.filter(handover_owner__isnull=True).exclude(status="Closed").count(), "without a named owner", "danger"),
-            _metric("Closed", plans.filter(status="Closed").count(), "completed transitions", "success"),
+            _metric(
+                "In progress",
+                plans.exclude(status="Closed").count(),
+                "active transitions",
+                "warning",
+            ),
+            _metric(
+                "Handover gaps",
+                plans.filter(handover_owner__isnull=True)
+                .exclude(status="Closed")
+                .count(),
+                "without a named owner",
+                "danger",
+            ),
+            _metric(
+                "Closed",
+                plans.filter(status="Closed").count(),
+                "completed transitions",
+                "success",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Open People Directory", "href": "/staff"},
@@ -789,29 +1351,61 @@ def offboarding_view(request):
 
 @require_page_permission("hr_analytics")
 def hr_analytics_view(request):
-    profiles = _search_profiles(_profile_scope(request), (request.GET.get("q") or "").strip())
-    grouped = profiles.values("country", "department").annotate(
-        headcount=Count("id"), active=Count("id", filter=Q(onboarding_state="active")), pending=Count("id", filter=Q(onboarding_state="pending"))
-    ).order_by("country", "department")
-    rows = [{"cells": [
-        _cell("Country", item["country"], primary=True),
-        _cell("Department", item["department"] or "Unassigned"),
-        _cell("Headcount", item["headcount"]),
-        _cell("Active", item["active"]),
-        _cell("Pending", item["pending"], status=item["pending"] > 0),
-        _cell("Activation rate", f"{round(item['active'] / item['headcount'] * 100) if item['headcount'] else 0}%"),
-    ]} for item in grouped]
+    profiles = _search_profiles(
+        _profile_scope(request), (request.GET.get("q") or "").strip()
+    )
+    grouped = (
+        profiles.values("country", "department")
+        .annotate(
+            headcount=Count("id"),
+            active=Count("id", filter=Q(onboarding_state="active")),
+            pending=Count("id", filter=Q(onboarding_state="pending")),
+        )
+        .order_by("country", "department")
+    )
+    rows = [
+        {
+            "cells": [
+                _cell("Country", item["country"], primary=True),
+                _cell("Department", item["department"] or "Unassigned"),
+                _cell("Headcount", item["headcount"]),
+                _cell("Active", item["active"]),
+                _cell("Pending", item["pending"], status=item["pending"] > 0),
+                _cell(
+                    "Activation rate",
+                    f"{round(item['active'] / item['headcount'] * 100) if item['headcount'] else 0}%",
+                ),
+            ]
+        }
+        for item in grouped
+    ]
     reviews = PerformanceReview.objects.filter(staff_id__in=profiles.values("id"))
-    compliance = EmployeeComplianceRecord.objects.filter(staff_id__in=profiles.values("id"))
+    compliance = EmployeeComplianceRecord.objects.filter(
+        staff_id__in=profiles.values("id")
+    )
     return _render_workspace(
         request,
         title="HR Analytics & Workforce Insights",
         description="Live workforce, review, and compliance signals computed from current operational records. Unsupported demographic and salary-correlation claims are intentionally excluded.",
         metrics=[
             _metric("Headcount", profiles.count(), "people in scope"),
-            _metric("Countries", profiles.values("country").distinct().count(), "operating footprint"),
-            _metric("Reviews due", reviews.exclude(status__in=["Completed", "Closed"]).count(), "open review workload", "warning"),
-            _metric("Compliance gaps", compliance.filter(status__in=["Missing", "Expired"]).count(), "missing or expired evidence", "danger"),
+            _metric(
+                "Countries",
+                profiles.values("country").distinct().count(),
+                "operating footprint",
+            ),
+            _metric(
+                "Reviews due",
+                reviews.exclude(status__in=["Completed", "Closed"]).count(),
+                "open review workload",
+                "warning",
+            ),
+            _metric(
+                "Compliance gaps",
+                compliance.filter(status__in=["Missing", "Expired"]).count(),
+                "missing or expired evidence",
+                "danger",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Review HR Dashboard", "href": "/dashboard"},
@@ -824,23 +1418,46 @@ def hr_audit_log_view(request):
     query = (request.GET.get("q") or "").strip()
     events = HRAuditEvent.objects.select_related("actor")
     if query:
-        events = events.filter(Q(actor__name__icontains=query) | Q(action__icontains=query) | Q(role__icontains=query) | Q(record_id__icontains=query))
-    rows = [{"cells": [
-        _cell("Action", event.action, primary=True),
-        _cell("Actor", event.actor.name if event.actor else "System"),
-        _cell("Role", event.role),
-        _cell("Record", event.record_id),
-        _cell("Timestamp", event.created_at.strftime("%d %b %Y, %H:%M")),
-    ]} for event in events.order_by("-created_at")]
+        events = events.filter(
+            Q(actor__name__icontains=query)
+            | Q(action__icontains=query)
+            | Q(role__icontains=query)
+            | Q(record_id__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Action", event.action, primary=True),
+                _cell("Actor", event.actor.name if event.actor else "System"),
+                _cell("Role", event.role),
+                _cell("Record", event.record_id),
+                _cell("Timestamp", event.created_at.strftime("%d %b %Y, %H:%M")),
+            ]
+        }
+        for event in events.order_by("-created_at")
+    ]
     return _render_workspace(
         request,
         title="HR System Audit Log",
         description="An append-style accountability view for sensitive HR actions. Event payload details remain out of the list to reduce incidental PII exposure.",
         metrics=[
             _metric("Events", events.count(), "matching audit records"),
-            _metric("Human actors", events.exclude(actor__isnull=True).values("actor").distinct().count(), "distinct users"),
-            _metric("System events", events.filter(actor__isnull=True).count(), "automated actions", "info"),
-            _metric("Roles", events.values("role").distinct().count(), "acting roles represented"),
+            _metric(
+                "Human actors",
+                events.exclude(actor__isnull=True).values("actor").distinct().count(),
+                "distinct users",
+            ),
+            _metric(
+                "System events",
+                events.filter(actor__isnull=True).count(),
+                "automated actions",
+                "info",
+            ),
+            _metric(
+                "Roles",
+                events.values("role").distinct().count(),
+                "acting roles represented",
+            ),
         ],
         rows=rows,
         primary_action={"label": "Open System Health", "href": "/system-health"},

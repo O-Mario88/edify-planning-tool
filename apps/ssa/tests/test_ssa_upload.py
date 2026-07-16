@@ -202,9 +202,7 @@ class SchoolEnrolmentCountVsSsaScoreTest(APITestCase):
     def test_ssa_enrolment_score_never_overwrites_school_enrollment_count(self):
         """A CSV row's "Enrolment" column (the SSA score, e.g. 6) must not
         touch School.enrollment (the headcount, 450)."""
-        body = (
-            f"{SSA_HEADERS}\nENR-SCH-1,2026-07-02,{SCORES}\n"
-        )
+        body = f"{SSA_HEADERS}\nENR-SCH-1,2026-07-02,{SCORES}\n"
         res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         self.school.refresh_from_db()
@@ -255,5 +253,6 @@ class LearnersImpactedUsesSchoolEnrollmentTest(APITestCase):
         # The learners-impacted aggregation must reference the count field...
         self.assertIn('Sum("enrollment")', source)
         # ...and must never aggregate an SSA score field for that purpose.
-        self.assertNotIn('learners_impacted = reached_schools.aggregate(total=Sum("score"',
-                          source)
+        self.assertNotIn(
+            'learners_impacted = reached_schools.aggregate(total=Sum("score"', source
+        )

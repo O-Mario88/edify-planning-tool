@@ -173,9 +173,7 @@ class Command(BaseCommand):
 
         super_pw = settings.SUPER_ADMIN_PASSWORD
         if not super_pw:
-            self.stdout.write(
-                "  super-admin: skipped (SUPER_ADMIN_PASSWORD not set)."
-            )
+            self.stdout.write("  super-admin: skipped (SUPER_ADMIN_PASSWORD not set).")
             return
         email = getattr(settings, "SUPER_ADMIN_EMAIL", SUPER_ADMIN_EMAIL)
         u, created = User.objects.update_or_create(

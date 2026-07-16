@@ -93,4 +93,3 @@ class HCOSWorkspaceViewTestCase(TestCase):
 
         policies = self.client.get("/policies")
         self.assertContains(policies, "Safeguarding policy")
-

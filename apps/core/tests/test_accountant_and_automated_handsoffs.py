@@ -186,9 +186,7 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
         # self-funded activity never had an original advance disbursement.
         self.assertIsNone(self.adv.disbursed_amount)
 
-        confirm_reimbursement_receipt(
-            self.adv.id, {"amount": 50000}, self.cceo_user
-        )
+        confirm_reimbursement_receipt(self.adv.id, {"amount": 50000}, self.cceo_user)
         self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.REIMBURSED)
         self.assertEqual(self.adv.reimbursement_receipt_confirmed_amount, 50000)

@@ -191,7 +191,9 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
     # view AND are convertible when the standardized PDF is requested.
     is_convertible = ext in CONVERTIBLE_EXTENSIONS or is_image
     preview_status = (
-        "ready" if (is_pdf or is_image) else ("pending" if is_convertible else "not_required")
+        "ready"
+        if (is_pdf or is_image)
+        else ("pending" if is_convertible else "not_required")
     )
 
     record = EvidenceRecord.objects.create(
@@ -323,9 +325,7 @@ def prepare_inline_view(record_id: str, principal) -> dict:
         return {"previewStatus": "ready", "viewKind": "pdf"}
     if record.file_extension not in CONVERTIBLE_EXTENSIONS and not is_image:
         return {"previewStatus": record.preview_status, "viewKind": _view_kind(record)}
-    converted = (
-        _try_image_to_pdf(record) if is_image else _try_office_to_pdf(record)
-    )
+    converted = _try_image_to_pdf(record) if is_image else _try_office_to_pdf(record)
     return {
         "previewStatus": "ready" if converted else record.preview_status,
         "viewKind": "pdf_rendition" if converted else _view_kind(record),

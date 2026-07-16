@@ -4,15 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('ssa', '0005_alter_ssascore_intervention'),
+        ("ssa", "0005_alter_ssascore_intervention"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='ssascore',
-            name='intervention',
-            field=models.CharField(choices=[('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to the Word of God'), ('financial_health', 'Financial Health'), ('leadership', 'Leadership'), ('government_requirement', 'Government Requirements'), ('learning_environment', 'Learning Environment'), ('teaching_environment', "Teacher's Environment"), ('enrolment', 'Enrolment')], max_length=64),
+            model_name="ssascore",
+            name="intervention",
+            field=models.CharField(
+                choices=[
+                    ("christlike_behaviour", "Christlike Behaviour"),
+                    ("exposure_to_word_of_god", "Exposure to the Word of God"),
+                    ("financial_health", "Financial Health"),
+                    ("leadership", "Leadership"),
+                    ("government_requirement", "Government Requirements"),
+                    ("learning_environment", "Learning Environment"),
+                    ("teaching_environment", "Teacher's Environment"),
+                    ("enrolment", "Enrolment"),
+                ],
+                max_length=64,
+            ),
         ),
     ]

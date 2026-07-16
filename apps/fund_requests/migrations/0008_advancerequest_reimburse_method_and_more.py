@@ -4,65 +4,92 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fund_requests', '0007_fundrequest_held_at_fundrequest_held_reason_and_more'),
+        ("fund_requests", "0007_fundrequest_held_at_fundrequest_held_reason_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='advancerequest',
-            name='reimburse_method',
+            model_name="advancerequest",
+            name="reimburse_method",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='reimburse_reference',
+            model_name="advancerequest",
+            name="reimburse_reference",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='reimbursed_amount',
+            model_name="advancerequest",
+            name="reimbursed_amount",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='reimbursed_at',
+            model_name="advancerequest",
+            name="reimbursed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='reimbursed_by_user_id',
+            model_name="advancerequest",
+            name="reimbursed_by_user_id",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='reimbursement_receipt_confirmed_amount',
+            model_name="advancerequest",
+            name="reimbursement_receipt_confirmed_amount",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='reimbursement_receipt_confirmed_at',
+            model_name="advancerequest",
+            name="reimbursement_receipt_confirmed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='return_reference',
+            model_name="advancerequest",
+            name="return_reference",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='return_verified_at',
+            model_name="advancerequest",
+            name="return_verified_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='return_verified_by_user_id',
+            model_name="advancerequest",
+            name="return_verified_by_user_id",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AlterField(
-            model_name='advancerequest',
-            name='status',
-            field=models.CharField(choices=[('draft_from_schedule', 'Draft (from schedule)'), ('pending_responsible_confirmation', 'Pending responsible confirmation'), ('confirmed_for_advance', 'Confirmed for advance'), ('self_funded_pending_reimbursement', 'Self-funded (pending reimbursement)'), ('not_requested', 'Not requested'), ('submitted_to_accountant', 'Submitted to accountant'), ('disbursed', 'Disbursed'), ('accountability_pending', 'Accountability pending'), ('accounted', 'Accounted'), ('reimbursement_submitted', 'Reimbursement submitted'), ('reimbursement_disbursed', 'Reimbursement disbursed (awaiting receipt confirmation)'), ('reimbursed', 'Reimbursed'), ('returned', 'Returned'), ('cancelled', 'Cancelled')], default='pending_responsible_confirmation', max_length=40),
+            model_name="advancerequest",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("draft_from_schedule", "Draft (from schedule)"),
+                    (
+                        "pending_responsible_confirmation",
+                        "Pending responsible confirmation",
+                    ),
+                    ("confirmed_for_advance", "Confirmed for advance"),
+                    (
+                        "self_funded_pending_reimbursement",
+                        "Self-funded (pending reimbursement)",
+                    ),
+                    ("not_requested", "Not requested"),
+                    ("submitted_to_accountant", "Submitted to accountant"),
+                    ("disbursed", "Disbursed"),
+                    ("accountability_pending", "Accountability pending"),
+                    ("accounted", "Accounted"),
+                    ("reimbursement_submitted", "Reimbursement submitted"),
+                    (
+                        "reimbursement_disbursed",
+                        "Reimbursement disbursed (awaiting receipt confirmation)",
+                    ),
+                    ("reimbursed", "Reimbursed"),
+                    ("returned", "Returned"),
+                    ("cancelled", "Cancelled"),
+                ],
+                default="pending_responsible_confirmation",
+                max_length=40,
+            ),
         ),
     ]

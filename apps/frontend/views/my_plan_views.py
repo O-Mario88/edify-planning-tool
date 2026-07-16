@@ -387,7 +387,11 @@ def confirm_reimbursement_receipt_action(request, activity_id):
         return render(
             request,
             "partials/my_plan/confirm_reimbursement_receipt_drawer.html",
-            {"act": get_activity(activity_id, request.user), "adv": adv, "drawer_size": "sm"},
+            {
+                "act": get_activity(activity_id, request.user),
+                "adv": adv,
+                "drawer_size": "sm",
+            },
         )
 
     if not adv:

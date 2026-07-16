@@ -23,6 +23,7 @@ from apps.schools.models import School
 
 User = get_user_model()
 
+
 # Minimal real JPEG header + body so both the magic-byte sniff and Pillow work.
 def _tiny_jpeg_bytes():
     from PIL import Image

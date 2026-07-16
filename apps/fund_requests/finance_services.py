@@ -500,11 +500,7 @@ class NetSuiteExpenseService:
         with transaction.atomic():
             # Lock the activity row + guard against re-clearing an already
             # cleared/closed record (double-click / replay immutability).
-            locked = (
-                Activity.objects.select_for_update()
-                .filter(id=activity.id)
-                .first()
-            )
+            locked = Activity.objects.select_for_update().filter(id=activity.id).first()
             if locked and locked.status == "closed":
                 raise ValueError(
                     "This activity is already closed — its accountability "
@@ -519,9 +515,9 @@ class NetSuiteExpenseService:
             # unblocks clearance. Callers wanting a separate pre-clearance
             # resolution can still resolve the review first; this makes the
             # accountant's clearance the backstop rather than a dead end.
-            VarianceReview.objects.filter(
-                activity=activity, status="pending"
-            ).update(status="resolved")
+            VarianceReview.objects.filter(activity=activity, status="pending").update(
+                status="resolved"
+            )
 
             # Check if already entered for another activity (duplicate check)
             is_dup = (

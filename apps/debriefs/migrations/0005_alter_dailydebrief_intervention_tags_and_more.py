@@ -5,20 +5,50 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('debriefs', '0004_alter_dailydebrief_intervention_tags_and_more'),
+        ("debriefs", "0004_alter_dailydebrief_intervention_tags_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='dailydebrief',
-            name='intervention_tags',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(choices=[('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to the Word of God'), ('financial_health', 'Financial Health'), ('leadership', 'Leadership'), ('government_requirement', 'Government Requirements'), ('learning_environment', 'Learning Environment'), ('teaching_environment', "Teacher's Environment"), ('enrolment', 'Enrolment')], max_length=64), blank=True, default=list, size=None),
+            model_name="dailydebrief",
+            name="intervention_tags",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    choices=[
+                        ("christlike_behaviour", "Christlike Behaviour"),
+                        ("exposure_to_word_of_god", "Exposure to the Word of God"),
+                        ("financial_health", "Financial Health"),
+                        ("leadership", "Leadership"),
+                        ("government_requirement", "Government Requirements"),
+                        ("learning_environment", "Learning Environment"),
+                        ("teaching_environment", "Teacher's Environment"),
+                        ("enrolment", "Enrolment"),
+                    ],
+                    max_length=64,
+                ),
+                blank=True,
+                default=list,
+                size=None,
+            ),
         ),
         migrations.AlterField(
-            model_name='dailydebrief',
-            name='recommended_intervention',
-            field=models.CharField(blank=True, choices=[('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to the Word of God'), ('financial_health', 'Financial Health'), ('leadership', 'Leadership'), ('government_requirement', 'Government Requirements'), ('learning_environment', 'Learning Environment'), ('teaching_environment', "Teacher's Environment"), ('enrolment', 'Enrolment')], max_length=64, null=True),
+            model_name="dailydebrief",
+            name="recommended_intervention",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("christlike_behaviour", "Christlike Behaviour"),
+                    ("exposure_to_word_of_god", "Exposure to the Word of God"),
+                    ("financial_health", "Financial Health"),
+                    ("leadership", "Leadership"),
+                    ("government_requirement", "Government Requirements"),
+                    ("learning_environment", "Learning Environment"),
+                    ("teaching_environment", "Teacher's Environment"),
+                    ("enrolment", "Enrolment"),
+                ],
+                max_length=64,
+                null=True,
+            ),
         ),
     ]

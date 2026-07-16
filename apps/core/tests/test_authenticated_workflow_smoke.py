@@ -155,7 +155,9 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
 
         self._as(self.cceo)
         completed = self._post(
-            f"/api/activities/{activity_id}/complete", {"salesforceId": "SVE-JUL10"}, 200
+            f"/api/activities/{activity_id}/complete",
+            {"salesforceId": "SVE-JUL10"},
+            200,
         )
         self.assertEqual(completed["status"], "submitted_to_pl")
 
