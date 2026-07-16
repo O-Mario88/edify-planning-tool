@@ -206,7 +206,10 @@ class LockoutUnificationTest(TestCase):
         self.assertEqual(web_user.lockout_escalated, api_user.lockout_escalated)
 
         # Both now reject the CORRECT password identically (locked, not a
-        # credentials error).
+        # credentials error). The 10 failed attempts above consumed the whole
+        # default 10/min API rate window, so clear it -- this asserts the
+        # lockout's 403, not the throttle's 429.
+        _rate_window._hits.clear()
         web_res = self._web_login("web-lock@edify.test", "CorrectPassword1!")
         self.assertContains(web_res, "locked")
         api_res = self._api_login("api-lock@edify.test", "CorrectPassword1!")
