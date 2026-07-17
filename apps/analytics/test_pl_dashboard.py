@@ -170,7 +170,10 @@ class PLDashboardTest(TestCase):
             rows["School A2"]["recommended_activity_label"],
             "Schedule Baseline SSA Visit",
         )
-        self.assertIn("recommended_activity_type=baseline_ssa_visit", rows["School PL-OWN"]["schedule_url"])
+        self.assertIn(
+            "recommended_activity_type=baseline_ssa_visit",
+            rows["School PL-OWN"]["schedule_url"],
+        )
 
     def test_pl_can_send_urgent_school_to_its_supervised_cceo_idempotently(self):
         self.client.force_login(self.pl_a)

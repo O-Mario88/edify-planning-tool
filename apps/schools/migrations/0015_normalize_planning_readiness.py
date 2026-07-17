@@ -21,7 +21,9 @@ CANONICAL_VALUES = {
 
 def normalize_readiness(apps, schema_editor):
     School = apps.get_model("schools", "School")
-    for school in School.objects.exclude(planning_readiness__in=CANONICAL_VALUES).iterator():
+    for school in School.objects.exclude(
+        planning_readiness__in=CANONICAL_VALUES
+    ).iterator():
         if not school.cluster_id:
             readiness = "requires_cluster"
         elif school.current_fy_ssa_status == "done":

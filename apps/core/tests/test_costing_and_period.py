@@ -32,11 +32,11 @@ class CostingBudgetPeriodTest(APITestCase):
     def setUp(self):
         # Scheduling has a deliberate published-catalogue gate. This suite
         # tests cost/period behaviour after that valid operational setup.
-        CostCatalogue.objects.create(
+        CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(),
             version=1,
-            label="Costing period test catalogue",
-        )
+            defaults={"label": "Costing period test catalogue"},
+        )[0]
         self.region = Region.objects.create(name="Cost Region")
         # district_type is required for staff school-visit reschedule, which
         # now routes through Daily Visit Batch pricing (day-based, shared cost

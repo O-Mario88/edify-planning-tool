@@ -16,9 +16,11 @@ def normalize_partner_assignment_staff_identity(apps, schema_editor):
     profile_ids = set(StaffProfile.objects.values_list("id", flat=True))
     profiles_by_user = dict(StaffProfile.objects.values_list("user_id", "id"))
 
-    for assignment in PartnerAssignment.objects.exclude(
-        assigning_staff_id__isnull=True
-    ).exclude(assigning_staff_id="").iterator():
+    for assignment in (
+        PartnerAssignment.objects.exclude(assigning_staff_id__isnull=True)
+        .exclude(assigning_staff_id="")
+        .iterator()
+    ):
         current = assignment.assigning_staff_id
         # Existing StaffProfile ids are already canonical.  A legacy User id
         # becomes the linked StaffProfile id when one exists; admins without

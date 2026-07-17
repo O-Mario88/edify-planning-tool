@@ -335,9 +335,7 @@ def _by_quarter_from_activities(activities) -> list[dict]:
     amt: dict[str, int] = {}
     cnt: dict[str, int] = {}
     for a in activities:
-        amount = (
-            sum(line.amount for line in a.schedule_cost_lines.all())
-        )
+        amount = sum(line.amount for line in a.schedule_cost_lines.all())
         q = a.quarter
         amt[q] = amt.get(q, 0) + amount
         cnt[q] = cnt.get(q, 0) + 1
@@ -383,9 +381,7 @@ def weekly(principal, query: dict) -> dict:
     week_counts = {w: 0 for w in range(1, 6)}
 
     for a in activities:
-        amount = (
-            sum(line.amount for line in a.schedule_cost_lines.all())
-        )
+        amount = sum(line.amount for line in a.schedule_cost_lines.all())
         total_cents += amount
         if a.cost_missing:
             cost_missing_count += 1

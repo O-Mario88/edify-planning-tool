@@ -239,6 +239,7 @@ def remove_school(*, activity_id: str) -> dict:
     permission checks are the caller's responsibility (the activity lifecycle
     functions already run _get_in_scope before calling this)."""
     from apps.activities.models import Activity
+
     with transaction.atomic():
         activity = Activity.objects.select_for_update().get(id=activity_id)
         batch = activity.daily_visit_batch
@@ -355,7 +356,6 @@ def _recalculate_and_write_lines(
     from apps.budget.costing import ActivityCost, CostLine
     from apps.budget.costing_service import (
         _rate_card,
-        active_catalogue,
         apply_to_activity,
     )
     from apps.fund_requests.weekly_service import trigger_generate_for_activity

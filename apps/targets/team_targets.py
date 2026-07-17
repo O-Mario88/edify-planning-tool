@@ -26,7 +26,7 @@ from apps.targets.fy_calendar import (
     QUARTERS,
     FinancialYearCalendarService as Cal,
 )
-from apps.targets.models import CatchUpPlan, TargetArea
+from apps.targets.models import CatchUpPlan
 from apps.targets.my_targets import (
     AREA_SOURCES,
     COMPLETED_STATUSES,

@@ -119,9 +119,14 @@ def _assert_school_entitlement_available(
             )
         return
 
-    if not is_partner and school.school_type == "core" and activity_type in (
-        "core_visit",
-        "core_training",
+    if (
+        not is_partner
+        and school.school_type == "core"
+        and activity_type
+        in (
+            "core_visit",
+            "core_training",
+        )
     ):
         # Core package: staff may directly take at most 2 of the 4 visits and
         # 2 of the 4 trainings; the remainder belongs to partners.
@@ -810,7 +815,9 @@ def submit_for_review(activity_id: str, principal) -> dict:
             "Training completion requires attendance (teachers and/or school leaders)"
         )
     if a.delivery_type == "partner" and a.evidence_status != "accepted":
-        raise BadRequest("Partner evidence must be accepted by staff before submission.")
+        raise BadRequest(
+            "Partner evidence must be accepted by staff before submission."
+        )
     if a.ssa_collection_expected and not a.ssa_not_collected_reason:
         from apps.ssa.models import SsaRecord
 
@@ -871,7 +878,12 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
         a.leaders_attended = count("leadersAttended")
         a.other_participants = count("otherParticipants")
         a.attended_school_ids = list(data.get("attendedSchoolIds") or [])
-        if a.status in ("scheduled", "in_progress", "assigned_to_partner", "partner_scheduled"):
+        if a.status in (
+            "scheduled",
+            "in_progress",
+            "assigned_to_partner",
+            "partner_scheduled",
+        ):
             a.status = "completion_started"
         a.save(
             update_fields=[

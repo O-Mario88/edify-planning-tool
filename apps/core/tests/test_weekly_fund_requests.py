@@ -5,7 +5,8 @@ from rest_framework.test import APITestCase
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import ActivityScheduleCostLine
-from apps.budget.models import CostSetting
+from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
@@ -13,6 +14,11 @@ from apps.schools.models import School
 
 class WeeklyFundRequestsTest(APITestCase):
     def setUp(self):
+        CostCatalogue.objects.create(
+            fy=get_operational_fy(),
+            version=1,
+            label="Weekly fund request test catalogue",
+        )
         self.region = Region.objects.create(name="Central")
         self.district = District.objects.create(name="Kampala", region=self.region)
         self.sub_county = SubCounty.objects.create(

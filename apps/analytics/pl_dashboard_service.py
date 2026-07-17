@@ -123,9 +123,7 @@ class ProgramLeadDashboardService:
         from apps.accounts.models import StaffSchoolAssignment
         from apps.core.scoping import resolve_user_scope
 
-        rows = PLAnalyticsService.risk_list(
-            pls, fy, None, filters, limit=limit
-        )["rows"]
+        rows = PLAnalyticsService.risk_list(pls, fy, None, filters, limit=limit)["rows"]
         scope = resolve_user_scope(user)
         own_school_ids = set(scope.own_school_ids)
         cceo_by_staff = {item["staff_id"]: item for item in pls.cceos}
@@ -143,9 +141,7 @@ class ProgramLeadDashboardService:
             is_personal = row["id"] in own_school_ids or owner is None
             row["owner_kind"] = "pl" if is_personal else "cceo"
             row["owner_name"] = (
-                getattr(user, "name", "Program Lead")
-                if is_personal
-                else owner["name"]
+                getattr(user, "name", "Program Lead") if is_personal else owner["name"]
             )
             row["owner_user_id"] = None if is_personal else owner["user_id"]
             query = {

@@ -69,16 +69,19 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
             supervisee=self.cceo_staff, supervisor=self.pl_staff
         )
 
-        CostCatalogue.objects.create(
+        CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(),
             version=1,
-            label="Authenticated workflow smoke catalogue",
-        )
+            defaults={"label": "Authenticated workflow smoke catalogue"},
+        )[0]
 
-        CostSetting.objects.create(
-            key="staff_visit_transport_primary", label="Transport", unit_cost=10000
-        )
-        CostSetting.objects.create(key="lunch", label="Lunch", unit_cost=5000)
+        CostSetting.objects.get_or_create(
+            key="staff_visit_transport_primary",
+            defaults={"label": "Transport", "unit_cost": 10000},
+        )[0]
+        CostSetting.objects.get_or_create(
+            key="lunch", defaults={"label": "Lunch", "unit_cost": 5000}
+        )[0]
 
     def test_school_to_accountability_workflow(self):
         self._as(self.ia)

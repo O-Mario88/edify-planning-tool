@@ -105,10 +105,10 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         platform = _read("static/css/platform.css")
 
         for declaration in (
-            "--edify-bg: #080b10",
-            "--edify-surface: #11161d",
-            "--edify-surface-raised: #161d26",
-            "--edify-surface-hover: #1c2530",
+            "--edify-bg: #000000",
+            "--edify-surface: #0d0d0f",
+            "--edify-surface-raised: #151518",
+            "--edify-surface-hover: #1c1c20",
             "--edify-text: #f5f7fa",
             "--edify-text-muted: #d6dde7",
             "--edify-text-subtle: #aeb9c7",
@@ -117,9 +117,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         ):
             self.assertIn(declaration, tokens)
 
-        self.assertGreaterEqual(_contrast_ratio("#f5f7fa", "#11161d"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#11161d"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#11161d"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#f5f7fa", "#0d0d0f"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#0d0d0f"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#0d0d0f"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#ffffff", "#2563eb"), 4.5)
         self.assertIn("DARK WORKSPACE — CINEMATIC DEPTH, OPERATIONAL CLARITY", platform)
         self.assertIn(
@@ -132,11 +132,18 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         pages = _read("static/css/pages.css")
 
         self.assertIn('class="pl-intelligence-grid"', dashboard)
-        self.assertNotIn("lg:col-span-5", dashboard[dashboard.index("SSA Intelligence") :])
+        self.assertNotIn(
+            "lg:col-span-5", dashboard[dashboard.index("SSA Intelligence") :]
+        )
         self.assertIn("pl-funding-summary", funding)
-        self.assertLess(funding.index("pl-funding-donut"), funding.index("pl-funding-statuses"))
+        self.assertLess(
+            funding.index("pl-funding-donut"), funding.index("pl-funding-statuses")
+        )
         self.assertIn("container: pl-dashboard / inline-size", pages)
-        self.assertIn("grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr) minmax(10.5rem, 0.48fr)", pages)
+        self.assertIn(
+            "grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr) minmax(10.5rem, 0.48fr)",
+            pages,
+        )
         self.assertIn("overflow-x: clip", pages)
 
     def test_operational_analytics_domains_use_the_shared_python_engine(self):

@@ -202,9 +202,7 @@ class ConcurrentMutationTest(TransactionTestCase):
                 for conn in connections.all():
                     conn.close()
 
-        threads = [
-            threading.Thread(target=runner, args=(i,)) for i in range(2)
-        ]
+        threads = [threading.Thread(target=runner, args=(i,)) for i in range(2)]
         for t in threads:
             t.start()
         for t in threads:
@@ -363,9 +361,7 @@ class ConcurrentMutationTest(TransactionTestCase):
         results = self._race(pay)
         winners = [r for ok, r in results if ok]
         self.assertEqual(len(winners), 1, f"double partner payment: {results}")
-        self.assertEqual(
-            PartnerPayment.objects.filter(activity=activity).count(), 1
-        )
+        self.assertEqual(PartnerPayment.objects.filter(activity=activity).count(), 1)
 
     def test_concurrent_identical_schedule_creates_one_activity(self):
         from apps.activities import services as activity_services
@@ -375,16 +371,16 @@ class ConcurrentMutationTest(TransactionTestCase):
         StaffSchoolAssignment.objects.create(staff=staff, school_id=self.school.id)
         from apps.budget.models import CostCatalogue, CostSetting
 
-        CostCatalogue.objects.create(
-            fy=self.fy, version=1, label="Concurrency test catalogue"
-        )
+        CostCatalogue.objects.get_or_create(
+            fy=self.fy, version=1, defaults={"label": "Concurrency test catalogue"}
+        )[0]
         for key, label in (
             ("staff_visit_transport_primary", "Transport (primary)"),
             ("lunch", "Lunch"),
         ):
-            CostSetting.objects.create(
-                key=key, label=label, unit_cost=10_000, version=1
-            )
+            CostSetting.objects.get_or_create(
+                key=key, defaults={"label": label, "unit_cost": 10_000, "version": 1}
+            )[0]
         self.school.district.district_type = "primary"
         self.school.district.save(update_fields=["district_type"])
         _confirmed_ssa(self.school, self.fy, avg=4.0)
@@ -444,19 +440,17 @@ class BoundaryTest(TestCase):
         )
         cceo = _user("bound-cceo@edify.test", EdifyRole.CCEO.value)
         staff = StaffProfile.objects.create(user=cceo, title="CCEO")
-        catalogue = CostCatalogue.objects.create(
-            fy="2027", version=1, label="FY 2027 boundary test catalogue"
-        )
+        catalogue = CostCatalogue.objects.get_or_create(
+            fy="2027", version=1, defaults={"label": "FY 2027 boundary test catalogue"}
+        )[0]
         for key, label in (
             ("primary_transport_per_day", "Primary transport"),
             ("primary_lunch_per_day", "Primary lunch"),
         ):
-            CostSetting.objects.create(
+            CostSetting.objects.get_or_create(
                 key=key,
-                label=label,
-                unit_cost=10_000,
-                catalogue=catalogue,
-            )
+                defaults={"label": label, "unit_cost": 10_000, "catalogue": catalogue},
+            )[0]
         activity = Activity.objects.create(
             school=school,
             activity_type="school_visit",
@@ -625,9 +619,7 @@ class ConsistencyReconciliationTest(TestCase):
         )
         self.assertIsNotNone(wfr)
         self.assertEqual(wfr.total_amount, total)
-        self.assertEqual(
-            sum(line.total_cost for line in wfr.lines.all()), total
-        )
+        self.assertEqual(sum(line.total_cost for line in wfr.lines.all()), total)
 
     def test_activity_status_matches_across_surfaces(self):
         region = Region.objects.create(name="Parity Region")

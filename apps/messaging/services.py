@@ -711,7 +711,9 @@ def _participant_threads(user):
 
 def _thread_messages(thread: MessageThread) -> list[Message]:
     cached = getattr(thread, "_message_cache", None)
-    return cached if cached is not None else list(thread.messages.order_by("created_at"))
+    return (
+        cached if cached is not None else list(thread.messages.order_by("created_at"))
+    )
 
 
 def _thread_participants(thread: MessageThread) -> list[MessageParticipant]:
@@ -1439,9 +1441,9 @@ def mark_read(message_id: str, principal) -> dict:
         )
         if not is_recipient:
             raise Forbidden("Cannot mark another user's message as read.")
-        MessageParticipant.objects.filter(
-            thread_id=m.thread_id, user_id=uid
-        ).update(last_read_at=timezone.now())
+        MessageParticipant.objects.filter(thread_id=m.thread_id, user_id=uid).update(
+            last_read_at=timezone.now()
+        )
         if m.recipient_id == uid:
             m.status = "read"
             m.save(update_fields=["status"])

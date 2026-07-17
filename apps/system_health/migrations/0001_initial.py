@@ -4,24 +4,27 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='EnvironmentStamp',
+            name="EnvironmentStamp",
             fields=[
-                ('id', models.PositiveSmallIntegerField(default=1, primary_key=True, serialize=False)),
-                ('environment', models.CharField(default='local', max_length=16)),
-                ('stamped_at', models.DateTimeField(auto_now_add=True)),
-                ('stamped_by', models.CharField(default='migration', max_length=128)),
-                ('seeded_demo_at', models.DateTimeField(blank=True, null=True)),
+                (
+                    "id",
+                    models.PositiveSmallIntegerField(
+                        default=1, primary_key=True, serialize=False
+                    ),
+                ),
+                ("environment", models.CharField(default="local", max_length=16)),
+                ("stamped_at", models.DateTimeField(auto_now_add=True)),
+                ("stamped_by", models.CharField(default="migration", max_length=128)),
+                ("seeded_demo_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'environment_stamp',
+                "db_table": "environment_stamp",
             },
         ),
     ]

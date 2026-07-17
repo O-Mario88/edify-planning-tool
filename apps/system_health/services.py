@@ -1184,9 +1184,7 @@ def _workflow_issues() -> dict:
         verification_status__in=["confirmed", "pending"],
     ).values_list("school_id", flat=True)
     stale_fy_readiness = (
-        live_schools.filter(
-            current_fy_ssa_status__in=["done", "partner_assigned"]
-        )
+        live_schools.filter(current_fy_ssa_status__in=["done", "partner_assigned"])
         .exclude(id__in=_current_ok)
         .count()
     )

@@ -5,7 +5,6 @@ from apps.core.permissions import (
     get_scoped_object_or_404,
 )
 from django.contrib import messages
-from django.db import transaction
 from django.http import HttpResponse, HttpResponseForbidden
 import csv
 from datetime import datetime, timedelta
@@ -703,15 +702,23 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             # district-level clusters with no covered sub-counties) in the
             # cluster's district.
             if covered_sub_counties:
-                school = school_queryset(resolve_user_scope(user)).filter(
-                    id=sid,
-                    sub_county_id__in=covered_sub_counties,
-                    deleted_at__isnull=True,
-                ).first()
+                school = (
+                    school_queryset(resolve_user_scope(user))
+                    .filter(
+                        id=sid,
+                        sub_county_id__in=covered_sub_counties,
+                        deleted_at__isnull=True,
+                    )
+                    .first()
+                )
             else:
-                school = school_queryset(resolve_user_scope(user)).filter(
-                    id=sid, district_id=cluster.district_id, deleted_at__isnull=True
-                ).first()
+                school = (
+                    school_queryset(resolve_user_scope(user))
+                    .filter(
+                        id=sid, district_id=cluster.district_id, deleted_at__isnull=True
+                    )
+                    .first()
+                )
             if school:
                 assign_school_to_cluster(
                     school.school_id, {"clusterId": cluster.id}, user

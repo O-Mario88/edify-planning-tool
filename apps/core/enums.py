@@ -84,10 +84,10 @@ class PlanningReadiness(models.TextChoices):
     CLOSED = "closed", "Closed"
     DATA_CLEANUP_REQUIRED = "data_cleanup_required", "Data Cleanup Required"
     COST_CATALOGUE_REQUIRED = "cost_catalogue_required", "Cost Catalogue Required"
+
     @classmethod
     def planning_ready_values(cls) -> list[str]:
-        """States meaning "the school is unblocked/visible in Planning".
-        """
+        """States meaning "the school is unblocked/visible in Planning"."""
         return [
             cls.READY_FOR_SUPPORT_PLANNING,
             cls.READY_FOR_BASELINE_SSA,

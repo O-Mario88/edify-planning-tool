@@ -1620,10 +1620,14 @@ class PLAnalyticsService:
                 continue
             lv = visited.get(s.id)
             lt = trained.get(s.id)
-            recommended = actions[0] if actions else {
-                "label": "Review School",
-                "activity_type": "school_visit",
-            }
+            recommended = (
+                actions[0]
+                if actions
+                else {
+                    "label": "Review School",
+                    "activity_type": "school_visit",
+                }
+            )
             rows.append(
                 {
                     "id": s.id,

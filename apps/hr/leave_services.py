@@ -43,7 +43,9 @@ def _activity_owner_ids(staff_or_user: StaffProfile | User) -> list[str]:
     return list(dict.fromkeys(value for value in ids if value))
 
 
-def _scheduled_datetime_window(start_date: date, end_date: date) -> tuple[datetime, datetime]:
+def _scheduled_datetime_window(
+    start_date: date, end_date: date
+) -> tuple[datetime, datetime]:
     """Return an aware, half-open scheduled-date range for inclusive dates."""
     tz = timezone.get_current_timezone()
     start = timezone.make_aware(datetime.combine(start_date, datetime.min.time()), tz)
@@ -1418,9 +1420,7 @@ class TeamAvailabilityService:
         staff_ids = [sp.id for sp in staff_list]
         activity_owner_ids = list(
             dict.fromkeys(
-                identity
-                for sp in staff_list
-                for identity in _activity_owner_ids(sp)
+                identity for sp in staff_list for identity in _activity_owner_ids(sp)
             )
         )
         scheduled_start, scheduled_end = _scheduled_datetime_window(

@@ -49,9 +49,7 @@ class EnvironmentGuardTest(TestCase):
         EnvironmentStamp.objects.all().delete()
         with override_settings(ENVIRONMENT="staging"):
             self.assertEqual(validate_environment(force=True), "stamped")
-        self.assertEqual(
-            EnvironmentStamp.objects.get(id=1).environment, "staging"
-        )
+        self.assertEqual(EnvironmentStamp.objects.get(id=1).environment, "staging")
 
     def test_guard_skips_under_test_runner_argv(self):
         # Default (non-forced) call inside the test runner must not enforce.
@@ -64,9 +62,7 @@ class StampCommandTest(TestCase):
     def test_wrong_phrase_refuses_and_preserves_stamp(self):
         _set_stamp("local")
         with self.assertRaises(CommandError):
-            call_command(
-                "stamp_environment", "--to", "production", "--confirm", "yes"
-            )
+            call_command("stamp_environment", "--to", "production", "--confirm", "yes")
         self.assertEqual(EnvironmentStamp.objects.get(id=1).environment, "local")
 
     def test_correct_phrase_restamps_and_audits(self):
@@ -78,9 +74,7 @@ class StampCommandTest(TestCase):
             "--confirm",
             "STAMP production",
         )
-        self.assertEqual(
-            EnvironmentStamp.objects.get(id=1).environment, "production"
-        )
+        self.assertEqual(EnvironmentStamp.objects.get(id=1).environment, "production")
         from apps.audit.models import AuditLog
 
         self.assertTrue(

@@ -424,12 +424,8 @@ def dashboard_view(request):
             }
             partner_query = {"school_id": row["id"]}
             if row["weakest_intervention_code"]:
-                schedule_query["focus_intervention"] = row[
-                    "weakest_intervention_code"
-                ]
-                partner_query["focus_intervention"] = row[
-                    "weakest_intervention_code"
-                ]
+                schedule_query["focus_intervention"] = row["weakest_intervention_code"]
+                partner_query["focus_intervention"] = row["weakest_intervention_code"]
             row["schedule_url"] = (
                 f"/planning/schedule-modal?{urlencode(schedule_query)}"
             )

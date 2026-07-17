@@ -39,15 +39,16 @@ def analytics_dashboard_view(request):
 
     # 2. Call Service to gather all dashboard datasets
     data = AnalyticsDashboardService.get_analytics_data(request.user, filters)
-    from apps.analytics.models import DEFAULT_ANALYTICS_CARDS, AnalyticsDashboardPreference
+    from apps.analytics.models import (
+        DEFAULT_ANALYTICS_CARDS,
+        AnalyticsDashboardPreference,
+    )
     from apps.analytics.report_delivery import CARD_CATEGORY
 
     preference = AnalyticsDashboardPreference.objects.filter(
         user_id=request.user.id
     ).first()
-    visible_cards = (
-        preference.visible_cards if preference else DEFAULT_ANALYTICS_CARDS
-    )
+    visible_cards = preference.visible_cards if preference else DEFAULT_ANALYTICS_CARDS
     data["kpi_strip_items"] = [
         item
         for item in data.get("kpi_strip_items", [])
@@ -233,9 +234,7 @@ def analytics_drilldown_view(request):
         schools = schools.filter(id__in=scope.school_ids)
         activities = activities.filter(school_id__in=scope.school_ids)
         if scope.partner_ids:
-            activities = activities.filter(
-                assigned_partner_id__in=scope.partner_ids
-            )
+            activities = activities.filter(assigned_partner_id__in=scope.partner_ids)
 
     title = "Drilldown Details"
     description = "Traceable source records for the selected metric."
@@ -492,7 +491,10 @@ def analytics_schedule_report_view(request):
 def analytics_customize_dashboard_view(request):
     """Persist the caller's KPI visibility and density preferences."""
     from apps.analytics.forms import AnalyticsDashboardPreferenceForm
-    from apps.analytics.models import AnalyticsDashboardPreference, DEFAULT_ANALYTICS_CARDS
+    from apps.analytics.models import (
+        AnalyticsDashboardPreference,
+        DEFAULT_ANALYTICS_CARDS,
+    )
     from apps.audit.services import log as audit_log
 
     preference = AnalyticsDashboardPreference.objects.filter(

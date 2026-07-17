@@ -7,31 +7,55 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('partners', '0005_partnerassignment_support_type_and_more'),
-        ('schools', '0014_school_school_name_trgm_idx'),
+        ("partners", "0005_partnerassignment_support_type_and_more"),
+        ("schools", "0014_school_school_name_trgm_idx"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PartnerActivityAllowance',
+            name="PartnerActivityAllowance",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('fy', models.CharField(max_length=16)),
-                ('additional_activities', models.PositiveIntegerField(default=1)),
-                ('activity_type', models.CharField(blank=True, max_length=64, null=True)),
-                ('granted_by', models.CharField(max_length=30)),
-                ('reason', models.TextField()),
-                ('expires_at', models.DateField(blank=True, null=True)),
-                ('partner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='activity_allowances', to='partners.partner')),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='partner_activity_allowances', to='schools.school')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("fy", models.CharField(max_length=16)),
+                ("additional_activities", models.PositiveIntegerField(default=1)),
+                (
+                    "activity_type",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("granted_by", models.CharField(max_length=30)),
+                ("reason", models.TextField()),
+                ("expires_at", models.DateField(blank=True, null=True)),
+                (
+                    "partner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="activity_allowances",
+                        to="partners.partner",
+                    ),
+                ),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="partner_activity_allowances",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'partner_activity_allowance',
-                'ordering': ['-created_at'],
+                "db_table": "partner_activity_allowance",
+                "ordering": ["-created_at"],
             },
         ),
     ]

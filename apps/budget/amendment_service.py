@@ -46,9 +46,7 @@ def request_amendment(activity_id: str, data: dict, principal) -> BudgetAmendmen
     from apps.activities.models import Activity
     from apps.activities.services import _assert_in_scope, _parse_date
 
-    activity = Activity.objects.filter(
-        id=activity_id, deleted_at__isnull=True
-    ).first()
+    activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
     if not activity:
         raise NotFoundError("Activity not found.")
     _assert_in_scope(activity, principal)
@@ -68,9 +66,7 @@ def request_amendment(activity_id: str, data: dict, principal) -> BudgetAmendmen
     ).exists():
         raise BadRequest("An amendment for this activity is already in review.")
 
-    original_amount = sum(
-        line.amount for line in activity.schedule_cost_lines.all()
-    )
+    original_amount = sum(line.amount for line in activity.schedule_cost_lines.all())
     amendment = BudgetAmendment.objects.create(
         activity=activity,
         original_date=activity.planned_date,

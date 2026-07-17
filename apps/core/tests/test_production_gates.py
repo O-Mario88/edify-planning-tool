@@ -102,9 +102,7 @@ class BudgetAmendmentTest(TestCase):
         from apps.budget.amendment_service import approve_amendment
 
         amendment = self._request()
-        line_ids = set(
-            self.activity.schedule_cost_lines.values_list("id", flat=True)
-        )
+        line_ids = set(self.activity.schedule_cost_lines.values_list("id", flat=True))
         applied = approve_amendment(amendment.id, {"note": "ok"}, self.accountant)
         self.assertEqual(applied.status, "applied")
         self.activity.refresh_from_db()
@@ -150,9 +148,7 @@ class EvidenceRequirementTest(TestCase):
         from apps.evidence.models import EvidenceRecord
         from apps.evidence.requirements import missing_evidence_kinds, required_kinds
 
-        self.assertNotEqual(
-            required_kinds("school_visit"), required_kinds("training")
-        )
+        self.assertNotEqual(required_kinds("school_visit"), required_kinds("training"))
         school = _world("EV1")
         visit = Activity.objects.create(
             school=school,
@@ -359,7 +355,9 @@ class FinanceSeamVerificationTest(TestCase):
             scheduled_date=timezone.now(),
             planned_date=timezone.now().date(),
         )
-        line = _line(activity, 60_000, owner=self.owner.id, planned=timezone.now().date())
+        line = _line(
+            activity, 60_000, owner=self.owner.id, planned=timezone.now().date()
+        )
         adv = AdvanceRequest.objects.create(
             activity=activity,
             budget_line=line,
@@ -476,11 +474,11 @@ class EntitlementGateTest(TestCase):
         # Scheduling is intentionally blocked without a published CD catalogue.
         # This entitlement fixture exercises slot behaviour, so it provides the
         # minimum valid operational configuration rather than bypassing costing.
-        CostCatalogue.objects.create(
+        CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(),
             version=1,
-            label="Entitlement test catalogue",
-        )
+            defaults={"label": "Entitlement test catalogue"},
+        )[0]
         for key, label in (
             ("staff_visit_transport_primary", "Transport (primary)"),
             ("lunch", "Lunch"),
@@ -488,7 +486,9 @@ class EntitlementGateTest(TestCase):
             ("group_training_venue_cost", "Training venue"),
             ("group_training_participant_meal_cost_per_head", "Training meals"),
         ):
-            CostSetting.objects.create(key=key, label=label, unit_cost=5_000, version=1)
+            CostSetting.objects.get_or_create(
+                key=key, defaults={"label": label, "unit_cost": 5_000, "version": 1}
+            )[0]
         from apps.ssa.models import SsaRecord, SsaScore
 
         record = SsaRecord.objects.create(
@@ -563,11 +563,11 @@ class EntitlementGateTest(TestCase):
         from apps.activities.services import create
 
         future_fy = get_operational_fy(future_fy_date)
-        CostCatalogue.objects.create(
+        CostCatalogue.objects.get_or_create(
             fy=future_fy,
             version=1,
-            label="Next FY entitlement test catalogue",
-        )
+            defaults={"label": "Next FY entitlement test catalogue"},
+        )[0]
 
         future = create(
             {
@@ -614,9 +614,9 @@ class EntitlementGateTest(TestCase):
                 {
                     "activityType": "core_visit",
                     "schoolId": self.school.school_id,
-                    "scheduledDate": (
-                        timezone.now() + timedelta(days=days)
-                    ).strftime("%Y-%m-%d"),
+                    "scheduledDate": (timezone.now() + timedelta(days=days)).strftime(
+                        "%Y-%m-%d"
+                    ),
                     "focusIntervention": "leadership",
                     "strict_validation": True,
                     "activityPurposeText": "Core cap test",

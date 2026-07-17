@@ -25,9 +25,7 @@ _STATIC_SERIES = re.compile(r"data:\s*\[\s*\d+\s*(?:,\s*\d+\s*){2,}\]")
 _LIGHT_GRID = re.compile(r"borderColor:\s*'#f[0-9a-f]{5}'")
 _ELEMENT_ID = re.compile(r'\bid=["\']([\w:-]+)["\']')
 _HTMX_TARGET = re.compile(r'hx-target=["\']#([\w:-]+)["\']')
-_EMPTY_HTMX = re.compile(
-    r"""hx-(?:get|post|put|patch|delete)=["']\s*["']""", re.I
-)
+_EMPTY_HTMX = re.compile(r"""hx-(?:get|post|put|patch|delete)=["']\s*["']""", re.I)
 _CLIENT_ONLY_SUCCESS = re.compile(
     r"""<form\b(?:(?!>).)*@submit\.prevent\s*=\s*["'][^"']*alert\s*\(""",
     re.I | re.S,

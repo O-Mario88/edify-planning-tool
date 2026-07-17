@@ -67,11 +67,11 @@ class FrontendViewsTestCase(TestCase):
         from apps.budget.models import CostCatalogue
         from apps.core.fy import get_operational_fy
 
-        return CostCatalogue.objects.create(
+        return CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(date.fromisoformat(scheduled_date)),
             version=1,
-            label="Frontend workflow test catalogue",
-        )
+            defaults={"label": "Frontend workflow test catalogue"},
+        )[0]
 
     def test_anonymous_redirect_to_login(self):
         # Unauthenticated users should be redirected to login page
@@ -976,9 +976,10 @@ class FrontendViewsTestCase(TestCase):
         from apps.budget.models import CostSetting
 
         self._publish_test_catalogue("2026-07-20")
-        CostSetting.objects.create(
-            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
-        )
+        CostSetting.objects.get_or_create(
+            key="partner_visit_lump_sum",
+            defaults={"label": "Partner Visit", "unit_cost": 35000},
+        )[0]
         partner = Partner.objects.create(name="Gate Partner", active_status=True)
 
         self.client.force_login(self.cceo_user)
@@ -1015,9 +1016,10 @@ class FrontendViewsTestCase(TestCase):
         from apps.budget.models import CostSetting
 
         self._publish_test_catalogue("2026-07-20")
-        CostSetting.objects.create(
-            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
-        )
+        CostSetting.objects.get_or_create(
+            key="partner_visit_lump_sum",
+            defaults={"label": "Partner Visit", "unit_cost": 35000},
+        )[0]
         partner = Partner.objects.create(
             name="Double Click Partner", active_status=True
         )
@@ -1122,9 +1124,10 @@ class FrontendViewsTestCase(TestCase):
         from apps.budget.models import CostSetting
         from apps.ssa.models import SsaRecord, SsaScore
 
-        CostSetting.objects.create(
-            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
-        )
+        CostSetting.objects.get_or_create(
+            key="partner_visit_lump_sum",
+            defaults={"label": "Partner Visit", "unit_cost": 35000},
+        )[0]
         ssa = SsaRecord.objects.create(
             school=self.school,
             date_of_ssa=timezone.make_aware(timezone.datetime(2026, 6, 1)),
@@ -1186,9 +1189,10 @@ class FrontendViewsTestCase(TestCase):
         from apps.accounts.models import StaffSchoolAssignment
 
         self._publish_test_catalogue("2026-07-21")
-        CostSetting.objects.create(
-            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
-        )
+        CostSetting.objects.get_or_create(
+            key="partner_visit_lump_sum",
+            defaults={"label": "Partner Visit", "unit_cost": 35000},
+        )[0]
         partner = Partner.objects.create(name="Bulk Dated Partner", active_status=True)
         second_school = School.objects.create(
             school_id="SCH-100",
@@ -1276,9 +1280,10 @@ class FrontendViewsTestCase(TestCase):
         from apps.budget.models import CostSetting
 
         self._publish_test_catalogue("2026-07-21")
-        CostSetting.objects.create(
-            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
-        )
+        CostSetting.objects.get_or_create(
+            key="partner_visit_lump_sum",
+            defaults={"label": "Partner Visit", "unit_cost": 35000},
+        )[0]
         partner = Partner.objects.create(
             name="Bulk Double Click Partner", active_status=True
         )
@@ -1355,11 +1360,10 @@ class FrontendViewsTestCase(TestCase):
         from apps.activities.models import Activity
         from apps.budget.models import CostSetting
 
-        CostSetting.objects.create(
+        CostSetting.objects.get_or_create(
             key="partner_cluster_activity_rate",
-            label="Partner cluster activity rate",
-            unit_cost=40000,
-        )
+            defaults={"label": "Partner cluster activity rate", "unit_cost": 40000},
+        )[0]
         self.school.cluster_id = self.cluster.id
         self.school.save()
         partner = Partner.objects.create(

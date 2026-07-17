@@ -218,9 +218,9 @@ def school_directory_view(request):
                 school.current_fy_ssa_status or "",
                 school.planning_readiness or "",
             ]
-            for school in schools_qs.select_related(
-                "district", "sub_county", "region"
-            )[:5000]
+            for school in schools_qs.select_related("district", "sub_county", "region")[
+                :5000
+            ]
         )
 
         if export_format == "xlsx":
@@ -1427,9 +1427,7 @@ def school_edit_drawer_view(request, school_id):
 
         with transaction.atomic():
             school.save()
-            set_school_cluster_membership(
-                school, new_cluster, request.user.user_id
-            )
+            set_school_cluster_membership(school, new_cluster, request.user.user_id)
         messages.success(
             request,
             f"School '{school.name}' successfully updated and quality score recalculated!",
@@ -1480,9 +1478,7 @@ def school_onboard_drawer_view(request):
             # If cluster assignment was selected, assign it
             if target_cluster_id:
                 cluster = get_object_or_404(Cluster, id=target_cluster_id)
-                set_school_cluster_membership(
-                    school, cluster, request.user.user_id
-                )
+                set_school_cluster_membership(school, cluster, request.user.user_id)
 
             messages.success(
                 request,

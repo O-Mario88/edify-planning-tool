@@ -90,7 +90,10 @@ class Migration(migrations.Migration):
                 ("next_run_at", models.DateTimeField(db_index=True)),
                 ("last_attempt_at", models.DateTimeField(blank=True, null=True)),
                 ("last_delivered_at", models.DateTimeField(blank=True, null=True)),
-                ("last_error", models.CharField(blank=True, default="", max_length=512)),
+                (
+                    "last_error",
+                    models.CharField(blank=True, default="", max_length=512),
+                ),
                 (
                     "user",
                     models.OneToOneField(
@@ -105,7 +108,8 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="analyticsreportschedule",
             index=models.Index(
-                fields=["is_active", "next_run_at"], name="analytics_r_is_acti_3b3302_idx"
+                fields=["is_active", "next_run_at"],
+                name="analytics_r_is_acti_3b3302_idx",
             ),
         ),
     ]

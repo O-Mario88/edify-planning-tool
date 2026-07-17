@@ -24,7 +24,9 @@ def repair_membership(apps, schema_editor):
     ):
         fallback_by_school.setdefault(row["school_id"], row["cluster_id"])
 
-    for school in School.objects.all().only("id", "cluster_id", "cluster_status").iterator():
+    for school in (
+        School.objects.all().only("id", "cluster_id", "cluster_status").iterator()
+    ):
         target_cluster_id = (
             school.cluster_id
             if school.cluster_id in valid_cluster_ids

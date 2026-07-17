@@ -58,11 +58,11 @@ class PartnerAndClusterFlowTest(APITestCase):
     def setUp(self):
         # Partner and cluster work is costed work; establish the CD-published
         # catalogue required by the real scheduling API before testing flow.
-        CostCatalogue.objects.create(
+        CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(),
             version=1,
-            label="Partner and cluster flow test catalogue",
-        )
+            defaults={"label": "Partner and cluster flow test catalogue"},
+        )[0]
         self.region = Region.objects.create(name="Flow Region")
         self.district = District.objects.create(
             name="Flow District", region=self.region
@@ -79,23 +79,31 @@ class PartnerAndClusterFlowTest(APITestCase):
 
         # Cost catalogue (reference data) — staff visit + partner lump sum + full
         # cluster-training rate card (training_fee, venue, meals, mobilisation).
-        CostSetting.objects.create(
-            key="staff_visit_transport_primary", label="Transport", unit_cost=10000
-        )
-        CostSetting.objects.create(key="lunch", label="Lunch", unit_cost=5000)
-        CostSetting.objects.create(
-            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
-        )
-        CostSetting.objects.create(
-            key="training_session_fee", label="Training Fee", unit_cost=50000
-        )
-        CostSetting.objects.create(key="venue", label="Venue", unit_cost=30000)
-        CostSetting.objects.create(
-            key="meals_per_participant", label="Meals", unit_cost=5000
-        )
-        CostSetting.objects.create(
-            key="mobilisation_per_participant", label="Mobilisation", unit_cost=2000
-        )
+        CostSetting.objects.get_or_create(
+            key="staff_visit_transport_primary",
+            defaults={"label": "Transport", "unit_cost": 10000},
+        )[0]
+        CostSetting.objects.get_or_create(
+            key="lunch", defaults={"label": "Lunch", "unit_cost": 5000}
+        )[0]
+        CostSetting.objects.get_or_create(
+            key="partner_visit_lump_sum",
+            defaults={"label": "Partner Visit", "unit_cost": 35000},
+        )[0]
+        CostSetting.objects.get_or_create(
+            key="training_session_fee",
+            defaults={"label": "Training Fee", "unit_cost": 50000},
+        )[0]
+        CostSetting.objects.get_or_create(
+            key="venue", defaults={"label": "Venue", "unit_cost": 30000}
+        )[0]
+        CostSetting.objects.get_or_create(
+            key="meals_per_participant", defaults={"label": "Meals", "unit_cost": 5000}
+        )[0]
+        CostSetting.objects.get_or_create(
+            key="mobilisation_per_participant",
+            defaults={"label": "Mobilisation", "unit_cost": 2000},
+        )[0]
 
     # ── Demo Flow 4: partner workflow ────────────────────────────────────────
     def test_assign_to_partner_then_partner_schedules_and_uploads_evidence(self):

@@ -486,15 +486,11 @@ def schedule_modal_view(request):
     )
     if recommended_activity_type not in school_activity_types:
         recommended_activity_type = ActivityType.SCHOOL_VISIT
-    if (
-        school.current_fy_ssa_status != "done"
-        and recommended_activity_type
-        not in {
-            ActivityType.BASELINE_SSA_VISIT,
-            ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
-            ActivityType.SCHOOL_VISIT,
-        }
-    ):
+    if school.current_fy_ssa_status != "done" and recommended_activity_type not in {
+        ActivityType.BASELINE_SSA_VISIT,
+        ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
+        ActivityType.SCHOOL_VISIT,
+    }:
         recommended_activity_type = ActivityType.BASELINE_SSA_VISIT
     recommended_activity_label = dict(ActivityType.choices).get(
         recommended_activity_type, "School Visit"
@@ -689,9 +685,7 @@ def assign_partner_modal_view(request):
         "drawer_type": "center",
         # Optional project context — stamps the partner activity for the loop.
         "project_id": request.GET.get("project_id", ""),
-        "recommended_focus_intervention": request.GET.get(
-            "focus_intervention", ""
-        ),
+        "recommended_focus_intervention": request.GET.get("focus_intervention", ""),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
 
@@ -740,9 +734,7 @@ def assign_partner_action_view(request):
         # without a profile attributable without creating a second identity
         # scheme for normal field staff.
         monitored_by_staff_id = (
-            request.user.staff_profile_id
-            or request.user.user_id
-            or request.user.id
+            request.user.staff_profile_id or request.user.user_id or request.user.id
         )
 
         def _finalize(pa, *, school=None, cluster=None, act_type, extra_fields=None):
@@ -1063,9 +1055,7 @@ def bulk_action_view(request):
                 pass
 
         monitored_by_staff_id = (
-            request.user.staff_profile_id
-            or request.user.user_id
-            or request.user.id
+            request.user.staff_profile_id or request.user.user_id or request.user.id
         )
         dedup_window = timezone.timedelta(seconds=15)
 

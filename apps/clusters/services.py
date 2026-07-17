@@ -1035,14 +1035,15 @@ class ClusterDashboardService:
             filtered_qs = filtered_qs.filter(sub_county_id=sub_county_id)
         if staff_id:
             staff_cluster_ids = (
-                School.objects.filter(account_owner_id=staff_id, deleted_at__isnull=True)
+                School.objects.filter(
+                    account_owner_id=staff_id, deleted_at__isnull=True
+                )
                 .exclude(cluster_id__isnull=True)
                 .exclude(cluster_id="")
                 .values("cluster_id")
             )
             filtered_qs = filtered_qs.filter(
-                Q(responsible_staff_id=staff_id)
-                | Q(id__in=staff_cluster_ids)
+                Q(responsible_staff_id=staff_id) | Q(id__in=staff_cluster_ids)
             ).distinct()
 
         # Get all planning info

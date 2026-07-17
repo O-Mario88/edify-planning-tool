@@ -121,6 +121,7 @@ def active_target_areas() -> list[TargetArea]:
             )
     return list(TargetArea.objects.filter(active=True).order_by("sort_order"))
 
+
 NEXT_ACTIONS = {
     "school_visits": ("Open Planning", "/planning"),
     "cluster_meetings": ("Open Planning", "/planning"),

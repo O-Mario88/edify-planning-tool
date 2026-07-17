@@ -25,6 +25,8 @@ class ThemeSystemContractTest(TestCase):
         for mode in ("system", "light", "blue", "dark"):
             self.assertContains(response, f"setTheme('{mode}')")
         self.assertContains(response, "Light by day, dark after 19:00")
+        self.assertContains(response, "Night black")
+        self.assertContains(response, "OLED-friendly")
 
     def test_bootstrap_and_runtime_keep_system_as_a_real_preference(self):
         response = self.client.get("/settings")
@@ -38,3 +40,10 @@ class ThemeSystemContractTest(TestCase):
         self.assertIn("['system', 'light', 'blue', 'dark']", javascript)
         self.assertIn("millisecondsUntilSystemBoundary", javascript)
         self.assertIn("preference: mode", javascript)
+        self.assertIn("toggleNight()", javascript)
+
+        design_system = (
+            Path(settings.BASE_DIR) / "static/css/design-system.css"
+        ).read_text(encoding="utf-8")
+        self.assertIn("--edify-bg: #000000", design_system)
+        self.assertIn("--edify-canvas-treatment: none", design_system)
