@@ -12,11 +12,11 @@
   </div>
 
   {# ── The operating flow ────────────────────────────────────────────────── #}
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">The Workflow, End to End</h2>
     <div class="flex flex-wrap items-center gap-1.5 edify-text-caption font-bold">
       {% for step in "School Upload,Clustering,Planning,Scheduling,Fund Request,Execution,Evidence + SF ID,IA Verification,Accountability,Closure,Analytics"|split:"," %}
-      <span class="px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-600">{{ step }}</span>
+      <span class="px-2 py-1 rounded-pill bg-slate-50 border border-slate-200 text-slate-600">{{ step }}</span>
       {% if not forloop.last %}<svg class="h-3 w-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>{% endif %}
       {% endfor %}
     </div>
@@ -30,7 +30,7 @@
   {# ── Role guides ───────────────────────────────────────────────────────── #}
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"
        x-data="{ open: '' }">
-    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <h3 class="text-[12.5px] font-bold text-slate-800">CCEO — Field Execution</h3>
       <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
         <li><b>Plan</b> your school visits in <a href="/planning" class="text-blue-600 font-semibold">Planning</a> — select schools, pick a day; the live route preview scores feasibility, travel load and cost per school before you confirm.</li>
@@ -40,7 +40,7 @@
         <li>Watch <a href="/todos" class="text-blue-600 font-semibold">To-Do</a> — it derives live from your actual workflow state and clears itself when you act.</li>
       </ul>
     </div>
-    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <h3 class="text-[12.5px] font-bold text-slate-800">Program Lead — Team Command</h3>
       <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
         <li>Your <a href="/dashboard" class="text-blue-600 font-semibold">dashboard</a> is scoped to your supervised CCEOs only — targets, backlog, SSA risk, route quality.</li>
@@ -49,7 +49,7 @@
         <li>Review completed activities in the PL queue before they proceed to IA verification.</li>
       </ul>
     </div>
-    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <h3 class="text-[12.5px] font-bold text-slate-800">Country Director — National Oversight</h3>
       <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
         <li>The <a href="/dashboard" class="text-blue-600 font-semibold">CD dashboard</a> surfaces what needs you today: escalated fund requests, the monthly budget stage, PL risk.</li>
@@ -58,7 +58,7 @@
         <li>Maintain <a href="/cost-settings" class="text-blue-600 font-semibold">Cost Settings</a> and district classifications — scheduling depends on them.</li>
       </ul>
     </div>
-    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <h3 class="text-[12.5px] font-bold text-slate-800">IA · Accountant · RVP · HR</h3>
       <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
         <li><b>IA</b> verifies completed work in the <a href="/ia/verification/" class="text-blue-600 font-semibold">Verification Queue</a> — evidence, duplicates, SSA uploads.</li>
@@ -70,7 +70,7 @@
   </div>
 
   {# ── FAQs ──────────────────────────────────────────────────────────────── #}
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-1" x-data="{ open: 0 }">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-1" x-data="{ open: 0 }">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight pb-2">Frequently Asked</h2>
     {% for q, a in faqs %}
     <div class="border-t border-slate-50">
@@ -84,9 +84,9 @@
     {% endfor %}
   </div>
 
-  <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 flex items-center justify-between gap-3">
+  <div class="rounded-surface border border-slate-200 bg-slate-50 px-4 py-3 flex items-center justify-between gap-3">
     <p class="edify-text-caption font-semibold text-slate-600">Still stuck? Message your supervisor or the Admin team directly.</p>
-    <a href="/messages/new" class="h-8 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold inline-flex items-center transition-colors shrink-0">New Message</a>
+    <a href="/messages/new" class="h-8 px-3 rounded-control bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold inline-flex items-center transition-colors shrink-0">New Message</a>
   </div>
 
 </div>

@@ -16,7 +16,7 @@
 <form method="post" action="" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="cancel">
-<button type="submit" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold rounded-lg transition-all">
+<button type="submit" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold rounded-control transition-all">
 Cancel Import
 </button>
 </form>
@@ -24,7 +24,7 @@ Cancel Import
 <form method="post" action="" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="confirm">
-<button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold rounded-lg shadow-sm transition-all">
+<button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold rounded-control shadow-sm transition-all">
 Confirm & Import
 </button>
 </form>
@@ -32,31 +32,31 @@ Confirm & Import
 </div>
 
 <!-- KPI summary strip -->
-<div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-<a href="?tab=ready" class="p-4 rounded-xl border transition-all {% if tab == 'ready' %}bg-emerald-50/50 border-emerald-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-4" role="tablist" aria-label="Upload validation views">
+<a id="upload-tab-ready" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'ready' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'ready' %}0{% else %}-1{% endif %}" href="?tab=ready" class="p-4 rounded-surface border transition-all {% if tab == 'ready' %}bg-emerald-50/50 border-emerald-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Ready to Import</span>
 <span class="text-[21px] font-extrabold tracking-tight text-emerald-600 mt-2">{{ stats.ready }}</span>
 </a>
-<a href="?tab=update" class="p-4 rounded-xl border transition-all {% if tab == 'update' %}bg-indigo-50/50 border-indigo-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
+<a id="upload-tab-update" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'update' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'update' %}0{% else %}-1{% endif %}" href="?tab=update" class="p-4 rounded-surface border transition-all {% if tab == 'update' %}bg-indigo-50/50 border-indigo-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Will Update</span>
 <span class="text-[21px] font-extrabold tracking-tight text-indigo-600 mt-2">{{ stats.update }}</span>
 </a>
-<a href="?tab=review" class="p-4 rounded-xl border transition-all {% if tab == 'review' %}bg-blue-50/50 border-blue-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
+<a id="upload-tab-review" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'review' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'review' %}0{% else %}-1{% endif %}" href="?tab=review" class="p-4 rounded-surface border transition-all {% if tab == 'review' %}bg-blue-50/50 border-blue-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Needs Review</span>
 <span class="text-[21px] font-extrabold tracking-tight text-blue-600 mt-2">{{ stats.review }}</span>
 </a>
-<a href="?tab=duplicate" class="p-4 rounded-xl border transition-all {% if tab == 'duplicate' %}bg-amber-50/50 border-amber-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
+<a id="upload-tab-duplicate" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'duplicate' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'duplicate' %}0{% else %}-1{% endif %}" href="?tab=duplicate" class="p-4 rounded-surface border transition-all {% if tab == 'duplicate' %}bg-amber-50/50 border-amber-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Duplicate Risk</span>
 <span class="text-[21px] font-extrabold tracking-tight text-amber-600 mt-2">{{ stats.duplicate }}</span>
 </a>
-<a href="?tab=blocked" class="p-4 rounded-xl border transition-all {% if tab == 'blocked' %}bg-rose-50/50 border-rose-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
+<a id="upload-tab-blocked" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'blocked' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'blocked' %}0{% else %}-1{% endif %}" href="?tab=blocked" class="p-4 rounded-surface border transition-all {% if tab == 'blocked' %}bg-rose-50/50 border-rose-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Blocked Rows</span>
 <span class="text-[21px] font-extrabold tracking-tight text-rose-600 mt-2">{{ stats.blocked }}</span>
 </a>
 </div>
 
 <!-- Preview table -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div id="upload-preview-panel" class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden" role="tabpanel" aria-live="polite">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
@@ -85,7 +85,7 @@ Confirm & Import
 {% if r.validation_errors %}
 <div class="flex flex-wrap gap-1.5">
 {% for err in r.validation_errors %}
-<span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-semibold bg-rose-50 text-rose-700">
+<span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700">
 {{ err }}
 </span>
 {% endfor %}

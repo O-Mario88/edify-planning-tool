@@ -126,6 +126,22 @@ class Command(BaseCommand):
                 "data are for local development only — production receives real data "
                 "through backend upload/admin workflows."
             )
+        # The env-only check above cannot catch the most dangerous accident:
+        # a LOCAL shell whose DATABASE_URL points at the LIVE database. The
+        # database's own stamp can — refuse demo seeding into any database
+        # stamped production, regardless of what this process believes it is.
+        if demo:
+            from apps.system_health.models import EnvironmentStamp
+
+            stamp = EnvironmentStamp.objects.filter(
+                id=EnvironmentStamp.SINGLETON_ID
+            ).first()
+            if stamp and stamp.environment == "production":
+                raise CommandError(
+                    "Refusing to seed demo data: this DATABASE is stamped "
+                    "'production' (your DATABASE_URL points at the live "
+                    "database). Fix .env before seeding."
+                )
 
         self.stdout.write(self.style.MIGRATE_HEADING("Seeding Edify API..."))
         self._seed_permissions()
@@ -138,6 +154,17 @@ class Command(BaseCommand):
             self._seed_demo_accounts()
             self._seed_geography()
             self._seed_sample_data()
+            # Mark THIS database as demo-seeded — if this database ever
+            # reaches production (dump restore), System Health raises a
+            # critical "demo data on production" blocker.
+            from django.utils import timezone as _tz
+
+            from apps.system_health.models import EnvironmentStamp
+
+            EnvironmentStamp.objects.update_or_create(
+                id=EnvironmentStamp.SINGLETON_ID,
+                defaults={"seeded_demo_at": _tz.now()},
+            )
             self.stdout.write(
                 self.style.WARNING(
                     "  ⚠ Demo data seeded — LOCAL DEVELOPMENT ONLY. Do NOT deploy this database."

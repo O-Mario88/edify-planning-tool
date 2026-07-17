@@ -11,31 +11,31 @@
       <h1 class="text-[21px] font-extrabold tracking-tight">Today</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">Your organization's field work for {{ today|date:"l, d M Y" }}.</p>
     </div>
-    <a href="/my-plan" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-lg transition-colors w-fit">
+    <a href="/my-plan" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-control transition-colors w-fit">
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       Open My Plan
     </a>
   </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Scheduled Today</p>
       <p class="text-[19px] font-bold text-slate-800 tabular-nums mt-0.5">{{ today_activities|length }}</p>
       <p class="edify-text-caption font-semibold text-slate-400">assigned to your organization</p>
     </div>
-    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Upcoming</p>
       <p class="text-[19px] font-bold text-slate-800 tabular-nums mt-0.5">{{ upcoming|length }}</p>
       <p class="edify-text-caption font-semibold text-slate-400">next scheduled visits</p>
     </div>
-    <a href="/partner/evidence" class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all">
+    <a href="/partner/evidence" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Evidence</p>
       <p class="text-[13px] font-bold text-blue-600 mt-1.5">Upload & track →</p>
       <p class="edify-text-caption font-semibold text-slate-400">completed work needs evidence</p>
     </a>
   </div>
 
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Today's Activities</h2>
     {% if today_activities %}
     <div class="divide-y divide-slate-50">
@@ -45,7 +45,7 @@
           <p class="text-[12.5px] font-semibold truncate">{% if a.school %}{{ a.school.name }}{% elif a.cluster %}{{ a.cluster.name }}{% else %}Activity{% endif %}</p>
           <p class="edify-text-caption text-slate-400 capitalize">{{ a.activity_type|cut:"_" }}{% if a.focus_intervention %} · {{ a.focus_intervention|cut:"_" }}{% endif %}</p>
         </div>
-        <span class="px-2 py-0.5 rounded-full edify-text-caption font-bold shrink-0
+        <span class="px-2 py-0.5 rounded-pill edify-text-caption font-bold shrink-0
           {% if a.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif a.status == 'scheduled' %}bg-sky-50 text-sky-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ a.status|cut:"_"|title }}</span>
       </div>
       {% endfor %}
@@ -55,7 +55,7 @@
     {% endif %}
   </div>
 
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Coming Up</h2>
     {% if upcoming %}
     <div class="divide-y divide-slate-50">

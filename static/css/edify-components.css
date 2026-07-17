@@ -62,13 +62,14 @@
   background-color: var(--edify-surface);
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-sm);
-  padding: 1.25rem;
+  padding: 0.75rem;
   box-shadow: var(--edify-shadow-sm);
   transition: var(--edify-transition-all);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 108px;
+  min-block-size: 5.75rem;
+  height: 100%;
 }
 .edify-kpi-card:hover {
   box-shadow: var(--edify-shadow-md);

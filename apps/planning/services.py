@@ -31,14 +31,35 @@ def setup(query: dict, principal) -> list[dict]:
 
     from apps.ssa.models import SsaRecord
 
-    records = SsaRecord.objects.filter(
-        school__in=schools, fy=fy, deleted_at__isnull=True
-    ).prefetch_related("scores")
+    # Canonical decision rule (apps.ssa.services.latest_applicable_record):
+    # confirmed records only — this function previously ranked weakest areas
+    # from unconfirmed uploads while its sibling below required confirmed,
+    # so the two planning surfaces could disagree on the same school.
+    # Latest confirmed record per school ACROSS FYs (not fy-filtered): the
+    # canonical rule (latest_applicable_record) and the create() gate use the
+    # newest confirmed SSA regardless of FY — a school whose only confirmed
+    # SSA is prior-FY still shows its weakest areas here (with staleness
+    # surfaced separately via current_fy_ssa_status), instead of a blank that
+    # disagreed with the scheduling gate.
+    records = (
+        SsaRecord.objects.filter(
+            school__in=schools,
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        )
+        .order_by("school_id", "-date_of_ssa", "-created_at")
+        .prefetch_related("scores")
+    )
 
     school_weakest = {}
+    seen_schools = set()
     for r in records:
+        if r.school_id in seen_schools:
+            continue
+        seen_schools.add(r.school_id)
         scores = sorted(
-            r.scores.all().values("intervention", "score"), key=lambda s: s["score"]
+            r.scores.all().values("intervention", "score"),
+            key=lambda s: (s["score"], s["intervention"]),
         )
         weakest_list = []
         for s in scores[:2]:

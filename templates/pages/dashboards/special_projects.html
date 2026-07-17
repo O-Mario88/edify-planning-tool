@@ -4,7 +4,7 @@
 {% block title %}Special Projects Dashboard — SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;color:var(--edify-text);">
+<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-3">
@@ -18,7 +18,7 @@
 <div class="flex flex-wrap items-center gap-2">
 <!-- User profile info -->
 <div class="flex items-center gap-2">
-<div class="h-8 w-8 rounded-full bg-slate-100 font-semibold text-[12px] flex items-center justify-center ">{{ avatar_initials }}</div>
+<div class="h-8 w-8 rounded-pill bg-slate-100 font-semibold text-[12px] flex items-center justify-center ">{{ avatar_initials }}</div>
 <span class="edify-text-caption font-semibold text-slate-800 hidden sm:inline">{{ user_name }}</span>
 </div>
 </div>
@@ -26,9 +26,9 @@
 
 
 <!-- Transformational Programs Banner -->
-<div class="bg-[var(--edify-primary-active)] text-white p-6 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
+<div class="bg-[var(--edify-primary-active)] text-white p-6 rounded-surface flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
 <!-- SVG background shape decoration -->
-<div class="absolute -right-20 -top-20 w-64 h-64 bg-slate-800/10 rounded-full blur-3xl"></div>
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-slate-800/10 rounded-pill blur-3xl"></div>
 <div class="relative z-10">
 <h2 class="text-[21px] font-extrabold tracking-tight leading-snug">Build transformational programs. Scale impact beyond the core model.</h2>
 <p class="text-[12px] text-slate-300 font-bold mt-1 max-w-[800px]">Special projects expand opportunity, strengthen schools, and equip teachers for lasting change.</p>
@@ -45,10 +45,10 @@
 
 <!-- Buttons Toolbar -->
 <div class="flex flex-wrap items-center gap-2">
-<a href="/schools/upload" class="inline-flex items-center h-9 px-3.5 edify-surface  rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
+<a href="/schools/upload" class="inline-flex items-center h-9 px-3.5 edify-surface  rounded-control text-[12px] font-bold shadow-sm hover:bg-slate-50">
 Import Schools
 </a>
-<a href="/analytics" class="inline-flex items-center h-9 px-3.5 edify-surface  rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
+<a href="/analytics" class="inline-flex items-center h-9 px-3.5 edify-surface  rounded-control text-[12px] font-bold shadow-sm hover:bg-slate-50">
 Track Impact
 </a>
 </div>

@@ -386,6 +386,7 @@ def dashboard_view(request):
         # (responsible_staff_id is stamped as either the StaffProfile or User
         # CUID) plus the partner work they monitor — matches the To-Do queue.
         from apps.core.scoping import resolve_user_scope
+        from apps.core.fy import get_operational_fy
 
         _scope = resolve_user_scope(user)
         _owner_ids = [
@@ -395,6 +396,46 @@ def dashboard_view(request):
             Q(responsible_staff_id__in=_owner_ids)
             | Q(monitored_by_staff_id__in=_owner_ids, delivery_type="partner")
         )
+
+        # Owner-scoped urgent-school decision queue. It deliberately reuses
+        # the same SSA/activity risk contract as the PL dashboard, then exposes
+        # both valid CCEO responses: schedule direct support or hand it to a
+        # partner. The drawers enforce object scope and permissions again.
+        from urllib.parse import urlencode
+
+        from apps.analytics.pl_analytics_service import PLScope, PLAnalyticsService
+
+        _dashboard_fy = get_operational_fy()
+        _risk_scope = PLScope(
+            user=user,
+            pl_staff_id=user.staff_profile_id,
+            responsible_ids=set(_owner_ids),
+            school_ids=list(_scope.own_school_ids),
+            district_ids=list(_scope.district_ids),
+            cluster_ids=list(_scope.cluster_ids),
+        )
+        urgent_schools = PLAnalyticsService.risk_list(
+            _risk_scope, _dashboard_fy, None, {}, limit=8
+        )["rows"]
+        for row in urgent_schools:
+            schedule_query = {
+                "school_id": row["id"],
+                "recommended_activity_type": row["recommended_activity_type"],
+            }
+            partner_query = {"school_id": row["id"]}
+            if row["weakest_intervention_code"]:
+                schedule_query["focus_intervention"] = row[
+                    "weakest_intervention_code"
+                ]
+                partner_query["focus_intervention"] = row[
+                    "weakest_intervention_code"
+                ]
+            row["schedule_url"] = (
+                f"/planning/schedule-modal?{urlencode(schedule_query)}"
+            )
+            row["partner_url"] = (
+                f"/planning/assign-partner-modal?{urlencode(partner_query)}"
+            )
 
         completed_cnt = cc_activities.filter(status="completed").count()
         in_progress_cnt = cc_activities.filter(
@@ -692,6 +733,7 @@ def dashboard_view(request):
             "todos": todo_data["todos"][:6],
             "todo_counts": todo_data["counts"],
             "todo_total": todo_data["total"],
+            "urgent_schools": urgent_schools,
         }
         return render(request, "pages/dashboards/cceo.html", context)
 
@@ -856,6 +898,94 @@ def pl_dashboard_approve_view(request):
     data = ProgramLeadDashboardService.get_dashboard(request.user, fy=fy)
     context = {**data, "fy_options": fy_options(), "approve_error": error}
     return render(request, "partials/dashboards/pl/body.html", context)
+
+
+@require_page_permission("dashboard")
+def pl_send_urgent_action_view(request):
+    """Delegate one currently urgent team school to its supervised CCEO.
+
+    The endpoint is intentionally idempotent: retrying the HTMX request marks
+    the same actionable notification unread instead of creating duplicates.
+    """
+    from django.http import HttpResponseBadRequest, HttpResponseForbidden
+
+    if request.user.active_role != "Program Lead" or request.method != "POST":
+        return HttpResponseForbidden("Program Lead only.")
+
+    from apps.accounts.models import StaffSchoolAssignment
+    from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService
+    from apps.analytics.pl_analytics_service import resolve_pl_scope
+    from apps.core.fy import get_operational_fy
+    from apps.core.scoping import resolve_user_scope
+    from apps.notifications.models import Notification
+    from apps.schools.models import School
+
+    school_id = (request.GET.get("school_id") or "").strip()
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    scope = resolve_user_scope(request.user)
+    if not school_id or school_id not in set(scope.team_school_ids):
+        return HttpResponseForbidden("This is not a supervised CCEO school.")
+
+    school = School.objects.filter(id=school_id).first()
+    if not school:
+        return HttpResponseBadRequest("School not found.")
+
+    owner_assignment = (
+        StaffSchoolAssignment.objects.filter(
+            school_id=school.id, staff_id__in=scope.supervised_staff_ids
+        )
+        .select_related("staff__user")
+        .order_by("created_at")
+        .first()
+    )
+    owner = owner_assignment.staff if owner_assignment else None
+    if not owner or not owner.user_id:
+        return HttpResponseBadRequest(
+            "This school has no supervised CCEO available for delegation."
+        )
+
+    pls = resolve_pl_scope(request.user)
+    urgent_row = next(
+        (
+            row
+            for row in ProgramLeadDashboardService.urgent_schools(
+                request.user, pls, fy, {}, limit=5000
+            )
+            if row["id"] == school.id and row["owner_kind"] == "cceo"
+        ),
+        None,
+    )
+    if not urgent_row:
+        return HttpResponseBadRequest("This school no longer requires urgent action.")
+
+    Notification.objects.update_or_create(
+        recipient_id=owner.user_id,
+        context_type="School",
+        context_id=school.id,
+        source_event_type="urgent_school_delegated",
+        defaults={
+            "recipient_role": "CCEO",
+            "title": f"Urgent school action: {school.name}",
+            "body": (
+                f"{request.user.name} asked you to "
+                f"{urgent_row['recommended_activity_label'].lower()} "
+                f"because the school is flagged for {urgent_row['issue']}."
+            ),
+            "category": "planning",
+            "target_route": "/dashboard#urgent-schools",
+            "action_label": "Open urgent schools",
+            "action_required": True,
+            "priority": "urgent",
+            "status": "unread",
+            "source_event_id": school.id,
+            "read_at": None,
+        },
+    )
+    return render(
+        request,
+        "partials/dashboards/pl/urgent_action_sent.html",
+        {"owner_name": owner.user.name, "school": school},
+    )
 
 
 @require_page_permission("cd_analytics")

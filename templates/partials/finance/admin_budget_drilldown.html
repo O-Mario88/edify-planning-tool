@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}CD Monthly Admin Plan allocation for {{ selected_month }} {{ selected_fy }}{% endblock %}
 
 {% block drawer_badge %}
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase {{ admin_data.status_class }}">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase {{ admin_data.status_class }}">
 {{ admin_data.status_label }}
 </span>
 {% endblock %}
@@ -14,7 +14,7 @@
 <div class="space-y-5 text-[12px] font-semibold text-slate-700 ">
 
 <!-- Plan Summary Info -->
-<div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 border border-slate-100 rounded-xl text-[12px]">
+<div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 border border-slate-100 rounded-surface text-[12px]">
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Total Planned</p>
 <p class="font-semibold text-slate-800 mt-0.5">{{ admin_data.planned_total|ugx }}</p>
@@ -34,7 +34,7 @@
 <p class="edify-text-caption uppercase font-bold text-slate-400">Plan Line Items</p>
 
 {% if admin_data.lines %}
-<div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+<div class="border border-slate-200 rounded-surface overflow-hidden shadow-sm">
 <table class="w-full text-left text-[12px] border-collapse edify-surface">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-200 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
@@ -64,7 +64,7 @@
 </table>
 </div>
 {% else %}
-<div class="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50 text-slate-400 text-[12px] font-bold">
+<div class="p-8 text-center border border-dashed border-slate-200 rounded-surface bg-slate-50/50 text-slate-400 text-[12px] font-bold">
 No administrative budget lines exist for this month.
 </div>
 {% endif %}

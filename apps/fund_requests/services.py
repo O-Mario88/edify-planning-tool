@@ -56,6 +56,36 @@ def submit(data: dict, principal) -> dict:
         "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
     )
     with transaction.atomic():
+        # A re-submit must never silently reset a request that has moved past
+        # the pending stage — rewriting an APPROVED or DISBURSED request back
+        # to SUBMITTED (and rebuilding its items/total) would erase an
+        # approval or, worse, a record of money already released. The weekly
+        # path guards this; the period path did not.
+        existing = (
+            FundRequest.objects.select_for_update()
+            .filter(
+                submitted_by_user_id=principal.user_id,
+                period=period,
+                period_key=period_key,
+            )
+            .first()
+        )
+        resubmittable = {
+            FundRequestStatus.DRAFT,
+            FundRequestStatus.SUBMITTED,
+            FundRequestStatus.RETURNED,
+            FundRequestStatus.REJECTED,
+            FundRequestStatus.RETURNED_BY_PL,
+            FundRequestStatus.RETURNED_BY_CD,
+            FundRequestStatus.RETURNED_BY_RVP,
+            FundRequestStatus.RETURNED_BY_ACCOUNTANT,
+        }
+        if existing and existing.status not in resubmittable:
+            raise BadRequest(
+                f"A {period} request for {period_key} already exists in status "
+                f"'{existing.status}' — it can no longer be re-submitted. Ask "
+                "the approver to return it first if changes are needed."
+            )
         fr, created = FundRequest.objects.update_or_create(
             submitted_by_user_id=principal.user_id,
             period=period,
@@ -174,18 +204,68 @@ def get_one(request_id: str, principal) -> dict:
     return _serialize(fr)
 
 
+# Statuses a reviewer may act on. Approving an already-disbursed request (or
+# re-approving an approved one) would rewrite financial history.
+_REVIEWABLE_STATUSES = (
+    FundRequestStatus.SUBMITTED,
+    FundRequestStatus.SUBMITTED_TO_PL,
+    FundRequestStatus.SUBMITTED_TO_CD,
+    FundRequestStatus.SUBMITTED_TO_RVP,
+    FundRequestStatus.SENT_TO_ACCOUNTANT,
+    FundRequestStatus.HELD,
+)
+
+
 def _review(request_id: str, new_status: str, data: dict, principal) -> dict:
-    fr = FundRequest.objects.filter(id=request_id).first()
-    if not fr:
-        raise NotFoundError("Fund request not found.")
-    fr.status = new_status
-    fr.reviewed_by_user_id = principal.user_id
-    fr.reviewed_at = timezone.now()
-    fr.review_note = data.get("note")
-    fr.save(
-        update_fields=["status", "reviewed_by_user_id", "reviewed_at", "review_note"]
+    with transaction.atomic():
+        fr = FundRequest.objects.select_for_update().filter(id=request_id).first()
+        if not fr:
+            raise NotFoundError("Fund request not found.")
+        # Self-approval is the one chain rule that must hold regardless of
+        # which coarse permission the caller carries (the weekly path enforces
+        # the same rule via _require_weekly_approver).
+        if fr.submitted_by_user_id == principal.user_id:
+            raise BadRequest("You cannot review your own fund request.")
+        if fr.status not in _REVIEWABLE_STATUSES:
+            raise BadRequest(
+                f"A request in status '{fr.status}' can no longer be reviewed."
+            )
+        fr.status = new_status
+        fr.reviewed_by_user_id = principal.user_id
+        fr.reviewed_at = timezone.now()
+        fr.review_note = data.get("note")
+        fr.save(
+            update_fields=[
+                "status",
+                "reviewed_by_user_id",
+                "reviewed_at",
+                "review_note",
+            ]
+        )
+    _audit_fund_request(
+        principal,
+        f"fund_request.{new_status}",
+        fr,
+        {"note": data.get("note") or ""},
     )
     return _serialize(fr)
+
+
+def _audit_fund_request(principal, action: str, fr: FundRequest, payload: dict):
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=action,
+            subject_kind="FundRequest",
+            subject_id=fr.id,
+            actor_id=principal.user_id,
+            actor_role=getattr(principal, "active_role", ""),
+            success=True,
+            payload={"period": fr.period, "period_key": fr.period_key, **payload},
+        )
+    except Exception:  # pragma: no cover — audit must never break the flow
+        pass
 
 
 def approve(request_id: str, data: dict, principal) -> dict:
@@ -201,38 +281,101 @@ def reject(request_id: str, data: dict, principal) -> dict:
 
 
 def disburse(request_id: str, data: dict, principal) -> dict:
-    """Accountant clears an APPROVED request -> disbursed."""
-    fr = FundRequest.objects.filter(id=request_id).first()
-    if not fr:
-        raise NotFoundError("Fund request not found.")
-    if fr.status not in (
-        FundRequestStatus.APPROVED,
-        FundRequestStatus.SENT_TO_ACCOUNTANT,
-    ):
-        raise BadRequest("Only an approved request can be disbursed.")
-    fr.status = FundRequestStatus.DISBURSED
-    fr.disbursed_amount = data.get("amount", fr.total_amount)
-    fr.disbursed_at = timezone.now()
-    fr.disbursed_by_user_id = principal.user_id
-    fr.disburse_method = data.get("method")
-    fr.disburse_reference = data.get("reference")
-    fr.save(
-        update_fields=[
-            "status",
-            "disbursed_amount",
-            "disbursed_at",
-            "disbursed_by_user_id",
-            "disburse_method",
-            "disburse_reference",
-        ]
+    """Accountant clears an APPROVED request -> disbursed.
+
+    select_for_update + the in-transaction status check close the double-click
+    race, and the cross-channel guard refuses to release money for budget
+    lines whose advances were already paid through the weekly/advance queues —
+    the AdvanceRequest rows are the shared ledger all channels converge on."""
+    with transaction.atomic():
+        fr = FundRequest.objects.select_for_update().filter(id=request_id).first()
+        if not fr:
+            raise NotFoundError("Fund request not found.")
+        if fr.status not in (
+            FundRequestStatus.APPROVED,
+            FundRequestStatus.SENT_TO_ACCOUNTANT,
+        ):
+            raise BadRequest("Only an approved request can be disbursed.")
+
+        line_ids = list(
+            fr.items.exclude(activity_schedule_cost_line_id="").values_list(
+                "activity_schedule_cost_line_id", flat=True
+            )
+        )
+        if line_ids:
+            from .models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequest
+
+            already = AdvanceRequest.objects.filter(
+                budget_line_id__in=line_ids,
+                status__in=MONEY_MOVED_ADVANCE_STATUSES,
+            ).count()
+            if already:
+                raise BadRequest(
+                    f"Cannot disburse — {already} of this request's budget lines "
+                    "already had money released through the weekly/advance queue."
+                )
+
+        fr.status = FundRequestStatus.DISBURSED
+        fr.disbursed_amount = data.get("amount", fr.total_amount)
+        fr.disbursed_at = timezone.now()
+        fr.disbursed_by_user_id = principal.user_id
+        fr.disburse_method = data.get("method")
+        fr.disburse_reference = data.get("reference")
+        fr.save(
+            update_fields=[
+                "status",
+                "disbursed_amount",
+                "disbursed_at",
+                "disbursed_by_user_id",
+                "disburse_method",
+                "disburse_reference",
+            ]
+        )
+        # WRITE the shared advance ledger, not just read it. The weekly and
+        # legacy channels both mark child advances DISBURSED when money moves;
+        # this channel only checked — leaving the same cost line payable a
+        # second time through the advance/weekly queue after a period-first
+        # disbursement.
+        if line_ids:
+            AdvanceRequest.objects.filter(
+                budget_line_id__in=line_ids,
+                status__in=[
+                    "pending_responsible_confirmation",
+                    "confirmed_for_advance",
+                    "submitted_to_accountant",
+                ],
+            ).update(
+                status="disbursed",
+                disbursed_at=fr.disbursed_at,
+                disbursed_by_user_id=principal.user_id,
+                disburse_method=fr.disburse_method,
+                disburse_reference=fr.disburse_reference,
+                updated_at=timezone.now(),
+            )
+    _audit_fund_request(
+        principal,
+        "fund_request.disburse",
+        fr,
+        {"amount": fr.disbursed_amount, "reference": fr.disburse_reference or ""},
     )
     return _serialize(fr)
 
 
 def submit_accountability(request_id: str, data: dict, principal) -> dict:
-    fr = FundRequest.objects.filter(id=request_id).first()
+    with transaction.atomic():
+        return _submit_accountability_locked(request_id, data, principal)
+
+
+def _submit_accountability_locked(request_id: str, data: dict, principal) -> dict:
+    fr = FundRequest.objects.select_for_update().filter(id=request_id).first()
     if not fr:
         raise NotFoundError("Fund request not found.")
+    # Accountability exists only for money that actually left the account.
+    if fr.status != FundRequestStatus.DISBURSED:
+        raise BadRequest(
+            f"Accountability can only be submitted for a disbursed request "
+            f"(current status: '{fr.status}')."
+        )
     fr.accounted_amount = data.get("amountSpent")
     fr.returned_amount = data.get("amountReturned")
     fr.accountability_netsuite_id = data.get("netsuiteId")
@@ -253,15 +396,34 @@ def submit_accountability(request_id: str, data: dict, principal) -> dict:
 def review_accountability(
     request_id: str, decision: str, data: dict, principal
 ) -> dict:
-    fr = FundRequest.objects.filter(id=request_id).first()
+    with transaction.atomic():
+        return _review_accountability_locked(request_id, decision, data, principal)
+
+
+def _review_accountability_locked(
+    request_id: str, decision: str, data: dict, principal
+) -> dict:
+    fr = FundRequest.objects.select_for_update().filter(id=request_id).first()
     if not fr:
         raise NotFoundError("Fund request not found.")
+    # Only a disbursed request with submitted accountability is reviewable —
+    # this path previously had NO state guard and could knock a DISBURSED
+    # request back to a resubmittable status, letting submit() rewrite the
+    # items of already-paid work.
+    if fr.status != FundRequestStatus.DISBURSED:
+        raise BadRequest(
+            f"Accountability review requires a disbursed request "
+            f"(current status: '{fr.status}')."
+        )
+    if fr.accountability_status != "submitted":
+        raise BadRequest("No submitted accountability to review.")
     if decision == "approve":
         fr.accountability_status = "approved"
         fr.status = FundRequestStatus.CLOSED
     else:
+        # Return the ACCOUNTABILITY for correction — the request itself stays
+        # DISBURSED (money already moved; the request is not resubmittable).
         fr.accountability_status = "returned"
-        fr.status = FundRequestStatus.RETURNED_BY_ACCOUNTANT
     fr.accountability_reviewed_at = timezone.now()
     fr.reviewed_by_user_id = principal.user_id
     fr.save(

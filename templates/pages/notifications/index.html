@@ -18,7 +18,7 @@
         <input type="hidden" name="action" value="mark_all_read">
         <button
           type="submit"
-          class="h-9 px-4 rounded-xl border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Mark All Read
         </button>
@@ -29,7 +29,7 @@
         <input type="hidden" name="action" value="archive_all_read">
         <button
           type="submit"
-          class="h-9 px-4 rounded-xl border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Archive All Read
         </button>
@@ -40,7 +40,7 @@
   <!-- KPI Strip -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
     <!-- KPI Card: Total -->
-    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-surface p-5 shadow-xs flex items-center justify-between">
       <div>
         <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Total Notifications</p>
         <h3 class="text-[26px] font-bold text-slate-800 mt-1 leading-none">{{ kpis.total }}</h3>
@@ -49,7 +49,7 @@
     </div>
 
     <!-- KPI Card: Unread -->
-    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-surface p-5 shadow-xs flex items-center justify-between">
       <div>
         <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Unread Alerts</p>
         <h3 class="text-[26px] font-bold text-blue-600 mt-1 leading-none">{{ kpis.unread }}</h3>
@@ -58,7 +58,7 @@
     </div>
 
     <!-- KPI Card: Action Required -->
-    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-surface p-5 shadow-xs flex items-center justify-between">
       <div>
         <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Action Required</p>
         <h3 class="text-[26px] font-bold text-amber-600 mt-1 leading-none">{{ kpis.action_required }}</h3>
@@ -67,7 +67,7 @@
     </div>
 
     <!-- KPI Card: Critical -->
-    <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs flex items-center justify-between">
+    <div class="edify-surface border border-slate-200 rounded-surface p-5 shadow-xs flex items-center justify-between">
       <div>
         <p class="edify-text-caption font-black text-slate-400 uppercase tracking-wider">Critical Tasks</p>
         <h3 class="text-[26px] font-bold text-rose-600 mt-1 leading-none">{{ kpis.critical }}</h3>
@@ -77,7 +77,7 @@
   </div>
 
   <!-- Filters & Search Toolbar -->
-  <div class="edify-surface border border-slate-200 rounded-lg p-5 shadow-xs">
+  <div class="edify-surface border border-slate-200 rounded-surface p-5 shadow-xs">
     <form method="get" action="/notifications" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <!-- Search bar -->
@@ -88,7 +88,7 @@
             name="q"
             placeholder="Search keywords, schools, or event details..."
             value="{{ q }}"
-            class="w-full h-10 px-3 border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-850 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+            class="w-full h-10 px-3 border border-slate-250 rounded-control text-[13px] font-semibold text-slate-850 placeholder-slate-400 focus:outline-none focus:border-blue-500"
           >
         </div>
 
@@ -97,7 +97,7 @@
           <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Status</label>
           <select
             name="status"
-            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
+            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-control text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All (except archived)</option>
             <option value="unread" {% if selected_status == 'unread' %}selected{% endif %}>Unread</option>
@@ -111,7 +111,7 @@
           <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Priority</label>
           <select
             name="priority"
-            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-xl text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
+            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-control text-[13px] font-semibold text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="" {% if not selected_priority %}selected{% endif %}>All Priorities</option>
             <option value="low" {% if selected_priority == 'low' %}selected{% endif %}>Low</option>
@@ -128,7 +128,7 @@
           <div>
             <select
               name="category"
-              class="h-9 px-3 edify-surface border border-slate-250 rounded-lg text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer"
+              class="h-9 px-3 edify-surface border border-slate-250 rounded-control text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
               <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
               {% for cat in categories %}
@@ -143,7 +143,7 @@
               name="action_required"
               value="true"
               {% if action_required_only %}checked{% endif %}
-              class="h-4 w-4 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              class="h-4 w-4 rounded-control border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             >
             <span class="text-[12.5px] font-bold text-slate-600">Action Required Only</span>
           </label>
@@ -153,13 +153,13 @@
         <div class="flex items-center gap-2.5">
           <a
             href="/notifications"
-            class="h-9 px-4 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-650 flex items-center justify-center cursor-pointer transition-colors"
+            class="h-9 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-650 flex items-center justify-center cursor-pointer transition-colors"
           >
             Reset Filters
           </a>
           <button
             type="submit"
-            class="h-9 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+            class="h-9 px-5 rounded-control bg-blue-600 hover:bg-blue-700 text-white font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
           >
             Apply Filters
           </button>
@@ -169,13 +169,13 @@
   </div>
 
   <!-- Notification Feed list -->
-  <div class="edify-surface border border-slate-200 rounded-lg overflow-hidden shadow-xs">
+  <div class="edify-surface border border-slate-200 rounded-surface overflow-hidden shadow-xs">
     {% if notifications %}
       <div class="divide-y divide-slate-100">
         {% for n in notifications %}
           <div class="p-5 flex items-start gap-4 transition-colors {% if n.status == 'unread' %}bg-blue-50/15{% endif %} hover:bg-slate-50/50">
             <!-- Priority Indicator Icon -->
-            <div class="h-10 w-10 rounded-xl shrink-0 grid place-items-center border
+            <div class="h-10 w-10 rounded-surface shrink-0 grid place-items-center border
               {% if n.priority == 'urgent' %}
                 bg-rose-50 border-rose-200 text-rose-600
               {% elif n.priority == 'high' %}
@@ -206,12 +206,12 @@
                 </h4>
 
                 <!-- Category Pill -->
-                <span class="inline-flex items-center px-2 py-0.5 rounded-md edify-text-caption font-black uppercase bg-slate-100 text-slate-600 select-none border border-slate-200">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-black uppercase bg-slate-100 text-slate-600 select-none border border-slate-200">
                   {{ n.category|title }}
                 </span>
 
                 <!-- Priority pill label -->
-                <span class="inline-flex items-center px-2 py-0.5 rounded-md edify-text-caption font-bold uppercase select-none border
+                <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase select-none border
                   {% if n.priority == 'urgent' %}
                     bg-rose-50 text-rose-700 border-rose-200
                   {% elif n.priority == 'high' %}
@@ -225,7 +225,7 @@
 
                 <!-- Action Required badge -->
                 {% if n.action_required and n.status == 'unread' %}
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-md edify-text-caption font-black uppercase bg-red-600 text-white select-none animate-pulse">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-black uppercase bg-red-600 text-white select-none animate-pulse">
                     Action Required
                   </span>
                 {% endif %}
@@ -255,7 +255,7 @@
               {% if n.target_route %}
                 <a
                   href="{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route }}{% else %}{{ n.target_route }}{% endif %}"
-                  class="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[12px] uppercase tracking-wider flex items-center justify-center shadow-xs transition-colors cursor-pointer"
+                  class="h-9 px-4 rounded-control bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[12px] uppercase tracking-wider flex items-center justify-center shadow-xs transition-colors cursor-pointer"
                 >
                   {{ n.action_label|default:"Open Record" }}
                 </a>

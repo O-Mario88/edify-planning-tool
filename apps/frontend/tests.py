@@ -1,5 +1,8 @@
+from datetime import date
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.geography.models import Region, District, SubCounty
 from apps.schools.models import School
@@ -59,6 +62,17 @@ class FrontendViewsTestCase(TestCase):
             status="active",
         )
 
+    def _publish_test_catalogue(self, scheduled_date: str):
+        """Provide the CD-owned catalogue required by costed schedule tests."""
+        from apps.budget.models import CostCatalogue
+        from apps.core.fy import get_operational_fy
+
+        return CostCatalogue.objects.create(
+            fy=get_operational_fy(date.fromisoformat(scheduled_date)),
+            version=1,
+            label="Frontend workflow test catalogue",
+        )
+
     def test_anonymous_redirect_to_login(self):
         # Unauthenticated users should be redirected to login page
         response = self.client.get("/dashboard")
@@ -70,6 +84,32 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/cceo.html")
+        self.assertContains(response, "Schools Needing Urgent Attention")
+        self.assertContains(response, "Schedule Baseline SSA Visit")
+        self.assertContains(response, "Assign to Partner")
+
+    def test_urgent_action_prefills_the_real_scheduling_drawer(self):
+        self.client.force_login(self.cceo_user)
+        self.school.current_fy_ssa_status = "done"
+        self.school.save(update_fields=["current_fy_ssa_status", "updated_at"])
+        response = self.client.get(
+            f"/planning/schedule-modal?school_id={self.school.id}"
+            "&recommended_activity_type=coaching_visit"
+            "&focus_intervention=teaching_environment",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Schedule Coaching Visit")
+        self.assertContains(
+            response,
+            'option value="coaching_visit" selected',
+            html=False,
+        )
+        self.assertContains(
+            response,
+            'value="teaching_environment" selected',
+            html=False,
+        )
 
     def test_country_director_dashboard_renders(self):
         User = get_user_model()
@@ -195,10 +235,71 @@ class FrontendViewsTestCase(TestCase):
         self.assertIn("1 weekly fund request", reco["detail"])
 
     def test_schools_directory_view_renders(self):
+        from apps.projects.models import Project
+
+        Project.objects.create(
+            name="School Directory Action Project",
+            code="SDAP-26",
+            category="intervention_specific",
+        )
         self.client.force_login(self.cceo_user)
         response = self.client.get("/schools")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/schools/index.html")
+        self.assertContains(response, 'class="school-directory-list"')
+        self.assertContains(response, 'class="school-directory-row"')
+        self.assertContains(response, "Kampola High School")
+        self.assertContains(response, "No SSA")
+        self.assertContains(response, "No Visit")
+        self.assertContains(response, "No Training")
+        self.assertContains(response, "No Cluster")
+        self.assertContains(response, "Add to Cluster")
+        self.assertContains(response, "Add to Project")
+        self.assertContains(response, f"/schools/{self.school.id}/add-to-cluster")
+        self.assertContains(response, f"/schools/{self.school.id}/assign-to-project")
+        self.assertNotContains(response, "Column Settings")
+
+    def test_school_directory_tabs_and_page_size_are_server_owned(self):
+        """Tab clicks must send one canonical value and every later filter
+        request must retain it. Page size is a real backend filter, not a
+        decorative selector."""
+        self.school.cluster_status = "clustered"
+        self.school.cluster_id = self.cluster.id
+        self.school.save(update_fields=["cluster_status", "cluster_id"])
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.get(
+            "/schools",
+            {"tab": "clustered", "per_page": "25"},
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="schools-table-container",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "partials/schools/htmx_response.html")
+        self.assertEqual(response.context["active_tab"], "clustered")
+        self.assertEqual(response.context["per_page"], 25)
+        self.assertEqual(response.context["page_obj"].paginator.per_page, 25)
+        self.assertContains(
+            response,
+            'id="schools-tab-clustered"',
+        )
+        self.assertContains(response, 'aria-selected="true"')
+        self.assertContains(response, 'id="filters-tab-input"')
+        self.assertContains(response, 'value="clustered"')
+
+        invalid = self.client.get("/schools", {"tab": "invented"})
+        self.assertEqual(invalid.context["active_tab"], "all")
+
+    def test_school_directory_excel_export_is_a_real_workbook(self):
+        self.client.force_login(self.cceo_user)
+        response = self.client.get("/schools", {"export": "xlsx"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertIn("schools_export.xlsx", response["Content-Disposition"])
+        self.assertTrue(response.content.startswith(b"PK"))
 
     def test_school_detail_view_renders(self):
         self.client.force_login(self.cceo_user)
@@ -219,10 +320,71 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/clusters/detail.html")
 
     def test_planning_dashboard_view_renders(self):
+        from django.utils import timezone
+        from apps.core.fy import get_operational_fy
+        from apps.ssa.models import SsaRecord, SsaScore
+
+        self.school.cluster_id = self.cluster.id
+        self.school.cluster_status = "clustered"
+        self.school.account_owner_id = self.cceo_profile.id
+        self.school.current_fy_ssa_status = "done"
+        self.school.shipping_address = "Plot 12, Kampala Road"
+        self.school.save()
+
+        ssa = SsaRecord.objects.create(
+            school=self.school,
+            fy=get_operational_fy(),
+            quarter="Q4",
+            date_of_ssa=timezone.now(),
+            verification_status="confirmed",
+            uploaded_by=self.cceo_user.id,
+        )
+        for intervention, score in (
+            ("leadership", 3.5),
+            ("financial_health", 4.5),
+            ("learning_environment", 5.5),
+            ("christlike_behaviour", 8.0),
+        ):
+            SsaScore.objects.create(
+                ssa_record=ssa,
+                intervention=intervention,
+                score=score,
+            )
+
         self.client.force_login(self.cceo_user)
         response = self.client.get("/planning")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/planning/index.html")
+        self.assertTemplateUsed(response, "partials/planning/school_row.html")
+        self.assertContains(response, 'class="planning-school-list"')
+        self.assertContains(response, "3 lowest SSA areas")
+        self.assertContains(response, self.cluster.name)
+        self.assertContains(response, "Plot 12, Kampala Road")
+
+        school_row = next(
+            item for item in response.context["schools"] if item["id"] == self.school.id
+        )
+        self.assertEqual(
+            [item["code"] for item in school_row["weakestInterventions"]],
+            ["leadership", "financial_health", "learning_environment"],
+        )
+
+    def test_planning_filters_return_one_table_and_refresh_tab_state(self):
+        self.client.force_login(self.cceo_user)
+        response = self.client.get(
+            "/planning",
+            {"tab": "core", "q": "Kampola"},
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="schools-table-container",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "partials/planning/school_table.html")
+        self.assertEqual(response.context["active_tab"], "core")
+        self.assertContains(response, 'id="schools-table-container"', count=1)
+        self.assertContains(response, 'id="planning-tabs-header"')
+        self.assertContains(response, 'hx-swap-oob="outerHTML"')
+        self.assertContains(response, 'id="planning-tab-core"')
+        self.assertContains(response, 'aria-selected="true"')
 
     def test_schedule_form_action_param_selects_training(self):
         # Regression: templates/pages/trainings/index.html links to
@@ -306,6 +468,48 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/schools/add_to_cluster_drawer.html")
+
+    def test_create_cluster_drawer_uses_guided_geography_workflow(self):
+        outside_region = Region.objects.create(name="Outside Drawer Region")
+        outside_district = District.objects.create(
+            name="Outside Drawer District", region=outside_region
+        )
+        SubCounty.objects.create(
+            name="Outside Drawer Subcounty", district=outside_district
+        )
+
+        self.client.force_login(self.cceo_user)
+        response = self.client.get("/clusters/create-drawer")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, "partials/clusters/create_cluster_drawer.html"
+        )
+        self.assertContains(response, 'class="cluster-create-drawer"')
+        self.assertContains(response, 'name="district_id"')
+        self.assertContains(response, 'name="sub_county_ids"')
+        self.assertContains(response, 'name="cluster_leader_name"')
+        self.assertContains(response, 'name="cluster_leader_phone"')
+        self.assertContains(response, "Create cluster")
+        self.assertNotContains(response, "Assigned Staff")
+        self.assertNotContains(response, "Outside Drawer District")
+        self.assertNotContains(response, "Outside Drawer Subcounty")
+
+    def test_cluster_name_must_be_unique_within_district(self):
+        from apps.clusters.services import create_cluster
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaisesMessage(
+            BadRequest, "A cluster with this name already exists in this district."
+        ):
+            create_cluster(
+                {
+                    "name": self.cluster.name.lower(),
+                    "regionId": self.region.id,
+                    "districtId": self.district.id,
+                    "subCountyIds": [],
+                },
+                self.cceo_user,
+            )
 
     def test_add_to_cluster_drawer_post_existing(self):
         self.client.force_login(self.cceo_user)
@@ -572,10 +776,11 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        # Verify activity updated to partner_scheduled and monitored_by_staff_id is PL user
+        # Verify activity updated to partner_scheduled and retains the
+        # canonical StaffProfile monitor identity used by My Plan scoping.
         act.refresh_from_db()
         self.assertEqual(act.status, "partner_scheduled")
-        self.assertEqual(act.monitored_by_staff_id, pl_user.id)
+        self.assertEqual(act.monitored_by_staff_id, pl_profile.id)
 
         # 4. Supervisor (PL) views My Plan and sees this scheduled activity
         self.client.force_login(pl_user)
@@ -770,6 +975,7 @@ class FrontendViewsTestCase(TestCase):
         from apps.activities.models import Activity, ActivityScheduleCostLine
         from apps.budget.models import CostSetting
 
+        self._publish_test_catalogue("2026-07-20")
         CostSetting.objects.create(
             key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
         )
@@ -808,6 +1014,7 @@ class FrontendViewsTestCase(TestCase):
         from apps.activities.models import Activity
         from apps.budget.models import CostSetting
 
+        self._publish_test_catalogue("2026-07-20")
         CostSetting.objects.create(
             key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
         )
@@ -920,7 +1127,7 @@ class FrontendViewsTestCase(TestCase):
         )
         ssa = SsaRecord.objects.create(
             school=self.school,
-            date_of_ssa="2026-06-01",
+            date_of_ssa=timezone.make_aware(timezone.datetime(2026, 6, 1)),
             fy="2026",
             quarter="Q4",
             verification_status="confirmed",
@@ -978,6 +1185,7 @@ class FrontendViewsTestCase(TestCase):
         from apps.schools.models import School
         from apps.accounts.models import StaffSchoolAssignment
 
+        self._publish_test_catalogue("2026-07-21")
         CostSetting.objects.create(
             key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
         )
@@ -1067,6 +1275,7 @@ class FrontendViewsTestCase(TestCase):
         from apps.activities.models import Activity
         from apps.budget.models import CostSetting
 
+        self._publish_test_catalogue("2026-07-21")
         CostSetting.objects.create(
             key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
         )

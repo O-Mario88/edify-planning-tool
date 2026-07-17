@@ -1,0 +1,9 @@
+{% include "partials/messages/thread_list.html" %}
+
+<div id="conversation-pane" hx-swap-oob="innerHTML">
+  {% include "partials/messages/conversation.html" %}
+</div>
+
+<div id="context-panel-scroll" hx-swap-oob="innerHTML">
+  {% include "partials/messages/context_panel.html" %}
+</div>

@@ -1,161 +1,47 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Special Projects Planning — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 " x-data="{ tab: 'all' }">
+<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260716a">
 
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-    <div class="min-w-0">
-      <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight">Special Projects Planning</h1>
-      <p class="text-[12px] text-slate-500 font-semibold mt-1">Plan school visits, trainings, and partner assignments for schools assigned to special projects.</p>
+<main
+  class="spp"
+  x-data="{
+    selected: [],
+    toggle(id) { this.selected.includes(id) ? this.selected = this.selected.filter(item => item !== id) : this.selected.push(id) },
+    togglePage(ids) { this.selected.length === ids.length ? this.selected = [] : this.selected = ids },
+    openBulk(kind) {
+      if (!this.selected.length) return;
+      const route = kind === 'schedule' ? '/projects/planning/bulk-schedule' : '/projects/planning/bulk-partner';
+      htmx.ajax('GET', route + '?assignments=' + encodeURIComponent(this.selected.join(',')), {target:'#drawer-container', swap:'innerHTML'});
+    }
+  }"
+  @keydown.escape.window="selected = []"
+>
+  <header class="spp-header">
+    <div class="spp-heading">
+      <p class="spp-eyebrow">Special Projects</p>
+      <h1>Special Projects Planning</h1>
+      <p>Plan SSA baselines, school support, partner assignments, and delivery for schools assigned from the School Directory.</p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <a href="/projects/analytics" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors whitespace-nowrap">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-        Analytics
-      </a>
-      <a href="/projects/my-plan" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold shadow-sm transition-colors whitespace-nowrap">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        Open My Plan
-      </a>
-    </div>
-  </div>
-
-  {% if not has_projects %}
-  <div class="card p-12">
-    {% include "components/empty_state.html" with title="No project schools to plan yet" message="Assign schools to a project from the School Directory and they appear here for scheduling or partner assignment." %}
-  </div>
-  {% else %}
-
-  <!-- KPI strip -->
-  {% include "components/kpi_strip.html" with items=kpis %}
-
-  <!-- Readiness bands -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-    {% for b in band_cards %}
-    <div class="card p-5 {% if b.tone == 'danger' %}bg-rose-50/40 border-rose-100{% elif b.tone == 'warning' %}bg-amber-50/40 border-amber-100{% else %}bg-emerald-50/40 border-emerald-100{% endif %}">
-      <p class="text-[12px] font-bold {% if b.tone == 'danger' %}text-rose-700{% elif b.tone == 'warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ b.label }}</p>
-      <div class="flex items-baseline gap-2 mt-1">
-        <span class="text-[26px] font-bold text-slate-800 tabular-nums leading-none">{{ b.value }}</span>
-        <span class="text-[12px] font-semibold text-slate-500">schools</span>
-      </div>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-1">{{ b.pct }}% of project schools</p>
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- Tabs + table -->
-  <div class="card overflow-hidden">
-    <div class="px-3 pt-3 border-b border-slate-100 flex items-center gap-1 flex-wrap">
-      {% include "partials/projects/plan_tab.html" with key="all" label="All Project Schools" count=tab_counts.all %}
-      {% include "partials/projects/plan_tab.html" with key="baseline" label="Baseline Required" count=tab_counts.baseline %}
-      {% include "partials/projects/plan_tab.html" with key="ready" label="Ready for Support" count=tab_counts.ready %}
-      {% include "partials/projects/plan_tab.html" with key="partner" label="Assigned to Partner" count=tab_counts.partner %}
-      {% include "partials/projects/plan_tab.html" with key="scheduled" label="Scheduled" count=tab_counts.scheduled %}
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
-            <th class="px-4 py-2.5">School</th>
-            <th class="px-3 py-2.5">Project</th>
-            <th class="px-3 py-2.5">Baseline / SSA</th>
-            <th class="px-3 py-2.5">Readiness</th>
-            <th class="px-3 py-2.5">Weakest Intervention</th>
-            <th class="px-3 py-2.5">Recommended Action</th>
-            <th class="px-3 py-2.5">Partner</th>
-            <th class="px-3 py-2.5 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-50">
-          {% for r in rows %}
-          <tr class="hover:bg-slate-50/50 align-top" x-show="tab === 'all' || tab === '{{ r.bucket }}'">
-            <td class="px-4 py-3">
-              <p class="text-[12.5px] font-bold text-slate-800 leading-tight">{{ r.school_name }}</p>
-              <p class="edify-text-caption font-semibold text-slate-400">{{ r.school_id }} · {{ r.district }}</p>
-            </td>
-            <td class="px-3 py-3">
-              <p class="text-[12px] font-semibold leading-tight">{{ r.project_name }}</p>
-              <p class="edify-text-caption font-semibold text-slate-400">{{ r.project_type }} · {{ r.school_type }}</p>
-            </td>
-            <td class="px-3 py-3">{% include "components/badge.html" with tone=r.baseline_tone label=r.baseline_status size="sm" %}</td>
-            <td class="px-3 py-3">{% include "components/badge.html" with tone=r.readiness_tone label=r.readiness size="sm" %}</td>
-            <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500">{{ r.weakest|default:"—" }}</td>
-            <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.action }}</td>
-            <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500">{{ r.partner }}</td>
-            <td class="px-3 py-3">
-              <div class="flex items-center justify-end gap-1.5">
-                <button hx-get="/planning/schedule-modal?school_id={{ r.school_pk }}&project_id={{ r.project_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                        class="inline-flex items-center h-7 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-bold transition-colors">Schedule</button>
-                <button hx-get="/planning/assign-partner-modal?school_id={{ r.school_pk }}&project_id={{ r.project_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                        class="inline-flex items-center h-7 px-2.5 rounded-lg border border-slate-200 edify-surface hover:bg-slate-50 edify-text-caption font-bold text-slate-600 transition-colors">Assign Partner</button>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between edify-text-caption font-semibold text-slate-500">
-      <span>Showing {{ rows|length }} of {{ total }} project school{{ total|pluralize }}</span>
-      <a href="/planning" class="font-bold text-blue-600 hover:underline">Open full planning queue →</a>
-    </div>
-  </div>
-
-  <!-- Summary + Delivery readiness -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="card overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100">
-        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Project Planning Summary</h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead>
-            <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
-              <th class="px-5 py-2.5">Project</th>
-              <th class="px-3 py-2.5 text-center">Assigned</th>
-              <th class="px-3 py-2.5 text-center">Ready</th>
-              <th class="px-3 py-2.5 text-center">Baseline</th>
-              <th class="px-3 py-2.5 text-center">Partner</th>
-              <th class="px-3 py-2.5 text-center">Scheduled</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-50">
-            {% for s in summary %}
-            <tr class="hover:bg-slate-50/50">
-              <td class="px-5 py-2.5 text-[12px] font-bold">{{ s.name }}</td>
-              <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ s.assigned }}</td>
-              <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ s.ready }} <span class="text-slate-400">({{ s.ready_pct }}%)</span></td>
-              <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ s.baseline }}</td>
-              <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ s.partner }}</td>
-              <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ s.scheduled }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">No projects in scope.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+    <div class="spp-header__tools">
+      <search class="spp-search">
+        {% include "partials/projects/planning_icon.html" with name="search" %}
+        <label class="sr-only" for="project-planning-search">Search project schools</label>
+        <input id="project-planning-search" type="search" name="q" value="{{ selected.q }}" form="spp-filters" placeholder="Search schools, projects, districts…" hx-get="/projects/planning" hx-target="#spp-workspace" hx-include="#spp-filters" hx-push-url="true" hx-trigger="search, keyup changed delay:350ms">
+      </search>
+      <div class="spp-actions">
+        <a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
+        <button class="spp-button spp-button--secondary" type="button" @click="openBulk('partner')" :disabled="selected.length === 0" :title="selected.length ? 'Assign selected schools to a partner' : 'Select schools first'">{% include "partials/projects/planning_icon.html" with name="partner" %} Bulk Assign <span x-show="selected.length" x-text="selected.length"></span></button>
+        <a class="spp-button spp-button--primary" href="/projects/my-plan">{% include "partials/projects/planning_icon.html" with name="calendar" %} Open My Plan</a>
       </div>
     </div>
+  </header>
 
-    <div class="card p-5">
-      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight mb-4">Project Delivery Readiness</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {% for d in delivery %}
-        <div class="rounded-xl border p-3 {% if d.tone == 'danger' %}bg-rose-50/50 border-rose-100{% elif d.tone == 'warning' %}bg-amber-50/50 border-amber-100{% elif d.tone == 'analytics' %}bg-violet-50/50 border-violet-100{% else %}bg-blue-50/50 border-blue-100{% endif %}">
-          <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-none">{{ d.value }}</p>
-          <p class="edify-text-caption font-semibold text-slate-500 mt-1 leading-snug">{{ d.label }}</p>
-        </div>
-        {% endfor %}
-      </div>
-      <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
-        <span class="edify-text-caption font-semibold text-slate-400">Budget generated (project activities)</span>
-        <span class="text-[13px] font-bold tabular-nums">{{ budget }}</span>
-      </div>
-    </div>
+  <div id="spp-workspace" aria-live="polite">
+    {% include "partials/projects/planning_workspace.html" %}
   </div>
-  {% endif %}
-</div>
+</main>
 {% endblock %}

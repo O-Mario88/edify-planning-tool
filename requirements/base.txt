@@ -43,3 +43,10 @@ openpyxl==3.1.5
 
 # Date utilities (FY math, scheduler cadence).
 python-dateutil==2.9.0.post0
+
+# Statistical impact analytics (apps.analytics.impact_engine): correlation,
+# significance testing, cost-effectiveness. Batch/service-layer only — the
+# request path stays on ORM aggregation.
+numpy==2.5.1
+pandas==3.0.3
+scipy==1.18.0

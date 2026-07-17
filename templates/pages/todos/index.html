@@ -28,17 +28,17 @@
   <!-- Filters -->
   <div class="flex flex-col lg:flex-row lg:items-center gap-3">
     <div class="flex items-center gap-1.5 flex-wrap">
-      <button @click="cat='all'" :class="cat==='all' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg edify-text-caption font-bold transition-all">All Categories</button>
+      <button @click="cat='all'" :class="cat==='all' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all">All Categories</button>
       {% for name, count in categories %}
-      <button @click="cat='{{ name }}'" :class="cat==='{{ name }}' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg edify-text-caption font-bold transition-all inline-flex items-center gap-1.5">{{ name }} <span class="px-1.5 rounded-md edify-text-caption bg-slate-100 text-slate-500">{{ count }}</span></button>
+      <button @click="cat='{{ name }}'" :class="cat==='{{ name }}' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all inline-flex items-center gap-1.5">{{ name }} <span class="px-1.5 rounded-pill edify-text-caption bg-slate-100 text-slate-500">{{ count }}</span></button>
       {% endfor %}
     </div>
     <div class="flex items-center gap-1.5 lg:ml-auto">
-      <button @click="prio='all'" :class="prio==='all' ? 'bg-slate-800 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg edify-text-caption font-bold transition-all">All</button>
-      <button @click="prio='critical'" :class="prio==='critical' ? 'bg-rose-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg edify-text-caption font-bold transition-all">Critical</button>
-      <button @click="prio='high'" :class="prio==='high' ? 'bg-amber-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg edify-text-caption font-bold transition-all">High</button>
-      <button @click="prio='medium'" :class="prio==='medium' ? 'bg-blue-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg edify-text-caption font-bold transition-all">Medium</button>
-      <button @click="prio='low'" :class="prio==='low' ? 'bg-slate-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg edify-text-caption font-bold transition-all">Low</button>
+      <button @click="prio='all'" :class="prio==='all' ? 'bg-slate-800 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all">All</button>
+      <button @click="prio='critical'" :class="prio==='critical' ? 'bg-rose-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all">Critical</button>
+      <button @click="prio='high'" :class="prio==='high' ? 'bg-amber-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all">High</button>
+      <button @click="prio='medium'" :class="prio==='medium' ? 'bg-blue-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all">Medium</button>
+      <button @click="prio='low'" :class="prio==='low' ? 'bg-slate-500 text-white' : 'edify-surface border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all">Low</button>
     </div>
   </div>
 

@@ -14,9 +14,9 @@
 @source "../../apps";
 
 @theme {
-  /* Outfit is loaded in base.html; it must lead the font-sans stack so the
-     `font-sans` utility (used on <body>) actually applies it. */
-  --font-sans: "Outfit", Inter, ui-sans-serif, system-ui, -apple-system,
+  /* Inter is the single product typeface. Keep Tailwind utilities aligned
+     with the semantic Edify design tokens. */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Edify brand tokens (referenced by templates as e.g. text-edify-primary,
@@ -45,6 +45,15 @@
   --color-amber-150: #fdeda9;
   --color-green-150: #ccf9db;
   --color-indigo-150: #d5dcfb;
+
+  /* Canonical Edify geometry. These generate the only approved radius
+     utilities: rounded-surface, rounded-control, rounded-overlay,
+     rounded-small and rounded-pill. */
+  --radius-surface: 16px;
+  --radius-control: 12px;
+  --radius-overlay: 20px;
+  --radius-small: 8px;
+  --radius-pill: 9999px;
 
   /* animate-fade-in is used by a few admin/upload templates. */
   --animate-fade-in: fade-in 0.3s ease-out both;

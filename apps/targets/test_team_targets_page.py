@@ -35,7 +35,7 @@ from apps.targets.models import (
     TargetAchievementLedger,
     TargetArea,
 )
-from apps.targets.my_targets import TargetAchievementService
+from apps.targets.my_targets import TargetAchievementService, active_target_areas
 from apps.targets.team_targets import (
     PLCatchUpPlanService,
     PLTeamTargetsService,
@@ -60,6 +60,7 @@ def _fixed_current(at=None):
 
 class TeamTargetsPageTest(TestCase):
     def setUp(self):
+        active_target_areas()
         self.region = Region.objects.create(name="R")
         self.district = District.objects.create(
             name="D-Primary", region=self.region, district_type="primary"
@@ -715,6 +716,7 @@ class TeamTargetsTodoTest(TestCase):
     """§29 — PL To-Dos derive from team state and auto-close."""
 
     def setUp(self):
+        active_target_areas()
         self.region = Region.objects.create(name="R2")
         self.district = District.objects.create(
             name="D2", region=self.region, district_type="primary"

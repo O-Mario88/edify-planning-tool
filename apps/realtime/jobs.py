@@ -196,6 +196,19 @@ def field_debrief_recurring_issues_job():
     )
 
 
+# ── 8. User-configured analytics report delivery ────────────────────────────
+def _do_analytics_report_delivery() -> int:
+    from apps.analytics.report_delivery import deliver_due_schedules
+
+    return deliver_due_schedules()
+
+
+def analytics_report_delivery_job():
+    if not _enabled():
+        return
+    run_tracked_job("analytics_report_delivery", _do_analytics_report_delivery)
+
+
 def _system_principal():
     """A minimal stand-in principal for system-initiated jobs."""
     from apps.accounts.jwt import AuthPrincipal
@@ -227,4 +240,5 @@ __all__ = [
     "target_ledger_sync_job",
     "pd_reminders_job",
     "field_debrief_recurring_issues_job",
+    "analytics_report_delivery_job",
 ]

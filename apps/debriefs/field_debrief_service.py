@@ -694,9 +694,18 @@ class FieldDebriefService:
         owner_id = _to_user_id(debrief.follow_up_owner_id) or _to_user_id(
             debrief.staff_id
         )
+        # status="planned" (NOT the model default not_planned): the To-Do
+        # engine excludes not_planned rows, so the default made an accepted
+        # follow-up invisible to its owner. quarter is stamped the same way
+        # the catch-up funnel does — an empty quarter hides the draft from
+        # every quarter-scoped rollup until someone happens to reschedule it.
+        from apps.core.fy import get_quarter_for_date
+
         activity = Activity.objects.create(
             fy=debrief.fy,
             activity_type=activity_type,
+            status="planned",
+            quarter=get_quarter_for_date(debrief.follow_up_date),
             responsible_staff_id=owner_id,
             school_id=school_id,
             focus_intervention=debrief.recommended_intervention or None,
@@ -718,6 +727,7 @@ class FieldDebriefService:
         FieldDebriefService._notify_recommendation_review(
             principal, debrief, accepted=True
         )
+        FieldDebriefService._notify_follow_up_owner(principal, debrief, activity)
         return activity
 
     @staticmethod
@@ -743,6 +753,31 @@ class FieldDebriefService:
             principal, debrief, accepted=False
         )
         return debrief
+
+    @staticmethod
+    def _notify_follow_up_owner(principal, debrief: DailyDebrief, activity) -> None:
+        """The person who must now schedule the follow-up is not always the
+        debrief submitter — without this, an owner who didn't submit the
+        debrief had no notification and (pre-fix) no To-Do either, making the
+        accepted recommendation undiscoverable."""
+        owner = activity.responsible_staff_id
+        if not owner or owner in (principal.user_id, debrief.submitted_by_user_id):
+            return
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type="field_debrief_follow_up_assigned",
+            category="field_debrief",
+            priority="normal",
+            title=f"Follow-up activity assigned: {debrief.title}",
+            body=(
+                "A field debrief recommendation was accepted and a draft "
+                "follow-up activity was created for you to schedule."
+            ),
+            context_type="activity",
+            context_id=activity.id,
+            recipients=[owner],
+        )
 
     @staticmethod
     def _notify_recommendation_review(

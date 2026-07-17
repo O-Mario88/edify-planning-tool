@@ -300,6 +300,35 @@ def ia_review_workspace_view(request, activity_id):
 
     evidence_list = EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False)
 
+    # Show the actual confirmed SSA values for this activity's school/FY. The
+    # previous workspace displayed four invented scores whenever the generic
+    # "SSA uploaded" check was true, which could mislead an IA decision.
+    ssa_scores = []
+    if a.school_id:
+        from apps.core.enums import SsaIntervention
+        from apps.ssa.models import SsaRecord
+
+        ssa_record = (
+            SsaRecord.objects.filter(
+                school_id=a.school_id,
+                fy=a.fy,
+                verification_status="confirmed",
+                deleted_at__isnull=True,
+            )
+            .prefetch_related("scores")
+            .order_by("-date_of_ssa")
+            .first()
+        )
+        if ssa_record:
+            labels = dict(SsaIntervention.choices)
+            ssa_scores = [
+                {
+                    "label": labels.get(score.intervention, score.intervention),
+                    "value": score.score,
+                }
+                for score in ssa_record.scores.all().order_by("intervention")
+            ]
+
     # Fetch timeline
     timeline = VerificationTimelineService.get_timeline(a)
 
@@ -310,14 +339,13 @@ def ia_review_workspace_view(request, activity_id):
     # Fetch cluster schools for school-level attendance list verification
     cluster_schools = []
     if a.cluster:
-        from apps.clusters.models import SchoolClusterAssignment
+        from apps.schools.models import School
 
-        cluster_schools = [
-            assignment.school
-            for assignment in SchoolClusterAssignment.objects.filter(
+        cluster_schools = list(
+            School.objects.filter(
                 cluster_id=a.cluster_id, deleted_at__isnull=True
-            ).select_related("school")
-        ]
+            ).order_by("name")
+        )
 
     context = {
         "act": a,
@@ -327,6 +355,7 @@ def ia_review_workspace_view(request, activity_id):
         "timeline": timeline,
         "comments": comments,
         "cluster_schools": cluster_schools,
+        "ssa_scores": ssa_scores,
         "suggested_reasons": [
             "Evidence missing",
             "Evidence unclear",
@@ -556,6 +585,47 @@ def ia_dashboard_view(request):
     verified_week = VerificationHistory.objects.filter(
         verified_at__gte=week_start
     ).count()
+
+    # Verification SLA is measured from the moment an activity enters the IA
+    # queue to its recorded verification.  Keep the query bounded to the
+    # current and previous week so the dashboard remains constant-cost while
+    # still providing an honest week-over-week comparison.
+    previous_week_start = week_start - timedelta(days=7)
+    sla_rows = VerificationHistory.objects.filter(
+        verified_at__gte=previous_week_start,
+        verified_at__lte=now,
+        activity__submitted_to_ia_at__isnull=False,
+    ).values_list("verified_at", "activity__submitted_to_ia_at")
+    current_sla_durations = []
+    previous_sla_durations = []
+    for verified_at, submitted_at in sla_rows:
+        duration_hours = (verified_at - submitted_at).total_seconds() / 3600
+        if verified_at >= week_start:
+            current_sla_durations.append(duration_hours)
+        else:
+            previous_sla_durations.append(duration_hours)
+
+    def _sla_percentage(durations):
+        if not durations:
+            return None
+        return round(
+            sum(duration <= 24 for duration in durations) / len(durations) * 100,
+            1,
+        )
+
+    current_sla_pct = _sla_percentage(current_sla_durations)
+    previous_sla_pct = _sla_percentage(previous_sla_durations)
+    sla_delta = (
+        round(current_sla_pct - previous_sla_pct, 1)
+        if current_sla_pct is not None and previous_sla_pct is not None
+        else None
+    )
+    verification_sla = {
+        "pct": current_sla_pct,
+        "sample_size": len(current_sla_durations),
+        "previous_pct": previous_sla_pct,
+        "delta": sla_delta,
+    }
     returned_today = VerificationDecision.objects.filter(
         decision="RETURN", decided_at__gte=today_start
     ).count()
@@ -1053,6 +1123,7 @@ def ia_dashboard_view(request):
         "upload_status": upload_status,
         "returned_open_school_cnt": returned_open_school_cnt,
         "avg_resolution_days": avg_resolution_days,
+        "verification_sla": verification_sla,
         "charts": {
             "verification_trend": verification_trend,
             "return_reasons": return_reasons,

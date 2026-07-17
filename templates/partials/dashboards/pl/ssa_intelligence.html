@@ -1,7 +1,7 @@
 {% load frontend_filters %}
-<div class="overflow-x-auto flex-1">
+<div class="pl-ssa-matrix-scroll overflow-x-auto flex-1">
   {% if ssa_matrix.rows %}
-  <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
+  <table class="pl-ssa-matrix" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
     <thead>
       <tr style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
         <th style="padding:8px 10px;">Cluster</th>
@@ -17,7 +17,7 @@
         <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ r.name }}</td>
         {% for cell in r.cells %}
         <td style="padding:7px 6px;text-align:center;">
-          <span class="inline-block rounded text-center font-bold"
+          <span class="pl-ssa-score inline-block rounded-pill text-center font-bold"
                 style="min-width:30px;padding:2px 6px;font-size: 12px;
                        background:{% if cell.tone == 'success' %}var(--edify-success-light)
                        {% elif cell.tone == 'lime' %}rgba(132,204,22,.14)
@@ -34,7 +34,7 @@
         </td>
         {% endfor %}
         <td style="padding:7px 6px;text-align:center;">
-          <span class="inline-block rounded text-center font-bold"
+          <span class="pl-ssa-score inline-block rounded-pill text-center font-bold"
                 style="min-width:30px;padding:2px 6px;font-size: 12px;
                        background:{% if r.overall_tone == 'success' %}var(--edify-success-light)
                        {% elif r.overall_tone == 'lime' %}rgba(132,204,22,.14)

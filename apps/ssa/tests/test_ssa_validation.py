@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from django.utils import timezone
 from apps.geography.models import Region, District
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
@@ -37,6 +38,12 @@ class SsaSequentialValidationTest(APITestCase):
 
         if "ENFORCE_SSA_SEQUENCE" in os.environ:
             del os.environ["ENFORCE_SSA_SEQUENCE"]
+
+    def test_date_only_input_is_normalized_to_an_aware_datetime(self):
+        """All SSA ingestion paths must persist a timezone-aware assessment date."""
+        parsed = ssa_services._parse_date("2026-06-15")
+        self.assertTrue(timezone.is_aware(parsed))
+        self.assertEqual(parsed.date().isoformat(), "2026-06-15")
 
     def test_current_fy_ssa_allowed_as_first_upload(self):
         """Uploading the first-ever SSA for a school should succeed even for
@@ -151,6 +158,11 @@ class AttendanceUploadActionTest(APITestCase):
         SchoolClusterAssignment.objects.create(
             school=self.school2, cluster=self.cluster, assigned_by="test-user"
         )
+        # School.cluster_id is the canonical membership source; the join rows
+        # above are its compatibility projection.
+        School.objects.filter(id__in=[self.school1.id, self.school2.id]).update(
+            cluster_id=self.cluster.id, cluster_status="clustered"
+        )
 
         from apps.activities.models import Activity
 
@@ -194,7 +206,9 @@ class AttendanceUploadActionTest(APITestCase):
         self.assertEqual(response.status_code, 302)
 
         self.activity.refresh_from_db()
-        self.assertEqual(self.activity.status, "completed")
+        # Attendance records execution detail; it does not bypass evidence,
+        # Salesforce-ID and review gates by completing the activity itself.
+        self.assertEqual(self.activity.status, "completion_started")
         self.assertEqual(self.activity.teachers_attended, 5)
         self.assertEqual(self.activity.leaders_attended, 2)
         self.assertEqual(self.activity.attended_school_ids, [self.school1.id])

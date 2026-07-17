@@ -35,24 +35,35 @@ def _scope_filter(principal):
 def list_clusters(principal) -> list[dict]:
     """List active/needs_review clusters within scope, with school counts + SSA."""
     scope_q, scope = _scope_filter(principal)
-    qs = (
+    clusters = list(
         Cluster.objects.filter(
             scope_q, deleted_at__isnull=True, status__in=["active", "needs_review"]
         )
         .select_related("district", "sub_county")
         .prefetch_related("covered_sub_counties__sub_county")
-        .annotate(
-            school_count=Count(
-                "assignments", filter=Q(assignments__school__deleted_at__isnull=True)
-            )
-        )
         .order_by("name")[:1000]  # safety bound
     )
+    cluster_ids = [cluster.id for cluster in clusters]
+    school_counts = {
+        row["cluster_id"]: row["count"]
+        for row in School.objects.filter(
+            cluster_id__in=cluster_ids, deleted_at__isnull=True
+        )
+        .values("cluster_id")
+        .annotate(count=Count("id"))
+    }
+    completed_ssa_counts = {
+        row["cluster_id"]: row["count"]
+        for row in School.objects.filter(
+            cluster_id__in=cluster_ids,
+            deleted_at__isnull=True,
+            current_fy_ssa_status="done",
+        )
+        .values("cluster_id")
+        .annotate(count=Count("id"))
+    }
     out = []
-    for c in qs:
-        ssa_done = c.assignments.filter(
-            school__deleted_at__isnull=True, school__current_fy_ssa_status="done"
-        ).count()
+    for c in clusters:
         out.append(
             {
                 "id": c.id,
@@ -69,8 +80,8 @@ def list_clusters(principal) -> list[dict]:
                     x.sub_county.name for x in c.covered_sub_counties.all()
                 ],
                 "subCountyIds": [x.sub_county_id for x in c.covered_sub_counties.all()],
-                "schoolCount": c.school_count,
-                "schoolsWithSsa": ssa_done,
+                "schoolCount": school_counts.get(c.id, 0),
+                "schoolsWithSsa": completed_ssa_counts.get(c.id, 0),
             }
         )
     return out
@@ -211,9 +222,17 @@ def create_cluster(data: dict, principal) -> dict:
                 raise BadRequest("An active cluster already covers this sub-county.")
 
     default_name = f"{primary.name} Cluster" if primary else f"{district.name} Cluster"
+    cluster_name = (data.get("name") or default_name).strip()
+    if Cluster.objects.filter(
+        district_id=district_id,
+        name__iexact=cluster_name,
+        deleted_at__isnull=True,
+    ).exists():
+        raise BadRequest("A cluster with this name already exists in this district.")
+
     with transaction.atomic():
         cluster = Cluster.objects.create(
-            name=data.get("name") or default_name,
+            name=cluster_name,
             region_id=region_id,
             district_id=district_id,
             sub_county=primary,
@@ -329,49 +348,27 @@ def create_from_school(data: dict, principal) -> dict:
     return create_cluster(payload, principal)
 
 
-def sync_school_cluster_assignment(school, cluster, assigned_by: str):
-    """Ensure exactly one active `SchoolClusterAssignment` row exists for
-    `school`, pointing at `cluster`.
+def set_school_cluster_membership(school, cluster, assigned_by: str):
+    """Apply the only supported operational cluster-membership transition.
 
-    Deletes any stale row(s) pointing at a different cluster first, inside the
-    same transaction, so a school can never accumulate assignment rows across
-    clusters (which silently inflates old clusters' school counts). Every call
-    site that assigns/reassigns a school to a cluster must go through this
-    helper instead of reimplementing get_or_create/update_or_create itself —
-    see `School.save()`'s automatic re-cluster branch (apps/schools/models.py)
-    for the reference delete+recreate behavior this mirrors.
+    ``School.cluster_id`` is the canonical membership source used by scope,
+    planning, activities and analytics. ``SchoolClusterAssignment`` is kept as
+    a deterministic compatibility/audit projection for older records; readers
+    must never use it to decide membership. The school row is locked so two
+    concurrent assignments cannot leave competing cluster records behind.
     """
-    with transaction.atomic():
-        SchoolClusterAssignment.objects.filter(school=school).exclude(
-            cluster=cluster
-        ).delete()
-        assignment, _ = SchoolClusterAssignment.objects.get_or_create(
-            school=school, cluster=cluster, defaults={"assigned_by": assigned_by}
-        )
-    return assignment
+    if cluster and (cluster.deleted_at or cluster.status != ClusterRecordStatus.ACTIVE):
+        raise BadRequest("A school can only be assigned to an active cluster.")
+    if cluster and school.district_id != cluster.district_id:
+        raise BadRequest("A school can only be assigned within its own district.")
 
-
-def assign_school(school_id: str, data: dict, principal) -> dict:
-    """Assign a school to a cluster (POST /schools/:id/cluster + /clusters/assign)."""
-    cluster_id = data.get("clusterId")
-    if not cluster_id:
-        raise BadRequest("clusterId is required.")
-    school = School.objects.filter(school_id=school_id).first()
-    if not school:
-        raise NotFoundError("School not found.")
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
-    if not cluster:
-        raise NotFoundError("Cluster not found.")
     with transaction.atomic():
-        sync_school_cluster_assignment(school, cluster, principal.user_id)
-        # Update the school's denormalized cluster pointer + status.
-        # School.save() unconditionally recomputes planning_readiness/
-        # data_quality_score/data_quality_status in memory before writing —
-        # update_fields must include them or the recompute is silently
-        # dropped and the school's own readiness badge goes stale relative
-        # to the Data Quality Center.
-        school.cluster_id = cluster.id
-        school.cluster_status = "clustered"
+        school = School.objects.select_for_update().get(pk=school.pk)
+        target_cluster_id = cluster.id if cluster else None
+        school.cluster_id = target_cluster_id
+        school.cluster_status = "clustered" if target_cluster_id else "unclustered"
+        # ``School.save`` derives quality/readiness using the canonical pointer;
+        # include those derived fields so the UI cannot retain a stale badge.
         school.save(
             update_fields=[
                 "cluster_id",
@@ -382,6 +379,44 @@ def assign_school(school_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
+        assignments = SchoolClusterAssignment.objects.select_for_update().filter(
+            school=school
+        )
+        assignments.delete()
+        if cluster:
+            SchoolClusterAssignment.objects.create(
+                school=school, cluster=cluster, assigned_by=assigned_by
+            )
+    return school
+
+
+def sync_school_cluster_assignment(school, cluster, assigned_by: str):
+    """Compatibility wrapper for legacy callers.
+
+    New callers should use :func:`set_school_cluster_membership`; keeping this
+    wrapper prevents a stale assignment row from becoming an alternate source
+    of truth while existing integrations migrate.
+    """
+    return set_school_cluster_membership(school, cluster, assigned_by)
+
+
+def assign_school(school_id: str, data: dict, principal) -> dict:
+    """Assign a school to a cluster (POST /schools/:id/cluster + /clusters/assign)."""
+    cluster_id = data.get("clusterId")
+    if not cluster_id:
+        raise BadRequest("clusterId is required.")
+    scope = resolve_user_scope(principal)
+    schools = school_queryset(scope)
+    school = (schools or School.objects.none()).filter(school_id=school_id).first()
+    if not school:
+        raise NotFoundError("School not found or outside your scope.")
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found.")
+    scope_q, _ = _scope_filter(principal)
+    if not Cluster.objects.filter(scope_q, id=cluster.id).exists():
+        raise Forbidden("Cluster outside your scope.")
+    school = set_school_cluster_membership(school, cluster, principal.user_id)
     return {"ok": True, "schoolId": school.school_id, "clusterId": cluster.id}
 
 
@@ -396,9 +431,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
     if not cluster:
         raise NotFoundError("Cluster not found.")
     schools = (
-        School.objects.filter(
-            cluster_assignments__cluster=cluster, deleted_at__isnull=True
-        )
+        School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
         .select_related("district", "sub_county", "parish")
         .prefetch_related("ssa_records__scores", "activities")
         .order_by("name")
@@ -431,9 +464,14 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
 
     out = []
     for s in schools:
+        # Canonical decision rule: confirmed SSA only (see
+        # apps.ssa.services.latest_applicable_record) — cluster intelligence
+        # previously ranked weakest areas from unverified uploads.
         latest_ssa = (
-            s.ssa_records.filter(deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
+            s.ssa_records.filter(
+                deleted_at__isnull=True, verification_status="confirmed"
+            )
+            .order_by("-date_of_ssa", "-created_at")
             .first()
         )
         avg_score = None
@@ -443,7 +481,10 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
 
         if latest_ssa:
             avg_score = latest_ssa.average_score
-            scores = sorted(list(latest_ssa.scores.all()), key=lambda x: x.score)
+            scores = sorted(
+                list(latest_ssa.scores.all()),
+                key=lambda x: (x.score, x.intervention),
+            )
             if scores:
                 weakest_label = scores[0].get_intervention_display()
                 weakest_key = scores[0].intervention
@@ -540,9 +581,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     if not cluster:
         raise NotFoundError("Cluster not found.")
 
-    schools = School.objects.filter(
-        cluster_assignments__cluster=cluster, deleted_at__isnull=True
-    )
+    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
     school_count = schools.count()
 
     # Calculate average SSA
@@ -616,9 +655,7 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
     if not cluster:
         raise NotFoundError("Cluster not found.")
 
-    schools = School.objects.filter(
-        cluster_assignments__cluster=cluster, deleted_at__isnull=True
-    )
+    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
 
     # Collect all scores for latest SSAs of the schools
     from apps.core.enums import SsaIntervention
@@ -677,9 +714,7 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found.")
-    schools = School.objects.filter(
-        cluster_assignments__cluster=cluster, deleted_at__isnull=True
-    )
+    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
     from apps.core.enums import SsaIntervention
 
     intervention_scores = {key.value: [] for key in SsaIntervention}
@@ -742,9 +777,7 @@ def cluster_intelligence(cluster_id: str, principal) -> dict:
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found.")
-    schools = School.objects.filter(
-        cluster_assignments__cluster=cluster, deleted_at__isnull=True
-    )
+    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
     total = schools.count()
     ssa_done = schools.filter(current_fy_ssa_status="done").count()
     return {
@@ -790,9 +823,7 @@ def cluster_planning(principal) -> list[dict]:
 
     out = []
     for c in clusters:
-        schools = School.objects.filter(
-            cluster_assignments__cluster=c, deleted_at__isnull=True
-        )
+        schools = School.objects.filter(cluster_id=c.id, deleted_at__isnull=True)
         total_schools = schools.count()
         ssa_done = schools.filter(current_fy_ssa_status="done").count()
         ssa_missing = total_schools - ssa_done
@@ -1003,9 +1034,15 @@ class ClusterDashboardService:
         if sub_county_id:
             filtered_qs = filtered_qs.filter(sub_county_id=sub_county_id)
         if staff_id:
+            staff_cluster_ids = (
+                School.objects.filter(account_owner_id=staff_id, deleted_at__isnull=True)
+                .exclude(cluster_id__isnull=True)
+                .exclude(cluster_id="")
+                .values("cluster_id")
+            )
             filtered_qs = filtered_qs.filter(
                 Q(responsible_staff_id=staff_id)
-                | Q(assignments__school__account_owner_id=staff_id)
+                | Q(id__in=staff_cluster_ids)
             ).distinct()
 
         # Get all planning info
@@ -1015,9 +1052,7 @@ class ClusterDashboardService:
         # Build Card viewmodels for filtered list
         cards = []
         for c in filtered_qs.select_related("district", "sub_county"):
-            schools = School.objects.filter(
-                cluster_assignments__cluster=c, deleted_at__isnull=True
-            )
+            schools = School.objects.filter(cluster_id=c.id, deleted_at__isnull=True)
             schools_count = schools.count()
 
             assigned_staff_ids = (
@@ -1326,9 +1361,7 @@ class ClusterActionPlannerService:
             PartnerAssignment.objects.create(
                 cluster_id=data.get("clusterId"),
                 partner_id=partner_id,
-                assigning_staff_id=user.staff_profile.staff_id
-                if hasattr(user, "staff_profile") and user.staff_profile
-                else user.id,
+                assigning_staff_id=user.staff_profile_id or user.id,
                 purpose=data.get("activityPurposeText"),
                 focus_intervention=data.get("focusIntervention"),
                 expected_activity_type=data.get("activityType"),

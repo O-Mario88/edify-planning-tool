@@ -4,21 +4,21 @@
 {% block title %}School Map · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;color:var(--edify-text);">
+<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
     <div>
       <h1 class="text-[21px] font-extrabold tracking-tight">School Map</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">Every school with verified coordinates, plotted live. Coordinates power Route Intelligence.</p>
     </div>
-    <span class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-500 w-fit">
-      <span class="h-1.5 w-1.5 rounded-full {% if with_coords %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
+    <span class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-500 w-fit">
+      <span class="h-1.5 w-1.5 rounded-pill {% if with_coords %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
       {{ with_coords|intcomma }} of {{ total|intcomma }} schools have coordinates
     </span>
   </div>
 
   {% if without_coords %}
-  <div class="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
+  <div class="rounded-surface border border-amber-200 bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
     <p class="text-[12px] font-semibold text-amber-800">
       {{ without_coords|intcomma }} school(s) have no coordinates yet — route estimates for them fall back to sub-county data.
     </p>
@@ -26,12 +26,12 @@
   </div>
   {% endif %}
 
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-2">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-2">
     {% if with_coords %}
-    <div id="school-map" class="h-[560px] w-full rounded-lg"></div>
+    <div id="school-map" class="h-[560px] w-full rounded-surface"></div>
     {% else %}
     <div class="h-[420px] flex flex-col items-center justify-center text-center gap-2">
-      <span class="h-10 w-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+      <span class="h-10 w-10 rounded-pill bg-slate-100 text-slate-400 flex items-center justify-center">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.6 16.6A10 10 0 0021 10a9 9 0 10-18 0 10 10 0 003.4 6.6L12 22z"/><circle cx="12" cy="10" r="2.4"/></svg>
       </span>
       <p class="text-[13px] font-bold text-slate-600">No school coordinates captured yet</p>

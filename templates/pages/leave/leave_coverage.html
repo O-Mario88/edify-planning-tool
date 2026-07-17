@@ -15,7 +15,7 @@
   {% if messages %}
   <div class="space-y-2">
     {% for msg in messages %}
-    <div class="p-4 rounded-xl border font-semibold text-[13px] flex items-center justify-between shadow-sm
+    <div class="p-4 rounded-surface border font-semibold text-[13px] flex items-center justify-between shadow-sm
       {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
       {% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-100
       {% else %}bg-rose-50 text-rose-700 border-rose-100{% endif %}"
@@ -27,7 +27,7 @@
   {% endif %}
 
   <!-- Coverage Assignments List -->
-  <div class="edify-surface rounded-lg border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden flex flex-col">
     <div class="p-5 border-b border-slate-100">
       <h3 class="text-[15px] font-bold text-slate-800">Coverage Assignments & Auditing</h3>
     </div>
@@ -59,12 +59,12 @@
             <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.start_datetime|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.end_datetime|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-4">
-              <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg edify-text-caption font-bold uppercase tracking-wider">
+              <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-pill edify-text-caption font-bold uppercase tracking-wider">
                 {{ cov.scope }}
               </span>
             </td>
             <td class="px-4 py-4">
-              <span class="px-2.5 py-0.5 rounded-full edify-text-caption font-bold uppercase border tracking-wider
+              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase border tracking-wider
                 {% if cov.status == 'active' %}bg-indigo-50 text-indigo-700 border-indigo-250
                 {% elif cov.status == 'expired' %}bg-slate-50 text-slate-500 border-slate-200
                 {% else %}bg-rose-50 text-rose-700 border-rose-250{% endif %}">
@@ -77,7 +77,7 @@
                 {% csrf_token %}
                 <button
                   type="submit"
-                  class="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-600 hover:text-white rounded-lg edify-text-caption font-bold uppercase transition"
+                  class="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-600 hover:text-white rounded-control edify-text-caption font-bold uppercase transition"
                   @click="if (!window.confirm('Are you sure you want to revoke delegated access immediately?')) $event.preventDefault()"
                 >
                   Revoke

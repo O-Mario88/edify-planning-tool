@@ -54,14 +54,14 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
 <!-- Core School Name (Read Only) -->
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Core School</label>
-<input type="text" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
+<input type="text" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
 </div>
 
 <div class="grid grid-cols-2 gap-4">
 <!-- Training Number -->
 <div>
 <label for="training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Slot</label>
-<select name="training_number" id="training_number" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="training_number" id="training_number" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="1" {% if next_train_seq == 1 %}selected{% endif %}>T1 Training</option>
 <option value="2" {% if next_train_seq == 2 %}selected{% endif %}>T2 Training</option>
 <option value="3" {% if next_train_seq == 3 %}selected{% endif %}>T3 Training</option>
@@ -147,7 +147,7 @@ class="relative "
 <button
 type="button"
 @click="open = !open"
-class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
+class="w-full h-10 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
 >
 <div class="flex items-center gap-2">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -166,7 +166,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div
 x-show="open"
 @click.outside="open = false"
-class="absolute right-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
+class="absolute right-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -177,11 +177,11 @@ x-transition:leave-end="opacity-0 transform scale-95"
 >
 <!-- Header -->
 <div class="flex items-center justify-between px-1">
-<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
 <span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
-<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
 </div>
@@ -199,7 +199,7 @@ x-transition:leave-end="opacity-0 transform scale-95"
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
-class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
+class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
 :class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
@@ -214,14 +214,14 @@ x-text="day"
 <!-- Primary Focus Intervention -->
 <div>
 <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention</label>
-<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="">Select Intervention...</option>
 {% for code, label in interventions %}
 <option value="{{ code }}" {% if recommendations and recommendations.0.code == code %}selected{% endif %}>{{ label }}</option>
 {% endfor %}
 </select>
 {% if recommendations %}
-<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-lg edify-text-caption text-amber-800 font-bold space-y-1">
+<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-surface edify-text-caption text-amber-800 font-bold space-y-1">
 <p class="font-semibold edify-text-caption">Recommended focus areas based on latest SSA:</p>
 {% for r in recommendations %}
 <p>&bull; {{ r.label }} (Score: {{ r.score }}/10)</p>
@@ -234,20 +234,20 @@ x-text="day"
 <!-- Expected Participants -->
 <div>
 <label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Participants</label>
-<input type="number" name="expected_participants" id="expected_participants" required min="1" max="1000" placeholder="e.g. 15" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
+<input type="number" name="expected_participants" id="expected_participants" required min="1" max="1000" placeholder="e.g. 15" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
 </div>
 
 <!-- Total Duration -->
 <div>
 <label for="duration_hours" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Duration (Hours)</label>
-<input type="number" name="duration_hours" id="duration_hours" required min="1" max="72" placeholder="e.g. 4" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
+<input type="number" name="duration_hours" id="duration_hours" required min="1" max="72" placeholder="e.g. 4" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
 </div>
 </div>
 
 <!-- Delivery Option -->
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Delivery Type</label>
-<select x-model="delivery" name="delivery_type" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select x-model="delivery" name="delivery_type" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="staff">Internal Field Staff (CCEO)</option>
 <option value="partner">Partner Agency Assignment</option>
 </select>
@@ -256,7 +256,7 @@ x-text="day"
 <!-- Partner Selection (Conditional) -->
 <div x-show="delivery === 'partner'" class="space-y-1" style="display: none;">
 <label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Partner Agency</label>
-<select name="assigned_partner_id" id="assigned_partner_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="assigned_partner_id" id="assigned_partner_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="">Select Partner...</option>
 {% for p in partners %}
 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -267,11 +267,11 @@ x-text="day"
 <!-- Purpose text -->
 <div>
 <label for="training_purpose" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Purpose &amp; Meeting Description</label>
-<textarea name="training_purpose" id="training_purpose" rows="2.5" required class="w-full p-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this support training..."></textarea>
+<textarea name="training_purpose" id="training_purpose" rows="2.5" required class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this support training..."></textarea>
 </div>
 
 <!-- Cost Preview (Automated Catalogue rates) -->
-<div class="p-4 rounded-xl bg-slate-50  space-y-2">
+<div class="p-4 rounded-surface bg-slate-50  space-y-2">
 <div class="flex items-center justify-between text-[12px] text-slate-500 font-semibold">
 <span>Estimated Cost (SIPA Catalogue rate)</span>
 <span class="text-slate-800 font-semibold">Auto-costed</span>
@@ -283,14 +283,14 @@ x-text="day"
 <div class="flex items-center gap-3 pt-3 border-t border-slate-100">
 <button
 type="submit"
-class="flex-1 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center"
+class="flex-1 h-9 rounded-control btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center"
 >
 Confirm &amp; Schedule Training
 </button>
 <button
 type="button"
 @click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
-class="px-5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
+class="px-5 h-9 rounded-surface bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
 >
 Cancel
 </button>

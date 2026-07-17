@@ -15,26 +15,26 @@
   </div>
 
   {% if error %}
-  <div class="p-3.5 rounded-xl border text-[12px] font-bold bg-rose-50 text-rose-800 border-rose-100">{{ error }}</div>
+  <div class="p-3.5 rounded-surface border text-[12px] font-bold bg-rose-50 text-rose-800 border-rose-100">{{ error }}</div>
   {% endif %}
 
   {% if not can_submit %}
-  <div class="p-3.5 rounded-xl border text-[12px] font-bold bg-amber-50 text-amber-800 border-amber-100">Your role cannot submit a Field Debrief.</div>
+  <div class="p-3.5 rounded-surface border text-[12px] font-bold bg-amber-50 text-amber-800 border-amber-100">Your role cannot submit a Field Debrief.</div>
   {% else %}
 
   <form method="post" action="/debriefs/submit" class="space-y-4">
     {% csrf_token %}
 
     <!-- Title + linked activities -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Debrief Title <span class="text-rose-500">*</span></span>
         <input type="text" name="title" required placeholder="e.g. Bright Hope Primary — Cluster Training Follow-Up"
-               class="mt-1 w-full h-10 px-3 rounded-lg border text-[13px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+               class="mt-1 w-full h-10 px-3 rounded-control border text-[13px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
       </label>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Debrief Type</span>
-        <select name="kind" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+        <select name="kind" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
           <option value="activity">Activity Debrief</option>
           <option value="daily">Daily Field Debrief</option>
           <option value="partner">Partner Debrief</option>
@@ -46,19 +46,19 @@
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Linked Activities</span>
         <p class="edify-text-caption text-slate-500 mb-1">Select one activity for a single-activity debrief, or several to cover them together in one debrief.</p>
         <select name="activity_ids" multiple size="5" hx-get="/debriefs/activity-options" hx-trigger="load" hx-target="this" hx-swap="innerHTML"
-                class="mt-1 w-full px-2 py-1.5 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+                class="mt-1 w-full px-2 py-1.5 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
           <option value="">Loading your recent activities…</option>
         </select>
       </label>
     </div>
 
     <!-- B. Execution Summary -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">B. Execution Summary</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Completion Status</span>
-          <select name="completion_status" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <select name="completion_status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
             <option value="completed_as_planned">Completed as Planned</option>
             <option value="partially_completed">Partially Completed</option>
             <option value="unsuccessful">Unsuccessful</option>
@@ -69,33 +69,33 @@
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">If Not Completed — Why?</span>
-          <input type="text" name="incomplete_reason" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <input type="text" name="incomplete_reason" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Start Time</span>
-          <input type="time" name="actual_start_time" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <input type="time" name="actual_start_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual End Time</span>
-          <input type="time" name="actual_end_time" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <input type="time" name="actual_end_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
         </label>
       </div>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Who Participated?</span>
-        <textarea name="participants_summary" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="participants_summary" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
       </label>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">What Was Done?</span>
-        <textarea name="what_was_done" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="what_was_done" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
       </label>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Intended Purpose</span>
-          <textarea name="intended_purpose" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+          <textarea name="intended_purpose" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Was the Purpose Achieved?</span>
-          <select name="purpose_achieved" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <select name="purpose_achieved" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
             <option value="">—</option><option value="true">Yes</option><option value="false">No</option>
           </select>
         </label>
@@ -103,26 +103,26 @@
     </div>
 
     <!-- Narrative summary -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Summary</h2>
-      <textarea name="summary" rows="2" placeholder="One or two lines summarizing this debrief" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-      <textarea name="what_happened" rows="2" placeholder="What happened?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+      <textarea name="summary" rows="2" placeholder="One or two lines summarizing this debrief" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+      <textarea name="what_happened" rows="2" placeholder="What happened?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <textarea name="what_went_well" rows="2" placeholder="What went well?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-        <textarea name="what_did_not_go_well" rows="2" placeholder="What didn't go well?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="what_went_well" rows="2" placeholder="What went well?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="what_did_not_go_well" rows="2" placeholder="What didn't go well?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
       </div>
     </div>
 
     <!-- C. School/Cluster Observations -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">C. School / Cluster Observations</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <textarea name="what_observed" rows="2" placeholder="What was observed?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-        <textarea name="what_improved" rows="2" placeholder="What has improved?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-        <textarea name="what_remains_weak" rows="2" placeholder="What remains weak?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-        <textarea name="what_surprised" rows="2" placeholder="What surprised the field team?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="what_observed" rows="2" placeholder="What was observed?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="what_improved" rows="2" placeholder="What has improved?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="what_remains_weak" rows="2" placeholder="What remains weak?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="what_surprised" rows="2" placeholder="What surprised the field team?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
       </div>
-      <textarea name="support_needed_next" rows="2" placeholder="What support does the school/cluster need next?" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+      <textarea name="support_needed_next" rows="2" placeholder="What support does the school/cluster need next?" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
       <div>
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Interventions Discussed or Observed</span>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
@@ -139,35 +139,35 @@
     </div>
 
     <!-- D. Participant and Engagement Quality -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">D. Participant &amp; Engagement Quality</h2>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Expected</span><input type="number" min="0" name="expected_participants" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Actual</span><input type="number" min="0" name="actual_participants" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Leaders Present</span><input type="number" min="0" name="school_leaders_present" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Teachers Present</span><input type="number" min="0" name="teachers_present" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Expected</span><input type="number" min="0" name="expected_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Actual</span><input type="number" min="0" name="actual_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Leaders Present</span><input type="number" min="0" name="school_leaders_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Teachers Present</span><input type="number" min="0" name="teachers_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Participation Quality</span>
-          <select name="engagement_level" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <select name="engagement_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
             <option value="excellent">Excellent</option><option value="good" selected>Good</option><option value="moderate">Moderate</option><option value="low">Low</option><option value="very_low">Very Low</option>
           </select>
         </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Attendance Concerns</span><input type="text" name="attendance_concerns" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Attendance Concerns</span><input type="text" name="attendance_concerns" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
       </div>
     </div>
 
     <!-- E. Challenges -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between pb-2 border-b" style="border-color:var(--edify-border);">
         <h2 class="text-[12.5px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">E. Challenges Encountered</h2>
         <button type="button" @click="challenges.push({challenge_type:'', description:'', severity:'medium'})" class="edify-text-caption font-bold" style="color:var(--edify-accent, var(--edify-chart-blue));">+ Add Challenge</button>
       </div>
       <template x-for="(c, i) in challenges" :key="i">
-        <div class="rounded-lg border p-3 space-y-2" style="border-color:var(--edify-border); background:var(--edify-surface-muted);">
+        <div class="rounded-surface border p-3 space-y-2" style="border-color:var(--edify-border); background:var(--edify-surface-muted);">
           <div class="flex items-center justify-between">
-            <select :name="'challenges[' + i + '][challenge_type]'" x-model="c.challenge_type" class="h-8 px-2 rounded border edify-text-caption font-semibold flex-1" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+            <select :name="'challenges[' + i + '][challenge_type]'" x-model="c.challenge_type" class="h-8 px-2 rounded-control border edify-text-caption font-semibold flex-1" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
               <option value="">Select challenge…</option>
               <option value="leader_unavailable">School Leader Unavailable</option><option value="teachers_unavailable">Teachers Unavailable</option>
               <option value="low_attendance">Low Attendance</option><option value="started_late">Activity Started Late</option>
@@ -182,57 +182,57 @@
               <option value="health_concern">Health Concern</option><option value="community_resistance">Community Resistance</option>
               <option value="government_regulatory">Government or Regulatory Issue</option><option value="other">Other</option>
             </select>
-            <select :name="'challenges[' + i + '][severity]'" x-model="c.severity" class="h-8 px-2 ml-2 rounded border edify-text-caption font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+            <select :name="'challenges[' + i + '][severity]'" x-model="c.severity" class="h-8 px-2 ml-2 rounded-control border edify-text-caption font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
               <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>
             </select>
             <button type="button" @click="challenges.splice(i, 1)" class="ml-2 text-rose-400 text-[16px] leading-none">&times;</button>
           </div>
-          <input type="text" :name="'challenges[' + i + '][description]'" x-model="c.description" placeholder="Description" class="w-full h-8 px-2 rounded border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
-          <input type="text" :name="'challenges[' + i + '][immediate_response]'" placeholder="Immediate response taken" class="w-full h-8 px-2 rounded border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+          <input type="text" :name="'challenges[' + i + '][description]'" x-model="c.description" placeholder="Description" class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+          <input type="text" :name="'challenges[' + i + '][immediate_response]'" placeholder="Immediate response taken" class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
         </div>
       </template>
       <p x-show="challenges.length === 0" class="edify-text-caption text-slate-400 font-semibold">No challenges added — click "Add Challenge" if any occurred.</p>
     </div>
 
     <!-- F. Route and Travel Debrief -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">F. Route &amp; Travel Debrief</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Route</span><input type="text" name="planned_route" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Route</span><input type="text" name="actual_route" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Route</span><input type="text" name="planned_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Route</span><input type="text" name="actual_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Planned</span><input type="number" min="0" name="schools_planned_count" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Reached</span><input type="number" min="0" name="schools_reached_count" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel Start</span><input type="time" name="travel_start_time" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel End</span><input type="time" name="travel_end_time" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Planned</span><input type="number" min="0" name="schools_planned_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Reached</span><input type="number" min="0" name="schools_reached_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel Start</span><input type="time" name="travel_start_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel End</span><input type="time" name="travel_end_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Route Quality</span>
-          <select name="route_quality" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <select name="route_quality" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
             <option value="">—</option><option value="excellent">Excellent</option><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option>
           </select>
         </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Transport Issue</span><input type="text" name="transport_issue" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Transport Issue</span><input type="text" name="transport_issue" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
       </div>
     </div>
 
     <!-- G. Outcomes and Commitments -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">G. Outcomes &amp; Commitments</h2>
-      <textarea name="immediate_result" rows="2" placeholder="Immediate result" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+      <textarea name="immediate_result" rows="2" placeholder="Immediate result" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
 
       <div class="flex items-center justify-between pt-1">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Commitments</span>
         <button type="button" @click="commitments.push({party:'school', commitment_text:''})" class="edify-text-caption font-bold" style="color:var(--edify-accent, var(--edify-chart-blue));">+ Add Commitment</button>
       </div>
       <template x-for="(c, i) in commitments" :key="i">
-        <div class="rounded-lg border p-3 space-y-2 flex items-start gap-2" style="border-color:var(--edify-border); background:var(--edify-surface-muted);">
-          <select :name="'commitments[' + i + '][party]'" x-model="c.party" class="h-8 px-2 rounded border edify-text-caption font-semibold shrink-0" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+        <div class="rounded-surface border p-3 space-y-2 flex items-start gap-2" style="border-color:var(--edify-border); background:var(--edify-surface-muted);">
+          <select :name="'commitments[' + i + '][party]'" x-model="c.party" class="h-8 px-2 rounded-control border edify-text-caption font-semibold shrink-0" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
             <option value="school">School</option><option value="staff">Edify Staff</option><option value="partner">Partner</option>
           </select>
-          <input type="text" :name="'commitments[' + i + '][commitment_text]'" x-model="c.commitment_text" placeholder="What was committed?" class="flex-1 h-8 px-2 rounded border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+          <input type="text" :name="'commitments[' + i + '][commitment_text]'" x-model="c.commitment_text" placeholder="What was committed?" class="flex-1 h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
           <button type="button" @click="commitments.splice(i, 1)" class="text-rose-400 text-[16px] leading-none shrink-0">&times;</button>
         </div>
       </template>
@@ -240,7 +240,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Recommended Next Activity</span>
-          <select name="recommended_next_activity_type" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <select name="recommended_next_activity_type" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
             <option value="">No Further Action</option>
             <option value="school_visit">School Visit</option><option value="follow_up_visit">Follow-Up Visit</option>
             <option value="baseline_ssa">Baseline SSA</option><option value="ssa_refresh">SSA Refresh</option>
@@ -250,27 +250,27 @@
             <option value="finance_follow_up">Finance Follow-Up</option><option value="data_cleanup">Data Cleanup</option>
           </select>
         </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Follow-Up Date</span><input type="date" name="follow_up_date" class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Follow-Up Date</span><input type="date" name="follow_up_date" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></label>
       </div>
       <p class="edify-text-caption text-slate-500">A recommendation only creates a Planning-ready draft once a supervisor accepts it — it never bypasses scheduling or costing.</p>
     </div>
 
     <!-- H. Support Required -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between pb-2 border-b" style="border-color:var(--edify-border);">
         <h2 class="text-[12.5px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">H. Support Required</h2>
         <button type="button" @click="supportRequests.push({requested_from_role:'Program Lead', support_type:'intervention_guidance'})" class="edify-text-caption font-bold" style="color:var(--edify-accent, var(--edify-chart-blue));">+ Request Support</button>
       </div>
       <template x-for="(s, i) in supportRequests" :key="i">
-        <div class="rounded-lg border p-3 space-y-2" style="border-color:var(--edify-border); background:var(--edify-surface-muted);">
+        <div class="rounded-surface border p-3 space-y-2" style="border-color:var(--edify-border); background:var(--edify-surface-muted);">
           <div class="flex items-center gap-2">
-            <select :name="'support_requests[' + i + '][requested_from_role]'" x-model="s.requested_from_role" class="h-8 px-2 rounded border edify-text-caption font-semibold flex-1" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+            <select :name="'support_requests[' + i + '][requested_from_role]'" x-model="s.requested_from_role" class="h-8 px-2 rounded-control border edify-text-caption font-semibold flex-1" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
               <option value="Program Lead">Program Lead</option><option value="CountryDirector">Country Director</option>
               <option value="ImpactAssessment">Impact Assessment</option><option value="HumanResources">HR</option>
               <option value="Accountant">Accountant</option><option value="partner_manager">Partner Manager</option>
               <option value="ProjectCoordinator">Project Coordinator</option><option value="RegionalVicePresident">RVP</option>
             </select>
-            <select :name="'support_requests[' + i + '][support_type]'" x-model="s.support_type" class="h-8 px-2 rounded border edify-text-caption font-semibold flex-1" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+            <select :name="'support_requests[' + i + '][support_type]'" x-model="s.support_type" class="h-8 px-2 rounded-control border edify-text-caption font-semibold flex-1" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
               <option value="technical">Technical Support</option><option value="intervention_guidance">Intervention Guidance</option>
               <option value="budget">Budget Support</option><option value="transport">Transport Support</option>
               <option value="partner">Partner Support</option><option value="training_materials">Training Materials</option>
@@ -280,19 +280,19 @@
             </select>
             <button type="button" @click="supportRequests.splice(i, 1)" class="text-rose-400 text-[16px] leading-none">&times;</button>
           </div>
-          <input type="text" :name="'support_requests[' + i + '][note]'" placeholder="Note (optional)" class="w-full h-8 px-2 rounded border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
+          <input type="text" :name="'support_requests[' + i + '][note]'" placeholder="Note (optional)" class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface); color:var(--edify-text);">
         </div>
       </template>
     </div>
 
     <!-- I. Success and Learning -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">I. Success &amp; Learning</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <textarea name="key_success" rows="2" placeholder="Key success" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-        <textarea name="key_lesson_learned" rows="2" placeholder="Key lesson learned" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-        <textarea name="practice_worth_repeating" rows="2" placeholder="Practice worth repeating" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-        <textarea name="innovation_observed" rows="2" placeholder="Innovation observed" class="w-full px-3 py-2 rounded-lg border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="key_success" rows="2" placeholder="Key success" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="key_lesson_learned" rows="2" placeholder="Key lesson learned" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="practice_worth_repeating" rows="2" placeholder="Practice worth repeating" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+        <textarea name="innovation_observed" rows="2" placeholder="Innovation observed" class="w-full px-3 py-2 rounded-control border text-[12px]" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
       </div>
       <div class="space-y-2 pt-1">
         <label class="flex items-start gap-2 edify-text-caption font-semibold" style="color:var(--edify-text);">
@@ -300,8 +300,8 @@
           Potential Most Significant Change Story candidate
         </label>
         <div x-show="mscsFlag" x-cloak class="pl-6 space-y-2">
-          <input type="text" name="potential_mscs_title" placeholder="Story title" class="w-full h-8 px-2 rounded border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
-          <textarea name="potential_mscs_narrative" rows="2" placeholder="Narrative" class="w-full px-2 py-1.5 rounded border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
+          <input type="text" name="potential_mscs_title" placeholder="Story title" class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <textarea name="potential_mscs_narrative" rows="2" placeholder="Narrative" class="w-full px-2 py-1.5 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
           <p class="edify-text-caption text-slate-500">Creates a draft story for Targets review — not an approved MSCS.</p>
         </div>
         <label class="flex items-start gap-2 edify-text-caption font-semibold" style="color:var(--edify-text);">
@@ -309,7 +309,7 @@
           Potential Champion School signal
         </label>
         <div x-show="championFlag" x-cloak class="pl-6">
-          <input type="text" name="potential_champion_note" placeholder="What suggests this?" class="w-full h-8 px-2 rounded border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+          <input type="text" name="potential_champion_note" placeholder="What suggests this?" class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
         </div>
         <label class="flex items-start gap-2 edify-text-caption font-semibold" style="color:var(--edify-text);">
           <input type="checkbox" name="potential_partner_success_flag" class="mt-0.5">
@@ -319,23 +319,23 @@
     </div>
 
     <!-- J. Risk and Escalation -->
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">J. Risk &amp; Escalation</h2>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Escalation Level</span>
-        <select name="risk_level" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+        <select name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
           <option value="none">No Escalation</option><option value="monitor">Monitor</option>
           <option value="pl_attention">PL Attention</option><option value="cd_attention">CD Attention</option>
           <option value="ia_attention">IA Attention</option><option value="hr_attention">HR Attention</option>
           <option value="finance_attention">Finance Attention</option><option value="critical">Critical Leadership Attention</option>
         </select>
       </label>
-      <label class="flex items-start gap-2 edify-text-caption font-semibold bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5" style="color:var(--edify-text);">
+      <label class="flex items-start gap-2 edify-text-caption font-semibold bg-rose-500/10 border border-rose-500/20 rounded-surface p-2.5" style="color:var(--edify-text);">
         <input type="checkbox" name="is_restricted_incident" x-model="restrictedFlag" class="mt-0.5">
         This is a restricted incident (safeguarding, fraud, safety, data integrity, misconduct) — routes only to authorized roles, never the general team or peer feed.
       </label>
       <div x-show="restrictedFlag" x-cloak class="pl-2">
-        <select name="restricted_incident_category" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
+        <select name="restricted_incident_category" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
           <option value="safeguarding">Safeguarding</option><option value="fraud">Fraud or Misuse of Funds</option>
           <option value="staff_safety">Serious Staff Safety Issue</option><option value="data_integrity">Serious Data Integrity Issue</option>
           <option value="partner_misconduct">Major Partner Misconduct</option><option value="school_complaint">Severe School Complaint</option>
@@ -345,8 +345,8 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <button type="submit" class="h-11 px-6 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold transition-colors">Submit Field Debrief</button>
-      <a href="/debriefs" class="h-11 px-6 inline-flex items-center rounded-lg border text-[13px] font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Cancel</a>
+      <button type="submit" class="h-11 px-6 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold transition-colors">Submit Field Debrief</button>
+      <a href="/debriefs" class="h-11 px-6 inline-flex items-center rounded-control border text-[13px] font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Cancel</a>
     </div>
   </form>
   {% endif %}

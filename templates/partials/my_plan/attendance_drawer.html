@@ -15,7 +15,7 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 
 <div class="space-y-4">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-blue-50 text-blue-600 edify-text-caption">1</span>
 Record Participant Headcount
 </h4>
 
@@ -29,7 +29,7 @@ name="teachers_attended"
 id="teachers_attended"
 min="0"
 value="{{ act.teachers_attended|default:0 }}"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
 >
 </div>
 <div>
@@ -40,7 +40,7 @@ name="leaders_attended"
 id="leaders_attended"
 min="0"
 value="{{ act.leaders_attended|default:0 }}"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700"
 >
 </div>
 </div>
@@ -48,11 +48,11 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 <!-- File Upload -->
 <div class="pt-2">
 <label for="attendance_file" class="block edify-text-caption font-bold text-slate-500 uppercase">Upload Signed Attendance Sheet</label>
-<div class="mt-1.5 p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+<div class="mt-1.5 p-3 bg-slate-50 rounded-surface border border-slate-200/60">
 <input
 type="file"
 name="attendance_file"
-class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 >
 </div>
 </div>
@@ -72,7 +72,7 @@ class="edify-text-caption font-semibold text-blue-600 hover:text-blue-800 hover:
 </button>
 </div>
 <p class="edify-text-caption text-slate-400 font-semibold leading-relaxed">Check all schools that attended this training/meeting session:</p>
-<div class="border border-slate-200 rounded-xl divide-y divide-slate-100 bg-slate-50/50 max-h-48 overflow-y-auto">
+<div class="border border-slate-200 rounded-surface divide-y divide-slate-100 bg-slate-50/50 max-h-48 overflow-y-auto">
 {% for school in cluster_schools %}
 <label class="flex items-center gap-3 px-4 py-2 hover:bg-slate-100/50 cursor-pointer text-[12px] font-semibold text-slate-700">
 <input
@@ -80,7 +80,7 @@ type="checkbox"
 name="attended_schools"
 value="{{ school.id }}"
 {% if not act.attended_school_ids or school.id in act.attended_school_ids %}checked{% endif %}
-class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+class="h-4 w-4 text-blue-600 rounded-control border-slate-300 focus:ring-blue-500"
 >
 <div class="flex-1">
 <span class="font-bold text-slate-800 block leading-tight">{{ school.name }}</span>
@@ -100,7 +100,7 @@ name="notes"
 id="notes"
 rows="2"
 placeholder="Any additional details on attendance registration..."
-class="w-full p-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-semibold text-slate-700"
+class="w-full p-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-semibold text-slate-700"
 ></textarea>
 </div>
 </div>

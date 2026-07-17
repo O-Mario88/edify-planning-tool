@@ -22,7 +22,12 @@ from apps.core.enums import (
     SsaIntervention,
     VerificationStatus,
 )
-from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
+from apps.core.models import (
+    CuidField,
+    SoftDeleteModel,
+    TimeStampedModel,
+    _normalize_datetime_value,
+)
 
 
 class Activity(SoftDeleteModel):
@@ -189,6 +194,12 @@ class Activity(SoftDeleteModel):
         ]
 
     def save(self, *args, **kwargs):
+        # ``scheduled_date`` is an instant, not a date-only planning field.
+        # Normalize direct model/admin/import writes before Django prepares the
+        # database value so a legacy naïve string or datetime cannot leak into
+        # analytics, availability, or period boundaries.
+        if self.scheduled_date is not None:
+            self.scheduled_date = _normalize_datetime_value(self.scheduled_date)
         super().save(*args, **kwargs)
         try:
             from apps.core_schools.models import CoreActivitySlot
@@ -206,7 +217,16 @@ class Activity(SoftDeleteModel):
                     # reachable path — see resync_plan_completion docstring).
                     resync_plan_completion(slot.core_plan)
         except Exception:
-            pass
+            # Never break an Activity save over the core-slot mirror, but a
+            # silent pass here hid real drift (stale slots, wrong package
+            # counters) — log it so System Health/ops can see the failures.
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Core slot mirror resync failed for activity %s",
+                self.id,
+                exc_info=True,
+            )
 
 
 class ActivityScheduleCostLine(TimeStampedModel):

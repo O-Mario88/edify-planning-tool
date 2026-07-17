@@ -129,10 +129,11 @@ class ActivityPurposeAndImpactTest(TestCase):
         self.assertEqual(impact["delta"], 2.0)
 
     def test_cluster_weakest_interventions(self):
-        # Assign school to cluster
-        from apps.clusters.models import SchoolClusterAssignment
+        # Use the canonical membership transition. The compatibility join is
+        # deliberately not an alternate source of truth for analytics.
+        from apps.clusters.services import set_school_cluster_membership
 
-        SchoolClusterAssignment.objects.create(school=self.school, cluster=self.cluster)
+        set_school_cluster_membership(self.school, self.cluster, self.user.id)
 
         weakest = cluster_weakest_interventions(self.cluster.id, self.user)
         self.assertEqual(len(weakest), 4)

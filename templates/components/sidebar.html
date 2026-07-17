@@ -3,12 +3,19 @@
 <div class="app-sidebar__brand">
   <!-- Expanded Logo -->
   <div x-show="!collapsed" class="app-sidebar__wordmark">
-    <span class="app-sidebar__brand-mark" aria-hidden="true">E</span>
-    <span class="app-sidebar__brand-name">Edify Planning &amp; Monitoring</span>
+    <img src="{% static 'images/logo.png' %}"
+         alt="Edify"
+         width="110"
+         height="45"
+         class="app-sidebar__brand-logo">
+    <span class="app-sidebar__brand-divider" aria-hidden="true"></span>
+    <span class="app-sidebar__brand-product">Planning &amp;<br>Monitoring</span>
   </div>
   <!-- Collapsed Logo -->
   <div x-show="collapsed" class="flex justify-center w-full" style="display: none;">
-    <span class="app-sidebar__brand-mark" aria-label="Edify">E</span>
+    <span class="app-sidebar__brand-logo-compact" aria-label="Edify">
+      <img src="{% static 'images/logo.png' %}" alt="" aria-hidden="true" width="88" height="36">
+    </span>
   </div>
 </div>
 
@@ -35,8 +42,10 @@
                   {{ item.icon|safe }}
                 </div>
                 <span class="app-sidebar__item-label" x-show="!collapsed">{{ item.label }}</span>
-                {% if item.url == "/messages" and unread_messages_count > 0 %}
-                  <span class="app-sidebar__item-badge app-sidebar__item-badge--blue" x-show="!collapsed">{{ unread_messages_count }}</span>
+                {% if item.url == "/messages" %}
+                  <span id="message-sidebar-badge"
+                        class="app-sidebar__item-badge app-sidebar__item-badge--blue"
+                        x-show="!collapsed && {{ unread_messages_count }} > 0">{{ unread_messages_count }}</span>
                 {% elif item.url == "/my-professional-development" and pd_action_required_count > 0 %}
                   <span class="app-sidebar__item-badge app-sidebar__item-badge--blue" x-show="!collapsed">{{ pd_action_required_count }}</span>
                 {% endif %}

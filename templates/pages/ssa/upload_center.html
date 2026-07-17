@@ -18,7 +18,7 @@
 {% if messages %}
 <div class="space-y-2">
   {% for message in messages %}
-  <div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 text-rose-800{% else %}bg-emerald-50 text-emerald-800{% endif %} rounded-xl text-[12px] font-medium">
+  <div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 text-rose-800{% else %}bg-emerald-50 text-emerald-800{% endif %} rounded-surface text-[12px] font-medium">
     {{ message }}
   </div>
   {% endfor %}
@@ -26,13 +26,13 @@
 {% endif %}
 
 <!-- Template Download + Column Guide -->
-<div class="edify-surface rounded-xl shadow-sm p-5 space-y-4">
+<div class="edify-surface rounded-surface shadow-sm p-5 space-y-4">
   <div class="flex items-center justify-between">
     <div>
       <h3 class="text-[14px] font-semibold text-slate-800">Required Column Format</h3>
       <p class="text-[12px] text-slate-400 font-normal mt-0.5">Download the template, fill in your scores, and upload it below.</p>
     </div>
-    <a href="/ssa/upload/template" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-md transition-colors">
+    <a href="/ssa/upload/template" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-control transition-colors">
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
       Download Template
     </a>
@@ -69,7 +69,7 @@
 </div>
 
 <!-- Upload Area -->
-<div class="edify-surface rounded-xl shadow-sm p-6">
+<div class="edify-surface rounded-surface shadow-sm p-6">
   <form method="post" enctype="multipart/form-data" class="space-y-4">
   {% csrf_token %}
 
@@ -78,7 +78,7 @@
     @dragover.prevent="dragging = true"
     @dragleave.prevent="dragging = false"
     @drop.prevent="dragging = false"
-    class="border-2 border-dashed rounded-xl p-10 text-center transition-colors flex flex-col items-center justify-center min-h-[200px]"
+    class="border-2 border-dashed rounded-surface p-10 text-center transition-colors flex flex-col items-center justify-center min-h-[200px]"
     :class="dragging ? 'border-blue-500 bg-blue-50/20' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'"
   >
     <svg class="w-10 h-10 text-slate-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -86,7 +86,7 @@
     </svg>
     <p class="text-[14px] font-medium">Drag & drop your SSA file here</p>
     <p class="edify-text-caption text-slate-400 font-normal mt-1">Supports Excel (.xlsx) and CSV format</p>
-    <label class="mt-4 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-medium text-[12px] rounded-md cursor-pointer transition-colors">
+    <label class="mt-4 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-medium text-[12px] rounded-surface cursor-pointer transition-colors">
       Browse Files
       <input type="file" name="file" class="hidden" required>
     </label>
@@ -97,7 +97,7 @@
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       School ID is required to map rows to schools.
     </span>
-    <button type="submit" class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-[12px] rounded-md transition-colors">
+    <button type="submit" class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-[12px] rounded-control transition-colors">
       Upload and Preview
     </button>
   </div>

@@ -126,7 +126,11 @@
   --color-edify-divider: var(--edify-divider);
   --bg-page: var(--edify-bg);
   --foreground: var(--edify-text);
+  --text-primary: var(--edify-text);
   --text-secondary: var(--edify-text-muted);
+  --text-muted: var(--edify-text-subtle);
+  --color-edify-text: var(--edify-text);
+  --color-edify-muted: var(--edify-text-muted);
   --border-card: var(--edify-border);
   --border-strong: var(--edify-border-strong);
 
@@ -140,15 +144,16 @@
        label   → captions, secondary (12px)
        micro   → overlines, badges (11px) */
   --edify-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --edify-font-serif: Georgia, 'Times New Roman', ui-serif, serif;
+  /* Compatibility alias only: themes must never introduce a second UI font. */
+  --edify-font-serif: var(--edify-font-sans);
   --edify-font-display-family: var(--edify-font-sans);
   --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
   --edify-text-display-size: clamp(1.5rem, 1.34rem + 0.52vw, 1.875rem);
-  --edify-text-heading-size: 1rem;
-  --edify-text-title-size:   0.875rem;
-  --edify-text-body-size:    0.875rem;
-  --edify-text-label-size:   0.75rem;
+  --edify-text-heading-size: clamp(1.05rem, 1rem + 0.18vw, 1.25rem);
+  --edify-text-title-size:   clamp(0.875rem, 0.84rem + 0.12vw, 1rem);
+  --edify-text-body-size:    clamp(0.875rem, 0.82rem + 0.16vw, 1rem);
+  --edify-text-label-size:   clamp(0.75rem, 0.72rem + 0.1vw, 0.875rem);
   --edify-text-micro-size:   0.6875rem;
 
   --edify-text-display-weight: 700;
@@ -199,17 +204,22 @@
   --edify-space-xl: var(--edify-space-8);
   --edify-space-2xl: var(--edify-space-12);
 
-  /* ── BORDER RADIUS (3 radii by component class) ──────────────────────────
-       sm (6px)  → inputs, buttons, small pills
-       md (10px) → cards, list items (default)
-       lg (16px) → modals, large panels, command palette
-       pill      → avatars, status dots only                        */
-  --edify-radius-xs: 6px;
-  --edify-radius-sm: 6px;
-  --edify-radius-md: 12px;
-  --edify-radius-lg: 18px;
-  --edify-radius-pill: 9999px;
-  --edify-radius-circle: 50%;
+  /* ── BORDER RADIUS — CANONICAL PLATFORM GEOMETRY ────────────────────────
+       Surfaces never change shape by page, role, theme or viewport.
+       Legacy aliases remain temporarily for third-party compatibility but
+       resolve to this semantic five-token contract. */
+  --radius-surface: 13px;
+  --radius-control: 9px;
+  --radius-overlay: 16px;
+  --radius-small: 7px;
+  --radius-pill: 9999px;
+  --edify-radius-xs: var(--radius-small);
+  --edify-radius-sm: var(--radius-control);
+  --edify-radius-md: var(--radius-surface);
+  --edify-radius-lg: var(--radius-overlay);
+  --edify-radius-xl: var(--radius-overlay);
+  --edify-radius-pill: var(--radius-pill);
+  --edify-radius-circle: var(--radius-pill);
 
   /* ── SHADOWS / ELEVATION (warm, multi-stop, very subtle at rest) ──────────
      A-tier cards float — barely-there shadow at rest, gentle lift on hover.
@@ -357,27 +367,27 @@ html.theme-blue body {
 
    This theme intentionally follows the approved workflow-report reference:
    a quiet near-black canvas, opaque ink-blue planes, hairline borders,
-   ivory display type, blue metadata and amber decision accents. It is not a
+   white body type and blue decision accents. It is not a
    dimmed Light theme and it is not the translucent, image-backed Blue theme.
    ════════════════════════════════════════════════════════════════════════════ */
 :root.theme-dark {
   color-scheme: dark;
 
   --edify-primary: #8fb1e8;
-  --edify-primary-hover: #b2c9ee;
-  --edify-primary-light: rgba(143, 177, 232, 0.14);
-  --edify-accent: #d9aa4b;
-  --edify-accent-hover: #efc66f;
-  --edify-on-accent: #101721;
-  --edify-accent-light: rgba(217, 170, 75, 0.14);
-  --edify-accent-border: rgba(217, 170, 75, 0.34);
+  --edify-primary-hover: #b7cdf0;
+  --edify-primary-light: rgba(143, 177, 232, 0.13);
+  --edify-accent: #2563eb;
+  --edify-accent-hover: #1d4ed8;
+  --edify-on-accent: #ffffff;
+  --edify-accent-light: rgba(37, 99, 235, 0.18);
+  --edify-accent-border: rgba(96, 165, 250, 0.42);
 
   --edify-success: #79ca98;
   --edify-success-light: rgba(43, 126, 75, 0.22);
   --edify-success-border: rgba(121, 202, 152, 0.30);
-  --edify-warning: #e0b354;
-  --edify-warning-light: rgba(111, 77, 15, 0.42);
-  --edify-warning-border: rgba(224, 179, 84, 0.34);
+  --edify-warning: #fb923c;
+  --edify-warning-light: rgba(154, 52, 18, 0.34);
+  --edify-warning-border: rgba(251, 146, 60, 0.38);
   --edify-danger: #e88c91;
   --edify-danger-light: rgba(121, 43, 47, 0.34);
   --edify-danger-border: rgba(232, 140, 145, 0.30);
@@ -391,45 +401,59 @@ html.theme-blue body {
   --edify-teal-light: rgba(120, 213, 208, 0.11);
   --edify-teal-border: rgba(120, 213, 208, 0.24);
 
-  --edify-notification: #e8792e;
+  --edify-notification: #f08a3e;
   --edify-notification-text: #ffffff;
-  --edify-notification-glow: rgba(232, 121, 46, 0.30);
+  --edify-notification-glow: rgba(240, 138, 62, 0.32);
 
-  --edify-surface: #182334;
-  --edify-surface-muted: #131d2a;
-  --edify-surface-raised: #1c293b;
-  --edify-surface-hover: #202e42;
-  --edify-surface-selected: #243853;
-  --edify-border: #2b3a4e;
-  --edify-border-strong: #3b4e67;
-  --edify-divider: #263548;
-  --edify-text: #edf0eb;
-  --edify-text-muted: #aeb8c5;
-  --edify-text-subtle: #7f8c9b;
-  --edify-text-disabled: #687686;
-  --edify-bg: #101721;
-  --edify-section-bg: #121b27;
-  --edify-canvas-treatment: linear-gradient(180deg, #101721 0%, #111923 54%, #0e151e 100%);
-  --edify-surface-treatment: linear-gradient(180deg, rgba(27, 39, 57, .98), rgba(23, 34, 50, .98));
-  --edify-font-display-family: var(--edify-font-serif);
-  --edify-radius-md: 10px;
-  --edify-radius-lg: 14px;
+  /* Five-step low-light surface ladder. The canvas stays genuinely dark;
+     structure comes from controlled luminance, not heavy outlines. */
+  --edify-bg: #080b10;
+  --edify-section-bg: #0b1016;
+  --edify-surface-muted: #0d1218;
+  --edify-surface: #11161d;
+  --edify-surface-raised: #161d26;
+  --edify-surface-hover: #1c2530;
+  --edify-surface-selected: #202e3e;
+  --edify-border: rgba(255, 255, 255, 0.10);
+  --edify-border-strong: rgba(255, 255, 255, 0.18);
+  --edify-divider: rgba(255, 255, 255, 0.075);
 
+  /* Text remains comfortably above WCAG AA on both canvas and card planes. */
+  --edify-text: #f5f7fa;
+  --edify-text-muted: #d6dde7;
+  --edify-text-subtle: #aeb9c7;
+  --edify-text-disabled: #7f8b9a;
+
+  --edify-canvas-treatment:
+    radial-gradient(circle at 82% -12%, rgba(86, 119, 158, 0.12), transparent 34rem),
+    radial-gradient(circle at 18% 104%, rgba(37, 99, 235, 0.065), transparent 28rem),
+    linear-gradient(180deg, #080b10 0%, #090d13 54%, #070a0f 100%);
+  --edify-surface-treatment:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.034), transparent 32%),
+    linear-gradient(145deg, #121820 0%, #0f141b 100%);
+  --edify-button-primary-treatment:
+    linear-gradient(180deg, #3478ee 0%, var(--edify-accent) 62%, #1e40af 100%);
+  --edify-button-secondary-treatment:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  --edify-glass-highlight: rgba(255, 255, 255, 0.055);
+  --edify-font-display-family: var(--edify-font-sans);
   --color-edify-divider: var(--edify-divider);
   --bg-page: var(--edify-bg);
 
-  --edify-shadow-sm: 0 1px 1px rgba(0,0,0,.30), 0 10px 22px -18px rgba(0,0,0,.74);
-  --edify-shadow-md: 0 18px 38px -24px rgba(0,0,0,.88), 0 2px 8px rgba(0,0,0,.24);
-  --edify-shadow-lg: 0 30px 68px -32px rgba(0,0,0,.96), 0 8px 22px rgba(0,0,0,.18);
-  --edify-shadow-drawer: -22px 0 58px -26px rgba(0,0,0,.92);
+  --edify-shadow-sm: 0 1px 1px rgba(0,0,0,.38), 0 12px 28px -22px rgba(0,0,0,.92);
+  --edify-shadow-md: 0 22px 48px -30px rgba(0,0,0,.96), 0 4px 12px -8px rgba(0,0,0,.52);
+  --edify-shadow-lg: 0 38px 82px -40px rgba(0,0,0,.98), 0 12px 28px -18px rgba(0,0,0,.72);
+  --edify-shadow-drawer: -24px 0 64px -28px rgba(0,0,0,.96);
 
-  --edify-topbar-bg: rgba(16, 23, 33, 0.94);
+  --edify-topbar-bg: rgba(8, 11, 16, 0.88);
   --edify-topbar-border: var(--edify-border);
-  --edify-topbar-shadow: 0 1px 0 rgba(123,189,232,.05), 0 20px 44px -30px rgba(0,0,0,.92);
-  --edify-scrim: rgba(0, 4, 10, 0.78);
-  --edify-focus-ring: 0 0 0 3px rgba(143, 177, 232, 0.24);
-  --edify-sidebar-bg: #101822;
-  --edify-scrollbar-thumb: #3b4e67;
+  --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.025), 0 20px 46px -32px rgba(0,0,0,.96);
+  --edify-scrim: rgba(0, 2, 6, 0.82);
+  --edify-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.32);
+  --edify-sidebar-bg:
+    radial-gradient(circle at 16% 0%, rgba(143, 177, 232, 0.065), transparent 22rem),
+    linear-gradient(180deg, #090d12 0%, #080c11 100%);
+  --edify-scrollbar-thumb: #37414e;
 }
 
 /* Theme changes feel immediate but not abrupt. Avoid overriding component
@@ -467,5 +491,46 @@ html.theme-fade :where(body, main, header, aside, nav, section, article, table, 
 @media (prefers-reduced-motion: reduce) {
   html.theme-fade :where(body, main, header, aside, nav, section, article, table, input, select, textarea, button, a, .card, .bg-white) {
     transition-duration: 0ms;
+  }
+}
+
+/* Mobile interaction baseline: prevent iOS form zoom and ensure critical
+   controls remain comfortably tappable without inflating ordinary text links. */
+@media (max-width: 40rem) and (pointer: coarse) {
+  :where(button, [role="button"], [role="tab"], input, select, textarea) {
+    min-height: 44px;
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    font-size: 16px;
+  }
+}
+
+/* School directory filters use an explicit breakpoint contract. A generic
+   legacy `[class*="grid-cols-4"]` mobile rule also matched responsive class
+   names such as `md:grid-cols-4`, which forced clipped two-column filters. */
+.school-filter-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+#filters-form.school-filters-form {
+  display: block !important;
+}
+
+@media (min-width: 40rem) {
+  .school-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 48rem) {
+  .school-filter-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 64rem) {
+  .school-filter-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   }
 }

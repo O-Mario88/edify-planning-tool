@@ -333,6 +333,7 @@ def apply_to_activity(
             AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
             AdvanceRequestStatus.ACCOUNTED,
             AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
+            AdvanceRequestStatus.REIMBURSEMENT_DISBURSED,
             AdvanceRequestStatus.REIMBURSED,
         ],
     ).exists():
@@ -340,6 +341,25 @@ def apply_to_activity(
             "This activity already has a disbursed or accounted advance — its "
             "cost snapshot is locked. Use a budget amendment instead of "
             "rescheduling to change its cost."
+        )
+
+    # Confirmed-but-not-yet-disbursed money is frozen too: the clear-and-
+    # rebuild below would CASCADE-delete a CONFIRMED_FOR_ADVANCE advance (the
+    # confirmation silently vanishes and is recreated as pending) while the
+    # approved weekly request keeps its stale total with a missing line — the
+    # accountant would then disburse an inconsistent request. The unstick path
+    # is the accountant returning the advance, which is re-confirmable.
+    if AdvanceRequest.objects.filter(
+        budget_line__activity=activity,
+        status__in=[
+            AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+            AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+        ],
+    ).exists():
+        raise BadRequest(
+            "This activity's advance is already confirmed and sitting in the "
+            "accountant's queue. Ask the accountant to return the advance "
+            "first, then reschedule."
         )
 
     # The clear-and-rebuild of ActivityScheduleCostLine plus the activity's own

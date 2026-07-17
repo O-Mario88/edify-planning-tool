@@ -73,14 +73,14 @@
   --border-strong: var(--edify-border-strong);
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
-     One font family (Outfit). Six steps. Every text element must use one.
+     One font family (Inter). Six steps. Every text element must use one.
        display → page titles (H1)
        heading → section titles (H2)
        title   → card/panel titles (H3)
        body    → default text, table cells, buttons
        label   → captions, table headers, secondary info
        micro   → overlines, badges, eyebrow text */
-  --edify-font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --edify-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
   --edify-text-display-size: 24px;   /* page title   */
@@ -140,18 +140,19 @@
   --edify-space-xl: var(--edify-space-8);
   --edify-space-2xl: var(--edify-space-12);
 
-  /* ── BORDER RADIUS ─────────────────────────────────────────────────────────
-     Three radii by component class:
-       sm (6px)  → inputs, buttons, small pills
-       md (10px) → cards, list items (the default)
-       lg (16px) → modals, large panels, command palette
-       pill      → avatars, status dots only */
-  --edify-radius-sm: 6px;
-  --edify-radius-md: 10px;
-  --edify-radius-lg: 16px;
-  --edify-radius-pill: 9999px;
-  /* Legacy aliases (some files still reference these names) */
-  --edify-radius-xs: var(--edify-radius-sm);
+  /* ── BORDER RADIUS — mirrors design-system.css ─────────────────────────── */
+  --radius-surface: 16px;
+  --radius-control: 12px;
+  --radius-overlay: 20px;
+  --radius-small: 8px;
+  --radius-pill: 9999px;
+  --edify-radius-xs: var(--radius-small);
+  --edify-radius-sm: var(--radius-control);
+  --edify-radius-md: var(--radius-surface);
+  --edify-radius-lg: var(--radius-overlay);
+  --edify-radius-xl: var(--radius-overlay);
+  --edify-radius-pill: var(--radius-pill);
+  --edify-radius-circle: var(--radius-pill);
 
   /* ── SHADOWS / ELEVATION ───────────────────────────────────────────────────
      Three levels. Warm (not blue-gray). */

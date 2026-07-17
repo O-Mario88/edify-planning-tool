@@ -1,6 +1,14 @@
 {% include "partials/schools/table.html" %}
 
 <!-- Out-of-band swaps for dashboard synchronization -->
+<input
+type="hidden"
+name="tab"
+id="filters-tab-input"
+value="{{ active_tab|default:'all' }}"
+hx-swap-oob="outerHTML"
+>
+
 <div id="kpi-cards-row" hx-swap-oob="true">
 {% include "partials/schools/kpi_cards.html" %}
 </div>

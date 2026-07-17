@@ -19,12 +19,12 @@
 <form hx-post="/data-quality/issue/{{ issue.id }}/action" hx-target="#dq-issue-{{ issue.id }}" hx-swap="outerHTML" class="inline m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="assign">
-<button type="submit" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold edify-text-caption rounded transition-all">Assign to me</button>
+<button type="submit" class="px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold edify-text-caption rounded-control transition-all">Assign to me</button>
 </form>
 <form hx-post="/data-quality/issue/{{ issue.id }}/action" hx-target="#dq-issue-{{ issue.id }}" hx-swap="outerHTML" class="inline m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="resolve">
-<button type="submit" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold edify-text-caption rounded transition-all">Resolve</button>
+<button type="submit" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold edify-text-caption rounded-control transition-all">Resolve</button>
 </form>
 </div>
 {% else %}

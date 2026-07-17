@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2 h-full">
   <div>
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">5. Performance by Partner</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Impact-weighted · recommendation review</p>
@@ -27,7 +27,7 @@
             {% if r.ssa_improve is not None %}{% if r.ssa_improve > 0 %}▲{% endif %}{{ r.ssa_improve }}pp{% else %}—{% endif %}
           </td>
           <td class="text-right py-1.5 pr-1">
-            <span class="inline-block px-1.5 py-0.5 rounded edify-text-caption font-bold whitespace-nowrap
+            <span class="inline-block px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap
               {% if r.rec_tone == 'success' %}bg-emerald-50 text-emerald-700
               {% elif r.rec_tone == 'warning' %}bg-amber-50 text-amber-700
               {% elif r.rec_tone == 'danger' %}bg-rose-50 text-rose-700

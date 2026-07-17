@@ -13,7 +13,7 @@
     </div>
   </div>
 
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     {% if schools %}
     <div class="overflow-x-auto -mx-1">
       <table class="w-full edify-text-caption">
@@ -34,7 +34,7 @@
             <td class="text-left text-slate-500 py-2.5">{{ s.sub_county.name|default:"—" }}</td>
             <td class="text-right tabular-nums text-slate-500 py-2.5">{{ s.enrollment|default:0|intcomma }}</td>
             <td class="text-right py-2.5 pr-1">
-              <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if s.current_fy_ssa_status == 'done' %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-700{% endif %}">
+              <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if s.current_fy_ssa_status == 'done' %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-700{% endif %}">
                 {{ s.current_fy_ssa_status|cut:"_"|title }}
               </span>
             </td>

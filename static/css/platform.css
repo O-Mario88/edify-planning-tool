@@ -6,10 +6,10 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --edify-page-max-size: 93.75rem;
-  --edify-control-block-size: 2.625rem;
-  --edify-panel-padding: clamp(1rem, 0.78rem + 0.7vw, 1.5rem);
-  --edify-panel-gap: clamp(0.875rem, 0.68rem + 0.62vw, 1.25rem);
+  --edify-page-max-size: 112rem;
+  --edify-control-block-size: 2.5rem;
+  --edify-panel-padding: clamp(0.75rem, 0.66rem + 0.35vw, 1.0625rem);
+  --edify-panel-gap: clamp(0.6875rem, 0.61rem + 0.28vw, 0.9375rem);
   --edify-focus-outline: 2px solid var(--edify-accent);
 }
 
@@ -22,6 +22,35 @@ main {
   min-inline-size: 0;
   color: var(--edify-text);
   scroll-padding-block-start: 4.5rem;
+}
+
+/* Every authenticated workspace inherits the same compact cockpit density as
+   Special Project Analytics. Individual workflows keep their own hierarchy,
+   while spacing, controls, surfaces and data rhythm stay platform-consistent. */
+main.edify-workspace {
+  container: edify-workspace / inline-size;
+  --edify-workspace-section-gap: clamp(0.75rem, 0.68rem + 0.3vw, 1rem);
+}
+
+main.edify-workspace :where(.space-y-6) > :not([hidden]) ~ :not([hidden]) {
+  margin-block-start: 1rem !important;
+}
+
+main.edify-workspace :where(.space-y-5) > :not([hidden]) ~ :not([hidden]) {
+  margin-block-start: 0.875rem !important;
+}
+
+main.edify-workspace :where(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
+  margin-block-start: 0.75rem !important;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--edify-font-sans) !important;
 }
 
 main > :where(div, section, article) {
@@ -38,6 +67,7 @@ main > :where(div, section)[class*="p-4"]:not([class*="drawer"]),
 main > :where(div, section)[class*="p-5"]:not([class*="drawer"]),
 main > :where(div, section)[class*="p-6"]:not([class*="drawer"]) {
   inline-size: min(100%, var(--edify-page-max-size));
+  max-inline-size: var(--edify-page-max-size) !important;
   margin-inline: auto;
   padding-inline: var(--edify-page-gutter) !important;
 }
@@ -46,6 +76,7 @@ main > :where(div, section)[class*="p-6"]:not([class*="drawer"]) {
 main h1 {
   max-inline-size: 30ch;
   text-wrap: balance;
+  font-size: var(--edify-text-display-size) !important;
   font-weight: 700 !important;
 }
 
@@ -56,10 +87,12 @@ main :where(h2, h3) {
 }
 
 main h2 {
+  font-size: var(--edify-text-heading-size) !important;
   font-weight: 600 !important;
 }
 
 main h3 {
+  font-size: var(--edify-text-title-size) !important;
   font-weight: 600 !important;
 }
 
@@ -107,6 +140,17 @@ main :where(.card, .panel, .premium-card, .premium-card-elevated,
   box-shadow: var(--edify-shadow-sm) !important;
 }
 
+main :where(.card, .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  .bg-white[class*="rounded-surface"]) {
+  border-radius: var(--edify-radius-md) !important;
+}
+
+main :where(.panel, .premium-card, .premium-card-elevated,
+  section.bg-white[class*="rounded-overlay"], article.bg-white[class*="rounded-overlay"],
+  aside.bg-white[class*="rounded-overlay"]) {
+  border-radius: var(--edify-radius-lg) !important;
+}
+
 main :where(.card, .panel, .premium-card, .premium-card-elevated,
   .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
   section.bg-white[class*="rounded-xl"], article.bg-white[class*="rounded-xl"],
@@ -116,6 +160,47 @@ main :where(.card, .panel, .premium-card, .premium-card-elevated,
   aside[style*="--edify-surface"][class*="rounded-xl"]) {
   min-inline-size: 0;
   container-type: inline-size;
+}
+
+/* Cards in the same CSS-grid row share the row height and align their content
+   anatomy without imposing arbitrary fixed heights on unrelated surfaces. */
+main .grid > :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi) {
+  align-self: stretch;
+  block-size: 100%;
+}
+
+main :where([class*="kpi-grid"], .platform-kpi-grid) {
+  align-items: stretch;
+}
+
+main :where([class*="kpi-grid"], .platform-kpi-grid) > :where(article, section, div) {
+  min-inline-size: 0;
+  block-size: 100%;
+}
+
+main .platform-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: clamp(0.75rem, 0.66rem + 0.3vw, 1rem);
+}
+
+main .platform-major-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--edify-panel-gap);
+}
+
+main .platform-support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  align-items: stretch;
+  gap: var(--edify-panel-gap);
+}
+
+main .platform-support-grid > :nth-child(n + 4) {
+  grid-column: auto;
 }
 
 main :where(section, article, aside, div)[class*="rounded-xl"][class*="border"] {
@@ -183,7 +268,7 @@ main :where(.btn, .edify-action-button,
   button[class*="bg-slate-8"], a[class*="bg-slate-8"]) {
   min-block-size: 2.5rem;
   padding-inline: 1rem;
-  border-radius: var(--edify-radius-md) !important;
+  border-radius: var(--edify-radius-sm) !important;
   font-size: var(--edify-text-label-size) !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
@@ -226,7 +311,7 @@ main :where(input[type="text"], input[type="email"], input[type="password"],
   input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
   min-block-size: var(--edify-control-block-size);
   border: 1px solid var(--edify-border) !important;
-  border-radius: var(--edify-radius-md) !important;
+  border-radius: var(--edify-radius-sm) !important;
   background-color: var(--edify-surface-muted) !important;
   color: var(--edify-text) !important;
   font: var(--edify-font-body) !important;
@@ -313,7 +398,7 @@ main table {
 }
 
 main table th {
-  padding: 0.75rem 0.875rem !important;
+  padding: 0.5625rem 0.6875rem !important;
   border-block-end: 1px solid var(--edify-border) !important;
   background: var(--edify-surface-muted) !important;
   color: var(--edify-text-subtle) !important;
@@ -322,10 +407,11 @@ main table th {
   letter-spacing: var(--edify-text-micro-tracking) !important;
   line-height: 1.3;
   text-wrap: balance;
+  text-transform: none !important;
 }
 
 main table td {
-  padding: 0.75rem 0.875rem !important;
+  padding: 0.5625rem 0.6875rem !important;
   color: var(--edify-text-muted);
   line-height: 1.4;
   vertical-align: middle;
@@ -341,20 +427,40 @@ main table tbody tr {
   transition: background-color var(--edify-transition-fast);
 }
 
+main table tbody tr:hover > :where(td, th) {
+  background-color: color-mix(in oklab, var(--edify-accent-light) 54%, var(--edify-surface)) !important;
+}
+
+main :where(.card, .panel, .bg-white[class*="rounded"]):has(> table),
+main :where(.card, .panel, .bg-white[class*="rounded"]):has(> .overflow-x-auto > table) {
+  overflow: clip;
+}
+
 /* ── Tabs, pills and workflow state. ───────────────────────────────────── */
 main :where([role="tablist"], .edify-tab-container) {
+  display: flex;
+  align-items: center;
   gap: 0.25rem;
   padding: 0.25rem;
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-md);
   background: var(--edify-surface-muted);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
 }
 
 main :where([role="tab"], .edify-tab-btn) {
-  min-block-size: 2.25rem;
+  min-block-size: 2.125rem;
+  flex: 0 0 auto;
   border-radius: var(--edify-radius-sm) !important;
   color: var(--edify-text-muted) !important;
   font-weight: 500 !important;
+}
+
+main [role="tabpanel"]:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 3px;
 }
 
 main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
@@ -385,7 +491,7 @@ main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notificatio
 main .kpi-strip__value,
 main :where([class*="text-[19px]"], [class*="text-[21px]"], [class*="text-[24px]"])[class*="tabular"] {
   color: var(--edify-text) !important;
-  font-size: clamp(1.35rem, 1.22rem + 0.38vw, 1.625rem) !important;
+  font-size: clamp(1.25rem, 1.16rem + 0.32vw, 1.5rem) !important;
   font-weight: 700 !important;
   letter-spacing: -0.025em !important;
 }
@@ -450,7 +556,8 @@ main .platform-filter-bar {
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-lg);
   background: var(--edify-surface);
-  box-shadow: var(--edify-shadow-card);
+  background-image: var(--edify-surface-treatment);
+  box-shadow: var(--edify-shadow-sm);
 }
 
 main .platform-filter-bar > :where(label, div) {
@@ -463,11 +570,11 @@ main .platform-filter-bar > .platform-filter-search {
 }
 
 .theme-blue main .platform-filter-bar {
-  border-color: var(--edify-glass-border);
-  background: var(--edify-glass-surface);
+  border-color: var(--edify-border);
+  background: var(--edify-surface-treatment);
   -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
   backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-  box-shadow: var(--edify-glass-shadow);
+  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md);
 }
 
 /* Intentional dark-blue hero for high-trust operational consoles. */
@@ -520,16 +627,262 @@ main .platform-hero__eyebrow {
   cursor: progress;
 }
 
+/* Reusable compact skeleton for HTMX workspaces. It preserves the panel's
+   shape and never presents false zero values while the request is pending. */
+.platform-skeleton {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.platform-skeleton > span {
+  display: block;
+  block-size: 0.875rem;
+  border-radius: var(--edify-radius-pill);
+  background: linear-gradient(90deg,
+    var(--edify-surface-muted) 20%,
+    var(--edify-surface-hover) 50%,
+    var(--edify-surface-muted) 80%);
+  background-size: 220% 100%;
+  animation: edify-skeleton 1.25s ease-in-out infinite;
+}
+
+.platform-skeleton > span:nth-child(2n) { inline-size: 78%; }
+.platform-skeleton > span:nth-child(3n) { inline-size: 56%; }
+
+/* Opt-in for genuinely heavy sections below the initial fold. The intrinsic
+   size prevents scroll jumps; unsupported browsers render normally. */
+.platform-deferred {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 32rem;
+}
+
+.platform-analytics-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.35;
+}
+
+.platform-analytics-note strong {
+  color: var(--edify-text);
+}
+
+.platform-responsive-grid {
+  container: responsive-grid / inline-size;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--edify-panel-gap);
+}
+
+@container responsive-grid (inline-size < 34rem) {
+  .platform-responsive-grid > * {
+    grid-column: 1 / -1;
+  }
+}
+
+@keyframes edify-skeleton {
+  to { background-position: -220% 0; }
+}
+
+/* Opt-in responsive table contract. Identity, status and action columns stay
+   visible; lower-priority cells collapse on tablets and become labelled cards
+   on phones when templates provide data-label attributes. */
+main .platform-responsive-table [data-priority="low"] {
+  transition: opacity var(--edify-transition-fast);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DARK WORKSPACE — CINEMATIC DEPTH, OPERATIONAL CLARITY
+   Loaded after the legacy utility bridge so one coherent component contract
+   wins across dashboards, tables, filters, drawers and HTMX partials.
+   ════════════════════════════════════════════════════════════════════════════ */
+.theme-dark .edify-topbar {
+  background: var(--edify-topbar-bg);
+  border-color: var(--edify-topbar-border);
+  box-shadow: var(--edify-topbar-shadow);
+  -webkit-backdrop-filter: blur(20px) saturate(118%);
+  backdrop-filter: blur(20px) saturate(118%);
+}
+
+.theme-dark main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"], .platform-filter-bar) {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-sm) !important;
+}
+
+.theme-dark main :where(.bg-slate-50, .bg-slate-100,
+  [class*="bg-slate-50/"], [class*="bg-slate-100/"]) {
+  background-color: var(--edify-surface-muted) !important;
+  background-image: none !important;
+}
+
+.theme-dark :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600,
+  button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: var(--edify-button-primary-treatment) !important;
+  border: 1px solid rgba(96, 165, 250, 0.62) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 10px 24px -16px rgba(37,99,235,.72) !important;
+  text-shadow: 0 1px 0 rgba(0,0,0,.18);
+}
+
+.theme-dark :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600,
+  button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent-hover) !important;
+  background-image: linear-gradient(180deg, #2f6fe7 0%, var(--edify-accent-hover) 62%, #1e3a8a 100%) !important;
+  border-color: rgba(147, 197, 253, 0.72) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 14px 30px -16px rgba(37,99,235,.82) !important;
+}
+
+.theme-dark :where(.btn-ghost, .edify-action-button.secondary,
+  .premium-button-secondary, .premium-button-outline,
+  .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+  .spp-button--secondary, .hcos-button--secondary, .admin-button--secondary) {
+  color: var(--edify-text) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: var(--edify-button-secondary-treatment) !important;
+  border-color: var(--edify-border-strong) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 8px 20px -16px rgba(0,0,0,.9) !important;
+}
+
+.theme-dark :where(.btn-ghost, .edify-action-button.secondary,
+  .premium-button-secondary, .premium-button-outline,
+  .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+  .spp-button--secondary, .hcos-button--secondary, .admin-button--secondary):hover:not(:disabled) {
+  color: var(--edify-accent) !important;
+  background-color: var(--edify-surface-hover) !important;
+  border-color: var(--edify-accent-border) !important;
+}
+
+.theme-dark main :where(input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
+  input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+  background-color: var(--edify-surface-muted) !important;
+  background-image: linear-gradient(180deg, rgba(0,0,0,.13), transparent) !important;
+  border-color: var(--edify-border) !important;
+  color: var(--edify-text) !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.22);
+}
+
+.theme-dark main :where(input, select, textarea):hover:not(:disabled) {
+  border-color: var(--edify-border-strong) !important;
+}
+
+.theme-dark main :where(input, select, textarea):focus-visible {
+  background-color: var(--edify-surface) !important;
+  border-color: var(--edify-accent) !important;
+  box-shadow: var(--edify-focus-ring) !important;
+}
+
+.theme-dark main table th {
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text-subtle) !important;
+  border-block-end-color: var(--edify-border-strong) !important;
+}
+
+.theme-dark main table td {
+  color: var(--edify-text-muted);
+  border-block-end-color: var(--edify-divider) !important;
+}
+
+.theme-dark main table tbody tr:nth-child(even) > :where(td, th) {
+  background-color: rgba(255,255,255,.014) !important;
+}
+
+.theme-dark main table tbody tr:hover > :where(td, th) {
+  background-color: color-mix(in oklab, var(--edify-accent-light) 62%, var(--edify-surface)) !important;
+}
+
+.theme-dark main :where([role="tablist"], .edify-tab-container) {
+  background: var(--edify-surface-muted);
+  border-color: var(--edify-border);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.22);
+}
+
+.theme-dark main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
+  background: var(--edify-surface-raised) !important;
+  color: var(--edify-accent) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045), var(--edify-shadow-sm);
+}
+
+.theme-dark .drawer-surface {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-drawer) !important;
+}
+
+.theme-dark .drawer-header,
+.theme-dark .drawer-footer {
+  background: var(--edify-surface-muted) !important;
+  border-color: var(--edify-border) !important;
+}
+
+.theme-dark ::selection {
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+}
+
+@media (prefers-contrast: more) {
+  .theme-dark {
+    --edify-border: rgba(255, 255, 255, 0.18);
+    --edify-border-strong: rgba(255, 255, 255, 0.30);
+    --edify-text-muted: #cbd2db;
+    --edify-text-subtle: #aeb8c5;
+  }
+}
+
 /* ── Responsive composition. ───────────────────────────────────────────── */
 @media (max-width: 63.9375rem) {
   main > :where(div, section)[class*="px-"] {
     padding-inline: clamp(1rem, 2.5vw, 1.5rem) !important;
   }
 
-  main [class*="grid-cols-8"],
-  main [class*="grid-cols-6"],
-  main [class*="grid-cols-5"] {
+  main [class~="grid-cols-8"],
+  main [class~="grid-cols-6"],
+  main [class~="grid-cols-5"] {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* IA's five headline metrics need more reading room than generic compact
+     tile grids on tablet. Two columns keep labels and helpers comfortably
+     separated; the fifth metric becomes a deliberate full-width summary. */
+  main .ia-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  main .ia-kpi-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+  }
+
+  main .ia-quality-value,
+  main .ia-quality-helper {
+    display: block !important;
+    inline-size: 100%;
   }
 
   main .platform-page-header {
@@ -546,6 +899,14 @@ main .platform-hero__eyebrow {
 
   main .platform-filter-bar > .platform-filter-search {
     grid-column: 1 / -1;
+  }
+
+  main .platform-major-grid {
+    grid-template-columns: 1fr;
+  }
+
+  main .platform-responsive-table [data-priority="low"] {
+    display: none;
   }
 }
 
@@ -569,14 +930,14 @@ main .platform-hero__eyebrow {
     inline-size: 100%;
   }
 
-  main [class*="grid-cols-8"],
-  main [class*="grid-cols-6"],
-  main [class*="grid-cols-5"],
-  main [class*="grid-cols-4"] {
+  main [class~="grid-cols-8"],
+  main [class~="grid-cols-6"],
+  main [class~="grid-cols-5"],
+  main [class~="grid-cols-4"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  main [class*="grid-cols-3"] {
+  main [class~="grid-cols-3"] {
     grid-template-columns: 1fr;
   }
 
@@ -609,6 +970,49 @@ main .platform-hero__eyebrow {
   main table th,
   main table td {
     padding: 0.6875rem 0.75rem !important;
+  }
+
+  main .platform-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main .platform-responsive-table.platform-table-cards,
+  main .platform-responsive-table.platform-table-cards :where(tbody, tr, td) {
+    display: block;
+    inline-size: 100%;
+  }
+
+  main .platform-responsive-table.platform-table-cards thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: clip;
+    clip-path: inset(50%);
+  }
+
+  main .platform-responsive-table.platform-table-cards tr {
+    margin-block-end: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-radius-md);
+    background: var(--edify-surface);
+    box-shadow: var(--edify-shadow-sm);
+  }
+
+  main .platform-responsive-table.platform-table-cards td {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 42%) 1fr;
+    gap: 0.75rem;
+    border: 0 !important;
+    padding: 0.4rem 0 !important;
+    text-align: start !important;
+  }
+
+  main .platform-responsive-table.platform-table-cards td::before {
+    content: attr(data-label);
+    color: var(--edify-text-subtle);
+    font-size: var(--edify-text-micro-size);
+    font-weight: 600;
   }
 }
 
@@ -653,6 +1057,10 @@ main .platform-hero__eyebrow {
     transition: none !important;
     translate: none !important;
   }
+
+  .platform-skeleton > span {
+    animation: none;
+  }
 }
 
 @media (forced-colors: active) {
@@ -677,5 +1085,979 @@ main .platform-hero__eyebrow {
 @media (min-width: 96rem) {
   main .debrief-kpi-grid {
     grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   School directory — compact, scan-first registry rows.
+   ════════════════════════════════════════════════════════════════════════════ */
+.school-directory-shell {
+  overflow: visible;
+}
+
+.school-directory-listbar {
+  position: relative;
+  display: flex;
+  min-block-size: 3.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface-muted) 64%, transparent);
+  color: var(--edify-text-muted);
+  font-size: 0.75rem;
+}
+
+.school-directory-listbar__select {
+  display: inline-flex;
+  min-block-size: 2rem;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--edify-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.school-directory-listbar input,
+.school-directory-row__select input {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 0.25rem;
+  accent-color: var(--edify-accent);
+  cursor: pointer;
+}
+
+.school-directory-listbar__bulk {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.375rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 1px solid var(--edify-border);
+}
+
+.school-directory-listbar__bulk strong {
+  margin-inline-end: 0.25rem;
+  color: var(--edify-text);
+  white-space: nowrap;
+}
+
+.school-directory-listbar__bulk button {
+  min-block-size: 1.875rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.school-directory-listbar__bulk button:hover {
+  border-color: var(--edify-accent-border);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.school-directory-listbar__bulk button.is-clear {
+  border-color: transparent;
+  background: transparent;
+  color: var(--edify-text-subtle);
+}
+
+.school-directory-listbar__count {
+  margin-inline-start: auto;
+  color: var(--edify-text-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.school-directory-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--edify-surface);
+}
+
+.school-directory-row {
+  position: relative;
+  display: grid;
+  grid-template-areas: "select icon body quick priority actions open";
+  grid-template-columns: 1.25rem 3.25rem minmax(13rem, 1fr) auto auto 2.75rem 2.75rem;
+  min-block-size: 7.75rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.125rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface) 97%, transparent);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 7.75rem;
+  transition:
+    background-color var(--edify-transition-fast),
+    box-shadow var(--edify-transition-fast);
+}
+
+.school-directory-row:last-child {
+  border-block-end: 0;
+}
+
+.school-directory-row:hover {
+  background: color-mix(in oklab, var(--edify-accent-light) 38%, var(--edify-surface));
+}
+
+.school-directory-row:focus-within {
+  z-index: 2;
+  box-shadow: inset 3px 0 0 var(--edify-accent);
+}
+
+.school-directory-row__select {
+  grid-area: select;
+  display: grid;
+  place-items: center;
+}
+
+.school-directory-row__icon {
+  grid-area: icon;
+  display: grid;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--edify-accent-border) 66%, transparent);
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
+  color: var(--edify-accent);
+}
+
+.school-directory-row__icon svg {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+}
+
+.school-directory-row__body {
+  grid-area: body;
+  min-inline-size: 0;
+}
+
+.school-directory-row__title-line {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.school-directory-row__name {
+  overflow: hidden;
+  color: var(--edify-text);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-directory-row__name:hover {
+  color: var(--edify-accent);
+}
+
+.school-directory-row__id {
+  flex: 0 0 auto;
+  color: var(--edify-text-subtle);
+  font: 600 0.625rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.school-directory-row__location {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.3125rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.school-directory-row__location svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  flex: 0 0 auto;
+  color: var(--edify-accent);
+}
+
+.school-directory-row__location span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-directory-row__statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-block-start: 0.6875rem;
+}
+
+.school-directory-status,
+.school-directory-priority {
+  display: inline-flex;
+  min-block-size: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.575rem;
+  border: 1px solid;
+  border-radius: var(--edify-radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.school-directory-status.is-complete,
+.school-directory-priority.is-low {
+  border-color: var(--edify-success-border);
+  background: var(--edify-success-light);
+  color: var(--edify-success);
+}
+
+.school-directory-status.is-missing,
+.school-directory-priority.is-high {
+  border-color: var(--edify-danger-border);
+  background: var(--edify-danger-light);
+  color: var(--edify-danger);
+}
+
+.school-directory-priority {
+  min-inline-size: 4.5rem;
+  text-transform: uppercase;
+}
+
+.school-directory-priority.is-medium {
+  border-color: var(--edify-warning-border);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning);
+}
+
+.school-directory-row__quick-actions {
+  display: flex;
+  grid-area: quick;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.school-directory-row__quick-action {
+  display: inline-flex;
+  min-block-size: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--edify-accent-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-accent);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: var(--edify-shadow-sm);
+  transition:
+    border-color var(--edify-transition-fast),
+    background-color var(--edify-transition-fast),
+    color var(--edify-transition-fast),
+    transform var(--edify-transition-fast);
+}
+
+.school-directory-row__quick-action.is-project {
+  border-color: var(--edify-accent);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent, #fff);
+}
+
+.school-directory-row__quick-action:hover {
+  border-color: var(--edify-accent);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+  transform: translateY(-1px);
+}
+
+.school-directory-row__quick-action.is-project:hover {
+  background: color-mix(in oklab, var(--edify-accent) 86%, #000);
+  color: var(--edify-on-accent, #fff);
+}
+
+.school-directory-row__quick-action:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--edify-accent) 44%, transparent);
+  outline-offset: 2px;
+}
+
+.school-directory-row__quick-action svg {
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+  flex: 0 0 auto;
+}
+
+.school-directory-row__priority {
+  grid-area: priority;
+}
+
+.school-directory-row__actions {
+  position: relative;
+  grid-area: actions;
+}
+
+.school-directory-row__action-trigger,
+.school-directory-row__open {
+  display: grid;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--edify-radius-sm);
+  color: var(--edify-text-subtle);
+}
+
+.school-directory-row__action-trigger {
+  background: transparent;
+}
+
+.school-directory-row__action-trigger:hover,
+.school-directory-row__open:hover {
+  border-color: var(--edify-border);
+  background: var(--edify-surface-hover);
+  color: var(--edify-text);
+}
+
+.school-directory-row__action-trigger svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.school-directory-row__open svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.school-directory-row__open {
+  grid-area: open;
+}
+
+.school-directory-row__menu {
+  position: absolute;
+  z-index: 40;
+  inset-block-start: calc(100% + 0.25rem);
+  inset-inline-end: 0;
+  display: grid;
+  inline-size: 11.75rem;
+  padding: 0.375rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-md);
+}
+
+.school-directory-row__menu :where(a, button) {
+  display: flex;
+  min-block-size: 2.25rem;
+  inline-size: 100%;
+  align-items: center;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  border-radius: var(--edify-radius-sm);
+  background: transparent;
+  color: var(--edify-text-muted);
+  font-size: 0.75rem;
+  font-weight: 550;
+  text-align: start;
+}
+
+.school-directory-row__menu :where(a, button):hover {
+  background: var(--edify-surface-hover);
+  color: var(--edify-text);
+}
+
+.school-directory-empty {
+  padding: 4rem 1.5rem;
+  background: var(--edify-surface);
+  color: var(--edify-text-muted);
+  text-align: center;
+}
+
+.school-directory-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-block-start: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface-muted) 64%, transparent);
+}
+
+@supports not (content-visibility: auto) {
+  .school-directory-row {
+    contain: layout style paint;
+  }
+}
+
+@media (max-width: 52rem) {
+  .school-directory-listbar {
+    flex-wrap: wrap;
+  }
+
+  .school-directory-listbar__bulk {
+    order: 3;
+    inline-size: 100%;
+    overflow-x: auto;
+    padding-block-start: 0.5rem;
+    padding-inline-start: 0;
+    border-block-start: 1px solid var(--edify-border);
+    border-inline-start: 0;
+  }
+
+  .school-directory-row {
+    grid-template-areas:
+      "select icon body priority"
+      ". . quick actions";
+    grid-template-columns: 1.25rem 3rem minmax(0, 1fr) auto;
+    gap: 0.75rem;
+  }
+
+  .school-directory-row__icon {
+    inline-size: 3rem;
+    block-size: 3rem;
+  }
+
+  .school-directory-row__priority {
+    align-self: start;
+  }
+
+  .school-directory-row__quick-actions {
+    justify-content: flex-start;
+  }
+
+  .school-directory-row__actions {
+    align-self: center;
+  }
+
+  .school-directory-row__open {
+    display: none;
+  }
+}
+
+@media (max-width: 36rem) {
+  .school-directory-row {
+    grid-template-areas:
+      "select icon body actions"
+      ". . priority priority"
+      ". . quick quick";
+    grid-template-columns: 1.25rem 2.75rem minmax(0, 1fr) 2.75rem;
+    align-items: start;
+    padding: 0.875rem;
+  }
+
+  .school-directory-row__icon {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  .school-directory-row__priority {
+    justify-self: start;
+  }
+
+  .school-directory-row__actions {
+    align-self: start;
+  }
+
+  .school-directory-row__title-line {
+    padding-inline-end: 0;
+  }
+
+  .school-directory-row__id {
+    display: none;
+  }
+
+  .school-directory-status,
+  .school-directory-priority {
+    font-size: 0.625rem;
+  }
+
+  .school-directory-row__quick-actions {
+    inline-size: 100%;
+    flex-wrap: wrap;
+  }
+
+  .school-directory-row__quick-action {
+    flex: 1 1 8.5rem;
+  }
+
+  .school-directory-listbar__count {
+    margin-inline-start: 0;
+  }
+
+  .school-directory-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Planning school list — directory-density with decision-ready SSA context.
+   ════════════════════════════════════════════════════════════════════════════ */
+.planning-school-list-wrap {
+  container: planning-school-list / inline-size;
+  background: var(--edify-surface);
+}
+
+.planning-school-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planning-school-row {
+  border-block-end: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface) 97%, transparent);
+  transition:
+    background-color var(--edify-transition-fast),
+    box-shadow var(--edify-transition-fast);
+}
+
+.planning-school-row:last-child {
+  border-block-end: 0;
+}
+
+.planning-school-row:hover,
+.planning-school-row.is-expanded {
+  background: color-mix(in oklab, var(--edify-accent-light) 34%, var(--edify-surface));
+}
+
+.planning-school-row:focus-within {
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 3px 0 0 var(--edify-accent);
+}
+
+.planning-school-row__summary {
+  display: grid;
+  grid-template-areas: "select icon identity focus cluster readiness toggle";
+  grid-template-columns: 1.25rem 3.25rem minmax(15rem, 1.35fr) minmax(19rem, 1.2fr) minmax(9rem, 0.65fr) auto auto;
+  min-block-size: 7.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.125rem;
+}
+
+.planning-school-row__select {
+  display: grid;
+  grid-area: select;
+  place-items: center;
+}
+
+.planning-school-row__select input {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  accent-color: var(--edify-accent);
+  cursor: pointer;
+}
+
+.planning-school-row__icon {
+  display: grid;
+  grid-area: icon;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--edify-accent-border) 66%, transparent);
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
+  color: var(--edify-accent);
+}
+
+.planning-school-row__icon svg {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+}
+
+.planning-school-row__identity {
+  grid-area: identity;
+  min-inline-size: 0;
+}
+
+.planning-school-row__title-line {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.planning-school-row__name {
+  overflow: hidden;
+  color: var(--edify-text);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planning-school-row__name:hover {
+  color: var(--edify-accent);
+}
+
+.planning-school-row__id {
+  flex: 0 0 auto;
+  color: var(--edify-text-subtle);
+  font: 600 0.625rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+
+.planning-school-row__address {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.3125rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.planning-school-row__address svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  flex: 0 0 auto;
+  color: var(--edify-accent);
+}
+
+.planning-school-row__address span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planning-school-row__signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-block-start: 0.625rem;
+}
+
+.planning-school-row__focus,
+.planning-school-row__cluster,
+.planning-school-row__readiness {
+  display: grid;
+  min-inline-size: 0;
+  align-content: center;
+  gap: 0.45rem;
+}
+
+.planning-school-row__focus { grid-area: focus; }
+.planning-school-row__cluster { grid-area: cluster; }
+.planning-school-row__readiness { grid-area: readiness; }
+
+.planning-school-row__meta-label {
+  color: var(--edify-text-subtle);
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.planning-school-row__interventions {
+  display: flex;
+  min-inline-size: 0;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.planning-school-intervention {
+  display: inline-flex;
+  min-block-size: 1.75rem;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid;
+  border-radius: var(--edify-radius-sm);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.planning-school-intervention span {
+  overflow: hidden;
+  max-inline-size: 9.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planning-school-intervention strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.planning-school-intervention.is-critical {
+  border-color: var(--edify-danger-border);
+  background: var(--edify-danger-light);
+  color: var(--edify-danger);
+}
+
+.planning-school-intervention.is-warning {
+  border-color: var(--edify-warning-border);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning);
+}
+
+.planning-school-intervention.is-improving {
+  border-color: var(--edify-info-border);
+  background: var(--edify-info-light);
+  color: var(--edify-info);
+}
+
+.planning-school-intervention.is-unassessed {
+  border-color: var(--edify-border);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+}
+
+.planning-school-row__cluster-name,
+.planning-school-readiness {
+  display: inline-flex;
+  min-block-size: 1.75rem;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--edify-success-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-success-light);
+  color: var(--edify-success);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.planning-school-row__cluster-name svg {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+  flex: 0 0 auto;
+}
+
+.planning-school-row__cluster-name.is-missing,
+.planning-school-readiness.is-blocked {
+  border-color: var(--edify-danger-border);
+  background: var(--edify-danger-light);
+  color: var(--edify-danger);
+}
+
+.planning-school-readiness.is-warning {
+  border-color: var(--edify-warning-border);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning);
+}
+
+.planning-school-readiness.is-ready {
+  border-color: var(--edify-success-border);
+  background: var(--edify-success-light);
+  color: var(--edify-success);
+}
+
+.planning-school-row__toggle {
+  display: inline-flex;
+  grid-area: toggle;
+  min-block-size: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 650;
+}
+
+.planning-school-row__toggle:hover {
+  border-color: var(--edify-accent-border);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.planning-school-row__toggle svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  transition: transform var(--edify-transition-fast);
+}
+
+.planning-school-row__toggle svg.is-rotated {
+  transform: rotate(180deg);
+}
+
+.planning-school-row__details {
+  margin: 0 1.125rem 1rem 5.625rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.planning-school-row__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.planning-school-detail {
+  min-inline-size: 0;
+  padding: 0.875rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+.planning-school-detail h4 {
+  margin: 0 0 0.625rem;
+  color: var(--edify-text-subtle);
+  font-size: 0.625rem !important;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.planning-school-detail dl {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.planning-school-detail dl div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.6875rem;
+}
+
+.planning-school-detail dt {
+  color: var(--edify-text-subtle);
+}
+
+.planning-school-detail dd {
+  margin: 0;
+  color: var(--edify-text);
+  font-weight: 600;
+  text-align: end;
+}
+
+.planning-school-detail.is-recommendation {
+  border-color: var(--edify-accent-border);
+  background: var(--edify-accent-light);
+}
+
+.planning-school-detail.is-recommendation strong {
+  color: var(--edify-text);
+  font-size: 0.8125rem;
+}
+
+.planning-school-detail.is-recommendation p {
+  margin: 0.4rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+}
+
+.planning-school-row__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.planning-school-row__actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.planning-school-row__blocked {
+  color: var(--edify-warning);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+@container planning-school-list (max-width: 70rem) {
+  .planning-school-row__summary {
+    grid-template-areas:
+      "select icon identity identity toggle"
+      ". . focus cluster readiness";
+    grid-template-columns: 1.25rem 3.25rem minmax(0, 1fr) minmax(10rem, 0.7fr) auto;
+  }
+
+  .planning-school-row__focus,
+  .planning-school-row__cluster,
+  .planning-school-row__readiness {
+    align-self: start;
+  }
+}
+
+@container planning-school-list (max-width: 45rem) {
+  .planning-school-row__summary {
+    grid-template-areas:
+      "select icon identity toggle"
+      ". . focus focus"
+      ". . cluster readiness";
+    grid-template-columns: 1.25rem 2.75rem minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .planning-school-row__icon {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  .planning-school-row__details {
+    margin: 0 0.875rem 0.875rem 4.875rem;
+  }
+
+  .planning-school-row__detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .planning-school-row__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .planning-school-row__actions :where(a, button) {
+    justify-content: center;
+  }
+}
+
+@container planning-school-list (max-width: 31rem) {
+  .planning-school-row__summary {
+    grid-template-areas:
+      "select icon identity toggle"
+      ". . focus focus"
+      ". . cluster cluster"
+      ". . readiness readiness";
+  }
+
+  .planning-school-row__toggle span:not(.sr-only) {
+    display: none;
+  }
+
+  .planning-school-row__details {
+    margin-inline-start: 0.875rem;
   }
 }

@@ -43,7 +43,7 @@
 .hcos-hero h1 {
   max-width: 22ch;
   color: var(--edify-heading);
-  font-family: var(--edify-font-display, Georgia, "Times New Roman", serif);
+  font-family: var(--edify-font-sans);
   font-size: clamp(2rem, 4vw, 3.5rem);
   font-weight: 620;
   line-height: 1.02;

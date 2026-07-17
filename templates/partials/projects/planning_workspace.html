@@ -1,0 +1,133 @@
+{% if is_htmx %}
+<a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
+{% endif %}
+
+{% if not has_projects %}
+<section class="spp-empty" aria-labelledby="spp-empty-title">
+  <span aria-hidden="true">{% include "partials/projects/planning_icon.html" with name="folder" %}</span>
+  <h2 id="spp-empty-title">No special projects are assigned to your role</h2>
+  <p>When a project is assigned to you—or to schools in your portfolio—it will appear here.</p>
+  <a class="spp-button spp-button--primary" href="/projects">Open Special Projects</a>
+</section>
+{% else %}
+<form id="spp-filters" class="spp-filter-panel" method="get" action="/projects/planning" hx-get="/projects/planning" hx-target="#spp-workspace" hx-swap="innerHTML" hx-push-url="true" hx-trigger="change, submit" hx-indicator="#spp-updating" @htmx:before-request="selected = []">
+  <input id="spp-tab" type="hidden" name="tab" value="{{ selected.tab }}">
+  <div class="spp-filter-grid">
+    <label class="spp-field"><span>Fiscal Year</span><select name="fy">{% for option in fy_options %}<option value="{{ option }}" {% if selected.fy == option %}selected{% endif %}>FY {{ option }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>Quarter</span><select name="quarter">{% for option in quarters %}<option value="{{ option }}" {% if selected.quarter == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>Region</span><select name="region"><option value="">All regions</option>{% for option in regions %}<option value="{{ option.id }}" {% if selected.region == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>District</span><select name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>Project Lead</span><select name="staff"><option value="">All project leads</option>{% for option in staff_options %}<option value="{{ option.id }}" {% if selected.staff == option.id|stringformat:'s' %}selected{% endif %}>{{ option.user.name }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>Project</span><select name="project"><option value="">All projects</option>{% for option in projects %}<option value="{{ option.id }}" {% if selected.project == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>Project Type</span><select name="project_type"><option value="">All types</option>{% for option in project_types %}<option value="{{ option.value }}" {% if selected.project_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>Delivery Type</span><select name="partner_type"><option value="">All delivery types</option>{% for option in partner_types %}<option value="{{ option.value }}" {% if selected.partner_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    <label class="spp-field"><span>Activity Type</span><select name="activity_type"><option value="">All activities</option>{% for option in activity_types %}<option value="{{ option.value }}" {% if selected.activity_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    <div class="spp-filter-reset"><span id="spp-updating" class="htmx-indicator">Updating…</span><a href="/projects/planning">{% include "partials/projects/planning_icon.html" with name="reset" %} Clear filters</a></div>
+  </div>
+</form>
+
+<section class="spp-kpi-grid" aria-label="Project planning summary">
+  {% for item in kpis %}
+  <article class="spp-kpi spp-tone--{{ item.tone }}">
+    <span class="spp-kpi__icon" aria-hidden="true">{% include "partials/projects/planning_icon.html" with name=item.icon %}</span>
+    <div><strong>{{ item.value }}</strong><span>{{ item.label }}</span><small>{{ item.helper }}</small></div>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="spp-band-grid" aria-label="Planning readiness bands">
+  {% for item in band_cards %}
+  <article class="spp-band spp-tone--{{ item.tone }}">
+    <span class="spp-band__icon" aria-hidden="true">{% include "partials/projects/planning_icon.html" with name=item.icon %}</span>
+    <div><span>{{ item.label }}</span><strong>{{ item.value }} <small>schools</small></strong><p>{{ item.pct }}% · {{ item.trend }}</p></div>
+  </article>
+  {% endfor %}
+</section>
+
+<div class="spp-work-layout">
+  <section class="spp-card spp-queue" aria-labelledby="spp-queue-title">
+    <nav class="spp-tabs" aria-label="Project school readiness">
+      <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='all'" class="{% if selected.tab == 'all' %}is-active{% endif %}">All Project Schools <b>{{ tab_counts.all }}</b></button>
+      <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='baseline'" class="{% if selected.tab == 'baseline' %}is-active{% endif %}">Baseline Required <b>{{ tab_counts.baseline }}</b></button>
+      <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='ready'" class="{% if selected.tab == 'ready' %}is-active{% endif %}">Ready for Support <b>{{ tab_counts.ready }}</b></button>
+      <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='partner'" class="{% if selected.tab == 'partner' %}is-active{% endif %}">Assigned to Partner <b>{{ tab_counts.partner }}</b></button>
+      <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='scheduled'" class="{% if selected.tab == 'scheduled' %}is-active{% endif %}">Scheduled <b>{{ tab_counts.scheduled }}</b></button>
+    </nav>
+    <div class="spp-card__titlebar">
+      <div><p class="spp-eyebrow">School Directory intake</p><h2 id="spp-queue-title">Project school planning queue</h2></div>
+      <span>{{ total }} matching assignments</span>
+    </div>
+
+    <div class="spp-table-wrap">
+      <table class="spp-table">
+        <caption class="sr-only">Schools assigned to special projects and their planning readiness</caption>
+        <thead><tr>
+          <th scope="col" class="spp-check"><input type="checkbox" aria-label="Select all schools on this page" :checked="selected.length === {{ rows|length }} && {{ rows|length }} > 0" @change="togglePage([{% for row in rows %}'{{ row.assignment_id }}'{% if not forloop.last %},{% endif %}{% endfor %}])"></th>
+          <th scope="col">School</th><th scope="col">Project</th><th scope="col">Baseline / SSA</th><th scope="col">Planning readiness</th><th scope="col">Weakest intervention</th><th scope="col">Recommended action</th><th scope="col">Partner</th><th scope="col">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="{% if selected_row.assignment_id == row.assignment_id %}is-selected{% endif %}">
+            <td class="spp-check"><input type="checkbox" value="{{ row.assignment_id }}" aria-label="Select {{ row.school_name }} for bulk action" :checked="selected.includes('{{ row.assignment_id }}')" @change="toggle('{{ row.assignment_id }}')"></td>
+            <td><a class="spp-school" href="{{ row.select_url }}" hx-get="{{ row.select_url }}" hx-target="#spp-workspace" hx-push-url="true"><strong>{{ row.school_name }}</strong><small>{{ row.school_id }} · {{ row.district }}</small></a></td>
+            <td><strong class="spp-cell-title">{{ row.project_name }}</strong><small>{{ row.project_type }} · {{ row.school_type }}</small></td>
+            <td><span class="spp-status spp-status--{{ row.baseline_tone }}">{{ row.baseline_status }}</span>{% if row.average is not None %}<small>Average {{ row.average }}/10 · {{ row.risk_label }}</small>{% endif %}</td>
+            <td><span class="spp-status spp-status--{{ row.readiness_tone }}">{{ row.readiness }}</span>{% if row.planned_date %}<small>{{ row.planned_date|date:"d M Y" }} · {{ row.activity_type }}</small>{% endif %}</td>
+            <td><strong class="spp-cell-title">{{ row.weakest }}</strong>{% if row.weakest_score is not None %}<small>{{ row.weakest_score|floatformat:1 }}/10</small>{% endif %}</td>
+            <td><span class="spp-action-copy">{{ row.action }}</span></td>
+            <td><span>{{ row.partner }}</span></td>
+            <td><div class="spp-row-actions">
+              {% if row.action_kind == 'schedule' and can_schedule %}<button type="button" hx-get="{{ row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Schedule</button>{% else %}<a href="{{ row.my_plan_url }}">My Plan</a>{% endif %}
+              {% if can_assign_partner %}<button type="button" class="is-secondary" hx-get="{{ row.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Partner</button>{% endif %}
+            </div></td>
+          </tr>
+          {% empty %}<tr><td colspan="9"><div class="spp-table-empty"><strong>No project schools match these filters</strong><span>Clear the filters or assign schools to a project from the School Directory.</span></div></td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="spp-pagination">
+      <span>Showing {{ result_start }}–{{ result_end }} of {{ total }} assignments</span>
+      <nav aria-label="Project school pages">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" hx-get="?{% for key,value in selected.items %}{% if value and key != 'selected' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" hx-target="#spp-workspace" hx-push-url="true" aria-label="Previous page">‹</a>{% endif %}{% for link in page_links %}{% if link.url %}<a href="{{ link.url }}" hx-get="{{ link.url }}" hx-target="#spp-workspace" hx-push-url="true" class="{% if link.current %}is-current{% endif %}">{{ link.label }}</a>{% else %}<span>…</span>{% endif %}{% endfor %}{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" hx-get="?{% for key,value in selected.items %}{% if value and key != 'selected' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" hx-target="#spp-workspace" hx-push-url="true" aria-label="Next page">›</a>{% endif %}</nav>
+      <label>Rows <select name="per_page" form="spp-filters"><option value="10" {% if selected.per_page == 10 %}selected{% endif %}>10</option><option value="25" {% if selected.per_page == 25 %}selected{% endif %}>25</option><option value="50" {% if selected.per_page == 50 %}selected{% endif %}>50</option></select></label>
+    </footer>
+  </section>
+
+  <aside class="spp-rail" aria-label="Project planning intelligence">
+    <section class="spp-card spp-intelligence">
+      <header><p class="spp-eyebrow">Project Planning Intelligence</p><h2>Selected school</h2></header>
+      {% if selected_row %}
+      <div class="spp-selected-school"><strong>{{ selected_row.school_name }}</strong><span>{{ selected_row.school_id }}</span></div>
+      <dl><div><dt>Project</dt><dd>{{ selected_row.project_name }}</dd></div><div><dt>District</dt><dd>{{ selected_row.district }}</dd></div><div><dt>Weakest intervention</dt><dd>{{ selected_row.weakest }}</dd></div><div><dt>SSA average</dt><dd>{% if selected_row.average is not None %}{{ selected_row.average }}/10{% else %}Not assessed{% endif %}</dd></div><div><dt>Current partner</dt><dd>{{ selected_row.partner }}</dd></div><div><dt>Planning readiness</dt><dd><span class="spp-status spp-status--{{ selected_row.readiness_tone }}">{{ selected_row.readiness }}</span></dd></div></dl>
+      <div class="spp-intelligence__links"><a href="{{ selected_row.school_url }}">View School</a><a href="{{ selected_row.ssa_url }}">View SSA</a></div>
+      {% else %}<p class="spp-muted">Select a school to see its project context and next step.</p>{% endif %}
+    </section>
+
+    {% if selected_row %}<section class="spp-card spp-next-step spp-tone--{{ selected_row.readiness_tone }}">
+      <header><span aria-hidden="true">{% include "partials/projects/planning_icon.html" with name="document" %}</span><div><p class="spp-eyebrow">Recommended next step</p><h2>{{ selected_row.action }}</h2></div></header>
+      <p>{{ selected_row.next_step }}</p>
+      {% if selected_row.action_kind == 'schedule' and can_schedule %}<button type="button" class="spp-button spp-button--primary" hx-get="{{ selected_row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML">{% include "partials/projects/planning_icon.html" with name="calendar" %} Schedule now</button>{% else %}<a class="spp-button spp-button--primary" href="{{ selected_row.my_plan_url }}">Open in My Plan</a>{% endif %}
+    </section>{% endif %}
+
+    <section class="spp-card spp-bulk">
+      <header><p class="spp-eyebrow">Bulk Actions</p><h2><span x-text="selected.length">0</span> selected</h2></header>
+      <button type="button" @click="openBulk('partner')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign to Partner</button>
+      <button type="button" @click="openBulk('schedule')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="calendar" %} Schedule Visits</button>
+      <a href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export Filtered</a>
+      {% if selected_row %}<a href="{{ selected_row.project_url }}">{% include "partials/projects/planning_icon.html" with name="folder" %} Open Project Plan</a>{% endif %}
+    </section>
+  </aside>
+</div>
+
+<div class="spp-lower-grid">
+  <section class="spp-card spp-summary">
+    <div class="spp-card__titlebar"><div><p class="spp-eyebrow">Portfolio</p><h2>Project Planning Summary</h2></div></div>
+    <div class="spp-table-wrap"><table><thead><tr><th>Project</th><th>Schools Assigned</th><th>Ready for Planning</th><th>Baseline Required</th><th>Assigned to Partner</th><th>Scheduled</th></tr></thead><tbody>{% for item in summary %}<tr><td><a href="{{ item.url }}">{{ item.name }}</a></td><td>{{ item.assigned }}</td><td>{{ item.ready }} <small>({{ item.ready_pct }}%)</small></td><td>{{ item.baseline }}</td><td>{{ item.partner }}</td><td>{{ item.scheduled }}</td></tr>{% empty %}<tr><td colspan="6">No projects match these filters.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+  <section class="spp-card spp-delivery">
+    <div class="spp-card__titlebar"><div><p class="spp-eyebrow">Workflow</p><h2>Project Delivery Readiness</h2></div><span>Budget generated: <strong>{{ budget }}</strong></span></div>
+    <div>{% for item in delivery %}<article class="spp-tone--{{ item.tone }}"><span>{% include "partials/projects/planning_icon.html" with name="check" %}</span><div><strong>{{ item.value }}</strong><b>{{ item.label }}</b><small>{{ item.helper }}</small></div></article>{% endfor %}</div>
+  </section>
+</div>
+{% include "components/analytics_provenance.html" with engine=analytics.engine %}
+{% endif %}

@@ -359,7 +359,7 @@ def _workflow_issues() -> dict:
     )
 
     # ── Workflow-consistency checks (clustering → planning → partner → project) ─
-    from apps.clusters.models import SchoolClusterAssignment
+    from apps.clusters.models import Cluster, SchoolClusterAssignment
     from apps.partners.models import Partner, PartnerAssignment
     from apps.projects.models import ProjectSchoolAssignment
 
@@ -368,8 +368,6 @@ def _workflow_issues() -> dict:
 
     # Clustered schools whose readiness state keeps them out of Planning.
     planning_visible_readiness = [
-        "ready",
-        "limited",
         "ready_for_support_planning",
         "ready_for_baseline_ssa",
     ]
@@ -378,19 +376,45 @@ def _workflow_issues() -> dict:
         .exclude(planning_readiness__in=planning_visible_readiness)
         .count()
     )
+    legacy_or_unknown_readiness = live_schools.exclude(
+        planning_readiness__in=PlanningReadiness.values
+    ).count()
 
-    # Clustered schools with no cluster link (no cluster_id OR no assignment row).
-    assigned_school_ids = SchoolClusterAssignment.objects.values_list(
-        "school_id", flat=True
-    )
-    clustered_missing_assignment = (
+    # School.cluster_id is the canonical membership source. The assignment table
+    # is a compatibility projection and must be an exact mirror, never a second
+    # reader-facing source of truth.
+    active_cluster_ids = Cluster.objects.filter(
+        deleted_at__isnull=True, status="active"
+    ).values("id")
+    clustered_invalid_pointer = (
         live_schools.filter(cluster_status="clustered")
         .filter(
             Q(cluster_id__isnull=True)
             | Q(cluster_id="")
-            | ~Q(id__in=assigned_school_ids)
+            | ~Q(cluster_id__in=active_cluster_ids)
         )
         .count()
+    )
+    matching_assignment_school_ids = SchoolClusterAssignment.objects.filter(
+        cluster_id=F("school__cluster_id"), school__deleted_at__isnull=True
+    ).values("school_id")
+    missing_assignment_projection = (
+        live_schools.exclude(cluster_id__isnull=True)
+        .exclude(cluster_id="")
+        .exclude(id__in=matching_assignment_school_ids)
+        .count()
+    )
+    incorrect_assignment_projection = (
+        SchoolClusterAssignment.objects.filter(school__deleted_at__isnull=True)
+        .filter(
+            Q(school__cluster_id__isnull=True)
+            | Q(school__cluster_id="")
+            | ~Q(cluster_id=F("school__cluster_id"))
+        )
+        .count()
+    )
+    cluster_membership_projection_drift = (
+        missing_assignment_projection + incorrect_assignment_projection
     )
 
     # Partner-assignment statuses. Pending = handed to partner but not yet
@@ -703,6 +727,23 @@ def _workflow_issues() -> dict:
         .count()
     )
 
+    # Client support is a fixed annual entitlement: one school visit and one
+    # school-improvement training per school/FY.  The scheduling service now
+    # prevents a new duplicate, but historic/imported rows can bypass that
+    # service.  Keep a health detector so data repair is explicit rather than
+    # quietly distorting cost, budget and support-coverage analytics.
+    client_duplicate_active_entitlements = (
+        active.filter(
+            school__school_type="client",
+            activity_type__in=["school_visit", "school_improvement_training"],
+        )
+        .exclude(status__in=["cancelled", "rejected", "deferred", "not_planned"])
+        .values("school_id", "fy", "activity_type")
+        .annotate(_n=Count("id"))
+        .filter(_n__gt=1)
+        .count()
+    )
+
     blockers = []
     if unclustered_schools:
         blockers.append(f"{unclustered_schools} school(s) without cluster.")
@@ -795,9 +836,17 @@ def _workflow_issues() -> dict:
         blockers.append(
             f"{clustered_not_in_planning} clustered school(s) whose readiness state keeps them out of Planning."
         )
-    if clustered_missing_assignment:
+    if legacy_or_unknown_readiness:
         blockers.append(
-            f"{clustered_missing_assignment} clustered school(s) missing a cluster link or assignment row."
+            f"{legacy_or_unknown_readiness} school(s) use a legacy or unknown planning-readiness value."
+        )
+    if clustered_invalid_pointer:
+        blockers.append(
+            f"{clustered_invalid_pointer} clustered school(s) have an invalid canonical cluster pointer."
+        )
+    if cluster_membership_projection_drift:
+        blockers.append(
+            f"{cluster_membership_projection_drift} cluster-membership projection row(s) drift from canonical School.cluster_id."
         )
     if partner_assigned_still_staff_planning:
         blockers.append(
@@ -895,6 +944,10 @@ def _workflow_issues() -> dict:
         blockers.append(
             f"{closed_money_missing_netsuite} closed activity(ies) with disbursed money but no NetSuite Code."
         )
+    if client_duplicate_active_entitlements:
+        blockers.append(
+            f"{client_duplicate_active_entitlements} client school/FY/support-type entitlement slot(s) have duplicate active activities."
+        )
 
     # ── Core Schools package integrity (Core mandate §44) ────────────────────
     from apps.core_schools.models import CoreActivitySlot, CorePlan
@@ -931,19 +984,19 @@ def _workflow_issues() -> dict:
     core_duplicate_slot_activities = (
         _linked.values("activity_id").annotate(_n=Count("id")).filter(_n__gt=1).count()
     )
-    _core_done = [
-        "Completed",
-        "Accountant Confirmed",
-        "ia_verified",
-        "iaVerify",
-        "accountant_confirmed",
-    ]
+    from apps.core_schools.services import (
+        CORE_SLOT_DONE_WITH_LEGACY,
+        EXPECTED_CORE_SLOTS,
+    )
+
+    _core_done = CORE_SLOT_DONE_WITH_LEGACY
     core_package_complete_missing_slots = sum(
         1
         for plan in _core_active_plans.filter(
             status__in=["Package Complete", "Complete", "complete"]
         ).prefetch_related("slots")
-        if sum(1 for sl in plan.slots.all() if sl.status in _core_done) < 8
+        if sum(1 for sl in plan.slots.all() if sl.status in _core_done)
+        < EXPECTED_CORE_SLOTS
     )
     _verified_slots = CoreActivitySlot.objects.filter(status__in=_core_done)
     core_verified_slots_missing_evidence = _verified_slots.filter(
@@ -1031,7 +1084,141 @@ def _workflow_issues() -> dict:
             "work-plan budgets."
         )
 
+    # ── Ecosystem handoff checks (2026-07 ecosystem audit §25) ───────────────
+    # Each detects a record stranded BETWEEN two features — the upstream step
+    # completed but the downstream queue never received it.
+    from apps.debriefs.models import DailyDebriefAction
+    from apps.fund_requests.models import AdvanceRequest as _Adv
+
+    # Salesforce ID reserved but the activity never reached the IA queue.
+    sf_complete_not_in_ia_queue = (
+        active.exclude(salesforce_activity_id="")
+        .exclude(salesforce_activity_id__isnull=True)
+        .filter(
+            status__in=[
+                "in_progress",
+                "completion_started",
+                "evidence_uploaded",
+                "evidence_accepted",
+                "salesforce_id_required",
+            ]
+        )
+        .count()
+    )
+
+    # IA-cleared staff work with budget lines but no advance rows at all —
+    # sync_for_activity should have drafted them; finance never saw the work.
+    ia_cleared_missing_finance = (
+        active.filter(
+            status=ActivityStatus.IA_VERIFIED,
+            delivery_type="staff",
+            schedule_cost_lines__isnull=False,
+        )
+        .exclude(advance_requests__isnull=False)
+        .distinct()
+        .count()
+    )
+
+    # Over-spend accepted as terminal ACCOUNTED without the reimbursement leg
+    # (approve_accountability must auto-route variance>0 to reimbursement).
+    overspend_missing_reimbursement = (
+        _Adv.objects.filter(status="accounted")
+        .filter(accounted_amount__gt=F("disbursed_amount"))
+        .filter(reimbursed_amount__isnull=True)
+        .count()
+    )
+
+    # Finance fully cleared but the activity never closed — a stuck closure.
+    finance_cleared_not_closed = (
+        active.filter(advance_requests__status__in=["accounted", "reimbursed"])
+        .exclude(status__in=["closed", "completed"])
+        .exclude(status="returned_by_ia")  # reopened for correction, expected
+        .distinct()
+        .count()
+    )
+
+    # Special Project activity with no intervention context at all.
+    project_activities_missing_intervention = (
+        scheduled.exclude(project_id__isnull=True)
+        .exclude(project_id="")
+        .filter(Q(focus_intervention__isnull=True) | Q(focus_intervention=""))
+        .filter(Q(purpose_intervention__isnull=True) | Q(purpose_intervention=""))
+        .exclude(ssa_collection_expected=True)
+        .count()
+    )
+
+    # Leadership action without an accountable owner.
+    leadership_actions_missing_owner = (
+        DailyDebriefAction.objects.filter(
+            status__in=["open", "assigned", "accepted", "in_progress"]
+        )
+        .filter(Q(owner_user_id__isnull=True) | Q(owner_user_id=""))
+        .count()
+    )
+
+    # Duplicate partner payments (should be impossible post-constraint;
+    # detects pre-constraint historical rows needing manual review).
+    from apps.fund_requests.finance_models import PartnerPayment as _PP
+
+    duplicate_partner_payments = (
+        _PP.objects.values("activity_id").annotate(_n=Count("id")).filter(_n__gt=1)
+    ).count()
+
+    # Partner activity marked paid with no PartnerPayment ledger row (the
+    # retired clear-payment bypass left these).
+    partner_paid_without_payment = (
+        active.filter(delivery_type="partner", payment_status="paid")
+        .exclude(partner_payments__isnull=False)
+        .distinct()
+        .count()
+    )
+
+    # current_fy_ssa_status satisfied by a prior-FY record only.
+    from apps.core.fy import get_operational_fy as _get_fy
+    from apps.ssa.models import SsaRecord as _SsaRecord
+
+    _fy_now = _get_fy()
+    _current_ok = _SsaRecord.objects.filter(
+        fy=_fy_now,
+        deleted_at__isnull=True,
+        verification_status__in=["confirmed", "pending"],
+    ).values_list("school_id", flat=True)
+    stale_fy_readiness = (
+        live_schools.filter(
+            current_fy_ssa_status__in=["done", "partner_assigned"]
+        )
+        .exclude(id__in=_current_ok)
+        .count()
+    )
+
+    # Demo/seed data present in a production-stamped database — the "local
+    # data reached the live server" detector. Counts: 1 if the database
+    # carries the demo-seed marker, plus any accounts on the test-only
+    # @edify.test domain (never legitimate in production).
+    from apps.system_health.models import EnvironmentStamp as _EnvStamp
+
+    _stamp = _EnvStamp.objects.filter(id=_EnvStamp.SINGLETON_ID).first()
+    demo_data_on_production = 0
+    environment_stamp_missing = 1 if _stamp is None else 0
+    if _stamp and _stamp.environment == "production":
+        from apps.accounts.models import User as _User
+
+        demo_data_on_production = (
+            1 if _stamp.seeded_demo_at else 0
+        ) + _User.objects.filter(email__endswith="@edify.test").count()
+
     return {
+        "demoDataOnProduction": demo_data_on_production,
+        "environmentStampMissing": environment_stamp_missing,
+        "duplicatePartnerPayments": duplicate_partner_payments,
+        "partnerPaidWithoutPayment": partner_paid_without_payment,
+        "staleFyReadiness": stale_fy_readiness,
+        "salesforceCompleteNotInIaQueue": sf_complete_not_in_ia_queue,
+        "iaClearedMissingFinance": ia_cleared_missing_finance,
+        "overspendMissingReimbursement": overspend_missing_reimbursement,
+        "financeClearedNotClosed": finance_cleared_not_closed,
+        "projectActivitiesMissingIntervention": project_activities_missing_intervention,
+        "leadershipActionsMissingOwner": leadership_actions_missing_owner,
         "annualBudgetReconciliationBreaks": annual_reconciliation_breaks,
         "coreSchoolsMissingPlan": core_schools_missing_plan,
         "coreSchoolsMissingCluster": core_schools_missing_cluster,
@@ -1046,6 +1233,7 @@ def _workflow_issues() -> dict:
         "plRequestsRoutedToPl": pl_requests_routed_to_pl,
         "accountabilityMissingNetsuite": accountability_missing_netsuite,
         "closedMoneyMissingNetsuite": closed_money_missing_netsuite,
+        "clientDuplicateActiveEntitlements": client_duplicate_active_entitlements,
         "unclusteredSchools": unclustered_schools,
         "scheduledActivitiesMissingCostLines": missing_cost_lines,
         "stuckInPlanning": stuck_in_planning,
@@ -1057,7 +1245,9 @@ def _workflow_issues() -> dict:
         "netsuiteIdMissing": netsuite_id_missing,
         "closedMissingAnalytics": closed_missing_analytics,
         "clusteredSchoolsNotInPlanning": clustered_not_in_planning,
-        "clusteredSchoolsMissingAssignment": clustered_missing_assignment,
+        "legacyOrUnknownPlanningReadiness": legacy_or_unknown_readiness,
+        "clusteredSchoolsMissingAssignment": clustered_invalid_pointer,
+        "clusterMembershipProjectionDrift": cluster_membership_projection_drift,
         "partnerAssignedStillInStaffPlanning": partner_assigned_still_staff_planning,
         "partnerAssignmentsInvisibleToPartner": partner_assignments_invisible,
         "partnerScheduledMissingFromPartnerPlan": partner_scheduled_no_partner_plan,

@@ -7,15 +7,15 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ activePill: 'all' }">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
+<div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <!-- Neon blur backing accents -->
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/20 blur-3xl pointer-events-none"></div>
-<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/20 blur-3xl pointer-events-none"></div>
+<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-pill bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
 <div class="space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
-<span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
+<span class="w-1.5 h-1.5 rounded-pill bg-blue-400 animate-pulse"></span>
 Audit Operations
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Quality Certification Queue</h1>
@@ -25,7 +25,7 @@ Authoritative validation layer. Review implementation evidence, detect anomalies
 </div>
 
 <!-- Metrics SLA summary badge -->
-<div class="w-full md:w-auto md:min-w-[250px] shrink-0 flex flex-col gap-1.5 bg-slate-800/80 backdrop-blur-md border border-slate-700/50 p-4 rounded-lg">
+<div class="w-full md:w-auto md:min-w-[250px] shrink-0 flex flex-col gap-1.5 bg-slate-800/80 backdrop-blur-md border border-slate-700/50 p-4 rounded-surface">
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider block">SLA COMPLIANCE</span>
 <div class="{% if kpis.sla_compliance is not None %}flex items-baseline gap-1{% else %}space-y-0.5{% endif %}">
 <span class="text-[24px] font-semibold {% if kpis.sla_compliance is not None %}text-emerald-400{% else %}text-slate-300{% endif %}">
@@ -37,8 +37,8 @@ Authoritative validation layer. Review implementation evidence, detect anomalies
 </div>
 <!-- Measured 30-day SLA progress; never filled from a placeholder value. -->
 {% if kpis.sla_compliance is not None %}
-<div class="w-36 h-1.5 bg-slate-700 rounded-full overflow-hidden mt-1">
-<div class="h-full bg-emerald-400 rounded-full" style="width: {% if kpis.sla_compliance is not None %}{{ kpis.sla_compliance }}{% else %}0{% endif %}%"></div>
+<div class="w-36 h-1.5 bg-slate-700 rounded-pill overflow-hidden mt-1">
+<div class="h-full bg-emerald-400 rounded-pill" style="width: {% if kpis.sla_compliance is not None %}{{ kpis.sla_compliance }}{% else %}0{% endif %}%"></div>
 </div>
 {% endif %}
 </div>
@@ -49,7 +49,7 @@ Authoritative validation layer. Review implementation evidence, detect anomalies
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Filters Panel -->
-<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-50 pb-4">
 <div class="flex items-center gap-2">
 <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
@@ -61,28 +61,28 @@ Authoritative validation layer. Review implementation evidence, detect anomalies
 <button
 @click="activePill = 'all'; $refs.typeSelect.value = ''; $refs.typeSelect.dispatchEvent(new Event('change'))"
 :class="activePill === 'all' ? 'bg-[var(--edify-chart-blue)] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
-class="px-3.5 py-1.5 rounded-full edify-text-caption font-semibold transition-all"
+class="px-3.5 py-1.5 rounded-pill edify-text-caption font-semibold transition-all"
 >
 All Activities
 </button>
 <button
 @click="activePill = 'visit'; $refs.typeSelect.value = 'school_visit'; $refs.typeSelect.dispatchEvent(new Event('change'))"
 :class="activePill === 'visit' ? 'bg-[var(--edify-chart-blue)] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
-class="px-3.5 py-1.5 rounded-full edify-text-caption font-semibold transition-all"
+class="px-3.5 py-1.5 rounded-pill edify-text-caption font-semibold transition-all"
 >
 School Visits
 </button>
 <button
 @click="activePill = 'training'; $refs.typeSelect.value = 'training'; $refs.typeSelect.dispatchEvent(new Event('change'))"
 :class="activePill === 'training' ? 'bg-[var(--edify-chart-blue)] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
-class="px-3.5 py-1.5 rounded-full edify-text-caption font-semibold transition-all"
+class="px-3.5 py-1.5 rounded-pill edify-text-caption font-semibold transition-all"
 >
 Trainings
 </button>
 <button
 @click="activePill = 'core'; $refs.scopeSelect.value = 'true'; $refs.scopeSelect.dispatchEvent(new Event('change'))"
 :class="activePill === 'core' ? 'bg-[var(--edify-chart-blue)] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
-class="px-3.5 py-1.5 rounded-full edify-text-caption font-semibold transition-all"
+class="px-3.5 py-1.5 rounded-pill edify-text-caption font-semibold transition-all"
 >
 Core Scope
 </button>
@@ -93,7 +93,7 @@ Core Scope
 <!-- FY -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Fiscal Year</label>
-<select name="fy" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<select name="fy" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
 <option value="">All FYs</option>
 <option value="FY24">FY24</option>
 <option value="FY25" selected>FY25</option>
@@ -104,7 +104,7 @@ Core Scope
 <!-- Quarter -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Quarter</label>
-<select name="quarter" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<select name="quarter" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
 <option value="">All Quarters</option>
 <option value="Q1">Q1</option>
 <option value="Q2">Q2</option>
@@ -116,7 +116,7 @@ Core Scope
 <!-- Activity Type -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Activity Type</label>
-<select x-ref="typeSelect" name="activity_type" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<select x-ref="typeSelect" name="activity_type" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
 <option value="">All Types</option>
 <option value="school_visit">School Visit</option>
 <option value="training">Training</option>
@@ -129,7 +129,7 @@ Core Scope
 <!-- School Scope (Core Schools) -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">School Scope</label>
-<select x-ref="scopeSelect" name="core_school" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<select x-ref="scopeSelect" name="core_school" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
 <option value="">All Schools</option>
 <option value="true">Core Schools Only</option>
 </select>
@@ -138,19 +138,19 @@ Core Scope
 <!-- District -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">District Name</label>
-<input type="text" name="district" placeholder="Kampala, Masaka..." class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold px-3.5 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<input type="text" name="district" placeholder="Kampala, Masaka..." class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3.5 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
 </div>
 
 <!-- Staff Search -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Responsible Staff</label>
-<input type="text" name="staff" placeholder="Search CCEO..." class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold px-3.5 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<input type="text" name="staff" placeholder="Search CCEO..." class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3.5 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
 </div>
 </form>
 </div>
 
 <!-- Queue Table Panel -->
-<div id="queue-table-container" class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
+<div id="queue-table-container" class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
 {% include "pages/ia/partials/queue_table.html" %}
 </div>
 </div>

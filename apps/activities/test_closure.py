@@ -223,8 +223,11 @@ class ActivityClosureSystemTest(TestCase):
         )
 
         self.activity.refresh_from_db()
-        # Should revert to verified and show reopened state
-        self.assertEqual(self.activity.status, "ia_verified")
+        # wrong_evidence INVALIDATES the achievement: the activity must land in
+        # the correction state (which reverses target credit), not ia_verified
+        # (which would keep the bad work credited in every target engine).
+        self.assertEqual(self.activity.status, "returned_by_ia")
+        self.assertEqual(self.activity.ia_verification_status, "returned")
         self.assertEqual(req.category, "wrong_evidence")
 
         closure = ActivityClosure.objects.get(activity=self.activity)
@@ -233,3 +236,23 @@ class ActivityClosureSystemTest(TestCase):
         # Analytics recalculation should be marked
         pub = AnalyticsPublishRecord.objects.get(activity=self.activity)
         self.assertEqual(pub.status, "recalculation_required")
+
+    def test_reopen_for_finance_correction_keeps_credit(self):
+        """Non-invalidating categories (finance/audit corrections): the field
+        work stands, so the activity stays in the verified (credited) state."""
+        self.activity.salesforce_activity_id = "SF-MOCK-1235"
+        self.activity.status = "closed"
+        self.activity.save()
+        ActivityClosure.objects.create(activity=self.activity, status="closed")
+        AnalyticsPublishRecord.objects.create(
+            activity=self.activity, status="published", published_at=timezone.now()
+        )
+
+        ActivityReopenService.reopen(
+            activity=self.activity,
+            reason="NetSuite reference corrected",
+            category="wrong_finance_clearance",
+            user_id="admin_user",
+        )
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "ia_verified")

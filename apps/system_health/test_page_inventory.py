@@ -11,7 +11,7 @@ class PageInventoryTest(SimpleTestCase):
         self.assertGreaterEqual(inventory["summary"]["routed_surfaces"], 90)
         self.assertGreaterEqual(inventory["summary"]["all_routes"], 200)
         self.assertEqual(inventory["summary"]["roles"], 11)
-        self.assertEqual(inventory["summary"]["scheduled_jobs"], 7)
+        self.assertEqual(inventory["summary"]["scheduled_jobs"], 8)
         self.assertGreaterEqual(inventory["summary"]["permission_keys"], 38)
         self.assertGreaterEqual(inventory["summary"]["component_templates"], 100)
 

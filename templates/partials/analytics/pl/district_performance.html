@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <div class="flex items-center justify-between">
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">C. District Performance Under My Team</h3>
     <span class="edify-text-caption font-bold text-slate-400">Team Avg <span class="text-slate-700">{{ district_performance.team_avg }}%</span></span>
@@ -17,8 +17,8 @@
           <span class="font-bold text-slate-800 tabular-nums w-9 text-right">{{ d.pct }}%</span>
         </div>
       </div>
-      <div class="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
-        <div class="h-full rounded-full {{ d.bar_color }}" style="width: {{ d.pct }}%"></div>
+      <div class="h-2 w-full bg-slate-50 rounded-pill overflow-hidden">
+        <div class="h-full rounded-pill {{ d.bar_color }}" style="width: {{ d.pct }}%"></div>
       </div>
     </button>
     {% empty %}

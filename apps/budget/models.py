@@ -123,4 +123,61 @@ class MonthlyFundRequest(TimeStampedModel):
         db_table = "monthly_fund_request"
 
 
-__all__ = ["CostCatalogue", "CostSetting", "CostSettingHistory", "MonthlyFundRequest"]
+class BudgetAmendmentStatus(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    SUBMITTED = "submitted", "Submitted"
+    UNDER_REVIEW = "under_review", "Under Review"
+    APPROVED = "approved", "Approved"
+    RETURNED = "returned", "Returned"
+    REJECTED = "rejected", "Rejected"
+    APPLIED = "applied", "Applied"
+    CANCELLED = "cancelled", "Cancelled"
+
+
+class BudgetAmendment(TimeStampedModel):
+    """Formal change to a finance-locked activity's schedule/period.
+
+    The cost-snapshot lock (apps.budget.costing_service) refuses to rebuild
+    lines once money is confirmed or moved — this is the sanctioned path its
+    message points to. v1 scope: move a locked activity's date/period without
+    delete-recreating its cost lines (the snapshot rows are preserved; only
+    their period stamps move on apply). Amount changes are recorded for audit
+    but the snapshot amounts are immutable once money moved."""
+
+    id = CuidField()
+    activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.CASCADE,
+        related_name="budget_amendments",
+    )
+    original_date = models.DateField(null=True, blank=True)
+    new_date = models.DateField()
+    original_amount = models.BigIntegerField(default=0)  # UGX
+    original_fy = models.CharField(max_length=16, null=True, blank=True)
+    original_quarter = models.CharField(max_length=8, null=True, blank=True)
+    new_fy = models.CharField(max_length=16, null=True, blank=True)
+    new_quarter = models.CharField(max_length=8, null=True, blank=True)
+    reason = models.TextField()
+    requested_by = models.CharField(max_length=30)
+    reviewed_by = models.CharField(max_length=30, null=True, blank=True)
+    review_note = models.TextField(null=True, blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=BudgetAmendmentStatus.choices,
+        default=BudgetAmendmentStatus.SUBMITTED,
+    )
+    applied_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "budget_amendment"
+        ordering = ["-created_at"]
+
+
+__all__ = [
+    "CostCatalogue",
+    "CostSetting",
+    "CostSettingHistory",
+    "MonthlyFundRequest",
+    "BudgetAmendment",
+    "BudgetAmendmentStatus",
+]

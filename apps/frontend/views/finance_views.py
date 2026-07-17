@@ -259,7 +259,7 @@ def disburse_advance_action(request):
             return response
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                 status=400,
             )
 
@@ -294,13 +294,13 @@ def clear_partner_payment_action(request):
             reasons = FinanceBlockedReasonService.get_blocked_reasons(activity)
             if reasons:
                 return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Cannot clear payment: {", ".join(reasons)}</div>',
+                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Cannot clear payment: {", ".join(reasons)}</div>',
                     status=400,
                 )
 
             if not netsuite_id:
                 return HttpResponse(
-                    '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Cannot clear payment: a NetSuite Expense ID is required.</div>',
+                    '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Cannot clear payment: a NetSuite Expense ID is required.</div>',
                     status=400,
                 )
 
@@ -351,7 +351,7 @@ def clear_partner_payment_action(request):
             return response
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                 status=400,
             )
 
@@ -387,7 +387,7 @@ def process_reimbursement_action(request):
             return response
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                 status=400,
             )
 
@@ -428,7 +428,7 @@ def confirm_accountability_action(request):
                 ]
                 if not pending:
                     return HttpResponse(
-                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">No submitted accountability awaits review on this request.</div>',
+                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">No submitted accountability awaits review on this request.</div>',
                         status=400,
                     )
                 for adv in pending:
@@ -501,7 +501,7 @@ def confirm_accountability_action(request):
             return response
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                 status=400,
             )
 
@@ -518,7 +518,7 @@ def finance_return_action(request):
         reason = request.POST.get("reason", "").strip()
         if not reason:
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">A return reason is required.</div>',
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">A return reason is required.</div>',
                 status=400,
             )
 
@@ -533,7 +533,7 @@ def finance_return_action(request):
                 )
                 if not wfr:
                     return HttpResponse(
-                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Weekly fund request not found.</div>',
+                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Weekly fund request not found.</div>',
                         status=400,
                     )
                 # Same precondition disburse() requires — only a plan the
@@ -542,7 +542,7 @@ def finance_return_action(request):
                 # by a stale tab or double-click on this action.
                 if wfr.status != "confirmed_for_advance":
                     return HttpResponse(
-                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Only a confirmed request can be returned by the accountant — this one is already {wfr.get_status_display()}.</div>',
+                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Only a confirmed request can be returned by the accountant — this one is already {wfr.get_status_display()}.</div>',
                         status=400,
                     )
 
@@ -579,7 +579,7 @@ def finance_return_action(request):
             return response
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                 status=400,
             )
 

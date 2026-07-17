@@ -126,6 +126,140 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 
+  // URL-addressable local dataset tabs. The backend still supplies every
+  // authorized dataset and count; this controller preserves the selected view
+  // across refresh/back/forward without turning Alpine into the data source.
+  Alpine.data('urlTabs', (defaultTab, allowedTabs) => ({
+    activeTab: defaultTab,
+    init() {
+      const requested = new URL(window.location.href).searchParams.get('tab');
+      if (allowedTabs.includes(requested)) this.activeTab = requested;
+      window.addEventListener('popstate', () => {
+        const tab = new URL(window.location.href).searchParams.get('tab');
+        this.activeTab = allowedTabs.includes(tab) ? tab : defaultTab;
+      });
+    },
+    setTab(tab) {
+      if (!allowedTabs.includes(tab) || tab === this.activeTab) return;
+      this.activeTab = tab;
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.pushState({}, '', url);
+    },
+  }));
+
+  // Impact charts read a single HTML-safe JSON script payload. This keeps
+  // backend data out of Alpine attributes and remains stable after HTMX swaps.
+  Alpine.data('impactChart', (payloadId, chartType) => ({
+    chart: null,
+    themeListener: null,
+    init() {
+      this.themeListener = () => this.renderChart();
+      window.addEventListener('edify-theme-change', this.themeListener);
+      this.$nextTick(() => this.renderChart());
+    },
+    destroy() {
+      if (this.themeListener) {
+        window.removeEventListener('edify-theme-change', this.themeListener);
+      }
+      if (this.chart) this.chart.destroy();
+      this.chart = null;
+    },
+    payload() {
+      const node = document.getElementById(payloadId);
+      if (!node) return {};
+      try {
+        return JSON.parse(node.textContent || '{}');
+      } catch (error) {
+        return {};
+      }
+    },
+    options(data) {
+      const shared = {
+        chart: { toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+        grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
+        tooltip: { theme: 'dark' },
+      };
+      if (chartType === 'dosage') {
+        return {
+          ...shared,
+          series: [
+            { name: 'Visits', data: data.visit_bucket_medians || [] },
+            { name: 'Trainings', data: data.training_bucket_medians || [] },
+          ],
+          chart: { ...shared.chart, height: 260, type: 'bar' },
+          plotOptions: { bar: { columnWidth: '45%', borderRadius: 3 } },
+          dataLabels: { enabled: false },
+          colors: ['var(--edify-chart-blue)', 'var(--edify-info-border)'],
+          xaxis: {
+            categories: data.bucket_labels || [],
+            title: { text: 'Executed activities in exposure window', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
+            labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+          },
+          yaxis: {
+            title: { text: 'Median score delta', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
+            labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } },
+          },
+          legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' } },
+        };
+      }
+      if (chartType === 'funding') {
+        return {
+          ...shared,
+          series: [{ name: 'School', data: data.funding_scatter || [] }],
+          chart: { ...shared.chart, height: 260, type: 'scatter', zoom: { enabled: false } },
+          colors: ['var(--edify-chart-blue)'],
+          xaxis: {
+            title: { text: 'Accepted spend (UGX)', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
+            labels: { formatter: (value) => `${Math.round(value / 1000)}k`, style: { colors: 'var(--edify-text-subtle)', fontSize: '11px' } },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+          },
+          yaxis: {
+            title: { text: 'Mean score delta', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
+            labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } },
+          },
+          annotations: { yaxis: [{ y: 0, borderColor: 'var(--edify-text-subtle)', strokeDashArray: 2 }] },
+        };
+      }
+      const series = data.geo_heatmap || [];
+      return {
+        ...shared,
+        series,
+        chart: { ...shared.chart, height: Math.max(160, series.length * 44 + 80), type: 'heatmap' },
+        dataLabels: { enabled: true, style: { fontSize: '11px' } },
+        plotOptions: { heatmap: { radius: 3, colorScale: { ranges: [
+          { from: -10, to: -0.31, color: 'var(--edify-danger)', name: 'declining' },
+          { from: -0.3, to: 0.3, color: 'var(--edify-warning)', name: 'stagnant' },
+          { from: 0.31, to: 10, color: 'var(--edify-success)', name: 'improving' },
+        ] } } },
+        xaxis: { labels: { rotate: -35, style: { colors: 'var(--edify-text-subtle)', fontSize: '11px', fontWeight: '600' } } },
+        yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
+        legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' } },
+      };
+    },
+    renderChart() {
+      if (!this.$refs.chart || !this.$refs.chart.isConnected) return;
+      if (typeof window.ApexCharts === 'undefined') {
+        if (this.$refs.status) this.$refs.status.textContent = 'Chart unavailable; the numeric analysis remains available below.';
+        return;
+      }
+      const data = this.payload();
+      if (chartType === 'geography' && !(data.geo_heatmap || []).length) return;
+      if (this.chart) this.chart.destroy();
+      this.chart = new window.ApexCharts(this.$refs.chart, this.options(data));
+      this.chart.render()
+        .then(() => {
+          if (this.$refs.status) this.$refs.status.textContent = 'Chart loaded.';
+        })
+        .catch(() => {
+          if (this.$refs.status) this.$refs.status.textContent = 'Chart unavailable; the numeric analysis remains available below.';
+        });
+    },
+  }));
+
   // Drawer / Slide-over Control
   Alpine.data('drawer', (initialOpen = false) => ({
     open: initialOpen,
@@ -271,3 +405,53 @@ document.addEventListener('alpine:init', () => {
     },
   }));
 });
+
+/* Shared accessible tabs --------------------------------------------------
+   The selected dataset remains server/URL-owned. This small progressive
+   enhancement only supplies the keyboard behavior required by the ARIA tabs
+   pattern and is safe to rerun after HTMX swaps. */
+function enhanceEdifyTabs(root = document) {
+  root.querySelectorAll('[role="tablist"]').forEach((tablist) => {
+    if (tablist.dataset.edifyTabsReady === 'true') return;
+    tablist.dataset.edifyTabsReady = 'true';
+
+    tablist.addEventListener('click', (event) => {
+      const selected = event.target.closest('[role="tab"]');
+      if (!selected || !tablist.contains(selected)) return;
+      tablist.querySelectorAll('[role="tab"]').forEach((tab) => {
+        const active = tab === selected;
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.tabIndex = active ? 0 : -1;
+      });
+    });
+
+    tablist.addEventListener('keydown', (event) => {
+      const tabs = Array.from(
+        tablist.querySelectorAll('[role="tab"]:not([aria-disabled="true"]):not(:disabled)')
+      );
+      if (!tabs.length) return;
+
+      const current = tabs.indexOf(document.activeElement);
+      if (current < 0) return;
+
+      let next = null;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        next = tabs[(current + 1) % tabs.length];
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        next = tabs[(current - 1 + tabs.length) % tabs.length];
+      } else if (event.key === 'Home') {
+        next = tabs[0];
+      } else if (event.key === 'End') {
+        next = tabs[tabs.length - 1];
+      }
+
+      if (!next) return;
+      event.preventDefault();
+      next.focus();
+      next.click();
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => enhanceEdifyTabs());
+document.addEventListener('htmx:afterSettle', (event) => enhanceEdifyTabs(event.target));

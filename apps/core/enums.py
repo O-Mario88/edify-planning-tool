@@ -84,26 +84,11 @@ class PlanningReadiness(models.TextChoices):
     CLOSED = "closed", "Closed"
     DATA_CLEANUP_REQUIRED = "data_cleanup_required", "Data Cleanup Required"
     COST_CATALOGUE_REQUIRED = "cost_catalogue_required", "Cost Catalogue Required"
-    # Legacy choices for migration safety
-    LOCKED = "locked", "Locked"
-    LIMITED = "limited", "Limited"
-    READY = "ready", "Ready"
-
     @classmethod
     def planning_ready_values(cls) -> list[str]:
         """States meaning "the school is unblocked/visible in Planning".
-
-        `School.recompute_quality_and_readiness()` (apps/schools/models.py)
-        writes the legacy 3-state vocabulary (READY/LIMITED/LOCKED) under
-        test/pytest but the newer state machine (REQUIRES_CLUSTER/
-        READY_FOR_BASELINE_SSA/READY_FOR_SUPPORT_PLANNING/...) in production —
-        production never persists the literal "ready". Anything counting
-        "planning ready" schools must check both vocabularies, otherwise the
-        count is structurally zero outside tests.
         """
         return [
-            cls.READY,
-            cls.LIMITED,
             cls.READY_FOR_SUPPORT_PLANNING,
             cls.READY_FOR_BASELINE_SSA,
         ]

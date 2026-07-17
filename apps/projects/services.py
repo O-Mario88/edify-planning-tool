@@ -39,7 +39,34 @@ def partners(project_id: str) -> list[dict]:
     ]
 
 
+def evaluate_school_need(project, school) -> str | None:
+    """Return the first project target intervention the school's latest
+    CONFIRMED SSA is genuinely weak in (< 7.0), or None. None with declared
+    targets means the assignment is off-recommendation and needs a reason."""
+    targets = project.target_intervention_list()
+    if not targets:
+        return None
+    from apps.ssa.services import latest_applicable_record
+
+    record = latest_applicable_record(school)
+    if not record:
+        return None
+    weak = {
+        row["intervention"]
+        for row in record.scores.all().values("intervention", "score")
+        if (row["score"] or 0) < 7.0
+    }
+    return next((t for t in targets if t in weak), None)
+
+
 def assign_school(project_id: str, data: dict) -> dict:
+    """Assign a school to a Special Project using verified SSA need.
+
+    Ecosystem rule: if the project declares target interventions, the school's
+    latest CONFIRMED SSA must show genuine weakness (< 7.0) in at least one of
+    them — otherwise assignment requires an explicit override reason, which is
+    persisted on the assignment. Schools with no confirmed SSA also require a
+    reason (never fabricate need)."""
     p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Project not found.")
@@ -48,7 +75,29 @@ def assign_school(project_id: str, data: dict) -> dict:
     school = School.objects.filter(school_id=data.get("schoolId")).first()
     if not school:
         raise BadRequest("Unknown school.")
-    ProjectSchoolAssignment.objects.get_or_create(project=p, school=school)
+
+    targets = p.target_intervention_list()
+    reason = (data.get("reason") or data.get("notes") or "").strip()
+    matched = evaluate_school_need(p, school)
+    if targets and not matched and not reason:
+        raise BadRequest(
+            "This school's confirmed SSA shows no weakness in the project's "
+            "target interventions — provide an override reason to assign it "
+            "anyway."
+        )
+
+    assignment, _created = ProjectSchoolAssignment.objects.get_or_create(
+        project=p, school=school
+    )
+    updates = []
+    if matched and assignment.matched_intervention != matched:
+        assignment.matched_intervention = matched
+        updates.append("matched_intervention")
+    if reason and assignment.assignment_reason != reason:
+        assignment.assignment_reason = reason
+        updates.append("assignment_reason")
+    if updates:
+        assignment.save(update_fields=[*updates, "updated_at"])
     return {"ok": True, "projectId": project_id, "schoolId": school.school_id}
 
 

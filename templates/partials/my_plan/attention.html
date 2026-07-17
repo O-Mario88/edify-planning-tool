@@ -11,7 +11,7 @@
 <h2 class="text-[15px] font-semibold text-rose-800 tracking-tight">
 Returned — Needs Correction
 </h2>
-<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-rose-100 text-rose-700 border border-rose-200">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-100 text-rose-700 border border-rose-200">
 {{ returned_needs_correction|length }}
 </span>
 </div>
@@ -43,7 +43,7 @@ Returned — Needs Correction
 hx-get="{{ row.next_action.url }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-rose-600 !text-white text-[12px] font-semibold hover:bg-rose-700 shadow-sm transition-all"
+class="inline-flex items-center justify-center h-8 px-3 rounded-control !bg-rose-600 !text-white text-[12px] font-semibold hover:bg-rose-700 shadow-sm transition-all"
 >
 {{ row.next_action.text }}
 </button>
@@ -68,7 +68,7 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-rose-600 
 <h2 class="text-[15px] font-semibold text-amber-800 tracking-tight">
 Waiting on Approval
 </h2>
-<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-amber-100 text-amber-700 border border-amber-200">
 {{ waiting_on_approval|length }}
 </span>
 </div>
@@ -94,7 +94,7 @@ Waiting on Approval
 <td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
 <td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td>
-<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded edify-text-caption">
+<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded-pill edify-text-caption">
 {{ row.status_label }}
 </span>
 </td>
@@ -118,7 +118,7 @@ Waiting on Approval
 <h2 class="text-[15px] font-semibold text-indigo-800 tracking-tight">
 Partner Planned — Monitoring
 </h2>
-<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
 {{ partner_monitoring|length }}
 </span>
 </div>
@@ -181,7 +181,7 @@ Partner Planned — Monitoring
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
 Finance / Accountability Pending
 </h2>
-<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] border border-[var(--edify-primary)]/20">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] border border-[var(--edify-primary)]/20">
 {{ finance_pending|length }}
 </span>
 </div>
@@ -206,7 +206,7 @@ Finance / Accountability Pending
 </td>
 <td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
 <td>
-<span class="inline-flex items-center rounded px-1.5 py-0.5 edify-text-caption font-semibold uppercase border bg-amber-50 text-amber-600 border-amber-150">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase border bg-amber-50 text-amber-600 border-amber-150">
 {{ row.payment_status|default:"none" }}
 </span>
 </td>
@@ -216,7 +216,7 @@ Finance / Accountability Pending
 hx-get="{{ row.next_action.url }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[var(--edify-primary)] !text-white text-[12px] font-semibold hover:bg-opacity-95 shadow-sm transition-all"
+class="inline-flex items-center justify-center h-8 px-3 rounded-control !bg-[var(--edify-primary)] !text-white text-[12px] font-semibold hover:bg-opacity-95 shadow-sm transition-all"
 >
 {{ row.next_action.text }}
 </button>

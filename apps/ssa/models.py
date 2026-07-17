@@ -8,10 +8,36 @@ collected lands `pending` until staff/IA confirm.
 
 from __future__ import annotations
 
+from datetime import date, datetime, time
+
 from django.db import models
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 
 from apps.core.enums import SsaCollectorType, SsaIntervention, VerificationStatus
 from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
+
+
+def _aware_timestamp(value):
+    """Normalize date-only and naïve values without Django's warning path."""
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, date):
+        parsed = datetime.combine(value, time.min)
+    elif isinstance(value, str):
+        parsed = parse_datetime(value)
+        if parsed is None:
+            parsed_date = parse_date(value)
+            if parsed_date is None:
+                return value
+            parsed = datetime.combine(parsed_date, time.min)
+    else:
+        return value
+    return (
+        timezone.make_aware(parsed, timezone.get_current_timezone())
+        if timezone.is_naive(parsed)
+        else parsed
+    )
 
 
 class SsaRecord(SoftDeleteModel):
@@ -58,6 +84,15 @@ class SsaRecord(SoftDeleteModel):
             models.Index(fields=["collector_type"]),
             models.Index(fields=["verification_status"]),
         ]
+
+    def save(self, *args, **kwargs):
+        """Normalize direct/import timestamp writes at the model boundary."""
+        for field_name in ("date_of_ssa", "verified_at", "qa_reviewed_at"):
+            value = getattr(self, field_name)
+            if value is None:
+                continue
+            setattr(self, field_name, _aware_timestamp(value))
+        super().save(*args, **kwargs)
 
 
 class SsaScore(TimeStampedModel):

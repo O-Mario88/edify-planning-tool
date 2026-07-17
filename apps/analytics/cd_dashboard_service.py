@@ -20,6 +20,7 @@ from django.db.models import Avg, Q, Sum
 
 from apps.accounts.models import User
 from apps.core.fy import get_operational_fy
+from apps.core.models import _normalize_datetime_value
 from apps.schools.models import School
 
 from apps.analytics.cd_analytics_service import (
@@ -485,10 +486,18 @@ class CDDashboardService:
             )
         )
         for r in qs:
+            # AdvanceRequest.planned_date is an instant while the weekly fund
+            # request owns date-only boundaries. Use an aware half-open window
+            # so the final day's advances are counted and strict timezone mode
+            # cannot turn a dashboard read into a 500 response.
+            week_start = _normalize_datetime_value(r.week_start_date)
+            week_end_exclusive = _normalize_datetime_value(
+                r.week_end_date + timedelta(days=1)
+            )
             covered = AdvanceRequest.objects.filter(
                 responsible_user_id=r.responsible_user,
-                planned_date__gte=r.week_start_date,
-                planned_date__lte=r.week_end_date,
+                planned_date__gte=week_start,
+                planned_date__lt=week_end_exclusive,
             ).count()
             pending_rows.append(
                 {

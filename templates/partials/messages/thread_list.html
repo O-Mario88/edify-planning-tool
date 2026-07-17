@@ -1,17 +1,19 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-lg border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden">
   <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100">
     {% for t in threads %}
     <button
+      type="button"
+      id="message-thread-{{ t.id }}"
       hx-get="/messages/thread/{{ t.id }}"
       hx-target="#conversation-pane"
       hx-swap="innerHTML"
       hx-push-url="/messages?thread={{ t.id }}"
-      @click="mobilePane = 'thread'"
+      @click="mobilePane = 'thread'; $el.querySelector('[data-unread-indicator]')?.remove()"
       class="w-full text-left p-3.5 transition-colors relative {% if t.id == selected_id %}bg-blue-50/60{% elif t.unread %}bg-blue-50/25 hover:bg-blue-50/40{% else %}hover:bg-slate-50{% endif %}">
       {% if t.id == selected_id %}<span class="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-blue-600"></span>{% endif %}
       <div class="flex items-start gap-2.5">
-        <div class="h-8 w-8 rounded-full {% if t.is_system %}bg-slate-800 text-white{% else %}bg-[var(--edify-primary)]/10 text-[var(--edify-primary)]{% endif %} flex items-center justify-center edify-text-caption font-bold shrink-0">
+        <div class="h-8 w-8 rounded-pill {% if t.is_system %}bg-slate-800 text-white{% else %}bg-[var(--edify-primary)]/10 text-[var(--edify-primary)]{% endif %} flex items-center justify-center edify-text-caption font-bold shrink-0">
           {% if t.is_system %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.3a1.7 1.7 0 013.4 0 1.7 1.7 0 002.6 1.1 1.7 1.7 0 012.4 2.4 1.7 1.7 0 001 2.5 1.7 1.7 0 010 3.4 1.7 1.7 0 00-1 2.6 1.7 1.7 0 01-2.4 2.4 1.7 1.7 0 00-2.6 1 1.7 1.7 0 01-3.4 0 1.7 1.7 0 00-2.5-1 1.7 1.7 0 01-2.4-2.4 1.7 1.7 0 00-1.1-2.6 1.7 1.7 0 010-3.4 1.7 1.7 0 001.1-2.5 1.7 1.7 0 012.4-2.4 1.7 1.7 0 002.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg>{% else %}{{ t.sender_name|avatar_initials }}{% endif %}
         </div>
         <div class="flex-1 min-w-0">
@@ -19,14 +21,14 @@
             <span class="edify-text-caption font-bold text-slate-500 truncate">{{ t.sender_name }}</span>
             <span class="inline-flex items-center gap-1.5 shrink-0">
               <span class="edify-text-caption font-semibold text-slate-400">{{ t.last_at|date:"M j, H:i" }}</span>
-              {% if t.unread %}<span class="h-2 w-2 rounded-full bg-blue-600"></span>{% endif %}
+              {% if t.unread %}<span data-unread-indicator class="h-2 w-2 rounded-pill bg-blue-600"><span class="sr-only">Unread</span></span>{% endif %}
             </span>
           </div>
           <p class="text-[12.5px] {% if t.unread %}font-bold text-slate-900{% else %}font-semibold text-slate-700{% endif %} truncate mt-0.5">{{ t.subject }}</p>
           <p class="edify-text-caption text-slate-400 font-medium truncate mt-0.5">{{ t.snippet }}</p>
           <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {% if t.context_badge %}
-            <span class="inline-flex px-1.5 py-0.5 rounded-md edify-text-caption font-bold uppercase tracking-wide
+            <span class="inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wide
               {% if t.context_type == 'fund_request' or t.context_type == 'finance' or t.context_type == 'accountant_disbursement' %}bg-emerald-50 text-emerald-700 border border-emerald-100
               {% elif t.context_type == 'leave' %}bg-purple-50 text-purple-700 border border-purple-100
               {% elif t.context_type == 'verification' or t.context_type == 'ssa_verification' or t.context_type == 'ia_return' %}bg-cyan-50 text-cyan-700 border border-cyan-100
@@ -37,9 +39,9 @@
             </span>
             {% endif %}
             {% if t.priority == 'high' or t.priority == 'urgent' %}
-              <span class="inline-flex px-1.5 py-0.5 rounded-md edify-text-caption font-bold uppercase bg-rose-50 text-rose-600 border border-rose-100">High</span>
+              <span class="inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-rose-50 text-rose-600 border border-rose-100">High</span>
             {% elif t.priority == 'low' %}
-              <span class="inline-flex px-1.5 py-0.5 rounded-md edify-text-caption font-bold uppercase bg-slate-50 text-slate-500 border border-slate-100">Low</span>
+              <span class="inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-slate-50 text-slate-500 border border-slate-100">Low</span>
             {% endif %}
             {% if t.starred %}<span class="text-amber-400 text-[12px] ml-auto"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path fill="currentColor" stroke="none" d="M11.5 3.6a.55.55 0 011 0l2.1 4.4 4.8.7a.55.55 0 01.3.9l-3.5 3.4.8 4.8a.55.55 0 01-.8.6L12 16.1l-4.3 2.3a.55.55 0 01-.8-.6l.8-4.8-3.4-3.4a.55.55 0 01.3-.9l4.8-.7 2.1-4.4z"/></svg></span>{% endif %}
           </div>
@@ -57,11 +59,11 @@
     <div class="flex items-center gap-1">
       {% for p in page_range %}
         {% if p == page %}
-          <span class="h-6 w-6 rounded-md bg-blue-600 text-white edify-text-caption font-bold flex items-center justify-center">{{ p }}</span>
+          <span class="h-6 w-6 rounded-pill bg-blue-600 text-white edify-text-caption font-bold flex items-center justify-center">{{ p }}</span>
         {% elif p <= 3 or p == pages or p == page|add:1 or p == page|add:-1 %}
           <button hx-get="/messages?tab={{ active_tab }}&sort={{ sort }}&page={{ p }}{% if search_q %}&q={{ search_q }}{% endif %}"
                   hx-target="#thread-list" hx-swap="innerHTML"
-                  class="h-6 w-6 rounded-md hover:bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center transition-colors">{{ p }}</button>
+                  class="h-6 w-6 rounded-control hover:bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center transition-colors">{{ p }}</button>
         {% elif p == 4 and pages > 5 %}
           <span class="text-slate-300 edify-text-caption font-bold">…</span>
         {% endif %}
@@ -69,7 +71,7 @@
       {% if page < pages %}
       <button hx-get="/messages?tab={{ active_tab }}&sort={{ sort }}&page={{ page|add:1 }}{% if search_q %}&q={{ search_q }}{% endif %}"
               hx-target="#thread-list" hx-swap="innerHTML"
-              class="h-6 w-6 rounded-md hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors" aria-label="Next page">
+              class="h-6 w-6 rounded-control hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors" aria-label="Next page">
         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
       </button>
       {% endif %}

@@ -16,9 +16,9 @@ from apps.fund_requests.models import (
 from apps.fund_requests.finance_services import (
     FinanceBlockedReasonService,
     PartnerPaymentService,
-    ReimbursementService,
 )
 from apps.fund_requests.disbursement_dashboard_service import weekly_status_buckets
+from apps.analytics.platform_engine import finance_health
 
 
 def format_ugx_compact(val):
@@ -66,6 +66,12 @@ def accountant_dashboard_view(request):
     total_disbursed_db = (
         fy_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
     )
+    total_accounted_db = (
+        fy_qs.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0
+    )
+    total_returned_db = (
+        fy_qs.aggregate(Sum("returned_amount"))["returned_amount__sum"] or 0
+    )
 
     # Approved but not yet disbursed
     pending_disb_sum = _bucket_sum("Pending Disbursement")
@@ -81,21 +87,26 @@ def accountant_dashboard_view(request):
     # reconciliation or already closed) vs. the reconciled subset.
     disbursed_count = _bucket_count("Disbursed", "Awaiting Reconciliation", "Closed")
     accounted_count = _bucket_count("Closed")
-    recon_rate = (
-        round(accounted_count * 100 / disbursed_count) if disbursed_count else 0
-    )
 
     # "Approved" = passed approval and disbursable-or-beyond — the
     # denominator for the Budget Utilization ratio.
     total_approved_db = _bucket_sum(
         "Pending Disbursement", "Disbursed", "Awaiting Reconciliation", "Closed"
     )
-    budget_util = (
-        round(total_disbursed_db * 100 / total_approved_db) if total_approved_db else 0
+    finance_analytics = finance_health(
+        approved=total_approved_db,
+        disbursed=total_disbursed_db,
+        accounted=total_accounted_db,
+        returned=total_returned_db,
+        reconciled_count=accounted_count,
+        disbursed_count=disbursed_count,
+        record_count=len(fy_wfrs),
     )
+    recon_rate = round(finance_analytics["reconciliation"]["rate"])
+    budget_util = round(finance_analytics["utilization"]["utilization_rate"] or 0)
 
-    # Let's query all WeeklyFundRequests
-    wfrs_db = list(WeeklyFundRequest.objects.all().order_by("-week_start_date"))
+    # Keep the visible queue aligned with the FY shown in the header and KPIs.
+    wfrs_db = list(fy_qs.prefetch_related("lines").order_by("-week_start_date"))
     user_ids = [w.responsible_user for w in wfrs_db]
     users_by_id = {u.id: u for u in User.objects.filter(id__in=user_ids)}
     profiles_by_id = {
@@ -289,6 +300,7 @@ def accountant_dashboard_view(request):
         "recent_activity": recent_activity,
         "recon_pending": recon_pending,
         "recon_stats": recon_stats,
+        "analytics": finance_analytics,
         "fy": fy,
     }
     return render(request, "pages/accounts/dashboard.html", context)
@@ -396,6 +408,46 @@ def pay_partner_action(request, activity_id):
 
 
 @require_page_permission("disbursements")
+def budget_amendments_view(request):
+    """Accountant review queue for locked-activity budget amendments (§4.5)."""
+    from apps.budget.models import BudgetAmendment
+
+    amendments = BudgetAmendment.objects.select_related(
+        "activity", "activity__school"
+    ).order_by("-created_at")[:100]
+    return render(
+        request,
+        "pages/accounts/budget_amendments.html",
+        {"amendments": amendments},
+    )
+
+
+@require_page_permission("disbursements")
+def budget_amendment_action(request, amendment_id):
+    """POST approve/return/reject on a submitted amendment."""
+    from apps.budget import amendment_service
+
+    if request.method == "POST":
+        verb = request.POST.get("action")
+        note = {"note": request.POST.get("note", "").strip()}
+        try:
+            if verb == "approve":
+                amendment_service.approve_amendment(amendment_id, note, request.user)
+                messages.success(request, "Amendment approved and applied.")
+            elif verb == "return":
+                amendment_service.return_amendment(amendment_id, note, request.user)
+                messages.info(request, "Amendment returned to the requester.")
+            elif verb == "reject":
+                amendment_service.reject_amendment(amendment_id, note, request.user)
+                messages.info(request, "Amendment rejected.")
+            else:
+                messages.error(request, "Unknown amendment action.")
+        except Exception as exc:
+            messages.error(request, f"Amendment action failed: {exc}")
+    return redirect("/accounts/budget-amendments")
+
+
+@require_page_permission("disbursements")
 def reimbursements_view(request):
     """Reimbursement Queue."""
     claims = ReimbursementClaim.objects.filter(status="pending").select_related(
@@ -408,24 +460,19 @@ def reimbursements_view(request):
 
 @require_page_permission("disbursements")
 def pay_reimbursement_action(request, claim_id):
-    """POST to disburse reimbursement claim."""
-    claim = get_object_or_404(ReimbursementClaim, id=claim_id)
-
-    if request.method == "POST":
-        method = request.POST.get("payment_method")
-        reference = request.POST.get("payment_reference", "").strip()
-
-        try:
-            ReimbursementService.disburse_reimbursement(
-                claim, method, reference, request.user.user_id
-            )
-            messages.success(
-                request,
-                f"Reimbursement of {claim.reimbursement_amount} UGX paid successfully.",
-            )
-        except Exception as e:
-            messages.error(request, f"Reimbursement payout failed: {e}")
-
+    """RETIRED (ecosystem audit). This legacy System-A payout closed the
+    activity directly (finance_services.disburse_reimbursement sets
+    status="closed"), bypassing the canonical ActivityClosureService nine-check
+    gate. No live workflow creates ReimbursementClaim rows any more —
+    self-funded and over-spend reimbursements flow through the advance
+    accountability queue (advance_service.reimburse), which respects closure.
+    Kept as a redirect so old bookmarks fail safely; performs no mutation."""
+    get_object_or_404(ReimbursementClaim, id=claim_id)
+    messages.info(
+        request,
+        "This legacy payout path is retired. Reimbursements are paid from the "
+        "advance accountability queue, which keeps closure checks intact.",
+    )
     return redirect("/accounts/reimbursements/")
 
 

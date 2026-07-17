@@ -356,7 +356,7 @@ def core_schedule_visit_action(request):
             return response
     except Exception as e:
         return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
             status=400,
         )
 
@@ -497,7 +497,7 @@ def core_schedule_training_action(request):
             return response
     except Exception as e:
         return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
             status=400,
         )
 
@@ -594,7 +594,7 @@ def core_assign_partner_action(request):
             return response
     except Exception as e:
         return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
             status=400,
         )
 

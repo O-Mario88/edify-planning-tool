@@ -26,18 +26,38 @@ VERSION = "v1"
 _HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
-def _load_key() -> bytes:
-    raw = os.environ.get("FIELD_ENCRYPTION_KEY", "")
+def load_field_encryption_key(raw: str | None = None) -> bytes:
+    """Validate and decode the configured AES-256-GCM key.
+
+    Keeping this validation independent of Django settings lets the production
+    settings module reject an unsafe process at boot, instead of discovering a
+    missing or malformed key only when a restricted field is first written.
+    """
+    if raw is None:
+        raw = os.environ.get("FIELD_ENCRYPTION_KEY", "")
     if not raw:
         raise RuntimeError(
             "FIELD_ENCRYPTION_KEY is not set — cannot encrypt/decrypt restricted fields."
         )
-    key = bytes.fromhex(raw) if _HEX64.match(raw) else base64.b64decode(raw)
+    try:
+        key = (
+            bytes.fromhex(raw)
+            if _HEX64.match(raw)
+            else base64.b64decode(raw, validate=True)
+        )
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError(
+            "FIELD_ENCRYPTION_KEY must be 32 bytes (64 hex chars or base64)."
+        ) from exc
     if len(key) != 32:
         raise RuntimeError(
             "FIELD_ENCRYPTION_KEY must be 32 bytes (64 hex chars or base64)."
         )
     return key
+
+
+def _load_key() -> bytes:
+    return load_field_encryption_key()
 
 
 def is_encrypted(value: str | None) -> bool:
@@ -88,6 +108,7 @@ def decrypt_nullable(value: str | None) -> str | None:
 
 
 __all__ = [
+    "load_field_encryption_key",
     "is_encrypted",
     "encrypt_field",
     "decrypt_field",

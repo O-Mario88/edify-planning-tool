@@ -1,0 +1,78 @@
+<div class="pl-urgent-table-scroll overflow-x-auto">
+  <table class="pl-urgent-table w-full border-collapse text-left text-[12px]">
+    <caption class="sr-only">Schools needing urgent attention and the next available workflow action</caption>
+    <thead>
+      <tr class="font-semibold uppercase tracking-[0.05em]">
+        <th scope="col" class="px-3 py-2.5">School</th>
+        <th scope="col" class="px-3 py-2.5">Priority issue</th>
+        <th scope="col" class="px-3 py-2.5">Recommended response</th>
+        <th scope="col" class="px-3 py-2.5 text-right">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in urgent_schools %}
+      <tr>
+        <th scope="row" class="px-3 py-3 align-top">
+          <a href="/schools/{{ row.school_id }}" class="font-semibold no-underline" style="color:var(--edify-text);">{{ row.school }}</a>
+          <span class="mt-0.5 block font-normal" style="color:var(--edify-text-muted);">{{ row.district }}</span>
+          {% if urgent_action_mode == "pl" %}
+          <span class="mt-1 inline-flex items-center rounded-pill px-2 py-0.5 font-semibold"
+                style="font-size: 12px;color:{% if row.owner_kind == 'pl' %}var(--edify-info){% else %}var(--edify-purple){% endif %};background:{% if row.owner_kind == 'pl' %}var(--edify-info-light){% else %}var(--edify-purple-light){% endif %};">
+            {% if row.owner_kind == "pl" %}My portfolio{% else %}{{ row.owner_name }} · supervised{% endif %}
+          </span>
+          {% endif %}
+        </th>
+        <td class="px-3 py-3 align-top">
+          <span class="inline-flex rounded-pill px-2 py-0.5 font-semibold"
+                style="font-size: 12px;background:var(--edify-danger-light);color:var(--edify-danger);border:1px solid var(--edify-danger-border);">
+            {{ row.issue }}
+          </span>
+          {% if row.weakest_intervention %}
+          <span class="mt-1 block" style="color:var(--edify-text-muted);">Weakest: {{ row.weakest_intervention }}</span>
+          {% endif %}
+        </td>
+        <td class="px-3 py-3 align-top font-medium" style="color:var(--edify-text);">
+          {{ row.recommended_activity_label }}
+        </td>
+        <td class="px-3 py-3 align-top text-right">
+          {% if urgent_action_mode == "pl" and row.owner_kind == "cceo" %}
+          <span id="urgent-action-{{ row.id }}">
+            <button type="button"
+                    class="edify-action-button primary"
+                    hx-post="/dashboard/pl-send-urgent-action?school_id={{ row.id }}&fy={{ fy }}"
+                    hx-target="#urgent-action-{{ row.id }}"
+                    hx-swap="innerHTML"
+                    aria-label="Send {{ row.school }} to {{ row.owner_name }} for action">
+              Send to {{ row.owner_name }}
+            </button>
+          </span>
+          {% else %}
+          <div class="inline-flex flex-wrap justify-end gap-1.5">
+            <button type="button"
+                    class="edify-action-button primary"
+                    hx-get="{{ row.schedule_url }}"
+                    hx-target="#drawer-container">
+              {{ row.recommended_activity_label }}
+            </button>
+            {% if urgent_action_mode == "cceo" %}
+            <button type="button"
+                    class="edify-action-button secondary"
+                    hx-get="{{ row.partner_url }}"
+                    hx-target="#drawer-container">
+              Assign to Partner
+            </button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="px-4 py-8 text-center font-semibold" style="color:var(--edify-text-muted);">
+          No schools require urgent action in your portfolio.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

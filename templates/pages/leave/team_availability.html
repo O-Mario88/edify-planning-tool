@@ -12,40 +12,40 @@
       <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Track workload, approved leaves, and calendar blockages for your team over the next 4 weeks</p>
     </div>
 
-    <div class="flex items-center gap-2 edify-text-caption font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-xl">
+    <div class="flex items-center gap-2 edify-text-caption font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-surface">
       <span>Scoping: {{ role }}</span>
     </div>
   </div>
 
   <!-- Legend & Overview -->
-  <div class="edify-surface rounded-lg border border-slate-100 p-5 shadow-sm space-y-4">
+  <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
     <h3 class="text-[14px] font-bold text-slate-850">Availability Status Legend</h3>
     <div class="flex flex-wrap gap-4 text-[12px] font-semibold">
       <div class="flex items-center gap-2">
-        <span class="w-4.5 h-4.5 rounded-md bg-emerald-500 inline-block shadow-sm"></span>
+        <span class="w-4.5 h-4.5 rounded-pill bg-emerald-500 inline-block shadow-sm"></span>
         <span class="text-slate-700">Available</span>
       </div>
       <div class="flex items-center gap-2">
-        <span class="w-4.5 h-4.5 rounded-md bg-blue-500 inline-block shadow-sm"></span>
+        <span class="w-4.5 h-4.5 rounded-pill bg-blue-500 inline-block shadow-sm"></span>
         <span class="text-slate-700">On Leave (Approved)</span>
       </div>
       <div class="flex items-center gap-2">
-        <span class="w-4.5 h-4.5 rounded-md bg-purple-500 inline-block shadow-sm"></span>
+        <span class="w-4.5 h-4.5 rounded-pill bg-purple-500 inline-block shadow-sm"></span>
         <span class="text-slate-700">Staff Conference Week</span>
       </div>
       <div class="flex items-center gap-2">
-        <span class="w-4.5 h-4.5 rounded-md bg-slate-600 inline-block shadow-sm"></span>
+        <span class="w-4.5 h-4.5 rounded-pill bg-slate-600 inline-block shadow-sm"></span>
         <span class="text-slate-700">Blocked (Blackout Date)</span>
       </div>
       <div class="flex items-center gap-2">
-        <span class="w-4.5 h-4.5 rounded-md bg-amber-500 inline-block shadow-sm"></span>
+        <span class="w-4.5 h-4.5 rounded-pill bg-amber-500 inline-block shadow-sm"></span>
         <span class="text-slate-700">High Workload (5+ Activities)</span>
       </div>
     </div>
   </div>
 
   <!-- Heatmap Matrix Grid -->
-  <div class="edify-surface rounded-lg border border-slate-100 shadow-sm overflow-hidden">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
     <div class="p-5 border-b border-slate-100">
       <h3 class="text-[16px] font-bold text-slate-850">4-Week Heatmap Matrix</h3>
     </div>
@@ -71,7 +71,7 @@
             {% for wk in row.weeks %}
             <td class="px-4 py-4 text-center">
               <div
-                class="inline-flex flex-col items-center justify-center p-3 rounded-lg text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
+                class="inline-flex flex-col items-center justify-center p-3 rounded-surface text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
                 style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-text-muted){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
               >
                 <span class="text-[12px] font-extrabold">{{ wk.status }}</span>

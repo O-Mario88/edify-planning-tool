@@ -98,6 +98,44 @@ class IAPerformanceTestBase(TestCase):
 
 
 class IADashboardQueryBudgetTest(IAPerformanceTestBase):
+    def test_ia_dashboard_sla_is_empty_until_a_real_cycle_is_measured(self):
+        response = self.client.get("/ia/dashboard/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context["verification_sla"]["pct"])
+        self.assertEqual(response.context["verification_sla"]["sample_size"], 0)
+        self.assertContains(response, "Not yet measured")
+        self.assertNotContains(response, "84%")
+        self.assertNotContains(response, "2 pts vs last week")
+
+    def test_ia_dashboard_sla_uses_real_queue_cycle_timestamps(self):
+        now = timezone.now()
+        for index, hours in enumerate((10, 30)):
+            activity = self._pending_activity(self._school(f"dashboard-sla-{index}"))
+            activity.status = "ia_verified"
+            activity.submitted_to_ia_at = now - timezone.timedelta(hours=hours)
+            activity.ia_confirmed_at = now
+            activity.save(
+                update_fields=[
+                    "status",
+                    "submitted_to_ia_at",
+                    "ia_confirmed_at",
+                    "updated_at",
+                ]
+            )
+            VerificationHistory.objects.create(
+                activity=activity,
+                verified_by=self.ia.id,
+                verified_at=now,
+            )
+
+        response = self.client.get("/ia/dashboard/")
+
+        self.assertEqual(response.context["verification_sla"]["pct"], 50.0)
+        self.assertEqual(response.context["verification_sla"]["sample_size"], 2)
+        self.assertContains(response, "50.0%")
+        self.assertContains(response, "n=2")
+
     # ── 1. /ia/dashboard/ documented, bounded, not O(rows) ───────────────────
     def test_ia_dashboard_query_count_is_bounded(self):
         for i in range(15):

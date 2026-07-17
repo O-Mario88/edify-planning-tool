@@ -75,8 +75,11 @@ class CoreSchoolsService:
             actor_name = getattr(user, "name", None) or "System (auto-heal)"
             for s in uninitialized_schools:
                 latest = (
-                    s.ssa_records.filter(deleted_at__isnull=True)
-                    .order_by("-date_of_ssa")
+                    s.ssa_records.filter(
+                        deleted_at__isnull=True,
+                        verification_status="confirmed",
+                    )
+                    .order_by("-date_of_ssa", "-created_at")
                     .first()
                 )
                 if not latest:
@@ -220,8 +223,11 @@ class CorePackageProgressService:
 
             # Map assessment score
             latest_ssa = (
-                s.ssa_records.filter(deleted_at__isnull=True)
-                .order_by("-date_of_ssa")
+                s.ssa_records.filter(
+                    deleted_at__isnull=True,
+                    verification_status="confirmed",
+                )
+                .order_by("-date_of_ssa", "-created_at")
                 .first()
             )
             score_val = latest_ssa.average_score if latest_ssa else None
@@ -513,21 +519,21 @@ class CorePlanningService:
             # Resolve weakest intervention from latest SSA
             weakest_intervention = "—"
             latest_ssa = (
-                s.ssa_records.filter(fy=fy, deleted_at__isnull=True)
-                .order_by("-date_of_ssa")
+                s.ssa_records.filter(
+                    fy=fy,
+                    deleted_at__isnull=True,
+                    verification_status="confirmed",
+                )
+                .order_by("-date_of_ssa", "-created_at")
                 .first()
             )
 
             if plan:
                 # Iterate the prefetched slot list in Python — calling .filter()
                 # here would discard the prefetch and re-query per school.
-                done_statuses = {
-                    "Completed",
-                    "Accountant Confirmed",
-                    "iaVerify",
-                    "ia_verified",
-                    "accountant_confirmed",
-                }
+                from apps.core_schools.services import CORE_SLOT_DONE_WITH_LEGACY
+
+                done_statuses = CORE_SLOT_DONE_WITH_LEGACY
                 slot_list = list(plan.slots.all())
                 visits_done = sum(
                     1

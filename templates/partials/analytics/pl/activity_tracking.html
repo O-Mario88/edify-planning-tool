@@ -1,9 +1,9 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">H. Activity Tracking</h3>
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
     {% for c in activity_tracking.cards %}
-    <div class="rounded-xl border border-slate-100 p-3">
+    <div class="rounded-surface border border-slate-100 p-3">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 leading-tight truncate" title="{{ c.label }}">{{ c.label }}</p>
       <div class="flex items-baseline gap-1 mt-1.5">
         <span class="text-[16px] font-bold text-slate-800 tabular-nums leading-none">{{ c.done }}</span>
@@ -12,8 +12,8 @@
       <div class="flex items-center justify-between mt-2 mb-1">
         <span class="edify-text-caption font-bold text-slate-500 tabular-nums">{{ c.pct }}%</span>
       </div>
-      <div class="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
-        <div class="h-full rounded-full {{ c.bar_color }}" style="width: {{ c.pct }}%"></div>
+      <div class="h-1.5 w-full bg-slate-50 rounded-pill overflow-hidden">
+        <div class="h-full rounded-pill {{ c.bar_color }}" style="width: {{ c.pct }}%"></div>
       </div>
     </div>
     {% endfor %}

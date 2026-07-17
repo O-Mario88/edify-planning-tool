@@ -20,7 +20,8 @@ from rest_framework.test import APITestCase
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import ActivityScheduleCostLine
-from apps.budget.models import CostSetting
+from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import FundRequestItem
 from apps.geography.models import District, Region, SubCounty
@@ -29,6 +30,13 @@ from apps.schools.models import School
 
 class CostingBudgetPeriodTest(APITestCase):
     def setUp(self):
+        # Scheduling has a deliberate published-catalogue gate. This suite
+        # tests cost/period behaviour after that valid operational setup.
+        CostCatalogue.objects.create(
+            fy=get_operational_fy(),
+            version=1,
+            label="Costing period test catalogue",
+        )
         self.region = Region.objects.create(name="Cost Region")
         # district_type is required for staff school-visit reschedule, which
         # now routes through Daily Visit Batch pricing (day-based, shared cost
@@ -71,8 +79,11 @@ class CostingBudgetPeriodTest(APITestCase):
             region=self.region,
             district=self.district,
             sub_county=self.sub_county,
+            # This fixture verifies period/cost aggregation, not the client
+            # entitlement; use a non-client school so two deliberately
+            # distinct monthly visits remain valid test inputs.
+            school_type="other",
             current_fy_ssa_status="done",
-            planning_readiness="ready",
         )
         StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
         self._as(self.cceo)

@@ -17,7 +17,7 @@
       <p>A complete view of execution, priorities, school improvement, and operational health.</p>
     </div>
     <div class="admin-command__actions">
-      <a href="/planning" class="admin-button admin-button--primary">
+      <a href="/my-plan" class="admin-button admin-button--primary">
         {% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}
         <span>Open My Plan</span>
       </a>
@@ -61,7 +61,7 @@
         <section class="admin-panel admin-priorities" aria-labelledby="admin-priorities-title">
           <header class="admin-panel__header">
             <h2 id="admin-priorities-title">Today’s Priorities <span class="admin-count">{{ priorities|length }}</span></h2>
-            <a href="/planning">View Calendar</a>
+            <a href="/calendar">View Calendar</a>
           </header>
           <div class="admin-table-wrap">
             <table class="admin-table admin-table--priorities">

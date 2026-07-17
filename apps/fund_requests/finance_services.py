@@ -20,6 +20,26 @@ from apps.fund_requests.models import (
 from apps.notifications.services import WorkflowNotificationService
 
 
+def _chain_audit(action: str, activity, actor_id: str, payload: dict) -> None:
+    """Mirror a security-critical finance event onto the tamper-evident
+    AuditLog chain. FinanceAuditLog remains the specialized ledger, but the
+    ecosystem audit found money events entirely absent from the hash chain."""
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=action,
+            subject_kind="Activity",
+            subject_id=activity.id,
+            actor_id=actor_id,
+            actor_role="Accountant",
+            success=True,
+            payload=payload,
+        )
+    except Exception:  # pragma: no cover — audit must never break finance
+        pass
+
+
 class FinanceBlockedReasonService:
     """Evaluates if an activity's finance steps are blocked and provides clean reasons."""
 
@@ -167,6 +187,12 @@ class AdvanceDisbursementService:
                 actor_role="Accountant",
                 new_value=f"Disbursed advance of {amount} UGX via {method} (Ref: {reference})",
             )
+            _chain_audit(
+                "finance.disbursed",
+                activity,
+                user_id,
+                {"amount": amount, "method": method, "reference": reference},
+            )
 
             # Send Notification
             if activity.responsible_staff_id:
@@ -202,6 +228,33 @@ class PartnerPaymentService:
         reasons = FinanceBlockedReasonService.get_blocked_reasons(activity)
         if reasons:
             raise ValueError(f"Partner payment is blocked: {', '.join(reasons)}")
+
+        # Cross-channel guard: a partner activity whose staff advance already
+        # moved money must not ALSO be partner-paid against the same cost
+        # lines (the advance and partner channels had no mutual exclusion).
+        from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
+
+        if activity.advance_requests.filter(
+            status__in=MONEY_MOVED_ADVANCE_STATUSES
+        ).exists():
+            raise ValueError(
+                "This activity already has money released through the advance "
+                "channel — settle that accountability instead of issuing a "
+                "partner payment for the same cost lines."
+            )
+
+        # Idempotency: one payout per activity. get_blocked_reasons passes for
+        # closed activities too, so without this a double-submit (or a second
+        # call after close) would write a duplicate PartnerPayment ledger row.
+        # Backstopped by the DB unique constraint on PartnerPayment.activity.
+        if (
+            activity.payment_status == "paid"
+            or PartnerPayment.objects.filter(activity=activity).exists()
+        ):
+            raise ValueError(
+                "Partner payment already recorded for this activity — a second "
+                "payout would double-count the money."
+            )
 
         # Partner payment is the terminal finance step for partner-delivery
         # activities in this legacy stack — there is no separate accountant
@@ -251,6 +304,17 @@ class PartnerPaymentService:
                     f"Paid partner {partner_name} {amount} UGX via {method} "
                     f"(Ref: {reference}). NetSuite ID: {netsuite_id}"
                 ),
+            )
+            _chain_audit(
+                "finance.partner_paid",
+                activity,
+                user_id,
+                {
+                    "partner": partner_name,
+                    "amount": amount,
+                    "netsuite_id": netsuite_id,
+                    "reference": reference,
+                },
             )
 
             # Close through the canonical gate (ClosureEligibilityService /

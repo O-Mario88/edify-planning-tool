@@ -18,3 +18,11 @@ htmlcov/
 .DS_Store
 Dockerfile
 docker-compose*.yml
+# Never ship database contents or dumps into an image — the live server must
+# not be able to receive local data (environment-stamp guard is the runtime
+# backstop; this is the build-time one).
+*.sql
+*.dump
+*.sqlite3
+db.sqlite3
+backups/

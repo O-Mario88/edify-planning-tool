@@ -14,9 +14,41 @@ replicate that with a default manager that hides soft-deleted rows, plus a
 
 from __future__ import annotations
 
+from datetime import date, datetime, time
+
 from django.db import models
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 
 from .cuid import cuid
+
+
+def _normalize_datetime_value(value):
+    """Make direct date/naïve datetime writes timezone-aware without warning.
+
+    Django warns only while preparing an ORM write, which is too late for a
+    production-hardening policy that treats warnings as errors. Centralising
+    this on the shared model base protects imports, admin actions and legacy
+    scripts while preserving already-aware timestamps.
+    """
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, date):
+        parsed = datetime.combine(value, time.min)
+    elif isinstance(value, str):
+        parsed = parse_datetime(value)
+        if parsed is None:
+            parsed_date = parse_date(value)
+            if parsed_date is None:
+                return value
+            parsed = datetime.combine(parsed_date, time.min)
+    else:
+        return value
+    return (
+        timezone.make_aware(parsed, timezone.get_current_timezone())
+        if timezone.is_naive(parsed)
+        else parsed
+    )
 
 
 class CuidField(models.CharField):
@@ -38,6 +70,14 @@ class TimeStampedModel(models.Model):
 
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        for field in self._meta.fields:
+            if isinstance(field, models.DateTimeField):
+                value = getattr(self, field.attname)
+                if value is not None:
+                    setattr(self, field.attname, _normalize_datetime_value(value))
+        super().save(*args, **kwargs)
 
 
 class DataSource(models.TextChoices):
@@ -123,6 +163,7 @@ class SoftDeleteModel(SourcedModel):
 
 __all__ = [
     "CuidField",
+    "_normalize_datetime_value",
     "TimeStampedModel",
     "SourcedModel",
     "DataSource",

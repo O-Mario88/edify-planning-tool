@@ -1,6 +1,14 @@
 {
   "components": [
     {
+      "bytes": 424,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/analytics_provenance.html"
+    },
+    {
       "bytes": 1283,
       "findings": [],
       "forms": 0,
@@ -32,7 +40,7 @@
       "template": "components/card.html"
     },
     {
-      "bytes": 2255,
+      "bytes": 2486,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -55,7 +63,7 @@
       "template": "components/empty_state.html"
     },
     {
-      "bytes": 2310,
+      "bytes": 2312,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -63,7 +71,7 @@
       "template": "components/input.html"
     },
     {
-      "bytes": 2307,
+      "bytes": 2399,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -79,7 +87,7 @@
       "template": "components/kpi_strip.html"
     },
     {
-      "bytes": 25886,
+      "bytes": 26015,
       "findings": [],
       "forms": 0,
       "htmx_controls": 10,
@@ -87,7 +95,7 @@
       "template": "components/school_list_card.html"
     },
     {
-      "bytes": 3759,
+      "bytes": 4102,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -102,7 +110,7 @@
       "template": "components/sidebar.html"
     },
     {
-      "bytes": 4315,
+      "bytes": 4325,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -110,7 +118,7 @@
       "template": "partials/analytics/activity_tracking.html"
     },
     {
-      "bytes": 3212,
+      "bytes": 3222,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -118,7 +126,7 @@
       "template": "partials/analytics/cd/body.html"
     },
     {
-      "bytes": 4198,
+      "bytes": 4231,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -133,7 +141,7 @@
       "template": "partials/analytics/cd/budget_finance.html"
     },
     {
-      "bytes": 2971,
+      "bytes": 2981,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -141,7 +149,7 @@
       "template": "partials/analytics/cd/cceo_snapshot.html"
     },
     {
-      "bytes": 3061,
+      "bytes": 3076,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -149,7 +157,7 @@
       "template": "partials/analytics/cd/cluster_performance.html"
     },
     {
-      "bytes": 3755,
+      "bytes": 3780,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -157,7 +165,7 @@
       "template": "partials/analytics/cd/district_heatmap.html"
     },
     {
-      "bytes": 12507,
+      "bytes": 12653,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -165,7 +173,7 @@
       "template": "partials/analytics/cd/drilldown.html"
     },
     {
-      "bytes": 3361,
+      "bytes": 3416,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -173,7 +181,7 @@
       "template": "partials/analytics/cd/impact_summary.html"
     },
     {
-      "bytes": 1738,
+      "bytes": 1748,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -181,7 +189,7 @@
       "template": "partials/analytics/cd/operational_risk.html"
     },
     {
-      "bytes": 2779,
+      "bytes": 2789,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -189,7 +197,7 @@
       "template": "partials/analytics/cd/partner_performance.html"
     },
     {
-      "bytes": 3443,
+      "bytes": 3460,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -197,7 +205,7 @@
       "template": "partials/analytics/cd/performance_vs_target.html"
     },
     {
-      "bytes": 2622,
+      "bytes": 2627,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -205,7 +213,7 @@
       "template": "partials/analytics/cd/pl_oversight.html"
     },
     {
-      "bytes": 2572,
+      "bytes": 2579,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -213,7 +221,7 @@
       "template": "partials/analytics/cd/recommended_actions.html"
     },
     {
-      "bytes": 2798,
+      "bytes": 2816,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -221,7 +229,7 @@
       "template": "partials/analytics/cd/regional_summary.html"
     },
     {
-      "bytes": 2929,
+      "bytes": 2952,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -229,7 +237,7 @@
       "template": "partials/analytics/cd/ssa_interventions.html"
     },
     {
-      "bytes": 3140,
+      "bytes": 3144,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -237,7 +245,7 @@
       "template": "partials/analytics/cd/target_by_pl.html"
     },
     {
-      "bytes": 2758,
+      "bytes": 2768,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -245,7 +253,7 @@
       "template": "partials/analytics/cluster_performance.html"
     },
     {
-      "bytes": 2166,
+      "bytes": 2186,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -253,15 +261,15 @@
       "template": "partials/analytics/core_champion_performance.html"
     },
     {
-      "bytes": 2375,
+      "bytes": 3190,
       "findings": [],
       "forms": 1,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "tables": 0,
       "template": "partials/analytics/customize_dashboard_drawer.html"
     },
     {
-      "bytes": 1972,
+      "bytes": 1977,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -269,7 +277,7 @@
       "template": "partials/analytics/donor_reporting_snapshot.html"
     },
     {
-      "bytes": 2286,
+      "bytes": 2296,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -277,15 +285,15 @@
       "template": "partials/analytics/drilldown_drawer.html"
     },
     {
-      "bytes": 6103,
+      "bytes": 6046,
       "findings": [],
       "forms": 1,
-      "htmx_controls": 2,
+      "htmx_controls": 1,
       "tables": 0,
       "template": "partials/analytics/filters.html"
     },
     {
-      "bytes": 2729,
+      "bytes": 2759,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -293,7 +301,15 @@
       "template": "partials/analytics/impact_summary.html"
     },
     {
-      "bytes": 1759,
+      "bytes": 19721,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 3,
+      "template": "partials/analytics/impact_workspace.html"
+    },
+    {
+      "bytes": 1845,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -301,7 +317,7 @@
       "template": "partials/analytics/kpi_cards.html"
     },
     {
-      "bytes": 2646,
+      "bytes": 2661,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -317,7 +333,7 @@
       "template": "partials/analytics/pl/_icon.html"
     },
     {
-      "bytes": 1235,
+      "bytes": 1245,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -325,7 +341,7 @@
       "template": "partials/analytics/pl/_risk_rows.html"
     },
     {
-      "bytes": 1336,
+      "bytes": 1346,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -333,7 +349,7 @@
       "template": "partials/analytics/pl/_school_rows.html"
     },
     {
-      "bytes": 1320,
+      "bytes": 1330,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -341,7 +357,7 @@
       "template": "partials/analytics/pl/activity_tracking.html"
     },
     {
-      "bytes": 4739,
+      "bytes": 4754,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -349,7 +365,7 @@
       "template": "partials/analytics/pl/body.html"
     },
     {
-      "bytes": 3899,
+      "bytes": 3909,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -357,7 +373,7 @@
       "template": "partials/analytics/pl/cceo_performance.html"
     },
     {
-      "bytes": 2992,
+      "bytes": 3002,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -365,7 +381,7 @@
       "template": "partials/analytics/pl/cluster_performance.html"
     },
     {
-      "bytes": 3152,
+      "bytes": 3166,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -373,7 +389,7 @@
       "template": "partials/analytics/pl/core_champion.html"
     },
     {
-      "bytes": 1725,
+      "bytes": 1730,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -381,7 +397,7 @@
       "template": "partials/analytics/pl/district_performance.html"
     },
     {
-      "bytes": 1844,
+      "bytes": 1859,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -389,7 +405,7 @@
       "template": "partials/analytics/pl/donor_snapshot.html"
     },
     {
-      "bytes": 4261,
+      "bytes": 4306,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -397,7 +413,7 @@
       "template": "partials/analytics/pl/drilldown.html"
     },
     {
-      "bytes": 2459,
+      "bytes": 2504,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -405,7 +421,7 @@
       "template": "partials/analytics/pl/impact_summary.html"
     },
     {
-      "bytes": 2874,
+      "bytes": 2891,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -413,7 +429,7 @@
       "template": "partials/analytics/pl/insights.html"
     },
     {
-      "bytes": 2606,
+      "bytes": 2616,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -421,7 +437,7 @@
       "template": "partials/analytics/pl/risk_list.html"
     },
     {
-      "bytes": 2752,
+      "bytes": 2776,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -429,7 +445,7 @@
       "template": "partials/analytics/pl/ssa_interventions.html"
     },
     {
-      "bytes": 2059,
+      "bytes": 2069,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -437,7 +453,7 @@
       "template": "partials/analytics/pl/staff_partner.html"
     },
     {
-      "bytes": 3071,
+      "bytes": 3088,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -445,7 +461,7 @@
       "template": "partials/analytics/pl/team_performance.html"
     },
     {
-      "bytes": 4770,
+      "bytes": 4785,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -453,7 +469,7 @@
       "template": "partials/analytics/recommended_insights.html"
     },
     {
-      "bytes": 2861,
+      "bytes": 2871,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -461,15 +477,15 @@
       "template": "partials/analytics/regional_performance.html"
     },
     {
-      "bytes": 3092,
+      "bytes": 2987,
       "findings": [],
       "forms": 1,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "tables": 0,
       "template": "partials/analytics/schedule_report_drawer.html"
     },
     {
-      "bytes": 1882,
+      "bytes": 1892,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -477,7 +493,7 @@
       "template": "partials/analytics/ssa_performance.html"
     },
     {
-      "bytes": 2675,
+      "bytes": 2685,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -485,7 +501,7 @@
       "template": "partials/analytics/staff_partner_performance.html"
     },
     {
-      "bytes": 1592,
+      "bytes": 1602,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -493,7 +509,7 @@
       "template": "partials/analytics/target_by_district.html"
     },
     {
-      "bytes": 6990,
+      "bytes": 7057,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -501,22 +517,15 @@
       "template": "partials/clusters/bulk_assign_drawer.html"
     },
     {
-      "bytes": 19081,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "bytes": 19049,
+      "findings": [],
       "forms": 1,
       "htmx_controls": 5,
       "tables": 0,
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 9945,
+      "bytes": 9985,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -531,7 +540,7 @@
       "template": "partials/clusters/cluster_card.html"
     },
     {
-      "bytes": 2131,
+      "bytes": 2146,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -539,7 +548,7 @@
       "template": "partials/clusters/cluster_detail_drawer.html"
     },
     {
-      "bytes": 3617,
+      "bytes": 3673,
       "findings": [],
       "forms": 0,
       "htmx_controls": 4,
@@ -547,7 +556,7 @@
       "template": "partials/clusters/cluster_list.html"
     },
     {
-      "bytes": 5898,
+      "bytes": 5923,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -555,37 +564,23 @@
       "template": "partials/clusters/cluster_schools_table.html"
     },
     {
-      "bytes": 7976,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "bytes": 6646,
+      "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "tables": 0,
       "template": "partials/clusters/create_cluster_drawer.html"
     },
     {
-      "bytes": 9368,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "bytes": 9411,
+      "findings": [],
       "forms": 1,
       "htmx_controls": 1,
       "tables": 0,
       "template": "partials/clusters/edit_cluster_drawer.html"
     },
     {
-      "bytes": 5568,
+      "bytes": 5613,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -601,7 +596,7 @@
       "template": "partials/clusters/htmx_response.html"
     },
     {
-      "bytes": 3611,
+      "bytes": 3651,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -609,7 +604,7 @@
       "template": "partials/clusters/impact_panel.html"
     },
     {
-      "bytes": 3221,
+      "bytes": 3261,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -625,7 +620,7 @@
       "template": "partials/clusters/kpi_strip.html"
     },
     {
-      "bytes": 4018,
+      "bytes": 4063,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -633,7 +628,7 @@
       "template": "partials/core_schools/assign_partner_drawer.html"
     },
     {
-      "bytes": 9872,
+      "bytes": 9904,
       "findings": [],
       "forms": 2,
       "htmx_controls": 0,
@@ -641,7 +636,7 @@
       "template": "partials/core_schools/champion_review_drawer.html"
     },
     {
-      "bytes": 3766,
+      "bytes": 3776,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -649,7 +644,7 @@
       "template": "partials/core_schools/core_assessment_drawer.html"
     },
     {
-      "bytes": 6453,
+      "bytes": 6518,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -657,7 +652,7 @@
       "template": "partials/core_schools/filters.html"
     },
     {
-      "bytes": 2879,
+      "bytes": 2884,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -665,7 +660,7 @@
       "template": "partials/core_schools/intervention_impact.html"
     },
     {
-      "bytes": 4365,
+      "bytes": 4395,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -673,7 +668,7 @@
       "template": "partials/core_schools/matrix_table.html"
     },
     {
-      "bytes": 10185,
+      "bytes": 10236,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -681,7 +676,7 @@
       "template": "partials/core_schools/performance_insights.html"
     },
     {
-      "bytes": 11187,
+      "bytes": 11236,
       "findings": [],
       "forms": 0,
       "htmx_controls": 9,
@@ -689,7 +684,7 @@
       "template": "partials/core_schools/planning_queue.html"
     },
     {
-      "bytes": 7809,
+      "bytes": 7866,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -697,7 +692,7 @@
       "template": "partials/core_schools/right_panel.html"
     },
     {
-      "bytes": 12453,
+      "bytes": 12538,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -705,7 +700,7 @@
       "template": "partials/core_schools/schedule_training_drawer.html"
     },
     {
-      "bytes": 12468,
+      "bytes": 12553,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -713,7 +708,7 @@
       "template": "partials/core_schools/schedule_visit_drawer.html"
     },
     {
-      "bytes": 3872,
+      "bytes": 3882,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -721,7 +716,7 @@
       "template": "partials/core_schools/strategy_playbook_drawer.html"
     },
     {
-      "bytes": 1741,
+      "bytes": 1751,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -729,7 +724,7 @@
       "template": "partials/cost_preview.html"
     },
     {
-      "bytes": 2638,
+      "bytes": 2663,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -745,7 +740,7 @@
       "template": "partials/dashboards/admin/_icon.html"
     },
     {
-      "bytes": 29636,
+      "bytes": 29813,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -753,22 +748,15 @@
       "template": "partials/dashboards/cd/body.html"
     },
     {
-      "bytes": 26910,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "bytes": 27027,
+      "findings": [],
       "forms": 0,
       "htmx_controls": 0,
       "tables": 3,
       "template": "partials/dashboards/hr/body.html"
     },
     {
-      "bytes": 2948,
+      "bytes": 2973,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -798,22 +786,15 @@
       "template": "partials/dashboards/pl/backlog_snapshot.html"
     },
     {
-      "bytes": 16899,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "bytes": 16098,
+      "findings": [],
       "forms": 0,
       "htmx_controls": 1,
-      "tables": 1,
+      "tables": 0,
       "template": "partials/dashboards/pl/body.html"
     },
     {
-      "bytes": 4313,
+      "bytes": 4323,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -828,7 +809,7 @@
       "template": "partials/dashboards/pl/cceo_performance.html"
     },
     {
-      "bytes": 2946,
+      "bytes": 2961,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -836,7 +817,7 @@
       "template": "partials/dashboards/pl/drilldown.html"
     },
     {
-      "bytes": 1912,
+      "bytes": 1753,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -851,7 +832,7 @@
       "template": "partials/dashboards/pl/funding_execution.html"
     },
     {
-      "bytes": 4035,
+      "bytes": 4060,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -866,7 +847,7 @@
       "template": "partials/dashboards/pl/route_capacity.html"
     },
     {
-      "bytes": 3508,
+      "bytes": 3587,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -881,7 +862,7 @@
       "template": "partials/dashboards/pl/ssa_intelligence.html"
     },
     {
-      "bytes": 2838,
+      "bytes": 2852,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -889,7 +870,15 @@
       "template": "partials/dashboards/pl/team_performance.html"
     },
     {
-      "bytes": 6177,
+      "bytes": 481,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/dashboards/pl/urgent_action_sent.html"
+    },
+    {
+      "bytes": 6237,
       "findings": [],
       "forms": 4,
       "htmx_controls": 0,
@@ -897,31 +886,7 @@
       "template": "partials/dashboards/rvp/approvals_drawer.html"
     },
     {
-      "bytes": 1925,
-      "findings": [],
-      "forms": 2,
-      "htmx_controls": 2,
-      "tables": 0,
-      "template": "partials/data_quality/issue_row.html"
-    },
-    {
-      "bytes": 1034,
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "tables": 1,
-      "template": "partials/data_quality/issue_section.html"
-    },
-    {
-      "bytes": 16123,
-      "findings": [],
-      "forms": 2,
-      "htmx_controls": 0,
-      "tables": 0,
-      "template": "partials/debriefs/dashboard_body.html"
-    },
-    {
-      "bytes": 7687,
+      "bytes": 3829,
       "findings": [
         {
           "evidence": "Static inline styling reduces theme and component consistency.",
@@ -931,12 +896,44 @@
         }
       ],
       "forms": 0,
+      "htmx_controls": 3,
+      "tables": 1,
+      "template": "partials/dashboards/urgent_schools_table.html"
+    },
+    {
+      "bytes": 1941,
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 2,
+      "tables": 0,
+      "template": "partials/data_quality/issue_row.html"
+    },
+    {
+      "bytes": 1039,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 1,
+      "template": "partials/data_quality/issue_section.html"
+    },
+    {
+      "bytes": 16210,
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/debriefs/dashboard_body.html"
+    },
+    {
+      "bytes": 7696,
+      "findings": [],
+      "forms": 0,
       "htmx_controls": 8,
       "tables": 1,
       "template": "partials/debriefs/dashboard_table.html"
     },
     {
-      "bytes": 13691,
+      "bytes": 13768,
       "findings": [],
       "forms": 1,
       "htmx_controls": 8,
@@ -944,7 +941,7 @@
       "template": "partials/disbursements/detail.html"
     },
     {
-      "bytes": 4661,
+      "bytes": 4701,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -952,7 +949,7 @@
       "template": "partials/disbursements/disburse_drawer.html"
     },
     {
-      "bytes": 3632,
+      "bytes": 3662,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -960,7 +957,7 @@
       "template": "partials/disbursements/hold_drawer.html"
     },
     {
-      "bytes": 3622,
+      "bytes": 3652,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -968,7 +965,7 @@
       "template": "partials/disbursements/return_drawer.html"
     },
     {
-      "bytes": 21013,
+      "bytes": 21119,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -976,7 +973,15 @@
       "template": "partials/disbursements/root.html"
     },
     {
-      "bytes": 6541,
+      "bytes": 7359,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 6,
+      "tables": 0,
+      "template": "partials/evidence/workspace.html"
+    },
+    {
+      "bytes": 6571,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -984,7 +989,7 @@
       "template": "partials/finance/accountant_insights.html"
     },
     {
-      "bytes": 4073,
+      "bytes": 4090,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -992,7 +997,7 @@
       "template": "partials/finance/admin_budget_drilldown.html"
     },
     {
-      "bytes": 3352,
+      "bytes": 3364,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1016,7 +1021,7 @@
       "template": "partials/finance/country_budget/_source_icon.html"
     },
     {
-      "bytes": 3648,
+      "bytes": 3653,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1024,7 +1029,7 @@
       "template": "partials/finance/country_budget/plan_sources_drawer.html"
     },
     {
-      "bytes": 3602,
+      "bytes": 3632,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1032,7 +1037,7 @@
       "template": "partials/finance/country_budget/return_drawer.html"
     },
     {
-      "bytes": 22991,
+      "bytes": 23091,
       "findings": [],
       "forms": 1,
       "htmx_controls": 5,
@@ -1040,7 +1045,7 @@
       "template": "partials/finance/country_budget/root.html"
     },
     {
-      "bytes": 1842,
+      "bytes": 1847,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1048,7 +1053,7 @@
       "template": "partials/finance/export_drawer.html"
     },
     {
-      "bytes": 8118,
+      "bytes": 8178,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1056,7 +1061,7 @@
       "template": "partials/finance/finance_action_drawer.html"
     },
     {
-      "bytes": 4395,
+      "bytes": 4415,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -1072,7 +1077,7 @@
       "template": "partials/finance/fund_allocation_kpis.html"
     },
     {
-      "bytes": 16686,
+      "bytes": 16723,
       "findings": [],
       "forms": 0,
       "htmx_controls": 10,
@@ -1080,7 +1085,7 @@
       "template": "partials/finance/fund_allocation_table.html"
     },
     {
-      "bytes": 6517,
+      "bytes": 6547,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1088,7 +1093,7 @@
       "template": "partials/fund_approvals/detail.html"
     },
     {
-      "bytes": 3527,
+      "bytes": 3557,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1096,7 +1101,7 @@
       "template": "partials/fund_approvals/return_drawer.html"
     },
     {
-      "bytes": 15521,
+      "bytes": 15578,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1112,7 +1117,7 @@
       "template": "partials/fund_approvals/snapshot_row.html"
     },
     {
-      "bytes": 4319,
+      "bytes": 4364,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1120,7 +1125,7 @@
       "template": "partials/fund_requests/breakdown_by_period.html"
     },
     {
-      "bytes": 6884,
+      "bytes": 6954,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1136,7 +1141,7 @@
       "template": "partials/fund_requests/kpis.html"
     },
     {
-      "bytes": 3063,
+      "bytes": 3075,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1144,7 +1149,7 @@
       "template": "partials/fund_requests/monthly_preview.html"
     },
     {
-      "bytes": 15648,
+      "bytes": 15351,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -1152,7 +1157,7 @@
       "template": "partials/fund_requests/root.html"
     },
     {
-      "bytes": 3468,
+      "bytes": 3480,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1160,7 +1165,7 @@
       "template": "partials/fund_requests/source_activities.html"
     },
     {
-      "bytes": 11139,
+      "bytes": 11211,
       "findings": [],
       "forms": 4,
       "htmx_controls": 5,
@@ -1168,7 +1173,7 @@
       "template": "partials/fund_requests/weekly_request_card.html"
     },
     {
-      "bytes": 6747,
+      "bytes": 6792,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1176,7 +1181,7 @@
       "template": "partials/fund_requests/workflow_strip.html"
     },
     {
-      "bytes": 2681,
+      "bytes": 2706,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1184,7 +1189,7 @@
       "template": "partials/hr/pd_dashboard/adjust_allocation_drawer.html"
     },
     {
-      "bytes": 25515,
+      "bytes": 25670,
       "findings": [],
       "forms": 5,
       "htmx_controls": 1,
@@ -1192,22 +1197,15 @@
       "template": "partials/hr/pd_dashboard/body.html"
     },
     {
-      "bytes": 5905,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "bytes": 5909,
+      "findings": [],
       "forms": 0,
       "htmx_controls": 2,
       "tables": 1,
       "template": "partials/hr/pd_dashboard/tracker_table.html"
     },
     {
-      "bytes": 27727,
+      "bytes": 27968,
       "findings": [],
       "forms": 5,
       "htmx_controls": 0,
@@ -1215,7 +1213,7 @@
       "template": "partials/leave/impact_panel.html"
     },
     {
-      "bytes": 13526,
+      "bytes": 13616,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1223,7 +1221,7 @@
       "template": "partials/leave/request_leave_drawer.html"
     },
     {
-      "bytes": 15923,
+      "bytes": 16025,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1231,7 +1229,7 @@
       "template": "partials/messages/compose_modal.html"
     },
     {
-      "bytes": 10571,
+      "bytes": 10618,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1239,7 +1237,7 @@
       "template": "partials/messages/context_panel.html"
     },
     {
-      "bytes": 3496,
+      "bytes": 3521,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1247,7 +1245,7 @@
       "template": "partials/messages/context_records.html"
     },
     {
-      "bytes": 5193,
+      "bytes": 5204,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1255,15 +1253,23 @@
       "template": "partials/messages/context_summary.html"
     },
     {
-      "bytes": 17609,
+      "bytes": 18538,
       "findings": [],
-      "forms": 3,
-      "htmx_controls": 4,
+      "forms": 4,
+      "htmx_controls": 5,
       "tables": 0,
       "template": "partials/messages/conversation.html"
     },
     {
-      "bytes": 3725,
+      "bytes": 285,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/messages/inbox_update.html"
+    },
+    {
+      "bytes": 3745,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1271,7 +1277,7 @@
       "template": "partials/messages/recipient_suggestions.html"
     },
     {
-      "bytes": 6577,
+      "bytes": 6770,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1279,7 +1285,15 @@
       "template": "partials/messages/thread_list.html"
     },
     {
-      "bytes": 4989,
+      "bytes": 227,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/messages/unread_badge_oob.html"
+    },
+    {
+      "bytes": 5029,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1287,7 +1301,7 @@
       "template": "partials/my_plan/accountability_drawer.html"
     },
     {
-      "bytes": 10986,
+      "bytes": 11966,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1295,7 +1309,7 @@
       "template": "partials/my_plan/activity_detail_drawer.html"
     },
     {
-      "bytes": 6301,
+      "bytes": 6311,
       "findings": [],
       "forms": 0,
       "htmx_controls": 8,
@@ -1303,7 +1317,7 @@
       "template": "partials/my_plan/activity_row.html"
     },
     {
-      "bytes": 14276,
+      "bytes": 14319,
       "findings": [],
       "forms": 0,
       "htmx_controls": 10,
@@ -1311,7 +1325,7 @@
       "template": "partials/my_plan/activity_table.html"
     },
     {
-      "bytes": 4485,
+      "bytes": 4523,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -1319,7 +1333,7 @@
       "template": "partials/my_plan/attendance_drawer.html"
     },
     {
-      "bytes": 8895,
+      "bytes": 8915,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1327,7 +1341,7 @@
       "template": "partials/my_plan/attention.html"
     },
     {
-      "bytes": 2646,
+      "bytes": 2651,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1335,7 +1349,7 @@
       "template": "partials/my_plan/cluster_meetings.html"
     },
     {
-      "bytes": 2956,
+      "bytes": 2966,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1343,7 +1357,7 @@
       "template": "partials/my_plan/cluster_trainings.html"
     },
     {
-      "bytes": 12003,
+      "bytes": 12096,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -1351,7 +1365,7 @@
       "template": "partials/my_plan/complete_drawer.html"
     },
     {
-      "bytes": 2118,
+      "bytes": 2133,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1359,7 +1373,7 @@
       "template": "partials/my_plan/confirm_reimbursement_receipt_drawer.html"
     },
     {
-      "bytes": 2334,
+      "bytes": 2349,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1367,7 +1381,7 @@
       "template": "partials/my_plan/evidence_drawer.html"
     },
     {
-      "bytes": 4746,
+      "bytes": 4791,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1383,7 +1397,7 @@
       "template": "partials/my_plan/kpi_cards.html"
     },
     {
-      "bytes": 3776,
+      "bytes": 3816,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1391,7 +1405,7 @@
       "template": "partials/my_plan/period_breakdown.html"
     },
     {
-      "bytes": 2505,
+      "bytes": 3696,
       "findings": [],
       "forms": 0,
       "htmx_controls": 4,
@@ -1399,7 +1413,7 @@
       "template": "partials/my_plan/period_tabs.html"
     },
     {
-      "bytes": 4479,
+      "bytes": 4499,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1407,7 +1421,7 @@
       "template": "partials/my_plan/planning_insights.html"
     },
     {
-      "bytes": 8132,
+      "bytes": 8177,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1415,7 +1429,7 @@
       "template": "partials/my_plan/reschedule_drawer.html"
     },
     {
-      "bytes": 799,
+      "bytes": 804,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1423,7 +1437,7 @@
       "template": "partials/my_plan/row_badges.html"
     },
     {
-      "bytes": 1796,
+      "bytes": 1801,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1431,7 +1445,7 @@
       "template": "partials/my_plan/salesforce_id_drawer.html"
     },
     {
-      "bytes": 2690,
+      "bytes": 2695,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1439,7 +1453,7 @@
       "template": "partials/my_plan/school_visits.html"
     },
     {
-      "bytes": 2194,
+      "bytes": 2214,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1447,7 +1461,7 @@
       "template": "partials/my_plan/ssa_upload_drawer.html"
     },
     {
-      "bytes": 1783,
+      "bytes": 1788,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1455,7 +1469,7 @@
       "template": "partials/my_plan/start_drawer.html"
     },
     {
-      "bytes": 4044,
+      "bytes": 4094,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1463,7 +1477,7 @@
       "template": "partials/my_plan/submit_drawer.html"
     },
     {
-      "bytes": 2070,
+      "bytes": 2075,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1487,7 +1501,7 @@
       "template": "partials/notifications/notification_drawer.html"
     },
     {
-      "bytes": 3676,
+      "bytes": 3696,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1495,7 +1509,7 @@
       "template": "partials/notifications/notification_drawer_list.html"
     },
     {
-      "bytes": 11499,
+      "bytes": 11810,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1503,7 +1517,7 @@
       "template": "partials/planning/assign_partner_drawer.html"
     },
     {
-      "bytes": 635,
+      "bytes": 645,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1511,7 +1525,7 @@
       "template": "partials/planning/reason_required_notice.html"
     },
     {
-      "bytes": 3021,
+      "bytes": 3046,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1519,7 +1533,7 @@
       "template": "partials/planning/right_panel.html"
     },
     {
-      "bytes": 3753,
+      "bytes": 3773,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1527,7 +1541,7 @@
       "template": "partials/planning/route_preview.html"
     },
     {
-      "bytes": 9648,
+      "bytes": 9713,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1535,7 +1549,7 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 11407,
+      "bytes": 13912,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1543,7 +1557,15 @@
       "template": "partials/planning/schedule_drawer.html"
     },
     {
-      "bytes": 12559,
+      "bytes": 8177,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 4,
+      "tables": 0,
+      "template": "partials/planning/school_row.html"
+    },
+    {
+      "bytes": 12958,
       "findings": [],
       "forms": 0,
       "htmx_controls": 6,
@@ -1551,7 +1573,15 @@
       "template": "partials/planning/school_table.html"
     },
     {
-      "bytes": 6937,
+      "bytes": 2766,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/planning/tabs.html"
+    },
+    {
+      "bytes": 6977,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1559,7 +1589,7 @@
       "template": "partials/professional_development/_request_summary.html"
     },
     {
-      "bytes": 1952,
+      "bytes": 1957,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1567,15 +1597,15 @@
       "template": "partials/professional_development/allocation_history_drawer.html"
     },
     {
-      "bytes": 21644,
+      "bytes": 21109,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 9,
+      "htmx_controls": 8,
       "tables": 1,
       "template": "partials/professional_development/body.html"
     },
     {
-      "bytes": 35264,
+      "bytes": 35619,
       "findings": [],
       "forms": 20,
       "htmx_controls": 0,
@@ -1583,7 +1613,23 @@
       "template": "partials/professional_development/request_form.html"
     },
     {
-      "bytes": 480,
+      "bytes": 468,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/projects/analytics_project_list.html"
+    },
+    {
+      "bytes": 15547,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 3,
+      "template": "partials/projects/analytics_workspace.html"
+    },
+    {
+      "bytes": 482,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1591,12 +1637,52 @@
       "template": "partials/projects/attention_row.html"
     },
     {
-      "bytes": 502,
+      "bytes": 3195,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/projects/bulk_partner_drawer.html"
+    },
+    {
+      "bytes": 2764,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/projects/bulk_schedule_drawer.html"
+    },
+    {
+      "bytes": 504,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
       "tables": 0,
       "template": "partials/projects/delta_pill.html"
+    },
+    {
+      "bytes": 2314,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "tables": 1,
+      "template": "partials/projects/my_plan_activity_table.html"
+    },
+    {
+      "bytes": 1011,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/projects/my_plan_icon.html"
+    },
+    {
+      "bytes": 11659,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 4,
+      "tables": 0,
+      "template": "partials/projects/my_plan_workspace.html"
     },
     {
       "bytes": 2584,
@@ -1607,12 +1693,28 @@
       "template": "partials/projects/plan_activity_table.html"
     },
     {
-      "bytes": 549,
+      "bytes": 556,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
       "tables": 0,
       "template": "partials/projects/plan_tab.html"
+    },
+    {
+      "bytes": 2643,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/projects/planning_icon.html"
+    },
+    {
+      "bytes": 15442,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 8,
+      "tables": 2,
+      "template": "partials/projects/planning_workspace.html"
     },
     {
       "bytes": 910,
@@ -1631,7 +1733,7 @@
       "template": "partials/projects/workflow_step.html"
     },
     {
-      "bytes": 12602,
+      "bytes": 12736,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1639,7 +1741,7 @@
       "template": "partials/schools/add_to_cluster_drawer.html"
     },
     {
-      "bytes": 11894,
+      "bytes": 11979,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1647,7 +1749,7 @@
       "template": "partials/schools/assign_to_project_drawer.html"
     },
     {
-      "bytes": 9720,
+      "bytes": 9811,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1655,7 +1757,15 @@
       "template": "partials/schools/directory_intelligence.html"
     },
     {
-      "bytes": 801,
+      "bytes": 5795,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "tables": 0,
+      "template": "partials/schools/directory_row.html"
+    },
+    {
+      "bytes": 806,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1663,7 +1773,7 @@
       "template": "partials/schools/drawer_error.html"
     },
     {
-      "bytes": 5684,
+      "bytes": 5744,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1671,7 +1781,7 @@
       "template": "partials/schools/edit_drawer.html"
     },
     {
-      "bytes": 467,
+      "bytes": 588,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1687,7 +1797,7 @@
       "template": "partials/schools/kpi_cards.html"
     },
     {
-      "bytes": 4230,
+      "bytes": 4265,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1695,7 +1805,7 @@
       "template": "partials/schools/onboard_drawer.html"
     },
     {
-      "bytes": 4718,
+      "bytes": 5361,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1703,7 +1813,7 @@
       "template": "partials/schools/table.html"
     },
     {
-      "bytes": 3051,
+      "bytes": 5369,
       "findings": [],
       "forms": 0,
       "htmx_controls": 5,
@@ -1711,7 +1821,7 @@
       "template": "partials/schools/tabs.html"
     },
     {
-      "bytes": 540,
+      "bytes": 545,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1719,7 +1829,22 @@
       "template": "partials/schools/toast_success.html"
     },
     {
-      "bytes": 6312,
+      "bytes": 16531,
+      "findings": [
+        {
+          "evidence": "Static inline styling reduces theme and component consistency.",
+          "key": "inline-style",
+          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
+          "severity": "low"
+        }
+      ],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 4,
+      "template": "partials/ssa/performance_workspace.html"
+    },
+    {
+      "bytes": 6372,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1727,7 +1852,7 @@
       "template": "partials/targets/area_drawer.html"
     },
     {
-      "bytes": 20169,
+      "bytes": 20221,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1751,7 +1876,7 @@
       "template": "partials/targets/team/body.html"
     },
     {
-      "bytes": 2644,
+      "bytes": 2674,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1759,7 +1884,7 @@
       "template": "partials/targets/team/day_drawer.html"
     },
     {
-      "bytes": 3508,
+      "bytes": 3518,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1767,7 +1892,7 @@
       "template": "partials/targets/team/matrix_drawer.html"
     },
     {
-      "bytes": 3866,
+      "bytes": 3906,
       "findings": [],
       "forms": 2,
       "htmx_controls": 0,
@@ -1775,7 +1900,7 @@
       "template": "partials/targets/team/recovery_drawer.html"
     },
     {
-      "bytes": 1444,
+      "bytes": 1459,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1783,7 +1908,7 @@
       "template": "partials/targets/team/sfid_drawer.html"
     },
     {
-      "bytes": 4746,
+      "bytes": 4781,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1799,7 +1924,7 @@
       "template": "partials/targets/team/workspace.html"
     },
     {
-      "bytes": 2820,
+      "bytes": 2840,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1807,7 +1932,7 @@
       "template": "partials/todos/command_center.html"
     },
     {
-      "bytes": 5316,
+      "bytes": 5328,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1815,7 +1940,7 @@
       "template": "partials/todos/row.html"
     },
     {
-      "bytes": 5182,
+      "bytes": 5242,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1828,19 +1953,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.dashboard_view",
       "charts": true,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
@@ -1879,11 +1997,13 @@
         "/rvp/strategy-note"
       ],
       "services_and_models": [
+        "apps.accounts.models",
         "apps.activities.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.notifications.models",
-        "apps.projects.models"
+        "apps.projects.models",
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -1913,20 +2033,13 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.5,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
-      "forms": true,
+      "findings": [],
+      "forms": false,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -1944,12 +2057,11 @@
       ],
       "route": "/accounts",
       "route_name": "finance_dashboard",
-      "secondary_actions": [
-        ""
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -1973,20 +2085,13 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.5,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
-      "forms": true,
+      "findings": [],
+      "forms": false,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -2004,12 +2109,11 @@
       ],
       "route": "/accounts/",
       "route_name": "",
-      "secondary_actions": [
-        ""
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2063,6 +2167,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2116,6 +2221,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2169,6 +2275,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2222,6 +2329,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2273,6 +2381,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2322,6 +2431,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2346,19 +2456,12 @@
       ],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.3,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.accounts_activity_evidence_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": false,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -2441,6 +2544,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2494,6 +2598,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2545,6 +2650,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2596,6 +2702,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2647,6 +2754,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2698,6 +2806,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2749,6 +2858,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2800,6 +2910,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2851,6 +2962,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2902,6 +3014,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -2917,6 +3030,110 @@
       "templates": [
         "pages/accounts/blocked.html"
       ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.finance_operating_views",
+      "backend_view": "apps.frontend.views.finance_operating_views.budget_amendments_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Budget Amendments \u00b7 Edify",
+      "permission_key": "disbursements",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Accountant review queue for locked-activity budget amendments (\u00a74.5).",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN"
+      ],
+      "route": "/accounts/budget-amendments",
+      "route_name": "budget_amendments",
+      "secondary_actions": [
+        "{% url "
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.models",
+        "apps.evidence.models",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/accounts/budget_amendments.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.finance_operating_views",
+      "backend_view": "apps.frontend.views.finance_operating_views.budget_amendment_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Budget Amendment Action",
+      "permission_key": "disbursements",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "POST approve/return/reject on a submitted amendment.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN"
+      ],
+      "route": "/accounts/budget-amendments/<str:amendment_id>/action",
+      "route_name": "budget_amendment_action",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.models",
+        "apps.evidence.models",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -2953,6 +3170,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3004,6 +3222,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3060,6 +3279,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3116,6 +3336,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3169,6 +3390,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3222,6 +3444,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3273,6 +3496,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3324,6 +3548,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3377,6 +3602,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3416,7 +3642,7 @@
       "permission_key": "disbursements",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "POST to disburse reimbursement claim.",
+      "purpose": "RETIRED (ecosystem audit). This legacy System-A payout closed the activity directly (finance_services.disburse_reimbursement sets status=\"closed\"), bypassing the canonical ActivityClosureService nine-check gate. No live workflow creates ReimbursementClaim rows any more \u2014 self-funded and over-spend reimbursements flow through the advance accountability queue (advance_service.reimburse), which respects closure. Kept as a redirect so old bookmarks fail safely; performs no mutation.",
       "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
@@ -3428,6 +3654,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3477,6 +3704,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3528,6 +3756,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3579,6 +3808,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3630,6 +3860,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3681,6 +3912,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -3732,6 +3964,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.budget.models",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models"
@@ -4341,19 +4574,12 @@
       ],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.3,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.evidence_packet_view",
       "charts": false,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": false,
       "htmx_endpoints": [
         "GET /activities/{{ act.id }}/timeline",
@@ -5095,7 +5321,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -5974,7 +6199,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.admin_user_detail_view",
       "charts": false,
@@ -6024,7 +6249,7 @@
         "apps.targets.models"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": true,
         "loading": false
@@ -6105,7 +6330,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.analytics_dashboard_view",
@@ -6144,7 +6369,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6169,7 +6397,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.analytics_dashboard_view",
@@ -6208,7 +6436,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6233,7 +6464,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.cd_analytics_view",
@@ -6264,7 +6495,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6289,7 +6523,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.cd_analytics_drilldown_view",
@@ -6318,7 +6552,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6342,7 +6579,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.cd_analytics_export_view",
@@ -6371,7 +6608,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6393,15 +6633,17 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.4,
+      "audit_events": true,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.analytics_customize_dashboard_view",
       "charts": false,
       "drawers": true,
       "findings": [],
       "forms": true,
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /analytics/customize-dashboard"
+      ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
@@ -6410,7 +6652,7 @@
       "permission_key": "analytics",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "GET to render the Customize Dashboard configurations drawer.",
+      "purpose": "Persist the caller's KPI visibility and density preferences.",
       "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
@@ -6425,11 +6667,16 @@
       ],
       "route": "/analytics/customize-dashboard",
       "route_name": "analytics_customize_dashboard",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/analytics/customize-dashboard"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6438,22 +6685,23 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
       "tables": false,
       "templates": [
+        "partials/schools/toast_success.html",
         "partials/analytics/customize_dashboard_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.analytics_drilldown_view",
@@ -6489,7 +6737,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6513,7 +6764,68 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.analytics_views",
+      "backend_view": "apps.frontend.views.analytics_views.analytics_export_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Analytics Export",
+      "permission_key": "analytics",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Download the caller's current role-scoped analytics KPIs as CSV.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/analytics/export",
+      "route_name": "analytics_export",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models",
+        "apps.system_health.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.pl_analytics_view",
@@ -6546,7 +6858,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6571,7 +6886,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.pl_analytics_drilldown_view",
@@ -6600,7 +6915,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6624,7 +6942,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.pl_analytics_export_view",
@@ -6653,7 +6971,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6771,15 +7092,17 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.4,
+      "audit_events": true,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.analytics_schedule_report_view",
       "charts": false,
       "drawers": true,
       "findings": [],
       "forms": true,
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "POST /analytics/schedule-report"
+      ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
@@ -6788,8 +7111,8 @@
       "permission_key": "analytics",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "GET to render the Schedule Report configurations drawer.",
-      "responsive_state": "manual-review-required",
+      "purpose": "Send a permission-scoped analytics snapshot to Messages immediately.",
+      "responsive_state": "detected",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -6803,11 +7126,16 @@
       ],
       "route": "/analytics/schedule-report",
       "route_name": "analytics_schedule_report",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/analytics/schedule-report"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -6816,16 +7144,17 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "drawer",
       "tables": false,
       "templates": [
+        "partials/schools/toast_success.html",
         "partials/analytics/schedule_report_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -6961,7 +7290,7 @@
       "permission_key": "planning",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Activity calendar \u2014 all scheduled activities for the current month.",
+      "purpose": "Activity calendar \u2014 role scoped, with an optional Special Projects lens.",
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
@@ -7059,19 +7388,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.5,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.auth_views",
       "backend_view": "apps.frontend.views.auth_views.force_change_password_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -7356,19 +7678,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.3,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.edit_cluster_drawer_view",
       "charts": false,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "GET {% url "
@@ -7536,26 +7851,17 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.3,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.create_cluster_drawer_view",
       "charts": false,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
-      "htmx_endpoints": [
-        "GET {% url "
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": true,
+      "modals": false,
       "notifications": false,
       "page_title": "Create Cluster Drawer",
       "permission_key": "planning",
@@ -7597,7 +7903,7 @@
         "partials/clusters/create_cluster_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -7842,14 +8148,7 @@
       "backend_view": "apps.frontend.views.cluster_views.planner_drawer_view",
       "charts": false,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "POST /clusters/schedule-activity",
@@ -7912,14 +8211,7 @@
       "backend_view": "apps.frontend.views.cluster_views.cluster_schedule_activity_view",
       "charts": false,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "POST /clusters/schedule-activity",
@@ -9763,14 +10055,7 @@
       "backend_view": "apps.frontend.views.hr_views.cpd_learning_view",
       "charts": true,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "GET /cpd-learning?partial=tracker&fy={{ fy }}&country={{ country }}&role={{ role_filter }}&status={{ status_filter }}&reminder={{ reminder_filter }}&q={{ search|urlencode }}&page={{ tracker_page|add:",
@@ -9973,19 +10258,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.dashboard_view",
       "charts": true,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
@@ -10024,11 +10302,13 @@
         "/rvp/strategy-note"
       ],
       "services_and_models": [
+        "apps.accounts.models",
         "apps.activities.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.notifications.models",
-        "apps.projects.models"
+        "apps.projects.models",
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -10086,11 +10366,13 @@
       "route_name": "cd_dashboard_approve",
       "secondary_actions": [],
       "services_and_models": [
+        "apps.accounts.models",
         "apps.activities.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.notifications.models",
-        "apps.projects.models"
+        "apps.projects.models",
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -10111,19 +10393,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.5,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_approve_view",
       "charts": true,
       "drawers": true,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": false,
       "htmx_endpoints": [
         "GET /dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}"
@@ -10154,20 +10429,22 @@
       "route_name": "pl_dashboard_approve",
       "secondary_actions": [],
       "services_and_models": [
+        "apps.accounts.models",
         "apps.activities.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.notifications.models",
-        "apps.projects.models"
+        "apps.projects.models",
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
       "surface_kind": "partial",
-      "tables": true,
+      "tables": false,
       "templates": [
         "partials/dashboards/pl/body.html"
       ],
@@ -10213,11 +10490,13 @@
       "route_name": "pl_dashboard_drilldown",
       "secondary_actions": [],
       "services_and_models": [
+        "apps.accounts.models",
         "apps.activities.models",
         "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.notifications.models",
-        "apps.projects.models"
+        "apps.projects.models",
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -10232,6 +10511,67 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.dashboard_views",
+      "backend_view": "apps.frontend.views.dashboard_views.pl_send_urgent_action_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Pl Send Urgent Action",
+      "permission_key": "dashboard",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Delegate one currently urgent team school to its supervised CCEO.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/dashboard/pl-send-urgent-action",
+      "route_name": "pl_send_urgent_action",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.notifications.models",
+        "apps.projects.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": false,
+      "templates": [
+        "partials/dashboards/pl/urgent_action_sent.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -10379,14 +10719,7 @@
       "backend_view": "apps.frontend.views.debrief_views.field_debrief_dashboard_view",
       "charts": true,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "GET /debriefs?partial=table&tab=all",
@@ -11156,8 +11489,8 @@
       "permission_key": "evidence_center",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Evidence Center showing tabs of different evidence/verification states.",
-      "responsive_state": "detected",
+      "purpose": "Scoped, URL-addressable Evidence Center.",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -11191,11 +11524,9 @@
       },
       "surface_kind": "page",
       "tables": false,
-      "templates": [
-        "pages/evidence/index.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -13017,7 +13348,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13044,19 +13374,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.ia_views",
       "backend_view": "apps.frontend.views.ia_views.ia_dashboard_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": false,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -13080,7 +13403,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13139,7 +13461,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13196,7 +13517,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13251,7 +13571,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13307,7 +13626,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13364,7 +13682,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13425,7 +13742,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13456,7 +13772,7 @@
       ],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.ia_views",
       "backend_view": "apps.frontend.views.ia_views.ia_review_workspace_view",
       "charts": false,
@@ -13488,7 +13804,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13498,7 +13813,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -13544,7 +13859,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13598,7 +13912,6 @@
         "apps.activities.models",
         "apps.activities.services",
         "apps.audit.services",
-        "apps.clusters.models",
         "apps.evidence.models",
         "apps.geography.models",
         "apps.notifications.models",
@@ -13616,6 +13929,52 @@
       "tables": false,
       "templates": [],
       "test_status": "coverage-review-required",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.impact_views",
+      "backend_view": "apps.frontend.views.impact_views.impact_analytics_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Impact Analytics",
+      "permission_key": "impact_analytics",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Statistical impact intelligence: did visits, trainings, and money move the SSA scores \u2014 and what does the field say where they didn't?",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RVP"
+      ],
+      "route": "/impact",
+      "route_name": "impact_analytics",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
     },
@@ -13694,19 +14053,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.leave_views",
       "backend_view": "apps.frontend.views.leave_views.leave_approvals_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "GET {% url "
@@ -13754,19 +14106,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.leave_views",
       "backend_view": "apps.frontend.views.leave_views.leave_approvals_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [
         "GET {% url "
@@ -14903,19 +15248,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.3,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.map_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": false,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -14985,14 +15323,9 @@
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": false,
+      "forms": true,
       "htmx_endpoints": [
-        "GET /messages/thread/{{ t.id }}",
-        "GET /messages?tab={{ active_tab }}&sort={{ sort }}&page={{ p }}{% if search_q %}&q={{ search_q }}{% endif %}",
-        "GET /messages?tab={{ active_tab }}&sort={{ sort }}&page={{ page|add:1 }}{% if search_q %}&q={{ search_q }}{% endif %}",
-        "GET /messages?tab={{ key }}{% if search_q %}&q={{ search_q }}{% endif %}&sort={{ sort }}",
-        "GET /messages?tab={{ active_tab }}&sort={{ sort }}",
-        "GET /messages?tab={{ active_tab }}{% if search_q %}&q={{ search_q }}{% endif %}"
+        "GET /messages"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -15018,25 +15351,27 @@
       ],
       "route": "/messages",
       "route_name": "messages_list",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/messages"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.messaging.models"
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "partial",
       "tables": false,
       "templates": [
-        "partials/messages/thread_list.html",
+        "partials/messages/inbox_update.html",
         "pages/messages/index.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -15049,14 +15384,9 @@
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": false,
+      "forms": true,
       "htmx_endpoints": [
-        "GET /messages/thread/{{ t.id }}",
-        "GET /messages?tab={{ active_tab }}&sort={{ sort }}&page={{ p }}{% if search_q %}&q={{ search_q }}{% endif %}",
-        "GET /messages?tab={{ active_tab }}&sort={{ sort }}&page={{ page|add:1 }}{% if search_q %}&q={{ search_q }}{% endif %}",
-        "GET /messages?tab={{ key }}{% if search_q %}&q={{ search_q }}{% endif %}&sort={{ sort }}",
-        "GET /messages?tab={{ active_tab }}&sort={{ sort }}",
-        "GET /messages?tab={{ active_tab }}{% if search_q %}&q={{ search_q }}{% endif %}"
+        "GET /messages"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -15082,25 +15412,27 @@
       ],
       "route": "/messages/",
       "route_name": "",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/messages"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.messaging.models"
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "partial",
       "tables": false,
       "templates": [
-        "partials/messages/thread_list.html",
+        "partials/messages/inbox_update.html",
         "pages/messages/index.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -15151,6 +15483,60 @@
         "loading": false
       },
       "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.message_views",
+      "backend_view": "apps.frontend.views.message_views.message_attachment_download_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Message Attachment Download",
+      "permission_key": "messages",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Stream an attachment only after re-authorising its conversation.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/messages/attachments/<str:attachment_id>",
+      "route_name": "message_attachment_download",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.messaging.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
       "tables": false,
       "templates": [],
       "test_status": "referenced-by-automated-test",
@@ -16063,6 +16449,65 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.request_budget_amendment_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Request Budget Amendment",
+      "permission_key": "my_plan",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "POST: staff requests a date change for a finance-locked activity \u2014 the sanctioned Budget Amendment path the cost-snapshot lock points to.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/<str:activity_id>/request-amendment",
+      "route_name": "request_budget_amendment",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.evidence.services",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.schools.models",
+        "apps.ssa.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -17662,6 +18107,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -18677,6 +19123,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -18735,6 +19182,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -18794,6 +19242,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -18851,6 +19300,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -18908,6 +19358,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -18965,6 +19416,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -19027,6 +19479,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -19084,6 +19537,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -19145,6 +19599,7 @@
         "apps.geography.models",
         "apps.partners.models",
         "apps.planning.services",
+        "apps.projects.models",
         "apps.schools.models"
       ],
       "state_coverage": {
@@ -19420,18 +19875,20 @@
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": false,
-      "htmx_endpoints": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /projects/analytics"
+      ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Special Project Analytics",
+      "page_title": "Analytics",
       "permission_key": "projects",
-      "primary_action": "Review Recommendations",
+      "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Special Project Impact Intelligence \u2014 verified SSA movement, partner performance, classification and recommendations, all computed live.",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -19441,7 +19898,9 @@
       ],
       "route": "/projects/analytics",
       "route_name": "special_projects_analytics",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/projects/analytics"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -19469,9 +19928,10 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "tables": true,
       "templates": [
+        "partials/projects/analytics_workspace.html",
         "pages/projects/analytics.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -19482,24 +19942,29 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.special_projects_my_plan_view",
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "findings": [],
-      "forms": false,
-      "htmx_endpoints": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /projects/my-plan",
+        "GET {{ item.detail_url }}",
+        "GET {{ item.url }}",
+        "GET {{ recommendation.action_url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
       "page_title": "My Plan",
       "permission_key": "projects",
-      "primary_action": "Analytics",
+      "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Special-project My Plan \u2014 the coordinator's scheduled project activities (staff-owned actionable; partner-planned read-only monitoring).",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -19509,7 +19974,9 @@
       ],
       "route": "/projects/my-plan",
       "route_name": "special_projects_my_plan",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/projects/my-plan"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -19535,11 +20002,12 @@
         "disabled": false,
         "empty": true,
         "error": false,
-        "loading": false
+        "loading": true
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "tables": false,
       "templates": [
+        "partials/projects/my_plan_workspace.html",
         "pages/projects/my_plan.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -19550,27 +20018,32 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.special_projects_planning_view",
       "charts": false,
       "drawers": true,
       "findings": [],
-      "forms": false,
+      "forms": true,
       "htmx_endpoints": [
-        "GET /planning/schedule-modal?school_id={{ r.school_pk }}&project_id={{ r.project_id }}",
-        "GET /planning/assign-partner-modal?school_id={{ r.school_pk }}&project_id={{ r.project_id }}"
+        "GET /projects/planning",
+        "GET {{ row.select_url }}",
+        "GET {{ row.schedule_url }}",
+        "GET {{ row.partner_url }}",
+        "GET ?{% for key,value in selected.items %}{% if value and key != ",
+        "GET {{ link.url }}",
+        "GET {{ selected_row.schedule_url }}"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": true,
+      "modals": false,
       "notifications": false,
-      "page_title": "Special Projects Planning",
+      "page_title": "Planning",
       "permission_key": "projects",
-      "primary_action": "Open My Plan",
+      "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Special Projects Planning \u2014 coordinator-scoped project schools with readiness + schedule / assign-to-partner (project-stamped) actions.",
-      "responsive_state": "detected",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -19580,7 +20053,9 @@
       ],
       "route": "/projects/planning",
       "route_name": "special_projects_planning",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/projects/planning"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -19603,18 +20078,145 @@
         "apps.targets.models"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": false,
-        "loading": false
+        "loading": true
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "tables": true,
       "templates": [
+        "partials/projects/planning_workspace.html",
         "pages/projects/planning.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.planning_views",
+      "backend_view": "apps.frontend.views.planning_views.special_projects_bulk_partner_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /projects/planning/bulk-partner"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Special Projects Bulk Partner",
+      "permission_key": "projects",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Create traceable partner activities for selected project-school pairs.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/projects/planning/bulk-partner",
+      "route_name": "special_projects_bulk_partner",
+      "secondary_actions": [
+        "/projects/planning/bulk-partner"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.clusters.models",
+        "apps.daily_visit_batches.services",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.planning.services",
+        "apps.projects.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/projects/bulk_partner_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.planning_views",
+      "backend_view": "apps.frontend.views.planning_views.special_projects_bulk_schedule_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /projects/planning/bulk-schedule"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Special Projects Bulk Schedule",
+      "permission_key": "projects",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Schedule the same dated visit for selected project-school pairs.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/projects/planning/bulk-schedule",
+      "route_name": "special_projects_bulk_schedule",
+      "secondary_actions": [
+        "/projects/planning/bulk-schedule"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.clusters.models",
+        "apps.daily_visit_batches.services",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.planning.services",
+        "apps.projects.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/projects/bulk_schedule_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -19900,19 +20502,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.3,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.reports_view",
       "charts": false,
       "drawers": false,
-      "findings": [
-        {
-          "evidence": "Static inline styling reduces theme and component consistency.",
-          "key": "inline-style",
-          "recommended_action": "Move static presentation into a shared component class; keep inline custom properties only for live data.",
-          "severity": "low"
-        }
-      ],
+      "findings": [],
       "forms": true,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -20215,6 +20810,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20245,7 +20841,7 @@
       "charts": false,
       "drawers": true,
       "findings": [],
-      "forms": false,
+      "forms": true,
       "htmx_endpoints": [
         "GET /schools/{{ school.id }}/edit-drawer"
       ],
@@ -20269,7 +20865,9 @@
       ],
       "route": "/schools/<str:school_id>",
       "route_name": "school_detail",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "{% url "
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.analytics.services",
@@ -20280,6 +20878,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20346,6 +20945,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20414,6 +21014,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20478,6 +21079,68 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_delete_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "School Delete",
+      "permission_key": "school_profile",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Admin-only school deletion (POST). Guard rails live in the service.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/schools/<str:school_id>/delete",
+      "route_name": "school_delete",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.analytics.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20542,6 +21205,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20604,6 +21268,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20664,6 +21329,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20724,6 +21390,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20784,6 +21451,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20848,6 +21516,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20916,6 +21585,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -20978,6 +21648,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -21039,6 +21710,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -21097,6 +21769,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -21153,6 +21826,7 @@
         "apps.geography.models",
         "apps.notifications.services",
         "apps.projects.models",
+        "apps.projects.services",
         "apps.schools.models",
         "apps.schools.services",
         "apps.ssa.services"
@@ -21325,58 +21999,44 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.extended_views",
-      "backend_view": "apps.frontend.views.extended_views.ssa_master_view",
+      "backend_module": "apps.frontend.views.ssa_views",
+      "backend_view": "apps.frontend.views.ssa_views.ssa_performance_view",
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": true,
+      "forms": false,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "SSA Scores",
-      "permission_key": "ssa",
-      "primary_action": "Upload SSA Report",
+      "page_title": "SSA Performance",
+      "permission_key": "ssa_performance",
+      "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "SSA master view \u2014 scores overview across all schools.",
-      "responsive_state": "detected",
+      "purpose": "Unified, role-scoped SSA intelligence workspace.",
+      "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "HR",
         "IA",
+        "PARTNER",
         "PL",
+        "PROJECT_COORDINATOR",
         "RVP"
       ],
       "route": "/ssa",
       "route_name": "ssa_master",
-      "secondary_actions": [
-        "/ssa"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
-        "apps.accounts.models",
-        "apps.activities.models",
-        "apps.activities.services",
-        "apps.admin_users.services",
-        "apps.audit.models",
-        "apps.audit.services",
-        "apps.clusters.models",
-        "apps.core.scoping",
-        "apps.core_schools.models",
-        "apps.flags.models",
-        "apps.geography.models",
-        "apps.notifications.models",
-        "apps.projects.models",
-        "apps.routes.models",
         "apps.schools.models",
         "apps.ssa.models",
-        "apps.ssa.services",
-        "apps.system_health.services",
-        "apps.targets.models"
+        "apps.ssa.services"
       ],
       "state_coverage": {
         "disabled": false,
@@ -21385,12 +22045,65 @@
         "loading": false
       },
       "surface_kind": "page",
-      "tables": true,
-      "templates": [
-        "pages/ssa/index.html"
-      ],
+      "tables": false,
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.ssa_views",
+      "backend_view": "apps.frontend.views.ssa_views.ssa_performance_export_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Ssa Performance Export",
+      "permission_key": "ssa_performance",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Export the exact confirmed, filtered school set shown by the dashboard.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/ssa/export",
+      "route_name": "ssa_performance_export",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -21893,7 +22606,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.system_health_view",
@@ -21921,7 +22634,10 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
         "apps.clusters.models",
+        "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
         "apps.schools.models",
@@ -23276,6 +23992,20 @@
         "max_retries": 2,
         "name": "field_debrief_recurring_issues",
         "retryable": true
+      },
+      {
+        "cron": "every 15 min Africa/Kampala",
+        "cron_kwargs": {
+          "minute": "*/15"
+        },
+        "description": "Delivers due user-configured analytics CSV digests by email.",
+        "expected_runtime_seconds": 120,
+        "idempotency_note": "Due rows are atomically claimed by advancing next_run_at before network delivery.",
+        "idempotent": true,
+        "max_interval_minutes": 45,
+        "max_retries": 2,
+        "name": "analytics_report_delivery",
+        "retryable": true
       }
     ]
   },
@@ -23567,6 +24297,33 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.finance_operating_views.budget_amendments_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "disbursements",
+      "required_permissions": [],
+      "route": "/accounts/budget-amendments",
+      "route_name": "budget_amendments",
+      "templates": [
+        "pages/accounts/budget_amendments.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.finance_operating_views.budget_amendment_action",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "disbursements",
+      "required_permissions": [],
+      "route": "/accounts/budget-amendments/<str:amendment_id>/action",
+      "route_name": "budget_amendment_action",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.finance_operating_views.cleared_view",
       "kind": "page",
       "methods": [
@@ -23695,8 +24452,7 @@
       "callback": "apps.frontend.views.finance_operating_views.pay_reimbursement_action",
       "kind": "page",
       "methods": [
-        "GET",
-        "POST"
+        "GET"
       ],
       "page_permission": "disbursements",
       "required_permissions": [],
@@ -24992,13 +25748,15 @@
       "callback": "apps.frontend.views.analytics_views.analytics_customize_dashboard_view",
       "kind": "drawer",
       "methods": [
-        "GET"
+        "GET",
+        "POST"
       ],
       "page_permission": "analytics",
       "required_permissions": [],
       "route": "/analytics/customize-dashboard",
       "route_name": "analytics_customize_dashboard",
       "templates": [
+        "partials/schools/toast_success.html",
         "partials/analytics/customize_dashboard_drawer.html"
       ]
     },
@@ -25015,6 +25773,18 @@
       "templates": [
         "partials/analytics/drilldown_drawer.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.analytics_views.analytics_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "analytics",
+      "required_permissions": [],
+      "route": "/analytics/export",
+      "route_name": "analytics_export",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.analytics_views.pl_analytics_view",
@@ -25089,13 +25859,15 @@
       "callback": "apps.frontend.views.analytics_views.analytics_schedule_report_view",
       "kind": "drawer",
       "methods": [
-        "GET"
+        "GET",
+        "POST"
       ],
       "page_permission": "analytics",
       "required_permissions": [],
       "route": "/analytics/schedule-report",
       "route_name": "analytics_schedule_report",
       "templates": [
+        "partials/schools/toast_success.html",
         "partials/analytics/schedule_report_drawer.html"
       ]
     },
@@ -35738,6 +36510,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.dashboard_views.pl_send_urgent_action_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "dashboard",
+      "required_permissions": [],
+      "route": "/dashboard/pl-send-urgent-action",
+      "route_name": "pl_send_urgent_action",
+      "templates": [
+        "partials/dashboards/pl/urgent_action_sent.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.extended_views.duplicate_review_view",
       "kind": "page",
       "methods": [
@@ -35951,9 +36737,7 @@
       "required_permissions": [],
       "route": "/evidence/",
       "route_name": "evidence_center",
-      "templates": [
-        "pages/evidence/index.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.my_plan_views.returned_evidence_view",
@@ -36524,6 +37308,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.impact_views.impact_analytics_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "impact_analytics",
+      "required_permissions": [],
+      "route": "/impact",
+      "route_name": "impact_analytics",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.leave_requests_view",
       "kind": "page",
       "methods": [
@@ -36881,7 +37677,7 @@
       "route": "/messages",
       "route_name": "messages_list",
       "templates": [
-        "partials/messages/thread_list.html",
+        "partials/messages/inbox_update.html",
         "pages/messages/index.html"
       ]
     },
@@ -36896,7 +37692,7 @@
       "route": "/messages/",
       "route_name": "",
       "templates": [
-        "partials/messages/thread_list.html",
+        "partials/messages/inbox_update.html",
         "pages/messages/index.html"
       ]
     },
@@ -36910,6 +37706,18 @@
       "required_permissions": [],
       "route": "/messages/<str:message_id>",
       "route_name": "message_detail",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.message_views.message_attachment_download_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "messages",
+      "required_permissions": [],
+      "route": "/messages/attachments/<str:attachment_id>",
+      "route_name": "message_attachment_download",
       "templates": []
     },
     {
@@ -37122,6 +37930,19 @@
       "templates": [
         "partials/my_plan/confirm_reimbursement_receipt_drawer.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.request_budget_amendment_action",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/<str:activity_id>/request-amendment",
+      "route_name": "request_budget_amendment",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.my_plan_views.reschedule_activity_action",
@@ -37911,7 +38732,7 @@
     },
     {
       "callback": "apps.frontend.views.extended_views.special_projects_analytics_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -37920,12 +38741,13 @@
       "route": "/projects/analytics",
       "route_name": "special_projects_analytics",
       "templates": [
+        "partials/projects/analytics_workspace.html",
         "pages/projects/analytics.html"
       ]
     },
     {
       "callback": "apps.frontend.views.extended_views.special_projects_my_plan_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -37934,12 +38756,13 @@
       "route": "/projects/my-plan",
       "route_name": "special_projects_my_plan",
       "templates": [
+        "partials/projects/my_plan_workspace.html",
         "pages/projects/my_plan.html"
       ]
     },
     {
       "callback": "apps.frontend.views.extended_views.special_projects_planning_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -37948,7 +38771,38 @@
       "route": "/projects/planning",
       "route_name": "special_projects_planning",
       "templates": [
+        "partials/projects/planning_workspace.html",
         "pages/projects/planning.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.planning_views.special_projects_bulk_partner_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "projects",
+      "required_permissions": [],
+      "route": "/projects/planning/bulk-partner",
+      "route_name": "special_projects_bulk_partner",
+      "templates": [
+        "partials/projects/bulk_partner_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.planning_views.special_projects_bulk_schedule_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "projects",
+      "required_permissions": [],
+      "route": "/projects/planning/bulk-schedule",
+      "route_name": "special_projects_bulk_schedule",
+      "templates": [
+        "partials/projects/bulk_schedule_drawer.html"
       ]
     },
     {
@@ -38160,6 +39014,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.school_views.school_delete_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_profile",
+      "required_permissions": [],
+      "route": "/schools/<str:school_id>/delete",
+      "route_name": "school_delete",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.school_views.school_edit_drawer_view",
       "kind": "drawer",
       "methods": [
@@ -38341,18 +39207,28 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.extended_views.ssa_master_view",
+      "callback": "apps.frontend.views.ssa_views.ssa_performance_view",
       "kind": "page",
       "methods": [
         "GET"
       ],
-      "page_permission": "ssa",
+      "page_permission": "ssa_performance",
       "required_permissions": [],
       "route": "/ssa",
       "route_name": "ssa_master",
-      "templates": [
-        "pages/ssa/index.html"
-      ]
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.ssa_views.ssa_performance_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "ssa_performance",
+      "required_permissions": [],
+      "route": "/ssa/export",
+      "route_name": "ssa_performance_export",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.extended_views.unmatched_ssa_queue_view",
@@ -38734,22 +39610,22 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 939,
+    "all_routes": 950,
     "api_routes": 528,
-    "component_templates": 212,
-    "full_pages": 234,
-    "partials_and_drawers": 122,
-    "permission_gated": 361,
+    "component_templates": 232,
+    "full_pages": 236,
+    "partials_and_drawers": 128,
+    "permission_gated": 372,
     "permission_keys": 39,
     "roles": 11,
-    "routed_surfaces": 363,
-    "scheduled_jobs": 7,
+    "routed_surfaces": 374,
+    "scheduled_jobs": 8,
     "severity_counts": {
       "critical": 0,
       "high": 0,
-      "low": 19,
+      "low": 0,
       "medium": 0
     },
-    "test_referenced": 323
+    "test_referenced": 334
   }
 }

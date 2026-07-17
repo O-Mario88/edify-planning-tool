@@ -4,44 +4,42 @@
 {% block title %}HR Director Dashboard · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1600px;margin:0 auto;color:var(--edify-text);">
+<div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
   <!-- Header — premium glass band -->
-  <div class="rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap"
-       style="background:rgba(255,255,255,.10);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-              border:1px solid rgba(255,255,255,.15);box-shadow:var(--edify-shadow-md);">
+  <div class="rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap bg-white/10 backdrop-blur-xl border border-white/15"
+       style="box-shadow:var(--edify-shadow-md);">
     <div>
       <div class="flex items-center gap-2">
-        <h1 style="font-size:21px;font-weight:800;line-height:1.15;letter-spacing:-.025em;color:var(--edify-surface-raised);">HR Director Dashboard</h1>
-        <span class="inline-flex h-2.5 w-2.5 items-center justify-center rounded-full bg-blue-500" title="Human Capital Operating System"></span>
+        <h1 class="text-[21px] font-semibold leading-[1.15] tracking-[-0.025em]" style="color:var(--edify-surface-raised);">HR Director Dashboard</h1>
+        <span class="inline-flex h-2.5 w-2.5 items-center justify-center rounded-pill bg-blue-500" title="Human Capital Operating System"></span>
       </div>
-      <p style="font-size:12px;color:rgba(255,255,255,.75);margin-top:2px;">Human capital overview across East Africa region. Monitor workforce health, performance and culture.</p>
+      <p class="text-[12px] text-white/75 mt-0.5">Human capital overview across East Africa region. Monitor workforce health, performance and culture.</p>
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
       <form hx-get="/dashboard" hx-target="#hr-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
-            class="flex items-center gap-2 rounded-md px-2.5 py-1.5 flex-wrap"
-            style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);">
+            class="flex items-center gap-2 rounded-surface px-2.5 py-1.5 flex-wrap bg-white/10 border border-white/15">
 
         <!-- FY Select -->
-        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.60);">FY</span>
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">FY</span>
         <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} style="color:var(--edify-text);">{{ opt }}</option>{% endfor %}
         </select>
 
-        <span style="height:16px;width:1px;background:rgba(255,255,255,.15);"></span>
+        <span class="h-4 w-px bg-white/15"></span>
 
         <!-- Month Select -->
-        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.60);">Month</span>
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">Month</span>
         <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
           <option value="" style="color:var(--edify-text);">All</option>
           {% for v, lbl in month_options %}<option value="{{ v }}" {% if month|stringformat:"s" == v %}selected{% endif %} style="color:var(--edify-text);">{{ lbl }}</option>{% endfor %}
         </select>
 
-        <span style="height:16px;width:1px;background:rgba(255,255,255,.15);"></span>
+        <span class="h-4 w-px bg-white/15"></span>
 
         <!-- Country Select -->
-        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.60);">Country</span>
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">Country</span>
         <select name="country" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
           <option value="" style="color:var(--edify-text);">All Countries</option>
           <option value="Uganda" {% if country == "Uganda" %}selected{% endif %} style="color:var(--edify-text);">Uganda</option>
@@ -50,10 +48,10 @@
           <option value="Ethiopia" {% if country == "Ethiopia" %}selected{% endif %} style="color:var(--edify-text);">Ethiopia</option>
         </select>
 
-        <span style="height:16px;width:1px;background:rgba(255,255,255,.15);"></span>
+        <span class="h-4 w-px bg-white/15"></span>
 
         <!-- Department Select -->
-        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.60);">Dept</span>
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">Dept</span>
         <select name="department" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
           <option value="" style="color:var(--edify-text);">All Departments</option>
           <option value="Program Operations" {% if department == "Program Operations" %}selected{% endif %} style="color:var(--edify-text);">Program Operations</option>
@@ -66,8 +64,8 @@
 
       <!-- Export button -->
       <a href="{% querystring export='csv' %}"
-         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-md transition-colors"
-         style="background:var(--edify-accent);box-shadow:0 1px 3px rgba(37,99,235,.25);">
+         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-control transition-colors shadow-sm"
+         style="background:var(--edify-accent);">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
         Export Report
       </a>

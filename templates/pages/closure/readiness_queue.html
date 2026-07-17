@@ -3,16 +3,16 @@
 {% block title %}Activity Closure Center - Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ activeTab: 'ready' }">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="urlTabs('ready', ['ready', 'finance', 'accountability', 'analytics', 'blocked'])">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
-<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+<div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-pill bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
 <div class="space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
 Audit & Closure
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Closure Readiness Workspace</h1>
@@ -22,10 +22,10 @@ Controlled activity closure pipeline. Monitor readiness checks, clear pending an
 </div>
 
 <div class="shrink-0 flex items-center gap-3">
-<a href="/completed-activities" class="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold flex items-center justify-center shadow-md transition-all">
+<a href="/completed-activities" class="h-10 px-5 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold flex items-center justify-center shadow-md transition-all">
 View Completed Archive
 </a>
-<a href="/activities/closure/blocked/" class="h-10 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-[12px] font-bold flex items-center justify-center transition-all">
+<a href="/activities/closure/blocked/" class="h-10 px-4 rounded-control border border-slate-700 hover:bg-slate-800 text-slate-300 text-[12px] font-bold flex items-center justify-center transition-all">
 Blocked Closures
 </a>
 </div>
@@ -33,37 +33,42 @@ Blocked Closures
 </div>
 
 <!-- Tabs Navigation -->
-<div class="flex items-center gap-2 border-b border-slate-100 pb-px">
+<div class="flex items-center gap-2 border-b border-slate-100 pb-px" role="tablist" aria-label="Closure readiness views">
 <button
-@click="activeTab = 'ready'"
+id="closure-tab-ready" type="button" role="tab" aria-controls="closure-panel-ready" :aria-selected="activeTab === 'ready'" :tabindex="activeTab === 'ready' ? 0 : -1"
+@click="setTab('ready')"
 :class="activeTab === 'ready' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Ready to Close ({{ ready|length }})
 </button>
 <button
-@click="activeTab = 'finance'"
+id="closure-tab-finance" type="button" role="tab" aria-controls="closure-panel-finance" :aria-selected="activeTab === 'finance'" :tabindex="activeTab === 'finance' ? 0 : -1"
+@click="setTab('finance')"
 :class="activeTab === 'finance' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Finance Pending ({{ finance_pending|length }})
 </button>
 <button
-@click="activeTab = 'accountability'"
+id="closure-tab-accountability" type="button" role="tab" aria-controls="closure-panel-accountability" :aria-selected="activeTab === 'accountability'" :tabindex="activeTab === 'accountability' ? 0 : -1"
+@click="setTab('accountability')"
 :class="activeTab === 'accountability' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Accountability Pending ({{ accountability_pending|length }})
 </button>
 <button
-@click="activeTab = 'analytics'"
+id="closure-tab-analytics" type="button" role="tab" aria-controls="closure-panel-analytics" :aria-selected="activeTab === 'analytics'" :tabindex="activeTab === 'analytics' ? 0 : -1"
+@click="setTab('analytics')"
 :class="activeTab === 'analytics' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Analytics Pending ({{ analytics_pending|length }})
 </button>
 <button
-@click="activeTab = 'blocked'"
+id="closure-tab-blocked" type="button" role="tab" aria-controls="closure-panel-blocked" :aria-selected="activeTab === 'blocked'" :tabindex="activeTab === 'blocked' ? 0 : -1"
+@click="setTab('blocked')"
 :class="activeTab === 'blocked' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
@@ -72,22 +77,22 @@ Blocked ({{ blocked|length }})
 </div>
 
 <!-- Queue Cards List -->
-<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm">
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm">
 
 <!-- Tab Panel: Ready -->
-<div x-show="activeTab === 'ready'" class="space-y-4">
+<div id="closure-panel-ready" role="tabpanel" x-show="activeTab === 'ready'" class="space-y-4">
 <div class="divide-y divide-slate-50">
 {% for act in ready %}
-<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
+<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }} &bull; Owner: {{ act.responsible_staff_id }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Ready
 </span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl bg-blue-700 hover:bg-blue-700 text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control bg-blue-700 hover:bg-blue-700 text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
 Open Workspace
 </a>
 </div>
@@ -99,17 +104,17 @@ Open Workspace
 </div>
 
 <!-- Tab Panel: Finance Pending -->
-<div x-show="activeTab === 'finance'" class="space-y-4" style="display: none;">
+<div id="closure-panel-finance" role="tabpanel" x-show="activeTab === 'finance'" class="space-y-4" style="display: none;">
 <div class="divide-y divide-slate-50">
 {% for act in finance_pending %}
-<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
+<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Awaiting Accountant Payout</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded-pill">Awaiting Accountant Payout</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -121,17 +126,17 @@ Workspace
 </div>
 
 <!-- Tab Panel: Accountability Pending -->
-<div x-show="activeTab === 'accountability'" class="space-y-4" style="display: none;">
+<div id="closure-panel-accountability" role="tabpanel" x-show="activeTab === 'accountability'" class="space-y-4" style="display: none;">
 <div class="divide-y divide-slate-50">
 {% for act in accountability_pending %}
-<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
+<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-150 rounded">NetSuite ID Required</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-150 rounded-pill">NetSuite ID Required</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -143,17 +148,17 @@ Workspace
 </div>
 
 <!-- Tab Panel: Analytics Pending -->
-<div x-show="activeTab === 'analytics'" class="space-y-4" style="display: none;">
+<div id="closure-panel-analytics" role="tabpanel" x-show="activeTab === 'analytics'" class="space-y-4" style="display: none;">
 <div class="divide-y divide-slate-50">
 {% for act in analytics_pending %}
-<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
+<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold uppercase text-blue-600 bg-blue-50 px-2 py-0.5 border  rounded">Awaiting Publish</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-blue-600 bg-blue-50 px-2 py-0.5 border  rounded-pill">Awaiting Publish</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -165,17 +170,17 @@ Workspace
 </div>
 
 <!-- Tab Panel: Blocked -->
-<div x-show="activeTab === 'blocked'" class="space-y-4" style="display: none;">
+<div id="closure-panel-blocked" role="tabpanel" x-show="activeTab === 'blocked'" class="space-y-4" style="display: none;">
 <div class="divide-y divide-slate-50">
 {% for act in blocked %}
-<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
+<div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-surface transition-colors">
 <div>
 <span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Blocker Present</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
+<span class="edify-text-caption font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded-pill">Blocker Present</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>

@@ -6,11 +6,11 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
   <!-- KPI Strip -->
   <div class="debrief-kpi-grid grid grid-cols-2 sm:grid-cols-4 gap-3">
     {% for k in kpis %}
-    <div class="rounded-xl border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+    <div class="rounded-surface border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
         <span class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
-        <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0
+        <div class="h-7 w-7 rounded-surface flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50/10 text-blue-400 border border-blue-500/20
           {% elif k.variant == 'success' %}bg-emerald-50/10 text-emerald-400 border border-emerald-500/20
           {% elif k.variant == 'warning' %}bg-amber-50/10 text-amber-400 border border-amber-500/20
@@ -35,7 +35,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
 
   <!-- Row: Trend + Activity Type -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <div class="lg:col-span-2 rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);"
+    <div class="lg:col-span-2 rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);"
          x-data="{
            chart: null,
            initChart() {
@@ -44,16 +44,16 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              if (!el) return;
              this.chart = new ApexCharts(el, {
                series: [
-                 { name: 'Submitted', data: {{ trend.submitted|safe }} },
-                 { name: 'Completed', data: {{ trend.completed|safe }} },
-                 { name: 'Action Required', data: {{ trend.action_required|safe }} },
-                 { name: 'Critical', data: {{ trend.critical|safe }} }
+                 { name: 'Submitted', data: {{ trend.submitted|escape }} },
+                 { name: 'Completed', data: {{ trend.completed|escape }} },
+                 { name: 'Action Required', data: {{ trend.action_required|escape }} },
+                 { name: 'Critical', data: {{ trend.critical|escape }} }
                ],
-               chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+               chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                stroke: { width: [2.5, 2, 2, 2], curve: 'smooth' },
                colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
                markers: { size: 0 },
-               xaxis: { categories: {{ trend.labels|safe }}, labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }, rotate: -45 } },
+               xaxis: { categories: {{ trend.labels|escape }}, labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }, rotate: -45 } },
                yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)' }, formatter: v => Math.round(v) } },
                legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                grid: { borderColor: 'rgba(148, 163, 184, 0.1)' },
@@ -66,7 +66,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
       <div id="debriefTrendChart"></div>
     </div>
 
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);"
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);"
          x-data="{
            chart: null,
            initChart() {
@@ -74,9 +74,9 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              const el = document.querySelector('#debriefActivityDonut');
              if (!el) return;
              this.chart = new ApexCharts(el, {
-               series: {{ activity_donut.counts|safe }},
+               series: {{ activity_donut.counts|escape }},
                labels: [{% for l in activity_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 260, fontFamily: 'Outfit, sans-serif' },
+               chart: { type: 'donut', height: 260, fontFamily: 'Inter, sans-serif' },
                colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-pink)', 'var(--edify-text-muted)'],
                legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
@@ -95,7 +95,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
 
   <!-- Row: Top Challenges + Action Center -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Top Challenges Reported</h2>
       <div class="space-y-2.5">
         {% for c in top_challenges %}
@@ -109,44 +109,44 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
       </div>
     </div>
 
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Action Center</h2>
       <div class="space-y-2">
         <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Debriefs Requiring My Action</span>
-          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.action_required %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.action_required }}</span>
+          <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums {% if action_center.action_required %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.action_required }}</span>
         </div>
         <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Escalations to Review</span>
-          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.escalations %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.escalations }}</span>
+          <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums {% if action_center.escalations %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.escalations }}</span>
         </div>
         <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Clarifications Requested</span>
-          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.clarifications %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.clarifications }}</span>
+          <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums {% if action_center.clarifications %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.clarifications }}</span>
         </div>
         <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Overdue Actions</span>
-          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums {% if action_center.overdue %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.overdue }}</span>
+          <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums {% if action_center.overdue %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.overdue }}</span>
         </div>
         <div class="flex items-center justify-between edify-text-caption font-semibold">
           <span class="text-slate-400">Open Commitments</span>
-          <span class="px-2 py-0.5 rounded-full edify-text-caption font-black tabular-nums bg-blue-500/10 text-blue-400 border border-blue-500/20">{{ action_center.open_commitments }}</span>
+          <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums bg-blue-500/10 text-blue-400 border border-blue-500/20">{{ action_center.open_commitments }}</span>
         </div>
       </div>
-      <a href="/debriefs?tab=escalated" class="block w-full text-center h-9 leading-9 rounded-lg border edify-text-caption font-bold hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">View Action Center &rarr;</a>
+      <a href="/debriefs?tab=escalated" class="block w-full text-center h-9 leading-9 rounded-control border edify-text-caption font-bold hover:bg-slate-500/10 transition-colors" style="border-color:var(--edify-border); color:var(--edify-text);">View Action Center &rarr;</a>
     </div>
   </div>
 
   <!-- Row: Team & Partner Debriefs + Recent Activity -->
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-    <div class="lg:col-span-3 rounded-xl border p-5 space-y-1" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="lg:col-span-3 rounded-surface border p-5 space-y-1" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3" style="color:var(--edify-text);">Team &amp; Partner Debriefs</h2>
       <div id="debrief-tracker-wrap">
         {% include "partials/debriefs/dashboard_table.html" %}
       </div>
     </div>
 
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Recent Activity</h2>
       <div class="space-y-3">
         {% for a in recent_activity %}
@@ -164,7 +164,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
 
   <!-- Row: Peer Solutions + Risk Donut + Intelligence Highlights -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
         <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">Recent Peer Solutions</h2>
         <a href="/debriefs?tab=peer_solutions" class="edify-text-caption font-bold" style="color:var(--edify-accent, var(--edify-chart-blue));">View all &rarr;</a>
@@ -181,7 +181,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
       </div>
     </div>
 
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);"
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);"
          x-data="{
            chart: null,
            initChart() {
@@ -189,9 +189,9 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              const el = document.querySelector('#debriefRiskDonut');
              if (!el) return;
              this.chart = new ApexCharts(el, {
-               series: {{ risk_donut.counts|safe }},
+               series: {{ risk_donut.counts|escape }},
                labels: [{% for l in risk_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 220, fontFamily: 'Outfit, sans-serif' },
+               chart: { type: 'donut', height: 220, fontFamily: 'Inter, sans-serif' },
                colors: ['var(--edify-text-muted)', 'var(--edify-chart-blue)', 'var(--edify-chart-purple)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
                legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
@@ -206,20 +206,20 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
       {% else %}<p class="edify-text-caption text-slate-400 font-medium py-10 text-center">No debriefs in this period.</p>{% endif %}
     </div>
 
-    <div class="rounded-xl border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Debrief Intelligence Highlights</h2>
       <div class="space-y-2.5">
         {% for h in highlights %}
         <div class="flex items-start gap-2 edify-text-caption font-semibold text-slate-400">
-          <span class="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0"></span>
+          <span class="h-1.5 w-1.5 rounded-pill bg-blue-400 mt-1.5 shrink-0"></span>
           <span class="flex-1">{{ h.text }}</span>
           {% if h.insight_id and can_manage_insights %}
           <div class="flex items-center gap-1 shrink-0">
             <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="acknowledge_insight"><input type="hidden" name="insight_id" value="{{ h.insight_id }}">
-              <button type="submit" class="h-6 px-1.5 rounded border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Ack</button>
+              <button type="submit" class="h-6 px-1.5 rounded-control border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Ack</button>
             </form>
             <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="dismiss_insight"><input type="hidden" name="insight_id" value="{{ h.insight_id }}">
-              <button type="submit" class="h-6 px-1.5 rounded border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Dismiss</button>
+              <button type="submit" class="h-6 px-1.5 rounded-control border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Dismiss</button>
             </form>
           </div>
           {% endif %}

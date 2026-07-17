@@ -18,12 +18,12 @@
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-2">Supervisor Review</p>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="supervisor_approve">
-        <button type="submit" class="w-full h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Approve &amp; Send to HR</button>
+        <button type="submit" class="w-full h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Approve &amp; Send to HR</button>
       </form>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2 mt-2">
         {% csrf_token %}<input type="hidden" name="action" value="supervisor_return">
-        <textarea name="note" required rows="2" placeholder="Reason for returning to the employee…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Return to Employee</button>
+        <textarea name="note" required rows="2" placeholder="Reason for returning to the employee…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Return to Employee</button>
       </form>
 
     {% elif instance.status == 'submitted_to_hr' or instance.status == 'pending_exception' %}
@@ -32,43 +32,43 @@
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="hr_approve">
         {% if instance.is_exception %}
-        <label class="flex items-start gap-2 edify-text-caption font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+        <label class="flex items-start gap-2 edify-text-caption font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded-surface p-2.5">
           <input type="checkbox" name="exception" value="true" required class="mt-0.5">
           I acknowledge and approve this funding exception (requested amount exceeds the employee's remaining PD fund).
         </label>
         {% endif %}
-        <button type="submit" class="w-full h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Approve Request</button>
+        <button type="submit" class="w-full h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Approve Request</button>
       </form>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2 mt-2">
         {% csrf_token %}<input type="hidden" name="action" value="hr_return">
-        <textarea name="note" required rows="2" placeholder="Reason for returning to the employee…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg edify-surface border border-amber-200 hover:bg-amber-50 text-amber-700 text-[12px] font-bold transition-colors">Return to Employee</button>
+        <textarea name="note" required rows="2" placeholder="Reason for returning to the employee…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control edify-surface border border-amber-200 hover:bg-amber-50 text-amber-700 text-[12px] font-bold transition-colors">Return to Employee</button>
       </form>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2 mt-2">
         {% csrf_token %}<input type="hidden" name="action" value="hr_reject">
-        <textarea name="note" rows="2" placeholder="Reason for rejecting (optional)…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Reject Request</button>
+        <textarea name="note" rows="2" placeholder="Reason for rejecting (optional)…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Reject Request</button>
       </form>
 
     {% elif instance.status == 'approved_pending_funding' %}
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-2">Finance — Disburse PD Funds</p>
       <form method="post" action="/my-professional-development/fund/{{ instance.fund_request.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="disburse"><input type="hidden" name="request_id" value="{{ instance.id }}">
-        <select name="method" class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <select name="method" class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
           <option value="bank_transfer">Bank Transfer</option><option value="mobile_money">Mobile Money</option><option value="cheque">Cheque</option><option value="cash">Cash</option>
         </select>
-        <input type="text" name="reference" placeholder="Payment reference" class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
-        <button type="submit" class="w-full h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Disburse Funds</button>
+        <input type="text" name="reference" placeholder="Payment reference" class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+        <button type="submit" class="w-full h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Disburse Funds</button>
       </form>
       <form method="post" action="/my-professional-development/fund/{{ instance.fund_request.id }}/action" class="space-y-2 mt-2">
         {% csrf_token %}<input type="hidden" name="action" value="hold"><input type="hidden" name="request_id" value="{{ instance.id }}">
-        <textarea name="reason" rows="2" placeholder="Hold reason…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg edify-surface border border-amber-200 hover:bg-amber-50 text-amber-700 text-[12px] font-bold transition-colors">Hold</button>
+        <textarea name="reason" rows="2" placeholder="Hold reason…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control edify-surface border border-amber-200 hover:bg-amber-50 text-amber-700 text-[12px] font-bold transition-colors">Hold</button>
       </form>
       <form method="post" action="/my-professional-development/fund/{{ instance.fund_request.id }}/action" class="space-y-2 mt-2">
         {% csrf_token %}<input type="hidden" name="action" value="return"><input type="hidden" name="request_id" value="{{ instance.id }}">
-        <textarea name="reason" required rows="2" placeholder="Return reason…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Return to HR</button>
+        <textarea name="reason" required rows="2" placeholder="Return reason…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Return to HR</button>
       </form>
 
     {% elif instance.status == 'accountability_submitted' %}
@@ -81,12 +81,12 @@
       </div>
       <form method="post" action="/my-professional-development/fund/{{ instance.fund_request.id }}/action">
         {% csrf_token %}<input type="hidden" name="action" value="clear_accountability"><input type="hidden" name="request_id" value="{{ instance.id }}">
-        <button type="submit" class="w-full h-9 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Clear Accountability</button>
+        <button type="submit" class="w-full h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Clear Accountability</button>
       </form>
       <form method="post" action="/my-professional-development/fund/{{ instance.fund_request.id }}/action" class="space-y-2 mt-2">
         {% csrf_token %}<input type="hidden" name="action" value="return_accountability"><input type="hidden" name="request_id" value="{{ instance.id }}">
-        <textarea name="reason" required rows="2" placeholder="Reason for returning accountability…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Return Accountability</button>
+        <textarea name="reason" required rows="2" placeholder="Reason for returning accountability…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 text-[12px] font-bold transition-colors">Return Accountability</button>
       </form>
 
     {% elif instance.status == 'awaiting_hr_signoff' %}
@@ -101,15 +101,15 @@
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action">
         {% csrf_token %}<input type="hidden" name="action" value="sign_off">
         <button type="submit" {% if signoff_gates %}disabled{% endif %}
-                class="w-full h-9 rounded-lg text-white text-[12px] font-bold transition-colors {% if signoff_gates %}bg-slate-300 cursor-not-allowed{% else %}bg-emerald-600 hover:bg-emerald-700{% endif %}">Sign Off &amp; Close</button>
+                class="w-full h-9 rounded-control text-white text-[12px] font-bold transition-colors {% if signoff_gates %}bg-slate-300 cursor-not-allowed{% else %}bg-emerald-600 hover:bg-emerald-700{% endif %}">Sign Off &amp; Close</button>
       </form>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2 mt-2">
         {% csrf_token %}<input type="hidden" name="action" value="hr_return_completion">
-        <select name="reason_category" class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <select name="reason_category" class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
           {% for cat in return_reason_categories %}<option value="{{ cat }}">{{ cat|replace_underscore|title }}</option>{% endfor %}
         </select>
-        <textarea name="note" rows="2" placeholder="Note for the employee…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg edify-surface border border-amber-200 hover:bg-amber-50 text-amber-700 text-[12px] font-bold transition-colors">Return for Correction</button>
+        <textarea name="note" rows="2" placeholder="Note for the employee…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control edify-surface border border-amber-200 hover:bg-amber-50 text-amber-700 text-[12px] font-bold transition-colors">Return for Correction</button>
       </form>
     {% endif %}
   </div>
@@ -122,7 +122,7 @@
     <input type="hidden" name="fy" value="{{ instance.fy|default:fy }}">
 
     {% if instance.status == 'returned_by_supervisor' or instance.status == 'returned_by_hr' %}
-    <div class="rounded-lg bg-rose-50 border border-rose-100 p-3">
+    <div class="rounded-surface bg-rose-50 border border-rose-100 p-3">
       <p class="edify-text-caption font-bold text-rose-800">Returned for correction</p>
       <p class="edify-text-caption text-rose-700 mt-0.5">{{ instance.supervisor_note|default:instance.hr_note }}</p>
     </div>
@@ -130,7 +130,7 @@
 
     <div>
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Employee Information</p>
-      <div class="grid grid-cols-2 gap-2 edify-text-caption bg-slate-50 rounded-lg p-3">
+      <div class="grid grid-cols-2 gap-2 edify-text-caption bg-slate-50 rounded-surface p-3">
         <div><span class="text-slate-400">Name</span><p class="font-semibold text-slate-700">{{ instance.staff_name|default:staff_info.staff_name }}</p></div>
         <div><span class="text-slate-400">Position</span><p class="font-semibold text-slate-700">{{ instance.position|default:staff_info.position|default:"—" }}</p></div>
         <div><span class="text-slate-400">Department</span><p class="font-semibold text-slate-700">{{ instance.department|default:staff_info.department|default:"—" }}</p></div>
@@ -142,16 +142,16 @@
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Course Information</p>
       <div>
         <label class="edify-text-caption font-bold text-slate-500">Course Name <span class="text-rose-500">*</span></label>
-        <input type="text" name="course_name" required maxlength="255" value="{{ instance.course_name|default:'' }}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <input type="text" name="course_name" required maxlength="255" value="{{ instance.course_name|default:'' }}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
       </div>
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Category <span class="text-rose-500">*</span></label>
-          <input type="text" name="course_category" required maxlength="64" value="{{ instance.course_category|default:'' }}" placeholder="e.g. Leadership Development" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="text" name="course_category" required maxlength="64" value="{{ instance.course_category|default:'' }}" placeholder="e.g. Leadership Development" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Delivery Type <span class="text-rose-500">*</span></label>
-          <select name="course_type" x-model="courseType" required class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <select name="course_type" x-model="courseType" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
             <option value="">Select…</option>
             {% for value, label in course_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
           </select>
@@ -159,20 +159,20 @@
       </div>
       <div>
         <label class="edify-text-caption font-bold text-slate-500">Institution <span class="text-rose-500">*</span></label>
-        <input type="text" name="institution" required maxlength="255" value="{{ instance.institution|default:'' }}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <input type="text" name="institution" required maxlength="255" value="{{ instance.institution|default:'' }}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
       </div>
       <div x-show="courseType === 'online' || courseType === 'hybrid'" style="display:none">
         <label class="edify-text-caption font-bold text-slate-500">Institution / Course Link <span class="text-rose-500">*</span></label>
-        <input type="url" name="course_link" value="{{ instance.course_link|default:'' }}" placeholder="https://…" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <input type="url" name="course_link" value="{{ instance.course_link|default:'' }}" placeholder="https://…" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
       </div>
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Start Date <span class="text-rose-500">*</span></label>
-          <input type="date" name="start_date" required value="{{ instance.start_date|date:'Y-m-d' }}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="date" name="start_date" required value="{{ instance.start_date|date:'Y-m-d' }}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500">End Date <span class="text-rose-500">*</span></label>
-          <input type="date" name="end_date" required value="{{ instance.end_date|date:'Y-m-d' }}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="date" name="end_date" required value="{{ instance.end_date|date:'Y-m-d' }}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
       </div>
       <label class="flex items-center gap-2 edify-text-caption font-semibold text-slate-600">
@@ -182,20 +182,20 @@
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Relevance to Role</label>
-          <textarea name="relevance_to_role" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]">{{ instance.relevance_to_role|default:'' }}</textarea>
+          <textarea name="relevance_to_role" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]">{{ instance.relevance_to_role|default:'' }}</textarea>
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Skills to Develop</label>
-          <textarea name="skills_to_develop" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]">{{ instance.skills_to_develop|default:'' }}</textarea>
+          <textarea name="skills_to_develop" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]">{{ instance.skills_to_develop|default:'' }}</textarea>
         </div>
       </div>
       <div>
         <label class="edify-text-caption font-bold text-slate-500">Expected Benefit to Edify</label>
-        <textarea name="expected_benefit" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]">{{ instance.expected_benefit|default:'' }}</textarea>
+        <textarea name="expected_benefit" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]">{{ instance.expected_benefit|default:'' }}</textarea>
       </div>
       <div>
         <label class="edify-text-caption font-bold text-slate-500">Impact on Work Time</label>
-        <textarea name="work_time_impact" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]">{{ instance.work_time_impact|default:'' }}</textarea>
+        <textarea name="work_time_impact" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]">{{ instance.work_time_impact|default:'' }}</textarea>
       </div>
     </div>
 
@@ -211,7 +211,7 @@
       </a>
       {% endfor %}
       <div class="flex items-center gap-2">
-        <select name="kind" form="pd-evidence-form" class="h-9 px-2 rounded-lg border border-slate-200 edify-text-caption">
+        <select name="kind" form="pd-evidence-form" class="h-9 px-2 rounded-control border border-slate-200 edify-text-caption">
           <option value="admission_letter">Admission / Enrollment Letter</option>
           <option value="brochure">Course Brochure</option>
           <option value="invoice">Institution Invoice</option>
@@ -232,53 +232,53 @@
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Course Fee</label>
-          <input type="number" step="0.01" min="0" name="course_fee" value="{% if instance %}{{ instance.course_fee_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="number" step="0.01" min="0" name="course_fee" value="{% if instance %}{{ instance.course_fee_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Other Costs</label>
-          <input type="number" step="0.01" min="0" name="other_costs" value="{% if instance %}{{ instance.other_costs_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="number" step="0.01" min="0" name="other_costs" value="{% if instance %}{{ instance.other_costs_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Employee Contribution</label>
-          <input type="number" step="0.01" min="0" name="employee_contribution" value="{% if instance %}{{ instance.employee_contribution_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="number" step="0.01" min="0" name="employee_contribution" value="{% if instance %}{{ instance.employee_contribution_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Requested from Edify</label>
-          <input type="number" step="0.01" min="0" name="requested_amount" value="{% if instance %}{{ instance.requested_amount_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="number" step="0.01" min="0" name="requested_amount" value="{% if instance %}{{ instance.requested_amount_cents|divide:100 }}{% endif %}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
       </div>
       <div>
         <label class="edify-text-caption font-bold text-slate-500">Funding Type <span class="text-rose-500">*</span></label>
-        <select name="funding_type" x-model="fundingType" required class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <select name="funding_type" x-model="fundingType" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
           {% for value, label in funding_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
         </select>
       </div>
       <div x-show="fundingType === 'fully_funded' || fundingType === 'partially_funded'" class="grid grid-cols-2 gap-2" style="display:none">
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Payment Recipient</label>
-          <input type="text" name="payment_recipient" value="{{ instance.payment_recipient|default:'' }}" placeholder="Institution or employee" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="text" name="payment_recipient" value="{{ instance.payment_recipient|default:'' }}" placeholder="Institution or employee" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500">Payment Details</label>
-          <input type="text" name="payment_details" value="{{ instance.payment_details|default:'' }}" placeholder="Bank / mobile money details" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="text" name="payment_details" value="{{ instance.payment_details|default:'' }}" placeholder="Bank / mobile money details" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
       </div>
       <div>
         <label class="edify-text-caption font-bold text-slate-500">Funding Exception Reason <span class="text-slate-300">(only if requested amount exceeds your remaining fund)</span></label>
-        <textarea name="exception_reason" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]">{{ instance.exception_reason|default:'' }}</textarea>
+        <textarea name="exception_reason" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]">{{ instance.exception_reason|default:'' }}</textarea>
       </div>
     </div>
 
     {% if conflict and conflict.status != 'no_conflict' %}
-    <div class="rounded-lg p-2.5 border {% if conflict.status == 'major_conflict' %}bg-rose-50 border-rose-100{% else %}bg-amber-50 border-amber-100{% endif %}">
+    <div class="rounded-surface p-2.5 border {% if conflict.status == 'major_conflict' %}bg-rose-50 border-rose-100{% else %}bg-amber-50 border-amber-100{% endif %}">
       <p class="edify-text-caption font-bold {% if conflict.status == 'major_conflict' %}text-rose-800{% else %}text-amber-800{% endif %}">Possible schedule conflict</p>
       <p class="edify-text-caption {% if conflict.status == 'major_conflict' %}text-rose-700{% else %}text-amber-700{% endif %} mt-0.5">{{ conflict.detail }}</p>
     </div>
     {% endif %}
 
     <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
-      <button type="submit" name="intent" value="draft" class="flex-1 h-9 rounded-lg edify-surface border border-slate-200 hover:bg-slate-50 text-slate-700 text-[12px] font-bold transition-colors">Save Draft</button>
-      <button type="submit" name="intent" value="submit" class="flex-1 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Submit for Approval</button>
+      <button type="submit" name="intent" value="draft" class="flex-1 h-9 rounded-control edify-surface border border-slate-200 hover:bg-slate-50 text-slate-700 text-[12px] font-bold transition-colors">Save Draft</button>
+      <button type="submit" name="intent" value="submit" class="flex-1 h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Submit for Approval</button>
     </div>
     {% if instance and instance.status == 'draft' %}
     <button type="submit" formaction="/my-professional-development/request/{{ instance.id }}/action" name="action" value="cancel" class="w-full text-center edify-text-caption font-bold text-slate-400 hover:text-rose-500">Cancel this draft</button>
@@ -288,7 +288,7 @@
   <form id="pd-evidence-form" method="post" enctype="multipart/form-data" action="/my-professional-development/request/{{ instance.id }}/evidence" class="flex items-center gap-2 -mt-2">
     {% csrf_token %}
     <input type="file" name="file" required class="flex-1 edify-text-caption">
-    <button type="submit" class="h-9 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold shrink-0">Upload Evidence</button>
+    <button type="submit" class="h-9 px-3 rounded-control bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold shrink-0">Upload Evidence</button>
   </form>
   {% endif %}
 
@@ -308,10 +308,10 @@
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="confirm_enrollment">
         <div class="grid grid-cols-2 gap-2">
-          <div><label class="edify-text-caption font-bold text-slate-500">Enrollment Date</label><input type="date" name="enrollment_date" value="{{ instance.start_date|date:'Y-m-d' }}" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]"></div>
-          <div><label class="edify-text-caption font-bold text-slate-500">Reference</label><input type="text" name="enrollment_reference" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]"></div>
+          <div><label class="edify-text-caption font-bold text-slate-500">Enrollment Date</label><input type="date" name="enrollment_date" value="{{ instance.start_date|date:'Y-m-d' }}" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]"></div>
+          <div><label class="edify-text-caption font-bold text-slate-500">Reference</label><input type="text" name="enrollment_reference" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]"></div>
         </div>
-        <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Confirm Enrollment</button>
+        <button type="submit" class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Confirm Enrollment</button>
       </form>
 
     {% elif instance.status == 'enrollment_confirmed' or instance.status == 'in_progress' %}
@@ -320,10 +320,10 @@
         <summary class="font-bold text-slate-400 cursor-pointer">Defer or withdraw</summary>
         <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2 mt-2">
           {% csrf_token %}
-          <textarea name="note" required rows="2" placeholder="Reason…" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
+          <textarea name="note" required rows="2" placeholder="Reason…" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
           <div class="flex gap-2">
-            <button type="submit" name="action" value="defer" class="flex-1 h-8 rounded-lg edify-surface border border-slate-200 hover:bg-slate-50 text-slate-600 edify-text-caption font-bold">Defer</button>
-            <button type="submit" name="action" value="withdraw" class="flex-1 h-8 rounded-lg edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 edify-text-caption font-bold">Withdraw</button>
+            <button type="submit" name="action" value="defer" class="flex-1 h-8 rounded-control edify-surface border border-slate-200 hover:bg-slate-50 text-slate-600 edify-text-caption font-bold">Defer</button>
+            <button type="submit" name="action" value="withdraw" class="flex-1 h-8 rounded-control edify-surface border border-rose-200 hover:bg-rose-50 text-rose-600 edify-text-caption font-bold">Withdraw</button>
           </div>
         </form>
       </details>
@@ -333,14 +333,14 @@
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="mark_complete">
         <label class="edify-text-caption font-bold text-slate-500">Completion Date</label>
-        <input type="date" name="actual_completion_date" value="{{ instance.end_date|date:'Y-m-d' }}" class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <input type="date" name="actual_completion_date" value="{{ instance.end_date|date:'Y-m-d' }}" class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         <label class="edify-text-caption font-bold text-slate-500">Course Outcome <span class="text-rose-500">*</span></label>
-        <textarea name="course_outcome" required rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
+        <textarea name="course_outcome" required rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
         <label class="edify-text-caption font-bold text-slate-500">Skills Gained</label>
-        <textarea name="skills_gained" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
+        <textarea name="skills_gained" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
         <label class="edify-text-caption font-bold text-slate-500">Application Plan</label>
-        <textarea name="application_plan" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Mark Complete</button>
+        <textarea name="application_plan" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Mark Complete</button>
       </form>
 
     {% elif instance.status == 'marked_complete' %}
@@ -348,12 +348,12 @@
       <form method="post" enctype="multipart/form-data" action="/my-professional-development/request/{{ instance.id }}/certificate" class="space-y-2">
         {% csrf_token %}
         <input type="file" name="file" required accept="application/pdf,image/*" class="w-full edify-text-caption">
-        <input type="text" name="certificate_name" placeholder="Certificate name" class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <input type="text" name="certificate_name" placeholder="Certificate name" class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         <div class="grid grid-cols-2 gap-2">
-          <input type="text" name="certificate_number" placeholder="Certificate number" class="h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
-          <input type="text" name="issuing_institution" placeholder="Issuing institution" class="h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+          <input type="text" name="certificate_number" placeholder="Certificate number" class="h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+          <input type="text" name="issuing_institution" placeholder="Issuing institution" class="h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         </div>
-        <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Upload Certificate</button>
+        <button type="submit" class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Upload Certificate</button>
       </form>
 
     {% elif instance.status == 'certificate_uploaded' %}
@@ -361,8 +361,8 @@
       <p class="edify-text-caption text-slate-500 mb-2">Upload your certificate to BambooHR directly, then confirm here. If your organization has no BambooHR integration yet, confirm once the certificate has been filed with HR.</p>
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="confirm_bamboohr">
-        <input type="text" name="bamboohr_reference" placeholder="BambooHR reference (optional)" class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
-        <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Confirm BambooHR Upload</button>
+        <input type="text" name="bamboohr_reference" placeholder="BambooHR reference (optional)" class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+        <button type="submit" class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Confirm BambooHR Upload</button>
       </form>
 
     {% elif instance.status == 'bamboohr_confirmed' %}
@@ -370,14 +370,14 @@
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="submit_accountability">
         <div class="grid grid-cols-2 gap-2">
-          <div><label class="edify-text-caption font-bold text-slate-500">Actual Spent</label><input type="number" step="0.01" min="0" name="actual_spent" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]"></div>
-          <div><label class="edify-text-caption font-bold text-slate-500">Amount Returned</label><input type="number" step="0.01" min="0" name="returned_amount" value="0" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]"></div>
+          <div><label class="edify-text-caption font-bold text-slate-500">Actual Spent</label><input type="number" step="0.01" min="0" name="actual_spent" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]"></div>
+          <div><label class="edify-text-caption font-bold text-slate-500">Amount Returned</label><input type="number" step="0.01" min="0" name="returned_amount" value="0" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]"></div>
         </div>
         <label class="edify-text-caption font-bold text-slate-500">NetSuite Expense ID <span class="text-rose-500">*</span></label>
-        <input type="text" name="netsuite_expense_id" required class="w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+        <input type="text" name="netsuite_expense_id" required class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
         <label class="edify-text-caption font-bold text-slate-500">Variance Note <span class="text-slate-300">(required if spent + returned ≠ disbursed)</span></label>
-        <textarea name="variance_note" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]"></textarea>
-        <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Submit Accountability</button>
+        <textarea name="variance_note" rows="2" class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]"></textarea>
+        <button type="submit" class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Submit Accountability</button>
       </form>
 
     {% elif instance.status == 'accountability_submitted' %}

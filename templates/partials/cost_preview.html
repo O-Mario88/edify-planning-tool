@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 {% if not success %}
-<div class="bg-rose-50 border border-rose-200 rounded-xl p-3 edify-text-caption font-semibold text-rose-700 space-y-1">
+<div class="bg-rose-50 border border-rose-200 rounded-surface p-3 edify-text-caption font-semibold text-rose-700 space-y-1">
 <div class="font-semibold text-[12px] uppercase">Cost Catalogue Error</div>
 <p>{{ error_msg }}</p>
 </div>
@@ -31,7 +31,7 @@
 </div>
 
 {% if preview.blockers %}
-<div class="mt-2 p-2 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 edify-text-caption font-bold text-center space-y-0.5">
+<div class="mt-2 p-2 bg-amber-50 text-amber-800 rounded-surface border border-amber-200 edify-text-caption font-bold text-center space-y-0.5">
 {% for b in preview.blockers %}
 <div>&#9888; {{ b }}</div>
 {% endfor %}

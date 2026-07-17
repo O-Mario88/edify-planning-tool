@@ -6,10 +6,10 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ claimOpen: false, selectedClaim: null, claimAmount: 0 }">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+<div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-amber-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-amber-500/10 border border-amber-500/20 text-amber-500 edify-text-caption font-semibold uppercase tracking-widest">
 Expense Claims
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Reimbursement Claim Queue</h1>
@@ -20,7 +20,7 @@ Review and process staff reimbursement claims. Reimbursements appear here only a
 </div>
 
 <!-- Table Card -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
@@ -66,7 +66,7 @@ Review and process staff reimbursement claims. Reimbursements appear here only a
 </td>
 <!-- IA Status -->
 <td class="px-6 py-4 text-center">
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Verified
 </span>
 </td>
@@ -76,11 +76,11 @@ Verified
 <button
 @click="claimOpen = true; selectedClaim = '{{ claim.id }}'; claimAmount = {{ claim.reimbursement_amount }}"
 type="button"
-class="h-8 px-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
+class="h-8 px-3.5 rounded-control bg-amber-600 hover:bg-amber-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >
 Process Payout
 </button>
-<a href="/accounts/activities/{{ claim.activity.id }}/" class="h-8 w-8 rounded-xl border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors">
+<a href="/accounts/activities/{{ claim.activity.id }}/" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
 </a>
 </div>
@@ -91,7 +91,7 @@ Process Payout
 <tr>
 <td colspan="8" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 <div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
+<div class="w-12 h-12 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
 </div>
 <p class="text-slate-400">No staff reimbursement claims pending payment.</p>
@@ -128,12 +128,12 @@ style="display: none;"
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Reimbursement Payout Amount</label>
-<div class="w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[14px] font-semibold text-slate-800 p-2.5 shadow-inner" x-text="claimAmount.toLocaleString() + ' UGX'"></div>
+<div class="w-full bg-slate-50 border border-slate-200/80 rounded-surface text-[14px] font-semibold text-slate-800 p-2.5 shadow-inner" x-text="claimAmount.toLocaleString() + ' UGX'"></div>
 </div>
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Method</label>
-<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-amber-500 focus:outline-none transition-all">
+<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-amber-500 focus:outline-none transition-all">
 {% for m in methods %}
 <option value="{{ m }}">{{ m }}</option>
 {% endfor %}
@@ -147,7 +147,7 @@ type="text"
 name="payment_reference"
 required
 placeholder="e.g. TXN-8800115"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3.5 edify-focus-surface focus:border-amber-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3.5 edify-focus-surface focus:border-amber-500 focus:outline-none transition-all"
 >
 </div>
 </form>
@@ -157,14 +157,14 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] fo
 <button
 form="claim-form"
 type="submit"
-class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-center justify-center bg-amber-600 hover:bg-amber-700 shadow-sm transition-all"
+class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-amber-600 hover:bg-amber-700 shadow-sm transition-all"
 >
 Confirm Payout
 </button>
 <button
 @click="claimOpen = false"
 type="button"
-class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-10 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>

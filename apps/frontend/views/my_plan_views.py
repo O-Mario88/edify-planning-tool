@@ -3,6 +3,8 @@ from apps.core.permissions import require_page_permission, RolePermissionService
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
 from datetime import date
 from apps.audit.models import AuditLog
 from apps.audit.services import log as audit_log
@@ -13,6 +15,8 @@ from apps.activities.services import (
     reschedule as reschedule_activity,
     start_completion,
     complete as complete_activity,
+    submit_for_review,
+    record_attendance,
     ia_confirm,
     ia_return,
     sf_kind,
@@ -28,7 +32,7 @@ from apps.evidence.services import (
     evidence_records_for_activity,
     infer_kind_from_upload,
 )
-from apps.core.enums import SsaIntervention, ActivityStatus
+from apps.core.enums import SsaIntervention
 from apps.pl_review.services import (
     queue as pl_queue,
     confirm as pl_confirm,
@@ -151,7 +155,10 @@ def activity_detail_view(request, activity_id):
     staff_name = "Unknown Staff"
     if a.responsible_staff_id:
         try:
-            staff_name = User.objects.get(id=a.responsible_staff_id).name
+            staff_name = User.objects.get(
+                Q(id=a.responsible_staff_id)
+                | Q(staff_profile__id=a.responsible_staff_id)
+            ).name
         except User.DoesNotExist:
             pass
 
@@ -202,7 +209,7 @@ def complete_drawer_view(request, activity_id):
             act = get_activity(activity_id, request.user)
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-4 bg-rose-50 text-rose-700 rounded-xl text-[12px] font-bold">Error starting completion: {str(e)}</div>',
+                f'<div class="p-4 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error starting completion: {str(e)}</div>',
                 status=400,
             )
 
@@ -213,7 +220,7 @@ def complete_drawer_view(request, activity_id):
         from apps.schools.models import School
 
         cluster_schools = School.objects.filter(
-            cluster_assignments__cluster=a.cluster, deleted_at__isnull=True
+            cluster_id=a.cluster_id, deleted_at__isnull=True
         ).order_by("name")
 
     needs_netsuite_id = False
@@ -287,7 +294,7 @@ def accountability_action(request, activity_id):
 
     if not disbursed:
         return HttpResponse(
-            '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">No disbursed advance is awaiting accountability on this activity.</div>',
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">No disbursed advance is awaiting accountability on this activity.</div>',
             status=400,
         )
 
@@ -298,7 +305,7 @@ def accountability_action(request, activity_id):
         amount_returned = int(request.POST.get("amount_returned") or 0)
     except ValueError:
         return HttpResponse(
-            '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Amounts must be whole UGX numbers.</div>',
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Amounts must be whole UGX numbers.</div>',
             status=400,
         )
 
@@ -313,7 +320,7 @@ def accountability_action(request, activity_id):
             )
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Receipt upload error: {str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Receipt upload error: {str(e)}</div>',
                 status=400,
             )
 
@@ -344,7 +351,7 @@ def accountability_action(request, activity_id):
             )
     except Exception as e:
         return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
             status=400,
         )
 
@@ -396,7 +403,7 @@ def confirm_reimbursement_receipt_action(request, activity_id):
 
     if not adv:
         return HttpResponse(
-            '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">No disbursed reimbursement is awaiting receipt confirmation on this activity.</div>',
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">No disbursed reimbursement is awaiting receipt confirmation on this activity.</div>',
             status=400,
         )
 
@@ -411,7 +418,7 @@ def confirm_reimbursement_receipt_action(request, activity_id):
         )
     except (BadRequest, Forbidden) as e:
         return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
             status=400,
         )
 
@@ -468,12 +475,11 @@ def reschedule_drawer_view(request, activity_id):
         if staff_id:
             from apps.accounts.models import User
 
-            staff_user = User.objects.filter(id=staff_id).first()
+            staff_user = User.objects.filter(
+                Q(id=staff_id) | Q(staff_profile__id=staff_id)
+            ).first()
             if staff_user:
                 assigning_staff_name = staff_user.name
-                if not a.monitored_by_staff_id:
-                    a.monitored_by_staff_id = staff_id
-                    a.save(update_fields=["monitored_by_staff_id"])
 
     context = {
         "act": act,
@@ -535,7 +541,7 @@ def reschedule_activity_action(request, activity_id):
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
                 return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                     status=400,
                 )
             messages.error(request, f"Error: {e}")
@@ -581,7 +587,7 @@ def complete_activity_action(request, activity_id):
             except Exception as e:
                 if request.headers.get("HX-Request") == "true":
                     return HttpResponse(
-                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error starting completion: {str(e)}</div>',
+                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error starting completion: {str(e)}</div>',
                         status=400,
                     )
                 messages.error(request, f"Error starting completion: {e}")
@@ -599,7 +605,7 @@ def complete_activity_action(request, activity_id):
             except Exception as e:
                 if request.headers.get("HX-Request") == "true":
                     return HttpResponse(
-                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Upload Error: {str(e)}</div>',
+                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Upload Error: {str(e)}</div>',
                         status=400,
                     )
                 messages.error(request, f"Upload error: {e}")
@@ -641,7 +647,7 @@ def complete_activity_action(request, activity_id):
                     except Exception as e:
                         if request.headers.get("HX-Request") == "true":
                             return HttpResponse(
-                                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                                 status=400,
                             )
                         messages.error(request, f"Error: {e}")
@@ -660,67 +666,47 @@ def complete_activity_action(request, activity_id):
                     val = request.POST.get(field_name, "").strip()
                     if not val:
                         return HttpResponse(
-                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Missing score for {enum_val.replace("_", " ").title()}</div>',
+                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Missing score for {enum_val.replace("_", " ").title()}</div>',
                             status=400,
                         )
                     try:
                         f_val = float(val)
                     except ValueError:
                         return HttpResponse(
-                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Score for {enum_val.replace("_", " ").title()} must be numeric</div>',
+                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Score for {enum_val.replace("_", " ").title()} must be numeric</div>',
                             status=400,
                         )
                     if f_val < 0 or f_val > 10:
                         return HttpResponse(
-                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Score for {enum_val.replace("_", " ").title()} must be between 0 and 10</div>',
+                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Score for {enum_val.replace("_", " ").title()} must be between 0 and 10</div>',
                             status=400,
                         )
                     scores_list.append({"intervention": enum_val, "score": f_val})
 
-                from apps.ssa.models import SsaRecord, SsaScore
-                from apps.core.fy import get_operational_fy, get_quarter_for_date
+                from apps.ssa.services import upload as upload_ssa
 
-                date_of_ssa = timezone.now()
-                fy = get_operational_fy(date_of_ssa)
-                quarter = get_quarter_for_date(date_of_ssa)
-                avg_score = round(sum(s["score"] for s in scores_list) / 8, 1)
-
-                rec = SsaRecord.objects.create(
-                    school=a.school,
-                    date_of_ssa=date_of_ssa,
-                    fy=fy,
-                    quarter=quarter,
-                    average_score=avg_score,
-                    uploaded_by=request.user.user_id,
-                    collector_type="partner"
-                    if a.delivery_type == "partner"
-                    else "staff",
-                    collected_by_user_id=request.user.user_id,
-                    collected_by_partner_id=a.assigned_partner_id,
-                    verification_status="pending",
-                    verification_source="activity_collection",
-                )
-
-                SsaScore.objects.bulk_create(
-                    [
-                        SsaScore(
-                            ssa_record=rec,
-                            intervention=s["intervention"],
-                            score=s["score"],
-                        )
-                        for s in scores_list
-                    ]
+                upload_ssa(
+                    {
+                        "schoolId": a.school.school_id,
+                        "dateOfSsa": timezone.now().isoformat(),
+                        "scores": scores_list,
+                        "collectorType": "partner"
+                        if a.delivery_type == "partner"
+                        else "staff",
+                        "collectedByPartnerId": a.assigned_partner_id,
+                    },
+                    request.user,
                 )
                 a.ssa_not_collected_reason = None
             else:
                 reason = request.POST.get("ssa_not_collected_reason", "").strip()
                 if not reason:
                     return HttpResponse(
-                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Please select a reason why SSA was not collected.</div>',
+                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Please select a reason why SSA was not collected.</div>',
                         status=400,
                     )
                 a.ssa_not_collected_reason = reason
-            a.save()
+            a.save(update_fields=["ssa_not_collected_reason", "updated_at"])
 
         payload = {
             "salesforceId": salesforce_id,
@@ -749,7 +735,7 @@ def complete_activity_action(request, activity_id):
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
                 return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Submission Error: {str(e)}</div>',
+                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Submission Error: {str(e)}</div>',
                     status=400,
                 )
             messages.error(request, f"Submission error: {e}")
@@ -959,8 +945,13 @@ def start_activity_action(request, activity_id):
 
     if request.method == "POST":
         notes = request.POST.get("notes", "").strip()
-        a.status = "in_progress"
-        a.save(update_fields=["status", "updated_at"])
+        try:
+            start_completion(activity_id, {"notes": notes}, request.user)
+        except Exception as exc:
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Start Error: {str(exc)}</div>',
+                status=400,
+            )
 
         audit_log(
             action="start_activity",
@@ -1021,8 +1012,6 @@ def evidence_upload_action(request, activity_id):
                     kind=infer_kind_from_upload(evidence_file),
                     file_obj=evidence_file,
                 )
-                a.evidence_status = "uploaded"
-                a.save(update_fields=["evidence_status", "updated_at"])
 
                 audit_log(
                     action="upload_evidence",
@@ -1035,7 +1024,7 @@ def evidence_upload_action(request, activity_id):
                 )
             except Exception as e:
                 return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                     status=400,
                 )
 
@@ -1074,13 +1063,13 @@ def salesforce_id_action(request, activity_id):
         salesforce_id = request.POST.get("salesforce_id", "").strip()
         if not salesforce_id:
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: SF ID cannot be blank.</div>',
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: SF ID cannot be blank.</div>',
                 status=400,
             )
 
         if a.ia_verification_status == "confirmed":
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction.</div>',
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction.</div>',
                 status=400,
             )
 
@@ -1100,12 +1089,12 @@ def salesforce_id_action(request, activity_id):
             )
         except DuplicateSalesforceId as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">{str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">{str(e)}</div>',
                 status=409,
             )
         except Exception as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
                 status=400,
             )
 
@@ -1124,7 +1113,7 @@ def submit_for_review_drawer_view(request, activity_id):
         return HttpResponseForbidden("Access Denied.")
 
     # Build Checklist
-    has_evidence = a.evidence_status == "uploaded"
+    has_evidence = a.evidence_status in {"uploaded", "accepted"}
     has_sf_id = bool(a.salesforce_activity_id)
 
     ssa_required = a.activity_type in [
@@ -1178,19 +1167,13 @@ def submit_for_review_action(request, activity_id):
         return forbidden
 
     if request.method == "POST":
-        # Route to the real ActivityStatus workflow state: a CCEO's completion
-        # needs supervisory PL review first (-> pl_review_queue); everyone
-        # else's goes straight to the IA verification queue. Mirrors the
-        # identical routing in activities.services.complete().
-        is_cceo = request.user.active_role == "CCEO"
-        a.status = (
-            ActivityStatus.SUBMITTED_TO_PL
-            if is_cceo
-            else ActivityStatus.AWAITING_IA_VERIFICATION
-        )
-        if not is_cceo:
-            a.submitted_to_ia_at = timezone.now()
-        a.save(update_fields=["status", "submitted_to_ia_at", "updated_at"])
+        try:
+            submit_for_review(activity_id, request.user)
+        except Exception as exc:
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Submission Error: {str(exc)}</div>',
+                status=400,
+            )
 
         audit_log(
             action="submit_for_review",
@@ -1257,7 +1240,7 @@ def attendance_upload_drawer_view(request, activity_id):
         from apps.schools.models import School
 
         cluster_schools = School.objects.filter(
-            cluster_assignments__cluster=a.cluster, deleted_at__isnull=True
+            cluster_id=a.cluster_id, deleted_at__isnull=True
         ).order_by("name")
 
     context = {
@@ -1285,19 +1268,21 @@ def attendance_upload_action(request, activity_id):
         notes = request.POST.get("notes", "").strip()
         attended_schools = request.POST.getlist("attended_schools")
 
-        a.teachers_attended = int(teachers) if teachers else 0
-        a.leaders_attended = int(leaders) if leaders else 0
-        a.attended_school_ids = list(attended_schools)
-        a.status = "completed"
-        a.save(
-            update_fields=[
-                "teachers_attended",
-                "leaders_attended",
-                "attended_school_ids",
-                "status",
-                "updated_at",
-            ]
-        )
+        try:
+            record_attendance(
+                activity_id,
+                {
+                    "teachersAttended": teachers,
+                    "leadersAttended": leaders,
+                    "attendedSchoolIds": attended_schools,
+                },
+                request.user,
+            )
+        except Exception as exc:
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Attendance Error: {str(exc)}</div>',
+                status=400,
+            )
 
         if attendance_file:
             record_upload(
@@ -1306,8 +1291,6 @@ def attendance_upload_action(request, activity_id):
                 kind="attendance_form",
                 file_obj=attendance_file,
             )
-            a.evidence_status = "uploaded"
-            a.save(update_fields=["evidence_status", "updated_at"])
 
         audit_log(
             action="upload_attendance",
@@ -1368,47 +1351,30 @@ def ssa_evidence_upload_action(request, activity_id):
                     )
                 except ValueError:
                     return HttpResponse(
-                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: Score must be numeric</div>',
+                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Score must be numeric</div>',
                         status=400,
                     )
 
         if has_scores:
             if len(scores_list) < 8:
                 return HttpResponse(
-                    '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: All 8 scores must be provided if manual entry is selected.</div>',
+                    '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: All 8 scores must be provided if manual entry is selected.</div>',
                     status=400,
                 )
 
-            from apps.ssa.models import SsaRecord, SsaScore
-            from apps.core.fy import get_operational_fy, get_quarter_for_date
-            from django.utils import timezone
+            from apps.ssa.services import upload as upload_ssa
 
-            date_of_ssa = timezone.now()
-            fy = get_operational_fy(date_of_ssa)
-            quarter = get_quarter_for_date(date_of_ssa)
-            avg_score = round(sum(s["score"] for s in scores_list) / 8, 1)
-
-            rec = SsaRecord.objects.create(
-                school=a.school,
-                date_of_ssa=date_of_ssa,
-                fy=fy,
-                quarter=quarter,
-                average_score=avg_score,
-                uploaded_by=request.user.user_id,
-                collector_type="partner" if a.delivery_type == "partner" else "staff",
-                collected_by_user_id=request.user.user_id,
-                collected_by_partner_id=a.assigned_partner_id,
-                verification_status="pending",
-                verification_source="activity_collection",
-            )
-
-            SsaScore.objects.bulk_create(
-                [
-                    SsaScore(
-                        ssa_record=rec, intervention=s["intervention"], score=s["score"]
-                    )
-                    for s in scores_list
-                ]
+            upload_ssa(
+                {
+                    "schoolId": a.school.school_id,
+                    "dateOfSsa": timezone.now().isoformat(),
+                    "scores": scores_list,
+                    "collectorType": "partner"
+                    if a.delivery_type == "partner"
+                    else "staff",
+                    "collectedByPartnerId": a.assigned_partner_id,
+                },
+                request.user,
             )
 
         if ssa_file:
@@ -1418,8 +1384,6 @@ def ssa_evidence_upload_action(request, activity_id):
                 kind="assessment_form",
                 file_obj=ssa_file,
             )
-            a.evidence_status = "uploaded"
-            a.save(update_fields=["evidence_status", "updated_at"])
 
         audit_log(
             action="upload_ssa",
@@ -1442,56 +1406,193 @@ def ssa_evidence_upload_action(request, activity_id):
 
 @require_page_permission("evidence_center")
 def evidence_center_view(request):
-    """Evidence Center showing tabs of different evidence/verification states."""
-    activities = (
-        Activity.objects.filter(deleted_at__isnull=True)
-        .select_related("school")
-        .order_by("-updated_at")
+    """Scoped, URL-addressable Evidence Center.
+
+    The page previously loaded every Activity into Python and passed raw model
+    objects into a table that expected dictionaries, producing blank actions.
+    Filtering, counts and pagination now stay in SQL and every rendered action
+    is an explicit, non-empty route.
+    """
+    from apps.accounts.models import StaffProfile
+    from apps.core.scoping import resolve_user_scope
+    from apps.partners.models import Partner
+
+    scope = resolve_user_scope(request.user)
+    activities = Activity.objects.filter(deleted_at__isnull=True)
+    if scope.can_view_summary_only:
+        activities = activities.none()
+    elif not scope.country_scope:
+        if scope.partner_ids:
+            activities = activities.filter(assigned_partner_id__in=scope.partner_ids)
+        elif scope.school_ids:
+            staff_ids = [
+                *scope.staff_ids,
+                *scope.supervised_staff_ids,
+                request.user.user_id,
+            ]
+            activities = activities.filter(
+                Q(school_id__in=scope.school_ids)
+                | Q(responsible_staff_id__in=[value for value in staff_ids if value])
+            )
+        else:
+            staff_ids = [*scope.staff_ids, request.user.user_id]
+            activities = activities.filter(
+                responsible_staff_id__in=[value for value in staff_ids if value]
+            )
+
+    submitted_statuses = (
+        "submitted_to_pl",
+        "awaiting_ia_verification",
+        "ia_verified",
+        "accountant_confirmed",
+    )
+    returned_statuses = ("returned", "returned_by_pl", "returned_by_ia")
+    tab_filters = {
+        "pending": Q(status="completed", evidence_status="none"),
+        "sf_missing": Q(evidence_status="uploaded")
+        & (Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")),
+        "submitted": Q(status__in=submitted_statuses),
+        "returned": Q(status__in=returned_statuses),
+        "ia_pending": Q(
+            status="awaiting_ia_verification", ia_verification_status="pending"
+        ),
+        "verified": Q(ia_verification_status="confirmed"),
+        "partner_ev": Q(delivery_type="partner"),
+    }
+    tab_labels = {
+        "pending": "Evidence Pending",
+        "sf_missing": "SF ID Missing",
+        "submitted": "Submitted",
+        "returned": "Returned",
+        "ia_pending": "IA Pending",
+        "verified": "Verified",
+        "partner_ev": "Partner Work",
+    }
+    active_tab = request.GET.get("tab", "pending")
+    if active_tab not in tab_filters:
+        active_tab = "pending"
+    search_query = request.GET.get("q", "").strip()[:100]
+
+    aggregate_fields = {
+        f"{key}_count": Count("id", filter=condition)
+        for key, condition in tab_filters.items()
+    }
+    count_values = activities.aggregate(**aggregate_fields)
+    tabs = [
+        {
+            "key": key,
+            "label": tab_labels[key],
+            "count": count_values[f"{key}_count"],
+        }
+        for key in tab_filters
+    ]
+
+    filtered = activities.filter(tab_filters[active_tab])
+    if search_query:
+        filtered = filtered.filter(
+            Q(school__name__icontains=search_query)
+            | Q(school__school_id__icontains=search_query)
+            | Q(cluster__name__icontains=search_query)
+            | Q(salesforce_activity_id__icontains=search_query)
+            | Q(activity_type__icontains=search_query)
+        )
+    page_obj = Paginator(
+        filtered.select_related(
+            "school",
+            "school__district",
+            "cluster",
+            "cluster__district",
+        ).order_by("-updated_at", "-id"),
+        24,
+    ).get_page(request.GET.get("page"))
+
+    owner_ids = {
+        value
+        for activity in page_obj.object_list
+        for value in (activity.responsible_staff_id, activity.assigned_partner_id)
+        if value
+    }
+    owners = {
+        profile.id: profile.user.name
+        for profile in StaffProfile.objects.filter(id__in=owner_ids).select_related(
+            "user"
+        )
+    }
+    owners.update(
+        {
+            partner.id: partner.name
+            for partner in Partner.objects.filter(id__in=owner_ids)
+        }
     )
 
-    pending = [
-        a for a in activities if a.status == "completed" and a.evidence_status == "none"
-    ]
-    sf_missing = [
-        a
-        for a in activities
-        if a.evidence_status == "uploaded" and not a.salesforce_activity_id
-    ]
-    submitted = [
-        a
-        for a in activities
-        if a.status
-        in (
-            "submitted_to_pl",
-            "awaiting_ia_verification",
-            "ia_verified",
-            "accountant_confirmed",
+    rows = []
+    for activity in page_obj.object_list:
+        if active_tab == "pending":
+            action = {
+                "label": "Upload evidence",
+                "url": f"/activities/{activity.id}/evidence",
+                "drawer": True,
+            }
+        elif active_tab == "sf_missing":
+            action = {
+                "label": "Enter SF ID",
+                "url": f"/activities/{activity.id}/salesforce-id",
+                "drawer": True,
+            }
+        elif active_tab == "verified":
+            action = {
+                "label": "View evidence packet",
+                "url": f"/activities/{activity.id}/evidence/detail",
+                "drawer": False,
+            }
+        else:
+            action = {
+                "label": "View details",
+                "url": f"/my-plan/{activity.id}",
+                "drawer": False,
+            }
+        location = activity.school or activity.cluster
+        district = ""
+        if activity.school and activity.school.district:
+            district = activity.school.district.name
+        elif activity.cluster and activity.cluster.district:
+            district = activity.cluster.district.name
+        rows.append(
+            {
+                "id": activity.id,
+                "activity_type": activity.get_activity_type_display(),
+                "location": getattr(location, "name", "No location assigned"),
+                "location_id": getattr(activity.school, "school_id", ""),
+                "district": district,
+                "owner": owners.get(
+                    activity.assigned_partner_id
+                    if activity.delivery_type == "partner"
+                    else activity.responsible_staff_id,
+                    "Unassigned",
+                ),
+                "delivery": activity.get_delivery_type_display(),
+                "evidence": activity.get_evidence_status_display(),
+                "verification": activity.get_ia_verification_status_display(),
+                "status": activity.get_status_display(),
+                "salesforce_id": activity.salesforce_activity_id,
+                "updated_at": activity.updated_at,
+                "action": action,
+            }
         )
-    ]
-    returned = [
-        a
-        for a in activities
-        if a.status in ("returned", "returned_by_pl", "returned_by_ia")
-    ]
-    ia_pending = [
-        a
-        for a in activities
-        if a.status == "awaiting_ia_verification"
-        and a.ia_verification_status == "pending"
-    ]
-    verified = [a for a in activities if a.ia_verification_status == "confirmed"]
-    partner_ev = [a for a in activities if a.delivery_type == "partner"]
 
     context = {
-        "pending": pending,
-        "sf_missing": sf_missing,
-        "submitted": submitted,
-        "returned": returned,
-        "ia_pending": ia_pending,
-        "verified": verified,
-        "partner_ev": partner_ev,
+        "active_tab": active_tab,
+        "tabs": tabs,
+        "rows": rows,
+        "page_obj": page_obj,
+        "search_query": search_query,
     }
-    return render(request, "pages/evidence/index.html", context)
+    template = (
+        "partials/evidence/workspace.html"
+        if request.headers.get("HX-Request") == "true"
+        else "pages/evidence/index.html"
+    )
+    return render(request, template, context)
 
 
 @require_page_permission("evidence_center")
@@ -1530,3 +1631,29 @@ def accounts_activity_evidence_view(request, activity_id):
         "evidence_list": evidence_list,
     }
     return render(request, "pages/accounts/activity_evidence.html", context)
+
+
+@require_page_permission("my_plan")
+def request_budget_amendment_action(request, activity_id):
+    """POST: staff requests a date change for a finance-locked activity —
+    the sanctioned Budget Amendment path the cost-snapshot lock points to."""
+    from apps.budget.amendment_service import request_amendment
+
+    if request.method == "POST":
+        try:
+            amendment = request_amendment(
+                activity_id,
+                {
+                    "newDate": request.POST.get("new_date", "").strip(),
+                    "reason": request.POST.get("reason", "").strip(),
+                },
+                request.user,
+            )
+            messages.success(
+                request,
+                f"Budget amendment submitted for review (move to {amendment.new_date}). "
+                "The accountant will apply it without touching the locked cost snapshot.",
+            )
+        except Exception as exc:
+            messages.error(request, f"Amendment request failed: {exc}")
+    return redirect("/my-plan")

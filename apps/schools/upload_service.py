@@ -485,7 +485,12 @@ def import_school_batch(batch, user) -> dict:
         if real_batch:
             batch = real_batch
 
-    rows = batch.rows.exclude(status="blocked")
+    # "duplicate" rows are schools that already exist while update_existing
+    # was False — staging counted them as NOT imported, so importing (and
+    # silently overwriting the live school) here would contradict what the
+    # uploader was told. Only "blocked" and "duplicate" are excluded;
+    # "update" rows (update_existing=True) still update.
+    rows = batch.rows.exclude(status__in=["blocked", "duplicate"])
     created_count = 0
     updated_count = 0
     clean_count = 0

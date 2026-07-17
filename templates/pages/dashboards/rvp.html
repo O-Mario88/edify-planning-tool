@@ -15,13 +15,13 @@
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <form method="get" class="flex items-center gap-2 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 edify-text-caption font-bold text-slate-500">
+      <form method="get" class="flex items-center gap-2 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 edify-text-caption font-bold text-slate-500">
         <span class="uppercase tracking-wider edify-text-caption">FY</span>
         <select name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </form>
-      <a href="/reports" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-lg transition-colors">
+      <a href="/reports" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-control transition-colors">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Export
       </a>
@@ -35,7 +35,7 @@
   {% if attention %}
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     {% for a in attention %}
-    <div class="rounded-xl border p-4 {% if a.tone == 'danger' %}border-rose-200 bg-rose-50/50{% elif a.tone == 'warning' %}border-amber-200 bg-amber-50/50{% else %}border-slate-200 edify-surface{% endif %}">
+    <div class="rounded-surface border p-4 {% if a.tone == 'danger' %}border-rose-200 bg-rose-50/50{% elif a.tone == 'warning' %}border-amber-200 bg-amber-50/50{% else %}border-slate-200 edify-surface{% endif %}">
       <p class="text-[12.5px] font-bold {% if a.tone == 'danger' %}text-rose-700{% elif a.tone == 'warning' %}text-amber-700{% else %}text-slate-700{% endif %}">{{ a.title }}</p>
       <p class="edify-text-caption text-slate-600 font-medium mt-1">{{ a.body }}</p>
       {% if a.drill == 'approvals' %}
@@ -55,7 +55,7 @@
 
       {# ── 1 + 2: overview chart · region ranking ─────────────────────────── #}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2"
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2"
              x-data="{
                chart: null,
                initChart() {
@@ -69,7 +69,7 @@
                      { name: 'Verified', type: 'column', data: {{ overview.verified }} },
                      { name: 'Target Achievement %', type: 'line', data: {{ overview.achievement }} }
                    ],
-                   chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+                   chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                    stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
                    colors: ['var(--edify-border)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)'],
                    plotOptions: { bar: { columnWidth: '55%', borderRadius: 2 } },
@@ -92,7 +92,7 @@
           <div id="rvpOverview"></div>
         </div>
 
-        <div id="region-ranking" class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5">
+        <div id="region-ranking" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">2. Region Performance Ranking</h2>
           <div class="space-y-2.5">
             {% for r in regions %}
@@ -100,12 +100,12 @@
               <div class="flex items-center justify-between edify-text-caption">
                 <span class="font-semibold text-slate-700"><span class="text-slate-300 font-bold mr-1.5">{{ r.rank }}</span>{{ r.name }}</span>
                 <span class="flex items-center gap-2">
-                  <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if r.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif r.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ r.status }}</span>
+                  <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if r.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif r.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ r.status }}</span>
                   <span class="font-bold tabular-nums text-slate-700">{{ r.score }}</span>
                 </span>
               </div>
-              <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
-                <div class="h-full rounded-full {% if r.tone == 'success' %}bg-emerald-500{% elif r.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {{ r.score }}%"></div>
+              <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
+                <div class="h-full rounded-pill {% if r.tone == 'success' %}bg-emerald-500{% elif r.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {{ r.score }}%"></div>
               </div>
               <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ r.schools }} schools · exec {{ r.exec_rate }}% · verified {{ r.verified_rate }}% · SSA {% if r.ssa is not None %}{{ r.ssa }}%{% else %}—{% endif %} · SF ID {{ r.sf_rate }}%</p>
             </div>
@@ -118,7 +118,7 @@
       </div>
 
       {# ── 3: Country Directors ────────────────────────────────────────────── #}
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">3. Country Directors Performance</h2>
         <div class="overflow-x-auto -mx-4 px-4">
           <table class="w-full min-w-[760px] edify-text-caption">
@@ -139,7 +139,7 @@
               {% for c in cds %}
               <tr class="hover:bg-slate-50/50">
                 <td class="py-2.5 pr-3">
-                  <div class="flex items-center gap-2"><span class="h-6 w-6 rounded-full bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0">{{ c.initials }}</span>{{ c.name }}</div>
+                  <div class="flex items-center gap-2"><span class="h-6 w-6 rounded-pill bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0">{{ c.initials }}</span>{{ c.name }}</div>
                 </td>
                 <td class="py-2.5 px-2 text-slate-500">{{ c.country }}</td>
                 <td class="py-2.5 px-2 text-center tabular-nums">{{ c.target_pct }}%</td>
@@ -148,7 +148,7 @@
                 <td class="py-2.5 px-2 text-center tabular-nums {% if c.sf_rate < 90 %}text-amber-600{% endif %}">{{ c.sf_rate }}%</td>
                 <td class="py-2.5 px-2 text-center tabular-nums {% if c.backlog %}text-rose-500{% endif %}">{{ c.backlog }}</td>
                 <td class="py-2.5 px-2 text-center tabular-nums">{{ c.budget_util }}%</td>
-                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if c.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif c.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ c.risk }}</span></td>
+                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if c.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif c.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ c.risk }}</span></td>
               </tr>
               {% empty %}
               <tr><td colspan="9" class="py-4 text-center edify-text-caption text-slate-400 font-medium">No active Country Directors.</td></tr>
@@ -159,23 +159,23 @@
       </div>
 
       {# ── 4: Budget & approval snapshot ───────────────────────────────────── #}
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">4. Country Budget &amp; Approval Snapshot</h2>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div class="rounded-xl border border-amber-100 bg-amber-50/40 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Monthly Pending</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.monthly_pending_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.monthly_pending }} budget(s)</p></div>
-          <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Annual Pending</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.annual_pending_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.annual_pending }} submission(s)</p></div>
-          <div class="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-emerald-600">Approved This FY</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.approved_fy_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.approved_fy_count }} monthly budget(s)</p></div>
-          <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total Regional Budget</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.total_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.returned_count }} returned</p></div>
+          <div class="rounded-surface border border-amber-100 bg-amber-50/40 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Monthly Pending</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.monthly_pending_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.monthly_pending }} budget(s)</p></div>
+          <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Annual Pending</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.annual_pending_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.annual_pending }} submission(s)</p></div>
+          <div class="rounded-surface border border-emerald-100 bg-emerald-50/40 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-emerald-600">Approved This FY</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.approved_fy_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.approved_fy_count }} monthly budget(s)</p></div>
+          <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total Regional Budget</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.total_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.returned_count }} returned</p></div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
           <div>
             <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Recent approval actions</p>
-            <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+            <div class="divide-y divide-slate-50 rounded-surface border border-slate-100">
               {% for d in budget_snapshot.recent_decisions %}
               <div class="px-3 py-2 flex items-center justify-between gap-2">
                 <div class="min-w-0"><p class="edify-text-caption font-semibold text-slate-700 truncate">{{ d.label }}</p><p class="edify-text-caption text-slate-400">{{ d.when|date:"d M Y H:i" }} · {{ d.by }}</p></div>
                 <span class="flex items-center gap-2 shrink-0"><span class="edify-text-caption font-bold tabular-nums text-slate-600">{{ d.amount }}</span>
-                <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if d.action == 'Approve' %}bg-emerald-50 text-emerald-700{% elif d.action == 'Return' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ d.action }}</span></span>
+                <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if d.action == 'Approve' %}bg-emerald-50 text-emerald-700{% elif d.action == 'Return' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ d.action }}</span></span>
               </div>
               {% empty %}
               <p class="px-3 py-3 edify-text-caption text-slate-400 font-medium">No RVP decisions recorded yet.</p>
@@ -185,19 +185,19 @@
           <div>
             <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Annual budget approval status</p>
             <div class="space-y-1.5 edify-text-caption font-semibold text-slate-600">
-              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Approved</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.approved }}</span></div>
-              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span>Pending</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.pending }}</span></div>
-              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-400"></span>Returned</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.returned }}</span></div>
-              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-slate-300"></span>Not Submitted / Draft</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.draft }}</span></div>
+              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500"></span>Approved</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.approved }}</span></div>
+              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-500"></span>Pending</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.pending }}</span></div>
+              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-400"></span>Returned</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.returned }}</span></div>
+              <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-slate-300"></span>Not Submitted / Draft</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.draft }}</span></div>
             </div>
             <button type="button" hx-get="/rvp/approvals?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                    class="mt-3 w-full h-9 rounded-lg border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">Open Approval Center</button>
+                    class="mt-3 w-full h-9 rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">Open Approval Center</button>
           </div>
         </div>
       </div>
 
       {# ── 5 + 6: special projects + impact ───────────────────────────────── #}
-      <div id="special-projects" class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4">
+      <div id="special-projects" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">5. Special Projects Performance <span class="text-slate-400 font-medium edify-text-caption">— impact is measured on verified annual SSA only</span></h2>
         <div class="overflow-x-auto -mx-4 px-4">
           <table class="w-full min-w-[860px] edify-text-caption">
@@ -223,13 +223,13 @@
                 <td class="py-2.5 px-2 text-center tabular-nums">{{ p.budget }}</td>
                 <td class="py-2.5 px-2 text-center tabular-nums">{{ p.target_pct }}%</td>
                 <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ p.verified }}</td>
-                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if p.impact_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif p.impact_tone == 'warning' %}bg-amber-50 text-amber-700{% elif p.impact_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ p.impact }}</span>{% if p.delta is not None %} <span class="edify-text-caption text-slate-400 tabular-nums">{{ p.delta }}pp</span>{% endif %}</td>
+                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if p.impact_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif p.impact_tone == 'warning' %}bg-amber-50 text-amber-700{% elif p.impact_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ p.impact }}</span>{% if p.delta is not None %} <span class="edify-text-caption text-slate-400 tabular-nums">{{ p.delta }}pp</span>{% endif %}</td>
                 <td class="py-2.5 px-2 text-slate-600">{{ p.recommendation }}</td>
                 <td class="py-2.5 px-2 text-right">
                   <form method="post" action="/rvp/project/{{ p.id }}/decision" class="inline-flex items-center gap-1"
                         @submit="if (!window.confirm('Record this strategic decision? It is audited and notifies the Country Director.')) $event.preventDefault()">
                     {% csrf_token %}
-                    <select name="action" class="h-7 px-1.5 rounded-lg border border-slate-200 edify-text-caption edify-surface">
+                    <select name="action" class="h-7 px-1.5 rounded-control border border-slate-200 edify-text-caption edify-surface">
                       <option value="scale">Approve Scale</option>
                       <option value="continue">Continue</option>
                       <option value="redesign">Request Redesign</option>
@@ -239,7 +239,7 @@
                       <option value="close">Close</option>
                       <option value="measure">Request Measurement</option>
                     </select>
-                    <button type="submit" class="h-7 px-2 rounded-lg bg-slate-800 text-white edify-text-caption font-bold hover:bg-slate-700">Record</button>
+                    <button type="submit" class="h-7 px-2 rounded-control bg-slate-800 text-white edify-text-caption font-bold hover:bg-slate-700">Record</button>
                   </form>
                 </td>
               </tr>
@@ -253,11 +253,11 @@
 
       {# ── 6 + 7: impact distribution · partner growth ─────────────────────── #}
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2.5">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">6. Special Project Impact</h2>
           {% for d in project_impact_dist %}
           <div class="flex items-center justify-between edify-text-caption font-semibold">
-            <span class="flex items-center gap-1.5 text-slate-600"><span class="h-2 w-2 rounded-full {% if d.label == 'Great Impact' %}bg-emerald-600{% elif d.label == 'Positive Impact' %}bg-emerald-400{% elif d.label == 'Negative Impact' %}bg-rose-500{% elif d.label == 'No Measurable Impact' %}bg-amber-400{% else %}bg-slate-300{% endif %}"></span>{{ d.label }}</span>
+            <span class="flex items-center gap-1.5 text-slate-600"><span class="h-2 w-2 rounded-pill {% if d.label == 'Great Impact' %}bg-emerald-600{% elif d.label == 'Positive Impact' %}bg-emerald-400{% elif d.label == 'Negative Impact' %}bg-rose-500{% elif d.label == 'No Measurable Impact' %}bg-amber-400{% else %}bg-slate-300{% endif %}"></span>{{ d.label }}</span>
             <span class="tabular-nums text-slate-700">{{ d.count }}</span>
           </div>
           {% empty %}
@@ -266,7 +266,7 @@
           <p class="edify-text-caption text-slate-400 font-medium pt-1">Official impact requires verified baseline + follow-up annual SSA. No monthly SSA claims.</p>
         </div>
 
-        <div id="partner-growth" class="lg:col-span-2 edify-surface rounded-xl border border-slate-100 shadow-sm p-4">
+        <div id="partner-growth" class="lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">7. Partner &amp; Stakeholder Growth</h2>
           <div class="overflow-x-auto -mx-4 px-4">
             <table class="w-full min-w-[640px] edify-text-caption">
@@ -290,7 +290,7 @@
                   <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ p.verified }}</td>
                   <td class="py-2.5 px-2 text-center tabular-nums">{% if p.ssa_improve is not None %}{{ p.ssa_improve }}pp{% else %}—{% endif %}</td>
                   <td class="py-2.5 px-2 text-slate-500">{{ p.strategic_value }}</td>
-                  <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if 'More' in p.recommendation or p.recommendation == 'Keep Active' %}bg-emerald-50 text-emerald-700{% elif 'Drop' in p.recommendation %}bg-rose-50 text-rose-700{% elif p.recommendation == 'Insufficient Data' %}bg-slate-50 text-slate-500{% else %}bg-amber-50 text-amber-700{% endif %}">{{ p.recommendation }}</span></td>
+                  <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if 'More' in p.recommendation or p.recommendation == 'Keep Active' %}bg-emerald-50 text-emerald-700{% elif 'Drop' in p.recommendation %}bg-rose-50 text-rose-700{% elif p.recommendation == 'Insufficient Data' %}bg-slate-50 text-slate-500{% else %}bg-amber-50 text-amber-700{% endif %}">{{ p.recommendation }}</span></td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="7" class="py-4 text-center edify-text-caption text-slate-400 font-medium">No partner activity in scope.</td></tr>
@@ -303,7 +303,7 @@
 
       {# ── 8 + 9: resource allocation · risks ─────────────────────────────── #}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2.5">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">8. Resource Allocation &amp; Scaling</h2>
           {% for f in allocation.funding %}
           <div>
@@ -311,8 +311,8 @@
               <span class="font-semibold text-slate-600">{{ f.region }}</span>
               <span class="font-bold tabular-nums text-slate-700">{{ f.amt }} <span class="text-slate-400 font-semibold">({{ f.share }}%)</span></span>
             </div>
-            <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
-              <div class="h-full rounded-full bg-blue-400" style="width: {{ f.share }}%"></div>
+            <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
+              <div class="h-full rounded-pill bg-blue-400" style="width: {{ f.share }}%"></div>
             </div>
             {% if f.flag %}<p class="edify-text-caption font-bold text-amber-600 mt-0.5">{{ f.flag }}</p>{% endif %}
           </div>
@@ -328,13 +328,13 @@
           <p class="edify-text-caption text-slate-400 font-medium">Reallocation decisions never edit approved budgets silently — they require a formal amendment (return &amp; resubmission).</p>
         </div>
 
-        <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4">
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">9. Operational Risk / Attention Needed</h2>
           <div class="space-y-1.5">
             {% for r in risks %}
-            <div class="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
+            <div class="flex items-center justify-between rounded-surface border border-slate-100 px-3 py-2">
               <span class="edify-text-caption font-semibold text-slate-600">{{ r.label }}{% if r.aging %} <span class="edify-text-caption text-slate-400">{{ r.aging }}</span>{% endif %}</span>
-              <span class="px-2 py-0.5 rounded-lg edify-text-caption font-bold tabular-nums {% if r.tone == 'danger' %}bg-rose-50 text-rose-700{% elif r.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-slate-50 text-slate-600{% endif %}">{{ r.count }}</span>
+              <span class="px-2 py-0.5 rounded-pill edify-text-caption font-bold tabular-nums {% if r.tone == 'danger' %}bg-rose-50 text-rose-700{% elif r.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-slate-50 text-slate-600{% endif %}">{{ r.count }}</span>
             </div>
             {% empty %}
             <p class="edify-text-caption text-slate-400 font-medium py-3">No open operational risks in scope.</p>
@@ -344,11 +344,11 @@
       </div>
 
       {# ── 10: quick executive actions ─────────────────────────────────────── #}
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">10. Quick Executive Actions</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {% for qa in quick_actions %}
-          <a href="{{ qa.url }}" class="h-11 px-3 flex items-center justify-between rounded-lg border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          <a href="{{ qa.url }}" class="h-11 px-3 flex items-center justify-between rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">
             {{ qa.label }} <span class="text-slate-300">&rsaquo;</span>
           </a>
           {% endfor %}
@@ -359,14 +359,14 @@
     {# ── Right executive rail ──────────────────────────────────────────────── #}
     <div class="lg:col-span-3 space-y-5 min-w-0">
 
-      <div id="rvp-approvals" class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4 space-y-2">
+      <div id="rvp-approvals" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Pending RVP Approvals</h2>
         <div class="space-y-1.5 edify-text-caption font-semibold text-slate-600">
           <div class="flex justify-between"><span>Monthly Budgets</span><span class="tabular-nums font-bold {% if budget_snapshot.monthly_pending %}text-amber-600{% endif %}">{{ budget_snapshot.monthly_pending }} · {{ budget_snapshot.monthly_pending_amt }}</span></div>
           <div class="flex justify-between"><span>Annual Budgets</span><span class="tabular-nums font-bold">{{ budget_snapshot.annual_pending }} · {{ budget_snapshot.annual_pending_amt }}</span></div>
         </div>
         {% for b in awaiting_rows %}
-        <div class="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
+        <div class="rounded-surface border border-amber-200 bg-amber-50/40 p-3">
           <div class="flex items-center justify-between">
             <p class="text-[12px] font-bold text-slate-700">{{ b.month }}</p>
             <p class="text-[12px] font-bold tabular-nums text-slate-800">{{ b.total }}</p>
@@ -377,14 +377,14 @@
               <input type="hidden" name="action" value="approve">
               <input type="hidden" name="budget_id" value="{{ b.id }}">
               <input type="hidden" name="fy" value="{{ fy }}">
-              <button type="submit" class="h-7 px-2.5 rounded-lg bg-emerald-600 text-white edify-text-caption font-bold hover:bg-emerald-700">Approve</button>
+              <button type="submit" class="h-7 px-2.5 rounded-control bg-emerald-600 text-white edify-text-caption font-bold hover:bg-emerald-700">Approve</button>
             </form>
             <form method="post" action="/country-budget/action" class="flex items-center gap-1">{% csrf_token %}
               <input type="hidden" name="action" value="return">
               <input type="hidden" name="budget_id" value="{{ b.id }}">
               <input type="hidden" name="fy" value="{{ fy }}">
-              <input type="text" name="reason" required placeholder="Return reason…" class="h-7 px-2 rounded-lg border border-slate-200 edify-text-caption w-28">
-              <button type="submit" class="h-7 px-2 rounded-lg border border-slate-200 text-slate-600 edify-text-caption font-bold hover:bg-slate-50">Return</button>
+              <input type="text" name="reason" required placeholder="Return reason…" class="h-7 px-2 rounded-control border border-slate-200 edify-text-caption w-28">
+              <button type="submit" class="h-7 px-2 rounded-control border border-slate-200 text-slate-600 edify-text-caption font-bold hover:bg-slate-50">Return</button>
             </form>
           </div>
         </div>
@@ -393,7 +393,7 @@
         {% endfor %}
         {% for a in annual_rows %}
         {% if a.status_key == 'submitted_to_rvp' %}
-        <div class="rounded-xl border border-blue-200 bg-blue-50/40 p-3">
+        <div class="rounded-surface border border-blue-200 bg-blue-50/40 p-3">
           <div class="flex items-center justify-between">
             <p class="text-[12px] font-bold text-slate-700">Annual FY {{ a.fy }}</p>
             <p class="text-[12px] font-bold tabular-nums text-slate-800">{{ a.total }}</p>
@@ -402,40 +402,40 @@
           <div class="flex items-center gap-1.5 mt-2">
             <form method="post" action="/rvp/annual/{{ a.id }}/action">{% csrf_token %}
               <input type="hidden" name="action" value="approve">
-              <button type="submit" class="h-7 px-2.5 rounded-lg bg-emerald-600 text-white edify-text-caption font-bold hover:bg-emerald-700">Approve &amp; Lock</button>
+              <button type="submit" class="h-7 px-2.5 rounded-control bg-emerald-600 text-white edify-text-caption font-bold hover:bg-emerald-700">Approve &amp; Lock</button>
             </form>
             <form method="post" action="/rvp/annual/{{ a.id }}/action" class="flex items-center gap-1">{% csrf_token %}
               <input type="hidden" name="action" value="return">
-              <input type="text" name="note" required placeholder="Return reason…" class="h-7 px-2 rounded-lg border border-slate-200 edify-text-caption w-28">
-              <button type="submit" class="h-7 px-2 rounded-lg border border-slate-200 text-slate-600 edify-text-caption font-bold hover:bg-slate-50">Return</button>
+              <input type="text" name="note" required placeholder="Return reason…" class="h-7 px-2 rounded-control border border-slate-200 edify-text-caption w-28">
+              <button type="submit" class="h-7 px-2 rounded-control border border-slate-200 text-slate-600 edify-text-caption font-bold hover:bg-slate-50">Return</button>
             </form>
           </div>
         </div>
         {% endif %}
         {% endfor %}
         <button type="button" hx-get="/rvp/approvals?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="w-full h-9 rounded-lg border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">View All Approvals</button>
+                class="w-full h-9 rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">View All Approvals</button>
       </div>
 
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4 space-y-2">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Recommended Next Actions</h2>
         {% for a in recommended %}
         <a href="{{ a.url }}" class="flex items-start gap-2 edify-text-caption font-semibold text-slate-600 hover:text-blue-700 transition-colors">
-          <span class="mt-0.5 px-1.5 rounded edify-text-caption font-bold {% if a.priority == 'high' %}bg-rose-50 text-rose-600{% else %}bg-slate-50 text-slate-500{% endif %}">{{ a.priority|upper }}</span>{{ a.label }}
+          <span class="mt-0.5 px-1.5 rounded-pill edify-text-caption font-bold {% if a.priority == 'high' %}bg-rose-50 text-rose-600{% else %}bg-slate-50 text-slate-500{% endif %}">{{ a.priority|upper }}</span>{{ a.label }}
         </a>
         {% empty %}
         <p class="edify-text-caption text-slate-400 font-medium">Nothing pending — the region is current.</p>
         {% endfor %}
       </div>
 
-      <a href="/debriefs?tab=escalated" class="block edify-surface rounded-xl border border-slate-100 shadow-sm p-4 space-y-2 hover:border-slate-200 transition-colors">
+      <a href="/debriefs?tab=escalated" class="block edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2 hover:border-slate-200 transition-colors">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Regional Field Intelligence <span class="text-slate-400 font-medium edify-text-caption">(escalated &amp; critical, last {{ field_debrief_intel.days }} days)</span></h2>
         <div class="grid grid-cols-2 gap-2 text-center">
-          <div class="rounded-lg py-2 {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+          <div class="rounded-surface py-2 {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
             <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.critical %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.critical }}</p>
             <p class="edify-text-caption font-semibold text-slate-400">Critical Risk</p>
           </div>
-          <div class="rounded-lg py-2 {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+          <div class="rounded-surface py-2 {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
             <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.escalated %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.escalated }}</p>
             <p class="edify-text-caption font-semibold text-slate-400">Escalated</p>
           </div>
@@ -447,16 +447,16 @@
         {% endif %}
       </a>
 
-      <div id="strategy-notes" class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
+      <div id="strategy-notes" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2.5">
         <div class="flex items-center justify-between">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Strategy Notes</h2>
           <button type="button" @click="showNote = true" class="edify-text-caption font-bold text-blue-600 hover:underline">+ New Note</button>
         </div>
         {% for n in strategy_notes %}
-        <div class="rounded-xl border border-slate-100 p-3">
+        <div class="rounded-surface border border-slate-100 p-3">
           <div class="flex items-center justify-between">
             <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ n.priority_label }}</p>
-            <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if n.status == 'done' %}bg-emerald-50 text-emerald-700{% elif n.status == 'open' %}bg-amber-50 text-amber-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ n.get_status_display }}</span>
+            <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if n.status == 'done' %}bg-emerald-50 text-emerald-700{% elif n.status == 'open' %}bg-amber-50 text-amber-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ n.get_status_display }}</span>
           </div>
           <p class="edify-text-caption text-slate-600 font-medium mt-1">{{ n.instruction|truncatechars:140 }}</p>
           <p class="edify-text-caption font-semibold text-slate-400 mt-1">{{ n.scope }}{% if n.deadline %} · due {{ n.deadline|date:"d M Y" }}{% endif %}</p>
@@ -473,7 +473,7 @@
   <!-- New strategy note -->
   <div x-show="showNote" x-cloak @click.self="showNote = false"
        class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
-    <div class="edify-surface rounded-lg shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
+    <div class="edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-[14px] font-bold text-slate-800">New Strategy Note</h3>
@@ -486,35 +486,35 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Strategic Priority</label>
-            <input type="text" name="priority" required class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]" placeholder="School Leadership">
+            <input type="text" name="priority" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]" placeholder="School Leadership">
           </div>
           <div>
             <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Scope</label>
-            <input type="text" name="scope" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]" placeholder="Regional / Uganda">
+            <input type="text" name="scope" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]" placeholder="Regional / Uganda">
           </div>
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Instruction <span class="text-rose-500">*</span></label>
-          <textarea name="instruction" required rows="3" class="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px]" placeholder="What must happen, and why…"></textarea>
+          <textarea name="instruction" required rows="3" class="mt-1 w-full px-3 py-2 rounded-control border border-slate-200 text-[12px]" placeholder="What must happen, and why…"></textarea>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Responsible CD</label>
-            <select name="responsible_cd_id" class="mt-1 w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] edify-surface">
+            <select name="responsible_cd_id" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] edify-surface">
               <option value="">—</option>
               {% for c in cd_options %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
             </select>
           </div>
           <div>
             <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Deadline</label>
-            <input type="date" name="deadline" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+            <input type="date" name="deadline" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
           </div>
         </div>
         <div>
           <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Expected Outcome</label>
-          <input type="text" name="expected_outcome" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]" placeholder="Measurable result expected">
+          <input type="text" name="expected_outcome" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]" placeholder="Measurable result expected">
         </div>
-        <button type="submit" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Save Strategy Note</button>
+        <button type="submit" class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Save Strategy Note</button>
       </form>
     </div>
   </div>

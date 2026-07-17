@@ -2,14 +2,14 @@
 <div class="space-y-5">
 
   {% if approve_error %}
-  <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-[12px] font-semibold text-rose-700">{{ approve_error }}</div>
+  <div class="rounded-surface border border-rose-200 bg-rose-50 px-4 py-2.5 text-[12px] font-semibold text-rose-700">{{ approve_error }}</div>
   {% endif %}
 
   {# ── KPI strip: 8 executive cards ──────────────────────────────────────── #}
   <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
     {% for k in kpi_strip_items %}
-    {% if k.link %}<a href="{{ k.link }}" class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all">{% else %}<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">{% endif %}
-      <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0
+    {% if k.link %}<a href="{{ k.link }}" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all">{% else %}<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">{% endif %}
+      <div class="h-8 w-8 rounded-surface flex items-center justify-center shrink-0
         {% if k.variant == 'primary' %}bg-blue-50 text-blue-600
         {% elif k.variant == 'success' %}bg-emerald-50 text-emerald-600
         {% elif k.variant == 'info' %}bg-teal-50 text-teal-600
@@ -31,9 +31,9 @@
   {% if leadership_attention %}
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
     {% for c in leadership_attention %}
-    <div class="rounded-xl border p-4 flex items-start gap-3
+    <div class="rounded-surface border p-4 flex items-start gap-3
       {% if c.tone == 'danger' %}bg-rose-50/60 border-rose-200{% elif c.tone == 'warning' %}bg-amber-50/60 border-amber-200{% else %}bg-sky-50/60 border-sky-200{% endif %}">
-      <span class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5
+      <span class="h-8 w-8 rounded-pill flex items-center justify-center shrink-0 mt-0.5
         {% if c.tone == 'danger' %}bg-rose-100 text-rose-600{% elif c.tone == 'warning' %}bg-amber-100 text-amber-600{% else %}bg-sky-100 text-sky-600{% endif %}">
         {% include "partials/analytics/pl/_icon.html" with name="warning" %}
       </span>
@@ -49,7 +49,7 @@
 
   {# ── Country Performance Overview | Regional Performance ──────────────── #}
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-    <div class="lg:col-span-3 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
+    <div class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
          x-data="{
            chart: null,
            initChart() {
@@ -58,17 +58,17 @@
              if (!el) return;
              this.chart = new ApexCharts(el, {
                series: [
-                 { name: 'Planned Activities', type: 'column', data: {{ country_performance.planned|safe }} },
-                 { name: 'Completed Activities', type: 'column', data: {{ country_performance.completed|safe }} },
-                 { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|safe }} },
-                 { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|safe }} }
+                 { name: 'Planned Activities', type: 'column', data: {{ country_performance.planned|escape }} },
+                 { name: 'Completed Activities', type: 'column', data: {{ country_performance.completed|escape }} },
+                 { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|escape }} },
+                 { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|escape }} }
                ],
-               chart: { height: 265, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+               chart: { height: 265, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
                colors: ['var(--edify-border)', 'var(--edify-chart-teal)', 'var(--edify-chart-teal)', 'var(--edify-chart-amber)'],
                plotOptions: { bar: { columnWidth: '60%', borderRadius: 2 } },
                dataLabels: { enabled: false },
-               labels: {{ country_performance.labels|safe }},
+               labels: {{ country_performance.labels|escape }},
                xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
                         labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
                yaxis: [
@@ -91,12 +91,12 @@
         <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Are plans converting into verified execution? · FY {{ fy }}</p>
       </div>
       {% if not country_performance.has_target %}
-      <p class="edify-text-caption text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1 inline-block">Achievement line shows 0 — no country targets set yet.</p>
+      <p class="edify-text-caption text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-surface px-2.5 py-1 inline-block">Achievement line shows 0 — no country targets set yet.</p>
       {% endif %}
       <div class="h-[265px] w-full" id="cdDashPerfChart"></div>
     </div>
 
-    <div class="lg:col-span-2 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+    <div class="lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
       <div class="flex items-center justify-between">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
           <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="map" %}</span>Regional Performance
@@ -110,8 +110,8 @@
             <span class="font-semibold text-slate-700"><span class="text-slate-400 font-bold mr-1.5">{{ r.rank }}</span>{{ r.name }}</span>
             <span class="font-bold text-slate-800 tabular-nums">{{ r.achievement }}%</span>
           </div>
-          <div class="h-[9px] bg-slate-100 rounded-full overflow-hidden mt-1">
-            <div class="h-full rounded-full {% if r.tone == 'success' %}bg-teal-500{% elif r.tone == 'warning' %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ r.achievement }}%"></div>
+          <div class="h-[9px] bg-slate-100 rounded-pill overflow-hidden mt-1">
+            <div class="h-full rounded-pill {% if r.tone == 'success' %}bg-teal-500{% elif r.tone == 'warning' %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ r.achievement }}%"></div>
           </div>
           <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ r.schools|intcomma }} schools · {{ r.completed|intcomma }} of {{ r.planned|intcomma }} done · {{ r.no_ssa|intcomma }} no SSA</p>
         </div>
@@ -130,7 +130,7 @@
 
   {# ── PL Performance | Fund Approval & Finance Snapshot ────────────────── #}
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-    <div class="lg:col-span-3 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    <div class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <div class="flex items-center justify-between">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
           <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="users" %}</span>Country Program Leads Performance
@@ -159,7 +159,7 @@
               <td class="text-left text-slate-500 py-2 whitespace-nowrap">{{ r.region }}</td>
               <td class="text-right py-2">
                 <span class="inline-flex items-center gap-1.5 justify-end">
-                  <span class="hidden sm:block w-14 h-[6px] bg-slate-100 rounded-full overflow-hidden"><span class="block h-full rounded-full {% if r.target_pct >= 70 %}bg-teal-500{% elif r.target_pct >= 55 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ r.target_pct }}%"></span></span>
+                  <span class="hidden sm:block w-14 h-[6px] bg-slate-100 rounded-pill overflow-hidden"><span class="block h-full rounded-pill {% if r.target_pct >= 70 %}bg-teal-500{% elif r.target_pct >= 55 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ r.target_pct }}%"></span></span>
                   <span class="font-bold text-slate-700 tabular-nums">{{ r.target_pct }}%</span>
                 </span>
               </td>
@@ -169,9 +169,9 @@
               <td class="text-right tabular-nums py-2 {% if r.sf_pending %}text-amber-600 font-bold{% else %}text-slate-500{% endif %}">{{ r.sf_pending|intcomma }}</td>
               <td class="text-right tabular-nums text-slate-500 py-2">{{ r.backlog }}</td>
               <td class="text-right py-2 pr-1">
-                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full edify-text-caption font-bold whitespace-nowrap
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap
                   {% if r.risk_tone == 'danger' %}bg-rose-50 text-rose-700{% elif r.risk_tone == 'warning' %}bg-orange-50 text-orange-700{% elif r.risk_tone == 'amber' %}bg-amber-50 text-amber-700{% else %}bg-emerald-50 text-emerald-700{% endif %}">
-                  <span class="h-1.5 w-1.5 rounded-full {% if r.risk_tone == 'danger' %}bg-rose-500{% elif r.risk_tone == 'warning' %}bg-orange-500{% elif r.risk_tone == 'amber' %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>{{ r.risk }}
+                  <span class="h-1.5 w-1.5 rounded-pill {% if r.risk_tone == 'danger' %}bg-rose-500{% elif r.risk_tone == 'warning' %}bg-orange-500{% elif r.risk_tone == 'amber' %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>{{ r.risk }}
                 </span>
               </td>
             </tr>
@@ -185,12 +185,12 @@
     </div>
 
     <div class="lg:col-span-2 space-y-5">
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="currency" %}</span>Fund Approval &amp; Finance Snapshot
           </h2>
-          <span class="edify-text-caption font-bold px-2 py-0.5 rounded-full {% if finance_snapshot.pending_count %}bg-amber-100 text-amber-700{% else %}bg-emerald-50 text-emerald-600{% endif %}">{{ finance_snapshot.pending_count }} pending</span>
+          <span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill {% if finance_snapshot.pending_count %}bg-amber-100 text-amber-700{% else %}bg-emerald-50 text-emerald-600{% endif %}">{{ finance_snapshot.pending_count }} pending</span>
         </div>
         {% if finance_snapshot.pending_rows %}
         <div class="divide-y divide-slate-50">
@@ -204,32 +204,32 @@
               <span class="edify-text-caption font-bold text-slate-700 tabular-nums">{{ r.amount }}</span>
               <button hx-post="/dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}"
                       hx-target="#cd-dashboard-body" hx-swap="innerHTML"
-                      class="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-bold transition-colors">Approve</button>
-              <a href="/fund-requests/weekly" class="h-7 px-2.5 rounded-lg border border-slate-200 text-slate-600 edify-text-caption font-bold inline-flex items-center hover:bg-slate-50">Review</a>
+                      class="h-7 px-2.5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-bold transition-colors">Approve</button>
+              <a href="/fund-requests/weekly" class="h-7 px-2.5 rounded-control border border-slate-200 text-slate-600 edify-text-caption font-bold inline-flex items-center hover:bg-slate-50">Review</a>
             </div>
           </div>
           {% endfor %}
         </div>
         {% else %}
         <div class="flex items-center gap-2 py-2">
-          <span class="h-7 w-7 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+          <span class="h-7 w-7 rounded-pill bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
           </span>
           <p class="edify-text-caption font-semibold text-slate-500">No weekly fund requests awaiting CD approval.</p>
         </div>
         {% endif %}
 
-        <div class="rounded-xl border border-violet-100 bg-violet-50/50 p-3 flex items-center justify-between">
+        <div class="rounded-surface border border-violet-100 bg-violet-50/50 p-3 flex items-center justify-between">
           <div class="min-w-0">
             <p class="edify-text-caption font-bold uppercase tracking-wider text-violet-500">Country Monthly Budget{% if budget_stage.month %} · {{ budget_stage.month }}{% endif %}</p>
             <p class="text-[12.5px] font-bold text-slate-800 mt-0.5 truncate">{{ budget_stage.label }}{% if budget_stage.amount %} <span class="edify-text-caption text-slate-500 font-semibold">· {{ budget_stage.amount }}</span>{% endif %}</p>
             <p class="edify-text-caption font-semibold text-slate-500">{{ budget_stage.helper }} · Accountant disburses after approval</p>
           </div>
-          <a href="/country-budget/" class="h-8 px-3 rounded-lg bg-violet-600 hover:bg-violet-700 text-white edify-text-caption font-bold inline-flex items-center transition-colors shrink-0">Open</a>
+          <a href="/country-budget/" class="h-8 px-3 rounded-control bg-violet-600 hover:bg-violet-700 text-white edify-text-caption font-bold inline-flex items-center transition-colors shrink-0">Open</a>
         </div>
       </div>
 
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
         <div class="flex items-center justify-between">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Funded Not Completed</h2>
           <a href="/disbursements" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">Aged analysis →</a>
@@ -237,15 +237,15 @@
         <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-none">{{ finance_snapshot.funded_not_completed.amount }}</p>
         <p class="edify-text-caption font-semibold text-slate-400">across {{ finance_snapshot.funded_not_completed.activities|intcomma }} funded activities</p>
         <div class="grid grid-cols-3 gap-2 pt-1">
-          <div class="rounded-lg bg-rose-50 border border-rose-100 p-2 text-center">
+          <div class="rounded-surface bg-rose-50 border border-rose-100 p-2 text-center">
             <p class="text-[14px] font-bold text-rose-700 tabular-nums">{{ finance_snapshot.funded_not_completed.overdue }}</p>
             <p class="edify-text-caption font-bold text-slate-500 uppercase">Overdue</p>
           </div>
-          <div class="rounded-lg bg-amber-50 border border-amber-100 p-2 text-center">
+          <div class="rounded-surface bg-amber-50 border border-amber-100 p-2 text-center">
             <p class="text-[14px] font-bold text-amber-700 tabular-nums">{{ finance_snapshot.funded_not_completed.in_progress }}</p>
             <p class="edify-text-caption font-bold text-slate-500 uppercase">In Progress</p>
           </div>
-          <div class="rounded-lg bg-slate-50 border border-slate-100 p-2 text-center">
+          <div class="rounded-surface bg-slate-50 border border-slate-100 p-2 text-center">
             <p class="text-[14px] font-bold text-slate-700 tabular-nums">{{ finance_snapshot.funded_not_completed.not_started }}</p>
             <p class="edify-text-caption font-bold text-slate-500 uppercase">Not Started</p>
           </div>
@@ -256,18 +256,18 @@
 
   {# ── Operational Risk & Backlog | School & SSA Intelligence ───────────── #}
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
-    <div class="lg:col-span-2 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
         <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="warning" %}</span>Operational Risk &amp; Backlog
       </h2>
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {% for c in operational_risk %}
-        <a href="{{ c.link }}" class="rounded-xl p-3 border transition-all hover:shadow-sm
+        <a href="{{ c.link }}" class="rounded-surface p-3 border transition-all hover:shadow-sm
            {% if c.tone == 'danger' %}bg-rose-50 border-rose-100
            {% elif c.tone == 'warning' %}bg-amber-50 border-amber-100
            {% elif c.tone == 'violet' %}bg-violet-50 border-violet-100
            {% else %}bg-sky-50 border-sky-100{% endif %}">
-          <span class="h-6 w-6 rounded-md flex items-center justify-center
+          <span class="h-6 w-6 rounded-pill flex items-center justify-center
             {% if c.tone == 'danger' %}bg-rose-100 text-rose-600{% elif c.tone == 'warning' %}bg-amber-100 text-amber-600{% elif c.tone == 'violet' %}bg-violet-100 text-violet-600{% else %}bg-sky-100 text-sky-600{% endif %}">
             {% include "partials/analytics/pl/_icon.html" with name=c.icon %}
           </span>
@@ -280,7 +280,7 @@
       <p class="edify-text-caption text-slate-400 font-medium">Every card drills to a filtered oversight list — follow-up routes to the responsible PL.</p>
     </div>
 
-    <div class="lg:col-span-3 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4">
+    <div class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
         <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>School &amp; SSA Intelligence
       </h2>
@@ -301,7 +301,7 @@
               <tr>
                 <td class="text-left font-semibold text-slate-700 pl-1 whitespace-nowrap max-w-[130px] truncate">{{ row.label }}{% if row.kind == 'cluster' %} <span class="text-slate-400 edify-text-caption">cluster</span>{% endif %}</td>
                 {% for cell in row.cells %}
-                <td class="text-center font-bold tabular-nums rounded px-0.5 py-1
+                <td class="text-center font-bold tabular-nums rounded-small px-0.5 py-1
                   {% if cell.tone == 'success' %}bg-emerald-100 text-emerald-800
                   {% elif cell.tone == 'lime' %}bg-lime-100 text-lime-800
                   {% elif cell.tone == 'warning' %}bg-amber-100 text-amber-800
@@ -310,7 +310,7 @@
                   {% if cell.pct is not None %}{{ cell.pct|floatformat:0 }}%{% else %}—{% endif %}
                 </td>
                 {% endfor %}
-                <td class="text-center font-extrabold tabular-nums rounded px-0.5 py-1
+                <td class="text-center font-extrabold tabular-nums rounded-small px-0.5 py-1
                   {% if row.overall_tone == 'success' %}bg-emerald-200 text-emerald-900
                   {% elif row.overall_tone == 'lime' %}bg-lime-200 text-lime-900
                   {% elif row.overall_tone == 'warning' %}bg-amber-200 text-amber-900
@@ -349,10 +349,10 @@
                 <td class="text-left font-semibold text-slate-700 py-2 pl-1 max-w-[170px] truncate">{{ p.school }}</td>
                 <td class="text-left text-slate-500 py-2 whitespace-nowrap">{{ p.region }}</td>
                 <td class="text-left py-2">
-                  {% for i in p.issues %}<span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold mr-1">{{ i }}</span>{% endfor %}
+                  {% for i in p.issues %}<span class="inline-block px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold mr-1">{{ i }}</span>{% endfor %}
                 </td>
                 <td class="text-right py-2">
-                  <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold {% if p.risk_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ p.risk }}</span>
+                  <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if p.risk_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ p.risk }}</span>
                 </td>
                 <td class="text-right py-2 pr-1">
                   <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">Inspect</a>
@@ -369,25 +369,25 @@
   </div>
 
   {# ── Country Field Intelligence (Field Debrief §11) ────────────────────── #}
-  <a href="/debriefs" class="block edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 hover:border-slate-200 transition-colors">
+  <a href="/debriefs" class="block edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 hover:border-slate-200 transition-colors">
     <div class="flex items-center justify-between">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Country Field Intelligence <span class="text-slate-400 font-medium edify-text-caption">(last {{ field_debrief_intel.days }} days)</span></h2>
       <span class="edify-text-caption font-bold text-blue-600">Open Field Debriefs →</span>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-      <div class="rounded-lg bg-slate-50 py-2.5 text-center">
+      <div class="rounded-surface bg-slate-50 py-2.5 text-center">
         <p class="text-[16px] font-bold text-slate-800 tabular-nums">{{ field_debrief_intel.total }}</p>
         <p class="edify-text-caption font-semibold text-slate-400">Debriefs Filed</p>
       </div>
-      <div class="rounded-lg py-2.5 text-center {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+      <div class="rounded-surface py-2.5 text-center {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
         <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.critical %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.critical }}</p>
         <p class="edify-text-caption font-semibold text-slate-400">Critical Risk</p>
       </div>
-      <div class="rounded-lg py-2.5 text-center {% if field_debrief_intel.action_required %}bg-amber-50{% else %}bg-slate-50{% endif %}">
+      <div class="rounded-surface py-2.5 text-center {% if field_debrief_intel.action_required %}bg-amber-50{% else %}bg-slate-50{% endif %}">
         <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.action_required %}text-amber-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.action_required }}</p>
         <p class="edify-text-caption font-semibold text-slate-400">Action Required</p>
       </div>
-      <div class="rounded-lg py-2.5 text-center {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+      <div class="rounded-surface py-2.5 text-center {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
         <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.escalated %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.escalated }}</p>
         <p class="edify-text-caption font-semibold text-slate-400">Escalated</p>
       </div>
@@ -400,12 +400,12 @@
   </a>
 
   {# ── Quick Leadership Actions ──────────────────────────────────────────── #}
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Quick Leadership Actions</h2>
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
       {% for q in quick_actions %}
-      <a href="{{ q.url }}" class="rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm p-3 flex flex-col gap-1.5 transition-all">
-        <span class="h-7 w-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+      <a href="{{ q.url }}" class="rounded-surface border border-slate-100 hover:border-slate-200 hover:shadow-sm p-3 flex flex-col gap-1.5 transition-all">
+        <span class="h-7 w-7 rounded-pill bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
           {% include "partials/analytics/pl/_icon.html" with name=q.icon %}
         </span>
         <span class="edify-text-caption font-bold text-slate-700 leading-tight">{{ q.label }}</span>

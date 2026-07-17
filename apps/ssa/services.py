@@ -29,40 +29,63 @@ ALL_INTERVENTIONS = [i.value for i in SsaIntervention]
 
 def _parse_date(value) -> datetime:
     if isinstance(value, datetime):
-        return value
-    # Accept ISO date/datetime strings.
-    try:
-        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise BadRequest(f"Invalid dateOfSsa: {value}") from exc
+        parsed = value
+    else:
+        # Accept ISO date/datetime strings.
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise BadRequest(f"Invalid dateOfSsa: {value}") from exc
+
+    # ``SsaRecord.date_of_ssa`` is timezone-aware.  Normalise date-only and
+    # naïve ISO inputs at the service boundary so every caller — UI, API,
+    # import or job — persists the same canonical representation.
+    if timezone.is_naive(parsed):
+        return timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
 
 
 def _recompute_readiness(school: School) -> None:
     """Centralized readiness recompute (§16) — the bridge to planning lists.
 
     Derives current_fy_ssa_status from actual SsaRecord rows (source of truth),
-    then sets planning_readiness accordingly:
-      confirmed record → done → ready
-      pending record   → scheduled/partner_assigned → limited
-      no record        → not_done → locked
+    then sets canonical planning readiness accordingly:
+      confirmed record → done → ready_for_support_planning
+      pending record   → scheduled/partner_assigned → ready_for_baseline_ssa
+      no record        → not_done → ready_for_baseline_ssa (if clustered)
 
     This avoids stale-cache bugs where the denormalized field is never updated
     (e.g. bulk/CSV uploads that bypass the upload() service path)."""
 
-    # Derive status from the actual SSA records for the current FY or any confirmed record.
+    # Derive status from the actual SSA records for the CURRENT operational FY
+    # only. The field is literally named current_fy_ssa_status: a confirmed
+    # record from a previous FY (a legitimate baseline upload) must not mark
+    # this FY "done" — that suppressed the Baseline/Refresh To-Do and the
+    # decision-engine "no SSA" recommendation for stale schools.
+    current_fy = get_operational_fy()
     confirmed = SsaRecord.objects.filter(
-        school=school, deleted_at__isnull=True, verification_status="confirmed"
+        school=school,
+        deleted_at__isnull=True,
+        verification_status="confirmed",
+        fy=current_fy,
     ).exists()
     pending = SsaRecord.objects.filter(
-        school=school, deleted_at__isnull=True, verification_status="pending"
+        school=school,
+        deleted_at__isnull=True,
+        verification_status="pending",
+        fy=current_fy,
     ).exists()
 
     if confirmed:
         ssa = "done"
     elif pending:
         ssa = "partner_assigned"
+    elif school.current_fy_ssa_status in ("done", "partner_assigned"):
+        # Status was earned by a record that is no longer current-FY (stale
+        # baseline or FY rollover) — reset so the refresh becomes actionable.
+        ssa = "not_done"
     else:
-        # Fall back to whatever the field already holds (e.g. "scheduled")
+        # Preserve operator-set intermediate states (e.g. "scheduled").
         ssa = school.current_fy_ssa_status
 
     # Persist the recomputed status if it changed.
@@ -171,8 +194,13 @@ def upload(data: dict, principal) -> dict:
         # Score (a 0-10 performance metric) being confused with, or
         # overwriting, the actual child headcount.
 
-        # SSA done + verified -> school's current-FY SSA status becomes done.
-        if record.verification_status == "confirmed":
+        # SSA done + verified -> school's current-FY SSA status becomes done,
+        # but ONLY when the record actually belongs to the current operational
+        # FY — prior-FY baseline uploads must not mark this FY complete.
+        if (
+            record.verification_status == "confirmed"
+            and record.fy == get_operational_fy()
+        ):
             school.current_fy_ssa_status = "done"
             school.save(update_fields=["current_fy_ssa_status", "updated_at"])
         _recompute_readiness(school)
@@ -210,16 +238,46 @@ def school_history(school_id: str, principal) -> list[dict]:
     return [_serialize_record(r) for r in records]
 
 
+def latest_applicable_record(school):
+    """THE canonical "latest SSA" lookup for every decision surface
+    (ecosystem audit): the newest CONFIRMED record. An unverified upload must
+    never gate, justify, or rank money-bearing work — before this helper, six
+    surfaces computed "weakest interventions" with different filters and the
+    planning gate could pass or fail on an unconfirmed score."""
+    return (
+        SsaRecord.objects.filter(
+            school=school,
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        )
+        .order_by("-date_of_ssa", "-created_at")
+        .first()
+    )
+
+
+def weakest_interventions_for(school, *, n=2):
+    """Canonical weakest-intervention ranking from the latest confirmed SSA.
+    Returns (record, rows) where rows is an ascending-score list of
+    {"intervention", "score"} dicts, at most n long ([] when no confirmed
+    SSA exists — never fabricate a need)."""
+    record = latest_applicable_record(school)
+    if not record:
+        return None, []
+    rows = list(
+        record.scores.all()
+        .order_by("score", "intervention")
+        .values("intervention", "score")[:n]
+    )
+    return record, rows
+
+
 def recommendation(school_id: str, principal) -> dict:
-    """The two weakest interventions + a severity band (from the latest SSA)."""
+    """The two weakest interventions + a severity band (from the latest
+    confirmed SSA — the canonical decision rule)."""
     school = School.objects.filter(school_id=school_id).first()
     if not school:
         raise NotFoundError("School not found.")
-    latest = (
-        SsaRecord.objects.filter(school=school, deleted_at__isnull=True)
-        .order_by("-date_of_ssa")
-        .first()
-    )
+    latest = latest_applicable_record(school)
     if not latest:
         return {
             "schoolId": school_id,

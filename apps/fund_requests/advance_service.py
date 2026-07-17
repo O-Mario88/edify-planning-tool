@@ -201,6 +201,18 @@ def disburse(advance_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
+    # Money out of the account must be on the tamper-evident chain like every
+    # other accountant action in this module.
+    _audit(
+        principal,
+        "advance_request.disburse",
+        adv,
+        {
+            "amount": adv.disbursed_amount,
+            "method": adv.disburse_method,
+            "reference": adv.disburse_reference,
+        },
+    )
     return _serialize(adv)
 
 
@@ -494,6 +506,15 @@ def submit_reimbursement(advance_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
+    _audit(
+        principal,
+        "advance_request.submit_reimbursement",
+        adv,
+        {
+            "amount_spent": adv.accounted_amount,
+            "netsuite_id": adv.accountability_netsuite_id,
+        },
+    )
     return _serialize(adv)
 
 

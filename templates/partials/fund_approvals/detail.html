@@ -16,7 +16,7 @@
   </div>
 
   {% if not selected.valid %}
-  <div class="rounded-xl bg-amber-50 border border-amber-200 p-3">
+  <div class="rounded-surface bg-amber-50 border border-amber-200 p-3">
     <p class="text-[12px] font-bold text-amber-800 mb-1">Needs Review — resolve before approving:</p>
     <ul class="space-y-0.5">{% for i in selected.issues %}<li class="edify-text-caption font-semibold text-amber-700">• {{ i }}</li>{% endfor %}</ul>
   </div>
@@ -26,7 +26,7 @@
     <!-- Funding breakdown from planned activities -->
     <div class="xl:col-span-2">
       <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Funding Breakdown from Planned Activities</h3>
-      <div class="overflow-x-auto rounded-xl border border-slate-100">
+      <div class="overflow-x-auto rounded-surface border border-slate-100">
         <table class="w-full text-left">
           <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100 bg-slate-50/60">
             <th class="px-3 py-2">Activity Category</th><th class="px-3 py-2 text-center">Planned Qty</th><th class="px-3 py-2 text-right">Unit Cost</th><th class="px-3 py-2 text-right">Total</th>
@@ -54,7 +54,7 @@
     <!-- Plan snapshot -->
     <div>
       <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Plan Snapshot</h3>
-      <div class="rounded-xl border border-slate-100 divide-y divide-slate-50">
+      <div class="rounded-surface border border-slate-100 divide-y divide-slate-50">
         {% include "partials/fund_approvals/snapshot_row.html" with label="Planned schools by staff" value=selected.snapshot.staff_schools %}
         {% include "partials/fund_approvals/snapshot_row.html" with label="Partner school visits" value=selected.snapshot.partner_visits %}
         {% include "partials/fund_approvals/snapshot_row.html" with label="Cluster meetings planned" value=selected.snapshot.cluster_meetings %}
@@ -66,19 +66,19 @@
 
   <!-- Actions -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
-    <a href="/planning" class="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-[12.5px] font-bold text-emerald-700 transition-colors">
+    <a href="/planning" class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-[12.5px] font-bold text-emerald-700 transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       View Full Plan
     </a>
     <button hx-post="/fund-approvals/action" hx-target="#fund-approval-root" hx-swap="innerHTML"
             hx-vals='{"action":"approve","cceo":"{{ selected.cceo_user_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
             {% if not selected.valid %}disabled{% endif %}
-            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl text-[12.5px] font-bold text-white transition-colors {% if selected.valid %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control text-[12.5px] font-bold text-white transition-colors {% if selected.valid %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Approve
     </button>
     <button hx-get="/fund-approvals/return?cceo={{ selected.cceo_user_id }}&name={{ selected.name|urlencode }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-rose-200 edify-surface hover:bg-rose-50 text-[12.5px] font-bold text-rose-600 transition-colors">
+            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[12.5px] font-bold text-rose-600 transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
       Return
     </button>

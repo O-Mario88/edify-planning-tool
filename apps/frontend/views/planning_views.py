@@ -16,6 +16,7 @@ from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
 from apps.core.enums import (
+    ActivityType,
     SsaIntervention,
     PlanningReadiness,
     SsaStatus,
@@ -26,6 +27,207 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
+
+
+def _scoped_project_assignments(request, raw_ids):
+    """Resolve selected School Directory → Project assignments in caller scope."""
+    from apps.projects.models import ProjectSchoolAssignment
+    from apps.projects.planning_service import _scoped_projects
+
+    ids = [value.strip() for value in str(raw_ids or "").split(",") if value.strip()]
+    ids = list(dict.fromkeys(ids))[:50]
+    project_ids = _scoped_projects(request.user).values_list("id", flat=True)
+    return list(
+        ProjectSchoolAssignment.objects.filter(id__in=ids, project_id__in=project_ids)
+        .select_related("school", "project")
+        .order_by("school__name")
+    )
+
+
+@require_page_permission("projects")
+def special_projects_bulk_schedule_view(request):
+    """Schedule the same dated visit for selected project-school pairs."""
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden(
+            "You do not have permission to schedule activities."
+        )
+
+    assignments = _scoped_project_assignments(
+        request,
+        request.POST.get("assignments")
+        if request.method == "POST"
+        else request.GET.get("assignments"),
+    )
+    if not assignments:
+        return HttpResponse("No in-scope project schools were selected.", status=400)
+
+    if request.method == "GET":
+        return render(
+            request,
+            "partials/projects/bulk_schedule_drawer.html",
+            {
+                "assignments": assignments,
+                "assignment_ids": ",".join(item.id for item in assignments),
+                "interventions": SsaIntervention.choices,
+                "drawer_size": "md",
+            },
+        )
+
+    scheduled_date = request.POST.get("scheduled_date", "").strip()
+    activity_type = request.POST.get("activity_type", "school_visit").strip()
+    focus = request.POST.get("focus_intervention", "").strip()
+    if not scheduled_date:
+        return HttpResponse(
+            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a delivery date.</div>',
+            status=400,
+        )
+
+    try:
+        with transaction.atomic():
+            for assignment in assignments:
+                payload = {
+                    "schoolId": assignment.school.school_id,
+                    "projectId": assignment.project_id,
+                    "activityType": activity_type,
+                    "scheduledDate": scheduled_date,
+                    "deliveryType": "staff",
+                    "ssaCollectionExpected": activity_type
+                    in {"baseline_ssa_visit", "school_visit_ssa_collection"},
+                    "activityPurposeText": f"Special project support: {assignment.project.name}",
+                    "expectedOutcome": "Complete the planned project support and record evidence.",
+                }
+                if focus:
+                    payload["focusIntervention"] = focus
+                    payload["purposeIntervention"] = focus
+                schedule_school_visit(payload, request.user)
+        messages.success(
+            request, f"Scheduled {len(assignments)} project school activities."
+        )
+        response = HttpResponse(
+            '<script>window.location.href="/projects/my-plan";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    except Exception as exc:
+        return HttpResponse(
+            f'<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Could not schedule the selection: {exc}</div>',
+            status=400,
+        )
+
+
+@require_page_permission("projects")
+def special_projects_bulk_partner_view(request):
+    """Create traceable partner activities for selected project-school pairs."""
+    if not RolePermissionService.can_assign_to_partner(request.user):
+        return HttpResponseForbidden(
+            "You do not have permission to assign to a partner."
+        )
+
+    assignments = _scoped_project_assignments(
+        request,
+        request.POST.get("assignments")
+        if request.method == "POST"
+        else request.GET.get("assignments"),
+    )
+    if not assignments:
+        return HttpResponse("No in-scope project schools were selected.", status=400)
+
+    partners = Partner.objects.filter(
+        deleted_at__isnull=True, active_status=True
+    ).order_by("name")
+    if request.method == "GET":
+        return render(
+            request,
+            "partials/projects/bulk_partner_drawer.html",
+            {
+                "assignments": assignments,
+                "assignment_ids": ",".join(item.id for item in assignments),
+                "partners": partners,
+                "interventions": SsaIntervention.choices,
+                "drawer_size": "md",
+            },
+        )
+
+    from datetime import date
+    from apps.activities.models import Activity
+    from apps.activities.services import create as create_activity
+
+    partner = get_object_or_404(partners, id=request.POST.get("partner_id"))
+    scheduled_date = request.POST.get("scheduled_date", "").strip()
+    activity_type = request.POST.get("activity_type", "school_visit").strip()
+    focus = request.POST.get("focus_intervention", "").strip() or None
+    if not scheduled_date:
+        return HttpResponse(
+            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a partner delivery date.</div>',
+            status=400,
+        )
+    try:
+        parsed_date = date.fromisoformat(scheduled_date)
+    except ValueError:
+        return HttpResponse(
+            '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a valid delivery date.</div>',
+            status=400,
+        )
+
+    try:
+        created = 0
+        with transaction.atomic():
+            for assignment in assignments:
+                duplicate = Activity.objects.filter(
+                    deleted_at__isnull=True,
+                    project_id=assignment.project_id,
+                    school=assignment.school,
+                    assigned_partner_id=partner.id,
+                    planned_date=parsed_date,
+                    activity_type=activity_type,
+                ).exists()
+                if duplicate:
+                    continue
+                pa = PartnerAssignment.objects.create(
+                    school=assignment.school,
+                    partner=partner,
+                    assigning_staff_id=(
+                        request.user.staff_profile_id
+                        or request.user.user_id
+                        or request.user.id
+                    ),
+                    purpose=f"Special project support: {assignment.project.name}",
+                    focus_intervention=focus,
+                    expected_activity_type=activity_type,
+                    scheduled_date=parsed_date,
+                    status="partner_scheduled",
+                    notes=f"Project: {assignment.project.name}",
+                )
+                payload = {
+                    "schoolId": assignment.school.school_id,
+                    "projectId": assignment.project_id,
+                    "activityType": activity_type,
+                    "scheduledDate": scheduled_date,
+                    "deliveryType": "partner",
+                    "assignedPartnerId": partner.id,
+                    "ssaCollectionExpected": activity_type
+                    in {"baseline_ssa_visit", "school_visit_ssa_collection"},
+                    "activityPurposeText": pa.purpose,
+                    "expectedOutcome": "Partner completes delivery and submits project evidence.",
+                }
+                if focus:
+                    payload["focusIntervention"] = focus
+                    payload["purposeIntervention"] = focus
+                create_activity(payload, principal=request.user)
+                created += 1
+        messages.success(
+            request, f"Assigned {created} project school activities to {partner.name}."
+        )
+        response = HttpResponse(
+            '<script>window.location.href="/projects/my-plan";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    except Exception as exc:
+        return HttpResponse(
+            f'<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Could not assign the selection: {exc}</div>',
+            status=400,
+        )
 
 
 @require_page_permission("planning")
@@ -208,6 +410,7 @@ def planning_dashboard_view(request):
 
     # If the target is only the school table
     if request.headers.get("HX-Target") == "schools-table-container":
+        context["is_planning_htmx_table"] = True
         return render(request, "partials/planning/school_table.html", context)
 
     return render(request, "pages/planning/index.html", context)
@@ -264,12 +467,63 @@ def schedule_modal_view(request):
         deleted_at__isnull=True, active_status=True
     ).order_by("name")
 
+    school_activity_types = {
+        ActivityType.SCHOOL_VISIT,
+        ActivityType.FOLLOW_UP_VISIT,
+        ActivityType.COACHING_VISIT,
+        ActivityType.IN_SCHOOL_SUPPORT,
+        ActivityType.SCHOOL_IMPROVEMENT_TRAINING,
+        ActivityType.BASELINE_SSA_VISIT,
+        ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
+    }
+    ssa_collection_activity_types = {
+        ActivityType.BASELINE_SSA_VISIT,
+        ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
+        ActivityType.SCHOOL_VISIT,
+    }
+    recommended_activity_type = request.GET.get(
+        "recommended_activity_type", ActivityType.SCHOOL_VISIT
+    )
+    if recommended_activity_type not in school_activity_types:
+        recommended_activity_type = ActivityType.SCHOOL_VISIT
+    if (
+        school.current_fy_ssa_status != "done"
+        and recommended_activity_type
+        not in {
+            ActivityType.BASELINE_SSA_VISIT,
+            ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
+            ActivityType.SCHOOL_VISIT,
+        }
+    ):
+        recommended_activity_type = ActivityType.BASELINE_SSA_VISIT
+    recommended_activity_label = dict(ActivityType.choices).get(
+        recommended_activity_type, "School Visit"
+    )
+    # The chooser is derived from the same enum accepted by the scheduling
+    # service.  Do not let a recommendation title drift from the form value:
+    # every option rendered here is a valid direct-school ActivityType.
+    selectable_activity_types = (
+        ssa_collection_activity_types
+        if school.current_fy_ssa_status != "done"
+        else school_activity_types - ssa_collection_activity_types
+    )
+    activity_type_options = [
+        (value, label)
+        for value, label in ActivityType.choices
+        if value in selectable_activity_types
+    ]
+    recommended_focus_intervention = request.GET.get("focus_intervention", "")
+
     context = {
         "school": school,
         "recommendations": recommendations,
         "interventions": SsaIntervention.choices,
         "partners": partners,
         "drawer_size": "lg",
+        "recommended_activity_type": recommended_activity_type,
+        "recommended_activity_label": recommended_activity_label,
+        "activity_type_options": activity_type_options,
+        "recommended_focus_intervention": recommended_focus_intervention,
         # Optional project context — stamps the scheduled activity so it flows
         # into the Special Projects dashboard / analytics / My Plan.
         "project_id": request.GET.get("project_id", ""),
@@ -373,11 +627,7 @@ def schedule_action_view(request):
                 principal=request.user,
             )
             messages.success(request, "School visit scheduled successfully.")
-        elif activity_type in [
-            "school_visit",
-            "baseline_ssa_visit",
-            "school_visit_ssa_collection",
-        ]:
+        elif school_id:
             schedule_school_visit(payload, request.user)
             messages.success(request, "School visit scheduled successfully.")
         else:
@@ -387,7 +637,10 @@ def schedule_action_view(request):
         # APPEND_SLASH is off and "/my-plan" has no trailing-slash route, so a
         # redirect to "/my-plan/" 404s — the activity saves but the user lands
         # on an error page and never sees confirmation.
-        response = HttpResponse('<script>window.location.href = "/my-plan";</script>')
+        plan_url = "/projects/my-plan" if project_id else "/my-plan"
+        response = HttpResponse(
+            f'<script>window.location.href = "{plan_url}";</script>'
+        )
         response["HX-Trigger"] = "close-drawer"
         return response
     except ReasonRequiredError as e:
@@ -399,7 +652,7 @@ def schedule_action_view(request):
         )
     except Exception as e:
         return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
             status=400,
         )
 
@@ -436,6 +689,9 @@ def assign_partner_modal_view(request):
         "drawer_type": "center",
         # Optional project context — stamps the partner activity for the loop.
         "project_id": request.GET.get("project_id", ""),
+        "recommended_focus_intervention": request.GET.get(
+            "focus_intervention", ""
+        ),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
 
@@ -468,14 +724,26 @@ def assign_partner_action_view(request):
             expected_date = _date.fromisoformat(expected_date_raw)
         except ValueError:
             pass
+    if project_id and not expected_date:
+        return HttpResponse(
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Choose a delivery date so the partner activity can be costed and linked to this project.</div>',
+            status=400,
+        )
 
     try:
         partner = get_object_or_404(Partner, id=partner_id)
 
-        from apps.activities.models import Activity
         from apps.activities.services import create as create_activity
 
-        monitored_by_staff_id = request.user.user_id or request.user.id
+        # PartnerAssignment and Activity.monitor fields use the StaffProfile
+        # CUID when one exists.  Falling back to the User id keeps Admins
+        # without a profile attributable without creating a second identity
+        # scheme for normal field staff.
+        monitored_by_staff_id = (
+            request.user.staff_profile_id
+            or request.user.user_id
+            or request.user.id
+        )
 
         def _finalize(pa, *, school=None, cluster=None, act_type, extra_fields=None):
             """Convert a freshly-created PartnerAssignment into a properly
@@ -505,15 +773,12 @@ def assign_partner_action_view(request):
                 data["clusterId"] = cluster.id
             if extra_fields:
                 data.update(extra_fields)
-            result = create_activity(data, principal=request.user)
-            # create() stamps monitored_by_staff_id from the StaffProfile CUID
-            # convention (matches My Plan's own scoping) — override to the
-            # raw User id this view/PartnerAssignment.assigning_staff_id and
-            # the reschedule-drawer's assigning-staff lookup already use, so
-            # both stay consistent for this handoff.
-            Activity.objects.filter(id=result["id"]).update(
-                monitored_by_staff_id=monitored_by_staff_id
-            )
+            create_activity(data, principal=request.user)
+            # activities.services.create() records the monitor using the
+            # canonical StaffProfile/User owner id used by My Plan.  Do not
+            # overwrite it with this view's raw User id: that creates a
+            # second identity scheme and can hide partner work from its
+            # assigned monitor.
             # Keep the PartnerAssignment in sync with the Activity it now
             # owns instead of leaving it stuck at pending_scheduling.
             pa.status = "partner_scheduled"
@@ -554,7 +819,12 @@ def assign_partner_action_view(request):
             )
             dup = _recent_duplicate(school=school, act_type=normalized_type)
             if dup:
-                response = HttpResponse("<script>window.location.reload();</script>")
+                target = "/projects/my-plan" if project_id else None
+                response = HttpResponse(
+                    f'<script>window.location.href="{target}";</script>'
+                    if target
+                    else "<script>window.location.reload();</script>"
+                )
                 response["HX-Trigger"] = "close-drawer"
                 return response
             with transaction.atomic():
@@ -577,7 +847,6 @@ def assign_partner_action_view(request):
                 )
                 # Update status
                 school.current_fy_ssa_status = "partner_assigned"
-                school.planning_readiness = "limited"
                 school.save(
                     update_fields=[
                         "current_fy_ssa_status",
@@ -614,7 +883,7 @@ def assign_partner_action_view(request):
 
                 # Assign all schools in the cluster
                 for school in School.objects.filter(
-                    cluster_assignments__cluster=cluster, deleted_at__isnull=True
+                    cluster_id=cluster.id, deleted_at__isnull=True
                 ):
                     PartnerAssignment.objects.create(
                         school=school,
@@ -628,7 +897,6 @@ def assign_partner_action_view(request):
                         status="pending_scheduling",
                     )
                     school.current_fy_ssa_status = "partner_assigned"
-                    school.planning_readiness = "limited"
                     school.save(
                         update_fields=[
                             "current_fy_ssa_status",
@@ -638,12 +906,16 @@ def assign_partner_action_view(request):
                     )
 
         # Return refresh trigger and close drawer
-        response = HttpResponse("<script>window.location.reload();</script>")
+        response = HttpResponse(
+            '<script>window.location.href="/projects/my-plan";</script>'
+            if project_id
+            else "<script>window.location.reload();</script>"
+        )
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
         return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
             status=400,
         )
 
@@ -773,14 +1045,13 @@ def bulk_action_view(request):
         partner_id = request.POST.get("partner_id")
         if not partner_id:
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Select a partner before confirming.</div>',
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Select a partner before confirming.</div>',
                 status=400,
             )
         partner = get_object_or_404(Partner, id=partner_id)
 
         from datetime import date as _date
 
-        from apps.activities.models import Activity
         from apps.activities.services import create as create_activity
 
         bulk_date_raw = request.POST.get("scheduled_date", "").strip()
@@ -791,7 +1062,11 @@ def bulk_action_view(request):
             except ValueError:
                 pass
 
-        monitored_by_staff_id = request.user.user_id or request.user.id
+        monitored_by_staff_id = (
+            request.user.staff_profile_id
+            or request.user.user_id
+            or request.user.id
+        )
         dedup_window = timezone.timedelta(seconds=15)
 
         for s in schools:
@@ -828,7 +1103,7 @@ def bulk_action_view(request):
                 # same PartnerAssignment once a date IS picked — instead of
                 # ever persisting an un-costed activity.
                 if bulk_date:
-                    result = create_activity(
+                    create_activity(
                         {
                             "activityType": "school_visit",
                             "schoolId": s.school_id,
@@ -839,14 +1114,10 @@ def bulk_action_view(request):
                         },
                         principal=request.user,
                     )
-                    Activity.objects.filter(id=result["id"]).update(
-                        monitored_by_staff_id=monitored_by_staff_id
-                    )
                     pa.status = "partner_scheduled"
                     pa.scheduled_date = bulk_date
                     pa.save(update_fields=["status", "scheduled_date", "updated_at"])
                 s.current_fy_ssa_status = "partner_assigned"
-                s.planning_readiness = "limited"
                 s.save(
                     update_fields=[
                         "current_fy_ssa_status",
@@ -873,14 +1144,14 @@ def bulk_action_view(request):
         reason = request.POST.get("reason", "").strip() or None
         if not scheduled_date_raw:
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Scheduled date is required.</div>',
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Scheduled date is required.</div>',
                 status=400,
             )
         try:
             scheduled_date = _date.fromisoformat(scheduled_date_raw)
         except ValueError:
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Invalid date.</div>',
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Invalid date.</div>',
                 status=400,
             )
 
@@ -921,7 +1192,7 @@ def bulk_action_view(request):
             )
         except BadRequest as e:
             return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {e}</div>',
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {e}</div>',
                 status=400,
             )
 

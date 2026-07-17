@@ -14,10 +14,11 @@ from apps.ssa.upload_service import upload_ssa_file
 from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
-from apps.clusters.models import Cluster, SchoolClusterAssignment
+from apps.clusters.models import Cluster
 from apps.clusters.services import (
-    sync_school_cluster_assignment,
+    assign_school as assign_school_to_cluster,
     create_cluster as create_cluster_service,
+    set_school_cluster_membership,
 )
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.projects.models import Project, ProjectSchoolAssignment
@@ -121,7 +122,21 @@ def school_directory_view(request):
     cluster_status = request.GET.get("cluster_status", "").strip()
     project_status = request.GET.get("project_status", "").strip()
     active_tab = request.GET.get("tab", "all").strip()
+    if active_tab not in {
+        "all",
+        "unclustered",
+        "clustered",
+        "not_assigned",
+        "assigned",
+    }:
+        active_tab = "all"
     page_number = request.GET.get("page", 1)
+    try:
+        per_page = int(request.GET.get("per_page", 15))
+    except (TypeError, ValueError):
+        per_page = 15
+    if per_page not in {15, 25, 50}:
+        per_page = 15
 
     # Apply dropdown filters
     filtered_qs = base_qs.order_by("name")
@@ -171,43 +186,67 @@ def school_directory_view(request):
     elif active_tab == "assigned":
         schools_qs = schools_qs.filter(project_assignments__isnull=False).distinct()
 
-    # CSV export of the currently filtered list (same pattern as /clusters).
-    if request.GET.get("export", "").strip() in ("csv", "xlsx"):
+    # Export the currently filtered list in the format promised by the UI.
+    export_format = request.GET.get("export", "").strip()
+    if export_format in ("csv", "xlsx"):
         import csv
+        from io import BytesIO
         from django.http import HttpResponse
+
+        headers = [
+            "School ID",
+            "Name",
+            "Type",
+            "District",
+            "Sub-county",
+            "Region",
+            "Enrollment",
+            "Cluster Status",
+            "SSA Status",
+            "Planning Readiness",
+        ]
+        export_rows = (
+            [
+                school.school_id,
+                school.name,
+                school.school_type,
+                school.district.name if school.district else "",
+                school.sub_county.name if school.sub_county else "",
+                school.region.name if school.region else "",
+                school.enrollment or "",
+                school.cluster_status or "",
+                school.current_fy_ssa_status or "",
+                school.planning_readiness or "",
+            ]
+            for school in schools_qs.select_related(
+                "district", "sub_county", "region"
+            )[:5000]
+        )
+
+        if export_format == "xlsx":
+            from openpyxl import Workbook
+
+            workbook = Workbook(write_only=True)
+            worksheet = workbook.create_sheet("Schools")
+            worksheet.append(headers)
+            for row in export_rows:
+                worksheet.append(row)
+            output = BytesIO()
+            workbook.save(output)
+            response = HttpResponse(
+                output.getvalue(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+            response["Content-Disposition"] = (
+                'attachment; filename="schools_export.xlsx"'
+            )
+            return response
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="schools_export.csv"'
         writer = csv.writer(response)
-        writer.writerow(
-            [
-                "School ID",
-                "Name",
-                "Type",
-                "District",
-                "Sub-county",
-                "Region",
-                "Enrollment",
-                "Cluster Status",
-                "SSA Status",
-                "Planning Readiness",
-            ]
-        )
-        for s in schools_qs.select_related("district", "sub_county", "region")[:5000]:
-            writer.writerow(
-                [
-                    s.school_id,
-                    s.name,
-                    s.school_type,
-                    s.district.name if s.district else "",
-                    s.sub_county.name if s.sub_county else "",
-                    s.region.name if s.region else "",
-                    s.enrollment or "",
-                    s.cluster_status or "",
-                    s.current_fy_ssa_status or "",
-                    s.planning_readiness or "",
-                ]
-            )
+        writer.writerow(headers)
+        writer.writerows(export_rows)
         return response
 
     # Compute scoped base KPIs for the KPI Row
@@ -311,7 +350,7 @@ def school_directory_view(request):
     schools_qs = schools_qs.annotate(
         _project_count=Count("project_assignments", distinct=True)
     )
-    paginator = Paginator(schools_qs, 15)
+    paginator = Paginator(schools_qs, per_page)
     page_obj = paginator.get_page(page_number)
     pages_list = list(
         page_obj.paginator.get_elided_page_range(
@@ -362,6 +401,7 @@ def school_directory_view(request):
     context = {
         "page_obj": page_obj,
         "pages_list": pages_list,
+        "per_page": per_page,
         "view_models": view_models,
         "kpi_strip_items": kpi_strip_items,
         "regions": regions,
@@ -586,12 +626,16 @@ def add_to_cluster_drawer_view(request, school_id):
                     district_id=school.district_id, deleted_at__isnull=True
                 ).order_by("name")
                 for rc in recommended_clusters:
-                    rc.schools_count = rc.assignments.count()
+                    rc.schools_count = School.objects.filter(
+                        cluster_id=rc.id, deleted_at__isnull=True
+                    ).count()
                 all_clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by(
                     "name"
                 )
                 for ac in all_clusters:
-                    ac.schools_count = ac.assignments.count()
+                    ac.schools_count = School.objects.filter(
+                        cluster_id=ac.id, deleted_at__isnull=True
+                    ).count()
                 staff_list = (
                     StaffProfile.objects.filter(user__is_active=True)
                     .select_related("user")
@@ -673,13 +717,7 @@ def add_to_cluster_drawer_view(request, school_id):
             cluster_id = cluster_data["id"]
 
         cluster = get_object_or_404(Cluster, id=cluster_id, deleted_at__isnull=True)
-        with transaction.atomic():
-            school.cluster_id = cluster.id
-            school.cluster_status = "clustered"
-            school.recompute_quality_and_readiness()
-            school.save()
-
-            sync_school_cluster_assignment(school, cluster, user.user_id)
+        assign_school_to_cluster(school.school_id, {"clusterId": cluster.id}, user)
 
         from apps.audit.services import log as audit_log
 
@@ -840,6 +878,30 @@ def assign_to_project_drawer_view(request, school_id):
             except ValueError:
                 pass
 
+        # Ecosystem rule: assignment must use verified SSA need, or carry an
+        # explicit override reason (same gate as apps.projects.services).
+        from apps.projects.services import evaluate_school_need
+
+        matched_intervention = evaluate_school_need(project, school)
+        if (
+            project.target_intervention_list()
+            and not matched_intervention
+            and not notes
+        ):
+            return render(
+                request,
+                "partials/schools/assign_to_project_drawer.html",
+                _drawer_context(
+                    {
+                        "validation_error": (
+                            "This school's confirmed SSA shows no weakness in "
+                            "the project's target interventions. Add a note "
+                            "explaining why it should join anyway."
+                        )
+                    }
+                ),
+            )
+
         ProjectSchoolAssignment.objects.create(
             project=project,
             school=school,
@@ -849,6 +911,8 @@ def assign_to_project_drawer_view(request, school_id):
             start_date=start_date,
             support_area=support_area,
             notes=notes,
+            assignment_reason=notes if not matched_intervention else "",
+            matched_intervention=matched_intervention or "",
         )
 
         # Set the project's coordinator if one was chosen and none is set yet
@@ -1038,6 +1102,8 @@ def school_detail_view(request, school_id):
 
     stroke_dashoffset = 175.9 * (100 - school.data_quality_score) / 100
 
+    from apps.core.navigation import get_user_role_slug
+
     context = {
         "school": school,
         "latest_ssa": latest_ssa,
@@ -1047,8 +1113,34 @@ def school_detail_view(request, school_id):
         "activities": activities,
         "impact_data": impact_data,
         "stroke_dashoffset": stroke_dashoffset,
+        # Deletion is Admin-only (enforced server-side by delete_school; this
+        # flag only controls whether the Danger Zone renders).
+        "can_delete_school": get_user_role_slug(request.user) == "ADMIN",
     }
     return render(request, "pages/schools/detail.html", context)
+
+
+@require_page_permission("school_profile")
+def school_delete_view(request, school_id):
+    """Admin-only school deletion (POST). Guard rails live in the service."""
+    from apps.core.exceptions import BadRequest, NotFoundError
+    from apps.schools.services import delete_school
+
+    if request.method != "POST":
+        return redirect("frontend:school_detail", school_id=school_id)
+    try:
+        result = delete_school(school_id, request.user)
+    except NotFoundError:
+        messages.error(request, "School not found.")
+        return redirect("frontend:schools_directory")
+    except BadRequest as exc:
+        messages.error(request, str(exc.detail))
+        return redirect("frontend:school_detail", school_id=school_id)
+    messages.warning(
+        request,
+        f"School '{result['name']}' deleted. SSA history and audit logs are retained.",
+    )
+    return redirect("frontend:schools_directory")
 
 
 @require_page_permission("school_directory")
@@ -1058,7 +1150,10 @@ def bulk_assign_cluster_view(request):
         cluster_id = request.POST.get("cluster_id", "").strip()
         if school_ids and cluster_id:
             cluster = get_object_or_404(Cluster, id=cluster_id, deleted_at__isnull=True)
-            schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
+            scope = resolve_user_scope(request.user)
+            schools = school_queryset(scope).filter(
+                id__in=school_ids, deleted_at__isnull=True
+            )
             already_clustered = schools.filter(cluster_status="clustered")
             if already_clustered.exists():
                 skipped_names = ", ".join([s.name for s in already_clustered])
@@ -1069,12 +1164,9 @@ def bulk_assign_cluster_view(request):
 
             count = 0
             for s in schools:
-                with transaction.atomic():
-                    s.cluster_id = cluster.id
-                    s.cluster_status = "clustered"
-                    s.planning_readiness = "ready"
-                    s.save()
-                    sync_school_cluster_assignment(s, cluster, request.user.user_id)
+                assign_school_to_cluster(
+                    s.school_id, {"clusterId": cluster.id}, request.user
+                )
                 count += 1
             if count > 0:
                 messages.success(
@@ -1174,7 +1266,6 @@ def add_school_view(request):
                 region=district.region,
                 school_type=school_type,
                 enrollment=enrollment,
-                planning_readiness="blocked",
             )
             messages.success(
                 request,
@@ -1317,11 +1408,6 @@ def school_edit_drawer_view(request, school_id):
             new_cluster = get_object_or_404(
                 Cluster, id=cluster_id, deleted_at__isnull=True
             )
-            school.cluster_id = new_cluster.id
-            school.cluster_status = "clustered"
-        else:
-            school.cluster_id = None
-            school.cluster_status = "unclustered"
 
         owner_id = request.POST.get("account_owner_id")
         if owner_id:
@@ -1341,16 +1427,9 @@ def school_edit_drawer_view(request, school_id):
 
         with transaction.atomic():
             school.save()
-            # Keep SchoolClusterAssignment in sync with the drawer's cluster
-            # choice — this path used to update School.cluster_id without
-            # ever touching the join table, so the school would never show
-            # up in its new cluster's school list.
-            if new_cluster:
-                sync_school_cluster_assignment(
-                    school, new_cluster, request.user.user_id
-                )
-            else:
-                SchoolClusterAssignment.objects.filter(school=school).delete()
+            set_school_cluster_membership(
+                school, new_cluster, request.user.user_id
+            )
         messages.success(
             request,
             f"School '{school.name}' successfully updated and quality score recalculated!",
@@ -1369,7 +1448,6 @@ def school_onboard_drawer_view(request):
     from django.http import HttpResponse
     from django.contrib import messages
     from apps.schools.models import School
-    from apps.clusters.models import SchoolClusterAssignment
 
     districts = District.objects.all().order_by("name")
     clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
@@ -1397,17 +1475,14 @@ def school_onboard_drawer_view(request):
                 region=district.region,
                 school_type=school_type,
                 enrollment=enrollment,
-                planning_readiness="blocked",
             )
 
             # If cluster assignment was selected, assign it
             if target_cluster_id:
                 cluster = get_object_or_404(Cluster, id=target_cluster_id)
-                SchoolClusterAssignment.objects.create(
-                    school=school, cluster=cluster, assigned_by=str(request.user.id)
+                set_school_cluster_membership(
+                    school, cluster, request.user.user_id
                 )
-                school.cluster_status = "clustered"
-                school.save(update_fields=["cluster_status"])
 
             messages.success(
                 request,
@@ -1418,7 +1493,7 @@ def school_onboard_drawer_view(request):
             return HttpResponse("<script>window.location.reload();</script>")
         else:
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Failed to create school: missing required fields.</div>',
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Failed to create school: missing required fields.</div>',
                 status=400,
             )
 

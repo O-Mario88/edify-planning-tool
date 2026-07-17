@@ -25,7 +25,7 @@
           <!-- Rows per page selector -->
           <div class="flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
             <span>Rows per page:</span>
-            <select class="h-7 px-1 rounded border border-slate-200 text-[12px] edify-surface font-bold focus:outline-none">
+            <select class="h-7 px-1 rounded-control border border-slate-200 text-[12px] edify-surface font-bold focus:outline-none">
               <option>10</option>
             </select>
           </div>
@@ -34,7 +34,7 @@
             <button
               type="button"
               @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-              class="h-8 px-3 rounded-lg border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
+              class="h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
             >
               Previous
             </button>
@@ -46,12 +46,12 @@
               {% if num == "..." %}
                 <span class="w-8 text-center text-slate-400 font-bold">...</span>
               {% elif num == page_obj.number %}
-                <span class="h-8 w-8 rounded-lg text-white font-semibold flex items-center justify-center shadow-sm select-none" style="background-color:var(--edify-primary);">{{ num }}</span>
+                <span class="h-8 w-8 rounded-pill text-white font-semibold flex items-center justify-center shadow-sm select-none" style="background-color:var(--edify-primary);">{{ num }}</span>
               {% else %}
                 <button
                   type="button"
                   @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-                  class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
+                  class="h-8 w-8 rounded-control hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
                 >
                   {{ num }}
                 </button>
@@ -63,7 +63,7 @@
             <button
               type="button"
               @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-              class="h-8 px-3 rounded-lg border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
+              class="h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
             >
               Next
             </button>
@@ -73,7 +73,7 @@
     {% endif %}
 
   {% else %}
-    <div class="p-10 text-center select-none edify-surface rounded-xl">
+    <div class="p-10 text-center select-none edify-surface rounded-surface">
       <span class="text-[32px] block mb-2">⭐</span>
       <p class="text-[14px] font-semibold text-[var(--edify-primary)]">No Core Schools Found</p>
       <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Please check your filters or search keywords.</p>

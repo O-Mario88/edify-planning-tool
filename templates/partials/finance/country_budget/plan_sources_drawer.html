@@ -39,7 +39,7 @@
             <td class="px-3 py-2.5 text-slate-500 tabular-nums">{{ r.planned_date|date:"M j, Y"|default:"—" }}</td>
             <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.amount_fmt }}</td>
             <td class="px-3 py-2.5 text-center">
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded edify-text-caption font-bold uppercase
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase
                 {% if r.status == 'Plan-backed' %}bg-emerald-50 text-emerald-700{% elif r.status == 'Missing Cost' or r.status == 'Needs Review' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ r.status }}</span>
             </td>
           </tr>

@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <div class="overflow-x-auto">
-  <table class="w-full text-left edify-text-caption font-semibold" style="min-width:1080px;">
+  <table class="w-full min-w-[1080px] text-left edify-text-caption font-semibold">
     <thead>
       <tr class="border-b" style="border-color:var(--edify-border);">
         <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Staff</th>
@@ -34,7 +34,7 @@
           <span class="block edify-text-caption text-slate-400">Used {{ r.fund_used }} · Rem. {{ r.remaining }}</span>
         </td>
         <td class="py-2.5 pr-3">
-          <span class="px-1.5 py-0.5 rounded edify-text-caption font-extrabold uppercase whitespace-nowrap
+          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase whitespace-nowrap
             {% if r.bucket == 'signed_off' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
             {% elif r.bucket == 'completed' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
             {% elif r.bucket == 'in_progress' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
@@ -46,8 +46,8 @@
         <td class="py-2.5 pr-3 text-slate-400">{{ r.accountability_status }}</td>
         <td class="py-2.5 pr-3 text-slate-400">{{ r.signoff_status }}</td>
         <td class="py-2.5 pr-3">
-          {% if r.reminder_tag == 'overdue' %}<span class="inline-flex items-center gap-1 text-rose-400 font-extrabold edify-text-caption"><span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>Overdue</span>
-          {% elif r.reminder_tag == 'due' %}<span class="inline-flex items-center gap-1 text-amber-400 font-extrabold edify-text-caption"><span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>Due Soon</span>
+          {% if r.reminder_tag == 'overdue' %}<span class="inline-flex items-center gap-1 text-rose-400 font-extrabold edify-text-caption"><span class="h-1.5 w-1.5 rounded-pill bg-rose-500"></span>Overdue</span>
+          {% elif r.reminder_tag == 'due' %}<span class="inline-flex items-center gap-1 text-amber-400 font-extrabold edify-text-caption"><span class="h-1.5 w-1.5 rounded-pill bg-amber-500"></span>Due Soon</span>
           {% else %}<span class="text-slate-500">—</span>{% endif %}
         </td>
         <td class="py-2.5 text-slate-400 whitespace-nowrap">{{ r.next_action }}</td>
@@ -66,12 +66,12 @@
     <button type="button" {% if tracker_page <= 1 %}disabled{% endif %}
       hx-get="/cpd-learning?partial=tracker&fy={{ fy }}&country={{ country }}&role={{ role_filter }}&status={{ status_filter }}&reminder={{ reminder_filter }}&q={{ search|urlencode }}&page={{ tracker_page|add:'-1' }}"
       hx-target="#pd-tracker-wrap" hx-swap="innerHTML"
-      class="h-8 px-3 rounded-lg border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+      class="h-8 px-3 rounded-control border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed"
       style="border-color:var(--edify-border); color:var(--edify-text);">Previous</button>
     <button type="button" {% if tracker_page >= tracker_pages %}disabled{% endif %}
       hx-get="/cpd-learning?partial=tracker&fy={{ fy }}&country={{ country }}&role={{ role_filter }}&status={{ status_filter }}&reminder={{ reminder_filter }}&q={{ search|urlencode }}&page={{ tracker_page|add:'1' }}"
       hx-target="#pd-tracker-wrap" hx-swap="innerHTML"
-      class="h-8 px-3 rounded-lg border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+      class="h-8 px-3 rounded-surface border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed"
       style="border-color:var(--edify-border); color:var(--edify-text);">Next</button>
   </div>
 </div>

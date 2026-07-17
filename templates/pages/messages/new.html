@@ -37,10 +37,10 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
       <!-- MAIN COMPOSE CARD -->
-      <div x-ref="composeCol" class="lg:col-span-8 edify-surface rounded-lg border border-slate-100 shadow-sm p-6 space-y-5 lg:overflow-y-auto">
+      <div x-ref="composeCol" class="lg:col-span-8 edify-surface rounded-surface border border-slate-100 shadow-sm p-6 space-y-5 lg:overflow-y-auto">
 
         <div class="flex items-center gap-2.5 pb-4 border-b border-slate-100">
-          <div class="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          <div class="h-10 w-10 rounded-surface bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           </div>
           <h2 class="text-[17px] font-semibold text-slate-800 tracking-tight">Compose Message</h2>
@@ -49,32 +49,32 @@
         <!-- Step indicator -->
         <div class="flex items-center gap-2 edify-text-caption font-bold overflow-x-auto scrollbar-none pb-1">
           <span class="shrink-0 inline-flex items-center gap-1.5" :class="ctxId ? 'text-emerald-600' : 'text-blue-700'">
-            <span class="h-6 w-6 rounded-full flex items-center justify-center edify-text-caption font-bold transition-colors"
+            <span class="h-6 w-6 rounded-pill flex items-center justify-center edify-text-caption font-bold transition-colors"
                   :class="ctxId ? 'bg-emerald-500 text-white' : 'bg-blue-600 text-white'">1</span>
             Select Context
           </span>
           <span class="shrink-0 w-10 border-t-2 border-dashed border-slate-200"></span>
           <span class="shrink-0 inline-flex items-center gap-1.5" :class="to.length ? 'text-emerald-600' : 'text-slate-400'">
-            <span class="h-6 w-6 rounded-full flex items-center justify-center edify-text-caption font-bold transition-colors"
+            <span class="h-6 w-6 rounded-pill flex items-center justify-center edify-text-caption font-bold transition-colors"
                   :class="to.length ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'">2</span>
             Choose Recipients
           </span>
           <span class="shrink-0 w-10 border-t-2 border-dashed border-slate-200"></span>
           <span class="shrink-0 inline-flex items-center gap-1.5" :class="(subject && body) ? 'text-emerald-600' : 'text-slate-400'">
-            <span class="h-6 w-6 rounded-full flex items-center justify-center edify-text-caption font-bold transition-colors"
+            <span class="h-6 w-6 rounded-pill flex items-center justify-center edify-text-caption font-bold transition-colors"
                   :class="(subject && body) ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'">3</span>
             Write Message
           </span>
           <span class="shrink-0 w-10 border-t-2 border-dashed border-slate-200"></span>
           <span class="shrink-0 inline-flex items-center gap-1.5" :class="canSend ? 'text-emerald-600' : 'text-slate-400'">
-            <span class="h-6 w-6 rounded-full flex items-center justify-center edify-text-caption font-bold transition-colors"
+            <span class="h-6 w-6 rounded-pill flex items-center justify-center edify-text-caption font-bold transition-colors"
                   :class="canSend ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'">4</span>
             Review &amp; Send
           </span>
         </div>
 
         <!-- Context-required banner -->
-        <div x-show="!ctxId" class="flex items-center justify-between gap-2.5 p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+        <div x-show="!ctxId" class="flex items-center justify-between gap-2.5 p-3.5 rounded-surface bg-amber-50 border border-amber-200">
           <div class="flex items-center gap-2.5">
             <svg class="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <p class="text-[12px] font-bold text-amber-800">Context is required. <span class="font-semibold">Submit is disabled until context is added.</span></p>
@@ -85,8 +85,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-1">
             <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">From <span class="normal-case text-slate-300">(You)</span></label>
-            <div class="h-11 px-3 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl">
-              <span class="h-7 w-7 rounded-full bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ request.user.name|avatar_initials }}</span>
+            <div class="h-11 px-3 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-surface">
+              <span class="h-7 w-7 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ request.user.name|avatar_initials }}</span>
               <span class="min-w-0">
                 <span class="block text-[12px] font-bold truncate leading-tight">{{ request.user.name }}</span>
                 <span class="block edify-text-caption font-semibold text-slate-400 truncate leading-tight">{{ request.user.email }}</span>
@@ -98,12 +98,12 @@
           <div class="space-y-1">
             <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">To <span class="text-rose-500">*</span></label>
             <div class="flex items-start gap-1.5">
-              <div class="flex-1 min-h-11 px-2 py-1.5 flex items-center flex-wrap gap-1.5 edify-surface border border-slate-200 rounded-xl">
+              <div class="flex-1 min-h-11 px-2 py-1.5 flex items-center flex-wrap gap-1.5 edify-surface border border-slate-200 rounded-surface">
                 <template x-for="r in to" :key="r.id">
-                  <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-full bg-blue-50 border border-blue-100 edify-text-caption font-bold text-blue-700">
-                    <span class="h-5 w-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center edify-text-caption font-black" x-text="r.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()"></span>
+                  <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-pill bg-blue-50 border border-blue-100 edify-text-caption font-bold text-blue-700">
+                    <span class="h-5 w-5 rounded-pill bg-blue-100 text-blue-700 flex items-center justify-center edify-text-caption font-black" x-text="r.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()"></span>
                     <span x-text="r.name + (r.role ? ' (' + r.role + ')' : '')"></span>
-                    <button type="button" @click="removeTo(r.id)" class="h-4 w-4 rounded-full hover:bg-blue-100 flex items-center justify-center text-blue-400">&times;</button>
+                    <button type="button" @click="removeTo(r.id)" class="h-4 w-4 rounded-pill hover:bg-blue-100 flex items-center justify-center text-blue-400">&times;</button>
                   </span>
                 </template>
                 <select @change="pickRecipient($event, 'to')"
@@ -114,7 +114,7 @@
                   {% endfor %}
                 </select>
               </div>
-              <span class="h-11 w-11 rounded-xl border border-slate-200 edify-surface flex items-center justify-center text-slate-400 shrink-0">
+              <span class="h-11 w-11 rounded-pill border border-slate-200 edify-surface flex items-center justify-center text-slate-400 shrink-0">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
               </span>
             </div>
@@ -125,12 +125,12 @@
         <div class="space-y-1">
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Cc <span class="normal-case text-slate-300">(Optional)</span></label>
           <div class="flex items-start gap-1.5">
-            <div class="flex-1 min-h-11 px-2 py-1.5 flex items-center flex-wrap gap-1.5 edify-surface border border-slate-200 rounded-xl">
+            <div class="flex-1 min-h-11 px-2 py-1.5 flex items-center flex-wrap gap-1.5 edify-surface border border-slate-200 rounded-surface">
               <template x-for="r in cc" :key="r.id">
-                <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-full bg-slate-50 border border-slate-200 edify-text-caption font-bold text-slate-600">
-                  <span class="h-5 w-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center edify-text-caption font-black" x-text="r.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()"></span>
+                <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-bold text-slate-600">
+                  <span class="h-5 w-5 rounded-pill bg-slate-200 text-slate-600 flex items-center justify-center edify-text-caption font-black" x-text="r.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()"></span>
                   <span x-text="r.name + (r.role ? ' (' + r.role + ')' : '')"></span>
-                  <button type="button" @click="removeCc(r.id)" class="h-4 w-4 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400">&times;</button>
+                  <button type="button" @click="removeCc(r.id)" class="h-4 w-4 rounded-pill hover:bg-slate-100 flex items-center justify-center text-slate-400">&times;</button>
                 </span>
               </template>
               <select @change="pickRecipient($event, 'cc')"
@@ -141,7 +141,7 @@
                 {% endfor %}
               </select>
             </div>
-            <span class="h-11 w-11 rounded-xl border border-slate-200 edify-surface flex items-center justify-center text-slate-400 shrink-0">
+            <span class="h-11 w-11 rounded-pill border border-slate-200 edify-surface flex items-center justify-center text-slate-400 shrink-0">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
             </span>
           </div>
@@ -152,7 +152,7 @@
           <div class="space-y-1">
             <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Category <span class="text-rose-500">*</span></label>
             <select name="category" x-model="category" required
-                    class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-xl text-[12.5px] font-semibold focus:border-blue-500 focus:outline-none cursor-pointer">
+                    class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold focus:border-blue-500 focus:outline-none cursor-pointer">
               <option value="" disabled {% if not pre_category %}selected{% endif %}>Select category…</option>
               {% for c in categories %}
               <option value="{{ c }}" {% if pre_category == c %}selected{% endif %}>{{ c }}</option>
@@ -161,7 +161,7 @@
           </div>
           <div class="space-y-1">
             <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Context <span class="text-rose-500">(Required) *</span></label>
-            <div class="h-11 px-3 flex items-center gap-2 rounded-xl border transition-colors"
+            <div class="h-11 px-3 flex items-center gap-2 rounded-surface border transition-colors"
                  :class="ctxId ? 'bg-emerald-50/50 border-emerald-200' : 'bg-slate-50 border-slate-200'">
               <template x-if="ctxId">
                 <span class="flex items-center gap-1.5 min-w-0">
@@ -181,14 +181,15 @@
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Subject <span class="text-rose-500">*</span></label>
           <input type="text" name="subject" x-model="subject" required value="{{ pre_subject }}"
                  placeholder="What is this topic about?"
-                 class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-xl text-[12.5px] font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none">
+                 class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:outline-none">
         </div>
 
         <!-- Context tabs + linked items picker -->
-        <div class="rounded-lg border border-slate-150 overflow-hidden">
-          <div class="flex items-center gap-0.5 px-2 pt-2 bg-slate-50/60 border-b border-slate-100 overflow-x-auto scrollbar-none">
+        <div class="rounded-surface border border-slate-150 overflow-hidden">
+          <div class="flex items-center gap-0.5 px-2 pt-2 bg-slate-50/60 border-b border-slate-100 overflow-x-auto scrollbar-none" role="tablist" aria-label="Linked record type">
             {% for key, label in context_tabs %}
-            <button type="button"
+            <button id="message-context-tab-{{ key }}" type="button" role="tab" aria-controls="context-records"
+                    :aria-selected="activeTab === '{{ key }}'" :tabindex="activeTab === '{{ key }}' ? 0 : -1"
                     hx-get="/messages/new/records?type={{ key }}&variant=cards"
                     hx-target="#context-records"
                     hx-swap="innerHTML"
@@ -222,7 +223,7 @@
                        hx-trigger="keyup changed delay:300ms"
                        :hx-vals="JSON.stringify({type: activeTab, variant: 'cards', status: statusFilter})"
                        name="q"
-                       class="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg edify-text-caption font-semibold edify-focus-surface focus:border-blue-500 focus:outline-none">
+                       class="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-control edify-text-caption font-semibold edify-focus-surface focus:border-blue-500 focus:outline-none">
               </div>
               <select x-model="statusFilter"
                       hx-get="/messages/new/records"
@@ -230,18 +231,18 @@
                       hx-swap="innerHTML"
                       hx-trigger="change"
                       :hx-vals="JSON.stringify({type: activeTab, variant: 'cards', status: statusFilter})"
-                      class="shrink-0 h-8 px-2 rounded-lg border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 focus:outline-none cursor-pointer">
+                      class="shrink-0 h-8 px-2 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 focus:outline-none cursor-pointer">
                 <option value="">All Schools</option>
                 <option value="scheduled">Scheduled</option>
                 <option value="pending">Pending</option>
                 <option value="no_ssa">No SSA</option>
               </select>
               <button type="button" @click="clearLinked()"
-                      class="shrink-0 h-8 px-3 rounded-lg border border-slate-200 edify-surface hover:bg-slate-50 edify-text-caption font-bold text-slate-500 transition-colors">
+                      class="shrink-0 h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 edify-text-caption font-bold text-slate-500 transition-colors">
                 Clear
               </button>
             </div>
-            <div id="context-records" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 max-h-56 overflow-y-auto">
+            <div id="context-records" role="tabpanel" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 max-h-56 overflow-y-auto">
               {% include "partials/messages/context_records.html" with context_tab=active_context_tab variant="cards" %}
             </div>
           </div>
@@ -250,23 +251,23 @@
         <!-- Message with toolbar -->
         <div class="space-y-1">
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Message <span class="text-rose-500">*</span></label>
-          <div class="rounded-xl border border-slate-200 overflow-hidden focus-within:border-blue-500 transition-colors">
+          <div class="rounded-surface border border-slate-200 overflow-hidden focus-within:border-blue-500 transition-colors">
             <div class="flex items-center gap-0.5 px-2 py-1.5 bg-slate-50/70 border-b border-slate-100 overflow-x-auto scrollbar-none">
-              <button type="button" @click="wrap('**')" title="Bold" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-500 text-[12px] font-black transition-colors">B</button>
-              <button type="button" @click="wrap('_')" title="Italic" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-500 text-[12px] italic font-bold transition-colors">I</button>
-              <button type="button" @click="wrap('__')" title="Underline" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-500 text-[12px] font-bold underline transition-colors">U</button>
-              <button type="button" @click="wrap('~~')" title="Strikethrough" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-500 text-[12px] font-bold line-through transition-colors">S</button>
+              <button type="button" @click="wrap('**')" title="Bold" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-500 text-[12px] font-black transition-colors">B</button>
+              <button type="button" @click="wrap('_')" title="Italic" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-500 text-[12px] italic font-bold transition-colors">I</button>
+              <button type="button" @click="wrap('__')" title="Underline" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-500 text-[12px] font-bold underline transition-colors">U</button>
+              <button type="button" @click="wrap('~~')" title="Strikethrough" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-500 text-[12px] font-bold line-through transition-colors">S</button>
               <span class="w-px h-4 bg-slate-200 mx-1"></span>
-              <button type="button" @click="insert(' [link](url) ')" title="Link" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
+              <button type="button" @click="insert(' [link](url) ')" title="Link" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
               </button>
-              <button type="button" @click="insertLine('- ')" title="Bulleted list" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
+              <button type="button" @click="insertLine('- ')" title="Bulleted list" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h.01M4 12h.01M4 18h.01M8 6h12M8 12h12M8 18h12"/></svg>
               </button>
-              <button type="button" @click="insertLine('1. ')" title="Numbered list" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
+              <button type="button" @click="insertLine('1. ')" title="Numbered list" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 20h14M7 12h14M7 4h14M3 20h.01M3 12h.01M3 4h.01"/></svg>
               </button>
-              <button type="button" @click="insertLine('> ')" title="Quote" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
+              <button type="button" @click="insertLine('> ')" title="Quote" class="h-7 w-7 rounded-surface hover:bg-slate-200/60 text-slate-400 flex items-center justify-center transition-colors">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
               </button>
             </div>
@@ -280,7 +281,7 @@
         <div class="space-y-1.5">
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Attachments <span class="normal-case text-slate-300">(Optional)</span></label>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-            <label class="block border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors"
+            <label class="block border-2 border-dashed rounded-surface p-5 text-center cursor-pointer transition-colors"
                    :class="dragging ? 'border-blue-400 bg-blue-50/50' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/30'"
                    @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false"
                    @drop.prevent="dragging = false; addFiles($event.dataTransfer.files)">
@@ -293,15 +294,15 @@
             </label>
             <div class="space-y-1.5">
               <template x-for="(f, idx) in files" :key="f.name + idx">
-                <div class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-150 edify-surface shadow-2xs">
-                  <span class="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 edify-text-caption font-black uppercase"
+                <div class="flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-150 edify-surface shadow-2xs">
+                  <span class="h-9 w-9 rounded-pill flex items-center justify-center shrink-0 edify-text-caption font-black uppercase"
                         :class="f.name.endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : (f.name.match(/\.xlsx?$/) ? 'bg-emerald-50 text-emerald-600' : (f.name.match(/\.docx?$/) ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'))"
                         x-text="f.name.split('.').pop().slice(0,4)"></span>
                   <span class="min-w-0 flex-1">
                     <span class="block edify-text-caption font-bold truncate" x-text="f.name"></span>
                     <span class="block edify-text-caption font-semibold text-slate-400" x-text="(f.size/1024) > 1024 ? (f.size/1048576).toFixed(1) + ' MB' : (f.size/1024).toFixed(0) + ' KB'"></span>
                   </span>
-                  <button type="button" @click="removeFile(idx)" class="h-6 w-6 rounded-md hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors shrink-0">&times;</button>
+                  <button type="button" @click="removeFile(idx)" class="h-6 w-6 rounded-control hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors shrink-0">&times;</button>
                 </div>
               </template>
             </div>
@@ -311,19 +312,19 @@
         <!-- Actions -->
         <div class="pt-4 border-t border-slate-100">
           <div class="flex flex-col sm:flex-row items-center justify-end gap-2">
-            <a href="/messages" class="h-10 px-5 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 transition-colors">
+            <a href="/messages" class="h-10 px-5 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 transition-colors">
               <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               Discard
             </a>
             <button type="submit" name="action" value="draft" formnovalidate
-                    class="h-10 px-5 rounded-xl border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 transition-colors">
+                    class="h-10 px-5 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 transition-colors">
               <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
               Save Draft
             </button>
             <button type="submit" name="action" value="send"
                     :disabled="!canSend"
                     :class="canSend ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-300 cursor-not-allowed'"
-                    class="h-10 px-6 rounded-xl text-white text-[12px] font-semibold flex items-center gap-1.5 shadow-sm transition-colors">
+                    class="h-10 px-6 rounded-control text-white text-[12px] font-semibold flex items-center gap-1.5 shadow-sm transition-colors">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
               Send Message
             </button>
@@ -339,17 +340,17 @@
       <div x-ref="rail" class="lg:col-span-4 space-y-4">
 
         <!-- Context Summary (HTMX-refreshed) -->
-        <div class="edify-surface rounded-lg border border-slate-100 shadow-sm p-4" id="context-summary-panel">
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4" id="context-summary-panel">
           {% include "partials/messages/context_summary.html" with summary=None has_context=False context_allowed=True %}
         </div>
 
         <!-- Suggested Recipients -->
-        <div class="edify-surface rounded-lg border border-slate-100 shadow-sm p-4" id="suggested-panel">
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4" id="suggested-panel">
           {% include "partials/messages/recipient_suggestions.html" with suggested=suggested context_type=pre_context_type context_id=pre_context_id context_allowed=True %}
         </div>
 
         <!-- Message Rules -->
-        <div class="edify-surface rounded-lg border border-slate-100 shadow-sm p-4">
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
           <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2.5">Message Rules</h3>
           <ul class="space-y-2">
             <li class="flex items-start gap-2">
@@ -380,14 +381,14 @@
         </div>
 
         <!-- Recent Drafts -->
-        <div class="edify-surface rounded-lg border border-slate-100 shadow-sm p-4">
+        <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Recent Drafts</h3>
           </div>
           <div class="divide-y divide-slate-50">
             {% for d in drafts %}
             <a href="/messages/new/?draft={{ d.id }}" class="flex items-start gap-2.5 py-2.5 group">
-              <span class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
+              <span class="h-8 w-8 rounded-pill bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 shrink-0 mt-0.5">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               </span>
               <span class="min-w-0 flex-1">

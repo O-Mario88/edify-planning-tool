@@ -9,6 +9,61 @@ from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 from .models import Partner
 
 
+# Core package slot types are governed by the nine-slot CorePlan (a partner
+# may legitimately hold several slots for one school) — the default
+# one-activity allowance applies to non-core partner work only.
+_CORE_EXEMPT_TYPES = {
+    "core_visit",
+    "core_training",
+    "core_assessment_visit",
+}
+
+
+def assert_partner_activity_allowance(
+    partner_id: str, school_id: str, activity_type: str, fy: str
+) -> None:
+    """Enforce the default partner activity allowance (§F): one non-core
+    activity per partner per school per FY; more requires an auditable
+    PartnerActivityAllowance grant."""
+    if not partner_id or not school_id or activity_type in _CORE_EXEMPT_TYPES:
+        return
+    from django.utils import timezone
+
+    from apps.activities.models import Activity
+
+    from .models import PartnerActivityAllowance
+
+    used = (
+        Activity.objects.filter(
+            assigned_partner_id=partner_id,
+            school_id=school_id,
+            fy=fy,
+            delivery_type="partner",
+            deleted_at__isnull=True,
+        )
+        .exclude(status__in=["cancelled", "rejected"])
+        .exclude(activity_type__in=_CORE_EXEMPT_TYPES)
+        .count()
+    )
+    grants = PartnerActivityAllowance.objects.filter(
+        partner_id=partner_id, school_id=school_id, fy=fy
+    )
+    extra = 0
+    today = timezone.now().date()
+    for grant in grants:
+        if grant.expires_at and grant.expires_at < today:
+            continue
+        if grant.activity_type and grant.activity_type != activity_type:
+            continue
+        extra += grant.additional_activities
+    if used >= 1 + extra:
+        raise BadRequest(
+            "Partner activity allowance reached for this school this FY "
+            f"({used} used, {1 + extra} allowed). Grant an additional "
+            "allowance (with a reason) to schedule more partner work here."
+        )
+
+
 def _serialize(p: Partner) -> dict:
     return {
         "id": p.id,

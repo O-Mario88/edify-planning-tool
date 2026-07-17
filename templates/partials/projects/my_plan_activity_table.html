@@ -1,0 +1,26 @@
+<section class="sp-card sp-table-card sp-table-card--{{ accent }}" aria-labelledby="sp-table-{{ kind }}">
+  <div class="sp-card__header">
+    <div><p class="sp-card__eyebrow">{{ period_label }}</p><h2 id="sp-table-{{ kind }}">{{ title }} <span class="sp-count">{{ count }}</span>{% if readonly %}<span class="sp-readonly">Read only</span>{% endif %}</h2></div>
+    <a href="/projects/planning">View planning <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="sp-table-wrap">
+    <table class="sp-table">
+      <caption class="sr-only">{{ title }} for {{ period_label }}</caption>
+      <thead><tr><th scope="col">School / Cluster</th><th scope="col">Project</th>{% if kind == 'visits' %}<th scope="col">District</th>{% else %}<th scope="col">Focus</th>{% endif %}<th scope="col">Planned date</th><th scope="col">Purpose</th>{% if kind == 'partners' %}<th scope="col">Partner</th><th scope="col">Evidence</th>{% elif kind == 'trainings' %}<th scope="col">Participants</th>{% endif %}<th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <th scope="row"><strong>{{ row.school }}</strong><small>{{ row.district }}</small></th>
+          <td>{{ row.project }}</td>
+          {% if kind == 'visits' %}<td>{{ row.district }}</td>{% else %}<td>{{ row.focus }}</td>{% endif %}
+          <td class="sp-table__date">{% if row.planned_date %}{{ row.planned_date|date:"M j, D" }}{% else %}Not scheduled{% endif %}</td>
+          <td><span class="sp-table__purpose">{{ row.purpose|truncatechars:52 }}</span></td>
+          {% if kind == 'partners' %}<td>{{ row.partner }}</td><td><span class="sp-badge sp-badge--{{ row.evidence_tone }}">{{ row.evidence }}</span></td>{% elif kind == 'trainings' %}<td>{{ row.participants }}</td>{% endif %}
+          <td><span class="sp-badge sp-badge--{{ row.status_tone }}">{{ row.status }}</span></td>
+          <td class="sp-table__action"><a href="{{ row.action.url }}" hx-get="{{ row.action.url }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="{{ row.action.text }} for {{ row.school }}">{{ row.action.text }}</a></td>
+        </tr>
+        {% empty %}<tr><td class="sp-table__empty" colspan="9">{{ empty }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

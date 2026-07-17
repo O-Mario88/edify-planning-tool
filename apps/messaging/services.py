@@ -10,7 +10,9 @@ Core rules:
 
 from __future__ import annotations
 
-from django.db.models import Q
+import logging
+
+from django.db.models import F, OuterRef, Prefetch, Q, Subquery
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -23,6 +25,8 @@ from .models import (
     MessageParticipant,
     MessageThread,
 )
+
+logger = logging.getLogger(__name__)
 
 PARTNER_ROLES = {"PartnerAdmin", "PartnerFieldOfficer"}
 
@@ -44,6 +48,7 @@ ACTIVITY_CONTEXTS = {
 FINANCE_CONTEXTS = {
     "fund_request",
     "budget",
+    "budget_line",
     "monthly_request",
     "finance",
     "accountant_disbursement",
@@ -82,6 +87,7 @@ CONTEXT_LABELS = {k: v for k, v in CONTEXT_TABS} | {
     "accountant_disbursement": "Disbursement",
     "accountability_confirmation": "Accountability",
     "budget": "Budget",
+    "budget_line": "Budget Line",
     "monthly_request": "Monthly Request",
     "core_school": "Core School",
     "ssa_verification": "SSA Verification",
@@ -378,6 +384,14 @@ def suggested_recipients(
         except Exception:
             return None
 
+    def user_for_staff_identity(staff_or_user_id):
+        """Resolve canonical StaffProfile ids and legacy User ids alike."""
+        if not staff_or_user_id:
+            return None
+        return User.objects.filter(
+            Q(id=staff_or_user_id) | Q(staff_profile__id=staff_or_user_id)
+        ).first()
+
     record, _ = resolve_context_record(context_type, context_id)
     cls = record.__class__.__name__ if record is not None else None
 
@@ -401,15 +415,17 @@ def suggested_recipients(
             add_by_role("ImpactAssessment", 1)
         elif cls == "Cluster":
             if record.responsible_staff_id:
-                add(User.objects.filter(id=record.responsible_staff_id).first())
+                add(user_for_staff_identity(record.responsible_staff_id))
             add_by_role("Program Lead", 1)
             add_by_role("ImpactAssessment", 1)
         elif cls == "Activity":
             if record.responsible_staff_id:
-                owner = User.objects.filter(id=record.responsible_staff_id).first()
+                owner = user_for_staff_identity(record.responsible_staff_id)
                 add(owner)
                 if owner:
                     add(supervisor_of(owner.id))
+            if record.monitored_by_staff_id:
+                add(user_for_staff_identity(record.monitored_by_staff_id))
             if record.assigned_partner_id:
                 from apps.partners.models import Partner
 
@@ -441,7 +457,7 @@ def suggested_recipients(
             if record.partner and record.partner.user_id:
                 add(User.objects.filter(id=record.partner.user_id).first())
             if record.assigning_staff_id:
-                add(User.objects.filter(id=record.assigning_staff_id).first())
+                add(user_for_staff_identity(record.assigning_staff_id))
             add_by_role("Program Lead", 1)
         elif context_type in FINANCE_CONTEXTS:
             add_by_role("Accountant", 1)
@@ -675,17 +691,70 @@ def context_summary(user, context_type, context_id, linked_ids=None) -> dict:
 
 
 def _participant_threads(user):
-    return MessageParticipant.objects.filter(user_id=user.id).select_related("thread")
+    return (
+        MessageParticipant.objects.filter(user_id=user.id)
+        .select_related("thread")
+        .prefetch_related(
+            Prefetch(
+                "thread__messages",
+                queryset=Message.objects.order_by("created_at"),
+                to_attr="_message_cache",
+            ),
+            Prefetch(
+                "thread__participants",
+                queryset=MessageParticipant.objects.order_by("created_at"),
+                to_attr="_participant_cache",
+            ),
+        )
+    )
 
 
-def _is_unread(p: MessageParticipant) -> bool:
+def _thread_messages(thread: MessageThread) -> list[Message]:
+    cached = getattr(thread, "_message_cache", None)
+    return cached if cached is not None else list(thread.messages.order_by("created_at"))
+
+
+def _thread_participants(thread: MessageThread) -> list[MessageParticipant]:
+    cached = getattr(thread, "_participant_cache", None)
+    return cached if cached is not None else list(thread.participants.all())
+
+
+def _last_message(thread: MessageThread) -> Message | None:
+    messages = _thread_messages(thread)
+    return messages[-1] if messages else None
+
+
+def _is_unread(p: MessageParticipant, last: Message | None = None) -> bool:
     t = p.thread
     if not t.last_reply_at:
         return False
     if p.last_read_at is None or p.last_read_at < t.last_reply_at:
-        last = t.messages.order_by("-created_at").first()
+        last = last or _last_message(t)
         return bool(last and last.sender_id != p.user_id)
     return False
+
+
+def unread_thread_count(user) -> int:
+    """Return the authoritative unread conversation count in one query."""
+    latest_sender = (
+        Message.objects.filter(thread_id=OuterRef("thread_id"))
+        .order_by("-created_at")
+        .values("sender_id")[:1]
+    )
+    return (
+        MessageParticipant.objects.filter(
+            user_id=user.id,
+            archived_at__isnull=True,
+            thread__last_reply_at__isnull=False,
+        )
+        .filter(
+            Q(last_read_at__isnull=True)
+            | Q(last_read_at__lt=F("thread__last_reply_at"))
+        )
+        .annotate(latest_sender_id=Subquery(latest_sender))
+        .exclude(latest_sender_id=user.id)
+        .count()
+    )
 
 
 def threads_for_user(user, tab: str = "all", search: str = "") -> list[dict]:
@@ -699,8 +768,8 @@ def threads_for_user(user, tab: str = "all", search: str = "") -> list[dict]:
     partner_user_ids = None
     for p in parts:
         t = p.thread
-        unread = _is_unread(p)
-        last = t.messages.order_by("-created_at").first()
+        last = _last_message(t)
+        unread = _is_unread(p, last)
         if not last:
             continue
         if tab == "unread" and not unread:
@@ -721,7 +790,7 @@ def threads_for_user(user, tab: str = "all", search: str = "") -> list[dict]:
                         | Q(roles__contains=["PartnerFieldOfficer"])
                     ).values_list("id", flat=True)
                 )
-            member_ids = set(t.participants.values_list("user_id", flat=True))
+            member_ids = {member.user_id for member in _thread_participants(t)}
             if not member_ids & partner_user_ids:
                 continue
         if (
@@ -730,13 +799,12 @@ def threads_for_user(user, tab: str = "all", search: str = "") -> list[dict]:
             and search.lower() not in (t.context_label or "").lower()
         ):
             continue
-        sender = User.objects.filter(id=last.sender_id).first()
         rows.append(
             {
                 "id": t.id,
                 "subject": t.subject,
                 "snippet": (last.body or "")[:90],
-                "sender_name": sender.name if sender else "System",
+                "sender_id": last.sender_id,
                 "context_type": t.context_type,
                 "context_badge": CONTEXT_LABELS.get(
                     t.context_type, t.context_type or ""
@@ -749,13 +817,20 @@ def threads_for_user(user, tab: str = "all", search: str = "") -> list[dict]:
                 "last_at": t.last_reply_at or t.updated_at,
             }
         )
+    sender_names = dict(
+        User.objects.filter(id__in={row["sender_id"] for row in rows}).values_list(
+            "id", "name"
+        )
+    )
+    for row in rows:
+        row["sender_name"] = sender_names.get(row.pop("sender_id"), "System")
     rows.sort(key=lambda r: r["last_at"], reverse=True)
     return rows
 
 
 def message_kpis(user) -> dict:
     parts = list(_participant_threads(user).filter(archived_at__isnull=True))
-    unread = sum(1 for p in parts if _is_unread(p))
+    unread = sum(1 for p in parts if _is_unread(p, _last_message(p.thread)))
     awaiting = 0
     returned = 0
     finance = 0
@@ -769,7 +844,7 @@ def message_kpis(user) -> dict:
     )
     for p in parts:
         t = p.thread
-        last = t.messages.order_by("-created_at").first()
+        last = _last_message(t)
         if last and last.sender_id == user.id:
             awaiting += 1
         if (t.category or "").lower().startswith(
@@ -778,7 +853,7 @@ def message_kpis(user) -> dict:
             returned += 1
         if t.context_type in FINANCE_CONTEXTS:
             finance += 1
-        if set(t.participants.values_list("user_id", flat=True)) & partner_user_ids:
+        if {member.user_id for member in _thread_participants(t)} & partner_user_ids:
             partner += 1
         if t.is_system_generated:
             system += 1
@@ -844,6 +919,7 @@ def thread_detail(thread_id: str, user) -> dict:
     return {
         "thread": t,
         "participants": participants,
+        "can_reply": any(p["id"] != user.id for p in participants),
         "starred": bool(me and me.starred),
         "messages": [
             {
@@ -859,7 +935,7 @@ def thread_detail(thread_id: str, user) -> dict:
                         "id": a.id,
                         "name": a.file_name,
                         "size": a.file_size,
-                        "url": a.file.url if a.file else "",
+                        "url": f"/messages/attachments/{a.id}",
                     }
                     for a in m.attachments.all()
                 ],
@@ -881,7 +957,10 @@ def context_panel(thread: MessageThread, user) -> dict:
     cls = record.__class__.__name__ if record is not None else None
 
     if cls == "Activity":
-        owner = User.objects.filter(id=record.responsible_staff_id).first()
+        owner = User.objects.filter(
+            Q(id=record.responsible_staff_id)
+            | Q(staff_profile__id=record.responsible_staff_id)
+        ).first()
         next_map = {
             "planned": "Schedule the visit",
             "scheduled": "Confirm schedule",
@@ -978,6 +1057,14 @@ def context_panel(thread: MessageThread, user) -> dict:
     elif cls == "PartnerAssignment":
         fields.update({"status": record.status, "linked_record": label})
         actions.append({"label": "Open Partner Assignment", "href": "/partners"})
+    elif thread.context_type == "system":
+        fields.update(
+            {
+                "status": "Delivered",
+                "linked_record": thread.context_label or thread.subject,
+            }
+        )
+        actions.append({"label": "Open Analytics", "href": "/analytics"})
     return {"fields": fields, "timeline": timeline, "actions": actions}
 
 
@@ -1011,14 +1098,32 @@ def send(data: dict, principal) -> dict:
 
     recipients_users = []
     for rid in [*to_ids, *cc_ids]:
-        u = User.objects.filter(id=rid, deleted_at__isnull=True).first()
+        if str(rid) == str(sender_id):
+            raise BadRequest("You cannot add yourself as a recipient.")
+        u = User.objects.filter(
+            id=rid, deleted_at__isnull=True, status="active"
+        ).first()
         if not u:
             raise NotFoundError("Recipient not found.")
         if not RolePermissionService.can_message_recipient(principal, u):
             raise Forbidden("Your active role is not permitted to message this user.")
+        # A recipient must be allowed to open the same workflow record. Without
+        # this, a sender could create a thread that the recipient can receive
+        # but cannot safely read or reply to once the thread access gate runs.
+        if not can_access_context(u, context_type, context_id):
+            raise Forbidden("The recipient cannot access this workflow context.")
         recipients_users.append(u)
 
-    subject = data.get("subject", "(no subject)")
+    subject = (data.get("subject") or "").strip()
+    body = (data.get("body") or "").strip()
+    if not subject:
+        raise BadRequest("Subject is required.")
+    if len(subject) > 255:
+        raise BadRequest("Subject cannot exceed 255 characters.")
+    if not body:
+        raise BadRequest("Message is required.")
+    if len(body) > 50_000:
+        raise BadRequest("Message cannot exceed 50,000 characters.")
     category = data.get("category")
     priority = (
         "high"
@@ -1084,7 +1189,7 @@ def send(data: dict, principal) -> dict:
         thread=thread,
         sender_id=sender_id,
         recipient_id=to_ids[0],
-        body=data.get("body", ""),
+        body=body,
         category=category,
         context_type=context_type,
         context_id=context_id,
@@ -1104,28 +1209,24 @@ def send(data: dict, principal) -> dict:
 
 
 def reply(thread_id: str, data: dict, principal) -> dict:
-    thread = MessageThread.objects.filter(id=thread_id).first()
-    if not thread:
-        raise NotFoundError("Thread not found.")
-
+    thread = _require_thread_access(thread_id, principal)
     sender_id = principal.user_id if hasattr(principal, "user_id") else principal.id
+    body = (data.get("body") or "").strip()
+    if not body:
+        raise BadRequest("Reply message is required.")
+    if len(body) > 50_000:
+        raise BadRequest("Reply cannot exceed 50,000 characters.")
     messages = Message.objects.filter(thread_id=thread_id)
     first_msg = messages.first()
     if not first_msg:
         raise BadRequest("Thread is empty.")
 
-    is_member = thread.participants.filter(user_id=sender_id).exists()
-    has_access = (
-        is_member
-        or messages.filter(Q(sender_id=sender_id) | Q(recipient_id=sender_id)).exists()
-    )
-    if not has_access:
-        raise Forbidden("You do not have permission to reply to this thread.")
-
     others = list(
         thread.participants.exclude(user_id=sender_id).values_list("user_id", flat=True)
     )
     if not others:
+        if thread.is_system_generated:
+            raise BadRequest("This system conversation is read-only.")
         # Legacy threads without membership rows.
         if thread.participant_a_id and thread.participant_b_id:
             others = [
@@ -1139,12 +1240,15 @@ def reply(thread_id: str, data: dict, principal) -> dict:
                 if first_msg.sender_id == sender_id
                 else first_msg.sender_id
             ]
+    others = [recipient_id for recipient_id in others if recipient_id != sender_id]
+    if not others:
+        raise BadRequest("This system conversation is read-only.")
 
     msg = Message.objects.create(
         thread=thread,
         sender_id=sender_id,
         recipient_id=others[0] if others else None,
-        body=data.get("body", ""),
+        body=body,
         context_type=thread.context_type,
         context_id=thread.context_id,
     )
@@ -1268,6 +1372,11 @@ def workflow_message(
             _notify_recipient(msg, None, rid)
         return thread
     except Exception:
+        logger.exception(
+            "Could not create workflow message for %s:%s",
+            context_type,
+            context_id,
+        )
         return None
 
 
@@ -1276,16 +1385,18 @@ def workflow_message(
 
 def recent(principal, query: dict) -> list[dict]:
     uid = principal.user_id if hasattr(principal, "user_id") else principal.id
-    qs = Message.objects.filter(Q(sender_id=uid) | Q(recipient_id=uid)).order_by(
-        "-created_at"
-    )
+    thread_ids = MessageParticipant.objects.filter(user_id=uid).values("thread_id")
+    qs = Message.objects.filter(thread_id__in=thread_ids).order_by("-created_at")
     return [_serialize(m) for m in qs[:50]]
 
 
 def counts(principal) -> dict:
     uid = principal.user_id if hasattr(principal, "user_id") else principal.id
-    base = Message.objects.filter(recipient_id=uid)
-    return {"unread": base.filter(status="unread").count(), "total": base.count()}
+    user = principal if hasattr(principal, "id") else User.objects.get(id=uid)
+    total = MessageParticipant.objects.filter(
+        user_id=uid, archived_at__isnull=True
+    ).count()
+    return {"unread": unread_thread_count(user), "total": total}
 
 
 def contexts(query: dict) -> list[dict]:
@@ -1320,10 +1431,20 @@ def mark_read(message_id: str, principal) -> dict:
     uid = principal.user_id if hasattr(principal, "user_id") else principal.id
     m = Message.objects.filter(id=message_id).first()
     if m:
-        if m.recipient_id != uid:
+        is_recipient = (
+            m.sender_id != uid
+            and MessageParticipant.objects.filter(
+                thread_id=m.thread_id, user_id=uid
+            ).exists()
+        )
+        if not is_recipient:
             raise Forbidden("Cannot mark another user's message as read.")
-        m.status = "read"
-        m.save(update_fields=["status"])
+        MessageParticipant.objects.filter(
+            thread_id=m.thread_id, user_id=uid
+        ).update(last_read_at=timezone.now())
+        if m.recipient_id == uid:
+            m.status = "read"
+            m.save(update_fields=["status"])
     return {"ok": True}
 
 
@@ -1344,7 +1465,7 @@ def _notify_recipient(msg: Message, sender, recipient_id: str | None = None) -> 
         WorkflowNotificationService.trigger(
             event_type="message",
             category="messages",
-            priority="normal",
+            priority=msg.priority or "normal",
             title=f"New message from {sender_name}",
             body=preview,
             context_type="Message",
@@ -1401,5 +1522,6 @@ def get_context_target_route(context_type: str | None, context_id: str | None) -
         "fund_request": "/fund-requests/weekly",
         "leave": "/leave/approvals",
         "project": "/projects",
+        "system": "/analytics",
     }
     return mapping.get(context_type, "/dashboard")

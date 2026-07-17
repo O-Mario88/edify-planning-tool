@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2 h-full">
   <div>
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">8. PL Oversight Summary</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Team achievement, risk & backlog · click a PL to review</p>
@@ -25,12 +25,12 @@
           <td class="text-right tabular-nums font-bold text-slate-700 py-1.5">{{ r.target_pct }}%</td>
           <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.schools_at_risk|intcomma }}</td>
           <td class="text-right py-1.5 pr-1">
-            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full edify-text-caption font-bold whitespace-nowrap
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap
               {% if r.risk_tone == 'danger' %}bg-rose-50 text-rose-700
               {% elif r.risk_tone == 'warning' %}bg-orange-50 text-orange-700
               {% elif r.risk_tone == 'amber' %}bg-amber-50 text-amber-700
               {% else %}bg-emerald-50 text-emerald-700{% endif %}">
-              <span class="h-1.5 w-1.5 rounded-full {% if r.risk_tone == 'danger' %}bg-rose-500{% elif r.risk_tone == 'warning' %}bg-orange-500{% elif r.risk_tone == 'amber' %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
+              <span class="h-1.5 w-1.5 rounded-pill {% if r.risk_tone == 'danger' %}bg-rose-500{% elif r.risk_tone == 'warning' %}bg-orange-500{% elif r.risk_tone == 'amber' %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
               {{ r.risk }}
             </span>
           </td>

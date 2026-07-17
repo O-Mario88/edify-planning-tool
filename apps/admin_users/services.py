@@ -251,7 +251,70 @@ def update_user(user_id: str, data: dict, principal) -> dict:
 
 
 def delete_user(user_id: str, principal) -> dict:
-    """Soft-deletes a user from the system."""
+    """Admin-only user deletion: soft-delete plus full access revocation.
+
+    Guard rails: only an acting Admin may delete; nobody deletes themselves;
+    the last active Admin can never be deleted. Revocation matters because
+    User.objects does NOT filter tombstones — a soft-deleted row with
+    is_active=True would keep existing sessions alive on every request, so
+    the delete also disables the account, tombstones the staff profile, and
+    purges the user's sessions.
+    """
+    from django.contrib.sessions.models import Session
+
+    from apps.accounts.models import StaffProfile
+    from apps.audit.services import log as audit_log
+    from apps.core.navigation import get_user_role_slug
+    from apps.core.rbac import EdifyRole
+
+    if get_user_role_slug(principal) != "ADMIN":
+        raise BadRequest("Only an Admin can delete users.")
+
     user = _get_user(user_id)
-    user.soft_delete()
+    if user.id == principal.id:
+        raise BadRequest("You cannot delete your own account.")
+
+    admin_role = EdifyRole.ADMIN.value
+    if admin_role in (user.roles or []):
+        other_admins = (
+            User.objects.filter(
+                deleted_at__isnull=True,
+                is_active=True,
+                roles__contains=[admin_role],
+            )
+            .exclude(id=user.id)
+            .exists()
+        )
+        if not other_admins:
+            raise BadRequest("Cannot delete the last active Admin account.")
+
+    original_email = user.email
+    with transaction.atomic():
+        user.soft_delete()
+        user.status = "disabled"
+        user.is_active = False
+        # The email column is DB-unique with no deleted_at scoping, so free
+        # the address for future accounts. The original email is preserved
+        # in the audit payload below.
+        user.email = f"deleted-{user.id}@deleted.invalid"
+        user.save(update_fields=["status", "is_active", "email", "updated_at"])
+
+        profile = StaffProfile.objects.filter(user=user).first()
+        if profile:
+            profile.soft_delete()
+
+    # Session purge is defence-in-depth (is_active=False already fails
+    # ModelBackend.user_can_authenticate on the next request).
+    for session in Session.objects.all():
+        if session.get_decoded().get("_auth_user_id") == user.id:
+            session.delete()
+
+    audit_log(
+        action="admin.user_deleted",
+        subject_kind="user",
+        subject_id=user.id,
+        actor_id=principal.id,
+        actor_role=getattr(principal, "active_role", None),
+        payload={"email": original_email, "name": user.name, "roles": user.roles},
+    )
     return {"ok": True}

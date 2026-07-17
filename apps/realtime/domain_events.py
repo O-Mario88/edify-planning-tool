@@ -1,9 +1,9 @@
 """
-DomainEvent seam — the single seam every workflow calls post-commit.
+DomainEvent seam — the single seam every workflow reaches post-commit.
 
 Does (best-effort — never rolls back the workflow):
-  1) appends a DomainEventLog row,
-  2) appends a hash-chained AuditLog row (via the AuditService),
+  1) appends a hash-chained AuditLog row (via the AuditService),
+  2) projects committed audit rows into DomainEventLog,
   3) writes per-recipient Notification rows (role-aware deep link + dedupe),
   4) pushes a realtime event to the bus.
 
@@ -38,15 +38,12 @@ def emit(
     notify: list[dict] | None = None,
     live_user_ids: list[str] | None = None,
 ) -> None:
-    """Emit a domain event: log it + audit it + notify + push realtime.
+    """Emit a domain event: audit it + notify + push realtime.
 
     `notify` is a list of {recipient_id, title, body?, target_route?, priority?,
     action_required?}. `live_user_ids` are the users who should get a realtime
     push (defaults to the notify recipients + the actor)."""
     try:
-        _append_domain_event_log(
-            event_type, subject_kind, subject_id, actor_id, payload
-        )
         _audit(event_type, subject_kind, subject_id, actor_id, actor_role, payload)
         event_id = cuid()
         notified: list[str] = []
@@ -66,7 +63,10 @@ def emit(
             "at": timezone.now().isoformat(),
             "meta": payload or {},
         }
-        bus.publish_many(push_ids, live_event)
+        # Do not tell the UI about a mutation that has not committed yet.
+        from django.db import transaction
+
+        transaction.on_commit(lambda: bus.publish_many(push_ids, live_event))
     except Exception as exc:  # noqa: BLE001 — best-effort, never break the workflow
         logger.exception("DomainEvent emit failed for %s: %s", event_type, exc)
 
@@ -108,6 +108,52 @@ def user_for_staff(staff_profile_id: str | None) -> str | None:
 
     sp = StaffProfile.objects.filter(id=staff_profile_id).first()
     return sp.user_id if sp else None
+
+
+def publish_audit_event(
+    *,
+    event_type: str,
+    subject_kind: str | None,
+    subject_id: str | None,
+    actor_id: str | None,
+    payload: dict[str, Any] | None,
+    audit_seq: int | None,
+    success: bool,
+    reason: str | None,
+) -> None:
+    """Project a committed audit row to the durable/realtime event stream.
+
+    This function never writes AuditLog or Notification rows, so the audit
+    projection cannot recurse into another audit event. It is called only by
+    ``apps.audit.services`` through ``transaction.on_commit``.
+    """
+    try:
+        _append_domain_event_log(
+            event_type,
+            subject_kind,
+            subject_id,
+            actor_id,
+            {
+                "auditSeq": audit_seq,
+                "success": success,
+                "reason": reason,
+                "data": payload or {},
+            },
+        )
+        if actor_id:
+            bus.publish(
+                actor_id,
+                {
+                    "type": event_type,
+                    "subjectKind": subject_kind,
+                    "subjectId": subject_id,
+                    "actorId": actor_id,
+                    "at": timezone.now().isoformat(),
+                    "meta": payload or {},
+                },
+            )
+    except Exception as exc:  # noqa: BLE001 — committed work must stay committed
+        logger.exception("Audit event projection failed for %s: %s", event_type, exc)
 
 
 def _append_domain_event_log(event_type, subject_kind, subject_id, actor_id, payload):
@@ -154,4 +200,10 @@ def _create_notification(recipient_id, event_type, event_id, spec):
     )
 
 
-__all__ = ["emit", "notify_only", "users_with_role", "user_for_staff"]
+__all__ = [
+    "emit",
+    "notify_only",
+    "publish_audit_event",
+    "users_with_role",
+    "user_for_staff",
+]

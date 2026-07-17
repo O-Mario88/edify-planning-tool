@@ -8,20 +8,20 @@
 <div class="space-y-4 text-slate-700">
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Target</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ target }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Validated</p><p class="text-[18px] font-bold text-emerald-600 tabular-nums">{{ achieved }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Remaining</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ remaining }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Weekly Pace Needed</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ weekly_pace }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ working_days_left }} working days left</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Target</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ target }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Validated</p><p class="text-[18px] font-bold text-emerald-600 tabular-nums">{{ achieved }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Remaining</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ remaining }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Weekly Pace Needed</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ weekly_pace }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ working_days_left }} working days left</p></div>
   </div>
 
   {% if pipeline.validated %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-emerald-600 mb-1.5">Validated · counted ({{ pipeline.validated|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+    <div class="divide-y divide-slate-50 rounded-surface border border-slate-100">
       {% for r in pipeline.validated %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
         <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.name }}</p><p class="edify-text-caption text-slate-400">{{ r.type }} · {{ r.date|date:"d M Y" }}</p></div>
-        <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 edify-text-caption font-bold shrink-0">Credited</span>
+        <span class="px-1.5 py-0.5 rounded-pill bg-emerald-50 text-emerald-700 edify-text-caption font-bold shrink-0">Credited</span>
       </div>
       {% endfor %}
     </div>
@@ -31,7 +31,7 @@
   {% if pipeline.pending_sf %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600 mb-1.5">Activity SF ID missing — not credited ({{ pipeline.pending_sf|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-amber-100 bg-amber-50/40">
+    <div class="divide-y divide-slate-50 rounded-surface border border-amber-100 bg-amber-50/40">
       {% for r in pipeline.pending_sf %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
         <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.name }}</p><p class="edify-text-caption text-slate-400">{{ r.type }} · {{ r.date|date:"d M Y" }} · {{ r.why }}</p></div>
@@ -45,7 +45,7 @@
   {% if pipeline.ia_pending %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-sky-600 mb-1.5">Awaiting IA verification ({{ pipeline.ia_pending|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+    <div class="divide-y divide-slate-50 rounded-surface border border-slate-100">
       {% for r in pipeline.ia_pending %}
       <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.name }}</p><p class="edify-text-caption text-slate-400">{{ r.type }} · {{ r.date|date:"d M Y" }}</p></div>
       {% endfor %}
@@ -56,7 +56,7 @@
   {% if pipeline.returned %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-rose-600 mb-1.5">Returned — credit reversed ({{ pipeline.returned|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-rose-100 bg-rose-50/40">
+    <div class="divide-y divide-slate-50 rounded-surface border border-rose-100 bg-rose-50/40">
       {% for r in pipeline.returned %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
         <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.name }}</p><p class="edify-text-caption text-slate-400">{{ r.type }} · {{ r.date|date:"d M Y" }} · {{ r.why }}</p></div>
@@ -70,7 +70,7 @@
   {% if pipeline.provisional %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-violet-600 mb-1.5">Awaiting review ({{ pipeline.provisional|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+    <div class="divide-y divide-slate-50 rounded-surface border border-slate-100">
       {% for r in pipeline.provisional %}
       <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.name }}</p><p class="edify-text-caption text-slate-400">{{ r.type }} · {{ r.date|date:"d M Y" }} · {{ r.why }}</p></div>
       {% endfor %}
@@ -81,7 +81,7 @@
   {% if pipeline.scheduled %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Scheduled — not yet executed ({{ pipeline.scheduled|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+    <div class="divide-y divide-slate-50 rounded-surface border border-slate-100">
       {% for r in pipeline.scheduled %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
         <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.name }}</p><p class="edify-text-caption text-slate-400">{{ r.type }} · {{ r.date|date:"d M Y" }}</p></div>
@@ -93,7 +93,7 @@
   {% endif %}
 
   {% if not pipeline.validated and not pipeline.pending_sf and not pipeline.ia_pending and not pipeline.returned and not pipeline.scheduled and not pipeline.provisional %}
-  <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-center">
+  <div class="rounded-surface border border-slate-100 bg-slate-50 p-4 text-center">
     <p class="text-[12px] font-semibold text-slate-500">Nothing recorded for {{ area }} in {{ month_label }} yet.</p>
     <p class="edify-text-caption text-slate-400 mt-1">Plan the work in Planning — validated completions appear here automatically.</p>
   </div>

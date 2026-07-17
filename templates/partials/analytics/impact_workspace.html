@@ -1,0 +1,251 @@
+<div id="impact-workspace" class="sp-workspace" aria-live="polite">
+  {{ impact_chart_payload|json_script:"impact-chart-payload" }}
+  <form class="sp-filter-panel"
+        method="get"
+        action="/impact"
+        hx-get="/impact"
+        hx-target="#impact-workspace"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+        hx-trigger="change delay:120ms">
+    <div class="sp-filter-grid">
+      <label class="sp-field" for="ia-fy">
+        <span>Financial year (assessed cycle)</span>
+        <select id="ia-fy" name="fy">
+          {% for option in dashboard.filters.fy_options %}
+          <option value="{{ option.value }}"{% if option.value == dashboard.filters.fy %} selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="sp-filter-actions">
+        <a href="/impact" class="sp-reset" aria-label="Reset Impact Analytics filters">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v6h6"/></svg>
+          Reset
+        </a>
+      </div>
+    </div>
+    <p class="sp-scope-note">
+      <span aria-hidden="true"></span>
+      Comparing confirmed SSA scores in {{ dashboard.filters.fy_label }} against FY {{ dashboard.filters.prev_fy }} for {{ dashboard.coverage.schools_paired }} of {{ dashboard.coverage.schools_in_scope }} schools in your scope · {{ dashboard.coverage.activities_in_window }} executed activities inside the exposure windows.
+    </p>
+    <noscript><button type="submit" class="sp-export">Apply filters</button></noscript>
+  </form>
+
+  {% if dashboard.coverage.schools_paired == 0 %}
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-8 text-center space-y-2">
+    <h2 class="text-[15px] font-bold text-slate-800">No paired assessment cycles yet</h2>
+    <p class="edify-text-caption text-slate-500 max-w-xl mx-auto">
+      Impact analysis needs schools with a confirmed SSA in both {{ dashboard.filters.fy_label }} and FY {{ dashboard.filters.prev_fy }}.
+      Once this cycle's SSA uploads are confirmed, every analysis on this page computes automatically — no configuration needed.
+    </p>
+  </section>
+  {% else %}
+
+  <section class="sp-kpis" aria-label="Impact key indicators">
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 21V8l5-3v16m0-10 6-3v13m0-7 5-2v9M2 21h20"/></svg></span>
+      <div><span>Schools analysed</span><strong>{{ dashboard.coverage.schools_paired }}</strong><small>assessed in both cycles</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="{% if dashboard.kpis.median_delta > 0 %}success{% else %}warning{% endif %}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 17l6-6 4 4 8-8M14 7h7v7"/></svg></span>
+      <div><span>Median school delta</span><strong>{% if dashboard.kpis.median_delta is not None %}{{ dashboard.kpis.median_delta }}{% else %}—{% endif %}</strong><small>score points vs FY {{ dashboard.filters.prev_fy }}</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="success" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+      <div><span>Schools improved</span><strong>{% if dashboard.kpis.improved_pct is not None %}{{ dashboard.kpis.improved_pct }}<em>%</em>{% else %}—{% endif %}</strong><small>mean delta above +0.3</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg></span>
+      <div><span>Accepted spend</span><strong class="text-[15px]">{{ dashboard.kpis.total_accepted_spend|default:"UGX 0" }}</strong><small>{% if dashboard.kpis.ugx_per_point %}{{ dashboard.kpis.ugx_per_point }} per net score point{% else %}no net improvement to price yet{% endif %}</small></div>
+    </article>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4" aria-label="Dosage and funding charts">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
+         x-data="impactChart('impact-chart-payload', 'dosage')">
+      <div>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Dose–response: support intensity vs improvement</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">
+          Median school delta by dosage bucket · visits {{ dashboard.visits.correlation.verdict }}{% if dashboard.visits.correlation.rho is not None %} (ρ {{ dashboard.visits.correlation.rho }}, p {{ dashboard.visits.correlation.p }}, n {{ dashboard.visits.correlation.n }}){% endif %} · trainings {{ dashboard.trainings.correlation.verdict }}{% if dashboard.trainings.correlation.rho is not None %} (ρ {{ dashboard.trainings.correlation.rho }}, p {{ dashboard.trainings.correlation.p }}){% endif %}
+        </p>
+      </div>
+      <div class="h-[260px] w-full" x-ref="chart" role="img" aria-label="Bar chart comparing support intensity with median school score improvement"></div>
+      <p class="sr-only" x-ref="status" aria-live="polite"></p>
+    </div>
+
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
+         x-data="impactChart('impact-chart-payload', 'funding')">
+      <div>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Funding vs improvement</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">
+          {{ dashboard.funding.funded_schools }} funded schools · {{ dashboard.funding.funded_improved }} improved · correlation {{ dashboard.funding.correlation.verdict }}{% if dashboard.funding.correlation.rho is not None %} (ρ {{ dashboard.funding.correlation.rho }}, p {{ dashboard.funding.correlation.p }}, n {{ dashboard.funding.correlation.n }}){% endif %}
+        </p>
+      </div>
+      <div class="h-[260px] w-full" x-ref="chart" role="img" aria-label="Scatter chart comparing accepted school spend with mean score improvement"></div>
+      <p class="sr-only" x-ref="status" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4" aria-label="Intervention-level treatment effects">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <div>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Focused visits: treated vs untreated weak-baseline schools</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Among schools starting below 7.0 on each intervention — did focused visits move the score more than no visits?</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[12px]">
+          <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Treated</th><th class="py-1.5 pr-2">Untreated</th><th class="py-1.5 pr-2">Effect</th><th class="py-1.5">Verdict</th></tr></thead>
+          <tbody>
+            {% for row in dashboard.visits.per_intervention %}
+            <tr class="border-t border-slate-100">
+              <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
+              <td class="py-1.5 pr-2 text-slate-500">{% if row.median_treated is not None %}{{ row.median_treated }} (n {{ row.n_treated }}){% else %}—{% endif %}</td>
+              <td class="py-1.5 pr-2 text-slate-500">{% if row.median_untreated is not None %}{{ row.median_untreated }} (n {{ row.n_untreated }}){% else %}—{% endif %}</td>
+              <td class="py-1.5 pr-2 font-semibold {% if row.effect is not None and row.effect > 0 %}text-emerald-600{% elif row.effect is not None and row.effect < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">{% if row.effect is not None %}{{ row.effect }}{% else %}—{% endif %}</td>
+              <td class="py-1.5"><span class="edify-text-caption font-semibold {% if row.verdict == 'significant' %}text-emerald-600{% elif row.verdict == 'suggestive' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ row.verdict }}{% if row.p is not None %} · p {{ row.p }}{% endif %}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <div>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Focused trainings: treated vs untreated weak-baseline schools</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Same design as visits — training-type activities focused on the intervention.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[12px]">
+          <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Treated</th><th class="py-1.5 pr-2">Untreated</th><th class="py-1.5 pr-2">Effect</th><th class="py-1.5">Verdict</th></tr></thead>
+          <tbody>
+            {% for row in dashboard.trainings.per_intervention %}
+            <tr class="border-t border-slate-100">
+              <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
+              <td class="py-1.5 pr-2 text-slate-500">{% if row.median_treated is not None %}{{ row.median_treated }} (n {{ row.n_treated }}){% else %}—{% endif %}</td>
+              <td class="py-1.5 pr-2 text-slate-500">{% if row.median_untreated is not None %}{{ row.median_untreated }} (n {{ row.n_untreated }}){% else %}—{% endif %}</td>
+              <td class="py-1.5 pr-2 font-semibold {% if row.effect is not None and row.effect > 0 %}text-emerald-600{% elif row.effect is not None and row.effect < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">{% if row.effect is not None %}{{ row.effect }}{% else %}—{% endif %}</td>
+              <td class="py-1.5"><span class="edify-text-caption font-semibold {% if row.verdict == 'significant' %}text-emerald-600{% elif row.verdict == 'suggestive' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ row.verdict }}{% if row.p is not None %} · p {{ row.p }}{% endif %}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-4" aria-label="Funding efficiency and target linkage">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2">
+      <div>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Funding efficiency quadrants</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Funded schools split at the median spend · improvement bar is +0.3 delta{% if not dashboard.scope.can_view_school_details %} · school identities withheld for your role{% endif %}</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div class="rounded-surface border border-emerald-100 bg-emerald-50/40 p-3">
+          <p class="edify-text-caption font-bold text-emerald-700 mb-1.5">High spend · improving ({{ dashboard.funding.quadrants.efficient|length }})</p>
+          {% for row in dashboard.funding.quadrants.efficient %}<p class="text-[12px] text-slate-600 flex justify-between"><span>{{ row.school }}</span><span class="font-semibold">UGX {{ row.spend }} · Δ{{ row.delta }}</span></p>{% empty %}<p class="text-[12px] text-slate-400">None</p>{% endfor %}
+        </div>
+        <div class="rounded-surface border border-rose-100 bg-rose-50/40 p-3">
+          <p class="edify-text-caption font-bold text-rose-700 mb-1.5">High spend · not improving ({{ dashboard.funding.quadrants.high_cost|length }})</p>
+          {% for row in dashboard.funding.quadrants.high_cost %}<p class="text-[12px] text-slate-600 flex justify-between"><span>{{ row.school }}</span><span class="font-semibold">UGX {{ row.spend }} · Δ{{ row.delta }}</span></p>{% empty %}<p class="text-[12px] text-slate-400">None</p>{% endfor %}
+        </div>
+        <div class="rounded-surface border border-sky-100 bg-sky-50/40 p-3">
+          <p class="edify-text-caption font-bold text-sky-700 mb-1.5">Low spend · improving ({{ dashboard.funding.quadrants.low_spend_improved|length }})</p>
+          {% for row in dashboard.funding.quadrants.low_spend_improved %}<p class="text-[12px] text-slate-600 flex justify-between"><span>{{ row.school }}</span><span class="font-semibold">UGX {{ row.spend }} · Δ{{ row.delta }}</span></p>{% empty %}<p class="text-[12px] text-slate-400">None</p>{% endfor %}
+        </div>
+        <div class="rounded-surface border border-amber-100 bg-amber-50/40 p-3">
+          <p class="edify-text-caption font-bold text-amber-700 mb-1.5">Low spend · not improving ({{ dashboard.funding.quadrants.stalled|length }})</p>
+          {% for row in dashboard.funding.quadrants.stalled %}<p class="text-[12px] text-slate-600 flex justify-between"><span>{{ row.school }}</span><span class="font-semibold">UGX {{ row.spend }} · Δ{{ row.delta }}</span></p>{% empty %}<p class="text-[12px] text-slate-400">None</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <div>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Target achievement ↔ school improvement</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Do staff who hit their targets support improving schools?</p>
+      </div>
+      <div class="space-y-1.5">
+        <p class="text-[13px] text-slate-600">
+          Spearman correlation between a school's assigned-staff target achievement and its score delta:
+          <span class="font-bold {% if dashboard.targets.correlation.verdict == 'significant' %}text-emerald-600{% elif dashboard.targets.correlation.verdict == 'suggestive' %}text-amber-600{% else %}text-slate-500{% endif %}">{{ dashboard.targets.correlation.verdict }}</span>
+          {% if dashboard.targets.correlation.rho is not None %}(ρ {{ dashboard.targets.correlation.rho }}, p {{ dashboard.targets.correlation.p }}, n {{ dashboard.targets.correlation.n }} schools){% endif %}
+        </p>
+        <p class="edify-text-caption text-slate-400">{{ dashboard.targets.staff_evaluated }} staff with assigned targets evaluated across the paired schools.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-4" aria-label="Geography">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2"
+         x-data="impactChart('impact-chart-payload', 'geography')">
+      <div>
+        <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Geography: median delta by district × intervention</h3>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Districts with at least 8 paired schools · Kruskal-Wallis tests whether districts genuinely differ per intervention</p>
+      </div>
+      {% if dashboard.geography.matrix %}
+      <div class="w-full overflow-x-auto">
+        <div class="min-w-[560px]" x-ref="chart" role="img" aria-label="Heatmap of median score improvement by district and intervention"></div>
+      </div>
+      <p class="sr-only" x-ref="status" aria-live="polite"></p>
+      {% else %}
+      <p class="text-[12px] text-slate-400 py-6 text-center">No district has enough paired schools yet for a geographic comparison.</p>
+      {% endif %}
+      {% if dashboard.geography.lagging %}
+      <div class="pt-1">
+        <p class="edify-text-caption font-bold text-slate-500 mb-1">Lagging district–intervention combinations</p>
+        {% for row in dashboard.geography.lagging %}
+        <p class="text-[12px] text-slate-600">{{ row.district }} · {{ row.intervention }} — median Δ {{ row.median_delta }} across {{ row.n }} schools</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Does geography matter?</h3>
+      {% for test in dashboard.geography.tests %}
+      <p class="text-[12px] text-slate-600 flex justify-between border-t border-slate-100 py-1.5 first:border-t-0">
+        <span>{{ test.label }}</span>
+        <span class="font-semibold {% if test.verdict == 'significant' %}text-emerald-600{% elif test.verdict == 'suggestive' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ test.verdict }}{% if test.p is not None %} · p {{ test.p }}{% endif %}</span>
+      </p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-label="Field reality">
+    <div>
+      <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">Field reality: why interventions are (not) moving</h3>
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Measured direction per intervention, overlaid with what field debriefs report — sorted worst first</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-[12px]">
+        <thead><tr class="text-left text-slate-400 font-semibold"><th class="py-1.5 pr-2">Intervention</th><th class="py-1.5 pr-2">Median Δ</th><th class="py-1.5 pr-2">Direction</th><th class="py-1.5 pr-2">Debriefs</th><th class="py-1.5 pr-2">Critical</th><th class="py-1.5">Top field challenges</th></tr></thead>
+        <tbody>
+          {% for row in dashboard.field_reality %}
+          <tr class="border-t border-slate-100">
+            <td class="py-1.5 pr-2 font-semibold text-slate-700">{{ row.label }}</td>
+            <td class="py-1.5 pr-2 text-slate-600">{% if row.median_delta is not None %}{{ row.median_delta }}{% else %}—{% endif %} <span class="text-slate-400">(n {{ row.n_schools }})</span></td>
+            <td class="py-1.5 pr-2"><span class="edify-text-caption font-bold {% if row.direction == 'improving' %}text-emerald-600{% elif row.direction == 'declining' %}text-rose-600{% elif row.direction == 'stagnant' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ row.direction }}</span></td>
+            <td class="py-1.5 pr-2 text-slate-600">{{ row.debriefs }}</td>
+            <td class="py-1.5 pr-2 {% if row.critical_debriefs %}font-bold text-rose-600{% else %}text-slate-400{% endif %}">{{ row.critical_debriefs }}</td>
+            <td class="py-1.5 text-slate-600">
+              {% for challenge in row.top_challenges %}{{ challenge.label }} ({{ challenge.count }}){% if not forloop.last %} · {% endif %}{% empty %}<span class="text-slate-400">no tagged debriefs</span>{% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2" aria-label="Methodology">
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">How these numbers are computed</h3>
+    <ul class="space-y-1">
+      {% for note in dashboard.method_notes %}
+      <li class="text-[12px] text-slate-500 leading-relaxed">· {{ note }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {% endif %}
+</div>

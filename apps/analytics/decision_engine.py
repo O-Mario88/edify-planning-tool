@@ -20,6 +20,8 @@ from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
+from .platform_engine import describe_numeric, engine_metadata
+
 
 # Configurable improvement thresholds (a school "improved" if delta > +0.3,
 # "declined" if delta < -0.3; within ±0.3 = "no_change").
@@ -112,7 +114,8 @@ def ssa_improvement(principal, query: dict) -> dict:
         else:
             no_change.append(entry)
 
-    avg_delta = round(sum(deltas) / len(deltas), 2) if deltas else 0
+    delta_summary = describe_numeric(deltas, target=IMPROVEMENT_THRESHOLD)
+    avg_delta = delta_summary["mean"] or 0
     return {
         "fy": fy,
         "previousFy": prev_fy,
@@ -125,6 +128,12 @@ def ssa_improvement(principal, query: dict) -> dict:
         "declined": sorted(declined, key=lambda x: x["delta"])[:50],
         "improvedSchoolIds": [e["schoolId"] for e in improved],
         "declinedSchoolIds": [e["schoolId"] for e in declined],
+        "analytics": {
+            "delta": delta_summary,
+            "engine": engine_metadata(
+                "ssa_improvement", record_count=len(deltas), confirmed_only=True
+            ),
+        },
     }
 
 
@@ -141,6 +150,12 @@ def _empty_improvement(fy: str) -> dict:
         "declined": [],
         "improvedSchoolIds": [],
         "declinedSchoolIds": [],
+        "analytics": {
+            "delta": describe_numeric([], target=IMPROVEMENT_THRESHOLD),
+            "engine": engine_metadata(
+                "ssa_improvement", record_count=0, confirmed_only=True
+            ),
+        },
     }
 
 
@@ -162,12 +177,14 @@ def intervention_analytics(principal, query: dict) -> dict:
             ssa_record__school_id__in=school_ids,
             ssa_record__fy=fy,
             ssa_record__deleted_at__isnull=True,
+            ssa_record__verification_status="confirmed",
             intervention=interv,
         ).aggregate(a=Avg("score"))["a"]
         prev = SsaScore.objects.filter(
             ssa_record__school_id__in=school_ids,
             ssa_record__fy=prev_fy,
             ssa_record__deleted_at__isnull=True,
+            ssa_record__verification_status="confirmed",
             intervention=interv,
         ).aggregate(a=Avg("score"))["a"]
         delta = (
@@ -177,6 +194,7 @@ def intervention_analytics(principal, query: dict) -> dict:
             ssa_record__school_id__in=school_ids,
             ssa_record__fy=fy,
             ssa_record__deleted_at__isnull=True,
+            ssa_record__verification_status="confirmed",
             intervention=interv,
             score__lt=5.0,
         ).count()
@@ -358,10 +376,32 @@ def recommendations(principal, query: dict) -> list[dict]:
     return recs
 
 
+def ssa_performance_dashboard(principal, query: dict) -> dict:
+    """Decision-engine view model for the unified SSA Performance workspace.
+
+    Kept on the engine's public surface so the web page, exports, and any later
+    API adapter cannot drift into separate risk or recommendation rules.
+    """
+    from .ssa_performance_service import build_dashboard
+
+    return build_dashboard(principal, query)
+
+
+def impact_analytics_dashboard(principal, query: dict) -> dict:
+    """Decision-engine view model for the statistical Impact Analytics
+    workspace (visits/trainings/funding/targets/geography/debriefs vs SSA
+    improvement). Same facade rule as ssa_performance_dashboard."""
+    from .impact_engine import build_dashboard
+
+    return build_dashboard(principal, query)
+
+
 __all__ = [
     "ssa_improvement",
     "intervention_analytics",
     "district_ssa_rollup",
     "cluster_ssa_rollup",
     "recommendations",
+    "ssa_performance_dashboard",
+    "impact_analytics_dashboard",
 ]

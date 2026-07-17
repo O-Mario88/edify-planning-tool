@@ -7,7 +7,23 @@
   class="pto-page"
   x-data="{
     activeTab: 'upcoming',
+    allowedTabs: ['upcoming', 'past', 'all'],
     avgTeamAvailability: {{ avg_team_availability }},
+    init() {
+      const requested = new URL(window.location.href).searchParams.get('tab');
+      if (this.allowedTabs.includes(requested)) this.activeTab = requested;
+      window.addEventListener('popstate', () => {
+        const tab = new URL(window.location.href).searchParams.get('tab');
+        this.activeTab = this.allowedTabs.includes(tab) ? tab : 'upcoming';
+      });
+    },
+    setTab(tab) {
+      if (!this.allowedTabs.includes(tab) || tab === this.activeTab) return;
+      this.activeTab = tab;
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.pushState({}, '', url);
+    },
     openRequestDrawer() {
       if (!this.$refs.requestDialog.open) this.$refs.requestDialog.showModal();
     },
@@ -184,14 +200,14 @@
             <span class="pto-kicker">My workflow</span>
             <h2 id="my-requests-title">Leave requests</h2>
           </div>
-          <div class="pto-tabs" role="group" aria-label="Filter leave requests">
-            <button type="button" @click="activeTab = 'upcoming'" :aria-pressed="activeTab === 'upcoming'" :class="activeTab === 'upcoming' ? 'is-active' : ''">Upcoming</button>
-            <button type="button" @click="activeTab = 'past'" :aria-pressed="activeTab === 'past'" :class="activeTab === 'past' ? 'is-active' : ''">Past</button>
-            <button type="button" @click="activeTab = 'all'" :aria-pressed="activeTab === 'all'" :class="activeTab === 'all' ? 'is-active' : ''">All</button>
+          <div class="pto-tabs" role="tablist" aria-label="Filter leave requests">
+            <button id="pto-tab-upcoming" type="button" role="tab" aria-controls="pto-requests-panel" :aria-selected="activeTab === 'upcoming'" :tabindex="activeTab === 'upcoming' ? 0 : -1" @click="setTab('upcoming')" :class="activeTab === 'upcoming' ? 'is-active' : ''">Upcoming <span>{{ upcoming_requests_count }}</span></button>
+            <button id="pto-tab-past" type="button" role="tab" aria-controls="pto-requests-panel" :aria-selected="activeTab === 'past'" :tabindex="activeTab === 'past' ? 0 : -1" @click="setTab('past')" :class="activeTab === 'past' ? 'is-active' : ''">Past <span>{{ past_requests_count }}</span></button>
+            <button id="pto-tab-all" type="button" role="tab" aria-controls="pto-requests-panel" :aria-selected="activeTab === 'all'" :tabindex="activeTab === 'all' ? 0 : -1" @click="setTab('all')" :class="activeTab === 'all' ? 'is-active' : ''">All <span>{{ leaves|length }}</span></button>
           </div>
         </div>
 
-        <div class="pto-request-list" aria-live="polite">
+        <div id="pto-requests-panel" class="pto-request-list" role="tabpanel" aria-live="polite">
           {% for l in leaves %}
           <article
             class="pto-request-row"
@@ -489,7 +505,7 @@
         >
           <div id="drawer-content-placeholder" class="flex-1 flex flex-col overflow-y-auto">
             <div class="px-4 sm:px-6 py-5 flex items-center justify-center flex-1">
-              <span class="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin" aria-label="Loading leave request form"></span>
+              <span class="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-pill animate-spin" aria-label="Loading leave request form"></span>
             </div>
           </div>
         </div>

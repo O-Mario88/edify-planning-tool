@@ -14,7 +14,7 @@
 </div>
 
 <!-- Listings Table -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
@@ -45,19 +45,19 @@
 {% endif %}
 </td>
 <td class="px-4 py-4">
-<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-slate-100">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-slate-100">
 {{ log.priority }}
 </span>
 </td>
 <td class="px-4 py-4">
 {% if log.status == 'read' %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-emerald-50 text-emerald-700">
-<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700">
+<span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
 <span>Delivered & Read</span>
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-blue-50 text-blue-700">
-<span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-blue-50 text-blue-700">
+<span class="h-1.5 w-1.5 rounded-pill bg-blue-500"></span>
 <span>Sent (Unread)</span>
 </span>
 {% endif %}
@@ -68,7 +68,7 @@
 <input type="hidden" name="resend_id" value="{{ log.id }}">
 <button
 type="submit"
-class="px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-600 hover:text-blue-800 rounded edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-600 hover:text-blue-800 rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Resend Alert
 </button>

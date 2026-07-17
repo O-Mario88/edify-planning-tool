@@ -18,13 +18,13 @@ border-radius: 4px;
 }
 </style>
 
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;color:var(--edify-text);">
+<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2">
-<div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+<div class="p-2 bg-emerald-50 text-emerald-600 rounded-surface">
 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
 </svg>
@@ -36,7 +36,7 @@ border-radius: 4px;
 
 <!-- Date range (current week) -->
 <div class="flex flex-wrap items-center gap-2">
-<span class="h-9 px-3 edify-surface border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm">
+<span class="h-9 px-3 edify-surface border border-slate-200 rounded-pill text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
 {{ date_range }}
 </span>
@@ -45,10 +45,10 @@ border-radius: 4px;
 
 
 <!-- ================= TOP KPI ROW ================= -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-2">
+<div class="ia-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-2">
 <!-- Records Uploaded Today -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
+<div class="p-3 bg-blue-50 text-blue-600 rounded-surface">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
 </div>
 <div>
@@ -59,8 +59,8 @@ border-radius: 4px;
 </div>
 
 <!-- Pending Verification -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
+<div class="p-3 bg-amber-50 text-amber-600 rounded-surface">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
 </div>
 <div>
@@ -71,8 +71,8 @@ border-radius: 4px;
 </div>
 
 <!-- Verified This Week -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
+<div class="p-3 bg-emerald-50 text-emerald-600 rounded-surface">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
 </div>
 <div>
@@ -83,8 +83,8 @@ border-radius: 4px;
 </div>
 
 <!-- Returned for Correction -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
+<div class="p-3 bg-rose-50 text-rose-600 rounded-surface">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H19.9"/></svg>
 </div>
 <div>
@@ -95,19 +95,19 @@ border-radius: 4px;
 </div>
 
 <!-- Data Quality Score -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-teal-50 text-teal-600 rounded-xl">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
+<div class="p-3 bg-teal-50 text-teal-600 rounded-surface">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
 </div>
 <div class="flex-1 min-w-0">
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Data Quality Score</p>
-<div class="flex items-baseline justify-between mt-0.5">
-<h3 class="text-[21px] font-extrabold tracking-tight">{{ kpis.quality }}</h3>
-<span class="edify-text-caption text-slate-400 font-semibold">avg across schools</span>
+<div class="flex flex-col items-start mt-0.5">
+<h3 class="ia-quality-value block w-full text-[21px] font-extrabold tracking-tight">{{ kpis.quality }}</h3>
+<span class="ia-quality-helper block w-full edify-text-caption text-slate-400 font-medium mt-0.5">Average across schools</span>
 </div>
 <!-- progress bar -->
-<div class="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-<div class="bg-teal-500 h-full rounded-full" style="width: {{ kpis.quality_pct }}%"></div>
+<div class="w-full bg-slate-100 h-1.5 rounded-pill mt-1.5 overflow-hidden">
+<div class="bg-teal-500 h-full rounded-pill" style="width: {{ kpis.quality_pct }}%"></div>
 </div>
 </div>
 </div>
@@ -116,10 +116,10 @@ border-radius: 4px;
 <!-- Pending-queue strip -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
 <!-- Salesforce Queue Pending -->
-<div class="bg-slate-50 p-3 rounded-lg border border-slate-100/50 flex flex-col justify-between">
+<div class="bg-slate-50 p-3 rounded-surface border border-slate-100/50 flex flex-col justify-between">
 <div class="flex items-center justify-between">
 <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Salesforce Queue</span>
-<span class="h-2 w-2 rounded-full bg-blue-500"></span>
+<span class="h-2 w-2 rounded-pill bg-blue-500"></span>
 </div>
 <div class="mt-2">
 <h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.sf_queue }}</h4>
@@ -128,10 +128,10 @@ border-radius: 4px;
 </div>
 
 <!-- SSA Submissions Pending -->
-<div class="bg-slate-50 p-3 rounded-lg border border-slate-100/50 flex flex-col justify-between">
+<div class="bg-slate-50 p-3 rounded-surface border border-slate-100/50 flex flex-col justify-between">
 <div class="flex items-center justify-between">
 <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">SSA Submissions</span>
-<span class="h-2 w-2 rounded-full bg-amber-500"></span>
+<span class="h-2 w-2 rounded-pill bg-amber-500"></span>
 </div>
 <div class="mt-2">
 <h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.ssa_pending_review }}</h4>
@@ -140,10 +140,10 @@ border-radius: 4px;
 </div>
 
 <!-- Evidence Files Pending -->
-<div class="bg-slate-50 p-3 rounded-lg border border-slate-100/50 flex flex-col justify-between">
+<div class="bg-slate-50 p-3 rounded-surface border border-slate-100/50 flex flex-col justify-between">
 <div class="flex items-center justify-between">
 <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Evidence Files</span>
-<span class="h-2 w-2 rounded-full bg-violet-500"></span>
+<span class="h-2 w-2 rounded-pill bg-violet-500"></span>
 </div>
 <div class="mt-2">
 <h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.evidence_pending }}</h4>
@@ -160,25 +160,25 @@ border-radius: 4px;
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- DATA UPLOAD / INTAKE CONTROL PANEL (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between space-y-4">
+<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between space-y-4">
 <div>
 <div class="flex items-center gap-1.5 pb-2 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Data Upload / Intake Control Panel</h2>
-<span class="text-slate-300 cursor-pointer" title="Manage bulk uploads and data streams">ⓘ</span>
+<span class="inline-flex text-slate-400" title="Manage bulk uploads and data streams" aria-label="Manage bulk uploads and data streams"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></span>
 </div>
 
 <div class="grid grid-cols-1 gap-2 mt-4">
-<a href="/ssa/upload/" class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl edify-text-caption font-semibold flex items-center justify-start px-3 gap-2 transition-all">
+<a href="/ssa/upload/" class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-control edify-text-caption font-semibold flex items-center justify-start px-3 gap-2 transition-all">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12V4m0 0L9 7m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg> Upload SSA Data
 </a>
-<a href="/ssa/upload/" class="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
+<a href="/ssa/upload/" class="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-control text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg> Import Bulk File
 </a>
 </div>
 </div>
 
 <!-- Upload Status Footer Panel -->
-<div class="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-2 mt-4">
+<div class="bg-slate-50 p-3 rounded-surface border border-slate-100 space-y-2 mt-4">
 <div class="flex items-center justify-between edify-text-caption">
 <span class="text-slate-500 font-bold">Last upload:</span>
 <span class="font-semibold">{% if upload_status.last_upload %}{{ upload_status.last_upload|date:"d M Y, h:i A" }}{% else %}No uploads yet{% endif %}</span>
@@ -191,7 +191,7 @@ border-radius: 4px;
 </div>
 
 <!-- VERIFICATION WORK QUEUE (Col Span 6) -->
-<div class="lg:col-span-6 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-6 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Verification Work Queue</h2>
@@ -200,11 +200,11 @@ border-radius: 4px;
 
 <!-- Interactive Tabs -->
 <div class="flex flex-wrap gap-1 mt-3 border-b border-slate-100 pb-2">
-<a href="/ia/verification/" class="px-3 py-1.5 bg-slate-900 text-white edify-text-caption font-semibold rounded-lg">All Pending</a>
-<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-lg">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full edify-text-caption font-semibold">{{ kpis.sf_queue }}</span></a>
-<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-lg">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full edify-text-caption font-semibold">{{ kpis.ssa_pending_review }}</span></a>
-<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-lg">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full edify-text-caption font-semibold">{{ kpis.evidence_pending }}</span></a>
-<a href="/ia/returned/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-lg">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full edify-text-caption font-semibold">{{ kpis.returned_open }}</span></a>
+<a href="/ia/verification/" class="px-3 py-1.5 bg-slate-900 text-white edify-text-caption font-semibold rounded-surface">All Pending</a>
+<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.sf_queue }}</span></a>
+<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.ssa_pending_review }}</span></a>
+<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.evidence_pending }}</span></a>
+<a href="/ia/returned/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.returned_open }}</span></a>
 </div>
 
 <!-- Table -->
@@ -229,20 +229,20 @@ border-radius: 4px;
 <td class="py-3 font-semibold text-slate-800">{{ item.school }}</td>
 <td class="py-3 font-semibold text-slate-500">{{ item.district }}</td>
 <td class="py-3">
-<span class="inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 edify-text-caption font-bold border border-slate-200">
+<span class="inline-flex items-center rounded-pill bg-slate-100 px-1.5 py-0.5 edify-text-caption font-bold border border-slate-200">
 {{ item.activity_type }}
 </span>
 </td>
 <td class="py-3 font-bold text-slate-600">{{ item.submitted_by }}</td>
 <td class="py-3 text-slate-400 font-bold whitespace-nowrap">{{ item.submission_date }}</td>
 <td class="py-3">
-<span class="inline-flex items-center rounded-full px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider border {{ item.status_class }}">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider border {{ item.status_class }}">
 {{ item.status }}
 </span>
 </td>
 <td class="py-3 text-right">
 <div class="flex items-center justify-end gap-1.5">
-<a href="/ia/verification/" class="h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded edify-text-caption font-semibold inline-flex items-center">Open queue &rarr;</a>
+<a href="/ia/verification/" class="h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-small edify-text-caption font-semibold inline-flex items-center">Open queue &rarr;</a>
 </div>
 </td>
 </tr>
@@ -262,26 +262,26 @@ border-radius: 4px;
 </div>
 
 <!-- ALERTS / EXCEPTIONS (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Alerts / Exceptions</h2>
-<span class="bg-rose-500 text-white font-semibold rounded-full h-5 px-1.5 edify-text-caption flex items-center justify-center">{{ exceptions|length }}</span>
+<span class="bg-rose-500 text-white font-semibold rounded-pill h-5 px-1.5 edify-text-caption flex items-center justify-center">{{ exceptions|length }}</span>
 </div>
 <a href="/data-quality/duplicates" class="edify-text-caption font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
 
 <div class="space-y-2 mt-4">
 {% for exception in exceptions %}
-<div class="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-lg border border-slate-100 flex items-start gap-3 transition-colors cursor-pointer group">
+<div class="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-surface border border-slate-100 flex items-start gap-3 transition-colors cursor-pointer group">
 <!-- custom alert colored shapes -->
 {% if exception.severity == 'error' %}
-<div class="h-5 w-5 bg-rose-100 text-rose-600 font-semibold rounded-lg flex items-center justify-center edify-text-caption shrink-0 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+<div class="h-5 w-5 bg-rose-100 text-rose-600 font-semibold rounded-surface flex items-center justify-center edify-text-caption shrink-0 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
 {% elif exception.severity == 'warning' %}
-<div class="h-5 w-5 bg-amber-100 text-amber-600 font-semibold rounded-lg flex items-center justify-center edify-text-caption shrink-0 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></div>
+<div class="h-5 w-5 bg-amber-100 text-amber-600 font-semibold rounded-surface flex items-center justify-center edify-text-caption shrink-0 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></div>
 {% else %}
-<div class="h-5 w-5 bg-blue-100 text-blue-600 font-semibold rounded-lg flex items-center justify-center edify-text-caption shrink-0 mt-0.5">ℹ️</div>
+<div class="h-5 w-5 bg-blue-100 text-blue-600 rounded-surface flex items-center justify-center shrink-0 mt-0.5"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></div>
 {% endif %}
 <div class="flex-1 min-w-0">
 <p class="text-[12px] font-semibold text-slate-800 leading-tight">
@@ -304,14 +304,14 @@ border-radius: 4px;
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- DATA QUALITY & COMPLIANCE PANEL (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-xl  shadow-sm space-y-4">
+<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Data Quality & Compliance Panel</h2>
 </div>
 
 <div class="grid grid-cols-1 gap-3">
 {% for metric in dq_metrics %}
-<div class="flex items-center justify-between p-3 rounded-lg bg-slate-50/50 border border-slate-100">
+<div class="flex items-center justify-between p-3 rounded-surface bg-slate-50/50 border border-slate-100">
 <div>
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">{{ metric.label }}</p>
 <h4 class="text-[21px] font-extrabold tracking-tight mt-0.5">{{ metric.value }}</h4>
@@ -328,7 +328,7 @@ border-radius: 4px;
 </div>
 
 <!-- SSA MONITORING ANALYTICS (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-xl  shadow-sm space-y-6">
+<div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm space-y-6">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">SSA Monitoring Analytics</h2>
 <a href="/analytics" class="edify-text-caption font-semibold text-blue-600 hover:underline">View full analytics &rarr;</a>
@@ -337,7 +337,7 @@ border-radius: 4px;
 <!-- Donut & Bar chart container -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 <!-- Donut 1: school SSA coverage (current FY) -->
-<div class="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-50/50 border border-slate-100 text-center space-y-2">
+<div class="flex flex-col items-center justify-center p-3 rounded-surface bg-slate-50/50 border border-slate-100 text-center space-y-2">
 <!-- circular svg representation -->
 <div class="relative h-20 w-20 flex items-center justify-center">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
@@ -366,8 +366,8 @@ border-radius: 4px;
 <span class="truncate pr-1">{{ item.name }}</span>
 <span>{{ item.rate }}%</span>
 </div>
-<div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-<div class="bg-rose-500 h-full rounded-full" style="width: {{ item.rate }}%"></div>
+<div class="w-full bg-slate-100 h-1 rounded-pill overflow-hidden">
+<div class="bg-rose-500 h-full rounded-pill" style="width: {{ item.rate }}%"></div>
 </div>
 </div>
 {% empty %}
@@ -388,8 +388,8 @@ border-radius: 4px;
 <span class="text-slate-300 font-semibold edify-text-caption">{{ forloop.counter }}</span> {{ item.name }}
 </span>
 <div class="flex items-center gap-2">
-<div class="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden hidden sm:block">
-<div class="bg-teal-500 h-full rounded-full" style="width: {{ item.rate }}%"></div>
+<div class="w-16 bg-slate-100 h-1.5 rounded-pill overflow-hidden hidden sm:block">
+<div class="bg-teal-500 h-full rounded-pill" style="width: {{ item.rate }}%"></div>
 </div>
 <span class="text-slate-800 font-semibold">{{ item.rate }}%</span>
 </div>
@@ -401,7 +401,7 @@ border-radius: 4px;
 </div>
 
 <!-- SSA Record Review Donut -->
-<div class="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-50/50 border border-slate-100 text-center space-y-2">
+<div class="flex flex-col items-center justify-center p-3 rounded-surface bg-slate-50/50 border border-slate-100 text-center space-y-2">
 <!-- circular svg representation -->
 <div class="relative h-20 w-20 flex items-center justify-center">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
@@ -423,12 +423,12 @@ border-radius: 4px;
 </div>
 
 <!-- EVIDENCE REVIEW PANEL (Col Span 6) -->
-<div class="lg:col-span-6 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-6 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Evidence Review Panel</h2>
-<span class="text-slate-300 cursor-pointer" title="Verification logs by document type">ⓘ</span>
+<span class="inline-flex text-slate-400" title="Verification logs by document type" aria-label="Verification logs by document type"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></span>
 </div>
 <a href="/evidence/" class="edify-text-caption font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
@@ -479,7 +479,7 @@ border-radius: 4px;
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- RECENT ACTIVITY FEED (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Activity Feed</h2>
@@ -490,7 +490,7 @@ border-radius: 4px;
 {% for act in recent_activities %}
 <div class="relative">
 <!-- circular dot on timeline -->
-<span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900 shadow-sm"></span>
+<span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-pill border-2 border-white bg-slate-900 shadow-sm"></span>
 <div class="space-y-0.5">
 <h4 class="text-[12px] font-semibold text-slate-800 leading-tight">{{ act.title }}</h4>
 <p class="edify-text-caption text-slate-500 font-semibold">{{ act.detail }}</p>
@@ -515,10 +515,10 @@ View all activity
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- FIELD MONITORING / STAFF COMPLIANCE (Col Span 9) -->
-<div class="lg:col-span-9 edify-surface p-5 rounded-xl  shadow-sm space-y-4">
+<div class="lg:col-span-9 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
 <div class="flex items-center gap-1.5 pb-2 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Field Monitoring / Staff Compliance</h2>
-<span class="text-slate-300 cursor-pointer" title="Compliance stats and verifier queues">ⓘ</span>
+<span class="inline-flex text-slate-400" title="Compliance stats and verifier queues" aria-label="Compliance stats and verifier queues"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></span>
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 pt-2">
@@ -572,40 +572,40 @@ View all activity
 </div>
 
 <!-- QUICK ACTIONS / WORKFLOWS (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-xl  shadow-sm space-y-4">
+<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Quick Actions / Workflows</h2>
 </div>
 
 <div class="grid grid-cols-2 gap-2">
 <!-- Start Verification -->
-<a href="/ia/verification/" class="h-20 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-100 rounded-lg p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+<a href="/ia/verification/" class="h-20 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-100 rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
+<div class="h-7 w-7 rounded-pill bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
 <span class="edify-text-caption font-semibold block mt-1">Start Verification</span>
 </a>
 
 <!-- Review Returned -->
-<a href="/ia/returned/" class="h-20 bg-amber-50 hover:bg-amber-100/70 border border-amber-100 rounded-lg p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">↺</div>
+<a href="/ia/returned/" class="h-20 bg-amber-50 hover:bg-amber-100/70 border border-amber-100 rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
+<div class="h-7 w-7 rounded-pill bg-amber-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M5.5 15a7 7 0 0011.4 2.1L20 15M4 9l3.1-2.1A7 7 0 0118.5 9"/></svg></div>
 <span class="edify-text-caption font-semibold block mt-1">Review Returned</span>
 </a>
 
 <!-- Open Salesforce Queue -->
-<a href="/ia/verification/" class="h-20 bg-blue-50 hover:bg-blue-100/70 border border-blue-100 rounded-lg p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 18a4 4 0 010-8 5 5 0 019.6-1.3A3.5 3.5 0 0117 18H7z"/></svg></div>
+<a href="/ia/verification/" class="h-20 bg-blue-50 hover:bg-blue-100/70 border border-blue-100 rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
+<div class="h-7 w-7 rounded-pill bg-blue-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 18a4 4 0 010-8 5 5 0 019.6-1.3A3.5 3.5 0 0117 18H7z"/></svg></div>
 <span class="edify-text-caption font-semibold block mt-1">Salesforce Queue</span>
 </a>
 
 <!-- View School 360 -->
-<a href="/schools" class="h-20 bg-teal-50 hover:bg-teal-100/70 border border-teal-100 rounded-lg p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg></div>
+<a href="/schools" class="h-20 bg-teal-50 hover:bg-teal-100/70 border border-teal-100 rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
+<div class="h-7 w-7 rounded-pill bg-teal-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg></div>
 <span class="edify-text-caption font-semibold block mt-1">View School 360</span>
 </a>
 </div>
 </div>
 
 <!-- Verification SLA Gauge (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-xl shadow-sm">
+<div class="lg:col-span-4 edify-surface p-5 rounded-surface shadow-sm">
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Verification SLA</h2>
 <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">24-hour target</span>
@@ -614,13 +614,22 @@ View all activity
 <div class="relative h-24 w-24 flex items-center justify-center shrink-0">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-emerald-500" stroke-dasharray="84, 100" stroke-width="2.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% if verification_sla.pct is not None %}<path class="text-emerald-500" stroke-dasharray="{{ verification_sla.pct }}, 100" stroke-width="2.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
 </svg>
-<span class="absolute text-[21px] font-extrabold tracking-tight leading-none">84%</span>
+<span class="absolute text-[21px] font-semibold tracking-tight leading-none">{% if verification_sla.pct is not None %}{{ verification_sla.pct|floatformat:1 }}%{% else %}&mdash;{% endif %}</span>
 </div>
 <div class="space-y-1.5">
-<p class="text-[12px] font-bold text-slate-500">Within SLA</p>
-<p class="edify-text-caption text-slate-400 font-semibold">&#9650; 2 pts vs last week</p>
+{% if verification_sla.pct is not None %}
+<p class="text-[12px] font-semibold text-slate-500">Within SLA <span class="text-slate-400">&middot; n={{ verification_sla.sample_size }}</span></p>
+{% if verification_sla.delta is not None %}
+<p class="edify-text-caption font-semibold {% if verification_sla.delta > 0 %}text-emerald-600{% elif verification_sla.delta < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">{% if verification_sla.delta > 0 %}&#9650;{% elif verification_sla.delta < 0 %}&#9660;{% endif %} {{ verification_sla.delta|floatformat:1 }} pts vs previous week</p>
+{% else %}
+<p class="edify-text-caption text-slate-400 font-medium">Previous week not yet measured</p>
+{% endif %}
+{% else %}
+<p class="text-[12px] font-semibold text-slate-500">Not yet measured</p>
+<p class="edify-text-caption text-slate-400 font-medium">Starts with the next completed IA cycle</p>
+{% endif %}
 <a href="/ia/verification/" class="inline-flex items-center gap-1 edify-text-caption font-semibold text-blue-600 hover:underline mt-1">Open queue &rarr;</a>
 </div>
 </div>
@@ -636,7 +645,7 @@ View all activity
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
 <!-- Highest Pending Queue -->
-<div class="edify-surface p-5 rounded-xl shadow-sm space-y-3">
+<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Highest Pending Queue</h2>
 <span class="edify-text-caption font-bold text-rose-600 uppercase tracking-wider">Backlog</span>
@@ -654,7 +663,7 @@ View all activity
 </div>
 
 <!-- Partner Pending Submissions -->
-<div class="edify-surface p-5 rounded-xl shadow-sm space-y-3">
+<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Partner Pending Submissions</h2>
 <span class="edify-text-caption font-bold text-amber-600 uppercase tracking-wider">Partners</span>
@@ -672,7 +681,7 @@ View all activity
 </div>
 
 <!-- Top Verifiers -->
-<div class="edify-surface p-5 rounded-xl shadow-sm space-y-3">
+<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Top Verifiers (This Week)</h2>
 <span class="edify-text-caption font-bold text-emerald-600 uppercase tracking-wider">Leaders</span>
@@ -690,7 +699,7 @@ View all activity
 </div>
 
 <!-- Slowest Turnaround -->
-<div class="edify-surface p-5 rounded-xl shadow-sm space-y-3">
+<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Slowest Turnaround</h2>
 <span class="edify-text-caption font-bold text-rose-500 uppercase tracking-wider">Bottlenecks</span>
@@ -716,7 +725,7 @@ View all activity
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- Awaiting Follow-up (Col Span 12) -->
-<div class="lg:col-span-12 edify-surface p-5 rounded-xl shadow-sm">
+<div class="lg:col-span-12 edify-surface p-5 rounded-surface shadow-sm">
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Awaiting Follow-up</h2>
 <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Correction cycle</span>
@@ -739,25 +748,25 @@ View all activity
 
 
 <!-- ================= GRID ROW 6: Field Quality & Data Signals ================= -->
-<a href="/debriefs" class="block edify-surface p-5 rounded-xl shadow-sm space-y-3 hover:shadow-md transition-shadow">
+<a href="/debriefs" class="block edify-surface p-5 rounded-surface shadow-sm space-y-3 hover:shadow-md transition-shadow">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Field Quality &amp; Data Signals from Field Debriefs <span class="text-slate-400 font-medium edify-text-caption">(last {{ field_debrief_intel.days }} days)</span></h2>
 <span class="edify-text-caption font-bold text-blue-600 uppercase tracking-wider">Open Field Debriefs &rarr;</span>
 </div>
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-<div class="rounded-lg bg-slate-50 py-3 text-center">
+<div class="rounded-surface bg-slate-50 py-3 text-center">
 <p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ field_debrief_intel.total }}</p>
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Debriefs Filed</p>
 </div>
-<div class="rounded-lg py-3 text-center {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+<div class="rounded-surface py-3 text-center {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
 <p class="text-[18px] font-bold tabular-nums {% if field_debrief_intel.critical %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.critical }}</p>
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Critical Risk</p>
 </div>
-<div class="rounded-lg py-3 text-center {% if field_debrief_intel.action_required %}bg-amber-50{% else %}bg-slate-50{% endif %}">
+<div class="rounded-surface py-3 text-center {% if field_debrief_intel.action_required %}bg-amber-50{% else %}bg-slate-50{% endif %}">
 <p class="text-[18px] font-bold tabular-nums {% if field_debrief_intel.action_required %}text-amber-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.action_required }}</p>
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Action Required</p>
 </div>
-<div class="rounded-lg py-3 text-center {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+<div class="rounded-surface py-3 text-center {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
 <p class="text-[18px] font-bold tabular-nums {% if field_debrief_intel.escalated %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.escalated }}</p>
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Escalated</p>
 </div>

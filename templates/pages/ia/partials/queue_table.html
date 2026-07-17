@@ -39,18 +39,18 @@
 </td>
 <!-- Activity Type -->
 <td class="px-6 py-4">
-<div class="inline-flex items-center px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
+<div class="inline-flex items-center px-2.5 py-0.5 rounded-surface edify-text-caption font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
 {{ act.activityType|title|replace_underscore }}
 </div>
 </td>
 <!-- Evidence Status -->
 <td class="px-6 py-4 text-center">
 {% if act.has_evidence %}
-<span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-150 shadow-sm" title="Evidence accepted/uploaded">
+<span class="inline-flex items-center justify-center w-7 h-7 rounded-pill bg-emerald-50 text-emerald-600 border border-emerald-150 shadow-sm" title="Evidence accepted/uploaded">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
 </span>
 {% else %}
-<span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-50 text-rose-600 border border-rose-150 shadow-sm" title="Evidence missing!">
+<span class="inline-flex items-center justify-center w-7 h-7 rounded-pill bg-rose-50 text-rose-600 border border-rose-150 shadow-sm" title="Evidence missing!">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </span>
 {% endif %}
@@ -59,9 +59,9 @@
 <td class="px-6 py-4 text-center">
 {% if act.ssa_collection_expected %}
 {% if act.has_ssa %}
-<span class="px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Collected</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Collected</span>
 {% else %}
-<span class="px-2.5 py-0.5 rounded-lg edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-200">Missing</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-200">Missing</span>
 {% endif %}
 {% else %}
 <span class="text-slate-400 edify-text-caption font-normal">N/A</span>
@@ -70,7 +70,7 @@
 <!-- Salesforce ID -->
 <td class="px-6 py-4">
 {% if act.salesforceActivityId %}
-<span class="font-mono text-slate-800 font-bold bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg edify-text-caption">{{ act.salesforceActivityId }}</span>
+<span class="font-mono text-slate-800 font-bold bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill edify-text-caption">{{ act.salesforceActivityId }}</span>
 {% else %}
 <span class="text-rose-600 font-semibold edify-text-caption inline-flex items-center gap-0.5">
 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01" /></svg>
@@ -81,7 +81,7 @@ Unlinked
 <!-- Attendance -->
 <td class="px-6 py-4 text-center">
 {% if act.teachersAttended is not None or act.leadersAttended is not None %}
-<span class="font-semibold text-slate-800 bg-slate-50 px-2 py-1 border border-slate-200/50 rounded-lg edify-text-caption">
+<span class="font-semibold text-slate-800 bg-slate-50 px-2 py-1 border border-slate-200/50 rounded-pill edify-text-caption">
 T:{{ act.teachersAttended|default:0 }} &bull; L:{{ act.leadersAttended|default:0 }}
 </span>
 {% else %}
@@ -91,12 +91,12 @@ T:{{ act.teachersAttended|default:0 }} &bull; L:{{ act.leadersAttended|default:0
 <!-- Priority -->
 <td class="px-6 py-4 text-center">
 {% if act.is_high_priority %}
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
+<span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-ping"></span>
 High
 </span>
 {% else %}
-<span class="px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
 Normal
 </span>
 {% endif %}
@@ -109,17 +109,17 @@ Normal
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
 <!-- Open Workspace -->
-<a href="/ia/verification/{{ act.id }}/" class="h-8 px-3 rounded-xl bg-blue-50 text-[var(--edify-chart-blue)] hover:bg-[var(--edify-chart-blue)] hover:text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
+<a href="/ia/verification/{{ act.id }}/" class="h-8 px-3 rounded-control bg-blue-50 text-[var(--edify-chart-blue)] hover:bg-[var(--edify-chart-blue)] hover:text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
 Review Action
 </a>
 
 <!-- Side-by-side comparison icon link -->
-<a href="/ia/compare/?activity_id={{ act.id }}" class="h-8 w-8 rounded-xl border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors" title="Compare side-by-side">
+<a href="/ia/compare/?activity_id={{ act.id }}" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors" title="Compare side-by-side">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
 </a>
 
 <!-- Timeline stepper icon link -->
-<a href="/activities/{{ act.id }}/timeline/" class="h-8 w-8 rounded-xl border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors" title="View Audit Timeline">
+<a href="/activities/{{ act.id }}/timeline/" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors" title="View Audit Timeline">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 </a>
 </div>
@@ -130,7 +130,7 @@ Review Action
 <tr>
 <td colspan="11" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 <div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
+<div class="w-12 h-12 rounded-surface bg-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
 </div>
 <p class="text-slate-400">All activities verified. The queue is empty.</p>
@@ -150,13 +150,13 @@ Review Action
 <a href="/ia/verification/?page={{ page_obj.previous_page_number }}"
    hx-get="/ia/verification/?page={{ page_obj.previous_page_number }}"
    hx-target="#queue-table-container" hx-include="#filters-form"
-   class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-lg">&larr; Prev</a>
+   class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">&larr; Prev</a>
 {% endif %}
 {% if page_obj.has_next %}
 <a href="/ia/verification/?page={{ page_obj.next_page_number }}"
    hx-get="/ia/verification/?page={{ page_obj.next_page_number }}"
    hx-target="#queue-table-container" hx-include="#filters-form"
-   class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-lg">Next &rarr;</a>
+   class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">Next &rarr;</a>
 {% endif %}
 </div>
 </div>

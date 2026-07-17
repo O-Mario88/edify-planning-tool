@@ -178,8 +178,9 @@ class UploadWiringTest(TestCase):
         self.assertEqual(SsaRecord.objects.count(), 1)
         self.assertEqual(SsaScore.objects.count(), 8)
         school.refresh_from_db()
-        # Staff-collected SSA → confirmed → readiness recomputed to ready.
-        self.assertEqual(school.planning_readiness, "ready")
+        # Staff-collected SSA is confirmed; an unclustered school still cannot
+        # enter support planning until canonical cluster membership is set.
+        self.assertEqual(school.planning_readiness, "requires_cluster")
         self.assertEqual(school.current_fy_ssa_status, "done")
 
 

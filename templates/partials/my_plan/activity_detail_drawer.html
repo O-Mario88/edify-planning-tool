@@ -20,7 +20,7 @@ class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
 <!-- Drawer Header -->
 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
 <div>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 mb-1">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 mb-1">
 Activity Parameters
 </span>
 <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight">
@@ -29,7 +29,7 @@ Activity Parameters
 </div>
 <button
 type="button"
-class="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+class="h-8 w-8 flex items-center justify-center rounded-control hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
 @click="closeDrawer()"
 >
 <span class="sr-only">Close panel</span>
@@ -72,8 +72,10 @@ class="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-200 te
 </div>
 
 <!-- Segmented Details Tabs -->
-<div class="border-b border-slate-100 flex gap-2">
+<div class="border-b border-slate-100 flex gap-2 overflow-x-auto" role="tablist" aria-label="Activity details">
 <button
+id="activity-detail-tab-overview" type="button" role="tab" aria-controls="activity-detail-panel-overview"
+:aria-selected="activeTab === 'details'" :tabindex="activeTab === 'details' ? 0 : -1"
 @click="activeTab = 'details'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
 :class="activeTab === 'details' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
@@ -81,6 +83,8 @@ class="pb-2 text-[12px] font-bold border-b-2 transition-all"
 Overview & Description
 </button>
 <button
+id="activity-detail-tab-finance" type="button" role="tab" aria-controls="activity-detail-panel-finance"
+:aria-selected="activeTab === 'finance'" :tabindex="activeTab === 'finance' ? 0 : -1"
 @click="activeTab = 'finance'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
 :class="activeTab === 'finance' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
@@ -88,6 +92,8 @@ class="pb-2 text-[12px] font-bold border-b-2 transition-all"
 Finance & Budget
 </button>
 <button
+id="activity-detail-tab-evidence" type="button" role="tab" aria-controls="activity-detail-panel-evidence"
+:aria-selected="activeTab === 'evidence'" :tabindex="activeTab === 'evidence' ? 0 : -1"
 @click="activeTab = 'evidence'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
 :class="activeTab === 'evidence' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
@@ -97,27 +103,27 @@ Evidence & SF ID ({{ evidence_list|length }})
 </div>
 
 <!-- Tab Details: Overview & Description -->
-<div x-show="activeTab === 'details'" class="space-y-4" x-transition>
+<div id="activity-detail-panel-overview" role="tabpanel" aria-labelledby="activity-detail-tab-overview" x-show="activeTab === 'details'" class="space-y-4" x-transition>
 <div>
 <h4 class="edify-text-caption uppercase font-bold text-slate-400">Activity Purpose & Context</h4>
-<p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+<p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-surface border border-slate-100">
 {{ act.activity_purpose_text|default:"No purpose description text entered." }}
 </p>
 </div>
 <div>
 <h4 class="edify-text-caption uppercase font-bold text-slate-400">Expected Outcome</h4>
-<p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+<p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-surface border border-slate-100">
 {{ act.expected_outcome|default:"No expected outcome text entered." }}
 </p>
 </div>
 
 <!-- Workflow Lifecycle Status tracker -->
-<div class="bg-slate-50 p-4 border border-slate-100 rounded-xl space-y-2.5">
+<div class="bg-slate-50 p-4 border border-slate-100 rounded-surface space-y-2.5">
 <h4 class="edify-text-caption uppercase font-bold text-slate-400">System Workflow Auditing</h4>
 <div class="grid grid-cols-2 gap-3 text-[12px] font-semibold">
 <div class="flex items-center gap-1.5">
 <span>Status:</span>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-bold uppercase {{ status_class }}">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold uppercase {{ status_class }}">
 {{ status_label }}
 </span>
 </div>
@@ -134,8 +140,8 @@ Evidence & SF ID ({{ evidence_list|length }})
 </div>
 
 <!-- Tab Finance: Budget Lines & Fund requests -->
-<div x-show="activeTab === 'finance'" class="space-y-4" x-transition>
-<div class="bg-slate-50 p-4 border border-slate-100 rounded-xl">
+<div id="activity-detail-panel-finance" role="tabpanel" aria-labelledby="activity-detail-tab-finance" x-show="activeTab === 'finance'" class="space-y-4" x-transition>
+<div class="bg-slate-50 p-4 border border-slate-100 rounded-surface">
 <p class="edify-text-caption uppercase font-bold text-slate-400 mb-1">Total Allocated Budget</p>
 <p class="text-[24px] font-semibold text-[var(--edify-primary)] leading-none">{{ act.est_cost_cents|ugx }}</p>
 <p class="edify-text-caption text-slate-400 font-bold mt-1.5">Created automatically upon planning schedule</p>
@@ -143,7 +149,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 
 <div>
 <h4 class="edify-text-caption uppercase font-bold text-slate-400 mb-2">Budget Line Verification</h4>
-<div class=" rounded-xl overflow-hidden">
+<div class=" rounded-surface overflow-hidden">
 <table class="w-full text-left text-[12px] font-semibold">
 <thead>
 <tr class="bg-slate-50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
@@ -167,7 +173,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 {{ line.quantity }} &times; {{ line.unit_cost|ugx }}
 </td>
 <td class="px-4 py-2.5 text-center">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-bold uppercase bg-blue-50/50 text-blue-700 border /40">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold uppercase bg-blue-50/50 text-blue-700 border /40">
 {{ line.finance_status }}
 </span>
 </td>
@@ -190,7 +196,7 @@ No budget lines created.
 </div>
 
 <!-- Tab Evidence & Salesforce IDs -->
-<div x-show="activeTab === 'evidence'" class="space-y-4" x-transition>
+<div id="activity-detail-panel-evidence" role="tabpanel" aria-labelledby="activity-detail-tab-evidence" x-show="activeTab === 'evidence'" class="space-y-4" x-transition>
 <div>
 <h4 class="edify-text-caption uppercase font-bold text-slate-400">Activity SF ID</h4>
 {% if act.salesforce_activity_id %}
@@ -205,21 +211,21 @@ No budget lines created.
 <div>
 <h4 class="edify-text-caption uppercase font-bold text-slate-400 mb-2">Uploaded Evidence Records</h4>
 {% if evidence_list %}
-<div class=" rounded-xl divide-y divide-slate-100 overflow-hidden">
+<div class=" rounded-surface divide-y divide-slate-100 overflow-hidden">
 {% for ev in evidence_list %}
 <div class="px-4 py-3 flex items-center justify-between text-[12px]">
 <div>
 <p class="font-semibold text-slate-800">{{ ev.original_name }}</p>
 <p class="edify-text-caption text-slate-400 font-bold capitalize mt-0.5">{{ ev.file_extension }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>
 {% endfor %}
 </div>
 {% else %}
-<div class="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50 text-slate-400 text-[12px] font-bold">
+<div class="p-8 text-center border border-dashed border-slate-200 rounded-surface bg-slate-50/50 text-slate-400 text-[12px] font-bold">
 No evidence files uploaded yet.
 </div>
 {% endif %}

@@ -28,7 +28,7 @@ New Staff Member
 <p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Total Active Staff</p>
 <p class="text-[24px] font-semibold text-slate-800 mt-1">{{ kpis.total_active }}</p>
 </div>
-<div class="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+<div class="h-10 w-10 rounded-pill bg-indigo-50 flex items-center justify-center text-indigo-500">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
 </div>
 </div>
@@ -39,7 +39,7 @@ New Staff Member
 <p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Pending Onboarding</p>
 <p class="text-[24px] font-semibold text-slate-800 mt-1">{{ kpis.pending_onboarding }}</p>
 </div>
-<div class="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
+<div class="h-10 w-10 rounded-pill bg-amber-50 flex items-center justify-center text-amber-500">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
 </div>
 </div>
@@ -50,7 +50,7 @@ New Staff Member
 <p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Average Coverage Gap</p>
 <p class="text-[24px] font-semibold text-[var(--edify-accent)] mt-1">{{ kpis.average_coverage_gap }}%</p>
 </div>
-<div class="h-10 w-10 rounded-full bg-[var(--edify-surface-muted)] flex items-center justify-center text-[var(--edify-accent)]">
+<div class="h-10 w-10 rounded-pill bg-[var(--edify-surface-muted)] flex items-center justify-center text-[var(--edify-accent)]">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
 </div>
 </div>
@@ -61,7 +61,7 @@ New Staff Member
 <p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">High Risk</p>
 <p class="text-[24px] font-semibold text-rose-600 mt-1">{{ kpis.high_risk }}</p>
 </div>
-<div class="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500">
+<div class="h-10 w-10 rounded-pill bg-rose-50 flex items-center justify-center text-rose-500">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 </div>
 </div>
@@ -72,20 +72,20 @@ New Staff Member
 
 <!-- Tabs Header -->
 <div class="border-b border-[var(--edify-border)] px-2 pt-2">
-<nav class="flex gap-2">
-<a href="?tab=all" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
+<nav class="flex gap-2" role="tablist" aria-label="Staff views">
+<a id="staff-tab-all" role="tab" aria-controls="staff-tab-panel" aria-selected="{% if active_tab == 'all' %}true{% else %}false{% endif %}" tabindex="{% if active_tab == 'all' %}0{% else %}-1{% endif %}" href="?tab=all" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
 {% if active_tab == 'all' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 All Staff
 </a>
-<a href="?tab=cceo" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
+<a id="staff-tab-cceo" role="tab" aria-controls="staff-tab-panel" aria-selected="{% if active_tab == 'cceo' %}true{% else %}false{% endif %}" tabindex="{% if active_tab == 'cceo' %}0{% else %}-1{% endif %}" href="?tab=cceo" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
 {% if active_tab == 'cceo' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 Field Officers (CCEO)
 </a>
-<a href="?tab=pl" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
+<a id="staff-tab-pl" role="tab" aria-controls="staff-tab-panel" aria-selected="{% if active_tab == 'pl' %}true{% else %}false{% endif %}" tabindex="{% if active_tab == 'pl' %}0{% else %}-1{% endif %}" href="?tab=pl" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
 {% if active_tab == 'pl' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 Program Leads
 </a>
-<a href="?tab=admin" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
+<a id="staff-tab-admin" role="tab" aria-controls="staff-tab-panel" aria-selected="{% if active_tab == 'admin' %}true{% else %}false{% endif %}" tabindex="{% if active_tab == 'admin' %}0{% else %}-1{% endif %}" href="?tab=admin" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
 {% if active_tab == 'admin' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 Admin & Support
 </a>
@@ -98,18 +98,17 @@ Admin & Support
 <input type="hidden" name="tab" value="{{ active_tab }}">
 <div class="relative flex-1 max-w-sm">
 <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-<input type="text" name="q" value="{{ search }}" placeholder="Search by name or email..." class="w-full pl-9 pr-4 h-9 edify-surface border border-[var(--edify-border)] rounded-lg text-[12px] font-semibold focus:ring-2 focus:ring-[var(--edify-accent)] focus:outline-none">
+<input type="text" name="q" value="{{ search }}" placeholder="Search by name or email..." class="w-full pl-9 pr-4 h-9 edify-surface border border-[var(--edify-border)] rounded-control text-[12px] font-semibold focus:ring-2 focus:ring-[var(--edify-accent)] focus:outline-none">
 </div>
-<select class="h-9 rounded-lg border border-[var(--edify-border)] edify-surface text-[12px] font-semibold px-3 focus:outline-none"><option>Any Status</option></select>
 </form>
 </div>
 
 <!-- Table -->
-<div class="overflow-x-auto">
+<div id="staff-tab-panel" class="overflow-x-auto" role="tabpanel" aria-live="polite">
 <table class="w-full text-left border-collapse text-[12px] ">
 <thead>
 <tr class="border-b border-[var(--edify-border)] edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/30">
-<th class="px-6 py-4 w-12 text-center"><input type="checkbox" class="rounded text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300"></th>
+<th class="px-6 py-4 w-12 text-center"><input type="checkbox" class="rounded-control text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300"></th>
 <th class="px-6 py-4">Staff Member</th>
 <th class="px-6 py-4">Role & District</th>
 <th class="px-6 py-4 text-center">Assigned Schools</th>
@@ -122,10 +121,10 @@ Admin & Support
 {% if staff %}
 {% for s in staff %}
 <tr class="hover:bg-slate-50/50 transition-colors group">
-<td class="px-6 py-4 text-center"><input type="checkbox" class="rounded text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300"></td>
+<td class="px-6 py-4 text-center"><input type="checkbox" class="rounded-control text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300"></td>
 <td class="px-6 py-4">
 <div class="flex items-center gap-3">
-<div class="h-9 w-9 rounded-full bg-indigo-100 text-indigo-700 font-bold text-[14px] grid place-items-center shrink-0">{{ s.initials }}</div>
+<div class="h-9 w-9 rounded-pill bg-indigo-100 text-indigo-700 font-bold text-[14px] grid place-items-center shrink-0">{{ s.initials }}</div>
 <div>
 <p class="font-bold text-[var(--edify-accent)] text-[14px] leading-tight">{{ s.name }}</p>
 <p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ s.email }}</p>
@@ -140,15 +139,15 @@ Admin & Support
 <td class="px-6 py-4 text-center font-semibold text-emerald-600">{{ s.completed_visits }}</td>
 <td class="px-6 py-4">
 {% if s.onboarding_state == "active" or s.onboarding_state == "complete" %}
-<span class="inline-flex items-center rounded-md px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>
+<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>
 {% elif s.onboarding_state == "pending" %}
-<span class="inline-flex items-center rounded-md px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
+<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
 {% else %}
-<span class="inline-flex items-center rounded-md px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">{{ s.onboarding_state|default:"Unknown" }}</span>
+<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">{{ s.onboarding_state|default:"Unknown" }}</span>
 {% endif %}
 </td>
 <td class="px-6 py-4 text-right font-semibold">
-<a href="/staff/{{ s.id }}" class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-[var(--edify-border)] edify-surface text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">View Profile</a>
+<a href="/staff/{{ s.id }}" class="inline-flex items-center justify-center h-8 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">View Profile</a>
 </td>
 </tr>
 {% endfor %}
@@ -172,21 +171,21 @@ Admin & Support
 {% if page_obj.has_other_pages %}
 <div class="flex items-center gap-1.5">
 {% if page_obj.has_previous %}
-<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" class="h-8 px-3 rounded-lg border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all">Previous</a>
+<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.previous_page_number }}" class="h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all">Previous</a>
 {% endif %}
 <div class="flex items-center gap-1 text-[12px]">
 {% for num in pages_list %}
 {% if num == "..." %}
 <span class="w-8 text-center text-slate-400 font-bold">...</span>
 {% elif num == page_obj.number %}
-<span class="h-8 w-8 rounded-lg text-white font-semibold flex items-center justify-center shadow-sm" style="background-color:var(--edify-primary);">{{ num }}</span>
+<span class="h-8 w-8 rounded-pill text-white font-semibold flex items-center justify-center shadow-sm" style="background-color:var(--edify-primary);">{{ num }}</span>
 {% else %}
-<a href="?q={{ search }}&tab={{ active_tab }}&page={{ num }}" class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors">{{ num }}</a>
+<a href="?q={{ search }}&tab={{ active_tab }}&page={{ num }}" class="h-8 w-8 rounded-control hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors">{{ num }}</a>
 {% endif %}
 {% endfor %}
 </div>
 {% if page_obj.has_next %}
-<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.next_page_number }}" class="h-8 px-3 rounded-lg border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all">Next</a>
+<a href="?q={{ search }}&tab={{ active_tab }}&page={{ page_obj.next_page_number }}" class="h-8 px-3 rounded-control border border-[var(--edify-border)] edify-hover-surface text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all">Next</a>
 {% endif %}
 </div>
 {% endif %}

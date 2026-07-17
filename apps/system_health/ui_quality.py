@@ -23,6 +23,30 @@ _XL = re.compile(r"\b((?:2xl|xl):[a-z0-9\-\[\]/.]+)")
 # ApexCharts series built from literal numbers instead of template variables.
 _STATIC_SERIES = re.compile(r"data:\s*\[\s*\d+\s*(?:,\s*\d+\s*){2,}\]")
 _LIGHT_GRID = re.compile(r"borderColor:\s*'#f[0-9a-f]{5}'")
+_ELEMENT_ID = re.compile(r'\bid=["\']([\w:-]+)["\']')
+_HTMX_TARGET = re.compile(r'hx-target=["\']#([\w:-]+)["\']')
+_EMPTY_HTMX = re.compile(
+    r"""hx-(?:get|post|put|patch|delete)=["']\s*["']""", re.I
+)
+_CLIENT_ONLY_SUCCESS = re.compile(
+    r"""<form\b(?:(?!>).)*@submit\.prevent\s*=\s*["'][^"']*alert\s*\(""",
+    re.I | re.S,
+)
+_UNSAFE_INLINE_JSON = re.compile(
+    r"""(?:x-data\s*=\s*"[^"]*\{\{[^}]+\|safe\s*\}\}|x-data\s*=\s*'[^']*\{\{[^}]+\|safe\s*\}\})""",
+    re.I,
+)
+_BUTTON = re.compile(r"<button\b[^>]*>", re.I | re.S)
+_BUTTON_BEHAVIOR = re.compile(
+    r"""(?:hx-(?:get|post|put|patch|delete)
+        |@(?:click|change|submit)
+        |x-on:
+        |type=["'](?:submit|reset)["']
+        |\bform=
+        |\bdisabled\b
+        |\bdata-[\w-]+)""",
+    re.I | re.X,
+)
 
 
 def _walk_templates():
@@ -41,14 +65,23 @@ def ui_quality_checks() -> dict:
 
     emoji_files, mock_files, dead_links = [], [], []
     static_series, light_grids, uncompiled = [], [], []
+    missing_targets, inert_buttons = [], []
+    empty_htmx, client_only_success, unsafe_inline_json = [], [], []
 
     try:
         compiled_css = open(MAIN_CSS, encoding="utf-8", errors="ignore").read()
     except OSError:
         compiled_css = ""
 
+    templates = list(_walk_templates())
+    template_ids = {
+        element_id
+        for _, source in templates
+        for element_id in _ELEMENT_ID.findall(source)
+    }
+
     seen_links: set[str] = set()
-    for rel, src in _walk_templates():
+    for rel, src in templates:
         if _EMOJI.search(src):
             emoji_files.append(rel)
         if _MOCK.search(src):
@@ -57,6 +90,12 @@ def ui_quality_checks() -> dict:
             static_series.append(rel)
         if _LIGHT_GRID.search(src):
             light_grids.append(rel)
+        if _CLIENT_ONLY_SUCCESS.search(src):
+            client_only_success.append(rel)
+        if _UNSAFE_INLINE_JSON.search(src):
+            unsafe_inline_json.append(rel)
+        for match in _EMPTY_HTMX.finditer(src):
+            empty_htmx.append((rel, src.count("\n", 0, match.start()) + 1))
         for m in _XL.finditer(src):
             cls = m.group(1)
             escaped = "." + cls.replace(":", "\\:").replace("[", "\\[").replace(
@@ -76,6 +115,21 @@ def ui_quality_checks() -> dict:
                 # rendered links.
                 if "components/" not in rel:
                     dead_links.append((rel, url))
+        for target in _HTMX_TARGET.findall(src):
+            if target not in template_ids and "components/" not in rel:
+                missing_targets.append((rel, f"#{target}"))
+        if "templates/components/" not in rel:
+            for button in _BUTTON.finditer(src):
+                opening_tag = button.group(0)
+                # A Django comparison can contain ">" before the HTML tag
+                # closes, making a regex-only opening-tag parse ambiguous.
+                if "{%" in opening_tag:
+                    continue
+                if not _BUTTON_BEHAVIOR.search(opening_tag) or _EMPTY_HTMX.search(
+                    opening_tag
+                ):
+                    line = src.count("\n", 0, button.start()) + 1
+                    inert_buttons.append((rel, line))
 
     def check(key, label, items, severity, fix):
         return {
@@ -109,6 +163,41 @@ def ui_quality_checks() -> dict:
                 dead_links,
                 "blocking",
                 "Point the button/link at a registered route or remove it.",
+            ),
+            check(
+                "missing_htmx_targets",
+                "HTMX controls targeting a missing element",
+                missing_targets,
+                "blocking",
+                "Target a rendered container or remove the partial-update behavior.",
+            ),
+            check(
+                "inert_buttons",
+                "Buttons with no action, form behavior, or disabled state",
+                inert_buttons,
+                "blocking",
+                "Connect the control to a real action or render non-interactive text.",
+            ),
+            check(
+                "empty_htmx_actions",
+                "HTMX controls with an empty mutation or navigation URL",
+                empty_htmx,
+                "blocking",
+                "Bind the control to a real authorized endpoint or remove it.",
+            ),
+            check(
+                "client_only_success",
+                "Forms that claim success without a server mutation",
+                client_only_success,
+                "blocking",
+                "Submit a validated CSRF-protected request and render server errors.",
+            ),
+            check(
+                "unsafe_inline_json",
+                "Backend JSON interpolated directly into Alpine attributes",
+                unsafe_inline_json,
+                "blocking",
+                "Use json_script and parse the payload from a registered component.",
             ),
             check(
                 "static_chart_series",

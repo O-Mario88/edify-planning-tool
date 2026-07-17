@@ -10,10 +10,15 @@ import sys
 
 from .base import *  # noqa: F401,F403
 from .base import _truthy
+from apps.core.crypto import load_field_encryption_key
 
 IS_PRODUCTION = True
 NODE_ENV = "production"
 DEBUG = False
+# Under prod settings the process identity IS production — never trust the
+# env var to say otherwise (a missing ENVIRONMENT must not weaken the stamp
+# guard on a production host).
+ENVIRONMENT = "production"
 
 # ── Production safety gates (collect ALL violations, then fail) ──────────────
 # Mirrors NestJS: "Production environment is not safe:\n<issues>".
@@ -48,6 +53,10 @@ if not EVIDENCE_STORAGE_DIR or not EVIDENCE_STORAGE_DIR.startswith("/"):
     )
 if not SUPER_ADMIN_PASSWORD:
     _issues.append("SUPER_ADMIN_PASSWORD must be set (super-admin login).")
+try:
+    load_field_encryption_key(FIELD_ENCRYPTION_KEY)
+except RuntimeError as exc:
+    _issues.append(f"FIELD_ENCRYPTION_KEY is required and must be valid: {exc}")
 
 if _issues:
     sys.stderr.write(

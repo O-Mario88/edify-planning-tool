@@ -39,8 +39,19 @@ SLOT_ACTIONS = {
 # Activity statuses that represent the field work as verified/settled done —
 # mirrors the "completed" statusGroup bucket in
 # activities.services.list_activities(), the canonical "is this activity
-# done?" definition already used elsewhere in the app.
-CORE_SLOT_DONE_STATUSES = {"completed", "ia_verified", "accountant_confirmed"}
+# done?" definition already used elsewhere in the app. "closed" is the
+# terminal state written by ActivityClosureService — omitting it made a
+# fully-closed package drop back OUT of the completion counters.
+CORE_SLOT_DONE_STATUSES = {"completed", "closed", "ia_verified", "accountant_confirmed"}
+
+# Legacy CamelCase spellings written only by the unreachable DRF slot_action
+# path; kept in read queries so historical rows are not stranded. Never write
+# these values.
+CORE_SLOT_DONE_WITH_LEGACY = CORE_SLOT_DONE_STATUSES | {
+    "Completed",
+    "Accountant Confirmed",
+    "iaVerify",
+}
 
 # The mandatory Core School package: 1 Core Assessment + 4 visits + 4
 # trainings = 9 slots. This spec is the single source of truth for slot
@@ -82,8 +93,11 @@ def list_candidates(principal) -> list[dict]:
     out = []
     for s in qs:
         latest = (
-            s.ssa_records.filter(deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
+            s.ssa_records.filter(
+                deleted_at__isnull=True,
+                verification_status="confirmed",
+            )
+            .order_by("-date_of_ssa", "-created_at")
             .first()
         )
         if latest and (latest.average_score or 0) >= 7.0:
@@ -104,8 +118,11 @@ def verify_candidate(school_id: str, data: dict, principal) -> dict:
     if not school:
         raise NotFoundError("School not found.")
     latest = (
-        school.ssa_records.filter(deleted_at__isnull=True)
-        .order_by("-date_of_ssa")
+        school.ssa_records.filter(
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        )
+        .order_by("-date_of_ssa", "-created_at")
         .first()
     )
     if not latest:
@@ -136,8 +153,11 @@ def onboard(school_id: str, data: dict, principal) -> dict:
     if not school:
         raise NotFoundError("School not found.")
     latest = (
-        school.ssa_records.filter(deleted_at__isnull=True)
-        .order_by("-date_of_ssa")
+        school.ssa_records.filter(
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        )
+        .order_by("-date_of_ssa", "-created_at")
         .first()
     )
     baseline_avg = latest.average_score if latest else 0.0
@@ -175,9 +195,35 @@ def onboard(school_id: str, data: dict, principal) -> dict:
                 "onboarding_reason": data.get("reason"),
             },
         )
+        # Persist the four-weakest recommendation on the plan, anchored to the
+        # baseline SSA record. CorePlan.interventions existed but was never
+        # written: the recommendation recomputed live against whatever the
+        # latest SSA later became, so the historical rationale for the package
+        # was lost and slots were seeded round-robin across ALL interventions
+        # instead of the recommended four.
+        from apps.core_schools.core_planning_services import (
+            CoreInterventionRecommendationService,
+        )
+
+        recommendation = CoreInterventionRecommendationService.recommend(school)
+        recommended_rows = recommendation.get("rows") or []
+        plan.interventions = {
+            "recommended": recommended_rows,
+            "maintenance": recommendation.get("maintenance", False),
+            "source_ssa_record_id": latest.id if latest else None,
+            "captured_at": timezone.now().isoformat(),
+            # Version anchor: a later SSA or algorithm change must never
+            # rewrite the historical rationale this package was planned on.
+            "algorithm_version": 1,
+        }
+        plan.save(update_fields=["interventions", "updated_at"])
+
         # Create the canonical 9-slot package (1 assessment + 4 visit +
-        # 4 training) if not present.
-        interventions = [i.value for i in SsaIntervention]
+        # 4 training) if not present — seeded from the recommended weakest
+        # interventions when a baseline exists, else the full canonical list.
+        interventions = [row["code"] for row in recommended_rows] or [
+            i.value for i in SsaIntervention
+        ]
         create_package_slots(plan, school_id, interventions)
         school.school_type = "core"
         school.save(update_fields=["school_type"])
@@ -343,13 +389,7 @@ def upload_follow_up_ssa(plan_id: str, data: dict, principal) -> dict:
     average_change = followup - baseline
 
     completed_slots_count = plan.slots.filter(
-        status__in=[
-            "Completed",
-            "Accountant Confirmed",
-            "iaVerify",
-            "ia_verified",
-            "accountant_confirmed",
-        ]
+        status__in=CORE_SLOT_DONE_WITH_LEGACY
     ).count()
     slots_complete = completed_slots_count >= EXPECTED_CORE_SLOTS
 

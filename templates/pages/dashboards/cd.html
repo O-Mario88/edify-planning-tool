@@ -4,40 +4,37 @@
 {% block title %}Country Director Dashboard · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;color:var(--edify-text);">
+<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
   <!-- Header — premium glass band -->
-  <div class="rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap"
-       style="background:rgba(255,255,255,.10);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-              border:1px solid rgba(255,255,255,.15);box-shadow:var(--edify-shadow-md);">
+  <div class="rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap bg-white/10 backdrop-blur-xl border border-white/15"
+       style="box-shadow:var(--edify-shadow-md);">
     <div>
-      <h1 style="font-size:21px;font-weight:800;line-height:1.15;letter-spacing:-.025em;color:var(--edify-surface-raised);">Country Director Dashboard</h1>
-      <p style="font-size:12px;color:rgba(255,255,255,.75);margin-top:2px;">National program performance, approvals, targets, compliance &amp; operational risk.</p>
+      <h1 class="text-[21px] font-semibold leading-[1.15] tracking-[-0.025em]" style="color:var(--edify-surface-raised);">Country Director Dashboard</h1>
+      <p class="text-[12px] text-white/75 mt-0.5">National program performance, approvals, targets, compliance &amp; operational risk.</p>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md edify-text-caption font-semibold whitespace-nowrap"
-            style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.85);">
-        <span class="h-1.5 w-1.5 rounded-full" style="background:var(--edify-chart-green);"></span>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap bg-white/10 border border-white/15 text-white/85">
+        <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-chart-green);"></span>
         <span class="hidden sm:inline">Country Wide · {{ scope_meta.pl_count }} PLs · {{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count|intcomma }} schools</span>
         <span class="sm:hidden">Country Wide · {{ scope_meta.school_count|intcomma }} schools</span>
       </span>
       <form hx-get="/dashboard" hx-target="#cd-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
-            class="flex items-center gap-2 rounded-md px-2.5 py-1.5"
-            style="background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);">
-        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.60);">FY</span>
+            class="flex items-center gap-2 rounded-surface px-2.5 py-1.5 bg-white/10 border border-white/15">
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">FY</span>
         <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]" style="color:var(--edify-surface-raised);">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} style="color:var(--edify-text);">FY {{ opt }}</option>{% endfor %}
         </select>
-        <span style="height:16px;width:1px;background:rgba(255,255,255,.15);"></span>
-        <span style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.60);">Month</span>
+        <span class="h-4 w-px bg-white/15"></span>
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">Month</span>
         <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]" style="color:var(--edify-surface-raised);">
           <option value="" style="color:var(--edify-text);">All</option>
           {% for v, lbl in month_options %}<option value="{{ v }}" {% if month|stringformat:"s" == v %}selected{% endif %} style="color:var(--edify-text);">{{ lbl }}</option>{% endfor %}
         </select>
       </form>
       <a href="/analytics/country-director"
-         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-md transition-colors btn-primary"
-         style="background:var(--edify-accent);box-shadow:0 1px 3px rgba(37,99,235,.25);">
+         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-control transition-colors btn-primary shadow-sm"
+         style="background:var(--edify-accent);">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 14l3-3 3 3 4-5M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
         Open CD Analytics
       </a>

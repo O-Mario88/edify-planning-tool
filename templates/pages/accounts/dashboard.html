@@ -5,12 +5,13 @@
 
 {% block shell_content %}
 {{ all_funds|json_script:"all-funds-data" }}
-<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;color:var(--edify-text);"
+<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]"
 x-data="{
 allFunds: JSON.parse(document.getElementById('all-funds-data').textContent),
 selectedId: null,
 selectedItem: null,
-activeTab: 'breakdown',
+search: '',
+statusFilter: '',
 init() {
 this.selectedItem = this.allFunds.find(f => f.id === this.selectedId) || this.allFunds[0] || null;
 if (this.selectedItem) { this.selectedId = this.selectedItem.id; }
@@ -21,6 +22,14 @@ this.selectedItem = this.allFunds.find(f => f.id === id);
 },
 formatCurrency(val) {
 return 'UGX ' + Number(val).toLocaleString();
+},
+filteredFunds() {
+const query = this.search.trim().toLowerCase();
+return this.allFunds.filter((fund) => {
+const matchesStatus = !this.statusFilter || fund.status === this.statusFilter;
+const haystack = `${fund.user_name} ${fund.region} ${fund.role} ${fund.status}`.toLowerCase();
+return matchesStatus && (!query || haystack.includes(query));
+});
 }
 }">
 
@@ -41,21 +50,15 @@ return 'UGX ' + Number(val).toLocaleString();
 
 <!-- Filters & Create button -->
 <div class="flex flex-wrap items-center gap-2">
-<!-- FY selector -->
-<select class="h-9 px-3 edify-surface border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>FY 2024/25</option>
-</select>
-<!-- Month selector -->
-<select class="h-9 px-3 edify-surface border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>May 2025</option>
-</select>
-<!-- Country selector -->
-<select class="h-9 px-3 edify-surface border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>All Countries</option>
-</select>
-<!-- Status filter -->
-<select class="h-9 px-3 edify-surface border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>All Statuses</option>
+<span class="h-9 px-3 inline-flex items-center rounded-control border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-600">
+FY {{ fy }} · Live workflow data
+</span>
+<label class="sr-only" for="fund-status-filter">Filter fund queue by status</label>
+<select id="fund-status-filter" x-model="statusFilter" class="h-9 px-3 edify-surface border border-slate-200 rounded-control text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
+<option value="">All statuses</option>
+<template x-for="status in [...new Set(allFunds.map((fund) => fund.status))]" :key="status">
+<option :value="status" x-text="status"></option>
+</template>
 </select>
 
 <div class="relative basis-full sm:basis-auto sm:w-64 lg:w-56">
@@ -64,64 +67,68 @@ return 'UGX ' + Number(val).toLocaleString();
 </span>
 <input
 type="text"
+x-model="search"
+id="fund-queue-search"
+aria-label="Search the fund queue"
 placeholder="Search funds, people, activities..."
-class="h-9 w-full edify-surface border border-slate-200 rounded-xl pl-9 pr-4 text-[12px] font-semibold focus:outline-none shadow-sm placeholder-slate-400"
+class="h-9 w-full edify-surface border border-slate-200 rounded-control pl-9 pr-4 text-[12px] font-semibold focus:outline-none shadow-sm placeholder-slate-400"
 >
 </div>
 
-<a href="/accounts/advances" class="h-9 w-full sm:w-auto px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
+<a href="/accounts/advances" class="h-9 w-full sm:w-auto px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-control text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg> Create Disbursement
 </a>
 </div>
 </div>
 
+{% include "components/analytics_provenance.html" with engine=analytics.engine %}
 
 <!-- ================= TOP KPI STRIP ================= -->
 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
 <!-- Total Funds -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Approved Funds</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_approved }}</h3>
 <span class="edify-text-caption text-emerald-600 font-semibold block pt-1">FY {{ fy }}</span>
 </div>
 
 <!-- Pending Disbursement -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Pending Disbursement</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.pending_disb }}</h3>
 <span class="edify-text-caption text-amber-600 font-bold block pt-1">{{ kpis.pending_disb_count }} request{{ kpis.pending_disb_count|pluralize }} awaiting</span>
 </div>
 
 <!-- Total Disbursed -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_disbursed }}</h3>
 <span class="edify-text-caption text-blue-600 font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }} made</span>
 </div>
 
 <!-- Awaiting Approval -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approvals</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.awaiting_approval }}</h3>
 <span class="edify-text-caption text-indigo-600 font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
 </div>
 
 <!-- Reconciliation Rate -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Reconciliation Rate</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.recon_rate }}</h3>
 <span class="edify-text-caption text-emerald-600 font-semibold block pt-1">{{ kpis.accounted_count }} of {{ kpis.disbursed_count }} accounted</span>
 </div>
 
 <!-- Budget Utilization -->
-<div class="edify-surface p-4 rounded-lg border border-slate-100 shadow-sm space-y-1 col-span-2">
+<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1 col-span-2">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Budget Util.</p>
 <div class="flex items-baseline justify-between mt-1">
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.budget_util }}</h3>
 <span class="edify-text-caption text-slate-400 font-bold">{{ kpis.total_disbursed }} used</span>
 </div>
-<div class="w-full bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
-<div class="bg-teal-500 h-full rounded-full" style="width: {{ kpis.budget_util_pct }}%"></div>
+<div class="w-full bg-slate-100 h-1.5 rounded-pill mt-1 overflow-hidden">
+<div class="bg-teal-500 h-full rounded-pill" style="width: {{ kpis.budget_util_pct }}%"></div>
 </div>
 </div>
 </div>
@@ -131,28 +138,26 @@ class="h-9 w-full edify-surface border border-slate-200 rounded-xl pl-9 pr-4 tex
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- LEFT PANEL: CONSOLIDATED FUND QUEUE (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 edify-text-caption flex items-center justify-center">{{ all_funds|length }}</span>
+<span class="bg-blue-600 text-white font-semibold rounded-pill px-1.5 py-0.5 edify-text-caption flex items-center justify-center">{{ all_funds|length }}</span>
 </div>
 
-<select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg edify-text-caption font-bold text-slate-500">
-<option>Sort by: Priority</option>
-</select>
+<span class="edify-text-caption font-semibold text-slate-400" x-text="`${filteredFunds().length} shown`"></span>
 </div>
 
 <div class="space-y-2 mt-4 max-h-[600px] overflow-y-auto pr-1">
-<template x-for="fund in allFunds" :key="fund.id">
+<template x-for="fund in filteredFunds()" :key="fund.id">
 <div
 @click="selectFund(fund.id)"
 :class="selectedId === fund.id ? 'border-slate-800 bg-slate-50' : 'border-slate-100 edify-surface hover:bg-slate-50/50'"
-class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-all group"
+class="p-3 border rounded-surface cursor-pointer flex items-center gap-3 transition-all group"
 >
 <!-- Initial avatar icon circle -->
-<div class="h-8 w-8 rounded-full bg-slate-100 font-semibold text-slate-600 flex items-center justify-center text-[12px] group-hover:scale-105 transition-transform" x-text="fund.user_name.slice(0,2)"></div>
+<div class="h-8 w-8 rounded-pill bg-slate-100 font-semibold text-slate-600 flex items-center justify-center text-[12px] group-hover:scale-105 transition-transform" x-text="fund.user_name.slice(0,2)"></div>
 
 <div class="flex-1 min-w-0">
 <h4 class="text-[12px] font-semibold text-slate-800 truncate" x-text="fund.user_name"></h4>
@@ -161,27 +166,31 @@ class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-a
 </p>
 <div class="flex items-center justify-between gap-2 mt-2 min-w-0">
 <span class="text-[12px] font-semibold text-slate-800 shrink-0" x-text="formatCurrency(fund.requested)"></span>
-<span :class="fund.status_class" class="inline-block rounded-full px-1.5 py-0.5 edify-text-caption font-bold border whitespace-nowrap overflow-hidden text-ellipsis min-w-0" :title="fund.status" x-text="fund.status"></span>
+<span :class="fund.status_class" class="inline-block rounded-pill px-1.5 py-0.5 edify-text-caption font-bold border whitespace-nowrap overflow-hidden text-ellipsis min-w-0" :title="fund.status" x-text="fund.status"></span>
 </div>
 </div>
 </div>
 </template>
+<div x-show="filteredFunds().length === 0" class="edify-empty-state px-4 py-8">
+<strong>No fund requests match these filters</strong>
+<span>Clear the search or choose another workflow status.</span>
+</div>
 </div>
 </div>
 
 <!-- Pagination -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 edify-text-caption font-bold text-slate-400">
-<span>Showing {{ all_funds|length }} fund{{ all_funds|length|pluralize }}</span>
+<span x-text="`Showing ${filteredFunds().length} of ${allFunds.length} funds`"></span>
 </div>
 </div>
 
 <!-- MIDDLE PANEL: DETAILS WORKSPACE (Col Span 6) -->
-<div class="lg:col-span-6 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between" x-show="selectedItem">
+<div class="lg:col-span-6 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between" x-show="selectedItem">
 <div>
 <!-- Selected Request Title block -->
 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
 <div class="flex items-center gap-3">
-<div class="h-10 w-10 rounded-full bg-slate-100 font-semibold flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
+<div class="h-10 w-10 rounded-pill bg-slate-100 font-semibold flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
 <div>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none" x-text="selectedItem ? selectedItem.user_name + ' — ' + selectedItem.region + ' Team Fund Plan' : ''"></h3>
 <p class="edify-text-caption text-slate-500 font-bold mt-1.5">
@@ -189,11 +198,11 @@ class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-a
 </p>
 </div>
 </div>
-<span :class="selectedItem ? selectedItem.status_class : ''" class="inline-flex items-center rounded-full px-2.5 py-1 edify-text-caption font-bold border uppercase tracking-wider whitespace-nowrap shrink-0 self-start sm:self-center" x-text="selectedItem ? selectedItem.status : ''"></span>
+<span :class="selectedItem ? selectedItem.status_class : ''" class="inline-flex items-center rounded-pill px-2.5 py-1 edify-text-caption font-bold border uppercase tracking-wider whitespace-nowrap shrink-0 self-start sm:self-center" x-text="selectedItem ? selectedItem.status : ''"></span>
 </div>
 
 <!-- Request Amounts -->
-<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100 mt-4">
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-surface border border-slate-100 mt-4">
 <div class="space-y-0.5">
 <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider block">Plan Period</span>
 <span class="edify-text-caption font-semibold text-slate-800 block truncate" x-text="selectedItem ? selectedItem.week_start + ' - ' + selectedItem.week_end.slice(-12) : ''"></span>
@@ -221,31 +230,31 @@ class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-a
 <span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wider block">Approval Chain Status</span>
 <div class="grid grid-cols-5 gap-2 text-center edify-text-caption font-semibold">
 <!-- 1: PL -->
-<div class="p-2 border rounded-xl flex flex-col items-center bg-emerald-50 border-emerald-200 text-emerald-700">
+<div class="p-2 border rounded-surface flex flex-col items-center bg-emerald-50 border-emerald-200 text-emerald-700">
 <span class="text-[14px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
 <span class="mt-1">PL</span>
 <span class="edify-text-caption text-emerald-500 font-bold">Program Lead</span>
 </div>
 <!-- 2: CD -->
-<div :class="selectedItem && selectedItem.cd_approved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
+<div :class="selectedItem && selectedItem.cd_approved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-surface flex flex-col items-center">
 <span class="text-[14px]" x-text="selectedItem && selectedItem.cd_approved ? '' : '●'"></span>
 <span class="mt-1">CD</span>
 <span class="edify-text-caption font-bold" :class="selectedItem && selectedItem.cd_approved ? 'text-emerald-500' : 'text-slate-400'">Country Director</span>
 </div>
 <!-- 3: RVP -->
-<div :class="selectedItem && selectedItem.rvp_approved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
+<div :class="selectedItem && selectedItem.rvp_approved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-surface flex flex-col items-center">
 <span class="text-[14px]" x-text="selectedItem && selectedItem.rvp_approved ? '' : '●'"></span>
 <span class="mt-1">RVP</span>
 <span class="edify-text-caption font-bold" :class="selectedItem && selectedItem.rvp_approved ? 'text-emerald-500' : 'text-slate-400'">Regional VP</span>
 </div>
 <!-- 4: Finance -->
-<div :class="selectedItem && selectedItem.finance_completed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
+<div :class="selectedItem && selectedItem.finance_completed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-surface flex flex-col items-center">
 <span class="text-[14px]" x-text="selectedItem && selectedItem.finance_completed ? '' : '●'"></span>
 <span class="mt-1">Finance</span>
 <span class="edify-text-caption font-bold" :class="selectedItem && selectedItem.finance_completed ? 'text-emerald-500' : 'text-slate-400'">Accountant</span>
 </div>
 <!-- 5: Disbursement -->
-<div :class="selectedItem && selectedItem.disbursed_completed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
+<div :class="selectedItem && selectedItem.disbursed_completed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-surface flex flex-col items-center">
 <span class="text-[14px]" x-text="selectedItem && selectedItem.disbursed_completed ? '' : '●'"></span>
 <span class="mt-1">Disbursement</span>
 <span class="edify-text-caption font-bold" :class="selectedItem && selectedItem.disbursed_completed ? 'text-emerald-500' : 'text-slate-400'">Payment Sent</span>
@@ -253,16 +262,13 @@ class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-a
 </div>
 </div>
 
-<!-- Detail tabs links -->
-<div class="flex gap-2 mt-6 border-b border-slate-100 pb-2">
-<button @click="activeTab = 'breakdown'" :class="activeTab === 'breakdown' ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-500'" class="px-3.5 py-1.5 edify-text-caption font-semibold rounded-lg">Funding Breakdown</button>
-<button @click="activeTab = 'snapshot'" :class="activeTab === 'snapshot' ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-500'" class="px-3.5 py-1.5 edify-text-caption font-semibold rounded-lg">Plan Snapshot</button>
-<button @click="activeTab = 'documents'" :class="activeTab === 'documents' ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-500'" class="px-3.5 py-1.5 edify-text-caption font-semibold rounded-lg">Documents &amp; Proofs (0)</button>
-<button @click="activeTab = 'history'" :class="activeTab === 'history' ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 text-slate-500'" class="px-3.5 py-1.5 edify-text-caption font-semibold rounded-lg">History</button>
+<div class="flex items-center justify-between gap-3 mt-6 border-b border-slate-100 pb-2">
+<h4 class="text-[14px] font-semibold text-slate-800">Verified Funding Breakdown</h4>
+<span class="edify-text-caption font-semibold text-slate-400" x-text="selectedItem ? `${selectedItem.lines.length} cost line${selectedItem.lines.length === 1 ? '' : 's'}` : ''"></span>
 </div>
 
-<!-- Tab 1: Funding Breakdown Table -->
-<div class="overflow-x-auto mt-4" x-show="activeTab === 'breakdown'">
+<!-- Real funding lines from the selected WeeklyFundRequest -->
+<div class="overflow-x-auto mt-4">
 <table class="w-full text-left text-[12px] border-collapse">
 <thead>
 <tr class="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider edify-text-caption">
@@ -281,6 +287,9 @@ class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-a
 <td class="py-2.5 text-right font-semibold text-slate-800" x-text="Number(line.total).toLocaleString()"></td>
 </tr>
 </template>
+<tr x-show="selectedItem && selectedItem.lines.length === 0">
+<td colspan="4" class="py-8 text-center text-slate-400 font-semibold">No cost lines are attached to this request. Review its source plan before disbursement.</td>
+</tr>
 <!-- Bold aggregate summary row -->
 <tr class="border-t border-slate-200 text-slate-800 font-semibold">
 <td class="py-3 font-semibold uppercase tracking-wider" colspan="3">Total</td>
@@ -290,8 +299,13 @@ class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-a
 </table>
 </div>
 
+{% comment %}
+Retired decorative panels. These formerly contained placeholder regional
+statistics, a static document count and invented approval-history dates. They
+remain inside a server-side comment temporarily to keep this change easy to
+review; no placeholder panel reaches the browser.
 <!-- Tab 2: Plan Snapshot -->
-<div class="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-2 mt-4" x-show="activeTab === 'snapshot'">
+<div class="p-4 bg-slate-50 rounded-surface border border-slate-100 space-y-2 mt-4" x-show="activeTab === 'snapshot'">
 <h4 class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide">Region Plan Statistics</h4>
 <ul class="text-[12px] font-bold space-y-1">
 <li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg> Planned schools by staff</span> <span class="text-slate-800 font-semibold">48</span></li>
@@ -312,53 +326,56 @@ No documents or receipts attached to this request yet.
 <!-- Tab 4: History -->
 <div class="px-4 sm:px-6 py-5 space-y-3 mt-4" x-show="activeTab === 'history'">
 <div class="flex items-start gap-2.5 text-[12px] font-bold">
-<span class="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
+<span class="h-2 w-2 rounded-pill bg-emerald-500 mt-1.5 shrink-0"></span>
 <div>
 <p class="text-slate-800">Plan approved by Country Director</p>
 <span class="edify-text-caption text-slate-400">19 May 2025, 02:40 PM</span>
 </div>
 </div>
 <div class="flex items-start gap-2.5 text-[12px] font-bold">
-<span class="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
+<span class="h-2 w-2 rounded-pill bg-emerald-500 mt-1.5 shrink-0"></span>
 <div>
 <p class="text-slate-800">Plan approved by Program Lead</p>
 <span class="edify-text-caption text-slate-400">18 May 2025, 11:20 AM</span>
 </div>
 </div>
 <div class="flex items-start gap-2.5 text-[12px] font-bold">
-<span class="h-2 w-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></span>
+<span class="h-2 w-2 rounded-pill bg-blue-500 mt-1.5 shrink-0"></span>
 <div>
 <p class="text-slate-800">Weekly Fund Request generated from schedule plan</p>
 <span class="edify-text-caption text-slate-400">17 May 2025, 09:00 AM</span>
 </div>
 </div>
 </div>
+{% endcomment %}
 
 </div>
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 mt-6">
-<form x-bind:action="'/accounts/activities/' + (selectedItem ? selectedItem.id : '') + '/disburse'" method="POST" class="inline">
-{% csrf_token %}
-<button type="submit" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
-Disburse Funds
-</button>
-</form>
+<a href="/disbursements" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-control text-[12px] font-semibold shadow-sm transition-all inline-flex items-center">
+Open Canonical Disbursement Queue
+</a>
 </div>
+</div>
+
+<div class="lg:col-span-6 edify-empty-state" x-show="!selectedItem">
+<strong>No fund requests exist for FY {{ fy }}</strong>
+<span>Approved requests will appear here when they reach the finance workflow.</span>
 </div>
 
 <!-- RIGHT PANEL SIDEBAR: STATS & RULES (Col Span 3) -->
 <div class="lg:col-span-3 space-y-6">
 
 <!-- This Month Overview -->
-<div class="edify-surface p-5 rounded-xl  shadow-sm space-y-3">
+<div class="edify-surface p-5 rounded-surface  shadow-sm space-y-3">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month Overview</h3>
 <div class="space-y-2 text-[12px] font-bold text-slate-500">
-<a href="/accounts/weekly-requests" class="flex items-center justify-between hover:bg-slate-50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">{{ month_overview.waiting_for_approval }}</span></a>
-<a href="/accounts/returned" class="flex items-center justify-between text-rose-600 hover:bg-rose-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Returned</span> <span class="font-semibold">{{ month_overview.returned }}</span></a>
-<a href="/accounts/advances" class="flex items-center justify-between text-amber-600 hover:bg-amber-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Approved (Not Disbursed)</span> <span class="font-semibold">{{ month_overview.approved_not_disbursed }}</span></a>
-<a href="/accounts/accountability" class="flex items-center justify-between text-blue-700 hover:bg-blue-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Disbursed</span> <span class="font-semibold">{{ month_overview.disbursed }}</span></a>
-<a href="/accounts/cleared" class="flex items-center justify-between text-emerald-600 hover:bg-emerald-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Reconciled</span> <span class="font-semibold">{{ month_overview.reconciled }}</span></a>
+<a href="/accounts/weekly-requests" class="flex items-center justify-between hover:bg-slate-50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">{{ month_overview.waiting_for_approval }}</span></a>
+<a href="/accounts/returned" class="flex items-center justify-between text-rose-600 hover:bg-rose-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Returned</span> <span class="font-semibold">{{ month_overview.returned }}</span></a>
+<a href="/accounts/advances" class="flex items-center justify-between text-amber-600 hover:bg-amber-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Approved (Not Disbursed)</span> <span class="font-semibold">{{ month_overview.approved_not_disbursed }}</span></a>
+<a href="/accounts/accountability" class="flex items-center justify-between text-blue-700 hover:bg-blue-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Disbursed</span> <span class="font-semibold">{{ month_overview.disbursed }}</span></a>
+<a href="/accounts/cleared" class="flex items-center justify-between text-emerald-600 hover:bg-emerald-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Reconciled</span> <span class="font-semibold">{{ month_overview.reconciled }}</span></a>
 </div>
 <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-50">
 <a href="/accounts/blocked" class="edify-text-caption font-semibold text-slate-500 hover:text-rose-600 hover:underline uppercase tracking-wider">Blocked</a>
@@ -368,7 +385,7 @@ Disburse Funds
 </div>
 
 <!-- Disbursement Status Chart Visual -->
-<div class="edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between space-y-4">
+<div class="edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Disbursement Status</h3>
 <div class="flex items-center justify-center gap-4">
 <!-- circular svg representation -->
@@ -392,16 +409,16 @@ Disburse Funds
 </div>
 </div>
 <div class="edify-text-caption space-y-1 font-bold text-slate-500">
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved ({{ donut.approved_pct }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending ({{ donut.pending_pct }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span> Disbursed ({{ donut.disbursed_pct }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned ({{ donut.returned_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500"></span> Approved ({{ donut.approved_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-500"></span> Pending ({{ donut.pending_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-blue-500"></span> Disbursed ({{ donut.disbursed_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-500"></span> Returned ({{ donut.returned_pct }}%)</div>
 </div>
 </div>
 </div>
 
 <!-- Finance & Disbursement Rules -->
-<div class="edify-surface p-5 rounded-xl  shadow-sm space-y-4">
+<div class="edify-surface p-5 rounded-surface  shadow-sm space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Finance &amp; Disbursement Rules</h3>
 <ul class="text-[12px] font-bold text-slate-500 space-y-2.5">
 <li class="flex items-start gap-2">
@@ -436,7 +453,7 @@ Disburse Funds
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- RECENT DISBURSEMENT ACTIVITY (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Disbursement Activity</h3>
@@ -447,7 +464,7 @@ Disburse Funds
 {% for item in recent_activity %}
 <div class="flex items-center justify-between text-[12px] font-bold">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center edify-text-caption font-semibold">{{ item.name|slice:":2"|upper }}</span>
+<span class="h-6 w-6 rounded-pill bg-blue-50 text-blue-600 flex items-center justify-center edify-text-caption font-semibold">{{ item.name|slice:":2"|upper }}</span>
 <div>
 <span class="text-slate-800 block leading-tight">{{ item.name }} &bull; {{ item.region }}</span>
 <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ item.when }}</span>
@@ -466,7 +483,7 @@ Disburse Funds
 </div>
 
 <!-- RECONCILIATION & PROOF TRACKER (Col Span 5) -->
-<div class="lg:col-span-5 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-5 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Reconciliation &amp; Proof Tracker</h3>
@@ -475,11 +492,11 @@ Disburse Funds
 
 <!-- mini status labels -->
 <div class="grid grid-cols-2 gap-2 mt-4 text-center">
-<div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
+<div class="p-2 bg-slate-50 border border-slate-100 rounded-surface">
 <h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ recon_stats.awaiting_receipts }}</h4>
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider block mt-1">Awaiting Receipts</span>
 </div>
-<div class="p-2 bg-emerald-50 border border-emerald-100 rounded-xl">
+<div class="p-2 bg-emerald-50 border border-emerald-100 rounded-surface">
 <h4 class="text-[21px] font-extrabold tracking-tight text-emerald-600 leading-none">{{ recon_stats.closed }}</h4>
 <span class="edify-text-caption text-emerald-500 font-bold uppercase tracking-wider block mt-1">Closed</span>
 </div>
@@ -500,7 +517,7 @@ Disburse Funds
 <tr class="hover:bg-slate-50/50">
 <td class="py-2.5 font-bold text-slate-800">{{ row.name }} &bull; {{ row.region }}</td>
 <td class="py-2.5 text-right font-semibold text-slate-800">{{ row.amount|floatformat:"0g" }}</td>
-<td class="py-2.5 text-center"><span class="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 edify-text-caption font-bold text-amber-700">Awaiting Receipts</span></td>
+<td class="py-2.5 text-center"><span class="inline-flex items-center rounded-pill bg-amber-50 border border-amber-200 px-1.5 py-0.5 edify-text-caption font-bold text-amber-700">Awaiting Receipts</span></td>
 <td class="py-2.5 text-right {% if row.days > 5 %}text-rose-600{% elif row.days > 3 %}text-amber-600{% else %}text-slate-500{% endif %} font-semibold">{{ row.days }} day{{ row.days|pluralize }}</td>
 </tr>
 {% empty %}
@@ -513,7 +530,7 @@ Disburse Funds
 </div>
 
 <!-- CASH POSITION / BUDGET BALANCE (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cash Position / Budget Balance</h3>
@@ -522,21 +539,21 @@ Disburse Funds
 
 <div class="grid grid-cols-2 gap-3 mt-4">
 <!-- 1 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-surface">
 <span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide block">Committed</span>
 <h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.pending_disb }}</h4>
 <span class="edify-text-caption text-slate-400 block mt-1">Approved, not disbursed</span>
 </div>
 
 <!-- 2 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-surface">
 <span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide block">Pending Requests</span>
 <h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.awaiting_approval }}</h4>
 <span class="edify-text-caption text-slate-400 block mt-1">Awaiting approval decision</span>
 </div>
 
 <!-- 3 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg col-span-2">
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-surface col-span-2">
 <span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide block">Program Funds</span>
 <h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.total_approved }}</h4>
 <span class="edify-text-caption text-slate-500 block mt-1">{{ kpis.budget_util_pct }}% utilized</span>

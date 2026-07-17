@@ -93,4 +93,33 @@ class PartnerAssignment(TimeStampedModel):
         ordering = ["-created_at"]
 
 
-__all__ = ["Partner", "PartnerAssignment"]
+class PartnerActivityAllowance(TimeStampedModel):
+    """Auditable grant of ADDITIONAL partner activities for one school.
+
+    Default policy (production mandate §F): one non-core activity per partner
+    per school per FY. Core package slots are governed by the nine-slot
+    CorePlan instead and are exempt. Every activity beyond the default
+    requires one of these grants — who allowed it, why, and for how long."""
+
+    id = CuidField()
+    partner = models.ForeignKey(
+        Partner, on_delete=models.CASCADE, related_name="activity_allowances"
+    )
+    school = models.ForeignKey(
+        "schools.School",
+        on_delete=models.CASCADE,
+        related_name="partner_activity_allowances",
+    )
+    fy = models.CharField(max_length=16)
+    additional_activities = models.PositiveIntegerField(default=1)
+    activity_type = models.CharField(max_length=64, null=True, blank=True)
+    granted_by = models.CharField(max_length=30)
+    reason = models.TextField()
+    expires_at = models.DateField(null=True, blank=True)
+
+    class Meta:
+        db_table = "partner_activity_allowance"
+        ordering = ["-created_at"]
+
+
+__all__ = ["Partner", "PartnerAssignment", "PartnerActivityAllowance"]

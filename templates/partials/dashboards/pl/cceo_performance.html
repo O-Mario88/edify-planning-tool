@@ -21,7 +21,7 @@
           tabindex="0">
         <td style="padding:7px 10px;">
           <div class="flex items-center gap-1.5">
-            <span class="inline-flex items-center justify-center rounded-full font-bold shrink-0"
+            <span class="inline-flex items-center justify-center rounded-pill font-bold shrink-0"
                   style="height:24px;width:24px;font-size: 12px;color:var(--edify-surface-raised);background:var(--edify-primary);">{{ c.initials }}</span>
             <span style="font-weight:600;color:var(--edify-text);">{{ c.name }}</span>
           </div>
@@ -33,12 +33,12 @@
         <td style="padding:7px 10px;text-align:center;font-variant-numeric:tabular-nums;color:{% if c.sf_pending %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.sf_pending }}</td>
         <td style="padding:7px 10px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:{% if c.backlog >= 4 %}var(--edify-danger){% elif c.backlog >= 2 %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.backlog }}</td>
         <td style="padding:7px 10px;text-align:center;">
-          <span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-bold"
+          <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold"
                 style="background:{% if c.route_tone == 'success' %}var(--edify-success-light){% elif c.route_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
                        color:{% if c.route_tone == 'success' %}var(--edify-success){% elif c.route_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.route_quality }}</span>
         </td>
         <td style="padding:7px 10px;text-align:center;">
-          <span class="inline-flex items-center px-2 py-0.5 rounded edify-text-caption font-bold"
+          <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold"
                 style="background:{% if c.risk_tone == 'success' %}var(--edify-success-light){% elif c.risk_tone == 'amber' %}var(--edify-warning-light){% elif c.risk_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
                        color:{% if c.risk_tone == 'success' %}var(--edify-success){% elif c.risk_tone == 'amber' %}var(--edify-warning){% elif c.risk_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.risk }}</span>
         </td>

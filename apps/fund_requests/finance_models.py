@@ -43,6 +43,14 @@ class PartnerPayment(TimeStampedModel):
 
     class Meta:
         db_table = "partner_payment"
+        constraints = [
+            # One payout per activity — the concurrency backstop for the
+            # pay_partner idempotency guard. A duplicate row here is a
+            # double-counted partner payment.
+            models.UniqueConstraint(
+                fields=["activity"], name="uniq_partner_payment_per_activity"
+            ),
+        ]
 
 
 class ReimbursementClaim(TimeStampedModel):

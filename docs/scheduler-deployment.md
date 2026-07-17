@@ -27,7 +27,7 @@ dedicated process, started explicitly via:
 python manage.py runscheduler
 ```
 
-This process registers all 7 jobs (see `apps/realtime/registry.py`
+This process registers all 8 jobs (see `apps/realtime/registry.py`
 `JOB_REGISTRY` for the authoritative list) and blocks in the foreground
 until terminated — a normal long-running service, not a side effect of
 importing Django.
@@ -57,6 +57,7 @@ are skipped rather than double-executing.
    ```
    ENABLE_BACKGROUND_JOBS=true
    ```
+
    **Do not expose a public port** for this service (it serves no HTTP
    traffic) — remove/skip domain generation.
    For the worker service's own health probe (separate from the web
@@ -106,9 +107,14 @@ policy decision rather than assumed.
 ENABLE_BACKGROUND_JOBS=true python manage.py runscheduler
 ```
 
-runs the same 7 jobs against your local database. Use `--allow-disabled` to
+runs the same 8 jobs against your local database. Use `--allow-disabled` to
 start the process without the flag for debugging the command itself (jobs
 will still no-op, matching production's "disabled" behavior).
+
+The eighth job is `analytics_report_delivery`, retained for a future opt-in
+scheduled-delivery release. It is not required by the current Analytics UI:
+“Send to Inbox” creates the scoped Message and Notification synchronously.
+No worker or outbound email provider is involved in that user action.
 
 ## Job inventory
 

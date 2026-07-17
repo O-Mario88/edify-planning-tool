@@ -41,6 +41,7 @@ from django.db.models import Avg, Count, Q, Sum
 
 from apps.accounts.models import StaffProfile, StaffTargetProfile
 from apps.activities.models import Activity
+from apps.core.enums import SsaIntervention
 from apps.core.fy import (
     get_fy_date_range,
     get_month_date_range,
@@ -1526,15 +1527,24 @@ class PLAnalyticsService:
                 trained[sid] = d
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
         low_ssa_ids = set()
+        latest_records = {}
         if latest_fy:
-            low_ssa_ids = set(
+            records = (
                 SsaRecord.objects.filter(
                     school_id__in=pls.school_ids,
                     verification_status="confirmed",
                     fy=latest_fy,
-                    average_score__lt=5.0,
-                ).values_list("school_id", flat=True)
+                )
+                .prefetch_related("scores")
+                .order_by("school_id", "-date_of_ssa", "-created_at")
             )
+            for record in records:
+                latest_records.setdefault(record.school_id, record)
+            low_ssa_ids = {
+                school_id
+                for school_id, record in latest_records.items()
+                if record.average_score is not None and record.average_score < 5.0
+            }
 
         schools = list(
             School.objects.filter(id__in=pls.school_ids)
@@ -1545,6 +1555,18 @@ class PLAnalyticsService:
         rows = []
         for s in schools:
             issues, actions = [], []
+            record = latest_records.get(s.id)
+            weakest_code = ""
+            weakest_label = ""
+            if record:
+                weakest_score = min(
+                    record.scores.all(), key=lambda score: score.score, default=None
+                )
+                if weakest_score:
+                    weakest_code = weakest_score.intervention
+                    weakest_label = dict(SsaIntervention.choices).get(
+                        weakest_code, weakest_code
+                    )
             no_ssa = s.current_fy_ssa_status != "done"
             not_visited = s.id not in visited
             not_trained = s.id not in trained
@@ -1552,33 +1574,70 @@ class PLAnalyticsService:
             severity = 0
             if no_ssa:
                 issues.append("No SSA")
-                actions.append("Schedule SSA & Visit")
+                actions.append(
+                    {
+                        "label": "Schedule Baseline SSA Visit",
+                        "activity_type": "baseline_ssa_visit",
+                    }
+                )
                 severity += 2
             if low_ssa:
                 issues.append("Low SSA")
-                actions.append("Provide SSA Support")
+                actions.append(
+                    {
+                        "label": (
+                            f"Schedule {weakest_label} Coaching Visit"
+                            if weakest_label
+                            else "Schedule Coaching Visit"
+                        ),
+                        "activity_type": "coaching_visit",
+                    }
+                )
                 severity += 2
             if not_visited:
                 issues.append("Not Visited")
-                actions.append("Schedule Visit")
+                actions.append(
+                    {
+                        "label": "Schedule School Visit",
+                        "activity_type": "school_visit",
+                    }
+                )
                 severity += 1
             if not_trained:
                 issues.append("Not Trained")
-                actions.append("Plan Training")
+                actions.append(
+                    {
+                        "label": (
+                            f"Schedule {weakest_label} Training"
+                            if weakest_label
+                            else "Schedule School Improvement Training"
+                        ),
+                        "activity_type": "school_improvement_training",
+                    }
+                )
                 severity += 1
             if not issues:
                 continue
             lv = visited.get(s.id)
             lt = trained.get(s.id)
+            recommended = actions[0] if actions else {
+                "label": "Review School",
+                "activity_type": "school_visit",
+            }
             rows.append(
                 {
                     "id": s.id,
+                    "school_id": s.school_id,
                     "school": s.name,
                     "district": s.district.name if s.district_id else "—",
                     "issue": " + ".join(issues[:2]),
                     "last_visit": f"{(today - lv).days} days ago" if lv else "—",
                     "last_training": f"{(today - lt).days} days ago" if lt else "—",
-                    "next_action": actions[0] if actions else "Review",
+                    "next_action": recommended["label"],
+                    "recommended_activity_label": recommended["label"],
+                    "recommended_activity_type": recommended["activity_type"],
+                    "weakest_intervention": weakest_label,
+                    "weakest_intervention_code": weakest_code,
                     "severity": severity,
                 }
             )

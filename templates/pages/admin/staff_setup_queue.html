@@ -14,7 +14,7 @@
 </div>
 
 <!-- Listings Table -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
@@ -37,7 +37,7 @@
 {{ school.district.name }} district / {{ school.region.name }} region
 </td>
 <td class="px-4 py-4">
-<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-amber-50 text-amber-700">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-amber-50 text-amber-700">
 Pending Link
 </span>
 </td>
@@ -48,7 +48,7 @@ Pending Link
 <input type="hidden" name="action" value="match">
 <select
 name="staff_id"
-class="rounded border border-slate-200 px-2 py-1 edify-text-caption font-semibold bg-slate-50 focus:outline-none focus:border-blue-500 edify-focus-surface"
+class="rounded-control border border-slate-200 px-2 py-1 edify-text-caption font-semibold bg-slate-50 focus:outline-none focus:border-blue-500 edify-focus-surface"
 >
 <option value="">Select CCEO profile...</option>
 {% for staff in staff_list %}
@@ -61,7 +61,7 @@ class="rounded border border-slate-200 px-2 py-1 edify-text-caption font-semibol
 <button
 type="submit"
 form="match-form-{{ school.id }}"
-class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Match
 </button>
@@ -71,7 +71,7 @@ Match
 <input type="hidden" name="action" value="ignore">
 <button
 type="submit"
-class="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Ignore
 </button>

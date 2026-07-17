@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.db import transaction
 from django.utils import timezone
 from .models import Notification
 
@@ -168,6 +169,7 @@ class WorkflowNotificationService:
         else:
             recipient_list = [recipients]
 
+        seen_recipient_ids: set[str] = set()
         for r in recipient_list:
             user_obj = None
             if isinstance(r, User):
@@ -179,6 +181,9 @@ class WorkflowNotificationService:
 
             if not user_obj:
                 continue
+            if user_id in seen_recipient_ids:
+                continue
+            seen_recipient_ids.add(user_id)
 
             role = getattr(user_obj, "active_role", None) or "Staff"
             target_route, action_label = NotificationLinkResolver.resolve(
@@ -201,6 +206,45 @@ class WorkflowNotificationService:
                 action_required=priority in ("high", "urgent"),
             )
             created_notifications.append(notif)
+
+        if created_notifications:
+            recipient_ids = [n.recipient_id for n in created_notifications]
+            try:
+                # Most workflows call this service directly. Record one
+                # auditable delivery command; audit's post-commit projector
+                # makes it a durable DomainEventLog record without recursion.
+                from apps.audit.services import log as audit_log
+
+                audit_log(
+                    action=f"notification.{event_type}",
+                    subject_kind=context_type,
+                    subject_id=context_id,
+                    payload={
+                        "category": category,
+                        "priority": priority,
+                        "recipient_ids": recipient_ids,
+                        "notification_ids": [n.id for n in created_notifications],
+                    },
+                )
+            except Exception:
+                # A temporary audit issue must not prevent operational inbox
+                # delivery; the audit-health gate exposes it separately.
+                pass
+
+            live_event = {
+                "type": f"notification.{event_type}",
+                "subjectKind": context_type,
+                "subjectId": context_id,
+                "at": timezone.now().isoformat(),
+                "meta": {"notificationCount": len(created_notifications)},
+            }
+
+            def _publish_notifications() -> None:
+                from apps.realtime.bus import bus
+
+                bus.publish_many(recipient_ids, live_event)
+
+            transaction.on_commit(_publish_notifications)
 
         return created_notifications
 

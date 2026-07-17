@@ -1,23 +1,34 @@
 {% load frontend_filters %}
-<div class="flex items-center gap-3 mb-3 flex-1">
-  <div class="relative shrink-0" style="height:80px;width:80px;">
-    <div class="absolute inset-0 rounded-full" style="background:conic-gradient(var(--edify-success) {{ funding_execution.utilization_pct }}%, var(--edify-border) 0);"></div>
-    <div class="absolute rounded-full flex flex-col items-center justify-center"
-         style="inset:8px;background:var(--edify-surface);box-shadow:var(--edify-shadow-sm);">
-      <span style="font-size:17px;font-weight:800;color:var(--edify-text);">{{ funding_execution.utilization_pct }}%</span>
-      <span style="font-size:7px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">UTIL</span>
+<div class="pl-funding-summary">
+  <div class="pl-funding-donut" role="img" aria-label="{{ funding_execution.utilization_pct }} percent of approved funding utilized">
+    <div class="absolute inset-0 rounded-pill" style="background:conic-gradient(var(--edify-success) {{ funding_execution.utilization_pct }}%, var(--edify-border) 0);"></div>
+    <div class="absolute rounded-pill flex flex-col items-center justify-center"
+         style="inset:7px;background:var(--edify-surface);box-shadow:var(--edify-shadow-sm);">
+      <span class="pl-funding-donut__value">{{ funding_execution.utilization_pct }}%</span>
+      <span class="pl-funding-donut__label">Utilized</span>
     </div>
   </div>
-  <div class="flex-1 space-y-1.5">
-    {% for b in funding_execution.statuses %}
-    <div class="flex items-center justify-between">
-      <span style="font-size: 12px;font-weight:500;color:var(--edify-text-muted);display:inline-flex;align-items:center;gap:6px;">
-        <span class="rounded-full" style="height:8px;width:8px;background:{% if b.tone == 'success' %}var(--edify-success){% elif b.tone == 'info' %}var(--edify-info){% elif b.tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};"></span>{{ b.label }}
-      </span>
-      <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--edify-text);">{{ b.count }} <span style="font-size: 12px;font-weight:400;color:var(--edify-text-subtle);">({{ b.amount }})</span></span>
-    </div>
-    {% endfor %}
+  <div class="pl-funding-summary__copy">
+    <strong>Budget utilization</strong>
+    <span>{{ funding_execution.disbursed_total }} disbursed</span>
   </div>
 </div>
-<p style="font-size: 12px;color:var(--edify-text-muted);">{{ funding_execution.disbursed_total }} / {{ funding_execution.approved_total }}</p>
-<a href="/disbursements" style="font-size: 12px;font-weight:600;color:var(--edify-accent);margin-top:4px;display:block;">View finance dashboard &rarr;</a>
+
+<div class="pl-funding-statuses" aria-label="Funding execution status details">
+  {% for b in funding_execution.statuses %}
+  <div class="pl-funding-status">
+    <span class="pl-funding-status__label">
+      <span class="pl-funding-status__dot"
+            style="background:{% if b.tone == 'success' %}var(--edify-success){% elif b.tone == 'info' %}var(--edify-info){% elif b.tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};"></span>
+      {{ b.label }}
+    </span>
+    <span class="pl-funding-status__value">{{ b.count }}</span>
+    <span class="pl-funding-status__amount">{{ b.amount }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="pl-funding-footer">
+  <p><span>Approved</span><strong>{{ funding_execution.approved_total }}</strong></p>
+  <a href="/disbursements">Open finance <span aria-hidden="true">&rarr;</span></a>
+</div>

@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
      x-data="{
        chart: null,
        initChart() {
@@ -8,16 +8,16 @@
          if (!el) return;
          this.chart = new ApexCharts(el, {
            series: [
-             { name: 'Planned Activities', type: 'column', data: {{ team_performance.planned|safe }} },
-             { name: 'Completed Activities', type: 'column', data: {{ team_performance.completed|safe }} },
-             { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|safe }} }
+             { name: 'Planned Activities', type: 'column', data: {{ team_performance.planned|escape }} },
+             { name: 'Completed Activities', type: 'column', data: {{ team_performance.completed|escape }} },
+             { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|escape }} }
            ],
-           chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+           chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
            stroke: { width: [0, 0, 2.5], curve: 'smooth' },
            colors: ['var(--edify-info-border)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)'],
            plotOptions: { bar: { columnWidth: '55%', borderRadius: 3 } },
            dataLabels: { enabled: false },
-           labels: {{ team_performance.labels|safe }},
+           labels: {{ team_performance.labels|escape }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
                     labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
            yaxis: [
@@ -41,7 +41,7 @@
     </div>
   </div>
   {% if team_performance.has_target %}{% else %}
-  <p class="edify-text-caption text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1 inline-block">
+  <p class="edify-text-caption text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-surface px-2.5 py-1 inline-block">
     Achievement line shows 0 — no annual targets set for this team yet.
   </p>
   {% endif %}

@@ -1,5 +1,8 @@
-from django.test import TestCase
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.utils import timezone
 from apps.accounts.models import StaffProfile
 from apps.geography.models import Region, District, SubCounty
 from apps.schools.models import School
@@ -124,7 +127,11 @@ class PlanningReadinessTestCase(TestCase):
         ssa = SsaRecord.objects.create(
             school=school,
             fy="2026",
-            date_of_ssa="2026-07-01",
+            # The production importer normalizes this to an aware timestamp;
+            # keep the direct model-fixture path equally realistic.
+            date_of_ssa=timezone.make_aware(
+                datetime(2026, 7, 1), timezone.get_current_timezone()
+            ),
             verification_status="confirmed",
         )
         SsaScore.objects.create(ssa_record=ssa, intervention="leadership", score=4)

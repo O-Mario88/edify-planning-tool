@@ -257,6 +257,12 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # ── Edify domain settings (ported from NestJS env.validation.ts) ─────────────
 IS_PRODUCTION = False  # overridden in prod.py
+
+# Environment identity for the database stamp guard (apps.system_health.
+# environment_guard): which environment THIS PROCESS believes it is. The
+# database carries its own stamp; a mismatch (prod server on a local dump,
+# or a local shell pointed at the production DATABASE_URL) refuses to run.
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "local").strip().lower()
 NODE_ENV = os.environ.get("NODE_ENV", "development")
 PORT = _as_int(os.environ.get("PORT"), 4000)
 

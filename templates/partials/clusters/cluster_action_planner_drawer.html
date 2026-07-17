@@ -56,7 +56,7 @@ participants: {{ expected_participants|default:25 }}
 class="space-y-4 text-[12px] font-bold text-slate-600"
 >
 {% if error_msg %}
-<div class="p-3.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-[12px] font-semibold flex items-start gap-2">
+<div class="p-3.5 rounded-surface border border-rose-100 bg-rose-50 text-rose-800 text-[12px] font-semibold flex items-start gap-2">
 <svg class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 </svg>
@@ -86,7 +86,7 @@ hx-swap="innerHTML"
 {% else %}
 <select
 name="cluster_id"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
 hx-get="/clusters/planner-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
@@ -104,12 +104,12 @@ hx-include="#action-planner-form"
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Recommended Focus</label>
 <div class="flex flex-wrap gap-1 justify-end max-w-[260px] ml-auto">
 {% for item in weakest_interventions %}
-<span class="inline-block px-2 py-0.5 rounded edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
+<span class="inline-block px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
 {{ item.label }} ({{ item.avg|floatformat:1 }})
 </span>
 {% empty %}
 {% if recommendation %}
-<span class="inline-block px-2.5 py-0.5 rounded edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
+<span class="inline-block px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
 {{ recommendation.focus_intervention|replace_underscore }}
 </span>
 {% else %}
@@ -168,12 +168,12 @@ hx-get="/clusters/cost-preview"
 hx-target="#planner-cost-preview-container"
 hx-trigger="change delay:200ms, keyup delay:200ms"
 hx-include="#action-planner-form"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none"
 required
 min="1"
 >
 <span class="absolute right-3 top-[26%] text-slate-400">
-<svg style="height: 18px; width: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
 </svg>
 </span>
@@ -183,7 +183,7 @@ min="1"
 <label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention <span class="text-rose-500">*</span></label>
 <select
 name="focus_intervention"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
 required
 >
 {% for item in interventions %}
@@ -201,7 +201,7 @@ required
 type="text"
 name="purpose"
 placeholder="{{ recommendation.headline|default:'e.g. Focus on Leadership strategies' }}"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none text-slate-700"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none text-slate-700"
 required
 >
 </div>
@@ -282,7 +282,7 @@ class="relative "
 <button
 type="button"
 @click="open = !open"
-class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none transition-colors text-slate-700"
+class="w-full h-10 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none transition-colors text-slate-700"
 >
 <div class="flex items-center gap-2">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -301,7 +301,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
+class="absolute left-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -312,11 +312,11 @@ x-transition:leave-end="opacity-0 transform scale-95"
 >
 <!-- Header -->
 <div class="flex items-center justify-between px-1">
-<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
 <span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
-<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
 </div>
@@ -334,7 +334,7 @@ x-transition:leave-end="opacity-0 transform scale-95"
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
-class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
+class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
 :class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
@@ -353,7 +353,7 @@ x-text="day"
 {% if request.user.active_role == 'Program Lead' or request.user.active_role == 'Admin' %}
 <select
 name="responsible_staff_id"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
 >
 <option value="">-- Choose Staff --</option>
 {% for p in staff_profiles %}
@@ -362,7 +362,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-bold
 </select>
 {% else %}
 <select
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-bold bg-slate-50 text-slate-400 cursor-not-allowed"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold bg-slate-50 text-slate-400 cursor-not-allowed"
 disabled
 >
 {% for p in staff_profiles %}
@@ -385,7 +385,7 @@ value="{% if selected_cluster.responsible_staff_id %}{{ selected_cluster.respons
 <select
 name="assigned_partner_id"
 id="assigned-partner-select"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-bold bg-slate-50 text-slate-400 cursor-not-allowed"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold bg-slate-50 text-slate-400 cursor-not-allowed"
 disabled
 >
 <option value="">Disabled (Staff Scheduling)</option>
@@ -398,7 +398,7 @@ disabled
 <div id="planner-cost-preview-container" class="border-t border-slate-100 pt-4">
 {% if cost_preview %}
 {% if not cost_preview.can_schedule %}
-<div class="p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-800 edify-text-caption font-semibold mb-2 space-y-0.5">
+<div class="p-3 bg-rose-50 border border-rose-100 rounded-surface text-rose-800 edify-text-caption font-semibold mb-2 space-y-0.5">
 {% for b in cost_preview.blockers %}
 <div>{{ b }}</div>
 {% empty %}
@@ -436,11 +436,11 @@ Active Cost Catalogue required before cluster activity can be scheduled.
 </div>
 
 <!-- Modal Footer Actions (Schedule & Assign to Partner) -->
-<div class="flex items-center justify-end gap-3" style="position: sticky; bottom: -28px; background:var(--edify-surface); z-index: 10; margin-left: -28px; margin-right: -28px; padding: 16px 28px; border-top: 1px solid var(--edify-border);">
+<div class="sticky bottom-[-28px] z-10 -mx-7 px-7 py-4 flex items-center justify-end gap-3" style="background:var(--edify-surface); border-top: 1px solid var(--edify-border);">
 <button
 type="button"
 @click="$dispatch('close-drawer')"
-class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
+class="px-5 h-9 rounded-control btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
@@ -449,13 +449,13 @@ Cancel
 <button
 type="submit"
 {% if cost_preview and not cost_preview.can_schedule %}disabled{% endif %}
-class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5 {% if cost_preview and not cost_preview.can_schedule %}opacity-50 cursor-not-allowed{% endif %}"
+class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5 {% if cost_preview and not cost_preview.can_schedule %}opacity-50 cursor-not-allowed{% endif %}"
 @click="
 let partnerSelect = document.getElementById('assigned-partner-select');
 if (partnerSelect) partnerSelect.value = '';
 "
 >
-<svg class="shrink-0" style="height: 16px; width: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
 </svg>
 Schedule
@@ -466,7 +466,7 @@ Schedule
 <button
 type="submit"
 {% if cost_preview and not cost_preview.can_schedule %}disabled{% endif %}
-class="px-6 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5 {% if cost_preview and not cost_preview.can_schedule %}opacity-50 cursor-not-allowed{% endif %}"
+class="px-6 h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5 {% if cost_preview and not cost_preview.can_schedule %}opacity-50 cursor-not-allowed{% endif %}"
 @click="
 let partnerSelect = document.getElementById('assigned-partner-select');
 if (partnerSelect && !partnerSelect.value) {
@@ -475,7 +475,7 @@ $event.preventDefault();
 }
 "
 >
-<svg class="shrink-0" style="height: 16px; width: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 </svg>
 Assign to Partner

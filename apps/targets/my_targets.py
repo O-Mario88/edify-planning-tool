@@ -23,6 +23,7 @@ from django.utils import timezone
 
 from apps.accounts.models import StaffTargetProfile
 from apps.activities.models import Activity
+from apps.core.fy import get_fy_date_range, get_month_date_range
 from apps.ssa.models import SsaRecord
 
 from apps.targets.fy_calendar import (
@@ -77,6 +78,48 @@ ANNUAL_FALLBACK = {
     "ssa_completed": lambda tp: tp.ssa_target or 0,
     "mscs": lambda tp: 0,  # MSCS has no annual field — monthly assignment only
 }
+
+# These are platform reference data, not optional user-entered configuration.
+# The migration seeds them for an installation, while this small repair guard
+# restores a missing row if a database restore, test flush, or historic manual
+# deletion removed it. Existing rows (including their configured weights) are
+# never overwritten here.
+OFFICIAL_TARGET_AREAS = (
+    ("school_visits", "School Visits", 30, 1),
+    ("cluster_meetings", "Cluster Meetings", 15, 2),
+    ("cluster_trainings", "Cluster Trainings", 20, 3),
+    ("ssa_completed", "SSA Completed", 25, 4),
+    ("mscs", "MSCS", 10, 5),
+)
+
+
+def active_target_areas() -> list[TargetArea]:
+    """Return the official active target areas, repairing only missing rows."""
+    areas = list(TargetArea.objects.filter(active=True).order_by("sort_order"))
+    active_keys = {area.key for area in areas}
+    missing = [area for area in OFFICIAL_TARGET_AREAS if area[0] not in active_keys]
+    if not missing:
+        return areas
+
+    existing_keys = set(
+        TargetArea.objects.filter(key__in=[area[0] for area in missing]).values_list(
+            "key", flat=True
+        )
+    )
+    for key, label, weight, sort_order in missing:
+        # An explicitly inactive record is an administrator's policy choice;
+        # only a genuinely absent reference row is repaired automatically.
+        if key not in existing_keys:
+            TargetArea.objects.get_or_create(
+                key=key,
+                defaults={
+                    "label": label,
+                    "weight": weight,
+                    "sort_order": sort_order,
+                    "active": True,
+                },
+            )
+    return list(TargetArea.objects.filter(active=True).order_by("sort_order"))
 
 NEXT_ACTIONS = {
     "school_visits": ("Open Planning", "/planning"),
@@ -149,7 +192,7 @@ def per_user_monthly_series(users, fy: str, areas=None) -> dict:
     monthly achieved]})}.
     """
     if areas is None:
-        areas = list(TargetArea.objects.filter(active=True))
+        areas = active_target_areas()
     out = {}
     for u in users:
         TargetAchievementService.rebuild(u, fy)
@@ -206,7 +249,7 @@ def pooled_monthly_series(users, fy: str, areas=None) -> tuple[dict, dict]:
     subset instead of calling this repeatedly — see its docstring.
     """
     if areas is None:
-        areas = list(TargetArea.objects.filter(active=True))
+        areas = active_target_areas()
     per_user = per_user_monthly_series(users, fy, areas=areas)
     return pool_series([u.id for u in users], per_user, areas)
 
@@ -218,9 +261,12 @@ class TargetAchievementService:
 
     @staticmethod
     def rebuild(user, fy: str) -> None:
-        areas = {a.key: a for a in TargetArea.objects.filter(active=True)}
+        areas = {a.key: a for a in active_target_areas()}
         ids = _user_ids(user)
-        fy_start, fy_end = Cal.fy_range(fy)
+        # Activity and ledger periods use calendar dates; SSA is timestamped.
+        # Query each with the matching canonical FY boundary type so Django
+        # never silently coerces a date into a naïve midnight datetime.
+        fy_start, fy_end = get_fy_date_range(fy)
         seen: set[tuple[str, str]] = set()
 
         def upsert(area_key, source_type, source_id, when: date, status: str):
@@ -345,7 +391,7 @@ class MyTargetQueryService:
     def monthly_targets(user, fy: str) -> dict[str, list[int]]:
         """{area_key: [12 monthly targets]} — explicit rows win; otherwise the
         annual profile is split so the 12 months sum to the annual value."""
-        areas = list(TargetArea.objects.filter(active=True))
+        areas = active_target_areas()
         explicit: dict[str, dict[int, int]] = {}
         for row in MonthlyPersonalTarget.objects.filter(user_id=user.id, fy=fy):
             explicit.setdefault(row.area.key, {})[row.month_of_fy] = row.target
@@ -369,7 +415,7 @@ class MyTargetQueryService:
 
     @staticmethod
     def monthly_achievements(user, fy: str) -> dict[str, list[int]]:
-        out = {a.key: [0] * 12 for a in TargetArea.objects.filter(active=True)}
+        out = {a.key: [0] * 12 for a in active_target_areas()}
         rows = TargetAchievementLedger.objects.filter(
             user_id=user.id, fy=fy, validation_status="validated"
         ).select_related("area")
@@ -410,7 +456,7 @@ class MyTargetQueryService:
         today = now["today"]
 
         TargetAchievementService.rebuild(user, fy)
-        areas = list(TargetArea.objects.filter(active=True).order_by("sort_order"))
+        areas = active_target_areas()
         targets = MyTargetQueryService.monthly_targets(user, fy)
         achieved = MyTargetQueryService.monthly_achievements(user, fy)
 
@@ -676,6 +722,7 @@ class MyTargetQueryService:
     def _pipeline(user, area_key: str, fy: str, month_of_fy: int) -> dict:
         ids = _user_ids(user)
         m_start, m_end = Cal.month_range(fy, month_of_fy)
+        ssa_start, ssa_end = get_month_date_range(fy, month_of_fy)
         stype, types = AREA_SOURCES[area_key]
         out = {
             "validated": [],
@@ -729,8 +776,8 @@ class MyTargetQueryService:
             recs = SsaRecord.objects.filter(
                 collected_by_user_id__in=ids,
                 deleted_at__isnull=True,
-                date_of_ssa__gte=m_start,
-                date_of_ssa__lt=m_end,
+                date_of_ssa__gte=ssa_start,
+                date_of_ssa__lt=ssa_end,
             ).select_related("school")
             for r in recs:
                 row = {
@@ -781,7 +828,9 @@ class MyTargetQueryService:
 
     @staticmethod
     def area_drawer(user, area_key: str, fy: str, month_of_fy: int) -> dict:
-        area = TargetArea.objects.filter(key=area_key, active=True).first()
+        area = next(
+            (item for item in active_target_areas() if item.key == area_key), None
+        )
         if not area:
             return {"ok": False}
         targets = MyTargetQueryService.monthly_targets(user, fy)
@@ -816,7 +865,7 @@ class MyTargetQueryService:
         targets = MyTargetQueryService.monthly_targets(user, fy)
         achieved = MyTargetQueryService.monthly_achievements(user, fy)
         rows = [["Target Area", "Period", "Target", "Achieved", "%"]]
-        for a in TargetArea.objects.filter(active=True).order_by("sort_order"):
+        for a in active_target_areas():
             for m in range(1, 13):
                 t, ach = targets[a.key][m - 1], achieved[a.key][m - 1]
                 rows.append(

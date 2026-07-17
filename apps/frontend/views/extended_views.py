@@ -11,6 +11,7 @@ from apps.core.permissions import (
     RolePermissionService,
 )
 from apps.core.scoping import resolve_user_scope, school_queryset
+from django.db import transaction
 from django.db.models import Q, Avg, Count, Sum
 from datetime import date
 
@@ -96,7 +97,7 @@ def fy_overview_view(request):
 
 @require_page_permission("planning")
 def calendar_view(request):
-    """Activity calendar — all scheduled activities for the current month."""
+    """Activity calendar — role scoped, with an optional Special Projects lens."""
     user = request.user
     month = int(request.GET.get("month", date.today().month))
     year = int(request.GET.get("year", date.today().year))
@@ -111,8 +112,30 @@ def calendar_view(request):
         .order_by("planned_date")
     )
 
-    if user.active_role == "CCEO":
-        activities = activities.filter(responsible_staff_id=user.id)
+    scope = resolve_user_scope(user)
+    if request.GET.get("project_scope") == "special":
+        projects_qs = Project.objects.filter(deleted_at__isnull=True)
+        if not scope.country_scope:
+            if user.active_role == "ProjectCoordinator" and user.staff_profile_id:
+                projects_qs = projects_qs.filter(manager_staff_id=user.staff_profile_id)
+            elif scope.school_ids:
+                projects_qs = projects_qs.filter(
+                    school_assignments__school_id__in=scope.school_ids
+                ).distinct()
+            else:
+                projects_qs = projects_qs.none()
+        project_ids = list(projects_qs.values_list("id", flat=True))
+        selected_project = request.GET.get("project")
+        if selected_project in project_ids:
+            project_ids = [selected_project]
+        activities = activities.filter(project_id__in=project_ids)
+    elif not scope.country_scope:
+        staff_ids = [user.staff_profile_id, user.id]
+        staff_ids = [staff_id for staff_id in staff_ids if staff_id]
+        activities = activities.filter(
+            Q(responsible_staff_id__in=staff_ids)
+            | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
+        )
 
     import calendar
 
@@ -538,19 +561,20 @@ def coverage_view(request):
         .count()
     )
 
-    # Cluster has no direct "schools" relation — schools attach via
-    # SchoolClusterAssignment (related_name="assignments" on Cluster).
-    clusters = (
-        Cluster.objects.filter(deleted_at__isnull=True)
-        .annotate(
-            school_count=Count(
-                "assignments",
-                filter=Q(assignments__school__deleted_at__isnull=True),
-                distinct=True,
-            ),
-        )
-        .order_by("name")
-    )
+    # School.cluster_id is the canonical cluster membership source. Build the
+    # counts in one aggregate query instead of reading the legacy assignment
+    # projection, which could diverge after an interrupted update.
+    clusters = list(Cluster.objects.filter(deleted_at__isnull=True).order_by("name"))
+    school_counts = {
+        row["cluster_id"]: row["count"]
+        for row in School.objects.filter(deleted_at__isnull=True)
+        .exclude(cluster_id__isnull=True)
+        .exclude(cluster_id="")
+        .values("cluster_id")
+        .annotate(count=Count("id"))
+    }
+    for cluster in clusters:
+        cluster.school_count = school_counts.get(cluster.id, 0)
 
     context = {
         "total_schools": total_schools,
@@ -706,7 +730,7 @@ def admin_user_detail_view(request, user_id):
     """User detail/edit/actions."""
     from django.contrib import messages
 
-    member = get_object_or_404(User, id=user_id)
+    member = get_object_or_404(User, id=user_id, deleted_at__isnull=True)
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -777,8 +801,19 @@ def admin_user_detail_view(request, user_id):
             messages.warning(request, f"User '{member.name}' deactivated.")
 
         elif action == "delete":
-            member.soft_delete()
-            messages.error(request, f"User '{member.name}' deleted.")
+            from apps.admin_users.services import delete_user
+            from apps.core.exceptions import BadRequest
+
+            try:
+                delete_user(member.id, request.user)
+            except BadRequest as exc:
+                messages.error(request, str(exc.detail))
+                return redirect("frontend:admin_user_detail", user_id=user_id)
+            messages.warning(
+                request,
+                f"User '{member.name}' deleted. Their access has been revoked; "
+                "history and audit logs are retained.",
+            )
             return redirect("frontend:admin_users")
 
         elif action == "invite":
@@ -900,6 +935,8 @@ def admin_user_detail_view(request, user_id):
         or (member.locked_until and member.locked_until > timezone.now())
     )
 
+    from apps.core.navigation import get_user_role_slug
+
     context = {
         "member": member,
         "available_roles": roles,
@@ -907,6 +944,9 @@ def admin_user_detail_view(request, user_id):
         "primary_district_id": primary_district_id,
         "assigned_districts": assigned_districts,
         "is_locked": is_locked,
+        # The users page is shared with CD/HR, but deletion is Admin-only
+        # (the service enforces it; this only controls the button).
+        "can_delete_users": get_user_role_slug(request.user) == "ADMIN",
     }
     return render(request, "pages/admin/user_detail.html", context)
 
@@ -1060,9 +1100,94 @@ def projects_list_view(request):
 def special_projects_analytics_view(request):
     """Special Project Impact Intelligence — verified SSA movement, partner
     performance, classification and recommendations, all computed live."""
+    import csv
+
+    from django.http import HttpResponse
+
     from apps.projects.impact_service import get_analytics
 
-    context = get_analytics(request.user)
+    query = {
+        key: request.GET.get(key)
+        for key in (
+            "fy",
+            "region",
+            "district",
+            "project",
+            "partner",
+            "intervention",
+            "impact_status",
+            "q",
+        )
+        if request.GET.get(key)
+    }
+    context = get_analytics(request.user, query)
+    context["is_htmx"] = request.headers.get("HX-Request") == "true"
+
+    export_kind = request.GET.get("export")
+    if export_kind in {"csv", "snapshot"}:
+        response = HttpResponse(content_type="text/csv")
+        filename = (
+            "special-project-impact-snapshot.csv"
+            if export_kind == "snapshot"
+            else "special-project-impact-matrix.csv"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        writer = csv.writer(response)
+        if export_kind == "snapshot":
+            writer.writerow(
+                ["Special Project Impact Snapshot", f"FY {context['selected']['fy']}"]
+            )
+            writer.writerow([])
+            writer.writerow(["Metric", "Value", "Definition"])
+            for item in context["kpis"]:
+                writer.writerow([item["label"], item["value"], item["helper"]])
+            writer.writerow([])
+            writer.writerow(
+                [
+                    "Data provenance",
+                    "IA-confirmed annual SSA and project-stamped verified activity workflow",
+                ]
+            )
+        else:
+            writer.writerow(
+                [
+                    "Project",
+                    "Associated Interventions",
+                    "Schools Assigned",
+                    "Schools Supported",
+                    "Verified Delivery Rate",
+                    "Measurable Schools",
+                    "Baseline Average",
+                    "Latest Average",
+                    "Annual SSA Delta",
+                    "Impact Classification",
+                    "Recommendation",
+                    "Budget Used",
+                    "Cost per Improved School",
+                ]
+            )
+            for row in context["matrix"]:
+                writer.writerow(
+                    [
+                        row["name"],
+                        row["interventions"],
+                        row["schools_assigned"],
+                        row["schools_supported"],
+                        f"{row['delivery_rate']}%",
+                        row["measurable_schools"],
+                        row["baseline_avg"] if row["baseline_avg"] is not None else "",
+                        row["latest_avg"] if row["latest_avg"] is not None else "",
+                        row["delta"] if row["delta"] is not None else "",
+                        row["classification"],
+                        row["recommendation"],
+                        row["budget"],
+                        row["cost_per_improved"],
+                    ]
+                )
+        return response
+
+    if context["is_htmx"]:
+        return render(request, "partials/projects/analytics_workspace.html", context)
     return render(request, "pages/projects/analytics.html", context)
 
 
@@ -1070,9 +1195,78 @@ def special_projects_analytics_view(request):
 def special_projects_planning_view(request):
     """Special Projects Planning — coordinator-scoped project schools with
     readiness + schedule / assign-to-partner (project-stamped) actions."""
+    import csv
+
+    from django.http import HttpResponse
+
     from apps.projects.planning_service import get_planning
 
-    context = get_planning(request.user)
+    query = {
+        key: request.GET.get(key)
+        for key in (
+            "fy",
+            "quarter",
+            "region",
+            "district",
+            "staff",
+            "project",
+            "project_type",
+            "partner_type",
+            "activity_type",
+            "tab",
+            "q",
+            "selected",
+            "page",
+            "per_page",
+        )
+        if request.GET.get(key)
+    }
+    context = get_planning(request.user, query)
+    context["is_htmx"] = request.headers.get("HX-Request") == "true"
+
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            'attachment; filename="special-project-planning.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "School ID",
+                "School",
+                "Region",
+                "District",
+                "Project",
+                "Project Type",
+                "Baseline / SSA",
+                "Planning Readiness",
+                "Weakest Intervention",
+                "SSA Average",
+                "Recommended Action",
+                "Partner",
+            ]
+        )
+        for row in context["export_rows"]:
+            writer.writerow(
+                [
+                    row["school_id"],
+                    row["school_name"],
+                    row["region"],
+                    row["district"],
+                    row["project_name"],
+                    row["project_type"],
+                    row["baseline_status"],
+                    row["readiness"],
+                    row["weakest"],
+                    row["average"] if row["average"] is not None else "",
+                    row["action"],
+                    row["partner"],
+                ]
+            )
+        return response
+
+    if context["is_htmx"]:
+        return render(request, "partials/projects/planning_workspace.html", context)
     return render(request, "pages/projects/planning.html", context)
 
 
@@ -1080,9 +1274,72 @@ def special_projects_planning_view(request):
 def special_projects_my_plan_view(request):
     """Special-project My Plan — the coordinator's scheduled project activities
     (staff-owned actionable; partner-planned read-only monitoring)."""
+    import csv
+
+    from django.http import HttpResponse
+
     from apps.projects.my_plan_service import get_my_plan
 
-    context = get_my_plan(request.user)
+    query = {
+        key: request.GET.get(key)
+        for key in (
+            "fy",
+            "quarter",
+            "month",
+            "week",
+            "region",
+            "district",
+            "project",
+            "partner",
+            "activity_type",
+            "status",
+            "period",
+            "q",
+        )
+        if request.GET.get(key)
+    }
+    context = get_my_plan(request.user, query)
+    context["is_htmx"] = request.headers.get("HX-Request") == "true"
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            'attachment; filename="special_project_my_plan.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "Activity ID",
+                "School / Cluster",
+                "District",
+                "Project",
+                "Planned Date",
+                "Purpose",
+                "Partner",
+                "Status",
+                "Evidence",
+                "Finance",
+            ]
+        )
+        for row in (
+            context["visits"] + context["trainings"] + context["partner_activities"]
+        ):
+            writer.writerow(
+                [
+                    row["id"],
+                    row["school"],
+                    row["district"],
+                    row["project"],
+                    row["planned_date"] or "",
+                    row["purpose"],
+                    row["partner"],
+                    row["status"],
+                    row["evidence"],
+                    row["finance"],
+                ]
+            )
+        return response
+    if context["is_htmx"]:
+        return render(request, "partials/projects/my_plan_workspace.html", context)
     return render(request, "pages/projects/my_plan.html", context)
 
 
@@ -1931,11 +2188,33 @@ def duplicate_review_view(request):
 @require_page_permission("data_quality_center")
 def unmatched_ssa_queue_view(request):
     from apps.schools.models import School, UnmatchedSSARecord
-    from apps.ssa.models import SsaRecord, SsaScore
-    from apps.core.enums import SsaCollectorType, VerificationStatus
     from django.contrib import messages
     from django.utils import timezone
     from apps.ssa import unmatched_service
+    from apps.ssa.services import upload as upload_ssa
+    from apps.core.exceptions import BadRequest
+
+    def record_matched_ssa(rec, school):
+        """Send unmatched-row resolution through the canonical SSA writer.
+
+        This path formerly constructed ``SsaRecord`` / ``SsaScore`` rows in
+        the view, which skipped score completeness, provenance, current-FY
+        readiness recomputation and timezone normalisation.  Resolution is
+        now an ordinary staff SSA upload with the original unmatched date and
+        scores, so it agrees with every other SSA source.
+        """
+        return upload_ssa(
+            {
+                "schoolId": school.school_id,
+                "dateOfSsa": rec.date_of_ssa or timezone.now().isoformat(),
+                "scores": [
+                    {"intervention": intervention, "score": score}
+                    for intervention, score in (rec.scores or {}).items()
+                ],
+                "collectorType": "staff",
+            },
+            request.user,
+        )
 
     if request.method == "POST":
         record_id = request.POST.get("record_id")
@@ -1948,47 +2227,14 @@ def unmatched_ssa_queue_view(request):
                 School, request.user, id=school_pk, deleted_at__isnull=True
             )
 
-            # Create SsaRecord
-            date_parsed = timezone.now()
-            if rec.date_of_ssa:
-                try:
-                    from datetime import datetime
-
-                    date_parsed = datetime.fromisoformat(
-                        rec.date_of_ssa.replace("Z", "+00:00")
-                    )
-                except ValueError:
-                    try:
-                        date_parsed = datetime.strptime(rec.date_of_ssa, "%Y-%m-%d")
-                    except ValueError:
-                        pass
-
-            avg = sum(rec.scores.values()) / max(1, len(rec.scores))
-
-            record = SsaRecord.objects.create(
-                school=school,
-                date_of_ssa=date_parsed,
-                fy=get_operational_fy(date_parsed),
-                quarter="Q1",
-                average_score=avg,
-                verification_status=VerificationStatus.CONFIRMED.value,
-                collector_type=SsaCollectorType.STAFF.value,
-                uploaded_by=request.user.user_id,
-            )
-
-            scores_to_create = [
-                SsaScore(ssa_record=record, intervention=k, score=v)
-                for k, v in rec.scores.items()
-            ]
-            SsaScore.objects.bulk_create(scores_to_create)
+            try:
+                record_matched_ssa(rec, school)
+            except BadRequest as exc:
+                messages.error(request, f"Cannot match SSA record: {exc}")
+                return redirect("/ssa/unmatched")
 
             rec.status = "matched"
             rec.save()
-
-            # Update school status
-            from apps.ssa.services import _recompute_readiness
-
-            _recompute_readiness(school)
 
             messages.success(
                 request, f"Successfully matched SSA report to '{school.name}'."
@@ -2027,56 +2273,24 @@ def unmatched_ssa_queue_view(request):
 
             region_obj = district_obj.region
 
-            # Create school
-            school = School.objects.create(
-                school_id=school_id_numeric,
-                name=rec.school_name_raw or f"School {school_id_numeric}",
-                district=district_obj,
-                region=region_obj,
-                school_type="client",
-                current_fy_ssa_status="done",
-            )
-
-            # Parse date
-            date_parsed = timezone.now()
-            if rec.date_of_ssa:
-                try:
-                    from datetime import datetime
-
-                    date_parsed = datetime.fromisoformat(
-                        rec.date_of_ssa.replace("Z", "+00:00")
+            # A failed canonical SSA validation must not leave behind a
+            # seemingly-onboarded school with no valid baseline record.
+            try:
+                with transaction.atomic():
+                    school = School.objects.create(
+                        school_id=school_id_numeric,
+                        name=rec.school_name_raw or f"School {school_id_numeric}",
+                        district=district_obj,
+                        region=region_obj,
+                        school_type="client",
+                        current_fy_ssa_status="not_done",
                     )
-                except ValueError:
-                    try:
-                        date_parsed = datetime.strptime(rec.date_of_ssa, "%Y-%m-%d")
-                    except ValueError:
-                        pass
-
-            avg = sum(rec.scores.values()) / max(1, len(rec.scores))
-            record = SsaRecord.objects.create(
-                school=school,
-                date_of_ssa=date_parsed,
-                fy=get_operational_fy(date_parsed),
-                quarter="Q1",
-                average_score=avg,
-                verification_status=VerificationStatus.CONFIRMED.value,
-                collector_type=SsaCollectorType.STAFF.value,
-                uploaded_by=request.user.user_id,
-            )
-
-            scores_to_create = [
-                SsaScore(ssa_record=record, intervention=k, score=v)
-                for k, v in rec.scores.items()
-            ]
-            SsaScore.objects.bulk_create(scores_to_create)
-
-            rec.status = "matched"
-            rec.save()
-
-            # Update school status
-            from apps.ssa.services import _recompute_readiness
-
-            _recompute_readiness(school)
+                    record_matched_ssa(rec, school)
+                    rec.status = "matched"
+                    rec.save(update_fields=["status", "updated_at"])
+            except BadRequest as exc:
+                messages.error(request, f"Cannot create school from SSA record: {exc}")
+                return redirect("/ssa/unmatched")
 
             messages.success(
                 request, f"Successfully created school '{school.name}' and matched SSA."

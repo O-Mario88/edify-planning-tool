@@ -398,7 +398,10 @@ class PlanningDashboardService:
             school_ids = [s.id for s in paginated_schools]
             ssa_records = (
                 SsaRecord.objects.filter(
-                    school_id__in=school_ids, deleted_at__isnull=True
+                    school_id__in=school_ids,
+                    fy=fy,
+                    verification_status="confirmed",
+                    deleted_at__isnull=True,
                 )
                 .prefetch_related("scores")
                 .order_by("school_id", "-date_of_ssa")
@@ -417,7 +420,7 @@ class PlanningDashboardService:
                     key=lambda x: x["score"],
                 )
                 weakest_list = []
-                for s in scores[:2]:
+                for s in scores[:3]:
                     code = s["intervention"]
                     label = dict(SsaIntervention.choices).get(code, code)
                     weakest_list.append(
@@ -466,11 +469,14 @@ class PlanningDashboardService:
                         "schoolId": s.school_id,
                         "name": s.name,
                         "district": s.district.name if s.district else "—",
+                        "subCounty": s.sub_county.name if s.sub_county else "—",
+                        "shippingAddress": s.shipping_address or "—",
                         "cluster": s.cluster_id or "—",
                         "schoolType": s.school_type.capitalize(),
                         "ssaStatus": s.ssa_readiness_state,
                         "weakestIntervention": weakest_area,
                         "weakestInterventionCode": weakest_code,
+                        "weakestInterventions": weak,
                         "planningReadiness": readiness_details["planningReadiness"],
                         "planning_readiness": readiness_details["planningReadiness"],
                         "recommendedAction": readiness_details["recommendedAction"],
@@ -495,6 +501,13 @@ class PlanningDashboardService:
                         "ownerName": s.account_owner_name_raw
                         or s.account_owner_id
                         or "—",
+                        "schoolContact": s.primary_contact_name or "—",
+                        "phone": s.primary_contact_phone
+                        or s.school_phone
+                        or "No phone",
+                        "enrolment": s.enrollment,
+                        "data_quality_score": s.data_quality_score,
+                        "data_quality_status": s.data_quality_status,
                         "currentPartnerType": partner_assignment.partner.name
                         if partner_assignment and partner_assignment.partner
                         else "None",

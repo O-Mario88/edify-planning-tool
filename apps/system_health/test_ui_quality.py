@@ -18,6 +18,11 @@ class UIQualityLintTest(TestCase):
             "mock_smells",
             "emojis",
             "dead_links",
+            "missing_htmx_targets",
+            "inert_buttons",
+            "empty_htmx_actions",
+            "client_only_success",
+            "unsafe_inline_json",
             "static_chart_series",
             "uncompiled_variants",
             "light_only_grids",
@@ -35,4 +40,4 @@ class UIQualityLintTest(TestCase):
 
         data = report()
         self.assertIn("uiQuality", data)
-        self.assertEqual(len(data["uiQuality"]["checks"]), 6)
+        self.assertEqual(len(data["uiQuality"]["checks"]), 11)

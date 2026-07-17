@@ -883,6 +883,11 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         # Request full page
         response = self.client.get(f"/leave/approvals/?id={leave.id}")
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["kpis"]["pending"], 1)
+        self.assertContains(response, "0% of pending requests")
+        self.assertNotContains(response, "88% of requests")
+        self.assertNotContains(response, "2 this wk")
+        self.assertNotContains(response, "3 from last wk")
 
         # Request partial view
         response_partial = self.client.get(f"/leave/approvals/{leave.id}/impact/")

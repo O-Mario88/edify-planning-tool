@@ -29,6 +29,7 @@ from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.fund_requests.weekly_service import approve_weekly_request, request_advance
 from apps.geography.models import District, Region
+from apps.notifications.models import Notification
 from apps.schools.models import School
 
 User = get_user_model()
@@ -152,6 +153,50 @@ class PLDashboardTest(TestCase):
         urgent = {r["school"] for r in d["urgent_schools"]}
         self.assertIn("School A2", urgent)
         self.assertNotIn("School B1", urgent)
+
+    def test_urgent_queue_distinguishes_personal_and_supervised_ownership(self):
+        own_school = self._school("PL-OWN", self.dist_a, ssa_done=False)
+        StaffSchoolAssignment.objects.create(
+            staff=self.pl_a_sp, school_id=own_school.id
+        )
+
+        rows = {row["school"]: row for row in self._dash(self.pl_a)["urgent_schools"]}
+
+        self.assertEqual(rows["School PL-OWN"]["owner_kind"], "pl")
+        self.assertEqual(rows["School PL-OWN"]["owner_name"], "PL A")
+        self.assertEqual(rows["School A2"]["owner_kind"], "cceo")
+        self.assertEqual(rows["School A2"]["owner_name"], "CCEO A1")
+        self.assertEqual(
+            rows["School A2"]["recommended_activity_label"],
+            "Schedule Baseline SSA Visit",
+        )
+        self.assertIn("recommended_activity_type=baseline_ssa_visit", rows["School PL-OWN"]["schedule_url"])
+
+    def test_pl_can_send_urgent_school_to_its_supervised_cceo_idempotently(self):
+        self.client.force_login(self.pl_a)
+        url = f"/dashboard/pl-send-urgent-action?school_id={self.sch_a2.id}&fy={FY}"
+
+        first = self.client.post(url, HTTP_HX_REQUEST="true")
+        second = self.client.post(url, HTTP_HX_REQUEST="true")
+
+        self.assertEqual(first.status_code, 200)
+        self.assertContains(first, "Sent to CCEO A1")
+        self.assertEqual(second.status_code, 200)
+        notifications = Notification.objects.filter(
+            recipient_id=self.a1.id,
+            context_id=self.sch_a2.id,
+            source_event_type="urgent_school_delegated",
+        )
+        self.assertEqual(notifications.count(), 1)
+        self.assertTrue(notifications.get().action_required)
+
+    def test_pl_cannot_delegate_another_program_leads_school(self):
+        self.client.force_login(self.pl_a)
+        response = self.client.post(
+            f"/dashboard/pl-send-urgent-action?school_id={self.sch_b1.id}&fy={FY}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 403)
 
     # ── 3. KPIs scoped ───────────────────────────────────────────────────────
     def test_pl_kpis_scoped_to_supervised_team(self):

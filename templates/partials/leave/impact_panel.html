@@ -5,7 +5,7 @@
      @keydown.escape.window="coverageModal = false; returnModal = false; rejectModal = false">
 
   <!-- Middle Column: Detailed Request Card (6/9 cols) -->
-  <div class="lg:col-span-6 rounded-lg border shadow-sm p-6 space-y-6"
+  <div class="lg:col-span-6 rounded-surface border shadow-sm p-6 space-y-6"
        style="background:var(--edify-surface); border-color:var(--edify-border);">
 
     <!-- Title & Request ID -->
@@ -17,7 +17,7 @@
     <!-- Employee Profile info -->
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="h-12 w-12 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center font-black text-sm shadow-inner">
+        <div class="h-12 w-12 rounded-surface bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center font-black text-sm shadow-inner">
           {{ leave.staff.user.name|slice:":2"|upper }}
         </div>
         <div>
@@ -27,10 +27,10 @@
       </div>
 
       <div class="text-right flex flex-col items-end gap-1.5">
-        <span class="px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded-lg edify-text-caption font-bold uppercase tracking-wider">
+        <span class="px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded-pill edify-text-caption font-bold uppercase tracking-wider">
           {{ leave.type|replace_underscore|title }}
         </span>
-        <span class="px-1.5 py-0.5 rounded edify-text-caption font-extrabold uppercase tracking-wide
+        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase tracking-wide
           {% if leave.status == 'pending' %}bg-amber-500/10 text-amber-500
           {% elif leave.status == 'approved' %}bg-emerald-500/10 text-emerald-500
           {% elif leave.status == 'rejected' %}bg-rose-500/10 text-rose-500
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Dates Strip & Balance -->
-    <div class="grid grid-cols-4 gap-4 p-4 rounded-xl border"
+    <div class="grid grid-cols-4 gap-4 p-4 rounded-surface border"
          style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
       <div class="space-y-1">
         <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Start Date</span>
@@ -69,7 +69,7 @@
     <!-- Notes/Reason -->
     <div class="space-y-1.5">
       <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Reason / Notes</span>
-      <div class="p-3 rounded-xl border text-xs font-semibold text-slate-300 leading-relaxed"
+      <div class="p-3 rounded-surface border text-xs font-semibold text-slate-300 leading-relaxed"
            style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         {{ leave.reason|default:"No description notes provided." }}
       </div>
@@ -78,13 +78,13 @@
     <!-- Coverage and Access Transfer block -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Coverage Assignee -->
-      <div class="p-4 rounded-xl border flex flex-col justify-between"
+      <div class="p-4 rounded-surface border flex flex-col justify-between"
            style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div>
           <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider block">Coverage Assignee</span>
           {% if leave.covering_staff %}
             <div class="flex items-center gap-2.5 mt-2">
-              <div class="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs shadow-sm">
+              <div class="h-8 w-8 rounded-surface bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs shadow-sm">
                 {{ leave.covering_staff.user.name|slice:":2"|upper }}
               </div>
               <div>
@@ -107,7 +107,7 @@
         {% if eligible_cover_staff %}
         <!-- Reassign Coverage dropdown trigger -->
         <button type="button" @click="coverageModal = true"
-                class="mt-4 px-3 py-1.5 edify-text-caption font-extrabold uppercase border rounded-lg hover:bg-slate-50/5 transition text-center tracking-wider"
+                class="mt-4 px-3 py-1.5 edify-text-caption font-extrabold uppercase border rounded-control hover:bg-slate-50/5 transition text-center tracking-wider"
                 style="border-color:var(--edify-border); color:var(--edify-text);">
           Change Assignee
         </button>
@@ -115,35 +115,35 @@
       </div>
 
       <!-- Auto Access Transfer Checklist -->
-      <div class="p-4 rounded-xl border"
+      <div class="p-4 rounded-surface border"
            style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider block">Auto-Access Transfer</span>
 
         <div class="mt-2.5 space-y-2">
           <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
-              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              <input type="checkbox" checked disabled class="rounded-control text-blue-500">
               Dashboards
             </span>
             <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
           </div>
           <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
-              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              <input type="checkbox" checked disabled class="rounded-control text-blue-500">
               Planning
             </span>
             <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
           </div>
           <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
-              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              <input type="checkbox" checked disabled class="rounded-control text-blue-500">
               My Plan
             </span>
             <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
           </div>
           <div class="flex items-center justify-between edify-text-caption font-semibold text-slate-300">
             <span class="flex items-center gap-1.5">
-              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              <input type="checkbox" checked disabled class="rounded-control text-blue-500">
               Clusters
             </span>
             <span class="text-emerald-500 edify-text-caption font-bold uppercase">Will Transfer</span>
@@ -158,27 +158,27 @@
 
       <div class="grid grid-cols-2 gap-2 edify-text-caption font-bold">
         <!-- Holiday -->
-        <div class="flex items-center gap-2 p-2 border rounded-xl"
+        <div class="flex items-center gap-2 p-2 border rounded-surface"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="h-2 w-2 rounded-full {% if overlaps %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
+          <span class="h-2 w-2 rounded-pill {% if overlaps %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
           <span>Holiday Overlap Check</span>
         </div>
         <!-- Blackout -->
-        <div class="flex items-center gap-2 p-2 border rounded-xl"
+        <div class="flex items-center gap-2 p-2 border rounded-surface"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="h-2 w-2 rounded-full {% if overlaps %}bg-rose-500{% else %}bg-emerald-500{% endif %}"></span>
+          <span class="h-2 w-2 rounded-pill {% if overlaps %}bg-rose-500{% else %}bg-emerald-500{% endif %}"></span>
           <span>Blackout Overlap Check</span>
         </div>
         <!-- Activities -->
-        <div class="flex items-center gap-2 p-2 border rounded-xl"
+        <div class="flex items-center gap-2 p-2 border rounded-surface"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="h-2 w-2 rounded-full {% if act_conflicts or impact.conflicts %}bg-rose-500{% else %}bg-emerald-500{% endif %}"></span>
+          <span class="h-2 w-2 rounded-pill {% if act_conflicts or impact.conflicts %}bg-rose-500{% else %}bg-emerald-500{% endif %}"></span>
           <span>Activities Impacted</span>
         </div>
         <!-- Capacity -->
-        <div class="flex items-center gap-2 p-2 border rounded-xl"
+        <div class="flex items-center gap-2 p-2 border rounded-surface"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span class="h-2 w-2 rounded-pill bg-emerald-500"></span>
           <span>Team Capacity Safe</span>
         </div>
       </div>
@@ -193,31 +193,31 @@
 
       <div class="grid grid-cols-3 sm:grid-cols-5 gap-3">
         <!-- Scheduled activities -->
-        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+        <div class="p-3 border rounded-surface flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.activity_count|default:"0" }}</span>
           <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Activities</span>
         </div>
         <!-- Planning items -->
-        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+        <div class="p-3 border rounded-surface flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.planning_count|default:"0" }}</span>
           <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Plan Items</span>
         </div>
         <!-- Partner work -->
-        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+        <div class="p-3 border rounded-surface flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.partner_count|default:"0" }}</span>
           <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Partner Work</span>
         </div>
         <!-- Fund requests -->
-        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+        <div class="p-3 border rounded-surface flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.fund_count|default:"0" }}</span>
           <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Fund Requests</span>
         </div>
         <!-- My Plan -->
-        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+        <div class="p-3 border rounded-surface flex flex-col items-center justify-center text-center gap-1 shadow-sm"
              style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
           <span class="text-lg font-black text-slate-200">{{ impact.due_count|default:"0" }}</span>
           <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">My Plan Due</span>
@@ -230,27 +230,27 @@
       <div class="pt-4 border-t flex flex-wrap items-center gap-3" style="border-color:var(--edify-border);">
         <form method="POST" action="{% url 'frontend:leave_approve_action' leave.id %}" class="inline-block">
           {% csrf_token %}
-          <button type="submit" class="px-5 py-2 text-xs font-bold text-white rounded-lg shadow transition bg-emerald-600 hover:bg-emerald-700">
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white rounded-control shadow transition bg-emerald-600 hover:bg-emerald-700">
             Approve Leave
           </button>
         </form>
 
         <button type="button" @click="returnModal = true"
-                class="px-4 py-2 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition"
+                class="px-4 py-2 text-xs font-bold border rounded-control hover:bg-slate-50/5 transition"
                 style="border-color:var(--edify-border); color:var(--edify-text);">
           Return for Clarification
         </button>
 
         <form method="POST" action="{% url 'frontend:leave_escalate_action' leave.id %}" class="inline-block">
           {% csrf_token %}
-          <button type="submit" class="px-4 py-2 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition text-amber-500"
+          <button type="submit" class="px-4 py-2 text-xs font-bold border rounded-control hover:bg-slate-50/5 transition text-amber-500"
                   style="border-color:var(--edify-border);">
             Escalate to HR
           </button>
         </form>
 
         <button type="button" @click="rejectModal = true"
-                class="px-4 py-2 text-xs font-bold text-rose-500 border rounded-lg hover:bg-rose-50/5 transition"
+                class="px-4 py-2 text-xs font-bold text-rose-500 border rounded-control hover:bg-rose-50/5 transition"
                 style="border-color:var(--edify-border);">
           Reject
         </button>
@@ -261,7 +261,7 @@
   <!-- Right Column: Staged Cards & Metadata (3/9 cols) -->
   <div class="lg:col-span-3 space-y-6">
     <!-- Holiday & Blackout Dates card -->
-    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+    <div class="rounded-surface border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
         <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Holiday & Blackout Dates</h4>
@@ -275,7 +275,7 @@
               <p class="text-slate-200 leading-tight">{{ h.name }}</p>
               <p class="edify-text-caption text-slate-400 mt-0.5">{{ h.date }}</p>
             </div>
-            <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+            <span class="h-2 w-2 rounded-pill bg-rose-500"></span>
           </div>
         {% empty %}
           <p class="edify-text-caption text-slate-500">No upcoming public holidays.</p>
@@ -284,7 +284,7 @@
     </div>
 
     <!-- Auto Blocked Conflicts -->
-    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+    <div class="rounded-surface border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
         <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Auto-Blocked Conflicts</h4>
@@ -294,10 +294,10 @@
       <div class="space-y-2.5">
         {% if conflicts_count or selected_leave_conflicts %}
           {% for conf in selected_leave_conflicts %}
-            <div class="p-2.5 rounded-xl border edify-text-caption space-y-1.5"
+            <div class="p-2.5 rounded-surface border edify-text-caption space-y-1.5"
                  style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
               <div class="flex items-center gap-1.5 text-rose-400 font-bold uppercase tracking-wider">
-                <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                <span class="h-1.5 w-1.5 rounded-pill bg-rose-500"></span>
                 {{ conf.conflict_type|replace_underscore|title }}
               </div>
               <p class="text-slate-300 font-semibold leading-relaxed">{{ conf.recommended_action }}</p>
@@ -305,7 +305,7 @@
             </div>
           {% endfor %}
         {% else %}
-          <div class="p-3 text-center rounded-xl bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 edify-text-caption">
+          <div class="p-3 text-center rounded-surface bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 edify-text-caption">
             No conflicts detected for this period.
           </div>
         {% endif %}
@@ -313,7 +313,7 @@
     </div>
 
     <!-- Team Availability Heatmap (4 weeks) -->
-    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+    <div class="rounded-surface border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
         <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Team Availability</h4>
@@ -338,7 +338,7 @@
               </div>
               {% for week in row.weeks|slice:":3" %}
                 <div class="flex items-center justify-center">
-                  <span class="h-3 w-5 rounded-md border
+                  <span class="h-3 w-5 rounded-pill border
                     {% if week.status == 'Available' %}bg-emerald-500/10 border-emerald-500/20 text-emerald-400
                     {% elif week.status == 'On Leave' %}bg-amber-500/10 border-amber-500/20 text-amber-400
                     {% elif week.status == 'Conference Week' %}bg-purple-500/10 border-purple-500/20 text-purple-400
@@ -357,7 +357,7 @@
     </div>
 
     <!-- Approval Rules checklist -->
-    <div class="rounded-lg border shadow-sm p-4 space-y-2.5"
+    <div class="rounded-surface border shadow-sm p-4 space-y-2.5"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Approval Rules Check</h4>
 
@@ -371,13 +371,13 @@
     </div>
 
     <!-- Audit Trail step logs -->
-    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+    <div class="rounded-surface border shadow-sm p-4 space-y-3"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <h4 class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Audit Trail</h4>
 
       <div class="space-y-3 edify-text-caption font-bold text-slate-400">
         <div class="flex items-start gap-2">
-          <span class="h-2 w-2 rounded-full bg-blue-500 mt-1"></span>
+          <span class="h-2 w-2 rounded-pill bg-blue-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Request Submitted</p>
             <p class="edify-text-caption text-slate-500 mt-0.5">{{ leave.created_at|date:"M j, Y \a\t g:i A" }} by {{ leave.staff.user.name }}</p>
@@ -385,7 +385,7 @@
         </div>
 
         <div class="flex items-start gap-2">
-          <span class="h-2 w-2 rounded-full bg-amber-500 mt-1"></span>
+          <span class="h-2 w-2 rounded-pill bg-amber-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Under Review</p>
             <p class="edify-text-caption text-slate-500 mt-0.5">{% if leave.status == 'pending' %}Awaiting authorized review{% else %}{{ leave.status|replace_underscore|title }}{% endif %}</p>
@@ -394,7 +394,7 @@
 
         {% if leave.covering_staff %}
         <div class="flex items-start gap-2">
-          <span class="h-2 w-2 rounded-full bg-emerald-500 mt-1"></span>
+          <span class="h-2 w-2 rounded-pill bg-emerald-500 mt-1"></span>
           <div>
             <p class="text-slate-300">Coverage Action</p>
             <p class="edify-text-caption text-slate-500 mt-0.5">Status: {{ leave.coverage_status }}</p>
@@ -410,7 +410,7 @@
   <div id="reassign-coverage-modal" x-show="coverageModal" x-cloak @click.self="coverageModal = false"
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
        role="dialog" aria-modal="true" aria-labelledby="coverage-modal-title">
-    <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
+    <div class="rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
         <h3 id="coverage-modal-title" class="text-sm font-black text-slate-100">Reassign Coverage Assignee</h3>
@@ -421,7 +421,7 @@
         {% csrf_token %}
         <div class="space-y-1">
           <label class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">Coverage Candidate</label>
-          <select name="covering_staff" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none">
+          <select name="covering_staff" class="w-full bg-slate-900 border border-slate-700 rounded-control px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none">
             <option value="">No coverage / Clear coverage</option>
             {% for candidate in eligible_cover_staff %}
               <option value="{{ candidate.id }}" {% if leave.covering_staff.id == candidate.id %}selected{% endif %}>
@@ -433,10 +433,10 @@
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
           <button type="button" @click="coverageModal = false"
-                  class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
+                  class="px-3 py-1.5 text-xs font-bold border rounded-control hover:bg-slate-50/5 transition">
             Cancel
           </button>
-          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition">
+          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-control shadow transition">
             Save Assignment
           </button>
         </div>
@@ -449,7 +449,7 @@
   <div id="return-leave-modal" x-show="returnModal" x-cloak @click.self="returnModal = false"
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
        role="dialog" aria-modal="true" aria-labelledby="return-modal-title">
-    <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
+    <div class="rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
         <h3 id="return-modal-title" class="text-sm font-black text-slate-100">Return Leave for Clarification</h3>
@@ -461,15 +461,15 @@
         <div class="space-y-1">
           <label class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">Feedback / Reason</label>
           <textarea name="reason" rows="3" required placeholder="Describe what handover details or dates are required..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
+                    class="w-full bg-slate-900 border border-slate-700 rounded-control px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
           <button type="button" @click="returnModal = false"
-                  class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
+                  class="px-3 py-1.5 text-xs font-bold border rounded-control hover:bg-slate-50/5 transition">
             Cancel
           </button>
-          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition">
+          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-control shadow transition">
             Send Back
           </button>
         </div>
@@ -481,7 +481,7 @@
   <div id="reject-leave-modal" x-show="rejectModal" x-cloak @click.self="rejectModal = false"
        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
        role="dialog" aria-modal="true" aria-labelledby="reject-modal-title">
-    <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
+    <div class="rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div>
         <h3 id="reject-modal-title" class="text-sm font-black text-slate-100">Reject Leave Request</h3>
@@ -493,15 +493,15 @@
         <div class="space-y-1">
           <label class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">Rejection Reason</label>
           <textarea name="reason" rows="3" required placeholder="Describe conflict reasons, capacity shortages, etc..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
+                    class="w-full bg-slate-900 border border-slate-700 rounded-control px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
           <button type="button" @click="rejectModal = false"
-                  class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
+                  class="px-3 py-1.5 text-xs font-bold border rounded-control hover:bg-slate-50/5 transition">
             Cancel
           </button>
-          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow transition">
+          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-control shadow transition">
             Reject Request
           </button>
         </div>

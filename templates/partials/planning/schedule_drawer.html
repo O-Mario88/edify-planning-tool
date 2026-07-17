@@ -1,6 +1,6 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Schedule School Visit{% endblock %}
+{% block drawer_title %}Schedule {{ recommended_activity_label|default:"School Visit" }}{% endblock %}
 {% block drawer_subtitle %}Configure activity details for {{ school.name }}{% endblock %}
 
 {% block drawer_body %}
@@ -8,7 +8,7 @@
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
-x-data="{ delivery: 'staff', ssa_expected: 'yes' }"
+x-data="{ delivery: 'staff', ssa_expected: 'yes', activityType: '{{ recommended_activity_type|default:'school_visit' }}' }"
 >
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
@@ -19,26 +19,12 @@ x-data="{ delivery: 'staff', ssa_expected: 'yes' }"
 
 <!-- SSA Missing Warning & Activity Type Select -->
 {% if school.current_fy_ssa_status != 'done' %}
-<div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[12px] font-bold leading-normal shadow-sm">
+<div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-surface text-[12px] font-bold leading-normal shadow-sm">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> SSA is missing. We recommend collecting SSA during this activity.
 </div>
 
-<div>
-<label for="activity_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Type</label>
-<select
-name="activity_type"
-id="activity_type"
-required
-class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
->
-<option value="baseline_ssa_visit">Schedule SSA Visit</option>
-<option value="school_visit_ssa_collection">Schedule Visit + SSA Collection</option>
-<option value="school_visit">Schedule Normal Visit</option>
-</select>
-</div>
-
 <!-- Will SSA be collected during this activity? -->
-<div class="space-y-1.5 bg-slate-50/50 p-3 rounded-xl border border-slate-200/60">
+<div class="space-y-1.5 bg-slate-50/50 p-3 rounded-surface border border-slate-200/60">
 <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Will SSA be collected during this activity?</span>
 <div class="flex flex-col sm:flex-row sm:items-center gap-4 mt-1.5 font-medium text-slate-700">
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
@@ -56,8 +42,34 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 </div>
 </div>
 {% else %}
-<input type="hidden" name="activity_type" value="school_visit">
+<div class="flex items-start gap-2.5 rounded-surface p-3"
+     style="color:var(--edify-text);background:var(--edify-info-light);border:1px solid var(--edify-info-border);">
+  <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="var(--edify-info)" stroke-width="1.8" aria-hidden="true">
+    <path d="M10 3v14M3 10h14"/>
+  </svg>
+  <div>
+    <p class="font-semibold">Recommended activity: {{ recommended_activity_label|default:"School Visit" }}</p>
+    {% if recommended_focus_intervention %}
+    <p class="mt-0.5 font-medium" style="color:var(--edify-text-muted);">The weakest verified intervention is selected below.</p>
+    {% endif %}
+  </div>
+</div>
 {% endif %}
+
+<div>
+<label for="activity_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Support Activity</label>
+<select
+name="activity_type"
+id="activity_type"
+required
+x-model="activityType"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+>
+{% for value, label in activity_type_options %}
+<option value="{{ value }}" {% if recommended_activity_type == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
 
 <!-- Date -->
 <div>
@@ -137,7 +149,7 @@ class="relative "
 <button
 type="button"
 @click="open = !open"
-class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
+class="w-full h-10 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
 >
 <div class="flex items-center gap-2">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -156,7 +168,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
+class="absolute left-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -167,11 +179,11 @@ x-transition:leave-end="opacity-0 transform scale-95"
 >
 <!-- Header -->
 <div class="flex items-center justify-between px-1">
-<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
 <span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
-<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
 </div>
@@ -189,7 +201,7 @@ x-transition:leave-end="opacity-0 transform scale-95"
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
-class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
+class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
 :class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
@@ -200,21 +212,35 @@ x-text="day"
 </div>
 </div>
 
+<!-- Training participants are required by the canonical cost engine. This is
+     intentionally tied to the selected activity type, not a separate UI rule. -->
+<div x-show="activityType === 'school_improvement_training'" style="display: none;">
+<label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participants</label>
+<input
+type="number"
+name="expected_participants"
+id="expected_participants"
+min="1"
+:required="activityType === 'school_improvement_training'"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
 <!-- Focus Intervention -->
 <div>
 <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
 <select
 name="focus_intervention"
 id="focus_intervention"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
 >
 <option value="">Select Focus Intervention...</option>
 {% for code, label in interventions %}
-<option value="{{ code }}">{{ label }}</option>
+<option value="{{ code }}" {% if code == recommended_focus_intervention %}selected{% endif %}>{{ label }}</option>
 {% endfor %}
 </select>
 {% if recommendations %}
-<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-lg edify-text-caption text-amber-800 font-bold space-y-1">
+<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-surface edify-text-caption text-amber-800 font-bold space-y-1">
 <p class="font-semibold edify-text-caption">Recommended focus areas based on latest SSA:</p>
 {% for r in recommendations %}
 <p>&bull; {{ r.label }} (Score: {{ r.score }})</p>
@@ -231,10 +257,10 @@ name="delivery_type"
 id="delivery_type"
 required
 x-model="delivery"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
 >
-<option value="staff">Direct Staff Visit</option>
-<option value="partner">Assigned Partner Visit</option>
+<option value="staff">Direct Staff Delivery</option>
+<option value="partner">Assigned Partner Delivery</option>
 </select>
 
 <!-- Partner dropdown if selected -->
@@ -243,7 +269,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 <select
 name="assigned_partner_id"
 id="assigned_partner_id"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
 :required="delivery === 'partner'"
 >
 <option value="">Select Partner Field Officer...</option>
@@ -263,7 +289,7 @@ id="activity_purpose_text"
 required
 rows="2"
 placeholder="What needs to be achieved in this activity?"
-class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
 ></textarea>
 </div>
 
@@ -280,13 +306,13 @@ $dispatch('close-drawer');
 $dispatch('close-drawer');
 }
 "
-class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
+class="px-5 h-9 rounded-control btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
 <button
 type="submit"
-class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
+class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >
 Schedule Activity
 </button>

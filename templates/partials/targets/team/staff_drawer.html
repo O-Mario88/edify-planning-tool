@@ -8,15 +8,15 @@
 <div class="space-y-4 text-slate-700">
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Monthly Target</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ m.month_target }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Valid Achieved</p><p class="text-[18px] font-bold text-emerald-600 tabular-nums">{{ m.month_achieved }}</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Achievement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if m.month_pct is not None %}{{ m.month_pct }}%{% else %}—{% endif %}</p><p class="edify-text-caption font-semibold text-slate-400">expected pace {{ m.pace }}%</p></div>
-    <div class="rounded-xl border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</p><p class="text-[13px] font-bold {% if m.tone == 'success' %}text-emerald-600{% elif m.tone == 'warning' %}text-amber-600{% elif m.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %} mt-1">{{ m.status }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Monthly Target</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ m.month_target }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Valid Achieved</p><p class="text-[18px] font-bold text-emerald-600 tabular-nums">{{ m.month_achieved }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Achievement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if m.month_pct is not None %}{{ m.month_pct }}%{% else %}—{% endif %}</p><p class="edify-text-caption font-semibold text-slate-400">expected pace {{ m.pace }}%</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</p><p class="text-[13px] font-bold {% if m.tone == 'success' %}text-emerald-600{% elif m.tone == 'warning' %}text-amber-600{% elif m.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %} mt-1">{{ m.status }}</p></div>
   </div>
 
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Target areas — {{ month_label }}</p>
-    <div class="overflow-x-auto rounded-xl border border-slate-100">
+    <div class="overflow-x-auto rounded-surface border border-slate-100">
       <table class="w-full min-w-[520px] edify-text-caption">
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider edify-text-caption text-left">
@@ -49,10 +49,10 @@
     <p class="edify-text-caption text-slate-400 font-medium mt-1.5">Valid = executed + evidenced + Activity SF ID + IA verification where required, credited to the month the work happened. Provisional work is visible above but never counted.</p>
   </div>
 
-  <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 flex flex-wrap items-center justify-between gap-2">
+  <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3 flex flex-wrap items-center justify-between gap-2">
     <p class="edify-text-caption font-semibold text-slate-500">Districts: <span class="text-slate-700">{{ m.district_label }}</span> &middot; SF ID compliance <span class="{% if m.sf_compliance < 90 %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ m.sf_compliance }}%</span>{% if m.core_pct is not None %} &middot; Core package {{ m.core_pct }}%{% endif %}</p>
     <button type="button" @click="showCatchup = true; catchupStaff = '{{ m.user_id }}'"
-            class="h-8 px-3 rounded-lg bg-slate-800 text-white edify-text-caption font-bold hover:bg-slate-700">Create Catch-Up Plan</button>
+            class="h-8 px-3 rounded-control bg-slate-800 text-white edify-text-caption font-bold hover:bg-slate-700">Create Catch-Up Plan</button>
   </div>
 
 </div>

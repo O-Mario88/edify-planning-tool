@@ -27,13 +27,13 @@ id="planning-main-container"
 
 <!-- Header -->
 <div class="edify-page-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
-<div>
+<div class="lg:max-w-[560px]">
 <h1 class="text-[21px] font-extrabold tracking-tight">Planning</h1>
 <p class="text-[12px] text-slate-500 font-semibold mt-1">Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.</p>
 </div>
 
 <!-- Header Actions -->
-<div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+<div class="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto lg:min-w-[360px] lg:justify-end">
 <!-- Export button -->
 <a
 href="{% querystring export='csv' %}"
@@ -71,13 +71,14 @@ id="filters-form"
 hx-get="/planning"
 hx-trigger="change delay:100ms, keyup delay:200ms changed from:input[name='q']"
 hx-target="#schools-table-container"
+hx-swap="outerHTML"
 hx-push-url="true"
-class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold"
+class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption font-bold"
 >
 <input type="hidden" name="tab" value="{{ active_tab }}">
 
 <!-- Quarter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">Quarter</span>
 <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
 {% for q in quarter_options %}
@@ -87,9 +88,9 @@ class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold"
 </div>
 
 <!-- District -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">District</span>
-<select name="district" class="bg-transparent focus:outline-none cursor-pointer">
+<select name="district" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
 <option value="All">All Districts</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
@@ -98,9 +99,9 @@ class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold"
 </div>
 
 <!-- Staff -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">Staff</span>
-<select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
+<select name="staff" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
 <option value="All">All Staff</option>
 {% for s in staff_members %}
 <option value="{{ s.user.user_id }}" {% if selected_staff == s.user.user_id %}selected{% endif %}>{{ s.user.name }}</option>
@@ -109,9 +110,9 @@ class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold"
 </div>
 
 <!-- Planning Readiness -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">Readiness</span>
-<select name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer">
+<select name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[150px]">
 <option value="All">All Readiness</option>
 {% for val, label in readiness_choices %}
 <option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
@@ -119,15 +120,21 @@ class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold"
 </select>
 </div>
 
+<!-- Search -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm min-w-[180px] flex-1 lg:max-w-[240px]">
+<svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.2-5.2m2.2-4.8a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+<label class="sr-only" for="planning-search">Search planning schools</label>
+<input id="planning-search" type="search" name="q" value="{{ search_q }}" placeholder="Search schools…" class="w-full bg-transparent focus:outline-none font-semibold min-w-0">
+</div>
+
 <!-- Clear Filters -->
-<button
-type="button"
-@click="$el.form.reset(); document.querySelectorAll('#filters-form select').forEach(s => s.value = 'All'); $el.form.querySelector('[name=q]').value = ''; $el.form.dispatchEvent(new Event('change', { bubbles: true }))"
+<a
+href="/planning"
 class="text-blue-600 hover:text-blue-700 edify-text-caption font-semibold tracking-wider uppercase ml-1 flex items-center gap-1"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
 Clear Filters
-</button>
+</a>
 </form>
 
 <!-- KPI cards Row -->
@@ -141,48 +148,13 @@ Clear Filters
 <!-- Main Content Column -->
 <div class="space-y-6">
 
-<nav class="edify-tab-container">
-<button
-@click="document.querySelector('#filters-form [name=tab]').value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
-class="edify-tab-btn {% if active_tab == 'client' %}active{% endif %}"
->
-Client Schools
-</button>
-
-<button
-@click="document.querySelector('#filters-form [name=tab]').value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
-class="edify-tab-btn {% if active_tab == 'core' %}active{% endif %}"
->
-Core Schools
-</button>
-
-<button
-@click="document.querySelector('#filters-form [name=tab]').value = 'clusters'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
-class="edify-tab-btn {% if active_tab == 'clusters' %}active{% endif %}"
->
-Clusters
-</button>
-
-<button
-@click="document.querySelector('#filters-form [name=tab]').value = 'partner'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
-class="edify-tab-btn {% if active_tab == 'partner' %}active{% endif %}"
->
-Assigned to Partner
-</button>
-
-<button
-@click="document.querySelector('#filters-form [name=tab]').value = 'scheduled'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
-class="edify-tab-btn {% if active_tab == 'scheduled' %}active{% endif %}"
->
-Scheduled / In My Plan
-</button>
-</nav>
+{% include "partials/planning/tabs.html" %}
 
 {% if active_tab == 'scheduled' %}
 <div class="flex justify-end mb-4">
-  <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-sm">
-    <button @click="activeView = 'list'" :class="activeView === 'list' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-lg text-[12px] font-semibold transition-all">List View</button>
-    <button @click="activeView = 'calendar'" :class="activeView === 'calendar' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-lg text-[12px] font-semibold transition-all">Calendar View</button>
+  <div class="flex items-center bg-slate-100 p-1 rounded-surface border border-slate-200 shadow-sm">
+    <button @click="activeView = 'list'" :class="activeView === 'list' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-control text-[12px] font-semibold transition-all">List View</button>
+    <button @click="activeView = 'calendar'" :class="activeView === 'calendar' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-control text-[12px] font-semibold transition-all">Calendar View</button>
   </div>
 </div>
 {% endif %}
@@ -193,7 +165,7 @@ Scheduled / In My Plan
 </div>
 
 {% if active_tab == 'scheduled' %}
-<div x-show="activeView === 'calendar'" style="display: none;" class="edify-surface rounded-lg border border-slate-100 p-5 shadow-sm">
+<div x-show="activeView === 'calendar'" style="display: none;" class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm">
   <div id="planning-calendar-view" class="w-full"></div>
 </div>
 
@@ -281,11 +253,11 @@ x-transition:enter-end="translate-y-0 opacity-100"
 x-transition:leave="transition ease-in duration-200 transform"
 x-transition:leave-start="translate-y-0 opacity-100"
 x-transition:leave-end="translate-y-24 opacity-0"
-class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-6 border border-slate-800/80"
+class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-surface shadow-lg flex items-center gap-6 border border-slate-800/80"
 style="display: none;"
 >
 <div class="flex items-center gap-2 select-none">
-<span class="h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center edify-text-caption font-semibold text-white" x-text="selectedSchools.length"></span>
+<span class="h-6 w-6 bg-blue-600 rounded-pill flex items-center justify-center edify-text-caption font-semibold text-white" x-text="selectedSchools.length"></span>
 <span class="text-[12px] font-semibold text-slate-300">schools selected</span>
 </div>
 
@@ -305,7 +277,7 @@ class="flex items-center gap-2"
 <button
 type="button"
 @click="showAssignPartnerForm = true"
-class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-xl edify-text-caption font-bold flex items-center gap-1.5 transition-all"
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all"
 >
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
 Assign Partner
@@ -315,7 +287,7 @@ Assign Partner
 <button
 type="button"
 @click="showScheduleForm = true; $nextTick(() => window.htmx && htmx.trigger('#route-preview', 'route-refresh'))"
-class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl edify-text-caption font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10"
+class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-surface edify-text-caption font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
 Schedule Visits
@@ -325,7 +297,7 @@ Schedule Visits
 type="submit"
 name="action"
 value="export"
-class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-300 rounded-xl edify-text-caption font-bold flex items-center gap-1.5 transition-all"
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-300 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all"
 >
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Export Selected
@@ -341,7 +313,7 @@ across every school selected above. -->
 x-show="showScheduleForm"
 x-transition
 @click.outside="showScheduleForm = false"
-class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-lg shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3"
+class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-surface shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3"
 style="display: none;"
 >
 <div class="flex items-center justify-between">
@@ -364,11 +336,11 @@ class="space-y-3"
 <input type="hidden" name="action" value="schedule">
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Visit Date</label>
-<input type="date" name="scheduled_date" required class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+<input type="date" name="scheduled_date" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 </div>
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Focus Intervention</label>
-<select name="focus_intervention" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+<select name="focus_intervention" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <option value="">Select...</option>
 {% for code, label in interventions %}
 <option value="{{ code }}">{{ label }}</option>
@@ -384,7 +356,7 @@ any change (date, intervention, selection re-open). Advisory only. -->
      hx-trigger="route-refresh, change from:closest form delay:200ms"
      hx-target="this" hx-swap="innerHTML"></div>
 <div id="bulk-schedule-feedback"></div>
-<button type="submit" class="w-full h-9 rounded-lg btn-premium-primary text-white text-[12px] font-bold">
+<button type="submit" class="w-full h-9 rounded-control btn-premium-primary text-white text-[12px] font-bold">
 Confirm Schedule
 </button>
 </form>
@@ -401,7 +373,7 @@ partner_schedule()). -->
 x-show="showAssignPartnerForm"
 x-transition
 @click.outside="showAssignPartnerForm = false"
-class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-lg shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3"
+class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-surface shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3"
 style="display: none;"
 >
 <div class="flex items-center justify-between">
@@ -425,7 +397,7 @@ class="space-y-3"
 <input type="hidden" name="action" value="partner">
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Partner</label>
-<select name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+<select name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <option value="">Select partner...</option>
 {% for p in partners %}
 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -434,11 +406,11 @@ class="space-y-3"
 </div>
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Target Date (Optional)</label>
-<input type="date" name="scheduled_date" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+<input type="date" name="scheduled_date" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <p class="edify-text-caption font-semibold text-slate-400 mt-1">Leave blank if the partner will confirm their own schedule.</p>
 </div>
 <div id="bulk-assign-partner-feedback"></div>
-<button type="submit" class="w-full h-9 rounded-lg btn-premium-primary text-white text-[12px] font-bold">
+<button type="submit" class="w-full h-9 rounded-control btn-premium-primary text-white text-[12px] font-bold">
 Confirm Handoff
 </button>
 </form>

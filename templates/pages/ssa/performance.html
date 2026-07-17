@@ -1,0 +1,21 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}SSA Performance · Edify{% endblock %}
+
+{% block shell_content %}
+<main class="sp-page" id="main-content" tabindex="-1">
+  <header class="sp-page-header">
+    <div>
+      <span class="sp-eyebrow">School intelligence</span>
+      <h1>SSA Performance</h1>
+      <p>Track confirmed school self-assessment performance across all eight interventions and act on the highest-priority gaps.</p>
+    </div>
+    <div class="sp-engine-state" aria-label="Decision engine status">
+      <span aria-hidden="true"></span>
+      {{ dashboard.engine.name }} · confirmed records only
+    </div>
+  </header>
+
+  {% include "partials/ssa/performance_workspace.html" %}
+</main>
+{% endblock %}

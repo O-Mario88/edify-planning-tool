@@ -24,11 +24,26 @@ class Project(SoftDeleteModel):
     intervention = models.CharField(
         max_length=64, choices=SsaIntervention.choices, null=True, blank=True
     )
+    # Ecosystem audit: a Special Project must declare WHICH of the eight SSA
+    # interventions it intends to improve — a single nullable `intervention`
+    # (kept for back-compat) under-specified real multi-intervention projects
+    # and let a project exist with no target at all. List of SsaIntervention
+    # values; target_intervention_list() merges both fields.
+    target_interventions = models.JSONField(default=list, blank=True)
+    # Measurement window for verified SSA impact comparison.
+    measurement_start_fy = models.CharField(max_length=16, null=True, blank=True)
+    measurement_end_fy = models.CharField(max_length=16, null=True, blank=True)
     manager_staff_id = models.CharField(max_length=30, null=True, blank=True)
 
     class Meta:
         db_table = "project"
         ordering = ["name"]
+
+    def target_intervention_list(self) -> list[str]:
+        merged = list(self.target_interventions or [])
+        if self.intervention and self.intervention not in merged:
+            merged.append(self.intervention)
+        return merged
 
 
 class ProjectSchoolAssignment(TimeStampedModel):
@@ -45,6 +60,11 @@ class ProjectSchoolAssignment(TimeStampedModel):
     start_date = models.DateField(null=True, blank=True)
     support_area = models.CharField(max_length=255, null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
+    # Ecosystem audit: when a school is assigned OFF-recommendation (its
+    # confirmed SSA does not show weakness in the project's target
+    # interventions), the override must carry a persisted reason.
+    assignment_reason = models.TextField(null=True, blank=True)
+    matched_intervention = models.CharField(max_length=64, null=True, blank=True)
 
     class Meta:
         db_table = "project_school_assignment"

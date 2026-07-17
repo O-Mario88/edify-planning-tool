@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <div>
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">13. Operational Risk / Attention Needed</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Real workflow gaps · route follow-up to responsible PL</p>
@@ -9,7 +9,7 @@
     <a href="/analytics/country-director/drilldown{{ c.link }}&fy={{ fy }}"
        hx-get="/analytics/country-director/drilldown{{ c.link }}&fy={{ fy }}"
        hx-target="#drawer-container" hx-swap="innerHTML"
-       class="rounded-xl p-3 border flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-sm
+       class="rounded-surface p-3 border flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-sm
        {% if c.tone == 'danger' %}bg-rose-50 border-rose-100
        {% elif c.tone == 'warning' %}bg-amber-50 border-amber-100
        {% else %}bg-sky-50 border-sky-100{% endif %}">
@@ -17,7 +17,7 @@
         <p class="edify-text-caption font-bold text-slate-700 leading-tight truncate">{{ c.label }}</p>
         {% if c.aging %}<p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ c.aging }}</p>{% endif %}
       </div>
-      <span class="shrink-0 px-2 py-0.5 rounded-full text-[12px] font-bold tabular-nums
+      <span class="shrink-0 px-2 py-0.5 rounded-pill text-[12px] font-bold tabular-nums
         {% if c.tone == 'danger' %}bg-rose-100 text-rose-700
         {% elif c.tone == 'warning' %}bg-amber-100 text-amber-700
         {% else %}bg-sky-100 text-sky-700{% endif %}">{{ c.count|intcomma }}</span>

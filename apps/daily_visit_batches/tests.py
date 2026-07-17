@@ -231,8 +231,11 @@ class DailyVisitBatchTestCase(TestCase):
         with self.assertRaises(BadRequest):
             self._schedule(["BATCH-P-1"], date(2026, 8, 3), reason="solo visit")
 
+        # ``scheduled_date`` is a timezone-aware timestamp.  The user-facing
+        # duplicate rule is calendar-day based, so use Django's date lookup
+        # rather than coercing a naive midnight datetime in the test.
         acts = Activity.objects.filter(
-            school__school_id="BATCH-P-1", scheduled_date=date(2026, 8, 3)
+            school__school_id="BATCH-P-1", scheduled_date__date=date(2026, 8, 3)
         )
         self.assertEqual(acts.count(), 1)
         self.assertEqual(acts.first().id, first["activities"][0]["id"])

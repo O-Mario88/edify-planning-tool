@@ -21,63 +21,67 @@
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Multi-tab main panel layout (Matrix, Queue, Impact, Performance Insights) using Alpine.js -->
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6" x-data="{ activeTab: 'matrix' }">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6" x-data="urlTabs('matrix', ['matrix', 'queue', 'impact', 'performance'])">
 
 <!-- Left 3 columns: Tab panels -->
 <div class="lg:col-span-3 space-y-6">
 
 <!-- Tab Headers -->
-<div class="flex items-center gap-2 border-b border-slate-100 pb-px">
+<div class="flex items-center gap-2 border-b border-slate-100 pb-px overflow-x-auto" role="tablist" aria-label="Core Schools views">
 <button
-@click="activeTab = 'matrix'"
+id="core-tab-matrix" type="button" role="tab" aria-controls="core-schools-table-container" :aria-selected="activeTab === 'matrix'" :tabindex="activeTab === 'matrix' ? 0 : -1"
+@click="setTab('matrix')"
 :class="activeTab === 'matrix' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
+class="min-h-11 px-4 border-b-2 text-[12px] font-semibold uppercase whitespace-nowrap transition-all focus:outline-none"
 >
 Core Service Package Matrix
 </button>
 <button
-@click="activeTab = 'queue'"
+id="core-tab-queue" type="button" role="tab" aria-controls="core-panel-queue" :aria-selected="activeTab === 'queue'" :tabindex="activeTab === 'queue' ? 0 : -1"
+@click="setTab('queue')"
 :class="activeTab === 'queue' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
+class="min-h-11 px-4 border-b-2 text-[12px] font-semibold uppercase whitespace-nowrap transition-all focus:outline-none"
 >
 Core Planning Queue
 </button>
 <button
-@click="activeTab = 'impact'"
+id="core-tab-impact" type="button" role="tab" aria-controls="core-panel-impact" :aria-selected="activeTab === 'impact'" :tabindex="activeTab === 'impact' ? 0 : -1"
+@click="setTab('impact')"
 :class="activeTab === 'impact' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
+class="min-h-11 px-4 border-b-2 text-[12px] font-semibold uppercase whitespace-nowrap transition-all focus:outline-none"
 >
 Intervention Impact Tracker
 </button>
 <button
-@click="activeTab = 'performance'"
+id="core-tab-performance" type="button" role="tab" aria-controls="core-panel-performance" :aria-selected="activeTab === 'performance'" :tabindex="activeTab === 'performance' ? 0 : -1"
+@click="setTab('performance')"
 :class="activeTab === 'performance' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all focus:outline-none"
+class="min-h-11 px-4 border-b-2 text-[12px] font-semibold uppercase whitespace-nowrap transition-all focus:outline-none"
 >
 Staff vs Partner Performance
 </button>
 </div>
 
 <!-- Tab Content Cards -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-6">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-6">
 
 <!-- Tab: Matrix -->
-<div x-show="activeTab === 'matrix'" id="core-schools-table-container">
+<div x-show="activeTab === 'matrix'" id="core-schools-table-container" role="tabpanel">
 {% include "partials/core_schools/matrix_table.html" %}
 </div>
 
 <!-- Tab: Queue -->
-<div x-show="activeTab === 'queue'" style="display: none;">
+<div x-show="activeTab === 'queue'" id="core-panel-queue" role="tabpanel" style="display: none;">
 {% include "partials/core_schools/planning_queue.html" %}
 </div>
 
 <!-- Tab: Impact -->
-<div x-show="activeTab === 'impact'" style="display: none;">
+<div x-show="activeTab === 'impact'" id="core-panel-impact" role="tabpanel" style="display: none;">
 {% include "partials/core_schools/intervention_impact.html" %}
 </div>
 
 <!-- Tab: Performance -->
-<div x-show="activeTab === 'performance'" style="display: none;">
+<div x-show="activeTab === 'performance'" id="core-panel-performance" role="tabpanel" style="display: none;">
 {% include "partials/core_schools/performance_insights.html" %}
 </div>
 

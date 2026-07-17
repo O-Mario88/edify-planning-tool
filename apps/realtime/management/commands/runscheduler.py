@@ -61,6 +61,7 @@ class Command(BaseCommand):
             "target_ledger_sync": jobs.target_ledger_sync_job,
             "pd_reminders": jobs.pd_reminders_job,
             "field_debrief_recurring_issues": jobs.field_debrief_recurring_issues_job,
+            "analytics_report_delivery": jobs.analytics_report_delivery_job,
         }
 
         scheduler = BackgroundScheduler(timezone="Africa/Kampala")

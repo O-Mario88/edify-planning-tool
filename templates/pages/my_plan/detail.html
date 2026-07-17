@@ -20,7 +20,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 {% endif %}
 </p>
 </div>
-<span class="inline-flex items-center rounded-full px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {{ status_class }}">
+<span class="inline-flex items-center rounded-pill px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {{ status_class }}">
 {{ status_label }}
 </span>
 </div>
@@ -46,13 +46,13 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 </div>
 <div class="col-span-2">
 <p class="edify-text-caption uppercase font-bold text-slate-400">Purpose Description</p>
-<p class="font-semibold mt-0.5 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
+<p class="font-semibold mt-0.5 leading-relaxed bg-slate-50 p-3 rounded-surface border border-slate-100">
 {{ act.activity_purpose_text|default:"No purpose description entered." }}
 </p>
 </div>
 <div class="col-span-2">
 <p class="edify-text-caption uppercase font-bold text-slate-400">Expected Outcome</p>
-<p class="font-semibold mt-0.5 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
+<p class="font-semibold mt-0.5 leading-relaxed bg-slate-50 p-3 rounded-surface border border-slate-100">
 {{ act.expected_outcome|default:"No expected outcome entered." }}
 </p>
 </div>
@@ -78,7 +78,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 <p class="font-bold text-slate-800">{{ ev.original_name }}</p>
 <p class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_extension }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-md px-2 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>

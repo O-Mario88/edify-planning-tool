@@ -26,7 +26,7 @@ name="school_id"
 id="school_id"
 required
 placeholder="e.g. SCH-9999"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
 >
 </div>
 
@@ -39,7 +39,7 @@ name="name"
 id="name"
 required
 placeholder="e.g. Kampala Hope Academy"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
 >
 </div>
 
@@ -50,7 +50,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semi
 name="district_id"
 id="district_id"
 required
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
 >
 <option value="" disabled selected>Select a District</option>
 {% for d in districts %}
@@ -65,7 +65,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 edif
 <select
 name="school_type"
 id="school_type"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
 >
 <option value="client" selected>Client School</option>
 <option value="core">Core School</option>
@@ -82,13 +82,13 @@ name="enrollment"
 id="enrollment"
 min="0"
 placeholder="e.g. 250"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
 >
 </div>
 
 <!-- Cluster assignment info notice -->
 {% if pre_cluster_id %}
-<div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100/60 edify-text-caption font-semibold text-emerald-800 leading-relaxed">
+<div class="p-3 bg-emerald-50 rounded-surface border border-emerald-100/60 edify-text-caption font-semibold text-emerald-800 leading-relaxed">
 <strong>Automatic Assignment</strong>: This school will be automatically added to the cluster checklist upon successful creation.
 </div>
 {% else %}
@@ -97,7 +97,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semi
 <select
 name="cluster_id"
 id="cluster_id"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
 >
 <option value="">Unassigned (Select later)</option>
 {% for c in clusters %}

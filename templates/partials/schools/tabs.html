@@ -1,57 +1,98 @@
 <!-- Roster Select Tabs -->
-<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0" role="tablist" aria-label="School directory views">
 <!-- All Schools -->
 <button
-hx-get="/schools?tab=all"
+type="button"
+id="schools-tab-all"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'all' or not active_tab %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'all' or not active_tab %}0{% else %}-1{% endif %}"
+hx-get="/schools"
 hx-target="#schools-table-container"
-hx-include="#filters-form"
+hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
+hx-indicator="#schools-tab-loading"
+@click="document.getElementById('filters-tab-input').value = 'all'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'all' or not active_tab %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-All Schools <span class="ml-1.5 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 edify-text-caption font-semibold">{{ all_count }}</span>
+All Schools <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-blue-100 text-blue-700 edify-text-caption font-semibold">{{ all_count }}</span>
 </button>
 
 <!-- Unclustered -->
 <button
-hx-get="/schools?tab=unclustered"
+type="button"
+id="schools-tab-unclustered"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'unclustered' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'unclustered' %}0{% else %}-1{% endif %}"
+hx-get="/schools"
 hx-target="#schools-table-container"
-hx-include="#filters-form"
+hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
+hx-indicator="#schools-tab-loading"
+@click="document.getElementById('filters-tab-input').value = 'unclustered'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'unclustered' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Unclustered <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ unclustered_count }}</span>
+Unclustered <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ unclustered_count }}</span>
 </button>
 
 <!-- Clustered -->
 <button
-hx-get="/schools?tab=clustered"
+type="button"
+id="schools-tab-clustered"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'clustered' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'clustered' %}0{% else %}-1{% endif %}"
+hx-get="/schools"
 hx-target="#schools-table-container"
-hx-include="#filters-form"
+hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
+hx-indicator="#schools-tab-loading"
+@click="document.getElementById('filters-tab-input').value = 'clustered'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'clustered' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Clustered <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ clustered_count }}</span>
+Clustered <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ clustered_count }}</span>
 </button>
 
 <!-- Not Assigned to Project -->
 <button
-hx-get="/schools?tab=not_assigned"
+type="button"
+id="schools-tab-not-assigned"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'not_assigned' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'not_assigned' %}0{% else %}-1{% endif %}"
+hx-get="/schools"
 hx-target="#schools-table-container"
-hx-include="#filters-form"
+hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
+hx-indicator="#schools-tab-loading"
+@click="document.getElementById('filters-tab-input').value = 'not_assigned'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'not_assigned' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Not Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ not_assigned_count }}</span>
+Not Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ not_assigned_count }}</span>
 </button>
 
 <!-- Assigned to Project -->
 <button
-hx-get="/schools?tab=assigned"
+type="button"
+id="schools-tab-assigned"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'assigned' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'assigned' %}0{% else %}-1{% endif %}"
+hx-get="/schools"
 hx-target="#schools-table-container"
-hx-include="#filters-form"
+hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
+hx-indicator="#schools-tab-loading"
+@click="document.getElementById('filters-tab-input').value = 'assigned'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'assigned' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ assigned_count }}</span>
+Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ assigned_count }}</span>
 </button>
 </div>
+<span id="schools-tab-loading" class="htmx-indicator sr-only" role="status">Updating school directory…</span>

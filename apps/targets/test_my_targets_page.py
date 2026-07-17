@@ -37,7 +37,11 @@ from apps.targets.models import (
     TargetAchievementLedger,
     TargetArea,
 )
-from apps.targets.my_targets import MyTargetQueryService, TargetAchievementService
+from apps.targets.my_targets import (
+    MyTargetQueryService,
+    TargetAchievementService,
+    active_target_areas,
+)
 
 User = get_user_model()
 FY = "2026"  # Oct 1 2025 – Sep 30 2026
@@ -60,6 +64,7 @@ class MyTargetsPageTest(TestCase):
     """All service math + page behaviour pinned to a fixed 'today'."""
 
     def setUp(self):
+        active_target_areas()
         self.region = Region.objects.create(name="R")
         self.district = District.objects.create(
             name="D", region=self.region, district_type="primary"

@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full"
      x-data="{
        chart: null,
        initChart() {
@@ -8,17 +8,17 @@
          if (!el) return;
          this.chart = new ApexCharts(el, {
            series: [
-             { name: 'Planned', type: 'column', data: {{ team_performance.planned|safe }} },
-             { name: 'Completed', type: 'column', data: {{ team_performance.completed|safe }} },
-             { name: 'Verified', type: 'column', data: {{ team_performance.verified|safe }} },
-             { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|safe }} }
+             { name: 'Planned', type: 'column', data: {{ team_performance.planned|escape }} },
+             { name: 'Completed', type: 'column', data: {{ team_performance.completed|escape }} },
+             { name: 'Verified', type: 'column', data: {{ team_performance.verified|escape }} },
+             { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|escape }} }
            ],
-           chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+           chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
            stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
            colors: ['var(--edify-chart-teal)', 'var(--edify-chart-teal)', 'var(--edify-chart-teal)', 'var(--edify-chart-amber)'],
            plotOptions: { bar: { columnWidth: '62%', borderRadius: 2 } },
            dataLabels: { enabled: false },
-           labels: {{ team_performance.labels|safe }},
+           labels: {{ team_performance.labels|escape }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
                     labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: 600 } } },
            yaxis: [

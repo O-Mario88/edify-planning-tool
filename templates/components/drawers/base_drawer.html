@@ -9,6 +9,9 @@ x-init="
 $nextTick(() => {
 active = true;
 document.body.style.overflow = 'hidden';
+$nextTick(() => {
+$refs.surface.querySelector('.drawer-body input:not([type=hidden]), .drawer-body select, .drawer-body textarea, .drawer-body button')?.focus();
+});
 })
 "
 @close-drawer.window="
@@ -45,9 +48,11 @@ $dispatch('close-drawer');
 <!-- Drawer Surface — premium token-driven panel -->
 <div
 class="drawer-surface"
+x-ref="surface"
 :class="[active ? 'active' : '', 'size-' + size, 'type-' + type]"
 role="dialog"
 aria-modal="true"
+aria-labelledby="drawer-title"
 @input="isDirty = true"
 @change="isDirty = true"
 >
@@ -58,7 +63,7 @@ aria-modal="true"
 {% if drawer_icon %}
 <span style="font-size:18px;font-weight:600;color:var(--edify-text-muted);">{{ drawer_icon }}</span>
 {% endif %}
-<h3 style="font-size:15px;font-weight:700;color:var(--edify-text);letter-spacing:-.005em;line-height:1.2;margin:0;">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
+<h3 id="drawer-title" style="font-size:15px;font-weight:700;color:var(--edify-text);letter-spacing:-.005em;line-height:1.2;margin:0;">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
 {% block drawer_badge %}{% endblock %}
 </div>
 <p style="font-size:12px;color:var(--edify-text-muted);font-weight:500;margin-top:4px;margin-bottom:0;">{% block drawer_subtitle %}{{ drawer_subtitle|default:"Configure action details" }}{% endblock %}</p>

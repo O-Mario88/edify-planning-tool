@@ -17,7 +17,7 @@
 {% if messages %}
 <div class="space-y-2">
 {% for message in messages %}
-<div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %} border rounded-xl text-[12px] font-bold">
+<div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %} border rounded-surface text-[12px] font-bold">
 {{ message }}
 </div>
 {% endfor %}
@@ -25,7 +25,7 @@
 {% endif %}
 
 <!-- Table -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
@@ -55,7 +55,7 @@
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="verify">
-<button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold edify-text-caption rounded-lg shadow-sm transition-all">
+<button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold edify-text-caption rounded-control shadow-sm transition-all">
 Verify & Confirm
 </button>
 </form>
@@ -64,7 +64,7 @@ Verify & Confirm
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="return">
-<button type="submit" class="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-lg transition-all">
+<button type="submit" class="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-control transition-all">
 Return for Correction
 </button>
 </form>

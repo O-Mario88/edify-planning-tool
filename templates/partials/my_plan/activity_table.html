@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="overflow-x-auto border border-slate-200/60 rounded-xl edify-surface shadow-sm">
+<div class="overflow-x-auto border border-slate-200/60 rounded-surface edify-surface shadow-sm">
 <table class="w-full text-left text-[12px] border-collapse ">
 <thead>
 <tr class="bg-slate-50/50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
@@ -17,17 +17,17 @@
 <!-- Column 1: Details & Context -->
 <td class="px-4 py-3.5 space-y-1">
 <div class="flex items-center gap-1.5 flex-wrap">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-150/45">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-150/45">
 {{ act.activity_type_label }}
 </span>
 {% if act.is_core %}
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] border border-[var(--edify-primary)]/20">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] border border-[var(--edify-primary)]/20">
 ⭐ Core School ({% if act.visit_number %}{{ act.visit_number }}{% elif act.training_number %}{{ act.training_number }}{% endif %})
 </span>
 <span class="edify-text-caption text-[var(--edify-primary)] font-bold">({{ act.core_progress }})</span>
 {% endif %}
 {% if act.partner_name %}
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 edify-text-caption font-bold bg-blue-50 text-blue-700 border /30">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold bg-blue-50 text-blue-700 border /30">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg> Partner ({{ act.partner_name }})
 </span>
 {% endif %}
@@ -72,7 +72,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 
 <!-- Return Message if returned -->
 {% if act.return_reason %}
-<div class="bg-rose-50 border border-rose-100 p-2 rounded-lg edify-text-caption text-rose-800 font-bold mt-1.5 space-y-0.5">
+<div class="bg-rose-50 border border-rose-100 p-2 rounded-surface edify-text-caption text-rose-800 font-bold mt-1.5 space-y-0.5">
 <p><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> Returned by: <span class="font-semibold text-rose-900">{{ act.returned_by }}</span></p>
 <p class="font-normal text-rose-700 italic">"{{ act.return_reason }}"</p>
 </div>
@@ -81,7 +81,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 
 <!-- Column 2: Planned Date -->
 <td class="px-4 py-3.5 text-center">
-<span class="font-bold text-slate-700 text-[12px] bg-slate-50 border border-slate-200/70 px-2 py-1 rounded-md">
+<span class="font-bold text-slate-700 text-[12px] bg-slate-50 border border-slate-200/70 px-2 py-1 rounded-pill">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg> {{ act.planned_date|date:"M j, D"|default:"Unscheduled" }}
 </span>
 </td>
@@ -93,7 +93,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 
 <div class="flex items-center justify-center gap-1 flex-wrap max-w-[200px]">
 {% for label, variant in act.badges %}
-<span class="inline-flex items-center rounded px-1.5 py-0.5 edify-text-caption font-semibold uppercase border
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase border
 {% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
 {% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
 {% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150
@@ -118,7 +118,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 hx-get="{{ act.next_action.url }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 shadow-sm transition-all"
+class="inline-flex items-center justify-center h-8 px-3 rounded-control border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 shadow-sm transition-all"
 >
 {{ act.next_action.text }}
 </button>
@@ -127,7 +127,7 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border
 hx-get="{{ act.next_action.url }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[var(--edify-primary)] !text-white text-[12px] font-semibold hover:bg-opacity-95 shadow-sm transition-all"
+class="inline-flex items-center justify-center h-8 px-3 rounded-control !bg-[var(--edify-primary)] !text-white text-[12px] font-semibold hover:bg-opacity-95 shadow-sm transition-all"
 >
 {{ act.next_action.text }}
 </button>
@@ -144,7 +144,7 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[var(--ed
 @click.outside="open = false"
 aria-label="More actions"
 :aria-expanded="open"
-class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-control hover:bg-slate-100 transition-colors"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
@@ -159,7 +159,7 @@ x-transition:enter-end="transform opacity-100 scale-100"
 x-transition:leave="transition ease-in duration-75"
 x-transition:leave-start="transform opacity-100 scale-100"
 x-transition:leave-end="transform opacity-0 scale-95"
-class="absolute right-4 mt-1 w-52 rounded-xl edify-surface border border-slate-200 shadow-lg z-30 py-1.5 text-left font-semibold text-[12px] text-slate-700"
+class="absolute right-4 mt-1 w-52 rounded-surface edify-surface border border-slate-200 shadow-lg z-30 py-1.5 text-left font-semibold text-[12px] text-slate-700"
 style="display: none;"
 >
 <!-- View Details -->

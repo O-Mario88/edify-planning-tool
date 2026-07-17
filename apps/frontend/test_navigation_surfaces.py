@@ -41,3 +41,71 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
                     (200, 301, 302),
                     f"Sidebar destination {url} returned {response.status_code}",
                 )
+
+    def test_major_filter_surfaces_accept_real_interaction_state(self):
+        """High-traffic filter/search/tab surfaces must render with non-default
+        query state instead of only passing their empty initial page."""
+        surfaces = (
+            (
+                "/schools",
+                {"tab": "unclustered", "q": "no-match", "per_page": "25"},
+            ),
+            (
+                "/planning",
+                {
+                    "tab": "core",
+                    "q": "no-match",
+                    "planning_readiness": "locked",
+                    "per_page": "20",
+                },
+            ),
+            (
+                "/my-plan",
+                {
+                    "period": "month",
+                    "activity_type": "school_visit",
+                    "status": "completed",
+                },
+            ),
+            (
+                "/messages",
+                {"tab": "unread", "q": "no-match", "sort": "oldest"},
+            ),
+            (
+                "/analytics/",
+                {"fy": "2026", "quarter": "Q4", "school_type": "core"},
+            ),
+            (
+                "/projects/planning",
+                {"q": "no-match", "tab": "baseline", "quarter": "Q4"},
+            ),
+            (
+                "/projects/my-plan",
+                {"q": "no-match", "period": "month", "quarter": "Q4"},
+            ),
+            (
+                "/projects/analytics",
+                {"q": "no-match", "fy": "2026"},
+            ),
+            (
+                "/ssa",
+                {"q": "no-match", "fy": "2026", "quarter": "Q4"},
+            ),
+            (
+                "/clusters",
+                {"q": "no-match", "status": "active"},
+            ),
+            (
+                "/debriefs",
+                {"q": "no-match", "range_days": "30", "risk_level": "critical"},
+            ),
+        )
+
+        for url, params in surfaces:
+            with self.subTest(url=url):
+                response = self.client.get(url, params)
+                self.assertEqual(
+                    response.status_code,
+                    200,
+                    f"Filtered surface {url} returned {response.status_code}",
+                )

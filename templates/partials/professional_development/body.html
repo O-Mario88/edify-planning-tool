@@ -4,10 +4,10 @@
   {# ── KPI strip ─────────────────────────────────────────────────────────── #}
   <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
     {% for k in kpis %}
-    <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <div class="flex items-center justify-between">
         <span class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
-        <div class="h-7 w-7 rounded-lg flex items-center justify-center shrink-0
+        <div class="h-7 w-7 rounded-surface flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50 text-blue-500
           {% elif k.variant == 'success' %}bg-emerald-50 text-emerald-500
           {% elif k.variant == 'warning' %}bg-amber-50 text-amber-500
@@ -25,11 +25,11 @@
   {# ── My Current Course + Progress Tracker ─────────────────────────────── #}
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-    <div class="lg:col-span-5 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="lg:col-span-5 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">My Current Course</h2>
         {% if current_course %}
-        <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold
+        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
           {% if current_course.status_key == 'in_progress' %}bg-blue-50 text-blue-700
           {% elif current_course.status_key == 'ended' or current_course.status_key == 'marked_complete' %}bg-amber-50 text-amber-700
           {% else %}bg-slate-100 text-slate-500{% endif %}">{{ current_course.status }}</span>
@@ -42,8 +42,8 @@
         <p class="edify-text-caption text-slate-500 font-medium mt-0.5">{{ current_course.institution }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-1.5">
-        <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ current_course.course_type }}</span>
-        <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 edify-text-caption font-bold">{{ current_course.category }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ current_course.course_type }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill bg-violet-50 text-violet-700 edify-text-caption font-bold">{{ current_course.category }}</span>
       </div>
       <p class="edify-text-caption text-slate-500 font-medium">{{ current_course.start_date|date:"d M Y" }} – {{ current_course.end_date|date:"d M Y" }} · {{ current_course.duration_days }} days</p>
 
@@ -51,13 +51,13 @@
         <div class="flex items-center justify-between edify-text-caption font-bold text-slate-500 mb-1">
           <span>Progress</span><span class="tabular-nums">{{ current_course.pct }}%</span>
         </div>
-        <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden">
-          <div class="h-full rounded-full bg-blue-500" style="width: {{ current_course.pct }}%"></div>
+        <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden">
+          <div class="h-full rounded-pill bg-blue-500" style="width: {{ current_course.pct }}%"></div>
         </div>
       </div>
 
       {% if current_course.next_action_label %}
-      <div class="rounded-lg bg-blue-50/60 border border-blue-100 p-3 flex items-start gap-2">
+      <div class="rounded-surface bg-blue-50/60 border border-blue-100 p-3 flex items-start gap-2">
         <svg class="h-4 w-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <div class="min-w-0 flex-1">
           <p class="edify-text-caption text-blue-800 font-semibold leading-snug">Next: {{ current_course.next_action_label }}</p>
@@ -71,7 +71,7 @@
       {% endif %}
       {% else %}
       <div class="flex flex-col items-center justify-center text-center py-8 px-4">
-        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3 bg-slate-100 text-slate-400">
+        <div class="w-12 h-12 rounded-pill flex items-center justify-center mb-3 bg-slate-100 text-slate-400">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
         </div>
         <h4 class="text-[14px] font-semibold text-slate-700 leading-snug">No active course</h4>
@@ -82,7 +82,7 @@
       {% endif %}
     </div>
 
-    <div class="lg:col-span-7 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="lg:col-span-7 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Course Progress Tracker</h2>
         {% if current_course %}
@@ -95,14 +95,14 @@
         {% for step in timeline.steps %}
         <div class="flex gap-3">
           <div class="flex flex-col items-center shrink-0">
-            <span class="h-5 w-5 rounded-full flex items-center justify-center shrink-0
+            <span class="h-5 w-5 rounded-pill flex items-center justify-center shrink-0
               {% if step.state == 'done' %}bg-emerald-500 text-white
               {% elif step.state == 'active' %}bg-blue-500 text-white ring-4 ring-blue-100
               {% elif step.state == 'blocked' %}bg-rose-100 text-rose-500
               {% else %}bg-slate-100 text-slate-400{% endif %}">
               {% if step.state == 'done' %}
               <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-              {% else %}<span class="h-1.5 w-1.5 rounded-full bg-current"></span>{% endif %}
+              {% else %}<span class="h-1.5 w-1.5 rounded-pill bg-current"></span>{% endif %}
             </span>
             {% if not forloop.last %}<span class="w-px flex-1 min-h-[20px] {% if step.state == 'done' %}bg-emerald-200{% else %}bg-slate-100{% endif %}"></span>{% endif %}
           </div>
@@ -122,20 +122,20 @@
   </div>
 
   {# ── Next Actions ──────────────────────────────────────────────────────── #}
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Next Actions</h2>
     {% if next_actions %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {% for a in next_actions %}
-      <div class="relative rounded-xl border border-slate-100 p-3.5 hover:border-slate-200 hover:shadow-sm transition-all">
-        <span class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-rose-500 text-white edify-text-caption font-bold flex items-center justify-center">1</span>
-        <div class="h-8 w-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mb-2">
+      <div class="relative rounded-surface border border-slate-100 p-3.5 hover:border-slate-200 hover:shadow-sm transition-all">
+        <span class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-pill bg-rose-500 text-white edify-text-caption font-bold flex items-center justify-center">1</span>
+        <div class="h-8 w-8 rounded-surface bg-slate-100 text-slate-500 flex items-center justify-center mb-2">
           {% include "partials/analytics/pl/_icon.html" with name=a.icon %}
         </div>
         <p class="text-[12px] font-bold text-slate-800">{{ a.title }}</p>
         <p class="edify-text-caption text-slate-500 font-medium mt-0.5 leading-snug">{{ a.description }}</p>
         <button type="button" hx-get="/my-professional-development/request?id={{ a.request_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="mt-2.5 h-7 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold transition-colors">{{ a.button }}</button>
+                class="mt-2.5 h-7 px-2.5 rounded-control bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold transition-colors">{{ a.button }}</button>
       </div>
       {% endfor %}
     </div>
@@ -147,14 +147,14 @@
   {# ── Reminders · Messages from HR · Quick Actions ──────────────────────── #}
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-    <div class="lg:col-span-4 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-1">
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-1">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-2">Upcoming Reminders</h2>
       {% if reminders %}
       <div class="divide-y divide-slate-50">
         {% for r in reminders %}
         <button type="button" hx-get="/my-professional-development/request?id={{ r.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
                 class="w-full text-left py-2.5 flex items-start gap-2.5">
-          <span class="h-2 w-2 rounded-full mt-1.5 shrink-0
+          <span class="h-2 w-2 rounded-pill mt-1.5 shrink-0
             {% if r.tone == 'danger' %}bg-rose-500{% elif r.tone == 'warning' %}bg-amber-500{% elif r.tone == 'info' %}bg-blue-500{% else %}bg-slate-300{% endif %}"></span>
           <div class="min-w-0 flex-1">
             <p class="edify-text-caption font-semibold text-slate-700 leading-snug">{{ r.label }}</p>
@@ -168,7 +168,7 @@
       {% endif %}
     </div>
 
-    <div class="lg:col-span-4 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-1">
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-1">
       <div class="flex items-center justify-between mb-2">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Messages from HR</h2>
         <a href="/messages" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">View all →</a>
@@ -177,11 +177,11 @@
       <div class="divide-y divide-slate-50">
         {% for m in hr_messages %}
         <a href="/messages{% if m.context_id %}?thread={{ m.context_id }}{% endif %}" class="py-2.5 flex items-start gap-2.5 group">
-          <span class="h-7 w-7 rounded-full bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ m.sender_name|avatar_initials }}</span>
+          <span class="h-7 w-7 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ m.sender_name|avatar_initials }}</span>
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
               <span class="edify-text-caption font-bold text-slate-600 truncate">{{ m.sender_name }}</span>
-              {% if m.unread %}<span class="h-2 w-2 rounded-full bg-blue-600 shrink-0"></span>{% endif %}
+              {% if m.unread %}<span class="h-2 w-2 rounded-pill bg-blue-600 shrink-0"></span>{% endif %}
             </div>
             <p class="edify-text-caption text-slate-500 font-medium truncate mt-0.5">{{ m.body }}</p>
           </div>
@@ -193,45 +193,40 @@
       {% endif %}
     </div>
 
-    <div class="lg:col-span-4 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-1">Quick Actions</h2>
-      <button type="button" hx-get="/my-professional-development/request" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors text-left">
-        <span class="h-7 w-7 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg></span>
-        <span class="text-[12px] font-bold text-slate-700">Request Professional Development</span>
-      </button>
       <button type="button" @click="showPolicy = true"
-              class="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors text-left">
-        <span class="h-7 w-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+              class="w-full flex items-center gap-2.5 p-2.5 rounded-control border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
         <span class="text-[12px] font-bold text-slate-700">View PD Policy &amp; Guidelines</span>
       </button>
       <button type="button" hx-get="/my-professional-development/allocation-history" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors text-left">
-        <span class="h-7 w-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+              class="w-full flex items-center gap-2.5 p-2.5 rounded-control border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
         <span class="text-[12px] font-bold text-slate-700">My PD Allocation History</span>
       </button>
       <a href="/my-professional-development/export?fy={{ fy }}"
-         class="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors text-left">
-        <span class="h-7 w-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span>
+         class="w-full flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span>
         <span class="text-[12px] font-bold text-slate-700">Download PD Report</span>
       </a>
       <a href="/messages?context_type=professional_development{% if current_course %}&context_id={{ current_course.id }}{% endif %}"
-         class="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors text-left">
-        <span class="h-7 w-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></span>
+         class="w-full flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></span>
         <span class="text-[12px] font-bold text-slate-700">Message HR</span>
       </a>
     </div>
   </div>
 
   {# ── My Courses ────────────────────────────────────────────────────────── #}
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3" x-data="{ tab: 'all' }">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" x-data="{ tab: 'all' }">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">My Courses</h2>
-      <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-        <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-md edify-text-caption font-bold transition-colors">All ({{ courses|length }})</button>
-        <button type="button" @click="tab = 'in_progress'" :class="tab === 'in_progress' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-md edify-text-caption font-bold transition-colors">In Progress ({{ in_progress_count }})</button>
-        <button type="button" @click="tab = 'completed'" :class="tab === 'completed' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-md edify-text-caption font-bold transition-colors">Completed ({{ completed_count }})</button>
-        <button type="button" @click="tab = 'cancelled'" :class="tab === 'cancelled' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-md edify-text-caption font-bold transition-colors">Cancelled ({{ cancelled_count }})</button>
+      <div class="flex items-center gap-1 bg-slate-100 rounded-surface p-1">
+        <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">All ({{ courses|length }})</button>
+        <button type="button" @click="tab = 'in_progress'" :class="tab === 'in_progress' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">In Progress ({{ in_progress_count }})</button>
+        <button type="button" @click="tab = 'completed'" :class="tab === 'completed' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">Completed ({{ completed_count }})</button>
+        <button type="button" @click="tab = 'cancelled'" :class="tab === 'cancelled' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">Cancelled ({{ cancelled_count }})</button>
       </div>
     </div>
     {% if courses %}
@@ -259,7 +254,7 @@
             <td class="py-2.5 px-3 text-slate-500 font-medium tabular-nums">{{ c.start_date|date:"d M Y" }}</td>
             <td class="py-2.5 px-3 text-slate-500 font-medium tabular-nums">{{ c.end_date|date:"d M Y" }}</td>
             <td class="py-2.5 px-3">
-              <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold
+              <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
                 {% if c.bucket == 'completed' %}bg-emerald-50 text-emerald-700
                 {% elif c.bucket == 'cancelled' %}bg-slate-100 text-slate-500
                 {% elif 'returned' in c.status_key or c.status_key == 'rejected' %}bg-rose-50 text-rose-700

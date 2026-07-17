@@ -10,7 +10,7 @@
 <style>
   /* Custom premium styles to blend FullCalendar with Edify Design language */
   #fullcalendar-view {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--edify-font-sans);
     background-color: var(--edify-surface-raised);
     border-radius: var(--edify-radius-lg, 16px);
   }
@@ -25,7 +25,7 @@
     font-size: 16px !important;
     font-weight: 600 !important;
     color: var(--edify-text) !important;
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--edify-font-sans);
   }
   .fc .fc-button-primary {
     background-color: var(--edify-primary) !important;
@@ -103,7 +103,7 @@
   </div>
 
   <!-- FullCalendar Container -->
-  <div class="edify-surface rounded-lg border border-slate-100 p-5 shadow-sm">
+  <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm">
     <div id="fullcalendar-view"></div>
   </div>
 </div>

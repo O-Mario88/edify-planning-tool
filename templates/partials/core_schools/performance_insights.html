@@ -1,7 +1,7 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 select-none">
 
 <!-- Card A: Core Assessment Performance by Staff -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Staff</h4>
 <p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg core assessment score of owned schools.</p>
@@ -14,8 +14,8 @@
 <span>{{ s.name }}</span>
 <span class="text-[var(--edify-primary)] font-semibold">{{ s.score }}%</span>
 </div>
-<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/50 shadow-inner">
-<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-full transition-all duration-500" style="width: {{ s.score }}%;"></div>
+<div class="w-full bg-slate-100 h-2 rounded-pill overflow-hidden border border-slate-200/50 shadow-inner">
+<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-pill transition-all duration-500" style="width: {{ s.score }}%;"></div>
 </div>
 </div>
 {% endfor %}
@@ -30,7 +30,7 @@
 </div>
 
 <!-- Card B: Core Assessment Performance by Partner -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Partner</h4>
 <p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg core assessment score of assigned partner schools.</p>
@@ -43,8 +43,8 @@
 <span class="truncate max-w-[125px]">{{ p.name }}</span>
 <span class="text-[var(--edify-primary)] font-semibold">{{ p.score }}%</span>
 </div>
-<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/50 shadow-inner">
-<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-full transition-all duration-500" style="width: {{ p.score }}%;"></div>
+<div class="w-full bg-slate-100 h-2 rounded-pill overflow-hidden border border-slate-200/50 shadow-inner">
+<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-pill transition-all duration-500" style="width: {{ p.score }}%;"></div>
 </div>
 </div>
 {% endfor %}
@@ -59,17 +59,17 @@
 </div>
 
 <!-- Card C: Core Assessment Performance by Region -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Region</h4>
 <p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg score comparison across regional teams.</p>
 </div>
 
-<div class="flex items-end justify-between h-[110px] px-3 pb-2.5 bg-slate-50/50 /45 rounded-xl gap-2.5 shadow-inner">
+<div class="flex items-end justify-between h-[110px] px-3 pb-2.5 bg-slate-50/50 /45 rounded-surface gap-2.5 shadow-inner">
 {% for r in perf_insights.region_insights %}
 <div class="flex flex-col items-center flex-1 group relative">
 <!-- Tooltip on Hover -->
-<div class="absolute -top-6 bg-slate-800 text-white edify-text-caption font-bold px-1.5 py-0.5 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none select-none z-20">
+<div class="absolute -top-6 bg-slate-800 text-white edify-text-caption font-bold px-1.5 py-0.5 rounded-small shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none select-none z-20">
 {{ r.score }}%
 </div>
 <!-- Premium Gradient Bar -->
@@ -91,7 +91,7 @@ style="height: {{ r.score|default:50 }}px;"
 </div>
 
 <!-- Card D: Staff vs Partner Performance by Intervention -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Staff vs Partner by Intervention</h4>
 <p class="edify-text-caption text-slate-400 font-semibold leading-normal">Average score improvement delta per focus area.</p>
@@ -108,9 +108,9 @@ style="height: {{ r.score|default:50 }}px;"
 <div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
 <span class="truncate edify-text-caption font-semibold text-slate-700">{{ row.label }}</span>
 <div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] edify-text-caption font-semibold">{{ row.staff_pct }}%</span>
+<span class="px-1.5 py-0.5 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] edify-text-caption font-semibold">{{ row.staff_pct }}%</span>
 <span class="text-slate-300 edify-text-caption font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 edify-text-caption font-semibold">{{ row.partner_pct }}%</span>
+<span class="px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-semibold">{{ row.partner_pct }}%</span>
 </div>
 </div>
 {% empty %}
@@ -130,14 +130,14 @@ Not enough staff/partner split data yet.
 </div>
 
 <!-- Card E: Intervention Impact Tracker (Trend Chart) -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Intervention Impact Tracker</h4>
 <p class="edify-text-caption text-slate-400 font-semibold leading-normal">Overall monthly assessment scores progression.</p>
 </div>
 
 <!-- Mini SVG Line Chart (built from real perf_insights.overall_trend history) -->
-<div class="h-[110px] flex items-center justify-center bg-slate-50/50 /45 rounded-xl px-2.5 shadow-inner">
+<div class="h-[110px] flex items-center justify-center bg-slate-50/50 /45 rounded-surface px-2.5 shadow-inner">
 {% if perf_insights.overall_trend_path %}
 <svg class="h-full w-full overflow-visible" viewBox="0 0 100 50">
 <defs>

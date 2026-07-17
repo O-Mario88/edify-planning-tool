@@ -57,7 +57,7 @@ this.updateMetrics();
 type="text"
 placeholder="Search schools by name or ID..."
 x-model="search"
-class="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 placeholder-slate-400"
+class="w-full h-10 pl-9 pr-4 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 placeholder-slate-400"
 >
 </div>
 
@@ -67,7 +67,7 @@ class="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 text-[12px] font
 <input
 type="checkbox"
 @change="toggleAll($event.target.checked)"
-class="rounded border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)]"
+class="rounded-control border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)]"
 >
 <span>Select All Visible Schools</span>
 </label>
@@ -85,13 +85,13 @@ class="space-y-6"
 {% regroup schools by sub_county as sub_county_list %}
 {% for item in sub_county_list %}
 <div class="space-y-2">
-<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded">
+<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded-small">
 {{ item.grouper.name }} Sub-county
 </h4>
 <div class="space-y-1.5">
 {% for s in item.list %}
 <div
-class="school-row flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-slate-200 edify-surface hover:bg-slate-50/20 transition-all shadow-sm"
+class="school-row flex items-center justify-between p-3 rounded-surface border border-slate-100 hover:border-slate-200 edify-surface hover:bg-slate-50/20 transition-all shadow-sm"
 x-data="{ name: '{{ s.name|escapejs }}', schoolId: '{{ s.school_id|escapejs }}' }"
 x-show="search === '' || name.toLowerCase().includes(search.toLowerCase()) || schoolId.toLowerCase().includes(search.toLowerCase())"
 >
@@ -103,7 +103,7 @@ value="{{ s.id }}"
 data-enrollment="{{ s.enrollment|default:0 }}"
 data-ssa="{{ s.current_ssa_average|default:0 }}"
 @change="updateMetrics()"
-class="school-checkbox rounded border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)] h-4 w-4 cursor-pointer"
+class="school-checkbox rounded-control border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)] h-4 w-4 cursor-pointer"
 >
 <div class="text-[12px] font-semibold text-slate-800">
 <p class="font-semibold text-slate-900 leading-snug">{{ s.name }}</p>
@@ -111,15 +111,15 @@ class="school-checkbox rounded border-slate-300 text-[var(--edify-primary)] focu
 </div>
 </div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption px-2 py-0.5 rounded font-semibold border {% if s.school_type == 'client' %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-purple-50 text-purple-700 border-purple-100{% endif %}">
+<span class="edify-text-caption px-2 py-0.5 rounded-pill font-semibold border {% if s.school_type == 'client' %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-purple-50 text-purple-700 border-purple-100{% endif %}">
 {{ s.get_school_type_display }}
 </span>
 {% if s.current_ssa_average %}
-<span class="edify-text-caption font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-100 flex items-center gap-1">
+<span class="edify-text-caption font-semibold px-1.5 py-0.5 rounded-pill bg-blue-50 text-blue-800 border border-blue-100 flex items-center gap-1">
 SSA: {{ s.current_ssa_average|floatformat:1 }}
 </span>
 {% else %}
-<span class="edify-text-caption font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 italic">No SSA</span>
+<span class="edify-text-caption font-semibold px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-500 italic">No SSA</span>
 {% endif %}
 </div>
 </div>
@@ -131,7 +131,7 @@ SSA: {{ s.current_ssa_average|floatformat:1 }}
 
 <!-- Planning Footprint Summary Panel -->
 <div
-class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 text-[12px] font-bold text-slate-600 shadow-sm"
+class="bg-slate-50 border border-slate-200/80 rounded-surface p-3.5 space-y-2 text-[12px] font-bold text-slate-600 shadow-sm"
 x-show="selectedCount > 0"
 style="display: none;"
 >
@@ -157,13 +157,13 @@ style="display: none;"
 <button
 type="button"
 @click="$dispatch('close-drawer')"
-class="px-5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
+class="px-5 h-9 rounded-control bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
 >
 Cancel
 </button>
 <button
 type="submit"
-class="px-6 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
+class="px-6 h-9 rounded-control btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
 :disabled="selectedCount === 0"
 :class="selectedCount === 0 ? 'opacity-50 cursor-not-allowed' : ''"
 >
@@ -173,7 +173,7 @@ class="px-6 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] 
 </form>
 {% else %}
 <!-- Empty State -->
-<div class="py-16 text-center text-slate-400 font-semibold bg-slate-50/40 rounded-lg border border-dashed border-slate-200">
+<div class="py-16 text-center text-slate-400 font-semibold bg-slate-50/40 rounded-surface border border-dashed border-slate-200">
 <div class="max-w-xs mx-auto space-y-3">
 <svg class="h-10 w-10 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

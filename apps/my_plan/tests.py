@@ -14,9 +14,11 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
+from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.activities.models import Activity
 from apps.core.enums import ActivityStatus, ActivityType
 from apps.core.rbac import EdifyRole
+from apps.evidence.models import EvidenceRecord
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -37,15 +39,27 @@ class SubmitForReviewActionTest(TestCase):
         )
 
     def _make_activity(self, responsible_staff_id):
-        return Activity.objects.create(
+        owner = User.objects.get(id=responsible_staff_id)
+        profile, _ = StaffProfile.objects.get_or_create(user=owner)
+        StaffSchoolAssignment.objects.get_or_create(
+            staff=profile, school_id=self.school.id
+        )
+        activity = Activity.objects.create(
             school=self.school,
             delivery_type="staff",
             activity_type=ActivityType.SCHOOL_VISIT,
             status=ActivityStatus.COMPLETED,
-            responsible_staff_id=responsible_staff_id,
+            responsible_staff_id=profile.id,
             scheduled_date=timezone.now(),
             salesforce_activity_id="SV-SUBMIT-1",
         )
+        EvidenceRecord.objects.create(
+            activity=activity,
+            kind="photo",
+            uri=f"submit-{activity.id}.jpg",
+            uploaded_by=owner.id,
+        )
+        return activity
 
     def test_cceo_submission_routes_to_pl_review_not_a_fake_status(self):
         cceo = User.objects.create_user(

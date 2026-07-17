@@ -10,14 +10,14 @@
 <div class="space-y-3">
 <div class="flex items-center justify-between edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <span>Upcoming Today</span>
-<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 edify-text-caption font-semibold">{{ upcoming_today|length }}</span>
+<span class="px-2 py-0.5 rounded-pill bg-blue-50 text-blue-700 edify-text-caption font-semibold">{{ upcoming_today|length }}</span>
 </div>
 
 {% if upcoming_today %}
 {% for a in upcoming_today %}
 <div class="card p-4 flex flex-col justify-between hover:border-[var(--edify-primary)]/30 transition-all">
 <div class="flex items-center justify-between mb-2">
-<span class="edify-text-caption font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg> {{ a.time }}</span>
+<span class="edify-text-caption font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-pill"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg> {{ a.time }}</span>
 <span class="text-[12px] text-slate-400 font-bold">{{ a.district }}</span>
 </div>
 <h3 class="text-[14px] font-semibold text-slate-800 leading-tight">{{ a.title }}</h3>
@@ -44,7 +44,7 @@ No activities scheduled for today.
 <div class="space-y-3">
 <div class="flex items-center justify-between edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <span>Attention Needed</span>
-<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 edify-text-caption font-semibold">{{ attention_needed|length }}</span>
+<span class="px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700 edify-text-caption font-semibold">{{ attention_needed|length }}</span>
 </div>
 
 {% if attention_needed %}
@@ -53,7 +53,7 @@ No activities scheduled for today.
 <div class="absolute left-0 top-0 bottom-0 w-1 {% if alert.type == 'Activity SF ID Missing' %}bg-red-500{% else %}bg-amber-400{% endif %}"></div>
 
 <div class="pl-2">
-<span class="inline-flex items-center rounded px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider {{ alert.badge_class }}">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider {{ alert.badge_class }}">
 {{ alert.type }}
 </span>
 <h3 class="text-[14px] font-semibold text-slate-800 leading-tight mt-2.5">{{ alert.title }}</h3>

@@ -44,6 +44,7 @@ from apps.targets.models import MonthlyPersonalTarget, TargetAdjustment, TargetA
 from apps.targets.my_targets import (
     MyTargetQueryService,
     TargetAchievementService,
+    active_target_areas,
     pooled_monthly_series,
     weighted_period_pct,
 )
@@ -60,6 +61,10 @@ class TargetFormulaEndToEndTest(TestCase):
     def setUp(self):
         self.now = Cal.current()
         self.fy = self.now["fy"]
+        # Reference rows are migration data and can be removed by an earlier
+        # TransactionTestCase when --keepdb is used. Exercise the production
+        # recovery path before this integration fixture reads them directly.
+        active_target_areas()
 
         self.region = Region.objects.create(name="TFU Region")
         self.district = District.objects.create(name="TFU District", region=self.region)

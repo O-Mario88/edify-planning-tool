@@ -6,6 +6,22 @@
 {% block shell_content %}
 <div class="h-full flex flex-col overflow-hidden" x-data="{
 activeTab: 'evidence',
+allowedTabs: ['evidence', 'ssa', 'attendance'],
+init() {
+const requested = new URL(window.location.href).searchParams.get('tab');
+if (this.allowedTabs.includes(requested)) this.activeTab = requested;
+window.addEventListener('popstate', () => {
+const tab = new URL(window.location.href).searchParams.get('tab');
+this.activeTab = this.allowedTabs.includes(tab) ? tab : 'evidence';
+});
+},
+setTab(tab) {
+if (!this.allowedTabs.includes(tab) || tab === this.activeTab) return;
+this.activeTab = tab;
+const url = new URL(window.location.href);
+url.searchParams.set('tab', tab);
+window.history.pushState({}, '', url);
+},
 returnOpen: false,
 checklist: {
 evidence_exists: {% if checks.evidence_exists %}true{% else %}false{% endif %},
@@ -24,12 +40,12 @@ zoomSrc: ''
 <!-- Top Navigation bar of workspace -->
 <div class="edify-surface border-b border-slate-200 px-6 py-3 shrink-0 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<a href="/ia/verification/" class="h-8 w-8 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors">
+<a href="/ia/verification/" class="h-8 w-8 rounded-control hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </a>
 <div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold uppercase bg-[var(--edify-chart-blue)]/10 text-[var(--edify-chart-blue)] px-1.5 py-0.5 rounded">FY25</span>
+<span class="edify-text-caption font-semibold uppercase bg-[var(--edify-chart-blue)]/10 text-[var(--edify-chart-blue)] px-1.5 py-0.5 rounded-pill">FY{{ act.fy }}</span>
 <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">Review Workspace</h2>
 </div>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Activity ID: #{{ act.id }}</p>
@@ -38,11 +54,11 @@ zoomSrc: ''
 
 <!-- Right links -->
 <div class="flex items-center gap-2">
-<a href="/activities/{{ act.id }}/timeline/" class="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-bold flex items-center gap-1.5 transition-colors">
+<a href="/activities/{{ act.id }}/timeline/" class="h-8 px-3 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-bold flex items-center gap-1.5 transition-colors">
 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 Audit Timeline
 </a>
-<a href="/ia/compare/?activity_id={{ act.id }}" class="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-bold flex items-center gap-1.5 transition-colors">
+<a href="/ia/compare/?activity_id={{ act.id }}" class="h-8 px-3 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-bold flex items-center gap-1.5 transition-colors">
 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
 Compare Side-by-Side
 </a>
@@ -109,7 +125,7 @@ Compare Side-by-Side
 <!-- Purpose Section -->
 <div class="border-t border-slate-100 pt-5">
 <h4 class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mb-2">Purpose Description</h4>
-<p class="text-[12px] text-slate-600 font-medium leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+<p class="text-[12px] text-slate-600 font-medium leading-relaxed bg-slate-50 p-3 rounded-surface border border-slate-100">
 {{ act.activity_purpose_text|default:"No purpose statement recorded." }}
 </p>
 </div>
@@ -118,14 +134,14 @@ Compare Side-by-Side
 <!-- CENTRE PANEL: Evidence Viewer -->
 <div class="flex-1 flex flex-col overflow-hidden">
 <!-- Tabs header -->
-<div class="edify-surface border-b border-slate-200 px-6 shrink-0 flex items-center gap-4">
-<button @click="activeTab = 'evidence'" :class="activeTab === 'evidence' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+<div class="edify-surface border-b border-slate-200 px-6 shrink-0 flex items-center gap-4" role="tablist" aria-label="IA review evidence views">
+<button id="ia-review-tab-evidence" type="button" role="tab" aria-controls="ia-review-panel-evidence" :aria-selected="activeTab === 'evidence'" :tabindex="activeTab === 'evidence' ? 0 : -1" @click="setTab('evidence')" :class="activeTab === 'evidence' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
 Evidence Attachments ({{ evidence_list|length }})
 </button>
-<button @click="activeTab = 'ssa'" :class="activeTab === 'ssa' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+<button id="ia-review-tab-ssa" type="button" role="tab" aria-controls="ia-review-panel-ssa" :aria-selected="activeTab === 'ssa'" :tabindex="activeTab === 'ssa' ? 0 : -1" @click="setTab('ssa')" :class="activeTab === 'ssa' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
 School Assessment (SSA)
 </button>
-<button @click="activeTab = 'attendance'" :class="activeTab === 'attendance' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+<button id="ia-review-tab-attendance" type="button" role="tab" aria-controls="ia-review-panel-attendance" :aria-selected="activeTab === 'attendance'" :tabindex="activeTab === 'attendance' ? 0 : -1" @click="setTab('attendance')" :class="activeTab === 'attendance' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
 Attendance Sheet
 </button>
 </div>
@@ -134,32 +150,32 @@ Attendance Sheet
 <div class="flex-1 overflow-y-auto p-6">
 
 <!-- Tab: Evidence Records -->
-<div x-show="activeTab === 'evidence'" class="space-y-6">
+<div id="ia-review-panel-evidence" role="tabpanel" x-show="activeTab === 'evidence'" class="space-y-6">
 {% if evidence_list %}
 <div class="grid grid-cols-2 gap-4">
 {% for ev in evidence_list %}
-<div class="edify-surface p-3 rounded-lg  shadow-sm space-y-3">
+<div class="edify-surface p-3 rounded-surface  shadow-sm space-y-3">
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
 <span class="edify-text-caption font-semibold text-slate-800 truncate max-w-[200px]" title="{{ ev.original_name }}">{{ ev.original_name }}</span>
-<span class="px-1.5 py-0.5 rounded edify-text-caption font-semibold uppercase bg-blue-50 text-blue-600 border border-blue-100">{{ ev.kind }}</span>
+<span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-blue-50 text-blue-600 border border-blue-100">{{ ev.kind }}</span>
 </div>
 <!-- Image thumbnail preview or file icon. Always served through the
      authorized endpoint (scope + quarantine + hardened headers) — never
      link the raw /uploads/ storage path. -->
 {% if ev.mime_type and 'image' in ev.mime_type %}
-<div class="aspect-video relative bg-slate-50 rounded-xl overflow-hidden group cursor-zoom-in" @click="zoomActive = true; zoomSrc = '/api/evidence/{{ ev.id }}/file'">
+<div class="aspect-video relative bg-slate-50 rounded-surface overflow-hidden group cursor-zoom-in" @click="zoomActive = true; zoomSrc = '/api/evidence/{{ ev.id }}/file'">
 <img src="/api/evidence/{{ ev.id }}/file" class="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Evidence Preview">
 <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white edify-text-caption font-bold">
 Click to Expand Image
 </div>
 </div>
 {% elif ev.mime_type == 'application/pdf' %}
-<div class="aspect-video bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
+<div class="aspect-video bg-slate-50 rounded-surface overflow-hidden border border-slate-200">
 <embed src="/api/evidence/{{ ev.id }}/file" type="application/pdf" class="w-full h-full" />
 </div>
 <a href="/api/evidence/{{ ev.id }}/file" target="_blank" class="edify-text-caption font-bold text-[var(--edify-chart-blue)] hover:underline">Open Full PDF</a>
 {% else %}
-<div class="aspect-video bg-slate-50 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2">
+<div class="aspect-video bg-slate-50 border border-dashed border-slate-200 rounded-surface flex flex-col items-center justify-center gap-2">
 <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
 <a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-bold text-[var(--edify-chart-blue)] hover:underline">Download Document (PDF/Doc)</a>
 </div>
@@ -171,21 +187,21 @@ Click to Expand Image
 {% endfor %}
 </div>
 {% else %}
-<div class="edify-surface p-12 text-center text-slate-400 font-semibold rounded-lg border border-slate-200">
+<div class="edify-surface p-12 text-center text-slate-400 font-semibold rounded-surface border border-slate-200">
 No evidence uploads available for this activity.
 </div>
 {% endif %}
 </div>
 
 <!-- Tab: SSA Record Details -->
-<div x-show="activeTab === 'ssa'" class="space-y-4">
-<div class="edify-surface p-5 rounded-lg  shadow-sm space-y-4">
+<div id="ia-review-panel-ssa" role="tabpanel" x-show="activeTab === 'ssa'" class="space-y-4">
+<div class="edify-surface p-5 rounded-surface  shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">School Self-Assessment Baseline</h3>
 {% if checks.ssa_uploaded %}
-<span class="px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-green-50 text-green-700 border border-green-200">Verified</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-green-50 text-green-700 border border-green-200">Verified</span>
 {% else %}
-<span class="px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200">Missing Baseline</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200">Missing Baseline</span>
 {% endif %}
 </div>
 
@@ -194,38 +210,30 @@ No evidence uploads available for this activity.
 </p>
 
 <!-- Intervention breakdown if SSA available -->
-{% if checks.ssa_uploaded %}
+{% if ssa_scores %}
 <div class="grid grid-cols-2 gap-3 mt-4 text-[12px] font-bold">
-<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Teaching &amp; Learning</span>
-<span class="text-slate-800">8.2 / 10</span>
+{% for score in ssa_scores %}
+<div class="flex items-center justify-between p-2 bg-slate-50 rounded-small border border-slate-100">
+<span class="text-slate-500">{{ score.label }}</span>
+<span class="text-slate-800">{{ score.value|floatformat:1 }} / 10</span>
 </div>
-<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Christian Ethos</span>
-<span class="text-slate-800">9.0 / 10</span>
+{% endfor %}
 </div>
-<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Leadership &amp; Governance</span>
-<span class="text-slate-800">7.5 / 10</span>
-</div>
-<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Safe Environment</span>
-<span class="text-slate-800">8.0 / 10</span>
-</div>
-</div>
+{% elif checks.ssa_uploaded %}
+<div class="edify-empty-state mt-4">The SSA check is present, but no IA-confirmed FY{{ act.fy }} intervention scores are available.</div>
 {% endif %}
 </div>
 </div>
 
 <!-- Tab: Attendance Sheet -->
-<div x-show="activeTab === 'attendance'" class="space-y-4">
-<div class="edify-surface p-5 rounded-lg  shadow-sm space-y-4">
+<div id="ia-review-panel-attendance" role="tabpanel" x-show="activeTab === 'attendance'" class="space-y-4">
+<div class="edify-surface p-5 rounded-surface  shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Participant Attendance Verification</h3>
 {% if checks.attendance_valid %}
-<span class="px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-green-50 text-green-700 border border-green-200">Valid</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-green-50 text-green-700 border border-green-200">Valid</span>
 {% else %}
-<span class="px-2.5 py-0.5 rounded-full edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200">Invalid / Missing</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200">Invalid / Missing</span>
 {% endif %}
 </div>
 
@@ -234,15 +242,15 @@ No evidence uploads available for this activity.
 </p>
 
 <div class="grid grid-cols-3 gap-4 mt-2">
-<div class="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+<div class="bg-slate-50 border border-slate-100 p-3 rounded-surface text-center">
 <span class="edify-text-caption uppercase font-bold text-slate-400">Teachers</span>
 <span class="text-[20px] font-semibold text-slate-800 mt-1 block">{{ act.teachers_attended|default:0 }}</span>
 </div>
-<div class="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+<div class="bg-slate-50 border border-slate-100 p-3 rounded-surface text-center">
 <span class="edify-text-caption uppercase font-bold text-slate-400">School Leaders</span>
 <span class="text-[20px] font-semibold text-slate-800 mt-1 block">{{ act.leaders_attended|default:0 }}</span>
 </div>
-<div class="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+<div class="bg-slate-50 border border-slate-100 p-3 rounded-surface text-center">
 <span class="edify-text-caption uppercase font-bold text-slate-400">Others</span>
 <span class="text-[20px] font-semibold text-slate-800 mt-1 block">{{ act.other_participants|default:0 }}</span>
 </div>
@@ -254,19 +262,19 @@ No evidence uploads available for this activity.
 <h4 class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Attendance Registry</h4>
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 {% for school in cluster_schools %}
-<div class="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
+<div class="p-3 rounded-surface border border-slate-100 bg-slate-50/50 flex items-center justify-between">
 <div>
 <span class="font-bold text-slate-800 block text-[12px] leading-tight">{{ school.name }}</span>
 <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
 </div>
 {% if school.id in act.attended_school_ids %}
-<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded edify-text-caption font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150">
-<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150">
+<span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
 Attended
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded edify-text-caption font-semibold uppercase bg-slate-100 text-slate-400 border border-slate-200/50">
-<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-slate-100 text-slate-400 border border-slate-200/50">
+<span class="w-1.5 h-1.5 rounded-pill bg-slate-400"></span>
 Absent
 </span>
 {% endif %}
@@ -291,8 +299,8 @@ Absent
 {% csrf_token %}
 
 <!-- Checkbox item: Evidence -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Evidence records exist</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Physical files/photos uploaded</span>
@@ -300,8 +308,8 @@ Absent
 </label>
 
 <!-- Checkbox item: Attendance -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Attendance valid</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Headcount matches evidence sheet</span>
@@ -309,8 +317,8 @@ Absent
 </label>
 
 <!-- Checkbox item: SSA -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="ssa_uploaded" x-model="checklist.ssa_uploaded" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="ssa_uploaded" x-model="checklist.ssa_uploaded" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">SSA Baseline uploaded</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Required for Core Schools</span>
@@ -318,8 +326,8 @@ Absent
 </label>
 
 <!-- Checkbox item: Correct School -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="correct_school" x-model="checklist.correct_school" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="correct_school" x-model="checklist.correct_school" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Correct School associated</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">School lookup matches execution</span>
@@ -327,8 +335,8 @@ Absent
 </label>
 
 <!-- Checkbox item: Correct Cluster -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="correct_cluster" x-model="checklist.correct_cluster" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="correct_cluster" x-model="checklist.correct_cluster" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Correct Cluster linked</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Operational cluster is correct</span>
@@ -336,8 +344,8 @@ Absent
 </label>
 
 <!-- Checkbox item: Correct Intervention -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="correct_intervention" x-model="checklist.correct_intervention" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="correct_intervention" x-model="checklist.correct_intervention" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Correct focus intervention</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Intervention type is valid</span>
@@ -345,8 +353,8 @@ Absent
 </label>
 
 <!-- Checkbox item: SF ID -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="sf_id_entered" x-model="checklist.sf_id_entered" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="sf_id_entered" x-model="checklist.sf_id_entered" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Salesforce Activity ID linked</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">SVE- or TS- format matching</span>
@@ -354,8 +362,8 @@ Absent
 </label>
 
 <!-- Checkbox item: Duplicates -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="duplicate_check_passed" x-model="checklist.duplicate_check_passed" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="duplicate_check_passed" x-model="checklist.duplicate_check_passed" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Duplicate checks passed</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">No overlap flags found</span>
@@ -363,8 +371,8 @@ Absent
 </label>
 
 <!-- Checkbox item: Analytics Ready -->
-<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
-<input type="checkbox" name="analytics_ready" x-model="checklist.analytics_ready" class="mt-0.5 rounded text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
+<label class="flex items-start gap-2.5 p-2 rounded-surface hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="analytics_ready" x-model="checklist.analytics_ready" class="mt-0.5 rounded-control text-[var(--edify-chart-blue)] focus:ring-[var(--edify-chart-blue)]">
 <div>
 <span class="text-[12px] font-bold block">Quality is Analytics ready</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5">Certified for official analytics</span>
@@ -379,14 +387,14 @@ Absent
 <button
 form="verify-form"
 type="submit"
-class="w-full h-10 rounded-lg text-white font-semibold text-[12px] flex items-center justify-center transition-all bg-[var(--edify-chart-blue)] hover:bg-[var(--edify-chart-blue)] shadow-sm"
+class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center transition-all bg-[var(--edify-chart-blue)] hover:bg-[var(--edify-chart-blue)] shadow-sm"
 >
 Verify &amp; Approve Activity
 </button>
 <button
 @click="returnOpen = true"
 type="button"
-class="w-full h-10 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-10 rounded-control border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Return for Correction
 </button>
@@ -417,10 +425,10 @@ style="display: none;"
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Select Reason(s)</label>
 <!-- Multi-select Reasons grid -->
-<div class="max-h-56 overflow-y-auto space-y-1.5  rounded-xl p-2.5 bg-slate-50/50">
+<div class="max-h-56 overflow-y-auto space-y-1.5  rounded-surface p-2.5 bg-slate-50/50">
 {% for reason in suggested_reasons %}
-<label class="flex items-center gap-2 p-1.5 edify-hover-surface rounded cursor-pointer transition-colors text-[12px] font-semibold">
-<input type="checkbox" name="reasons" value="{{ reason }}" class="rounded text-rose-600 focus:ring-rose-500">
+<label class="flex items-center gap-2 p-1.5 edify-hover-surface rounded-small cursor-pointer transition-colors text-[12px] font-semibold">
+<input type="checkbox" name="reasons" value="{{ reason }}" class="rounded-control text-rose-600 focus:ring-rose-500">
 <span>{{ reason }}</span>
 </label>
 {% endfor %}
@@ -432,7 +440,7 @@ style="display: none;"
 <textarea
 name="comment"
 placeholder="Details of corrections required e.g. Attendance sheet uploaded has only 14 teachers but activity recorded 25 participants."
-class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[12px] edify-focus-surface focus:outline-none h-24 resize-none font-semibold"
+class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface focus:outline-none h-24 resize-none font-semibold"
 ></textarea>
 </div>
 </form>
@@ -442,14 +450,14 @@ class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[12px] e
 <button
 form="return-form"
 type="submit"
-class="w-full h-10 rounded-lg text-white font-semibold text-[12px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 shadow-sm transition-all"
+class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 shadow-sm transition-all"
 >
 Confirm &amp; Return
 </button>
 <button
 @click="returnOpen = false"
 type="button"
-class="w-full h-10 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-10 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>
@@ -467,11 +475,11 @@ class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center jus
 style="display: none;"
 @click="zoomActive = false"
 >
-<div class="max-w-4xl w-full edify-surface rounded-lg overflow-hidden p-2 relative" @click.stop>
-<button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition-colors" @click="zoomActive = false">
+<div class="max-w-4xl w-full edify-surface rounded-surface overflow-hidden p-2 relative" @click.stop>
+<button class="absolute top-4 right-4 w-8 h-8 rounded-pill bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition-colors" @click="zoomActive = false">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>
-<img :src="zoomSrc" class="w-full h-auto object-contain max-h-[80vh] rounded-xl" alt="Evidence zoom">
+<img :src="zoomSrc" class="w-full h-auto object-contain max-h-[80vh] rounded-surface" alt="Evidence zoom">
 </div>
 </div>
 

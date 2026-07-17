@@ -14,13 +14,13 @@
 
 <div class="grid md:grid-cols-2 gap-6">
 <!-- School Upload Panel -->
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <div>
 <h3 class="text-[15px] font-semibold text-slate-800">School Directory Upload</h3>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Upload a CSV or Excel sheet containing new schools, district definitions, and account owners.</p>
 </div>
 
-<a href="/schools/upload/template" class="inline-flex items-center gap-1.5 h-8 px-3 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-md transition-colors">
+<a href="/schools/upload/template" class="inline-flex items-center gap-1.5 h-8 px-3 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-control transition-colors">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Download School Template
 </a>
@@ -41,7 +41,7 @@ name="schools_file"
 id="schools_file"
 accept=".csv, .xlsx"
 required
-class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[12px] file:font-semibold file:bg-[var(--edify-surface-muted)] file:text-[var(--edify-accent)] hover:file:bg-[var(--edify-surface-muted)]/80 mt-2"
+class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-control file:border-0 file:text-[12px] file:font-semibold file:bg-[var(--edify-surface-muted)] file:text-[var(--edify-accent)] hover:file:bg-[var(--edify-surface-muted)]/80 mt-2"
 >
 </div>
 
@@ -50,7 +50,7 @@ class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:roun
 id="update_existing"
 name="update_existing"
 type="checkbox"
-class="h-4 w-4 text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300 rounded"
+class="h-4 w-4 text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300 rounded-control"
 >
 <label for="update_existing" class="ml-2 block text-[12px] text-slate-500 font-semibold select-none">
 Update existing school records
@@ -60,7 +60,7 @@ Update existing school records
 <div class="flex items-center gap-3">
 <button
 type="submit"
-class="h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-all"
+class="h-10 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-all"
 >
 Upload Schools
 </button>
@@ -78,13 +78,13 @@ Upload Schools
 </div>
 
 <!-- SSA Upload Panel -->
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <div>
 <h3 class="text-[15px] font-semibold text-slate-800">School Self-Assessment (SSA)</h3>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Upload verified SSA scores for the current fiscal year. School planning is locked until current SSA is recorded.</p>
 </div>
 
-<a href="/ssa/upload/template" class="inline-flex items-center gap-1.5 h-8 px-3 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-md transition-colors">
+<a href="/ssa/upload/template" class="inline-flex items-center gap-1.5 h-8 px-3 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-control transition-colors">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Download SSA Template
 </a>
@@ -105,14 +105,14 @@ name="ssa_file"
 id="ssa_file"
 accept=".csv, .xlsx"
 required
-class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[12px] file:font-semibold file:bg-[var(--edify-surface-muted)] file:text-[var(--edify-accent)] hover:file:bg-[var(--edify-surface-muted)]/80 mt-2"
+class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-control file:border-0 file:text-[12px] file:font-semibold file:bg-[var(--edify-surface-muted)] file:text-[var(--edify-accent)] hover:file:bg-[var(--edify-surface-muted)]/80 mt-2"
 >
 </div>
 
 <div class="flex items-center gap-3">
 <button
 type="submit"
-class="h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-all"
+class="h-10 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-all"
 >
 Upload SSA
 </button>

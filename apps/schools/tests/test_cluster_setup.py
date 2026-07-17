@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.models import StaffProfile, User
+from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.core.enums import SsaIntervention
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region, SubCounty
@@ -336,22 +336,10 @@ class ClusterSetupTest(APITestCase):
         self.assertIn("option", response.content.decode())
         self.assertIn(self.user.name, response.content.decode())
 
-    # ── Regressions: planning_readiness dual vocabulary (HIGH finding §1) ──────
+    # ── Regression: planning-readiness canonical vocabulary ──────────────────
 
     def test_planning_ready_counters_recognize_production_vocabulary(self):
-        """ "Planning Ready" counters must count production-vocabulary states
-        (ready_for_support_planning/ready_for_baseline_ssa), not just the
-        legacy "ready" literal that recompute_quality_and_readiness() only
-        ever writes under pytest — production never writes "ready", so
-        before this fix the counters were structurally zero outside tests.
-
-        recompute() always takes the test-mode branch under the test
-        runner (sys.argv contains "test"), so School.objects.create()/.save()
-        can never itself produce a production-vocabulary value here —
-        .update() (which bypasses save()) is the only way to reproduce a
-        production row inside this test.
-        """
-        from apps.accounts.models import StaffSchoolAssignment
+        """Counters use the same persisted readiness codes in every runtime."""
         from apps.core.enums import PlanningReadiness
 
         school = School.objects.create(
@@ -390,6 +378,27 @@ class ClusterSetupTest(APITestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertGreaterEqual(resp.context["planning_ready_schools"], 1)
 
+    def test_system_health_flags_legacy_readiness_rows_for_repair(self):
+        school = School.objects.create(
+            school_id="SCH-951",
+            name="Legacy Readiness School",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        # Simulates a pre-migration row. Direct update is intentional here so
+        # the model's canonical state transition does not normalize it first.
+        School.objects.filter(pk=school.pk).update(planning_readiness="locked")
+
+        from apps.system_health.services import report as system_health_report
+
+        self.assertGreaterEqual(
+            system_health_report()["workflowIssues"][
+                "legacyOrUnknownPlanningReadiness"
+            ],
+            1,
+        )
+
     # ── Regressions: assign_school() dropping recomputed fields (§2) ───────────
 
     def test_assign_school_persists_recomputed_readiness_and_quality(self):
@@ -409,8 +418,10 @@ class ClusterSetupTest(APITestCase):
             school_type="client",
         )
         self.assertIsNone(school.cluster_id)
-        self.assertEqual(school.planning_readiness, "locked")
+        self.assertEqual(school.planning_readiness, "requires_cluster")
         self.assertEqual(school.data_quality_score, 10)
+
+        StaffSchoolAssignment.objects.create(staff=self.profile, school_id=school.id)
 
         assign_school(school.school_id, {"clusterId": self.cluster1.id}, self.user)
 
@@ -420,7 +431,7 @@ class ClusterSetupTest(APITestCase):
         # Before the fix these stayed at their pre-assignment (missing-cluster)
         # values in the DB because update_fields excluded them — only
         # cluster_id/cluster_status/updated_at actually reached the row.
-        self.assertEqual(school.planning_readiness, "ready")
+        self.assertEqual(school.planning_readiness, "ready_for_baseline_ssa")
         self.assertEqual(school.data_quality_score, 30)
 
     # ── Regressions: SchoolClusterAssignment desync (§3) ────────────────────────

@@ -14,7 +14,7 @@ from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.schools.models import School
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.core.enums import SsaIntervention
 
 from apps.clusters.services import (
@@ -23,8 +23,8 @@ from apps.clusters.services import (
     cluster_weakest_interventions,
     cluster_intervention_summary,
     cluster_activity_impact,
+    assign_school as assign_school_to_cluster,
     create_cluster as create_cluster_service,
-    sync_school_cluster_assignment,
     ClusterDashboardService,
     ClusterPlanningService,
     ClusterActionPlannerService,
@@ -465,15 +465,9 @@ def create_cluster_view(request):
                     cluster = get_scoped_object_or_404(
                         Cluster, request.user, id=cluster_id, deleted_at__isnull=True
                     )
-                    with transaction.atomic():
-                        school.cluster_id = cluster.id
-                        school.cluster_status = "clustered"
-                        school.planning_readiness = "ready"
-                        school.save()
-
-                        sync_school_cluster_assignment(
-                            school, cluster, request.user.user_id
-                        )
+                    assign_school_to_cluster(
+                        school.school_id, {"clusterId": cluster.id}, request.user
+                    )
 
                     # Log audit event
                     from apps.audit.services import log as audit_log
@@ -529,18 +523,31 @@ def cluster_detail_view(request, cluster_id):
 def create_cluster_drawer_view(request):
     import json
 
-    districts = District.objects.all().order_by("name")
-    sub_counties = SubCounty.objects.all().order_by("name")
+    scope = resolve_user_scope(request.user)
+    districts = District.objects.all()
+    if not scope.country_scope:
+        districts = districts.filter(id__in=scope.district_ids)
+    districts = districts.order_by("name")
+
+    district_ids = list(districts.values_list("id", flat=True))
+    sub_counties = SubCounty.objects.filter(district_id__in=district_ids).order_by(
+        "name"
+    )
 
     sub_counties_list = [
         {"id": sc.id, "name": sc.name, "district_id": sc.district_id}
         for sc in sub_counties
     ]
+    requested_district_id = request.GET.get("district_id", "").strip()
+    selected_district_id = (
+        requested_district_id if requested_district_id in district_ids else ""
+    )
 
     context = {
         "districts": districts,
         "sub_counties_json": json.dumps(sub_counties_list),
-        "drawer_size": "md",
+        "selected_district_id": selected_district_id,
+        "drawer_size": "xl",
         "drawer_type": "center",
         "assign_school_id": request.GET.get("assign_school_id", "").strip(),
     }
@@ -696,23 +703,19 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             # district-level clusters with no covered sub-counties) in the
             # cluster's district.
             if covered_sub_counties:
-                school = School.objects.filter(
+                school = school_queryset(resolve_user_scope(user)).filter(
                     id=sid,
                     sub_county_id__in=covered_sub_counties,
                     deleted_at__isnull=True,
                 ).first()
             else:
-                school = School.objects.filter(
+                school = school_queryset(resolve_user_scope(user)).filter(
                     id=sid, district_id=cluster.district_id, deleted_at__isnull=True
                 ).first()
             if school:
-                with transaction.atomic():
-                    school.cluster_id = cluster.id
-                    school.cluster_status = "clustered"
-                    school.recompute_quality_and_readiness()
-                    school.save()
-
-                    sync_school_cluster_assignment(school, cluster, user.user_id)
+                assign_school_to_cluster(
+                    school.school_id, {"clusterId": cluster.id}, user
+                )
                 assigned_schools.append(school.name)
 
                 audit_log(

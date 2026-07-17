@@ -102,7 +102,8 @@ class School(SoftDeleteModel):
         max_length=32, choices=DuplicateStatus.choices, default=DuplicateStatus.NONE
     )
 
-    # Cluster — plain ref; FK added by the clusters app migration.
+    # Canonical operational cluster membership. The clusters app maintains its
+    # older join table as a deterministic compatibility projection only.
     cluster_id = models.CharField(max_length=30, null=True, blank=True)
     cluster_status = models.CharField(
         max_length=32, choices=ClusterStatus.choices, default=ClusterStatus.UNCLUSTERED
@@ -114,7 +115,7 @@ class School(SoftDeleteModel):
     planning_readiness = models.CharField(
         max_length=32,
         choices=PlanningReadiness.choices,
-        default=PlanningReadiness.LOCKED,
+        default=PlanningReadiness.REQUIRES_CLUSTER,
     )
     data_quality_score = models.IntegerField(default=100)
     data_quality_status = models.CharField(max_length=64, default="Clean")
@@ -182,26 +183,16 @@ class School(SoftDeleteModel):
         else:
             self.data_quality_status = "Needs Cleanup"
 
-        # 2. Compute Planning Readiness
-        import sys
-
-        is_testing = "test" in sys.argv or "pytest" in sys.modules
-        if is_testing:
-            if self.cluster_id or self.current_fy_ssa_status == "done":
-                self.planning_readiness = "ready"
-            elif self.current_fy_ssa_status in ("scheduled", "partner_assigned"):
-                self.planning_readiness = "limited"
-            else:
-                self.planning_readiness = "locked"
-            return
-
+        # 2. Compute Planning Readiness. This exact state machine runs in
+        # every environment; test-only vocabulary caused dashboards and live
+        # data to disagree about whether a school could be planned.
         if not self.cluster_id:
-            self.planning_readiness = "requires_cluster"
+            self.planning_readiness = PlanningReadiness.REQUIRES_CLUSTER
         else:
             if self.current_fy_ssa_status != "done":
-                self.planning_readiness = "ready_for_baseline_ssa"
+                self.planning_readiness = PlanningReadiness.READY_FOR_BASELINE_SSA
             else:
-                self.planning_readiness = "ready_for_support_planning"
+                self.planning_readiness = PlanningReadiness.READY_FOR_SUPPORT_PLANNING
 
     def __str__(self) -> str:
         return f"{self.name} ({self.school_id})"
@@ -323,6 +314,8 @@ class School(SoftDeleteModel):
         create_data_quality_issues(self)
 
         if sub_county_changed or district_changed:
+            # Compatibility projection only: School.cluster_id remains the
+            # canonical membership source for all readers and decisions.
             SchoolClusterAssignment.objects.filter(school=self).delete()
             if self.cluster_id:
                 SchoolClusterAssignment.objects.get_or_create(

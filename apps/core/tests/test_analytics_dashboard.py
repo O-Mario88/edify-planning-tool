@@ -97,6 +97,21 @@ class AnalyticsDashboardTest(TestCase):
         self.assertContains(response, "Analytics")
         self.assertContains(response, "Kampala")
         self.assertContains(response, "Central Region")
+        self.assertContains(response, "Download CSV")
+        self.assertContains(response, "Send to Inbox")
+
+    def test_analytics_csv_export_uses_current_authorized_dashboard_data(self):
+        self.client.login(email="cd@edify.org", password="testpassword")
+        response = self.client.get(
+            reverse("frontend:analytics_export"),
+            {"fy": "2026", "quarter": "Q2"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn("edify-analytics-", response["Content-Disposition"])
+        content = response.content.decode("utf-8")
+        self.assertIn("Metric,Value,Context,Generated at", content)
+        self.assertIn("Overall Target Achievement", content)
 
     def test_htmx_partial_render(self):
         self.client.login(email="cd@edify.org", password="testpassword")
@@ -123,10 +138,52 @@ class AnalyticsDashboardTest(TestCase):
         self.client.login(email="cd@edify.org", password="testpassword")
         response = self.client.get(reverse("frontend:analytics_schedule_report"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Schedule Report")
+        self.assertContains(response, "Send Analytics to Inbox")
+        self.assertContains(response, "Delivered privately to your Edify inbox")
+        self.assertContains(response, "No scheduler worker or email provider")
 
     def test_customize_dashboard_drawer(self):
         self.client.login(email="cd@edify.org", password="testpassword")
         response = self.client.get(reverse("frontend:analytics_customize_dashboard"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Customize Dashboard")
+
+    def test_analytics_snapshot_is_delivered_to_messages_immediately(self):
+        from apps.messaging.models import MessageThread
+
+        self.client.login(email="cd@edify.org", password="testpassword")
+        response = self.client.post(
+            reverse("frontend:analytics_schedule_report"),
+            {
+                "categories": ["targets", "ssa"],
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        thread = MessageThread.objects.get(
+            context_type="system",
+            context_id=f"analytics-{self.user.id}",
+            is_system_generated=True,
+        )
+        self.assertContains(response, "Analytics snapshot sent to your inbox")
+        self.assertTrue(thread.messages.filter(body__contains="SSA Average").exists())
+        self.assertEqual(response.headers["HX-Trigger"], "close-drawer")
+
+    def test_dashboard_preferences_are_persisted_and_applied(self):
+        from apps.analytics.models import AnalyticsDashboardPreference
+
+        self.client.login(email="cd@edify.org", password="testpassword")
+        response = self.client.post(
+            reverse("frontend:analytics_customize_dashboard"),
+            {"visible_cards": ["targets"], "layout": "compact"},
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        preference = AnalyticsDashboardPreference.objects.get(user=self.user)
+        self.assertEqual(preference.visible_cards, ["targets"])
+        self.assertEqual(preference.layout, "compact")
+
+        dashboard = self.client.get(reverse("frontend:analytics_dashboard"))
+        self.assertContains(dashboard, 'data-analytics-layout="compact"')
+        self.assertContains(dashboard, "Overall Target Achievement")
+        self.assertNotContains(dashboard, 'kpi-strip__label">Teachers Trained')

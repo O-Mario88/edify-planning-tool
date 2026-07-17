@@ -49,9 +49,56 @@
 
 .app-sidebar__wordmark {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
-  min-height: 38px;
+  justify-content: center;
+  gap: 11px;
+  min-height: 54px;
+}
+
+.app-sidebar .app-sidebar__brand-logo {
+  display: block;
+  width: 110px;
+  min-width: 110px;
+  max-width: 110px;
+  height: auto;
+  max-height: 46px;
+  flex: 0 0 110px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.app-sidebar__brand-divider {
+  width: 1px;
+  height: 42px;
+  flex: 0 0 1px;
+  background: rgba(189, 216, 233, 0.72);
+}
+
+.app-sidebar__brand-product {
+  color: rgba(215, 230, 239, 0.88);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.app-sidebar__brand-logo-compact {
+  display: block;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: var(--radius-small);
+}
+
+.app-sidebar__brand-logo-compact img {
+  display: block;
+  width: auto;
+  max-width: none;
+  height: 36px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .app-sidebar__brand-mark {
@@ -65,7 +112,7 @@
   background: #8fb1e8;
   color: #132037;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
-  font-family: var(--edify-font-serif);
+  font-family: var(--edify-font-sans);
   font-size: 18px;
   font-weight: 700;
   line-height: 1;
@@ -97,9 +144,9 @@
   font-weight: 500;
   color: rgba(189, 216, 233, 0.68);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.075em;
   line-height: 1.4;
-  margin-top: 6px;
+  margin-top: 0;
   display: block;
 }
 
@@ -362,17 +409,24 @@
 }
 
 .theme-dark .app-sidebar__section-title {
-  color: rgba(237, 240, 235, .84);
-  font-weight: 650;
-  letter-spacing: .1em;
+  color: var(--edify-text-subtle);
+  font-weight: 600;
+  letter-spacing: .105em;
 }
 
 .theme-dark .app-sidebar__item {
-  color: rgba(174, 184, 197, .92) !important;
+  color: var(--edify-text-muted) !important;
+}
+
+.theme-dark .app-sidebar__item:hover {
+  color: var(--edify-text) !important;
+  background: rgba(255, 255, 255, .045) !important;
 }
 
 .theme-dark .app-sidebar__item--active {
-  background: rgba(143, 177, 232, .12) !important;
+  color: var(--edify-text) !important;
+  background: var(--edify-accent-light) !important;
+  box-shadow: inset 0 0 0 1px rgba(224, 179, 84, .10);
 }
 
 .theme-dark .app-sidebar__item--active::before {
@@ -381,6 +435,14 @@
 
 .theme-dark .app-sidebar__item--active .app-sidebar__item-icon {
   color: var(--edify-accent);
+}
+
+.theme-dark .app-sidebar__brand-divider {
+  background: rgba(255, 255, 255, .16);
+}
+
+.theme-dark .app-sidebar__brand-product {
+  color: var(--edify-text-muted);
 }
 .app-sidebar--collapsed .app-sidebar__item {
   justify-content: center;

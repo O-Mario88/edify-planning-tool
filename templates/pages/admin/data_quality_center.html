@@ -18,36 +18,36 @@
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Resolution Guides Callout -->
-<div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+<div class="bg-slate-50 border border-slate-200 rounded-surface p-5 space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800">Quality Actions Needed</h3>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-<div class="edify-surface rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
 <h4 class="text-[12px] font-semibold text-slate-800">Link Raw Staff Names</h4>
 <p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Match schools imported via CSV with active staff profiles in the staff setup queue.</p>
 </div>
 <a href="/admin-panel/staff-setup-queue" class="inline-block edify-text-caption font-semibold uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open setup queue &rarr;</a>
 </div>
-<div class="edify-surface rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
 <h4 class="text-[12px] font-semibold text-slate-800">Cluster Client Schools</h4>
 <p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Every client school must belong to a cluster group before scheduling training or meetings.</p>
 </div>
 <a href="/schools?filter=unclustered" class="inline-block edify-text-caption font-semibold uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open school directory &rarr;</a>
 </div>
-<div class="edify-surface rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
 <h4 class="text-[12px] font-semibold text-slate-800">Resolve Duplicate Risks</h4>
 <p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Review name and location duplicate risk flags to ensure directory accuracy.</p>
 </div>
 <a href="/data-quality/duplicates" class="inline-block edify-text-caption font-semibold uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open duplicate review &rarr;</a>
 </div>
-<div class="edify-surface rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
 <h4 class="text-[12px] font-semibold text-slate-800 flex items-center justify-between">
 <span>Link Unmatched SSAs</span>
 {% if unmatched_ssa_count > 0 %}
-<span class="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded edify-text-caption font-semibold">{{ unmatched_ssa_count }}</span>
+<span class="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ unmatched_ssa_count }}</span>
 {% endif %}
 </h4>
 <p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Resolve SSA uploads mapped to nonexistent School IDs by linking them manually.</p>

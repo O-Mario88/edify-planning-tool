@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
      x-data="{
        chart: null,
        ids: [{% for r in target_by_pl.rows %}'{{ r.id }}'{% if not forloop.last %},{% endif %}{% endfor %}],
@@ -13,7 +13,7 @@
              { name: 'Target Achievement %', data: [{% for r in target_by_pl.rows %}{{ r.pl_pct }}{% if not forloop.last %},{% endif %}{% endfor %}] },
              { name: 'CCEO Average %', data: [{% for r in target_by_pl.rows %}{{ r.cceo_avg }}{% if not forloop.last %},{% endif %}{% endfor %}] }
            ],
-           chart: { height: 268, type: 'bar', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif',
+           chart: { height: 268, type: 'bar', toolbar: { show: false }, fontFamily: 'Inter, sans-serif',
                     events: { dataPointSelection: (e, ctx, cfg) => {
                       const id = self.ids[cfg.dataPointIndex];
                       if (id) window.htmx && window.htmx.ajax('GET',

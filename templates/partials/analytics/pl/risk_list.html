@@ -1,9 +1,9 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
       <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">K. School Risk &amp; Attention List</h3>
-      {% if risk_list.total %}<span class="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-rose-100 text-rose-600 edify-text-caption font-bold">{{ risk_list.total }}</span>{% endif %}
+      {% if risk_list.total %}<span class="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-pill bg-rose-100 text-rose-600 edify-text-caption font-bold">{{ risk_list.total }}</span>{% endif %}
     </div>
     <button type="button" hx-get="/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
        hx-target="#drawer-container" hx-swap="innerHTML"
@@ -27,7 +27,7 @@
           <td class="py-2.5 px-2 edify-text-caption font-semibold text-slate-700">{{ r.school }}</td>
           <td class="py-2.5 px-2 edify-text-caption font-medium text-slate-500">{{ r.district }}</td>
           <td class="py-2.5 px-2">
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded edify-text-caption font-bold bg-rose-50 text-rose-600 border border-rose-100 whitespace-nowrap">{{ r.issue }}</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-bold bg-rose-50 text-rose-600 border border-rose-100 whitespace-nowrap">{{ r.issue }}</span>
           </td>
           <td class="py-2.5 px-2 edify-text-caption font-medium text-slate-500 tabular-nums">{{ r.last_visit }}</td>
           <td class="py-2.5 px-2 edify-text-caption font-medium text-slate-500 tabular-nums">{{ r.last_training }}</td>

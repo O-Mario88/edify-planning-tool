@@ -25,7 +25,7 @@
 <!-- Assigned Staff -->
 <td class="px-4 py-2.5 font-semibold text-slate-600">
 <div class="flex items-center gap-1.5">
-<span class="h-5 w-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center edify-text-caption font-semibold uppercase">
+<span class="h-5 w-5 rounded-pill bg-slate-200 text-slate-700 flex items-center justify-center edify-text-caption font-semibold uppercase">
 {{ q.assigned_staff|slice:":2" }}
 </span>
 <span class="truncate max-w-[100px]">{{ q.assigned_staff }}</span>
@@ -36,7 +36,7 @@
 <td class="px-4 py-2.5 font-semibold text-slate-600">
 <div class="flex items-center gap-1.5">
 {% if q.assigned_partner != "Unassigned" %}
-<span class="h-5 w-5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center edify-text-caption font-semibold uppercase">
+<span class="h-5 w-5 rounded-pill bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center edify-text-caption font-semibold uppercase">
 P
 </span>
 <span class="truncate max-w-[120px]">{{ q.assigned_partner }}</span>
@@ -48,7 +48,7 @@ P
 
 <!-- Weakest Intervention -->
 <td class="px-4 py-2.5 font-semibold text-slate-600">
-<span class="inline-flex items-center rounded px-1.5 py-0.5 edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-150/60">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-150/60">
 {{ q.weakest_interventions }}
 </span>
 </td>
@@ -61,8 +61,8 @@ P
 <!-- Progress (Visits & Trainings bars) -->
 <td class="px-4 py-2.5 text-center min-w-[130px]">
 <div class="flex flex-col gap-1 items-center">
-<div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200/50">
-<div class="bg-[var(--edify-primary)] h-full rounded-full" style="width: {{ q.progress_pct }}%;"></div>
+<div class="w-full bg-slate-100 rounded-pill h-1.5 overflow-hidden border border-slate-200/50">
+<div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {{ q.progress_pct }}%;"></div>
 </div>
 <div class="flex items-center justify-between w-full edify-text-caption font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
 <span class="text-slate-600">{{ q.visits_progress }} V</span>
@@ -78,7 +78,7 @@ P
 <button
 disabled
 title="Add this school to a cluster before core planning can begin."
-class="px-3 h-7 edify-text-caption font-semibold rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed uppercase tracking-wider flex items-center justify-center shrink-0"
+class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed uppercase tracking-wider flex items-center justify-center shrink-0"
 >
 Blocked: Cluster Required
 </button>
@@ -86,7 +86,7 @@ Blocked: Cluster Required
 <button
 hx-get="/core-schools/assessment?school_id={{ q.school_id }}"
 hx-target="#drawer-container"
-class="px-3 h-7 edify-text-caption font-semibold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 uppercase tracking-wider flex items-center justify-center shrink-0"
+class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 uppercase tracking-wider flex items-center justify-center shrink-0"
 >
 Upload Assessment
 </button>
@@ -94,7 +94,7 @@ Upload Assessment
 <button
 hx-get="/core-schools/assessment?school_id={{ q.school_id }}"
 hx-target="#drawer-container"
-class="px-3 h-7 edify-text-caption font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 uppercase tracking-wider flex items-center justify-center shrink-0"
+class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-slate-100 hover:bg-slate-200 text-slate-700 uppercase tracking-wider flex items-center justify-center shrink-0"
 >
 Review SSA
 </button>
@@ -106,7 +106,7 @@ hx-get="/core-schools/schedule-visit?school_id={{ q.school_id }}"
 hx-get="/core-schools/schedule-training?school_id={{ q.school_id }}"
 {% endif %}
 hx-target="#drawer-container"
-class="px-3 h-7 edify-text-caption font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center justify-center shrink-0 uppercase tracking-wider transition-all"
+class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center justify-center shrink-0 uppercase tracking-wider transition-all"
 >
 Plan Now
 </button>
@@ -127,12 +127,12 @@ Plan Now
 hx-get="/core-schools?page={{ page_obj.previous_page_number }}&fy={{ fy }}&region={{ selected_region }}&district={{ selected_district }}&staff={{ selected_staff }}&partner={{ selected_partner }}&school_type_filter={{ selected_school_type }}&ssa_status={{ selected_ssa_status }}&partner_assigned={{ selected_partner_assigned }}"
 hx-target="#core-schools-main-container"
 hx-swap="outerHTML"
-class="relative inline-flex items-center rounded-md border border-slate-200 edify-surface px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+class="relative inline-flex items-center rounded-control border border-slate-200 edify-surface px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
 >
 Previous
 </button>
 {% else %}
-<span class="relative inline-flex items-center rounded-md border border-slate-100 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-400 cursor-not-allowed">Previous</span>
+<span class="relative inline-flex items-center rounded-pill border border-slate-100 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-400 cursor-not-allowed">Previous</span>
 {% endif %}
 
 {% if page_obj.has_next %}
@@ -140,12 +140,12 @@ Previous
 hx-get="/core-schools?page={{ page_obj.next_page_number }}&fy={{ fy }}&region={{ selected_region }}&district={{ selected_district }}&staff={{ selected_staff }}&partner={{ selected_partner }}&school_type_filter={{ selected_school_type }}&ssa_status={{ selected_ssa_status }}&partner_assigned={{ selected_partner_assigned }}"
 hx-target="#core-schools-main-container"
 hx-swap="outerHTML"
-class="relative ml-3 inline-flex items-center rounded-md border border-slate-200 edify-surface px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+class="relative ml-3 inline-flex items-center rounded-control border border-slate-200 edify-surface px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
 >
 Next
 </button>
 {% else %}
-<span class="relative ml-3 inline-flex items-center rounded-md border border-slate-100 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-400 cursor-not-allowed">Next</span>
+<span class="relative ml-3 inline-flex items-center rounded-pill border border-slate-100 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-400 cursor-not-allowed">Next</span>
 {% endif %}
 </div>
 <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
@@ -161,7 +161,7 @@ schools
 </p>
 </div>
 <div>
-<nav class="isolate inline-flex -space-x-px rounded-md shadow-sm edify-surface" aria-label="Pagination">
+<nav class="isolate inline-flex -space-x-px rounded-surface shadow-sm edify-surface" aria-label="Pagination">
 {% if page_obj.has_previous %}
 <button
 hx-get="/core-schools?page={{ page_obj.previous_page_number }}&fy={{ fy }}&region={{ selected_region }}&district={{ selected_district }}&staff={{ selected_staff }}&partner={{ selected_partner }}&school_type_filter={{ selected_school_type }}&ssa_status={{ selected_ssa_status }}&partner_assigned={{ selected_partner_assigned }}"

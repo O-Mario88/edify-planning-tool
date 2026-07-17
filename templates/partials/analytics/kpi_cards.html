@@ -1,9 +1,9 @@
 {% load frontend_filters %}
 
-<div id="analytics-kpi-and-content-container" class="space-y-6 ">
+<div id="analytics-kpi-and-content-container" class="space-y-6" data-analytics-layout="{{ analytics_layout|default:'grid' }}">
 
 <!-- KPI Strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items variant=analytics_layout %}
 
 <!-- Main grid section (Layout Alignment Fixed using compiled lg:col-span-9 and lg:col-span-3) -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">

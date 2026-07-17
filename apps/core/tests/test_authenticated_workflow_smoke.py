@@ -21,7 +21,8 @@ from apps.accounts.models import (
     User,
 )
 from apps.activities.models import Activity
-from apps.budget.models import CostSetting
+from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import FundRequest, FundRequestItem
 from apps.geography.models import District, Region, SubCounty
@@ -68,6 +69,12 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
             supervisee=self.cceo_staff, supervisor=self.pl_staff
         )
 
+        CostCatalogue.objects.create(
+            fy=get_operational_fy(),
+            version=1,
+            label="Authenticated workflow smoke catalogue",
+        )
+
         CostSetting.objects.create(
             key="staff_visit_transport_primary", label="Transport", unit_cost=10000
         )
@@ -107,7 +114,7 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         )
         self.assertEqual(ssa["verificationStatus"], "confirmed")
         school.refresh_from_db()
-        self.assertEqual(school.planning_readiness, "ready")
+        self.assertEqual(school.planning_readiness, "requires_cluster")
 
         self._as(self.cceo)
         cluster = self._post(

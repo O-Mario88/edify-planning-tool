@@ -12,7 +12,7 @@
 </div>
 </div>
 
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if logs %}<table class="w-full text-[12px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 edify-text-caption font-bold uppercase text-slate-400">Action</th><th class="text-left px-4 py-3 edify-text-caption font-bold uppercase text-slate-400">Time</th></tr></thead>
 <tbody class="divide-y divide-slate-100">{% for l in logs %}<tr><td class="px-5 py-3.5 font-bold text-slate-800">{{ l.action }}</td><td class="px-4 py-3.5 text-slate-500">{{ l.created_at }}</td></tr>{% endfor %}</tbody></table>
 {% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></p><p class="text-[14px] font-bold text-slate-600">No audit records</p></div>{% endif %}

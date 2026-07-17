@@ -53,20 +53,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260718a">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260724a">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260722b">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260723g">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260723a">
-  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260723l">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260717enterprise1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260717d12">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260717d10">
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260717enterprise1">
 <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260715a">
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260715c">
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260718b">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
-    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260715k">
+    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260717enterprise1">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -148,7 +148,7 @@ input[type="email"], input[type="password"], input[type="tel"],
 input[type="date"], input[type="datetime-local"], select, textarea) {
   border: 1px solid var(--edify-border);
   background-color: var(--edify-surface);
-  border-radius: var(--edify-radius-md);
+  border-radius: var(--edify-radius-sm);
   color: var(--edify-text);
   font-size: var(--edify-text-body-size);
   font-family: var(--edify-font-sans);
@@ -193,7 +193,7 @@ button, a, select, input, textarea {
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260723b"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260717enterprise1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
@@ -217,7 +217,7 @@ x-data="{ show: true }"
 x-show="show"
 x-init="setTimeout(() => show = false, 4000)"
 x-transition
-class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border shadow-lg max-w-sm text-[12px] font-semibold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif msg.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}"
+class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-surface border shadow-lg max-w-sm text-[12px] font-semibold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif msg.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}"
 >
 <span>{{ msg }}</span>
 <button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100" aria-label="Dismiss notification">&times;</button>

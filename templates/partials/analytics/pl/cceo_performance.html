@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <div class="flex items-center justify-between">
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">F. CCEO Performance</h3>
     <span class="edify-text-caption font-semibold text-slate-400">{{ cceo_performance.rows|length }} supervised</span>
@@ -24,14 +24,14 @@
             hx-target="#drawer-container" hx-swap="innerHTML">
           <td class="py-2.5 px-2">
             <div class="flex items-center gap-2">
-              <span class="h-6 w-6 rounded-full bg-slate-800 text-white edify-text-caption font-bold flex items-center justify-center shrink-0">{{ c.initials }}</span>
+              <span class="h-6 w-6 rounded-pill bg-slate-800 text-white edify-text-caption font-bold flex items-center justify-center shrink-0">{{ c.initials }}</span>
               <span class="edify-text-caption font-semibold text-slate-700">{{ c.name }}</span>
             </div>
           </td>
           <td class="py-2.5 px-2 text-center edify-text-caption font-semibold text-slate-600 tabular-nums">{{ c.schools_managed }}</td>
           <td class="py-2.5 px-2 text-center edify-text-caption font-semibold text-slate-600 tabular-nums">{{ c.completed }}</td>
           <td class="py-2.5 px-2 text-center">
-            <span class="inline-block px-1.5 py-0.5 rounded edify-text-caption font-bold tabular-nums
+            <span class="inline-block px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tabular-nums
               {% if c.ssa_tone == 'success' %}bg-emerald-50 text-emerald-700
               {% elif c.ssa_tone == 'lime' %}bg-lime-50 text-lime-700
               {% elif c.ssa_tone == 'warning' %}bg-amber-50 text-amber-700
@@ -41,7 +41,7 @@
           <td class="py-2.5 px-2 text-center edify-text-caption font-bold tabular-nums {% if c.backlog >= 4 %}text-rose-500{% else %}text-slate-500{% endif %}">{{ c.backlog }}</td>
           <td class="py-2.5 px-2 text-center edify-text-caption font-semibold tabular-nums {% if c.has_target %}text-slate-700{% else %}text-slate-300{% endif %}">{% if c.has_target %}{{ c.target_pct }}%{% else %}—{% endif %}</td>
           <td class="py-2.5 px-2 text-center">
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full edify-text-caption font-bold border whitespace-nowrap
+            <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold border whitespace-nowrap
               {% if c.risk_tone == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200
               {% elif c.risk_tone == 'amber' %}bg-amber-50 text-amber-700 border-amber-200
               {% elif c.risk_tone == 'warning' %}bg-orange-50 text-orange-700 border-orange-200

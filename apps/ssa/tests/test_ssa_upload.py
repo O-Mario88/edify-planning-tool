@@ -73,7 +73,7 @@ class SsaUploadTest(APITestCase):
         self.assertEqual(record.scores.count(), 8)
         self.school.refresh_from_db()
         self.assertEqual(self.school.current_fy_ssa_status, "done")
-        self.assertEqual(self.school.planning_readiness, "ready")
+        self.assertEqual(self.school.planning_readiness, "requires_cluster")
 
     def test_invalid_school_id_fails_row(self):
         body = f"{SSA_HEADERS}\nGHOST-SCHOOL,2026-07-01,{SCORES}\n"

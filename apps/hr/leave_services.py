@@ -23,6 +23,36 @@ from apps.core.exceptions import BadRequest, NotFoundError
 logger = logging.getLogger("edify.hr.leave")
 
 
+def _activity_owner_ids(staff_or_user: StaffProfile | User) -> list[str]:
+    """Return every persisted Activity owner identity for a staff member.
+
+    Activities historically stored a User id in ``responsible_staff_id``. New
+    activities use the StaffProfile id so that a person has one staff identity
+    throughout planning, assignments, and reporting. Availability must see
+    both representations until the historical Activity data is normalized.
+    """
+    if isinstance(staff_or_user, StaffProfile):
+        ids = [staff_or_user.id, staff_or_user.user_id]
+    else:
+        profile_id = (
+            StaffProfile.objects.filter(user_id=staff_or_user.id)
+            .values_list("id", flat=True)
+            .first()
+        )
+        ids = [staff_or_user.id, profile_id]
+    return list(dict.fromkeys(value for value in ids if value))
+
+
+def _scheduled_datetime_window(start_date: date, end_date: date) -> tuple[datetime, datetime]:
+    """Return an aware, half-open scheduled-date range for inclusive dates."""
+    tz = timezone.get_current_timezone()
+    start = timezone.make_aware(datetime.combine(start_date, datetime.min.time()), tz)
+    end = timezone.make_aware(
+        datetime.combine(end_date + timedelta(days=1), datetime.min.time()), tz
+    )
+    return start, end
+
+
 def check_staff_availability(staff_id: str, check_date) -> bool:
     """Check if the staff member is on approved leave on the given date (accepts user_id or staff_profile_id)."""
     if not check_date:
@@ -777,10 +807,17 @@ class LeaveImpactAnalysisService:
         from apps.planning.models import MonthlyPlanActivity
         from apps.fund_requests.models import FundRequest, FundRequestStatus
 
+        start_date = date.fromisoformat(start_date_str)
+        end_date = date.fromisoformat(end_date_str)
+        scheduled_start, scheduled_end = _scheduled_datetime_window(
+            start_date, end_date
+        )
+
         # 1. Activities scheduled during leave
         activities = Activity.objects.filter(
-            responsible_staff_id=staff.user.id,
-            scheduled_date__date__range=(start_date_str, end_date_str),
+            responsible_staff_id__in=_activity_owner_ids(staff),
+            scheduled_date__gte=scheduled_start,
+            scheduled_date__lt=scheduled_end,
             deleted_at__isnull=True,
         ).select_related("school", "cluster")
 
@@ -797,7 +834,8 @@ class LeaveImpactAnalysisService:
         # 4. Partner assignments waiting
         partner_assignments = Activity.objects.filter(
             monitored_by_staff_id=staff.id,
-            scheduled_date__date__range=(start_date_str, end_date_str),
+            scheduled_date__gte=scheduled_start,
+            scheduled_date__lt=scheduled_end,
             delivery_type="partner",
             status="planned",
             deleted_at__isnull=True,
@@ -1027,10 +1065,13 @@ class LeaveConflictDetectionService:
 
         s = date.fromisoformat(start_date_str)
         e = date.fromisoformat(end_date_str)
+        scheduled_start, scheduled_end = _scheduled_datetime_window(s, e)
         conflicts = []
 
         activities = Activity.objects.filter(
-            responsible_staff_id=staff_profile.user.id, scheduled_date__range=(s, e)
+            responsible_staff_id__in=_activity_owner_ids(staff_profile),
+            scheduled_date__gte=scheduled_start,
+            scheduled_date__lt=scheduled_end,
         ).exclude(status__in=["cancelled", "completed"])
 
         for act in activities:
@@ -1122,8 +1163,9 @@ class LeaveConflictDetectionService:
 
             cover_acts_count = (
                 Activity.objects.filter(
-                    responsible_staff_id=cover_profile.user.id,
-                    scheduled_date__range=(s, e),
+                    responsible_staff_id__in=_activity_owner_ids(cover_profile),
+                    scheduled_date__gte=scheduled_start,
+                    scheduled_date__lt=scheduled_end,
                 )
                 .exclude(status__in=["cancelled", "completed"])
                 .count()
@@ -1227,10 +1269,14 @@ class PlanningAvailabilityService:
 
         start_of_week = d - timedelta(days=d.weekday())
         end_of_week = start_of_week + timedelta(days=6)
+        scheduled_start, scheduled_end = _scheduled_datetime_window(
+            start_of_week, end_of_week
+        )
         week_count = (
             Activity.objects.filter(
-                responsible_staff_id=user.id,
-                scheduled_date__range=(start_of_week, end_of_week),
+                responsible_staff_id__in=_activity_owner_ids(user),
+                scheduled_date__gte=scheduled_start,
+                scheduled_date__lt=scheduled_end,
             )
             .exclude(status__in=["cancelled", "completed"])
             .count()
@@ -1297,9 +1343,13 @@ class LeaveImpactPreviewService:
 
         from apps.activities.models import Activity
 
+        scheduled_start, scheduled_end = _scheduled_datetime_window(s, e)
+
         affected_activities_count = (
             Activity.objects.filter(
-                responsible_staff_id=staff_profile.user.id, scheduled_date__range=(s, e)
+                responsible_staff_id__in=_activity_owner_ids(staff_profile),
+                scheduled_date__gte=scheduled_start,
+                scheduled_date__lt=scheduled_end,
             )
             .exclude(status__in=["cancelled", "completed"])
             .count()
@@ -1366,11 +1416,16 @@ class TeamAvailabilityService:
             return []
 
         staff_ids = [sp.id for sp in staff_list]
-        # NOTE: matches the original per-staff query, which only ever
-        # checked responsible_staff_id == the User id (not the dual
-        # StaffProfile-CUID space) — preserved as-is here, not expanded,
-        # to keep this a pure performance fix.
-        user_ids = [sp.user.id for sp in staff_list]
+        activity_owner_ids = list(
+            dict.fromkeys(
+                identity
+                for sp in staff_list
+                for identity in _activity_owner_ids(sp)
+            )
+        )
+        scheduled_start, scheduled_end = _scheduled_datetime_window(
+            overall_start, overall_end
+        )
 
         leaves_by_staff: dict[str, list[tuple[str, str]]] = {}
         for row in Leave.objects.filter(
@@ -1405,8 +1460,9 @@ class TeamAvailabilityService:
         acts_by_user: dict[str, list] = {}
         for row in (
             Activity.objects.filter(
-                responsible_staff_id__in=user_ids,
-                scheduled_date__range=(overall_start, overall_end),
+                responsible_staff_id__in=activity_owner_ids,
+                scheduled_date__gte=scheduled_start,
+                scheduled_date__lt=scheduled_end,
             )
             .exclude(status__in=["cancelled", "completed"])
             .values("responsible_staff_id", "scheduled_date")
@@ -1418,7 +1474,11 @@ class TeamAvailabilityService:
         matrix = []
         for sp in staff_list:
             staff_leaves = leaves_by_staff.get(sp.id, [])
-            user_acts = acts_by_user.get(sp.user.id, [])
+            user_acts = [
+                activity_date
+                for identity in _activity_owner_ids(sp)
+                for activity_date in acts_by_user.get(identity, [])
+            ]
             row = {
                 "staff_name": sp.user.name,
                 "staff_id": sp.id,

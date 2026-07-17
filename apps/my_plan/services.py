@@ -132,7 +132,7 @@ def get(principal, query: dict) -> dict:
             qs = qs.filter(quarter=q_val)
 
     items = []
-    for a in qs.select_related("school", "cluster").order_by(
+    for a in qs.select_related("school", "school__district", "cluster").order_by(
         "planned_month", "planned_week"
     ):
         items.append(
@@ -929,7 +929,7 @@ def get_frontend_context(principal, query: dict) -> dict:
     # 9. Right Rail: Planning Insights
     today_activities = (
         qs.filter(planned_date=today)
-        .select_related("school", "cluster")
+        .select_related("school", "school__district", "cluster")
         .order_by("created_at")
     )
     upcoming_today = []
@@ -978,7 +978,7 @@ def get_frontend_context(principal, query: dict) -> dict:
     # 2. Awaiting Evidence
     awaiting_evidence_acts = qs.filter(
         status="completed", evidence_status="none"
-    ).select_related("school", "cluster")[:3]
+    ).select_related("school", "school__district", "cluster")[:3]
     for ae in awaiting_evidence_acts:
         attention_needed.append(
             {
@@ -996,7 +996,7 @@ def get_frontend_context(principal, query: dict) -> dict:
     # 3. SF ID Missing
     sf_missing_acts = qs.filter(
         status="completed", salesforce_activity_id__isnull=True
-    ).select_related("school", "cluster")[:3]
+    ).select_related("school", "school__district", "cluster")[:3]
     for sf in sf_missing_acts:
         attention_needed.append(
             {

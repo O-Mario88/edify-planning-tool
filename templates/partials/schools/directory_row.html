@@ -1,0 +1,131 @@
+<li class="school-directory-row" x-data="{ actionsOpen: false }">
+  <div class="school-directory-row__select">
+    <input
+      type="checkbox"
+      id="select-school-{{ school.id }}"
+      value="{{ school.id }}"
+      x-model="selectedSchools"
+      aria-label="Select {{ school.school_name }}"
+    >
+  </div>
+
+  <div class="school-directory-row__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/>
+    </svg>
+  </div>
+
+  <div class="school-directory-row__body">
+    <div class="school-directory-row__title-line">
+      <a class="school-directory-row__name" href="/schools/{{ school.school_id }}">
+        {{ school.school_name }}
+      </a>
+      <span class="school-directory-row__id">{{ school.school_id }}</span>
+    </div>
+
+    <p class="school-directory-row__location">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/>
+        <circle cx="12" cy="10" r="2.5"/>
+      </svg>
+      <span>{{ school.district }}{% if school.sub_county and school.sub_county != "—" %}, {{ school.sub_county }}{% endif %}</span>
+    </p>
+
+    <div class="school-directory-row__statuses" aria-label="School workflow status">
+      <span class="school-directory-status {% if school.has_ssa %}is-complete{% else %}is-missing{% endif %}">
+        {% if school.has_ssa %}SSA Complete{% else %}No SSA{% endif %}
+      </span>
+      <span class="school-directory-status {% if school.has_visit %}is-complete{% else %}is-missing{% endif %}">
+        {% if school.has_visit %}Visit Complete{% else %}No Visit{% endif %}
+      </span>
+      <span class="school-directory-status {% if school.has_training %}is-complete{% else %}is-missing{% endif %}">
+        {% if school.has_training %}Training Complete{% else %}No Training{% endif %}
+      </span>
+      <span class="school-directory-status {% if school.is_clustered %}is-complete{% else %}is-missing{% endif %}">
+        {% if school.is_clustered %}Clustered{% else %}No Cluster{% endif %}
+      </span>
+    </div>
+  </div>
+
+  {% if "add_to_cluster" in school.available_actions or "assign_to_project" in school.available_actions %}
+    <div class="school-directory-row__quick-actions" aria-label="Workflow actions for {{ school.school_name }}">
+      {% if "add_to_cluster" in school.available_actions %}
+        <button
+          type="button"
+          class="school-directory-row__quick-action is-cluster"
+          aria-label="Add {{ school.school_name }} to Cluster"
+          hx-get="/schools/{{ school.id }}/add-to-cluster"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5.5h8M6.5 9.5h11M5 13.5h14M12 3v13m-3.5 3h7M12 16v6"/>
+          </svg>
+          <span>Add to Cluster</span>
+        </button>
+      {% endif %}
+      {% if "assign_to_project" in school.available_actions %}
+        <button
+          type="button"
+          class="school-directory-row__quick-action is-project"
+          aria-label="Add {{ school.school_name }} to Project"
+          hx-get="/schools/{{ school.id }}/assign-to-project"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.5 7.5h6l1.8 2h9.2v8.7a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8V7.5Zm0 0V5.8A1.8 1.8 0 0 1 5.3 4h4.2l1.8 2h7.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/>
+            <path stroke-linecap="round" d="M12 12.5v4m-2-2h4"/>
+          </svg>
+          <span>Add to Project</span>
+        </button>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="school-directory-row__priority">
+    {% if school.is_high_priority or not school.is_clustered or not school.has_ssa %}
+      <span class="school-directory-priority is-high">High</span>
+    {% elif school.data_quality_score < 85 %}
+      <span class="school-directory-priority is-medium">Medium</span>
+    {% else %}
+      <span class="school-directory-priority is-low">Low</span>
+    {% endif %}
+  </div>
+
+  <div class="school-directory-row__actions">
+    <button
+      type="button"
+      class="school-directory-row__action-trigger"
+      @click="actionsOpen = !actionsOpen"
+      @keydown.escape.window="actionsOpen = false"
+      :aria-expanded="actionsOpen.toString()"
+      aria-haspopup="menu"
+      aria-label="Actions for {{ school.school_name }}"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/>
+      </svg>
+    </button>
+    <div
+      class="school-directory-row__menu"
+      x-show="actionsOpen"
+      x-transition.opacity.duration.120ms
+      @click.outside="actionsOpen = false"
+      role="menu"
+      style="display: none;"
+    >
+      <a role="menuitem" href="/schools/{{ school.school_id }}">Open school profile</a>
+    </div>
+  </div>
+
+  <a
+    class="school-directory-row__open"
+    href="/schools/{{ school.school_id }}"
+    aria-label="Open {{ school.school_name }} profile"
+  >
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/>
+    </svg>
+  </a>
+</li>

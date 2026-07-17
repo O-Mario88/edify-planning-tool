@@ -18,14 +18,14 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <!-- Core School Name (Read Only) -->
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Core School</label>
-<input type="text" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
+<input type="text" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
 </div>
 
 <div class="grid grid-cols-2 gap-4">
 <!-- Support Type -->
 <div>
 <label for="support_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Support Type</label>
-<select name="support_type" id="support_type" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="support_type" id="support_type" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="Visit">School Visit (V1-V4)</option>
 <option value="Training">Group Training (T1-T4)</option>
 </select>
@@ -34,7 +34,7 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <!-- Sequence Number -->
 <div>
 <label for="visit_training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Sequence Number (1-4)</label>
-<select name="visit_training_number" id="visit_training_number" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="visit_training_number" id="visit_training_number" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="1">Slot 1</option>
 <option value="2">Slot 2</option>
 <option value="3">Slot 3</option>
@@ -46,7 +46,7 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <!-- Partner Selection -->
 <div>
 <label for="partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Select Partner Agency</label>
-<select name="partner_id" id="partner_id" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="partner_id" id="partner_id" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="">Select Partner...</option>
 {% for p in partners %}
 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -57,7 +57,7 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <!-- Focus Intervention -->
 <div>
 <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Focus Intervention</label>
-<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="">Select Intervention...</option>
 {% for code, label in interventions %}
 <option value="{{ code }}">{{ label }}</option>
@@ -68,11 +68,11 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <!-- Notes -->
 <div>
 <label for="notes" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Assignment Notes &amp; Guidelines</label>
-<textarea name="notes" id="notes" rows="3.5" class="w-full p-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Provide instructions, timelines, or focus details for the partner..."></textarea>
+<textarea name="notes" id="notes" rows="3.5" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Provide instructions, timelines, or focus details for the partner..."></textarea>
 </div>
 
 <!-- Notice -->
-<div class="p-4 rounded-xl bg-slate-50  edify-text-caption text-slate-400 font-semibold leading-normal">
+<div class="p-4 rounded-surface bg-slate-50  edify-text-caption text-slate-400 font-semibold leading-normal">
 Assigning this slot will remove it from internal staff active queue and notify the partner. The activity moves to the Partner scheduling queue.
 </div>
 
@@ -81,13 +81,13 @@ Assigning this slot will remove it from internal staff active queue and notify t
 <button
 type="button"
 @click="$dispatch('close-drawer')"
-class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
+class="px-5 h-9 rounded-control btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
 <button
 type="submit"
-class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
+class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >
 Confirm &amp; Assign to Partner
 </button>

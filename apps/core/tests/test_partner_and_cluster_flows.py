@@ -30,7 +30,8 @@ from rest_framework.test import APITestCase
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import ActivityScheduleCostLine
-from apps.budget.models import CostSetting
+from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.geography.models import District, Region, SubCounty
@@ -55,6 +56,13 @@ class PartnerAndClusterFlowTest(APITestCase):
     """Proves Demo Flows 4 + 6 (and DOCX evidence) against authenticated API calls."""
 
     def setUp(self):
+        # Partner and cluster work is costed work; establish the CD-published
+        # catalogue required by the real scheduling API before testing flow.
+        CostCatalogue.objects.create(
+            fy=get_operational_fy(),
+            version=1,
+            label="Partner and cluster flow test catalogue",
+        )
         self.region = Region.objects.create(name="Flow Region")
         self.district = District.objects.create(
             name="Flow District", region=self.region

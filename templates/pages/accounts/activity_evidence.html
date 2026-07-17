@@ -13,14 +13,14 @@
 </a>
 </div>
 
-<div class="edify-surface rounded-lg  p-6 space-y-4 shadow-sm">
+<div class="edify-surface rounded-surface  p-6 space-y-4 shadow-sm">
 <div class="flex items-center justify-between">
 <h1 class="text-[21px] font-extrabold tracking-tight uppercase tracking-tight">Accountant Evidence Packet View</h1>
-<span class="px-2.5 py-1 rounded edify-text-caption font-semibold bg-blue-50 text-blue-700 border  uppercase">{{ act.status|replace_underscore }}</span>
+<span class="px-2.5 py-1 rounded-pill edify-text-caption font-semibold bg-blue-50 text-blue-700 border  uppercase">{{ act.status|replace_underscore }}</span>
 </div>
 
 <!-- Meta fields grid -->
-<div class="grid grid-cols-2 gap-4 text-[12px] font-bold bg-slate-50 p-4 rounded-xl">
+<div class="grid grid-cols-2 gap-4 text-[12px] font-bold bg-slate-50 p-4 rounded-surface">
 <div>
 <span class="text-slate-400 block edify-text-caption uppercase">Activity Type</span>
 <span class="text-slate-700">{{ act.activity_type|replace_underscore }}</span>
@@ -37,7 +37,7 @@
 </div>
 
 <!-- Evidence List -->
-<div class="edify-surface rounded-lg  shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface  shadow-sm overflow-hidden">
 <div class="px-5 py-4 border-b border-slate-100">
 <h3 class="text-[14px] font-semibold">Attached Verification Files</h3>
 </div>
@@ -63,8 +63,8 @@ Download File
 </div>
 </div>
 {% if ev.mime_type == 'application/pdf' %}
-<div class="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
-<embed src="/api/evidence/{{ ev.id }}/file" type="application/pdf" class="w-full" style="height:420px;" />
+<div class="rounded-surface overflow-hidden border border-slate-200 bg-slate-50">
+<embed src="/api/evidence/{{ ev.id }}/file" type="application/pdf" class="w-full h-[420px]" />
 </div>
 {% endif %}
 </div>

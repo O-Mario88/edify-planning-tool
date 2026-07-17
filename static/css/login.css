@@ -160,7 +160,7 @@ button {
 .login-brand__title {
   margin: 0;
   color: #83d3ff;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--login-font);
   font-size: clamp(3rem, 4vw, 4.05rem);
   font-weight: 700;
   letter-spacing: -.035em;

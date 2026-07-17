@@ -19,6 +19,7 @@ from django.utils import timezone
 
 from apps.accounts.models import StaffSchoolAssignment, StaffSupervisorAssignment, User
 from apps.activities.models import Activity
+from apps.core.fy import get_month_date_range
 from apps.ssa.models import SsaRecord
 
 from apps.targets.fy_calendar import (
@@ -34,6 +35,7 @@ from apps.targets.my_targets import (
     MyTargetQueryService,
     TargetAchievementService,
     _user_ids,
+    active_target_areas,
     weighted_period_pct,
 )
 
@@ -340,7 +342,7 @@ class PLTeamTargetsService:
         month_of_fy = month_of_fy or (now["month_of_fy"] if is_current_fy else 1)
         today = now["today"]
         m_start, m_end = Cal.month_range(fy, month_of_fy)
-        areas = list(TargetArea.objects.filter(active=True).order_by("sort_order"))
+        areas = active_target_areas()
         valid_area_keys = {a.key for a in areas}
         category = category if category in valid_area_keys else "overall"
         metric_areas = (
@@ -647,12 +649,13 @@ class PLTeamTargetsService:
             if team_ids
             else 0
         )
+        ssa_month_start, ssa_month_end = get_month_date_range(fy, month_of_fy)
         ssa_pending_ia = (
             SsaRecord.objects.filter(
                 collected_by_user_id__in=team_ids,
                 deleted_at__isnull=True,
-                date_of_ssa__gte=m_start,
-                date_of_ssa__lt=m_end,
+                date_of_ssa__gte=ssa_month_start,
+                date_of_ssa__lt=ssa_month_end,
             )
             .exclude(verification_status="confirmed")
             .count()
@@ -826,6 +829,15 @@ class PLTeamTargetsService:
         ).count()
 
         member_names = {str(m["user_id"]): m["name"] for m in members}
+        # Advance any plans whose recovery activities have since completed —
+        # keeps the active list honest and lets finished recoveries close.
+        PLCatchUpPlanService.sync_completion(
+            CatchUpPlan.objects.filter(
+                pl_user_id=pl_user.id,
+                fy=fy,
+                status__in=["approved", "scheduled", "in_progress"],
+            )
+        )
         active_plan_qs = (
             CatchUpPlan.objects.filter(
                 pl_user_id=pl_user.id,
@@ -1338,7 +1350,7 @@ class PLTeamTargetsService:
         now = Cal.current()
         fy = fy or now["fy"]
         month_of_fy = month_of_fy or (now["month_of_fy"] if fy == now["fy"] else 1)
-        areas = list(TargetArea.objects.filter(active=True).order_by("sort_order"))
+        areas = active_target_areas()
         selected_area_key = (area or "").strip()
         if selected_area_key:
             areas = [item for item in areas if item.key == selected_area_key]
@@ -1537,6 +1549,37 @@ class PLCatchUpPlanService:
     }
 
     @staticmethod
+    def sync_completion(plans) -> None:
+        """Advance approved/scheduled plans whose recovery activities have
+        actually run. CatchUpStatus defines in_progress/completed but nothing
+        ever wrote them — a fully-recovered plan sat 'scheduled' forever, so
+        the recovery loop never visibly closed. Derived-on-read like the rest
+        of the targets stack."""
+        from apps.activities.models import Activity
+
+        for plan in plans:
+            ids = list(plan.created_activity_ids or [])
+            if not ids or plan.status not in ("approved", "scheduled", "in_progress"):
+                continue
+            statuses = list(
+                Activity.objects.filter(
+                    id__in=ids, deleted_at__isnull=True
+                ).values_list("status", flat=True)
+            )
+            if not statuses:
+                continue
+            live = [s for s in statuses if s not in ("cancelled", "rejected")]
+            if live and all(s in COMPLETED_STATUSES for s in live):
+                new_status = "completed"
+            elif any(s not in ("planned", "scheduled") for s in live):
+                new_status = "in_progress"
+            else:
+                continue
+            if plan.status != new_status:
+                plan.status = new_status
+                plan.save(update_fields=["status", "updated_at"])
+
+    @staticmethod
     def submit(
         pl_user,
         *,
@@ -1550,7 +1593,11 @@ class PLCatchUpPlanService:
         note="",
         partner_id=None,
     ):
-        area = TargetArea.objects.get(key=area_key, active=True)
+        area = next(
+            (item for item in active_target_areas() if item.key == area_key), None
+        )
+        if area is None:
+            raise ValueError("Unknown active target area.")
         plan = CatchUpPlan.objects.create(
             pl_user_id=pl_user.id,
             staff_user_id=staff_user_id,

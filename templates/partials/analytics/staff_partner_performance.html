@@ -1,4 +1,4 @@
-<div class="edify-surface rounded-xl  p-4 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
@@ -8,7 +8,7 @@
 <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Top completed activities leaderboard</p>
 </div>
 
-<select class="bg-slate-50  rounded-lg edify-text-caption font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<select class="bg-slate-50  rounded-control edify-text-caption font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
 <option>This Quarter</option>
 </select>
 </div>
@@ -20,8 +20,8 @@
 <span>Staff Activities (CCEOs)</span>
 <span class="font-semibold text-slate-800">{{ staff_partner_performance.chart.staff_pct }}%</span>
 </div>
-<div class="h-2 w-full bg-slate-50  rounded-full overflow-hidden">
-<div class="h-full bg-blue-600 rounded-full" style="width: {{ staff_partner_performance.chart.staff_pct }}%"></div>
+<div class="h-2 w-full bg-slate-50  rounded-pill overflow-hidden">
+<div class="h-full bg-blue-600 rounded-pill" style="width: {{ staff_partner_performance.chart.staff_pct }}%"></div>
 </div>
 </div>
 <div class="space-y-1">
@@ -29,8 +29,8 @@
 <span>Partner Activities</span>
 <span class="font-semibold text-slate-800">{{ staff_partner_performance.chart.partner_pct }}%</span>
 </div>
-<div class="h-2 w-full bg-slate-50  rounded-full overflow-hidden">
-<div class="h-full bg-indigo-500 rounded-full" style="width: {{ staff_partner_performance.chart.partner_pct }}%"></div>
+<div class="h-2 w-full bg-slate-50  rounded-pill overflow-hidden">
+<div class="h-full bg-indigo-500 rounded-pill" style="width: {{ staff_partner_performance.chart.partner_pct }}%"></div>
 </div>
 </div>
 </div>
@@ -42,7 +42,7 @@
 {% for st in staff_partner_performance.leaderboard %}
 <div class="flex items-center justify-between edify-text-caption font-bold text-slate-600">
 <div class="flex items-center gap-2">
-<span class="h-5 w-5 bg-blue-50 text-blue-600 font-semibold edify-text-caption rounded-full flex items-center justify-center border border-blue-100">{{ forloop.counter }}</span>
+<span class="h-5 w-5 bg-blue-50 text-blue-600 font-semibold edify-text-caption rounded-pill flex items-center justify-center border border-blue-100">{{ forloop.counter }}</span>
 <div>
 <p class="font-bold text-slate-800 text-[12px] leading-tight">{{ st.name }}</p>
 <p class="edify-text-caption text-slate-400 font-semibold leading-none">{{ st.role }}</p>

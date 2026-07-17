@@ -15,6 +15,7 @@ from .views import (
     extended_views,
     message_views,
     core_schools_views,
+    impact_views,
     ssa_views,
     ia_views,
     finance_operating_views,
@@ -46,6 +47,11 @@ urlpatterns = [
         "dashboard/pl-approve",
         dashboard_views.pl_dashboard_approve_view,
         name="pl_dashboard_approve",
+    ),
+    path(
+        "dashboard/pl-send-urgent-action",
+        dashboard_views.pl_send_urgent_action_view,
+        name="pl_send_urgent_action",
     ),
     path(
         "dashboard/cd-approve",
@@ -114,6 +120,11 @@ urlpatterns = [
     ),
     path(
         "schools/<str:school_id>", school_views.school_detail_view, name="school_detail"
+    ),
+    path(
+        "schools/<str:school_id>/delete",
+        school_views.school_delete_view,
+        name="school_delete",
     ),
     path(
         "schools/<str:school_id>/change-type",
@@ -325,6 +336,11 @@ urlpatterns = [
         name="reschedule_drawer",
     ),
     path(
+        "my-plan/<str:activity_id>/request-amendment",
+        my_plan_views.request_budget_amendment_action,
+        name="request_budget_amendment",
+    ),
+    path(
         "my-plan/<str:activity_id>/reschedule",
         my_plan_views.reschedule_activity_action,
         name="reschedule_activity",
@@ -531,6 +547,11 @@ urlpatterns = [
         "analytics/drilldown",
         analytics_views.analytics_drilldown_view,
         name="analytics_drilldown",
+    ),
+    path(
+        "analytics/export",
+        analytics_views.analytics_export_view,
+        name="analytics_export",
     ),
     path(
         "analytics/schedule-report",
@@ -913,6 +934,16 @@ urlpatterns = [
         name="finance_pay_partner",
     ),
     path(
+        "accounts/budget-amendments",
+        finance_operating_views.budget_amendments_view,
+        name="budget_amendments",
+    ),
+    path(
+        "accounts/budget-amendments/<str:amendment_id>/action",
+        finance_operating_views.budget_amendment_action,
+        name="budget_amendment_action",
+    ),
+    path(
         "accounts/reimbursements",
         finance_operating_views.reimbursements_view,
         name="finance_reimbursements",
@@ -1064,7 +1095,15 @@ urlpatterns = [
     ),
     path("partner/my-plan", partner_views.partner_my_plan_view, name="partner_my_plan"),
     # ── GROUP 4: SSA, FY & Planning ──────────────────────────────────────────
-    path("ssa", extended_views.ssa_master_view, name="ssa_master"),
+    # Keep the legacy route name for reverse() compatibility; the destination
+    # is now the unified SSA Performance workspace.
+    path("ssa", ssa_views.ssa_performance_view, name="ssa_master"),
+    path(
+        "ssa/export",
+        ssa_views.ssa_performance_export_view,
+        name="ssa_performance_export",
+    ),
+    path("impact", impact_views.impact_analytics_view, name="impact_analytics"),
     path("fy", extended_views.fy_overview_view, name="fy_overview"),
     path("calendar", extended_views.calendar_view, name="calendar"),
     path("work-plan", extended_views.work_plan_view, name="work_plan"),
@@ -1204,6 +1243,11 @@ urlpatterns = [
         name="message_thread_star",
     ),
     path(
+        "messages/attachments/<str:attachment_id>",
+        message_views.message_attachment_download_view,
+        name="message_attachment_download",
+    ),
+    path(
         "messages/<str:message_id>",
         message_views.message_deep_link_view,
         name="message_detail",
@@ -1294,6 +1338,16 @@ urlpatterns = [
         "projects/planning",
         extended_views.special_projects_planning_view,
         name="special_projects_planning",
+    ),
+    path(
+        "projects/planning/bulk-partner",
+        planning_views.special_projects_bulk_partner_view,
+        name="special_projects_bulk_partner",
+    ),
+    path(
+        "projects/planning/bulk-schedule",
+        planning_views.special_projects_bulk_schedule_view,
+        name="special_projects_bulk_schedule",
     ),
     path(
         "projects/my-plan",

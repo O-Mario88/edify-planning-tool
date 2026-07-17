@@ -80,10 +80,24 @@
 .dark .bg-slate-100 { background-color: var(--edify-surface-muted) !important; }
 
 /* Text — dark text becomes light text */
-.dark .text-slate-900, .dark .text-slate-800 { color: var(--edify-text) !important; }
-.dark .text-slate-700, .dark .text-slate-600 { color: var(--edify-text) !important; }
-.dark .text-slate-500, .dark .text-slate-400 { color: var(--edify-text-muted) !important; }
-.dark .text-slate-300, .dark .text-slate-200 { color: var(--edify-text-subtle) !important; }
+.dark :is(.text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600,
+  .text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600,
+  .text-zinc-900, .text-zinc-800, .text-zinc-700, .text-zinc-600,
+  .text-neutral-900, .text-neutral-800, .text-neutral-700, .text-neutral-600) {
+  color: var(--edify-text) !important;
+}
+.dark :is(.text-slate-500, .text-slate-400,
+  .text-gray-500, .text-gray-400,
+  .text-zinc-500, .text-zinc-400,
+  .text-neutral-500, .text-neutral-400) {
+  color: var(--edify-text-muted) !important;
+}
+.dark :is(.text-slate-300, .text-slate-200,
+  .text-gray-300, .text-gray-200,
+  .text-zinc-300, .text-zinc-200,
+  .text-neutral-300, .text-neutral-200) {
+  color: var(--edify-text-subtle) !important;
+}
 
 /* Borders — light borders become dark borders */
 .dark .border-slate-200, .dark .border-slate-100 { border-color: var(--edify-border) !important; }
@@ -95,31 +109,32 @@
 
 /* Semantic backgrounds — translucent tints for dark mode */
 .dark .bg-emerald-50, .dark .bg-green-50 { background-color: var(--edify-success-light) !important; }
-.dark .bg-amber-50 { background-color: var(--edify-warning-light) !important; }
+.dark .bg-amber-50, .dark .bg-yellow-50, .dark .bg-orange-50 { background-color: var(--edify-warning-light) !important; }
 .dark .bg-rose-50, .dark .bg-red-50 { background-color: var(--edify-danger-light) !important; }
 .dark .bg-blue-50, .dark .bg-sky-50 { background-color: var(--edify-info-light) !important; }
 .dark .bg-indigo-50 { background-color: var(--edify-info-light) !important; }
 .dark .bg-violet-50, .dark .bg-purple-50 { background-color: var(--edify-purple-light) !important; }
-.dark .bg-orange-50 { background-color: var(--edify-warning-light) !important; }
 .dark .bg-teal-50, .dark .bg-cyan-50 { background-color: var(--edify-teal-light) !important; }
 .dark [class*="bg-emerald-50/"], .dark [class*="bg-green-50/"] { background-color: var(--edify-success-light) !important; }
-.dark [class*="bg-amber-50/"] { background-color: var(--edify-warning-light) !important; }
+.dark [class*="bg-amber-50/"], .dark [class*="bg-yellow-50/"], .dark [class*="bg-orange-50/"] { background-color: var(--edify-warning-light) !important; }
 .dark [class*="bg-rose-50/"], .dark [class*="bg-red-50/"] { background-color: var(--edify-danger-light) !important; }
 .dark [class*="bg-blue-50/"], .dark [class*="bg-sky-50/"] { background-color: var(--edify-info-light) !important; }
 .dark [class*="bg-indigo-50/"] { background-color: var(--edify-info-light) !important; }
 .dark [class*="bg-violet-50/"], .dark [class*="bg-purple-50/"] { background-color: var(--edify-purple-light) !important; }
-.dark [class*="bg-orange-50/"] { background-color: var(--edify-warning-light) !important; }
 .dark [class*="bg-teal-50/"], .dark [class*="bg-cyan-50/"] { background-color: var(--edify-teal-light) !important; }
 .dark [class*="bg-slate-50/"], .dark [class*="bg-slate-100/"] { background-color: var(--edify-surface-muted) !important; }
 
 /* Semantic text — lighter for dark mode readability */
 .dark .text-emerald-600, .dark .text-emerald-700 { color: var(--edify-success) !important; }
-.dark .text-amber-600, .dark .text-amber-700 { color: var(--edify-warning) !important; }
+.dark :is(.text-amber-500, .text-amber-600, .text-amber-700, .text-amber-800,
+  .text-yellow-500, .text-yellow-600, .text-yellow-700, .text-yellow-800,
+  .text-orange-500, .text-orange-600, .text-orange-700, .text-orange-800) {
+  color: var(--edify-warning) !important;
+}
 .dark .text-rose-600, .dark .text-rose-700 { color: var(--edify-danger) !important; }
 .dark .text-blue-600, .dark .text-blue-700 { color: var(--edify-info) !important; }
 .dark .text-indigo-600, .dark .text-indigo-700 { color: var(--edify-info) !important; }
 .dark .text-violet-600, .dark .text-violet-700 { color: var(--edify-purple) !important; }
-.dark .text-orange-600, .dark .text-orange-700 { color: var(--edify-warning) !important; }
 .dark .text-teal-600, .dark .text-teal-700 { color: var(--edify-teal) !important; }
 
 /* Semantic borders — translucent */
@@ -252,10 +267,9 @@ main .bg-white {
 }
 
 .theme-blue .kpi-strip {
-  background-color: rgba(5, 54, 96, 0.58) !important;
-  background-image: var(--edify-glass-kpi-treatment) !important;
-  border-color: rgba(123, 189, 232, 0.48) !important;
-  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.22), 0 24px 54px -30px rgba(0, 8, 20, .90) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .theme-blue .kpi-strip__item:not(:last-child) {
@@ -552,7 +566,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   background-color: var(--edify-surface) !important;
   background-image: var(--edify-surface-treatment);
   border: 1px solid var(--edify-border) !important;
-  border-radius: var(--edify-radius-lg) !important;
+  border-radius: var(--edify-radius-md) !important;
   box-shadow: var(--edify-shadow-sm) !important;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   position: relative;
@@ -588,27 +602,29 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 
 /* KPI Card semantic component styling */
 .edify-kpi-card, .card-kpi {
+  position: relative;
+  overflow: hidden;
   background-color: var(--edify-surface);
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-md);
-  padding: 1.25rem;
+  padding: 0.75rem;
   box-shadow: var(--edify-shadow-sm);
   transition: var(--edify-transition-all);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 110px;
+  min-height: 5.75rem;
 }
 .edify-kpi-card:hover, .card-kpi:hover {
   box-shadow: var(--edify-shadow-md);
-  transform: translateY(-1.5px);
-  border-color: rgba(46, 80, 95, 0.15);
+  border-color: var(--edify-border-strong);
 }
 
 /* KPI Icon Circle container */
 .kpi-icon-circle {
-  height: 36px;
-  width: 36px;
+  height: 32px;
+  width: 32px;
   border-radius: var(--edify-radius-circle);
   background-color: var(--edify-primary-light);
   color: var(--edify-primary);
@@ -995,14 +1011,13 @@ input:focus, select:focus, textarea:focus {
 
 /* ─── GLOBAL KPI STRIP COMPONENT ───────────────────────────────────────────── */
 .kpi-strip {
-  background-color: var(--edify-surface);
-  background-image: var(--edify-surface-treatment);
-  border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-lg);
-  box-shadow: var(--edify-shadow-sm);
-  padding: clamp(0.875rem, 0.72rem + 0.5vw, 1.25rem);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
   container: kpi-strip / inline-size;
 }
@@ -1015,7 +1030,7 @@ input:focus, select:focus, textarea:focus {
   gap: 0.25rem 1rem;
   margin-bottom: 0.875rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--edify-border);
+  border-bottom: 0;
 }
 
 .kpi-strip__title {
@@ -1034,24 +1049,37 @@ input:focus, select:focus, textarea:focus {
 .kpi-strip__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 
 .kpi-strip__item {
-  padding: 0.75rem;
+  position: relative;
+  overflow: hidden;
+  padding: 1rem;
+  min-height: 7.15rem;
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-md);
-  background: var(--edify-surface-muted);
-  background: color-mix(in srgb, var(--edify-surface-muted) 72%, transparent);
+  background-color: var(--edify-surface);
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.kpi-strip__item::after {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--edify-glass-highlight);
+  content: "";
+  pointer-events: none;
 }
 
 .kpi-strip__item-body {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   min-width: 0;
   color: inherit;
@@ -1143,7 +1171,7 @@ input:focus, select:focus, textarea:focus {
 .kpi-strip__label {
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   color: var(--edify-text-muted);
   line-height: 1.25;
   margin-bottom: 0.125rem;
@@ -1209,17 +1237,12 @@ input:focus, select:focus, textarea:focus {
 }
 
 @container kpi-strip (min-width: 48rem) {
-  .kpi-strip__grid { gap: 0; }
+  .kpi-strip__grid { gap: 0.75rem; }
 
   .kpi-strip__item {
-    padding: 0.55rem clamp(0.75rem, 1.4cqi, 1.25rem);
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-  }
-
-  .kpi-strip__item:not(:last-child) {
-    border-right: 1px solid var(--edify-border);
+    padding: 1rem;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-radius-md);
   }
 }
 
@@ -1338,6 +1361,37 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── Responsive composition — mobile is a distinct working layout. ─────── */
+@media (min-width: 1280px) {
+  .pd-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .pd-page-header > :first-child {
+    max-inline-size: 24rem;
+  }
+
+  .pd-page-header > :last-child {
+    flex-wrap: nowrap !important;
+  }
+
+  #planning-main-container #filters-form {
+    flex-wrap: nowrap !important;
+  }
+
+  #planning-main-container #filters-form > div:nth-of-type(2) select,
+  #planning-main-container #filters-form > div:nth-of-type(3) select {
+    inline-size: 8.4375rem !important;
+    min-inline-size: 0 !important;
+  }
+
+  #planning-main-container #filters-form > div:nth-of-type(4) select {
+    inline-size: 9.375rem !important;
+    min-inline-size: 0 !important;
+  }
+}
+
 @media (max-width: 767px) {
   .edify-topbar {
     padding-inline: 0.75rem;

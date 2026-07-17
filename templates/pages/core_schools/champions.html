@@ -21,7 +21,7 @@
 <div>
 <a
 href="{% url 'frontend:champion_candidates' %}"
-class="edify-surface border border-slate-200 hover:bg-slate-50 rounded-lg px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
+class="edify-surface border border-slate-200 hover:bg-slate-50 rounded-surface px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
 >
 <span>&larr; Back to Candidates Queue</span>
 </a>
@@ -29,7 +29,7 @@ class="edify-surface border border-slate-200 hover:bg-slate-50 rounded-lg px-4 p
 </div>
 
 <!-- Champions Grid / List -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-6 space-y-4">
 <div class="flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Active Graduated Champions ({{ champions|length }})</h3>
 </div>
@@ -55,7 +55,7 @@ class="edify-surface border border-slate-200 hover:bg-slate-50 rounded-lg px-4 p
 <td class="py-3.5 text-center font-semibold">{{ c.onboard_fy }}</td>
 <td class="py-3.5 text-center text-blue-600 font-semibold">{{ c.latest_avg }}</td>
 <td class="py-3.5 text-center">
-<span class="inline-flex items-center rounded-lg px-2.5 py-0.5 edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+<span class="inline-flex items-center rounded-pill px-2.5 py-0.5 edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
 Graduate Champion
 </span>
 </td>

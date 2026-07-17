@@ -14,11 +14,11 @@
 <!-- Status Badge -->
 <div class="flex items-center gap-2">
 {% if act.status == "closed" %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Closed
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-slate-900 text-white">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-slate-900 text-white">
 {{ act.get_status_display }}
 </span>
 {% endif %}
@@ -32,7 +32,7 @@ Closed
 <div class="lg:col-span-2 space-y-6">
 
 <!-- Activity details -->
-<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
 <h2 class="text-[18px] font-semibold text-slate-800">Closure Details Checklist</h2>
 
 <div class="space-y-4">
@@ -109,12 +109,12 @@ Closed
 </div>
 
 <!-- Activity Timeline Vertical Stream -->
-<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[15px] font-semibold text-slate-800">Vertical Activity Journey Stream</h3>
 <div class="relative pl-6 border-l-2 border-slate-100 space-y-5">
 {% for ev in timeline %}
 <div class="relative">
-<span class="absolute -left-[30px] top-1.5 w-2 h-2 rounded-full bg-blue-600"></span>
+<span class="absolute -left-[30px] top-1.5 w-2 h-2 rounded-pill bg-blue-600"></span>
 <div class="flex items-center justify-between text-[12px]">
 <span class="font-semibold text-slate-800">{{ ev.event_name }}</span>
 <span class="edify-text-caption text-slate-400 font-bold uppercase">{{ ev.timestamp|date:"M d, Y H:i" }}</span>
@@ -133,18 +133,18 @@ Closed
 <div class="space-y-6">
 
 <!-- Actions Card -->
-<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[15px] font-semibold text-slate-800">Closure Operations</h3>
 
 {% if act.status == "closed" %}
-<div class="bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-150 text-[12px] font-semibold leading-relaxed">
+<div class="bg-emerald-50 text-emerald-700 p-4 rounded-surface border border-emerald-150 text-[12px] font-semibold leading-relaxed">
 This activity is fully verified, closed, and locked in the archives. Core values cannot be edited.
 </div>
 {% if request.user.active_role in "Admin,CountryDirector,ImpactAssessment" %}
 <button
 @click="reopenOpen = true"
 type="button"
-class="w-full h-10 rounded-xl text-rose-700 font-semibold text-[12px] bg-rose-50 hover:bg-rose-100 border border-rose-200/80 flex items-center justify-center transition-all"
+class="w-full h-10 rounded-control text-rose-700 font-semibold text-[12px] bg-rose-50 hover:bg-rose-100 border border-rose-200/80 flex items-center justify-center transition-all"
 >
 Reopen Closed Activity
 </button>
@@ -157,21 +157,21 @@ Reopen Closed Activity
 type="submit"
 :disabled="submittingClose"
 :class="submittingClose ? 'opacity-50 cursor-not-allowed bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'"
-class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-center justify-center transition-all shadow-md"
+class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center transition-all shadow-md"
 >
 <span x-show="!submittingClose">Close & Lock Activity</span>
 <span x-show="submittingClose">Closing...</span>
 </button>
 </form>
 {% else %}
-<div class="bg-slate-50 text-slate-500 p-4 rounded-xl border border-slate-200/70 text-[12px] font-semibold text-center">
+<div class="bg-slate-50 text-slate-500 p-4 rounded-surface border border-slate-200/70 text-[12px] font-semibold text-center">
 Cannot Close Yet &bull; Blocker items pending.
 </div>
 
 <div class="space-y-2.5">
 <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">Blockers:</span>
 {% for b in blockers %}
-<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-150 rounded-lg text-[12px] font-bold">
+<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-150 rounded-surface text-[12px] font-bold">
 {{ b.blocking_reason }} (Assignee: {{ b.responsible_role }})
 </div>
 {% endfor %}
@@ -211,13 +211,13 @@ style="display: none;"
 name="reason"
 required
 placeholder="Provide exact reason for reopening..."
-class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] edify-focus-surface focus:border-blue-500 focus:outline-none h-28 resize-none font-semibold"
+class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface focus:border-blue-500 focus:outline-none h-28 resize-none font-semibold"
 ></textarea>
 </div>
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Category</label>
-<select name="category" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<select name="category" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
 <option value="wrong_evidence">Wrong Evidence File</option>
 <option value="wrong_salesforce_id">Wrong Salesforce ID</option>
 <option value="wrong_school">Wrong School Assignment</option>
@@ -235,7 +235,7 @@ form="reopen-form"
 type="submit"
 :disabled="submittingReopen"
 :class="submittingReopen ? 'opacity-50 cursor-not-allowed bg-rose-500' : 'bg-rose-600 hover:bg-rose-700'"
-class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-center justify-center shadow-sm transition-all"
+class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center shadow-sm transition-all"
 >
 <span x-show="!submittingReopen">Confirm Reopen</span>
 <span x-show="submittingReopen">Reopening...</span>
@@ -243,7 +243,7 @@ class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-ce
 <button
 @click="reopenOpen = false"
 type="button"
-class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-10 rounded-control border border-slate-200 hover:bg-slate-50 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>

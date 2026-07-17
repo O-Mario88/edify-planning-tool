@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full"
      x-data="{
        chart: null,
        initChart() {
@@ -8,14 +8,14 @@
          if (!el) return;
          this.chart = new ApexCharts(el, {
            series: [
-             { name: 'Team Staff', data: {{ staff_partner.staff|safe }} },
-             { name: 'Partners', data: {{ staff_partner.partner|safe }} }
+             { name: 'Team Staff', data: {{ staff_partner.staff|escape }} },
+             { name: 'Partners', data: {{ staff_partner.partner|escape }} }
            ],
-           chart: { height: 240, type: 'bar', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+           chart: { height: 240, type: 'bar', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
            colors: ['var(--edify-chart-blue)', 'var(--edify-chart-blue-soft)'],
            plotOptions: { bar: { columnWidth: '58%', borderRadius: 3, dataLabels: { position: 'top' } } },
            dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '12px', colors: ['var(--edify-text-muted)'], fontWeight: 700 } },
-           labels: {{ staff_partner.labels|safe }},
+           labels: {{ staff_partner.labels|escape }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
                     labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: 600 } } },
            yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },

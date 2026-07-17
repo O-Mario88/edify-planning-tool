@@ -17,10 +17,10 @@
 </div>
 
 <!-- Filters -->
-<form method="get" action="" class="edify-surface rounded-xl border border-slate-100 shadow-sm p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 items-end">
+<form method="get" action="" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 items-end">
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Status</label>
-<select name="status" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<select name="status" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 <option value="">Pending + Hold</option>
 {% for value, label in status_choices %}
 <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
@@ -29,7 +29,7 @@
 </div>
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Upload Batch</label>
-<select name="batch" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<select name="batch" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 <option value="">All batches</option>
 {% for batch_id, file_name in batch_options %}
 <option value="{{ batch_id }}" {% if filters.batch == batch_id %}selected{% endif %}>{{ file_name }}</option>
@@ -38,32 +38,32 @@
 </div>
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">District</label>
-<input type="text" name="district" value="{{ filters.district }}" placeholder="Contains…" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<input type="text" name="district" value="{{ filters.district }}" placeholder="Contains…" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 </div>
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Suspected School ID</label>
-<input type="text" name="school_id" value="{{ filters.school_id }}" placeholder="Contains…" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<input type="text" name="school_id" value="{{ filters.school_id }}" placeholder="Contains…" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 </div>
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Min. Confidence</label>
-<input type="number" step="0.05" min="0" max="1" name="min_confidence" value="{{ filters.min_confidence }}" placeholder="0.00–1.00" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<input type="number" step="0.05" min="0" max="1" name="min_confidence" value="{{ filters.min_confidence }}" placeholder="0.00–1.00" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 </div>
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Uploaded From</label>
-<input type="date" name="date_from" value="{{ filters.date_from }}" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<input type="date" name="date_from" value="{{ filters.date_from }}" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 </div>
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Uploaded To</label>
-<input type="date" name="date_to" value="{{ filters.date_to }}" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none font-semibold">
+<input type="date" name="date_to" value="{{ filters.date_to }}" class="w-full text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1.5 focus:outline-none font-semibold">
 </div>
 <div class="col-span-2 sm:col-span-4 lg:col-span-7 flex items-center gap-2">
-<button type="submit" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold edify-text-caption rounded-lg transition-all shadow-sm">Apply Filters</button>
-<a href="?" class="px-4 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-semibold edify-text-caption rounded-lg transition-all">Clear</a>
+<button type="submit" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold edify-text-caption rounded-control transition-all shadow-sm">Apply Filters</button>
+<a href="?" class="px-4 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-semibold edify-text-caption rounded-surface transition-all">Clear</a>
 </div>
 </form>
 
 <!-- Table -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
@@ -96,9 +96,9 @@
 </td>
 <td class="px-4 py-4">
 {% if r.status == 'hold' %}
-<span class="px-2 py-0.5 bg-amber-50 text-amber-700 edify-text-caption rounded font-bold uppercase tracking-wider">Held</span>
+<span class="px-2 py-0.5 bg-amber-50 text-amber-700 edify-text-caption rounded-pill font-bold uppercase tracking-wider">Held</span>
 {% else %}
-<span class="px-2 py-0.5 bg-slate-50 text-slate-500 edify-text-caption rounded font-bold uppercase tracking-wider">Pending</span>
+<span class="px-2 py-0.5 bg-slate-50 text-slate-500 edify-text-caption rounded-pill font-bold uppercase tracking-wider">Pending</span>
 {% endif %}
 </td>
 <td class="px-4 py-4 text-right">
@@ -110,7 +110,7 @@
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="match">
 
-<select name="school_id" required class="text-[12px] bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 max-w-[160px] focus:outline-none font-semibold">
+<select name="school_id" required class="text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1 max-w-[160px] focus:outline-none font-semibold">
 <option value="">-- Select school --</option>
 {% if r.suggested_school %}
 <option value="{{ r.suggested_school.id }}" selected>Suggested: {{ r.suggested_school.name }} ({{ r.suggested_school.school_id }})</option>
@@ -120,7 +120,7 @@
 {% endfor %}
 </select>
 
-<button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold edify-text-caption rounded-lg transition-all shadow-sm">
+<button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold edify-text-caption rounded-control transition-all shadow-sm">
 Link
 </button>
 </form>
@@ -130,7 +130,7 @@ Link
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="create_school">
-<button type="submit" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold edify-text-caption rounded-lg transition-all shadow-sm">
+<button type="submit" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold edify-text-caption rounded-control transition-all shadow-sm">
 Create School
 </button>
 </form>
@@ -141,7 +141,7 @@ Create School
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="hold">
-<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-lg transition-all">
+<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-control transition-all">
 Hold
 </button>
 </form>
@@ -152,7 +152,7 @@ Hold
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="ignore">
-<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-rose-500 font-bold edify-text-caption rounded-lg transition-all">
+<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-rose-500 font-bold edify-text-caption rounded-control transition-all">
 Ignore
 </button>
 </form>
@@ -177,10 +177,10 @@ No unmatched SSA records match this filter.
 <span>Page {{ records_page.number }} of {{ records_page.paginator.num_pages }} · {{ records_page.paginator.count }} total</span>
 <div class="flex items-center gap-2">
 {% if records_page.has_previous %}
-<a href="?page={{ records_page.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-lg">&larr; Prev</a>
+<a href="?page={{ records_page.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">&larr; Prev</a>
 {% endif %}
 {% if records_page.has_next %}
-<a href="?page={{ records_page.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-lg">Next &rarr;</a>
+<a href="?page={{ records_page.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">Next &rarr;</a>
 {% endif %}
 </div>
 </div>

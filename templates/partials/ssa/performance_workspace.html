@@ -1,0 +1,194 @@
+<div id="ssa-performance-workspace" class="sp-workspace" aria-live="polite">
+  <form class="sp-filter-panel"
+        method="get"
+        action="/ssa"
+        hx-get="/ssa"
+        hx-target="#ssa-performance-workspace"
+        hx-swap="outerHTML"
+        hx-trigger="change delay:120ms">
+    <div class="sp-filter-grid">
+      <label class="sp-field" for="sp-fy">
+        <span>Financial year</span>
+        <select id="sp-fy" name="fy">
+          {% for option in dashboard.filters.fy_options %}
+          <option value="{{ option.value }}"{% if option.value == dashboard.filters.fy %} selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="sp-field" for="sp-quarter">
+        <span>Quarter</span>
+        <select id="sp-quarter" name="quarter">
+          {% for quarter in dashboard.filters.quarters %}
+          <option value="{{ quarter }}"{% if quarter == dashboard.filters.quarter %} selected{% endif %}>{{ quarter }} · {% if quarter == 'Q1' %}Oct–Dec{% elif quarter == 'Q2' %}Jan–Mar{% elif quarter == 'Q3' %}Apr–Jun{% else %}Jul–Sep{% endif %}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="sp-field" for="sp-region">
+        <span>Region</span>
+        <select id="sp-region" name="region">
+          <option value="">All regions</option>
+          {% for region in dashboard.filters.regions %}
+          <option value="{{ region.region_id }}"{% if region.region_id == dashboard.filters.region %} selected{% endif %}>{{ region.region__name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="sp-field" for="sp-district">
+        <span>District</span>
+        <select id="sp-district" name="district">
+          <option value="">All districts</option>
+          {% for district in dashboard.filters.districts %}
+          <option value="{{ district.district_id }}"{% if district.district_id == dashboard.filters.district %} selected{% endif %}>{{ district.district__name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="sp-filter-actions">
+        <a href="/ssa" class="sp-reset" aria-label="Reset SSA Performance filters">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v6h6"/></svg>
+          Reset
+        </a>
+        {% if dashboard.scope.can_export %}
+        <a class="sp-export" href="/ssa/export?fy={{ dashboard.filters.fy }}&quarter={{ dashboard.filters.quarter }}{% if dashboard.filters.region %}&region={{ dashboard.filters.region }}{% endif %}{% if dashboard.filters.district %}&district={{ dashboard.filters.district }}{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 18v3h14v-3"/></svg>
+          Export
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    <p class="sp-scope-note">
+      <span aria-hidden="true"></span>{{ dashboard.scope.note }}
+      Current view: {{ dashboard.filters.fy_label }} · {{ dashboard.filters.quarter }} · {{ dashboard.filters.region_name }} · {{ dashboard.filters.district_name }}.
+    </p>
+    <noscript><button type="submit" class="sp-export">Apply filters</button></noscript>
+  </form>
+
+  <section class="sp-kpis" aria-label="SSA performance key indicators">
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 21V8l5-3v16m0-10 6-3v13m0-7 5-2v9M2 21h20"/></svg></span>
+      <div><span>Total schools assessed</span><strong>{{ dashboard.kpis.assessed }}</strong><small>of {{ dashboard.kpis.total_schools }} schools · {{ dashboard.kpis.completion_rate }}%</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="success" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+      <div><span>SSA completion rate</span><strong>{{ dashboard.kpis.completion_rate }}<em>%</em></strong><small>{{ dashboard.kpis.assessed }} confirmed this quarter</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8m11 18v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <div><span>Districts reporting</span><strong>{{ dashboard.kpis.reporting_districts }}</strong><small>of {{ dashboard.kpis.total_districts }} in your scope</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="warning" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 2 3 6 7 .9-5 4.8 1.2 7-6.2-3.3-6.2 3.3 1.2-7-5-4.8L9 8z"/></svg></span>
+      <div><span>Average SSA score</span><strong>{% if dashboard.kpis.average_score != None %}{{ dashboard.kpis.average_score }}{% else %}—{% endif %}<em>/10</em></strong><small>{% if dashboard.kpis.average_delta != None %}{{ dashboard.kpis.average_delta|stringformat:"+.2f" }} vs {{ dashboard.kpis.comparison_label }}{% else %}No comparable prior period{% endif %}</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="danger" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v4m0 4h.01M10 3 2.5 19a2 2 0 0 0 1.8 2h15.4a2 2 0 0 0 1.8-2L14 3a2 2 0 0 0-4 0Z"/></svg></span>
+      <div><span>High-risk schools</span><strong>{{ dashboard.kpis.high_risk }}</strong><small>{{ dashboard.kpis.high_risk_pct }}% of assessed · below {{ dashboard.engine.high_risk_score }}</small></div>
+    </article>
+    <article class="sp-kpi">
+      <span class="sp-kpi__icon" data-tone="danger" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h2m2 0h2M9 11h2m2 0h2M9 15h2m2 0h2"/></svg></span>
+      <div><span>Districts below target</span><strong>{{ dashboard.kpis.districts_below_target }}</strong><small>below {{ dashboard.kpis.target }} average</small></div>
+    </article>
+  </section>
+
+  <div class="sp-dashboard-grid">
+    <section class="sp-card sp-interventions" aria-labelledby="sp-interventions-title">
+      <header class="sp-card__header">
+        <div><span class="sp-card__eyebrow">Eight interventions</span><h2 id="sp-interventions-title">Performance overview</h2></div>
+        <span class="sp-help" title="Average confirmed score for each intervention" aria-label="Average confirmed score for each intervention">i</span>
+      </header>
+      <ol class="sp-intervention-list">
+        {% for intervention in dashboard.interventions %}
+        <li>
+          <span class="sp-rank">{{ forloop.counter }}</span>
+          <span class="sp-intervention-name">{{ intervention.label }}</span>
+          <span class="sp-meter" aria-hidden="true"><i style="width:{{ intervention.width }}%; background:{{ intervention.band.color }}"></i></span>
+          <strong>{% if intervention.average != None %}{{ intervention.average }}{% else %}—{% endif %}</strong>
+          <span class="sp-band" data-tone="{{ intervention.band.tone }}">{{ intervention.band.label }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <section class="sp-card sp-district-table-card" aria-labelledby="sp-district-title">
+      <header class="sp-card__header">
+        <div><span class="sp-card__eyebrow">Geographic comparison</span><h2 id="sp-district-title">District SSA performance</h2></div>
+      </header>
+      <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable district SSA performance table">
+        <table class="sp-table">
+          <caption>Confirmed SSA performance by district for {{ dashboard.filters.fy_label }} {{ dashboard.filters.quarter }}</caption>
+          <thead><tr><th scope="col">#</th><th scope="col">District</th><th scope="col">Assessed</th><th scope="col">Average</th><th scope="col">Highest weakness</th><th scope="col">High risk</th><th scope="col">Completion</th></tr></thead>
+          <tbody>
+          {% for district in dashboard.districts %}
+          <tr><td>{{ forloop.counter }}</td><th scope="row">{{ district.name }}</th><td>{{ district.schools_assessed }}/{{ district.total_schools }}</td><td><strong data-tone="{{ district.band.tone }}">{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong></td><td>{{ district.weakest }}</td><td><span class="sp-risk-count">{{ district.high_risk }}</span></td><td>{{ district.completion_rate }}%</td></tr>
+          {% empty %}
+          <tr><td colspan="7" class="sp-empty-cell">No districts are available in this scope.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sp-card sp-heat-panel" aria-labelledby="sp-heat-title">
+      <header class="sp-card__header"><div><span class="sp-card__eyebrow">Portfolio risk</span><h2 id="sp-heat-title">District performance heat panel</h2></div></header>
+      <div class="sp-district-tiles">
+        {% for district in dashboard.districts %}
+        <article data-tone="{{ district.band.tone }}"><span>{{ district.name }}</span><strong>{% if district.average != None %}{{ district.average }}{% else %}—{% endif %}</strong><small>{{ district.band.label }} · {{ district.completion_rate }}% complete</small></article>
+        {% empty %}<p class="sp-empty">No district results for this selection.</p>{% endfor %}
+      </div>
+      <div class="sp-legend" aria-label="SSA score bands"><span data-tone="danger">Critical</span><span data-tone="warning">Warning</span><span data-tone="lime">Improving</span><span data-tone="success">Strong</span></div>
+    </section>
+
+    <section class="sp-card sp-matrix-card" aria-labelledby="sp-matrix-title">
+      <header class="sp-card__header"><div><span class="sp-card__eyebrow">Priority gaps</span><h2 id="sp-matrix-title">Intervention gaps by district</h2></div></header>
+      <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable intervention gaps heatmap">
+        <table class="sp-matrix">
+          <caption>Average confirmed intervention scores by district</caption>
+          <thead><tr><th scope="col">District</th>{% for intervention in dashboard.interventions %}<th scope="col">{{ intervention.label }}</th>{% endfor %}</tr></thead>
+          <tbody>{% for row in dashboard.matrix %}<tr><th scope="row">{{ row.name }}</th>{% for cell in row.cells %}<td><span data-tone="{{ cell.band.tone }}">{% if cell.value != None %}{{ cell.value }}{% else %}—{% endif %}</span></td>{% endfor %}</tr>{% empty %}<tr><td colspan="9" class="sp-empty-cell">No intervention scores are available.</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sp-card sp-urgent-card" aria-labelledby="sp-urgent-title">
+      <header class="sp-card__header"><div><span class="sp-card__eyebrow">Decision queue</span><h2 id="sp-urgent-title">{% if dashboard.scope.can_view_school_details %}Schools requiring urgent attention{% else %}Urgent-attention summary{% endif %}</h2></div><span class="sp-count-badge">{{ dashboard.urgent_total }}</span></header>
+      {% if dashboard.scope.can_view_school_details %}
+      <div class="sp-table-scroll">
+        <table class="sp-table sp-urgent-table">
+          <caption>Schools with an intervention score below {{ dashboard.engine.high_risk_score }}</caption>
+          <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Lowest intervention</th><th scope="col">Score</th><th scope="col">Recommended action</th></tr></thead>
+          <tbody>{% for school in dashboard.urgent_schools|slice:":5" %}<tr><th scope="row">{% if dashboard.scope.can_link_schools %}<a href="/schools/{{ school.id }}">{{ school.name }}</a>{% else %}{{ school.name }}{% endif %}</th><td>{{ school.district }}</td><td>{{ school.intervention }}</td><td><strong data-tone="danger">{{ school.score }}</strong></td><td>{{ school.action }}</td></tr>{% empty %}<tr><td colspan="5" class="sp-empty-cell">No schools fall below the urgent-risk threshold in this selection.</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="sp-protected-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg><div><strong>{{ dashboard.urgent_total }} high-risk school{{ dashboard.urgent_total|pluralize }}</strong><p>Your role receives regional aggregates. School identities remain protected by the field-data access policy.</p></div></div>
+      {% endif %}
+    </section>
+
+    <aside class="sp-card sp-insights" aria-labelledby="sp-insights-title">
+      <header class="sp-card__header"><div><span class="sp-card__eyebrow">Decision engine</span><h2 id="sp-insights-title">Insights &amp; recommendations</h2></div></header>
+      <ul>{% for insight in dashboard.insights %}<li data-tone="{{ insight.tone }}"><span class="sp-insight-icon" aria-hidden="true">{% if insight.tone == 'success' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true" style="width:0.75em;height:0.75em"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>{% elif insight.tone == 'info' %}i{% else %}!{% endif %}</span><div><strong>{{ insight.title }}</strong><p>{{ insight.body }}</p><small>{{ insight.action }} →</small></div></li>{% endfor %}</ul>
+    </aside>
+
+    <section class="sp-card sp-trend" aria-labelledby="sp-trend-title">
+      <header class="sp-card__header"><div><span class="sp-card__eyebrow">Multi-year progress</span><h2 id="sp-trend-title">SSA performance trend by year</h2></div><span class="sp-target-chip">Target {{ dashboard.engine.target_score }}</span></header>
+      {% if dashboard.trend.has_data %}
+      <figure>
+        <svg viewBox="0 0 900 220" role="img" aria-labelledby="sp-chart-title sp-chart-desc">
+          <title id="sp-chart-title">Annual average SSA performance trend</title>
+          <desc id="sp-chart-desc">Annual confirmed SSA averages compared with the target score of {{ dashboard.engine.target_score }}.</desc>
+          <g class="sp-chart-grid" aria-hidden="true"><line x1="48" y1="20" x2="852" y2="20"/><line x1="48" y1="59" x2="852" y2="59"/><line x1="48" y1="98" x2="852" y2="98"/><line x1="48" y1="137" x2="852" y2="137"/><line x1="48" y1="176" x2="852" y2="176"/></g>
+          <g class="sp-chart-axis" aria-hidden="true"><text x="8" y="24">10</text><text x="8" y="63">7.5</text><text x="8" y="102">5</text><text x="8" y="141">2.5</text><text x="8" y="180">0</text></g>
+          <line class="sp-chart-target" x1="48" y1="{{ dashboard.trend.target_y }}" x2="852" y2="{{ dashboard.trend.target_y }}"/>
+          <text class="sp-chart-target-label" x="858" y="{{ dashboard.trend.target_y }}">Target</text>
+          {% if dashboard.trend.polyline %}<polyline class="sp-chart-line" points="{{ dashboard.trend.polyline }}"/>{% endif %}
+          {% for point in dashboard.trend.points %}
+          <text class="sp-chart-year" x="{{ point.x }}" y="207" text-anchor="middle">{{ point.label }}</text>
+          {% if point.value != None %}<circle class="sp-chart-point" cx="{{ point.x }}" cy="{{ point.y }}" r="4"/><text class="sp-chart-value" x="{{ point.x }}" y="{{ point.y|add:'-10' }}" text-anchor="middle">{{ point.value }}</text>{% endif %}
+          {% endfor %}
+        </svg>
+        <figcaption>Annual averages use each school’s latest confirmed SSA in that financial year.</figcaption>
+      </figure>
+      <table class="sp-visually-hidden"><caption>Annual SSA average data</caption><thead><tr><th scope="col">Year</th><th scope="col">Average</th></tr></thead><tbody>{% for point in dashboard.trend.points %}<tr><th scope="row">{{ point.label }}</th><td>{% if point.value != None %}{{ point.value }}{% else %}No data{% endif %}</td></tr>{% endfor %}</tbody></table>
+      {% else %}<div class="sp-empty-state"><strong>No confirmed trend data yet</strong><p>Annual performance will appear after SSA records in this scope are confirmed.</p></div>{% endif %}
+    </section>
+  </div>
+</div>
+{% include "components/analytics_provenance.html" with engine=dashboard.engine %}

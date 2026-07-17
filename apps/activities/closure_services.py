@@ -321,6 +321,30 @@ class ActivityClosureService:
                 description="Activity met all closure checklist conditions and is locked.",
             )
 
+            # Closure is a security-critical event: the per-activity timeline
+            # above is NOT tamper-evident — the hash-chained AuditLog must
+            # also record it (ecosystem audit: closure was absent from the
+            # chain entirely).
+            try:
+                from apps.audit.services import log as audit_log
+
+                audit_log(
+                    action="activity.closed",
+                    subject_kind="Activity",
+                    subject_id=activity.id,
+                    actor_id=closed_by,
+                    actor_role="System",
+                    success=True,
+                    payload={
+                        "school_id": activity.school_id,
+                        "final_budget": budget_total,
+                        "disbursed": disb_total,
+                        "actual_spend": actual_spend_total,
+                    },
+                )
+            except Exception:  # pragma: no cover
+                pass
+
             # Send Notification
             if activity.responsible_staff_id:
                 WorkflowNotificationService.trigger(
@@ -354,11 +378,29 @@ class ActivityReopenService:
                 approved=True,
             )
 
-            # Reset activity status
-            activity.status = (
-                "ia_verified"  # Revert to verified so it can be re-cleared/fixed
-            )
-            activity.save(update_fields=["status", "updated_at"])
+            # Reset activity status. Categories that INVALIDATE the achievement
+            # (wrong evidence, wrong Salesforce ID, wrong school, duplicate)
+            # must not land on "ia_verified" — that status still counts as
+            # achieved in every target engine, so the bad work would stay
+            # credited. "returned_by_ia" is the platform's own correction
+            # state: target ledger reverses, and the owner gets the fix To-Do.
+            invalidating = {
+                "wrong_evidence",
+                "wrong_salesforce_id",
+                "wrong_school",
+                "duplicate_discovered",
+            }
+            if category in invalidating:
+                activity.status = "returned_by_ia"
+                activity.ia_verification_status = "returned"
+                activity.save(
+                    update_fields=["status", "ia_verification_status", "updated_at"]
+                )
+            else:
+                # Finance/audit/analytics corrections: the field work itself
+                # stands, so keep the verified (credited) state.
+                activity.status = "ia_verified"
+                activity.save(update_fields=["status", "updated_at"])
 
             # Update closure record status
             ActivityClosure.objects.filter(activity=activity).update(

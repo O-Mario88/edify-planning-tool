@@ -4,15 +4,15 @@
   {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
   <div class="flex flex-col lg:flex-row items-stretch gap-2">
     {% for c in period_cards %}
-    <div class="flex-1 edify-surface rounded-xl border {% if c.current %}border-blue-200 ring-2 ring-blue-100{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
+    <div class="flex-1 edify-surface rounded-surface border {% if c.current %}border-blue-200 ring-2 ring-blue-100{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
       <div class="flex items-center justify-between">
         <p class="edify-text-caption font-bold uppercase tracking-wider {% if c.current %}text-blue-600{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
         <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-300 shrink-0">{{ c.sublabel }}</span>
       </div>
       <div class="flex items-center gap-2.5">
-        <div class="relative h-[52px] w-[52px] shrink-0 rounded-full"
+        <div class="relative h-[52px] w-[52px] shrink-0 rounded-pill"
              style="background: conic-gradient({% if c.tone == 'success' %}var(--edify-chart-green){% elif c.tone == 'warning' %}var(--edify-chart-amber){% elif c.tone == 'danger' %}var(--edify-chart-red){% else %}var(--edify-border){% endif %} 0% {{ c.ring }}%, var(--edify-border, var(--edify-border)) {{ c.ring }}% 100%);">
-          <div class="absolute inset-[6px] edify-surface rounded-full flex items-center justify-center">
+          <div class="absolute inset-[6px] edify-surface rounded-pill flex items-center justify-center">
             <span class="text-[12px] font-bold text-slate-800 tabular-nums">{{ c.pct }}%</span>
           </div>
         </div>
@@ -40,7 +40,7 @@
     {% for a in area_cards %}
     <div hx-get="/my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}"
          hx-target="#drawer-container" hx-swap="innerHTML"
-         class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 cursor-pointer hover:border-slate-200 hover:shadow transition-all">
+         class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 cursor-pointer hover:border-slate-200 hover:shadow transition-all">
       <div class="flex items-center justify-between">
         <p class="edify-text-caption font-bold text-slate-600 truncate">{{ a.label }}</p>
         <svg class="h-3 w-3 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
@@ -61,7 +61,7 @@
   </div>
 
   {# ── Targets by Time Period matrix ──────────────────────────────────────── #}
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Targets by Time Period</h2>
     <div class="overflow-x-auto">
       <table class="w-full edify-text-caption border-collapse min-w-[860px]">
@@ -111,7 +111,7 @@
 
   {# ── Charts + focus row ─────────────────────────────────────────────────── #}
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-    <div class="lg:col-span-5 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2"
+    <div class="lg:col-span-5 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2"
          x-data="{
            chart: null,
            initChart() {
@@ -120,10 +120,10 @@
              if (!el) return;
              this.chart = new ApexCharts(el, {
                series: [
-                 { name: 'Actual', data: {{ trend.actual_json|safe }} },
-                 { name: 'Expected Target Pace', data: {{ trend.expected_json|safe }} }
+                 { name: 'Actual', data: {{ trend.actual_json|escape }} },
+                 { name: 'Expected Target Pace', data: {{ trend.expected_json|escape }} }
                ],
-               chart: { height: 240, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+               chart: { height: 240, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                stroke: { width: [2.5, 2], curve: 'smooth', dashArray: [0, 6] },
                colors: ['var(--edify-chart-blue)', 'var(--edify-text-subtle)'],
                markers: { size: [3, 0] },
@@ -144,7 +144,7 @@
       <div class="h-[240px] w-full" id="myTargetTrend"></div>
     </div>
 
-    <div class="lg:col-span-3 edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Contribution to Roll-up</h2>
       <div class="space-y-2.5">
         {% for c in period_cards %}
@@ -153,8 +153,8 @@
             <span class="font-semibold {% if c.current %}text-blue-700{% else %}text-slate-600{% endif %}">{% if c.kind == 'month' %}{{ c.label }} (Monthly){% elif c.kind == 'fy' %}FY Cumulative{% else %}{{ c.label }}{% endif %}</span>
             <span class="font-bold text-slate-700 tabular-nums">{{ c.pct }}%</span>
           </div>
-          <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
-            <div class="h-full rounded-full {% if c.tone == 'success' %}bg-emerald-500{% elif c.tone == 'warning' %}bg-amber-500{% elif c.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ c.ring }}%"></div>
+          <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
+            <div class="h-full rounded-pill {% if c.tone == 'success' %}bg-emerald-500{% elif c.tone == 'warning' %}bg-amber-500{% elif c.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ c.ring }}%"></div>
           </div>
         </div>
         {% endfor %}
@@ -162,7 +162,7 @@
     </div>
 
     <div class="lg:col-span-4 space-y-5">
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2"
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2"
            x-data="{
              chart: null,
              initChart() {
@@ -172,7 +172,7 @@
                this.chart = new ApexCharts(el, {
                  series: [{% for d in distribution %}{{ d.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
                  labels: [{% for d in distribution %}'{{ d.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-                 chart: { height: 170, type: 'donut', fontFamily: 'Outfit, sans-serif' },
+                 chart: { height: 170, type: 'donut', fontFamily: 'Inter, sans-serif' },
                  colors: [{% for d in distribution %}{% if d.label == 'On Track' %}'var(--edify-chart-green)'{% elif d.label == 'At Risk' %}'var(--edify-chart-amber)'{% elif d.label == 'Off Track' %}'var(--edify-chart-red)'{% elif d.label == 'Complete / Exceeded' %}'var(--edify-chart-blue)'{% else %}'var(--edify-text-subtle)'{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}],
                  dataLabels: { enabled: false },
                  plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
@@ -193,17 +193,17 @@
         {% endif %}
       </div>
 
-      <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Top Areas to Focus</h2>
         {% if focus %}
         <div class="divide-y divide-slate-50">
           {% for f in focus %}
           <div class="py-2.5 flex items-start gap-2.5">
-            <span class="h-5 w-5 rounded-full bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0 mt-0.5">{{ forloop.counter }}</span>
+            <span class="h-5 w-5 rounded-pill bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0 mt-0.5">{{ forloop.counter }}</span>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-2">
                 <p class="text-[12px] font-bold text-slate-700">{{ f.area }}</p>
-                <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold shrink-0 {% if f.tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ f.status }}</span>
+                <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold shrink-0 {% if f.tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ f.status }}</span>
               </div>
               <p class="edify-text-caption text-slate-500">{{ f.achieved }} of {{ f.target }} achieved · {{ f.reason }}</p>
               {% if f.action_url == '?mscs=new' %}
@@ -223,7 +223,7 @@
   </div>
 
   {# ── Core School Tracker (4 visits + 4 trainings per core school) ───────── #}
-  <div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
     <div class="flex items-center justify-between pb-2 border-b border-slate-50">
       <div>
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Core School Tracker</h2>
@@ -251,24 +251,24 @@
             <td class="py-2.5 px-3 text-center tabular-nums {% if c.baseline == None %}text-slate-300{% else %}text-slate-700{% endif %}">{% if c.baseline != None %}{{ c.baseline|floatformat:1 }}/10{% else %}—{% endif %}</td>
             <td class="py-2.5 px-3">
               <span class="inline-flex items-center gap-1">
-                {% for done in c.visit_dots %}<span class="h-2.5 w-2.5 rounded-full {% if done %}bg-teal-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+                {% for done in c.visit_dots %}<span class="h-2.5 w-2.5 rounded-pill {% if done %}bg-teal-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
                 <span class="edify-text-caption text-slate-400 font-bold ml-1 tabular-nums">{{ c.visits_done }}/4</span>
               </span>
             </td>
             <td class="py-2.5 px-3">
               <span class="inline-flex items-center gap-1">
-                {% for done in c.training_dots %}<span class="h-2.5 w-2.5 rounded-full {% if done %}bg-violet-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+                {% for done in c.training_dots %}<span class="h-2.5 w-2.5 rounded-pill {% if done %}bg-violet-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
                 <span class="edify-text-caption text-slate-400 font-bold ml-1 tabular-nums">{{ c.trainings_done }}/4</span>
               </span>
             </td>
             <td class="py-2.5 px-3 text-center">
               <span class="inline-flex items-center gap-1.5">
-                <span class="w-14 h-[6px] bg-slate-100 rounded-full overflow-hidden"><span class="block h-full rounded-full {% if c.pct >= 100 %}bg-emerald-500{% elif c.pct >= 50 %}bg-teal-500{% elif c.pct > 0 %}bg-amber-500{% else %}bg-slate-200{% endif %}" style="width: {{ c.pct }}%"></span></span>
+                <span class="w-14 h-[6px] bg-slate-100 rounded-pill overflow-hidden"><span class="block h-full rounded-pill {% if c.pct >= 100 %}bg-emerald-500{% elif c.pct >= 50 %}bg-teal-500{% elif c.pct > 0 %}bg-amber-500{% else %}bg-slate-200{% endif %}" style="width: {{ c.pct }}%"></span></span>
                 <span class="tabular-nums edify-text-caption font-bold text-slate-600">{{ c.pct }}%</span>
               </span>
             </td>
             <td class="py-2.5 px-3 text-right">
-              <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold
+              <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
               {% if c.tone == 'success' %}bg-emerald-50 text-emerald-700
               {% elif c.tone == 'info' %}bg-sky-50 text-sky-700
               {% elif c.tone == 'warning' %}bg-amber-50 text-amber-700

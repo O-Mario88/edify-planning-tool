@@ -209,10 +209,9 @@ def _prime_target_series(cd: CDScope) -> None:
     DB) instead of re-rebuilding + re-fetching per PL row AND again per CCEO
     row, which is what made target_by_pl_cceo/pl_oversight/kpis each
     independently re-derive the same people's numbers."""
-    from apps.targets.models import TargetArea
-    from apps.targets.my_targets import per_user_monthly_series
+    from apps.targets.my_targets import active_target_areas, per_user_monthly_series
 
-    cd.areas = list(TargetArea.objects.filter(active=True))
+    cd.areas = active_target_areas()
     if not cd.cceo_user_ids:
         cd.per_user_series = {}
         return
@@ -569,8 +568,8 @@ class CDAnalyticsService:
         a genuinely one-off caller like a single-CCEO drilldown.
         """
         from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
-        from apps.targets.models import TargetArea
         from apps.targets.my_targets import (
+            active_target_areas,
             pool_series,
             pooled_monthly_series,
             weighted_period_pct,
@@ -592,7 +591,7 @@ class CDAnalyticsService:
         if not resolved_user_ids:
             return 0, 0, 0
 
-        areas = areas or list(TargetArea.objects.filter(active=True))
+        areas = areas or active_target_areas()
         months = TCal.months_of_quarter(quarter) if quarter else list(range(1, 13))
         if per_user_series is not None:
             targets, achieved = pool_series(resolved_user_ids, per_user_series, areas)

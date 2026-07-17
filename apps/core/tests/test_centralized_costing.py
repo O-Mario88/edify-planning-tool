@@ -17,12 +17,14 @@ Isolated test DB only.
 
 from __future__ import annotations
 
+from django.conf import settings
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import ActivityScheduleCostLine
-from apps.budget.models import CostSetting
+from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
 from apps.geography.models import District, Region, SubCounty
@@ -30,7 +32,27 @@ from apps.schools.models import School
 
 
 def _seed_rates(**rates: int) -> None:
-    """Upsert cost rates (integer UGX)."""
+    """Set up the minimum valid CD rate card and upsert its rates (UGX)."""
+    fy = get_operational_fy()
+    country = getattr(settings, "COUNTRY", "Uganda")
+    catalogue = CostCatalogue.objects.filter(
+        country=country, fy=fy, is_active=True
+    ).first()
+    if catalogue is None:
+        latest_version = (
+            CostCatalogue.objects.filter(country=country, fy=fy)
+            .order_by("-version")
+            .values_list("version", flat=True)
+            .first()
+            or 0
+        )
+        catalogue = CostCatalogue.objects.create(
+            country=country,
+            fy=fy,
+            version=latest_version + 1,
+            is_active=True,
+            label="Centralized costing test catalogue",
+        )
     for key, unit_cost in rates.items():
         CostSetting.objects.update_or_create(
             key=key, defaults={"label": key, "unit_cost": unit_cost}

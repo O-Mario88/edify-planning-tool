@@ -97,9 +97,9 @@ class ProgramLeadDashboardService:
                 pls, fy, filters, acts
             ),
             "ssa_matrix": ProgramLeadDashboardService.ssa_cluster_matrix(pls, fy),
-            "urgent_schools": PLAnalyticsService.risk_list(
-                pls, fy, None, filters, limit=8
-            )["rows"],
+            "urgent_schools": ProgramLeadDashboardService.urgent_schools(
+                user, pls, fy, filters, limit=8
+            ),
             "route_capacity": ProgramLeadDashboardService.route_capacity(
                 pls, fy, filters, acts
             ),
@@ -110,6 +110,52 @@ class ProgramLeadDashboardService:
                 "school_count": School.objects.filter(id__in=pls.school_ids).count(),
             },
         }
+
+    @staticmethod
+    def urgent_schools(user, pls, fy, filters, limit=8) -> list[dict]:
+        """Return the PL's combined personal + supervised urgent queue.
+
+        Ownership is explicit on every row so the dashboard can schedule the
+        PL's own work while delegating a supervised CCEO's school to that CCEO.
+        """
+        from urllib.parse import urlencode
+
+        from apps.accounts.models import StaffSchoolAssignment
+        from apps.core.scoping import resolve_user_scope
+
+        rows = PLAnalyticsService.risk_list(
+            pls, fy, None, filters, limit=limit
+        )["rows"]
+        scope = resolve_user_scope(user)
+        own_school_ids = set(scope.own_school_ids)
+        cceo_by_staff = {item["staff_id"]: item for item in pls.cceos}
+        owner_by_school = {}
+        assignments = StaffSchoolAssignment.objects.filter(
+            staff_id__in=cceo_by_staff, school_id__in=[row["id"] for row in rows]
+        ).order_by("created_at")
+        for assignment in assignments:
+            owner_by_school.setdefault(
+                assignment.school_id, cceo_by_staff.get(assignment.staff_id)
+            )
+
+        for row in rows:
+            owner = owner_by_school.get(row["id"])
+            is_personal = row["id"] in own_school_ids or owner is None
+            row["owner_kind"] = "pl" if is_personal else "cceo"
+            row["owner_name"] = (
+                getattr(user, "name", "Program Lead")
+                if is_personal
+                else owner["name"]
+            )
+            row["owner_user_id"] = None if is_personal else owner["user_id"]
+            query = {
+                "school_id": row["id"],
+                "recommended_activity_type": row["recommended_activity_type"],
+            }
+            if row["weakest_intervention_code"]:
+                query["focus_intervention"] = row["weakest_intervention_code"]
+            row["schedule_url"] = f"/planning/schedule-modal?{urlencode(query)}"
+        return rows
 
     # ── shared scoped querysets ──────────────────────────────────────────────
     @staticmethod

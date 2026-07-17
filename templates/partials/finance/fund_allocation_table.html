@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <!-- Allocation Table & Out-of-band updates -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden " id="allocation-table-container">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden " id="allocation-table-container">
 
 <!-- CD Monthly Admin Plan Blocker/Warnings -->
 {% if not admin_budget_data.exists %}
@@ -242,7 +242,7 @@ No planned allocation for this month.
 hx-get="/finance/fund-allocation?page={{ page|add:-1 }}&per_page={{ per_page }}&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
 hx-target="#allocation-table-container"
 hx-swap="outerHTML"
-class="h-7 w-7 rounded border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center"
+class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center"
 >
 &lt;
 </button>
@@ -253,7 +253,7 @@ class="h-7 w-7 rounded border border-slate-200 edify-surface hover:bg-slate-50 f
 hx-get="/finance/fund-allocation?page={{ p }}&per_page={{ per_page }}&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
 hx-target="#allocation-table-container"
 hx-swap="outerHTML"
-class="h-7 w-7 rounded border flex items-center justify-center {% if page == p %}border-blue-500 bg-blue-50 text-blue-600{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
+class="h-7 w-7 rounded-control border flex items-center justify-center {% if page == p %}border-blue-500 bg-blue-50 text-blue-600{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
 >
 {{ p }}
 </button>
@@ -264,7 +264,7 @@ class="h-7 w-7 rounded border flex items-center justify-center {% if page == p %
 hx-get="/finance/fund-allocation?page={{ page|add:1 }}&per_page={{ per_page }}&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
 hx-target="#allocation-table-container"
 hx-swap="outerHTML"
-class="h-7 w-7 rounded border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center"
+class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center"
 >
 &gt;
 </button>
@@ -277,7 +277,7 @@ name="per_page"
 hx-get="/finance/fund-allocation?page=1&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
 hx-target="#allocation-table-container"
 hx-swap="outerHTML"
-class="h-7 px-2 edify-surface border border-slate-200 rounded font-bold cursor-pointer focus:outline-none"
+class="h-7 px-2 edify-surface border border-slate-200 rounded-control font-bold cursor-pointer focus:outline-none"
 >
 <option value="10" {% if per_page == 10 %}selected{% endif %}>10 / page</option>
 <option value="20" {% if per_page == 20 %}selected{% endif %}>20 / page</option>

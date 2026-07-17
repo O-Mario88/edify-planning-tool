@@ -1,5 +1,7 @@
+import csv
 import datetime
 
+from django.http import HttpResponse
 from django.shortcuts import render
 from apps.core.permissions import require_page_permission
 from django.utils import timezone
@@ -13,11 +15,9 @@ from apps.activities.models import Activity
 from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
 
 
-@require_page_permission("analytics")
-def analytics_dashboard_view(request):
-    """GET to render the primary Analytics Dashboard with filters."""
-    # 1. Gather all filters from GET parameters
-    filters = {
+def _analytics_filters(request):
+    """Return the supported analytics filters from the current request."""
+    return {
         "fy": request.GET.get("fy"),
         "quarter": request.GET.get("quarter"),
         "region": request.GET.get("region"),
@@ -30,8 +30,30 @@ def analytics_dashboard_view(request):
         "q": request.GET.get("q"),
     }
 
+
+@require_page_permission("analytics")
+def analytics_dashboard_view(request):
+    """GET to render the primary Analytics Dashboard with filters."""
+    # 1. Gather all filters from GET parameters
+    filters = _analytics_filters(request)
+
     # 2. Call Service to gather all dashboard datasets
     data = AnalyticsDashboardService.get_analytics_data(request.user, filters)
+    from apps.analytics.models import DEFAULT_ANALYTICS_CARDS, AnalyticsDashboardPreference
+    from apps.analytics.report_delivery import CARD_CATEGORY
+
+    preference = AnalyticsDashboardPreference.objects.filter(
+        user_id=request.user.id
+    ).first()
+    visible_cards = (
+        preference.visible_cards if preference else DEFAULT_ANALYTICS_CARDS
+    )
+    data["kpi_strip_items"] = [
+        item
+        for item in data.get("kpi_strip_items", [])
+        if CARD_CATEGORY.get(item.get("label"), "reach") in visible_cards
+    ]
+    analytics_layout = preference.layout if preference else "grid"
 
     # 3. Retrieve options list for dropdown filters
     regions = Region.objects.all().order_by("name")
@@ -55,6 +77,7 @@ def analytics_dashboard_view(request):
         # Action settings
         "use_dark_sidebar": False,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
+        "analytics_layout": analytics_layout,
     }
 
     # If HTMX request, render only content cards to swap
@@ -62,6 +85,31 @@ def analytics_dashboard_view(request):
         return render(request, "partials/analytics/kpi_cards.html", context)
 
     return render(request, "pages/analytics/index.html", context)
+
+
+@require_page_permission("analytics")
+def analytics_export_view(request):
+    """Download the caller's current role-scoped analytics KPIs as CSV."""
+    data = AnalyticsDashboardService.get_analytics_data(
+        request.user, _analytics_filters(request)
+    )
+    generated = timezone.localtime().strftime("%Y-%m-%d %H:%M %Z")
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = (
+        f'attachment; filename="edify-analytics-{timezone.localdate().isoformat()}.csv"'
+    )
+    writer = csv.writer(response)
+    writer.writerow(["Metric", "Value", "Context", "Generated at"])
+    for card in data.get("kpi_strip_items", []):
+        writer.writerow(
+            [
+                card.get("label", ""),
+                card.get("value", ""),
+                card.get("helper", ""),
+                generated,
+            ]
+        )
+    return response
 
 
 @require_page_permission("pl_analytics")
@@ -168,9 +216,26 @@ def analytics_drilldown_view(request):
     fy = request.GET.get("fy") or get_operational_fy()
     quarter = request.GET.get("quarter") or "Q2"
 
-    # Base filter criteria
+    from apps.core.scoping import resolve_user_scope
+
+    # Base filter criteria are constrained before any metric-specific query.
+    # The dashboard service already scopes aggregates; drill-down records must
+    # obey the same boundary so a URL cannot reveal another portfolio.
     activities = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    schools = School.objects.filter(deleted_at__isnull=True)
+    schools = School.objects.filter(deleted_at__isnull=True).select_related(
+        "district", "account_owner__user"
+    )
+    scope = resolve_user_scope(request.user)
+    if scope.can_view_summary_only:
+        activities = activities.none()
+        schools = schools.none()
+    elif not scope.country_scope:
+        schools = schools.filter(id__in=scope.school_ids)
+        activities = activities.filter(school_id__in=scope.school_ids)
+        if scope.partner_ids:
+            activities = activities.filter(
+                assigned_partner_id__in=scope.partner_ids
+            )
 
     title = "Drilldown Details"
     description = "Traceable source records for the selected metric."
@@ -373,18 +438,100 @@ def analytics_drilldown_view(request):
 
 @require_page_permission("analytics")
 def analytics_schedule_report_view(request):
-    """GET to render the Schedule Report configurations drawer."""
+    """Send a permission-scoped analytics snapshot to Messages immediately."""
+    from apps.analytics.forms import AnalyticsInboxSnapshotForm
+    from apps.analytics.report_delivery import send_analytics_snapshot
+    from apps.audit.services import log as audit_log
+
+    if request.method == "POST":
+        form = AnalyticsInboxSnapshotForm(request.POST)
+        if form.is_valid():
+            try:
+                thread = send_analytics_snapshot(
+                    user=request.user,
+                    categories=form.cleaned_data["categories"],
+                )
+            except RuntimeError:
+                form.add_error(
+                    None,
+                    "The snapshot could not be delivered. Nothing was sent; please try again.",
+                )
+            else:
+                audit_log(
+                    action="analytics_snapshot_sent",
+                    subject_kind="MessageThread",
+                    subject_id=str(thread.id),
+                    actor_id=str(request.user.id),
+                    actor_role=request.user.active_role,
+                    reason="User sent an analytics snapshot to their private inbox",
+                    payload={
+                        "categories": form.cleaned_data["categories"],
+                        "recipient_user_id": str(request.user.id),
+                        "channel": "in_app",
+                    },
+                )
+                response = render(
+                    request,
+                    "partials/schools/toast_success.html",
+                    {"message": "Analytics snapshot sent to your inbox."},
+                )
+                response["HX-Trigger"] = "close-drawer"
+                return response
+    else:
+        form = AnalyticsInboxSnapshotForm(
+            initial={"categories": ["targets", "training", "reach", "ssa"]}
+        )
     context = {
         "drawer_size": "sm",
+        "form": form,
     }
     return render(request, "partials/analytics/schedule_report_drawer.html", context)
 
 
 @require_page_permission("analytics")
 def analytics_customize_dashboard_view(request):
-    """GET to render the Customize Dashboard configurations drawer."""
+    """Persist the caller's KPI visibility and density preferences."""
+    from apps.analytics.forms import AnalyticsDashboardPreferenceForm
+    from apps.analytics.models import AnalyticsDashboardPreference, DEFAULT_ANALYTICS_CARDS
+    from apps.audit.services import log as audit_log
+
+    preference = AnalyticsDashboardPreference.objects.filter(
+        user_id=request.user.id
+    ).first()
+    if request.method == "POST":
+        form = AnalyticsDashboardPreferenceForm(request.POST, instance=preference)
+        if form.is_valid():
+            preference = form.save(commit=False)
+            preference.user_id = request.user.id
+            preference.save()
+            audit_log(
+                action="analytics_dashboard_preference_saved",
+                subject_kind="AnalyticsDashboardPreference",
+                subject_id=str(preference.id),
+                actor_id=str(request.user.id),
+                actor_role=request.user.active_role,
+                reason="User updated analytics presentation preferences",
+                payload={
+                    "layout": preference.layout,
+                    "visible_cards": preference.visible_cards,
+                },
+            )
+            response = render(
+                request,
+                "partials/schools/toast_success.html",
+                {"message": "Analytics dashboard preferences saved."},
+            )
+            response["HX-Trigger"] = "close-drawer"
+            response["HX-Refresh"] = "true"
+            return response
+    else:
+        form = AnalyticsDashboardPreferenceForm(
+            instance=preference,
+            initial={"visible_cards": DEFAULT_ANALYTICS_CARDS, "layout": "grid"},
+        )
     context = {
         "drawer_size": "sm",
+        "form": form,
     }
     return render(
         request, "partials/analytics/customize_dashboard_drawer.html", context

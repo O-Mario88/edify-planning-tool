@@ -12,12 +12,12 @@
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Review the parsed SSA assessment rows before confirming import into the directory.</p>
 </div>
 <div class="flex items-center gap-3">
-<a href="/ssa/upload/" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-[12px] rounded-lg transition-colors">
+<a href="/ssa/upload/" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-[12px] rounded-surface transition-colors">
 Cancel Upload
 </a>
 <form method="post" action="">
 {% csrf_token %}
-<button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[12px] rounded-lg shadow transition-colors">
+<button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[12px] rounded-control shadow transition-colors">
 Confirm Import ({{ ready_count }} ready)
 </button>
 </form>
@@ -50,7 +50,7 @@ Blocked Rows ({{ blocked_count }})
 </div>
 
 <!-- Tab Contents -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 
 <!-- Ready Tab -->
@@ -71,7 +71,7 @@ Blocked Rows ({{ blocked_count }})
 <td class="px-4 py-3.5 text-slate-900 font-bold">ID: {{ r.school_id }}</td>
 <td class="px-4 py-3.5">{{ r.date_of_ssa }}</td>
 <td class="px-4 py-3.5">
-<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 edify-text-caption rounded font-bold">
+<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 edify-text-caption rounded-pill font-bold">
 {{ r.scores.values|length }} scores parsed
 </span>
 </td>

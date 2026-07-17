@@ -18,7 +18,7 @@ x-data="{ showAddModal: false, tempPassword: '' }"
 
 <button
 @click="showAddModal = true"
-class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -31,7 +31,7 @@ class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-wh
 {% if messages %}
 <div class="space-y-2">
 {% for msg in messages %}
-<div class="p-3.5 rounded-xl border font-semibold text-[12px] flex items-center justify-between shadow-sm
+<div class="p-3.5 rounded-surface border font-semibold text-[12px] flex items-center justify-between shadow-sm
 {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200
 {% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-200
 {% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}"
@@ -43,7 +43,7 @@ class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-wh
 {% endif %}
 
 <!-- Search Filter Panel -->
-<div class="edify-surface rounded-xl border border-slate-100 p-4 shadow-sm">
+<div class="edify-surface rounded-surface border border-slate-100 p-4 shadow-sm">
 <form method="get" action="{% url 'frontend:admin_users' %}" class="flex gap-3">
 <div class="relative flex-1">
 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -56,12 +56,12 @@ type="text"
 name="q"
 value="{{ search }}"
 placeholder="Search users by name, email, or role..."
-class="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-[12px] focus:outline-none bg-slate-50/50 edify-focus-surface transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+class="w-full pl-9 pr-3 py-1.5 rounded-control border border-slate-200 text-[12px] focus:outline-none bg-slate-50/50 edify-focus-surface transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
 >
 </div>
 <button
 type="submit"
-class="h-9 px-4 bg-slate-800 text-white rounded-lg edify-text-caption font-semibold uppercase tracking-wider hover:bg-slate-900 transition-all focus:outline-none"
+class="h-9 px-4 bg-slate-800 text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider hover:bg-slate-900 transition-all focus:outline-none"
 >
 Search
 </button>
@@ -69,7 +69,7 @@ Search
 </div>
 
 <!-- User Listings Table -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
@@ -86,13 +86,13 @@ Search
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-3.5">
 <div class="flex items-center gap-3">
-<div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center font-semibold text-[12px] text-slate-600">
+<div class="h-8 w-8 rounded-pill bg-slate-100 flex items-center justify-center font-semibold text-[12px] text-slate-600">
 {{ u.name|slice:":2"|upper }}
 </div>
 <div>
 <span class="font-semibold text-slate-800 block">{{ u.name }}</span>
 {% if "pending." in u.email %}
-<span class="inline-flex items-center edify-text-caption font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded px-1.5 mt-0.5 select-none" title="This is a placeholder email profile from school upload.">
+<span class="inline-flex items-center edify-text-caption font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-pill px-1.5 mt-0.5 select-none" title="This is a placeholder email profile from school upload.">
 Needs Real Email
 </span>
 {% else %}
@@ -103,19 +103,19 @@ Needs Real Email
 </td>
 <td class="px-4 py-3.5 text-slate-500 font-semibold">{{ u.email }}</td>
 <td class="px-4 py-3.5">
-<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold uppercase tracking-wider bg-slate-100">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-slate-100">
 {{ u.active_role|default:"CCEO" }}
 </span>
 </td>
 <td class="px-4 py-3.5">
 {% if u.is_active %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+<span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
 <span>Active</span>
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-slate-50 text-slate-500 border border-slate-200">
-<span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-slate-50 text-slate-500 border border-slate-200">
+<span class="h-1.5 w-1.5 rounded-pill bg-slate-400"></span>
 <span>{{ u.status|capfirst }}</span>
 </span>
 {% endif %}
@@ -123,7 +123,7 @@ Needs Real Email
 <td class="px-5 py-3.5 text-right space-x-1.5">
 <a
 href="{% url 'frontend:admin_user_detail' u.id %}"
-class="inline-flex items-center px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:text-blue-600 rounded-lg edify-text-caption font-semibold uppercase transition-all edify-surface"
+class="inline-flex items-center px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:text-blue-600 rounded-control edify-text-caption font-semibold uppercase transition-all edify-surface"
 >
 Configure
 </a>
@@ -157,7 +157,7 @@ class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity"
 <!-- Modal Content -->
 <div class="flex items-center justify-center min-h-screen p-4">
 <div
-class="edify-surface rounded-lg max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5"
+class="edify-surface rounded-surface max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5"
 @click.away="showAddModal = false"
 x-transition
 >
@@ -165,7 +165,7 @@ x-transition
 <h3 class="text-[21px] font-extrabold tracking-tight text-slate-900 tracking-tight">Provision New System User</h3>
 <button
 @click="showAddModal = false"
-class="text-slate-400 hover:p-1 rounded-lg hover:bg-slate-100 transition-colors"
+class="text-slate-400 hover:p-1 rounded-control hover:bg-slate-100 transition-colors"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
 </button>
@@ -182,7 +182,7 @@ type="text"
 name="name"
 required
 placeholder="e.g. John Doe"
-class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
+class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
 >
 </div>
 
@@ -193,7 +193,7 @@ type="email"
 name="email"
 required
 placeholder="johndoe@edify.org"
-class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
+class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
 >
 </div>
 
@@ -203,7 +203,7 @@ class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outl
 type="text"
 name="phone"
 placeholder="+256..."
-class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
+class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
 >
 </div>
 
@@ -214,7 +214,7 @@ type="password"
 name="password"
 required
 placeholder="Set a password for this user"
-class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
+class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface focus:border-blue-500 transition-all"
 >
 </div>
 
@@ -224,7 +224,7 @@ class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outl
 <select
 name="role"
 required
-class="w-full h-9 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
+class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
 >
 {% for r in available_roles %}
 <option value="{{ r }}">{{ r }}</option>
@@ -236,7 +236,7 @@ class="w-full h-9 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outl
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Primary District Assignment</label>
 <select
 name="primary_district"
-class="w-full h-9 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
+class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
 >
 <option value="">None (HQ / Regional)</option>
 {% for d in districts %}
@@ -248,14 +248,14 @@ class="w-full h-9 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outl
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional District Assignments</label>
-<div class="bg-slate-50 border border-slate-100 rounded-lg p-3.5 space-y-2 max-h-36 overflow-y-auto">
+<div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
 {% for d in districts %}
 <label class="flex items-center gap-2 cursor-pointer select-none">
 <input
 type="checkbox"
 name="additional_districts"
 value="{{ d.id }}"
-class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+class="rounded-control border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
 >
 <span>{{ d.name }}</span>
 </label>
@@ -265,14 +265,14 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
-<div class="bg-slate-50 border border-slate-100 rounded-lg p-3.5 space-y-2 max-h-36 overflow-y-auto">
+<div class="bg-slate-50 border border-slate-100 rounded-surface p-3.5 space-y-2 max-h-36 overflow-y-auto">
 {% for r in available_roles %}
 <label class="flex items-center gap-2 cursor-pointer select-none">
 <input
 type="checkbox"
 name="additional_roles"
 value="{{ r }}"
-class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+class="rounded-control border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
 >
 <span>{{ r }}</span>
 </label>
@@ -284,13 +284,13 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
 <button
 type="button"
 @click="showAddModal = false"
-class="h-9 px-4 border border-slate-200 edify-surface hover:bg-slate-50 rounded-lg edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+class="h-9 px-4 border border-slate-200 edify-surface hover:bg-slate-50 rounded-control edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
 >
 Cancel
 </button>
 <button
 type="submit"
-class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
 >
 Provision & Set Password
 </button>

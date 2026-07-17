@@ -5,15 +5,15 @@ initChart() {
 if (this.chart) this.chart.destroy();
 const options = {
   series: [
-    { name: 'Planned', type: 'column', data: {{ performance_overview.planned|safe }} },
-    { name: 'Achieved', type: 'column', data: {{ performance_overview.achieved|safe }} },
-    { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|safe }} }
+    { name: 'Planned', type: 'column', data: {{ performance_overview.planned|escape }} },
+    { name: 'Achieved', type: 'column', data: {{ performance_overview.achieved|escape }} },
+    { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|escape }} }
   ],
   chart: {
     height: 200,
     type: 'line',
     toolbar: { show: false },
-    fontFamily: 'Outfit, sans-serif'
+    fontFamily: 'Inter, sans-serif'
   },
   stroke: {
     width: [0, 0, 2],
@@ -26,7 +26,7 @@ const options = {
       borderRadius: 3
     }
   },
-  labels: {{ performance_overview.labels|safe }},
+  labels: {{ performance_overview.labels|escape }},
   xaxis: {
     type: 'category',
     axisBorder: { show: false },
@@ -41,14 +41,14 @@ const options = {
   },
   yaxis: [
     {
-      title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Outfit' } },
+      title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Inter' } },
       labels: {
         style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }
       }
     },
     {
       opposite: true,
-      title: { text: 'Achievement %', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Outfit' } },
+      title: { text: 'Achievement %', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Inter' } },
       max: 100,
       labels: {
         formatter: function (val) { return val + '%'; },
@@ -76,7 +76,7 @@ this.chart.render();
 }
 }"
 x-init="initChart()"
-class="edify-surface rounded-xl p-5 shadow-sm space-y-3"
+class="edify-surface rounded-surface p-5 shadow-sm space-y-3"
 >
 
 <div class="flex items-start justify-between">
@@ -84,7 +84,7 @@ class="edify-surface rounded-xl p-5 shadow-sm space-y-3"
     <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Performance Overview</h3>
     <p class="edify-text-caption text-slate-400 font-normal mt-0.5">Planned vs Achieved activities across the fiscal year</p>
   </div>
-  <select class="bg-slate-50 rounded-md edify-text-caption font-medium text-slate-500 py-1 px-2 outline-none cursor-pointer">
+  <select class="bg-slate-50 rounded-control edify-text-caption font-medium text-slate-500 py-1 px-2 outline-none cursor-pointer">
     <option>This FY</option>
   </select>
 </div>

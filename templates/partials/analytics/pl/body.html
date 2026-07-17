@@ -7,12 +7,12 @@
     {% if k.link %}
     <button type="button"
        hx-get="/analytics/program-lead/drilldown{{ k.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}" hx-target="#drawer-container" hx-swap="innerHTML"
-       class="w-full text-left edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all group cursor-pointer">
+       class="w-full text-left edify-surface rounded-control border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all group cursor-pointer">
     {% else %}
-    <article class="edify-surface rounded-xl border border-slate-100 shadow-sm p-3.5 block">
+    <article class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 block">
     {% endif %}
       <div class="flex items-start justify-between">
-        <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0
+        <div class="h-8 w-8 rounded-surface flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50 text-blue-600
           {% elif k.variant == 'success' %}bg-emerald-50 text-emerald-600
           {% elif k.variant == 'info' %}bg-sky-50 text-sky-600

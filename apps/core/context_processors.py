@@ -1,5 +1,4 @@
 from apps.notifications.models import Notification
-from apps.messaging.models import Message
 from apps.core.navigation import build_sidebar_for_user
 
 
@@ -19,9 +18,9 @@ def sidebar_counts(request):
         notifications_count = 0
 
     try:
-        messages_count = Message.objects.filter(
-            recipient_id=request.user.id, status="unread"
-        ).count()
+        from apps.messaging.services import unread_thread_count
+
+        messages_count = unread_thread_count(request.user)
     except Exception:
         messages_count = 0
 

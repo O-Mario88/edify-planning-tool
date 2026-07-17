@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from apps.core.permissions import require_page_permission
 from apps.schools.models import SSAImportBatch
 from apps.ssa.models import SsaRecord
@@ -8,6 +8,64 @@ from apps.ssa.upload_service import upload_ssa_file, import_ssa_batch
 from apps.core.enums import VerificationStatus, SsaIntervention
 from django.utils import timezone
 import csv
+
+
+@require_page_permission("ssa_performance")
+def ssa_performance_view(request):
+    """Unified, role-scoped SSA intelligence workspace."""
+    from apps.analytics.decision_engine import ssa_performance_dashboard
+
+    dashboard = ssa_performance_dashboard(request.user, request.GET.dict())
+    template = (
+        "partials/ssa/performance_workspace.html"
+        if request.headers.get("HX-Request") == "true"
+        else "pages/ssa/performance.html"
+    )
+    return render(request, template, {"dashboard": dashboard})
+
+
+@require_page_permission("ssa_performance")
+def ssa_performance_export_view(request):
+    """Export the exact confirmed, filtered school set shown by the dashboard."""
+    from apps.analytics.decision_engine import ssa_performance_dashboard
+
+    dashboard = ssa_performance_dashboard(request.user, request.GET.dict())
+    if not dashboard["scope"]["can_export"]:
+        return HttpResponseForbidden("Your role cannot export SSA performance data.")
+
+    fy = dashboard["filters"]["fy"]
+    quarter = dashboard["filters"]["quarter"]
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="ssa-performance-fy{fy}-{quarter.lower()}.csv"'
+    )
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "School ID",
+            "School",
+            "Region",
+            "District",
+            "Average score",
+            "Lowest intervention",
+            "Lowest score",
+            "High risk",
+        ]
+    )
+    for row in dashboard["export_rows"]:
+        writer.writerow(
+            [
+                row["school_id"],
+                row["school"],
+                row["region"],
+                row["district"],
+                row["average"],
+                row["lowest_intervention"],
+                row["lowest_score"],
+                row["high_risk"],
+            ]
+        )
+    return response
 
 
 @require_page_permission("ssa")

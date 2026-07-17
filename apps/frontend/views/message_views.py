@@ -6,11 +6,13 @@ only handles local UI state.
 """
 
 from django.contrib import messages as django_messages
-from django.http import HttpResponse
+from django.db import transaction
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import redirect, render
 
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.permissions import require_page_permission
+from apps.evidence.validation import assert_safe_upload
 from apps.messaging import services
 from apps.messaging.models import (
     Message,
@@ -72,6 +74,38 @@ MESSAGE_RULES = [
 ]
 
 
+def _validated_attachments(files):
+    """Validate message attachments before creating a message or reply."""
+    uploads = list(files)
+    if len(uploads) > 5:
+        raise BadRequest("You can attach up to 5 files per message.")
+    for upload in uploads:
+        head = upload.read(512)
+        upload.seek(0)
+        assert_safe_upload(
+            original_name=upload.name,
+            mime_type=upload.content_type or "",
+            head=head,
+            size=upload.size or 0,
+        )
+    return uploads
+
+
+def _save_attachments(message_id, uploads, user_id):
+    # FileField storage hooks are intentionally invoked through save(); Django
+    # bulk_create bypasses model save hooks and can leave database rows pointing
+    # at files that were never written to the configured private storage.
+    for upload in uploads:
+        MessageAttachment.objects.create(
+            message_id=message_id,
+            file=upload,
+            file_name=upload.name,
+            file_type=upload.content_type or "",
+            file_size=upload.size or 0,
+            uploaded_by=user_id,
+        )
+
+
 @require_page_permission("messages")
 def messages_list_view(request):
     tab = request.GET.get("tab", "all")
@@ -126,7 +160,7 @@ def messages_list_view(request):
         "message_rules": MESSAGE_RULES,
     }
     if request.headers.get("HX-Request") == "true":
-        return render(request, "partials/messages/thread_list.html", context)
+        return render(request, "partials/messages/inbox_update.html", context)
     return render(request, "pages/messages/index.html", context)
 
 
@@ -143,11 +177,19 @@ def thread_view(request, thread_id):
             "</div>",
             status=200,
         )
-    return render(
+    response = render(
         request,
         "partials/messages/conversation.html",
-        {"selected": selected, "selected_id": thread_id, "oob_context": True},
+        {
+            "selected": selected,
+            "selected_id": thread_id,
+            "oob_context": True,
+            "unread_messages_count": services.unread_thread_count(request.user),
+            "oob_message_badge": True,
+        },
     )
+    response["HX-Trigger"] = "message-read"
+    return response
 
 
 @require_page_permission("messages")
@@ -155,26 +197,28 @@ def thread_reply_action(request, thread_id):
     if request.method != "POST":
         return redirect(f"/messages?thread={thread_id}")
     body = request.POST.get("body", "").strip()
-    if body:
-        try:
+    reply_error = ""
+    try:
+        uploads = _validated_attachments(request.FILES.getlist("attachments"))
+        with transaction.atomic():
             msg = services.reply(thread_id, {"body": body}, request.user)
-            for f in request.FILES.getlist("attachments"):
-                MessageAttachment.objects.create(
-                    message_id=msg["id"],
-                    file=f,
-                    file_name=f.name,
-                    file_type=f.content_type or "",
-                    file_size=f.size or 0,
-                    uploaded_by=request.user.id,
-                )
-        except (Forbidden, NotFoundError, BadRequest) as e:
-            django_messages.error(request, f"Could not send reply: {e}")
+            _save_attachments(msg["id"], uploads, request.user.id)
+    except (Forbidden, NotFoundError, BadRequest) as e:
+        reply_error = str(e)
+        django_messages.error(request, f"Could not send reply: {e}")
     selected = _thread_context(request, thread_id)
     if request.headers.get("HX-Request") == "true":
         return render(
             request,
             "partials/messages/conversation.html",
-            {"selected": selected, "selected_id": thread_id, "oob_context": True},
+            {
+                "selected": selected,
+                "selected_id": thread_id,
+                "oob_context": True,
+                "reply_error": reply_error,
+                "unread_messages_count": services.unread_thread_count(request.user),
+                "oob_message_badge": True,
+            },
         )
     return redirect(f"/messages?thread={thread_id}")
 
@@ -219,6 +263,31 @@ def message_deep_link_view(request, message_id):
         return redirect(f"/messages?thread={message_id}")
     django_messages.error(request, "That conversation could not be found.")
     return redirect("/messages")
+
+
+@require_page_permission("messages")
+def message_attachment_download_view(request, attachment_id):
+    """Stream an attachment only after re-authorising its conversation."""
+    attachment = (
+        MessageAttachment.objects.select_related("message__thread")
+        .filter(id=attachment_id)
+        .first()
+    )
+    if not attachment:
+        return HttpResponse(status=404)
+    try:
+        services._require_thread_access(attachment.message.thread_id, request.user)
+        stored_file = attachment.file.open("rb")
+    except (Forbidden, NotFoundError, FileNotFoundError, OSError):
+        # A uniform 404 avoids disclosing whether another user's attachment
+        # exists and also handles storage/database drift safely.
+        return HttpResponse(status=404)
+    return FileResponse(
+        stored_file,
+        as_attachment=True,
+        filename=attachment.file_name,
+        content_type=attachment.file_type or "application/octet-stream",
+    )
 
 
 # ── Compose ──────────────────────────────────────────────────────────────────
@@ -328,16 +397,10 @@ def message_compose_view(request):
         try:
             if not data["subject"] or not data["body"]:
                 raise BadRequest("Subject and message are required.")
-            msg = services.send(data, request.user)
-            for f in request.FILES.getlist("attachments"):
-                MessageAttachment.objects.create(
-                    message_id=msg["id"],
-                    file=f,
-                    file_name=f.name,
-                    file_type=f.content_type or "",
-                    file_size=f.size or 0,
-                    uploaded_by=request.user.id,
-                )
+            uploads = _validated_attachments(request.FILES.getlist("attachments"))
+            with transaction.atomic():
+                msg = services.send(data, request.user)
+                _save_attachments(msg["id"], uploads, request.user.id)
             if request.POST.get("draft_id"):
                 MessageDraft.objects.filter(
                     id=request.POST["draft_id"], user_id=request.user.id

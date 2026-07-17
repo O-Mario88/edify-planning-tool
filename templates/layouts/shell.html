@@ -46,7 +46,7 @@ style="height: 100%;"
 <button
 type="button"
 x-ref="mobileSidebarClose"
-class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+class="ml-1 flex items-center justify-center h-10 w-10 rounded-pill focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
 @click="sidebarOpen = false"
 >
 <span class="sr-only">Close sidebar</span>
@@ -76,7 +76,7 @@ class="app-sidebar hidden lg:flex"
 <div class="flex items-center gap-4 flex-1">
 <button
 type="button"
-class="lg:hidden h-9 w-9 flex items-center justify-center rounded-lg focus:outline-none"
+class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:outline-none"
 style="color:var(--edify-text-muted);"
 @click="sidebarOpen = true; $nextTick(() => $refs.mobileSidebarClose?.focus())"
 >
@@ -113,7 +113,7 @@ id="global-search-input"
 name="q"
 value="{{ request.GET.q|default:'' }}"
 {% endif %}
-class="h-9 w-full rounded-lg pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all"
+class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all"
 style="padding-left: 36px; background:var(--edify-surface-muted); border:1px solid var(--edify-border); color:var(--edify-text);"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
@@ -129,7 +129,7 @@ style="padding-left: 36px; background:var(--edify-surface-muted); border:1px sol
 hx-get="/notifications/drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="h-9 w-9 rounded-lg hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center relative transition-all focus:outline-none"
+class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center relative transition-all focus:outline-none"
 title="Notifications"
 aria-label="Notifications"
 >
@@ -148,7 +148,7 @@ aria-label="Notifications"
 <!-- Help icon -->
 <a
 href="/help"
-class="h-9 w-9 rounded-lg hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
+class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
 title="Help Center"
 aria-label="Help Center"
 >
@@ -163,7 +163,7 @@ aria-label="Help Center"
 @click="open = !open"
 aria-label="Account menu"
 :aria-expanded="open"
-class="h-9 w-9 rounded-full text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none transition-colors"
+class="h-9 w-9 rounded-pill text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none transition-colors"
 style="background:var(--edify-primary);"
 >
 <span>{{ request.user.name|avatar_initials }}</span>
@@ -172,7 +172,7 @@ style="background:var(--edify-primary);"
 <div
 x-show="open"
 @click.outside="open = false"
-class="absolute right-0 mt-2 w-56 rounded-xl shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
+class="absolute right-0 mt-2 w-56 rounded-surface shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
 style="display: none; background:var(--edify-surface); border:1px solid var(--edify-border);"
 >
 <div class="px-4 py-2" style="border-bottom:1px solid var(--edify-border);">
@@ -215,7 +215,13 @@ Sign out
 </header>
 
 <!-- Main Content Area -->
-<main id="main-content" tabindex="-1" class="flex-1 overflow-y-auto focus:outline-none relative bg-[var(--edify-bg)]">
+<main
+id="main-content"
+tabindex="-1"
+class="edify-workspace flex-1 overflow-y-auto focus:outline-none relative bg-[var(--edify-bg)]"
+data-density="compact"
+data-analytics-engine="edify-python-1.0"
+>
 {% block shell_content %}{% endblock %}
 </main>
 </div>

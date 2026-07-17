@@ -15,6 +15,7 @@ from apps.accounts.models import (
     LeaveBalance,
     TemporaryCoverageAssignment,
     StaffProfile,
+    StaffSupervisorAssignment,
     PublicHoliday,
     User,
     CalendarBlock,
@@ -647,28 +648,58 @@ def leave_approvals_view(request):
         if LeaveApprovalService.is_authorized_approver(user, lv):
             authorized_leaves.append(lv)
 
+    # The headline queue remains stable when the reviewer changes a display
+    # filter.  Metrics are calculated from the full authorized scope rather
+    # than the currently filtered slice shown in the left rail.
+    pending_scope = list(
+        Leave.objects.filter(status="pending")
+        .select_related("staff__user", "covering_staff__user")
+        .order_by("created_at")
+    )
+    authorized_pending = [
+        lv
+        for lv in pending_scope
+        if LeaveApprovalService.is_authorized_approver(user, lv)
+    ]
+
     # 1. KPI Pending Approvals
-    pending_count = len([lv for lv in authorized_leaves if lv.status == "pending"])
+    pending_count = len(authorized_pending)
 
     # 2. Approved this week (last 7 days reviewed by reviewer or generally if Admin)
     seven_days_ago = timezone.now() - timedelta(days=7)
     approved_this_week = Leave.objects.filter(
         status="approved", reviewed_at__gte=seven_days_ago
     )
+    previous_window_start = seven_days_ago - timedelta(days=7)
+    approved_previous_week = Leave.objects.filter(
+        status="approved",
+        reviewed_at__gte=previous_window_start,
+        reviewed_at__lt=seven_days_ago,
+    )
     if role != "Admin":
         approved_this_week = approved_this_week.filter(reviewed_by_user_id=user.id)
+        approved_previous_week = approved_previous_week.filter(
+            reviewed_by_user_id=user.id
+        )
     approved_this_week_count = approved_this_week.count()
+    approved_previous_week_count = approved_previous_week.count()
+    approved_delta = approved_this_week_count - approved_previous_week_count
 
     # 3. Coverage Assigned (in the authorized list)
     coverage_assigned_count = sum(
         1
-        for lv in authorized_leaves
-        if lv.covering_staff and lv.coverage_status == "Accepted"
+        for lv in authorized_pending
+        if lv.covering_staff and lv.coverage_status in {"Accepted", "Approved"}
+    )
+    coverage_rate = (
+        round((coverage_assigned_count / pending_count) * 100)
+        if pending_count
+        else None
     )
 
     # 4. Conflicts Detected
     conflicts_detected_count = 0
-    for lv in authorized_leaves:
+    for lv in authorized_pending:
         conflicts = LeaveConflictDetectionService.detect(
             lv.staff, lv.start_date, lv.end_date, lv.covering_staff
         )
@@ -676,15 +707,94 @@ def leave_approvals_view(request):
             conflicts_detected_count += 1
 
     # 5. Staff on Leave This Week
-    today_str = date.today().isoformat()
-    staff_on_leave_this_week = Leave.objects.filter(
-        status="approved", start_date__lte=today_str, end_date__gte=today_str
-    ).count()
+    today = timezone.localdate()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+    approved_in_week = Leave.objects.filter(
+        status="approved",
+        start_date__lte=week_end.isoformat(),
+        end_date__gte=week_start.isoformat(),
+    ).select_related("staff__user")
+    staff_on_leave_this_week = sum(
+        1
+        for lv in approved_in_week
+        if LeaveApprovalService.is_authorized_approver(user, lv)
+    )
 
     # 6. Leave Balance Alerts (remaining PTO < 5)
-    leave_balance_alerts = LeaveBalance.objects.filter(
+    balance_scope = LeaveBalance.objects.filter(
         leave_type="personal_time_off", remaining__lt=5, year=timezone.now().year
-    ).count()
+    )
+    reviewer_profile = getattr(user, "staff_profile", None)
+    if role != "Admin":
+        if reviewer_profile is None:
+            balance_scope = balance_scope.none()
+        elif role in {"CD", "RVP"}:
+            balance_scope = balance_scope.filter(
+                staff__country=reviewer_profile.country
+            )
+        else:
+            direct_report_ids = StaffSupervisorAssignment.objects.filter(
+                supervisor=reviewer_profile
+            ).values_list("supervisee_id", flat=True)
+            balance_scope = balance_scope.filter(staff_id__in=direct_report_ids)
+    leave_balance_alerts = balance_scope.count()
+
+    if approved_delta > 0:
+        approved_helper = f"{approved_delta} more than previous 7 days"
+    elif approved_delta < 0:
+        approved_helper = f"{abs(approved_delta)} fewer than previous 7 days"
+    else:
+        approved_helper = "Same as previous 7 days"
+
+    leave_kpi_items = [
+        {
+            "label": "Pending Approvals",
+            "value": str(pending_count),
+            "helper": "Authorized requests awaiting a decision",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Approved · 7 Days",
+            "value": str(approved_this_week_count),
+            "helper": approved_helper,
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Coverage Ready",
+            "value": str(coverage_assigned_count),
+            "helper": (
+                f"{coverage_rate}% of pending requests"
+                if coverage_rate is not None
+                else "No pending requests"
+            ),
+            "icon": "users",
+            "variant": "info",
+        },
+        {
+            "label": "Critical Conflicts",
+            "value": str(conflicts_detected_count),
+            "helper": "Detected in the pending queue",
+            "icon": "warning",
+            "variant": "danger" if conflicts_detected_count else "success",
+        },
+        {
+            "label": "Away This Week",
+            "value": str(staff_on_leave_this_week),
+            "helper": "Approved leave overlapping this week",
+            "icon": "calendar",
+            "variant": "primary",
+        },
+        {
+            "label": "Balance Alerts",
+            "value": str(leave_balance_alerts),
+            "helper": "PTO balances below five days",
+            "icon": "warning",
+            "variant": "warning" if leave_balance_alerts else "success",
+        },
+    ]
 
     # Recent approval activities list
     recent_activities = (
@@ -777,6 +887,7 @@ def leave_approvals_view(request):
             "staff_on_leave": staff_on_leave_this_week,
             "balance_alerts": leave_balance_alerts,
         },
+        "leave_kpi_items": leave_kpi_items,
         "recent_activity": recent_activity_data,
         "search_q": q,
         "selected_type": leave_type_filter,

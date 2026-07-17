@@ -10,7 +10,11 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
-from .models import WeeklyFundRequest, WeeklyFundRequestLine
+from .models import (
+    MONEY_MOVED_ADVANCE_STATUSES,
+    WeeklyFundRequest,
+    WeeklyFundRequestLine,
+)
 
 logger = logging.getLogger("edify.weekly_fund_request")
 
@@ -569,6 +573,24 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         fraction = disbursed_amount / wfr.total_amount if wfr.total_amount else 0
         now = timezone.now()
 
+        # Cross-channel mutual exclusion: the AdvanceRequest rows are the one
+        # shared money ledger every disbursement channel converges on. If any
+        # child advance already has money out (disbursed directly via
+        # advance_service, or mirrored by a period FundRequest), releasing
+        # this weekly request would pay the same cost lines twice.
+        already_moved = [
+            line.activity_budget_line_id
+            for line in wfr.lines.select_related("activity_budget_line")
+            for adv in line.activity_budget_line.advance_requests.all()
+            if adv.status in MONEY_MOVED_ADVANCE_STATUSES
+        ]
+        if already_moved:
+            raise BadRequest(
+                "Cannot disburse — money has already been released for "
+                f"{len(already_moved)} of this request's budget lines through "
+                "another disbursement channel."
+            )
+
         wfr.status = "disbursed"
         wfr.disbursed_amount = disbursed_amount
         wfr.disbursed_at = now
@@ -587,15 +609,32 @@ def disburse(request_id: str, data: dict, principal) -> dict:
             ]
         )
 
-        # Also update linked AdvanceRequests status to keep them in sync — each
-        # advance's own disbursed_amount is scaled by the same fraction of the
-        # line's full cost as was actually released for the whole request, not
-        # hard-set to the full line amount regardless of what was entered above.
-        for line in wfr.lines.select_related("activity_budget_line"):
-            adv = line.activity_budget_line.advance_requests.first()
+        # Also update linked AdvanceRequests status to keep them in sync.
+        # Largest-remainder allocation: per-line round() drifted from the
+        # parent total by up to ±1 UGX per line — the children must sum to
+        # EXACTLY the disbursed amount (required reconciliation mismatch: 0).
+        lines_with_adv = [
+            (line, line.activity_budget_line.advance_requests.first())
+            for line in wfr.lines.select_related("activity_budget_line")
+        ]
+        lines_with_adv = [(ln, adv) for ln, adv in lines_with_adv if adv]
+        shares: dict[str, int] = {}
+        if lines_with_adv:
+            exact = [
+                (adv.id, (ln.total_cost or 0) * fraction) for ln, adv in lines_with_adv
+            ]
+            floors = {adv_id: int(value) for adv_id, value in exact}
+            remainder = disbursed_amount - sum(floors.values())
+            by_fraction = sorted(
+                exact, key=lambda item: (item[1] - int(item[1])), reverse=True
+            )
+            for adv_id, _value in by_fraction[: max(0, remainder)]:
+                floors[adv_id] += 1
+            shares = floors
+        for line, adv in lines_with_adv:
             if adv:
                 adv.status = "disbursed"
-                adv.disbursed_amount = round(line.total_cost * fraction)
+                adv.disbursed_amount = shares.get(adv.id, 0)
                 adv.disbursed_at = now
                 adv.disbursed_by_user_id = principal.user_id
                 adv.disburse_method = data.get("method")
@@ -612,6 +651,18 @@ def disburse(request_id: str, data: dict, principal) -> dict:
                     ]
                 )
 
+    # Money moved — the ONLY disbursement channel that wasn't writing the
+    # tamper-evident chain.
+    _audit_weekly(
+        principal,
+        "weekly_fund_request.disburse",
+        wfr,
+        {
+            "disbursed": wfr.disbursed_amount,
+            "method": wfr.disburse_method or "",
+            "reference": wfr.disburse_reference or "",
+        },
+    )
     return _serialize_request(wfr)
 
 

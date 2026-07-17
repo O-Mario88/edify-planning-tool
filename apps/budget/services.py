@@ -222,9 +222,10 @@ def from_schedule(principal, query: dict) -> dict:
 
     for a in activities:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
-        # Fall back to the stored estimate if no lines were ever snapshotted.
-        if not amount and a.est_cost_cents:
-            amount = a.est_cost_cents
+        # NO est_cost_cents fallback: authoritative totals come from canonical
+        # cost lines only. A scheduled activity with no lines is a System
+        # Health signal (missing_cost_lines_count), not a number to guess —
+        # the estimate could double-count once lines are later snapshotted.
         total += amount
         if a.cost_missing:
             cost_missing_count += 1
@@ -335,7 +336,7 @@ def _by_quarter_from_activities(activities) -> list[dict]:
     cnt: dict[str, int] = {}
     for a in activities:
         amount = (
-            sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+            sum(line.amount for line in a.schedule_cost_lines.all())
         )
         q = a.quarter
         amt[q] = amt.get(q, 0) + amount
@@ -383,7 +384,7 @@ def weekly(principal, query: dict) -> dict:
 
     for a in activities:
         amount = (
-            sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+            sum(line.amount for line in a.schedule_cost_lines.all())
         )
         total_cents += amount
         if a.cost_missing:
@@ -523,8 +524,8 @@ def board(principal, query: dict) -> dict:
 
     for a in activities:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
-        if not amount and a.est_cost_cents:
-            amount = a.est_cost_cents
+        # NO est_cost_cents fallback — canonical cost lines only (see
+        # from_schedule above for the rationale).
 
         total_fy += amount
         if a.cost_missing:
@@ -762,17 +763,26 @@ def get_budget_rollup(
                 ]
             ),
         ),
+        # Disbursed/accounted report ACTUAL money (AdvanceRequest amounts),
+        # not the planned line amount — a partial disbursement previously
+        # showed as fully disbursed on every rollup surface.
         disbursed=Sum(
-            "amount",
+            "advance_requests__disbursed_amount",
             filter=Q(
                 advance_requests__status__in=[
                     "disbursed",
                     "accountability_pending",
                     "accounted",
+                    "reimbursement_submitted",
+                    "reimbursement_disbursed",
+                    "reimbursed",
                 ]
             ),
         ),
-        accounted=Sum("amount", filter=Q(advance_requests__status="accounted")),
+        accounted=Sum(
+            "advance_requests__accounted_amount",
+            filter=Q(advance_requests__status__in=["accounted", "reimbursed"]),
+        ),
     )
 
     planned = int(agg["planned"] or 0)

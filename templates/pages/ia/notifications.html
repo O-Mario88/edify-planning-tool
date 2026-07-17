@@ -6,11 +6,11 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
 Monitoring Log
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Quality Notifications Feed</h1>
@@ -21,13 +21,13 @@ Real-time compliance triggers. Review incoming completions, resubmissions, retur
 </div>
 
 <!-- Notification Feed list -->
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm overflow-hidden p-6 space-y-4">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden p-6 space-y-4">
 {% if alerts %}
 <div class="divide-y divide-slate-100">
 {% for alert in alerts %}
-<div class="py-4 first:pt-0 last:pb-0 flex items-start gap-4 hover:bg-slate-50/20 transition-colors p-2 rounded-xl">
+<div class="py-4 first:pt-0 last:pb-0 flex items-start gap-4 hover:bg-slate-50/20 transition-colors p-2 rounded-surface">
 <!-- Icon marker -->
-<div class="mt-0.5 shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-blue-50 text-[var(--edify-chart-blue)] border border-blue-100 shadow-sm">
+<div class="mt-0.5 shrink-0 w-9 h-9 rounded-surface flex items-center justify-center bg-blue-50 text-[var(--edify-chart-blue)] border border-blue-100 shadow-sm">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
 </div>
 
@@ -46,7 +46,7 @@ Real-time compliance triggers. Review incoming completions, resubmissions, retur
 {% else %}
 <div class="text-center text-slate-500 font-semibold py-16">
 <div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
+<div class="w-12 h-12 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
 </div>
 <p class="text-slate-500">No notifications generated in this audit scope.</p>

@@ -58,6 +58,9 @@ class MessagingBaseTest(TestCase):
         StaffSupervisorAssignment.objects.create(
             supervisee=cls.sp1, supervisor=cls.sp_pl
         )
+        StaffSupervisorAssignment.objects.create(
+            supervisee=cls.sp2, supervisor=cls.sp_pl
+        )
 
         region = Region.objects.create(name="Test Region")
         district = District.objects.create(name="Test District", region=region)
@@ -133,6 +136,13 @@ class ContextRequirementTest(MessagingBaseTest):
         self.assertEqual(r["contextType"], "school")
         self.assertEqual(r["contextId"], self.school1.school_id)
 
+    def test_empty_messages_and_replies_are_rejected(self):
+        with self.assertRaises(BadRequest):
+            self._send(self.cceo1, self.pl, body="   ")
+        message = self._send(self.cceo1, self.pl)
+        with self.assertRaises(BadRequest):
+            services.reply(message["threadId"], {"body": "\n\t"}, self.pl)
+
 
 class ThreadIdentityTest(MessagingBaseTest):
     def test_same_subject_different_pairs_get_separate_threads(self):
@@ -192,6 +202,16 @@ class ContextPermissionTest(MessagingBaseTest):
         with self.assertRaises(Forbidden):
             services.thread_detail(msg["threadId"], self.cceo1)
 
+    def test_reply_rechecks_access_after_assignment_is_revoked(self):
+        msg = self._send(
+            self.cceo1, self.pl, ctype="school", cid=self.school1.school_id
+        )
+        StaffSchoolAssignment.objects.filter(
+            staff=self.sp1, school_id=self.school1.id
+        ).delete()
+        with self.assertRaises(Forbidden):
+            services.reply(msg["threadId"], {"body": "stale access"}, self.cceo1)
+
     def test_partner_cannot_access_internal_staff_thread(self):
         msg = self._send(self.cceo1, self.pl, ctype="planning", cid="c-int")
         with self.assertRaises(Forbidden):
@@ -250,6 +270,24 @@ class SuggestedRecipientTest(MessagingBaseTest):
         out = services.suggested_recipients(self.pl, "verification", act.id)
         ids = {s["id"] for s in out}
         self.assertIn(self.ia.id, ids)
+
+    def test_activity_owner_and_monitor_suggestions_accept_staff_profile_ids(self):
+        """Canonical staff ids must not make contextual messaging go blank."""
+        from apps.activities.models import Activity
+
+        act = Activity.objects.create(
+            activity_type="school_visit",
+            status="partner_scheduled",
+            school=self.school1,
+            delivery_type="partner",
+            responsible_staff_id=self.sp1.id,
+            monitored_by_staff_id=self.sp_pl.id,
+            fy="2026",
+        )
+        out = services.suggested_recipients(self.admin, "activity", act.id)
+        ids = {item["id"] for item in out}
+        self.assertIn(self.cceo1.id, ids)
+        self.assertIn(self.pl.id, ids)
 
     def test_accountant_suggested_for_finance_context(self):
         out = services.suggested_recipients(self.pl, "finance", "any-id")
@@ -322,6 +360,17 @@ class WorkflowMessageTest(MessagingBaseTest):
         self.assertEqual(t.id, t2.id)
         self.assertEqual(t2.messages.count(), 2)
 
+    def test_single_recipient_system_thread_is_read_only(self):
+        thread = services.workflow_message(
+            context_type="system",
+            context_id=f"analytics-{self.pl.id}",
+            subject="Analytics snapshot",
+            body="Snapshot ready",
+            recipient_ids=[self.pl.id],
+        )
+        with self.assertRaises(BadRequest):
+            services.reply(thread.id, {"body": "reply to system"}, self.pl)
+
 
 class InboxBehaviourTest(MessagingBaseTest):
     def test_archived_thread_removed_from_inbox(self):
@@ -337,6 +386,21 @@ class InboxBehaviourTest(MessagingBaseTest):
         self.assertEqual(services.message_kpis(self.pl)["unread"], 1)
         services.thread_detail(m["threadId"], self.pl)  # opening marks read
         self.assertEqual(services.message_kpis(self.pl)["unread"], 0)
+
+    def test_group_recipient_is_counted_and_can_mark_read(self):
+        msg = services.send(
+            {
+                "recipientIds": [self.pl.id, self.ia.id],
+                "subject": "Group unread",
+                "contextType": "planning",
+                "contextId": "group-1",
+                "body": "Review together",
+            },
+            self.cceo1,
+        )
+        self.assertEqual(services.unread_thread_count(self.ia), 1)
+        services.mark_read(msg["id"], self.ia)
+        self.assertEqual(services.unread_thread_count(self.ia), 0)
 
     def test_reply_routes_to_other_participant(self):
         m = self._send(self.pl, self.hr, body="original")
@@ -384,6 +448,35 @@ class AttachmentTest(MessagingBaseTest):
         thread_id = Message.objects.get(id=att.message_id).thread_id
         r2 = self.client.get(f"/messages?thread={thread_id}")
         self.assertContains(r2, "register.pdf")
+        self.assertContains(r2, f"/messages/attachments/{att.id}")
+
+        download = self.client.get(f"/messages/attachments/{att.id}")
+        self.assertEqual(download.status_code, 200)
+        self.assertEqual(download["Content-Type"], "application/pdf")
+
+        self.client.force_login(self.cceo2)
+        denied = self.client.get(f"/messages/attachments/{att.id}")
+        self.assertEqual(denied.status_code, 404)
+
+    def test_unsafe_attachment_rejects_the_entire_message(self):
+        self.client.force_login(self.cceo1)
+        upload = SimpleUploadedFile(
+            "payload.html", b"<script>alert(1)</script>", content_type="text/html"
+        )
+        response = self.client.post(
+            "/messages/new/",
+            {
+                "recipient_ids": [self.pl.id],
+                "subject": "Unsafe file",
+                "category": "Planning",
+                "context_type": "school",
+                "context_id": self.school1.school_id,
+                "body": "do not create",
+                "attachments": upload,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Message.objects.filter(body="do not create").exists())
 
 
 class PageRenderTest(MessagingBaseTest):
@@ -408,6 +501,19 @@ class PageRenderTest(MessagingBaseTest):
         r = self.client.get(f"/messages/thread/{m['threadId']}", HTTP_HX_REQUEST="true")
         self.assertContains(r, "HTMX check")
         self.assertContains(r, "Replies inherit this context")
+
+    def test_htmx_filter_clears_stale_conversation_and_context(self):
+        self._send(self.cceo1, self.pl, subject="Visible before filter")
+        self.client.force_login(self.pl)
+        response = self.client.get(
+            "/messages",
+            {"q": "definitely-no-match"},
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertContains(response, 'id="conversation-pane"')
+        self.assertContains(response, 'id="context-panel-scroll"')
+        self.assertContains(response, 'hx-swap-oob="innerHTML"')
+        self.assertNotContains(response, "Visible before filter")
 
     def test_deep_link_by_message_id_redirects_to_thread(self):
         m = self._send(self.cceo1, self.pl)

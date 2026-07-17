@@ -4,13 +4,13 @@
 {% block title %}Batch Payments - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ activeTab: 'advances' }">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="urlTabs('advances', ['advances', 'partners', 'reimbursements'])">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
 Bulk Dispatcher
 </div>
 <h1 class="text-[21px] font-extrabold tracking-tight">Batch Payments Center</h1>
@@ -21,23 +21,26 @@ Execute batch payouts for advances, partner invoices, or staff expenses. Review 
 </div>
 
 <!-- Tabs Navigation -->
-<div class="flex items-center gap-2 border-b border-slate-100 pb-px">
+<div class="flex items-center gap-2 border-b border-slate-100 pb-px" role="tablist" aria-label="Batch payment views">
 <button
-@click="activeTab = 'advances'"
+id="batch-tab-advances" type="button" role="tab" aria-controls="batch-panel-advances" :aria-selected="activeTab === 'advances'" :tabindex="activeTab === 'advances' ? 0 : -1"
+@click="setTab('advances')"
 :class="activeTab === 'advances' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Advances ({{ advances|length }})
 </button>
 <button
-@click="activeTab = 'partners'"
+id="batch-tab-partners" type="button" role="tab" aria-controls="batch-panel-partners" :aria-selected="activeTab === 'partners'" :tabindex="activeTab === 'partners' ? 0 : -1"
+@click="setTab('partners')"
 :class="activeTab === 'partners' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Partner Payments ({{ partners|length }})
 </button>
 <button
-@click="activeTab = 'reimbursements'"
+id="batch-tab-reimbursements" type="button" role="tab" aria-controls="batch-panel-reimbursements" :aria-selected="activeTab === 'reimbursements'" :tabindex="activeTab === 'reimbursements' ? 0 : -1"
+@click="setTab('reimbursements')"
 :class="activeTab === 'reimbursements' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'"
 class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
@@ -46,18 +49,18 @@ Reimbursements ({{ reimbursements|length }})
 </div>
 
 <!-- Batch Panels -->
-<div class="edify-surface rounded-xl border border-slate-100 p-6 shadow-sm">
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm">
 <!-- Advances Panel -->
-<div x-show="activeTab === 'advances'" class="space-y-4">
+<div id="batch-panel-advances" role="tabpanel" x-show="activeTab === 'advances'" class="space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Advances ready for payment file</h3>
-<a href="?export=advances" class="h-8 px-3 edify-surface border border-slate-200 rounded-lg edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Advances CSV</a>
+<a href="?export=advances" class="h-8 px-3 edify-surface border border-slate-200 rounded-control edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Advances CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for act in advances %}
 <div class="py-3 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<input type="checkbox" class="w-4 h-4 rounded text-blue-700 border-slate-300 focus:ring-blue-500">
+<input type="checkbox" class="w-4 h-4 rounded-control text-blue-700 border-slate-300 focus:ring-blue-500">
 <div>
 <span class="font-semibold text-[12px] text-slate-800 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ act.school.name|default:"Cluster-wide" }}</span>
@@ -72,16 +75,16 @@ Reimbursements ({{ reimbursements|length }})
 </div>
 
 <!-- Partner Panel -->
-<div x-show="activeTab === 'partners'" class="space-y-4" style="display: none;">
+<div id="batch-panel-partners" role="tabpanel" x-show="activeTab === 'partners'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Partner Payments ready for payment file</h3>
-<a href="?export=partners" class="h-8 px-3 edify-surface border border-slate-200 rounded-lg edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Partner Payments CSV</a>
+<a href="?export=partners" class="h-8 px-3 edify-surface border border-slate-200 rounded-control edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Partner Payments CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for act in partners %}
 <div class="py-3 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<input type="checkbox" class="w-4 h-4 rounded text-blue-700 border-slate-300 focus:ring-blue-500">
+<input type="checkbox" class="w-4 h-4 rounded-control text-blue-700 border-slate-300 focus:ring-blue-500">
 <div>
 <span class="font-semibold text-[12px] text-slate-800 block">{{ act.assigned_partner_id }} &bull; #{{ act.id|slice:":8" }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ act.get_activity_type_display }}</span>
@@ -96,16 +99,16 @@ Reimbursements ({{ reimbursements|length }})
 </div>
 
 <!-- Reimbursements Panel -->
-<div x-show="activeTab === 'reimbursements'" class="space-y-4" style="display: none;">
+<div id="batch-panel-reimbursements" role="tabpanel" x-show="activeTab === 'reimbursements'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Staff Reimbursements ready for payment file</h3>
-<a href="?export=reimbursements" class="h-8 px-3 edify-surface border border-slate-200 rounded-lg edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Reimbursements CSV</a>
+<a href="?export=reimbursements" class="h-8 px-3 edify-surface border border-slate-200 rounded-control edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Reimbursements CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for claim in reimbursements %}
 <div class="py-3 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<input type="checkbox" class="w-4 h-4 rounded text-blue-700 border-slate-300 focus:ring-blue-500">
+<input type="checkbox" class="w-4 h-4 rounded-control text-blue-700 border-slate-300 focus:ring-blue-500">
 <div>
 <span class="font-semibold text-[12px] text-slate-800 block">Claim ID: {{ claim.id|slice:":8" }} &bull; Staff: {{ claim.staff_id }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ claim.activity.get_activity_type_display }}</span>

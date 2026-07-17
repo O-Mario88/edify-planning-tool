@@ -20,10 +20,10 @@
   <!-- Approval chain -->
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-2">Approval Chain Status</p>
-    <div class="flex items-center gap-1.5 flex-wrap rounded-xl border border-slate-100 bg-slate-50/50 p-2.5">
+    <div class="flex items-center gap-1.5 flex-wrap rounded-surface border border-slate-100 bg-slate-50/50 p-2.5">
       {% for st in selected.chain %}
       <div class="flex items-center gap-1.5">
-        <span class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg edify-text-caption font-bold
+        <span class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-pill edify-text-caption font-bold
           {% if st.state == 'approved' or st.state == 'done' %}bg-emerald-50 text-emerald-700 border border-emerald-200
           {% elif st.state == 'pending' %}bg-amber-50 text-amber-700 border border-amber-200
           {% elif st.state == 'held' %}bg-orange-50 text-orange-700 border border-orange-200
@@ -46,12 +46,12 @@
   </div>
 
   {% if selected.status == 'Held' and selected.held_reason %}
-  <div class="rounded-xl bg-orange-50 border border-orange-200 p-3">
+  <div class="rounded-surface bg-orange-50 border border-orange-200 p-3">
     <p class="text-[12px] font-bold text-orange-800">On hold — {{ selected.held_reason }}</p>
   </div>
   {% endif %}
   {% if selected.status == 'Returned' and selected.review_note %}
-  <div class="rounded-xl bg-rose-50 border border-rose-200 p-3">
+  <div class="rounded-surface bg-rose-50 border border-rose-200 p-3">
     <p class="text-[12px] font-bold text-rose-800">Returned — {{ selected.review_note }}</p>
   </div>
   {% endif %}
@@ -60,7 +60,7 @@
     <!-- Funding breakdown -->
     <div class="xl:col-span-2">
       <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Funding Breakdown</h3>
-      <div class="overflow-x-auto rounded-xl border border-slate-100">
+      <div class="overflow-x-auto rounded-surface border border-slate-100">
         <table class="w-full text-left">
           <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100 bg-slate-50/60">
             <th class="px-3 py-2">Activity Category</th><th class="px-3 py-2 text-center">Planned Qty</th><th class="px-3 py-2 text-right">Unit Cost</th><th class="px-3 py-2 text-right">Total</th>
@@ -89,7 +89,7 @@
     <div class="space-y-4">
       <div>
         <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Plan Snapshot</h3>
-        <div class="rounded-xl border border-slate-100 divide-y divide-slate-50">
+        <div class="rounded-surface border border-slate-100 divide-y divide-slate-50">
           {% for label, value in selected.snapshot %}
           <div class="flex items-center justify-between gap-2 px-3 py-2.5">
             <span class="edify-text-caption font-semibold text-slate-500 leading-snug">{{ label }}</span>
@@ -101,7 +101,7 @@
       {% if selected.history %}
       <div>
         <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">History</h3>
-        <div class="rounded-xl border border-slate-100 divide-y divide-slate-50">
+        <div class="rounded-surface border border-slate-100 divide-y divide-slate-50">
           {% for h in selected.history %}
           <div class="flex items-center justify-between gap-2 px-3 py-2">
             <span class="edify-text-caption font-semibold text-slate-600">{{ h.action }}</span>
@@ -116,7 +116,7 @@
 
   {% if selected.accountability %}
   <!-- Submitted accountability awaiting the Accountant's review -->
-  <div class="rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3 space-y-1.5">
+  <div class="rounded-surface border border-sky-100 bg-sky-50/60 px-4 py-3 space-y-1.5">
     <p class="edify-text-caption font-bold uppercase tracking-wider text-sky-700">Accountability submitted — awaiting your review</p>
     <p class="text-[12px] font-semibold text-slate-700">
       {{ selected.accountability.accounted_total }} spent · {{ selected.accountability.returned_total }} returned
@@ -132,33 +132,33 @@
   <div class="flex flex-wrap items-center gap-2.5 pt-2">
     {% if selected.can_confirm_accountability %}
     <button hx-get="/finance/actions/drawer?action=confirm_accountability&request_id={{ selected.weekly_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">
+            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Review Accountability
     </button>
     {% endif %}
     {% if selected.can_disburse %}
     <button hx-get="/disbursements/drawer?type=disburse&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">
+            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1"/></svg>
       Disburse
     </button>
     {% endif %}
     {% if selected.weekly_can_disburse %}
     <button hx-get="/finance/actions/drawer?action=disburse_advance&request_id={{ selected.weekly_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">Disburse Advance</button>
+            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">Disburse Advance</button>
     {% endif %}
     {% if selected.activity_id %}
     <button hx-get="/finance/actions/drawer?action=clear_partner_payment&activity_id={{ selected.activity_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">Pay Partner</button>
+            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">Pay Partner</button>
     {% endif %}
     {% if selected.advance_id %}
     <button hx-get="/finance/actions/drawer?action=process_reimbursement&advance_id={{ selected.advance_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">Process Reimbursement</button>
+            class="inline-flex items-center justify-center gap-1.5 h-11 px-6 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-sm transition-colors">Process Reimbursement</button>
     {% endif %}
     {% if selected.can_hold %}
     <button hx-get="/disbursements/drawer?type=hold&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-xl border border-amber-200 bg-amber-50/60 hover:bg-amber-50 text-[12.5px] font-bold text-amber-700 transition-colors">
+            class="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-control border border-amber-200 bg-amber-50/60 hover:bg-amber-50 text-[12.5px] font-bold text-amber-700 transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Hold
     </button>
@@ -169,12 +169,12 @@
       <input type="hidden" name="action" value="release">
       <input type="hidden" name="fund_request_id" value="{{ selected.fund_request_id }}">
       <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
-      <button type="submit" class="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-50 text-[12.5px] font-bold text-emerald-700 transition-colors">Release Hold</button>
+      <button type="submit" class="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-control border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-50 text-[12.5px] font-bold text-emerald-700 transition-colors">Release Hold</button>
     </form>
     {% endif %}
     {% if selected.can_return %}
     <button hx-get="/disbursements/drawer?type=return&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-xl border border-rose-200 edify-surface hover:bg-rose-50 text-[12.5px] font-bold text-rose-600 transition-colors">
+            class="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[12.5px] font-bold text-rose-600 transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
       Return
     </button>

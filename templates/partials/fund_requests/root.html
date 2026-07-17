@@ -12,17 +12,17 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 >
 
 {% if action_error %}
-<div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700">{{ action_error }}</div>
+<div class="p-3.5 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700">{{ action_error }}</div>
 {% elif action_ok %}
-<div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[12px] font-bold text-emerald-700">{{ action_ok }}</div>
+<div class="p-3.5 rounded-surface bg-emerald-50 border border-emerald-200 text-[12px] font-bold text-emerald-700">{{ action_ok }}</div>
 {% endif %}
 
 {% if receipt_pending_plans %}
 <div class="space-y-2">
   {% for p in receipt_pending_plans %}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-surface bg-emerald-50 border border-emerald-200">
     <div class="flex items-center gap-3 min-w-0">
-      <span class="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+      <span class="h-9 w-9 rounded-pill bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1"/></svg>
       </span>
       <div class="min-w-0">
@@ -34,7 +34,7 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
       {% csrf_token %}
       <input type="hidden" name="fund_request_id" value="{{ p.id }}">
       <input type="hidden" name="next" value="/fund-requests/weekly">
-      <button type="submit" class="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">Confirm Receipt</button>
+      <button type="submit" class="h-10 px-5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">Confirm Receipt</button>
     </form>
   </div>
   {% endfor %}
@@ -62,7 +62,7 @@ Export
 <!-- Open My Plan -->
 <a
 href="/my-plan"
-class="flex items-center gap-1.5 h-9 px-4 edify-surface border border-slate-200 text-[var(--edify-primary)] text-[12px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+class="flex items-center gap-1.5 h-9 px-4 edify-surface border border-slate-200 text-[var(--edify-primary)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
 >
 Open My Plan
 <svg class="h-3 w-3 text-slate-400 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
@@ -74,7 +74,7 @@ Open My Plan
 {% if messages %}
 <div class="space-y-2">
 {% for message in messages %}
-<div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+<div class="p-3.5 rounded-surface border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
 <span>{{ message }}</span>
 <button type="button" @click="$el.parentElement.remove()" class="text-slate-400 hover:text-slate-600" aria-label="Dismiss notification">&times;</button>
 </div>
@@ -99,18 +99,18 @@ hx-trigger="change, keyup delay:200ms changed from:input[name='q']"
 hx-target="#fund-requests-page-root"
 hx-swap="innerHTML"
 hx-push-url="true"
-class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[12px] font-bold text-slate-700"
+class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[12px] font-bold text-slate-700"
 >
 <input type="hidden" name="tab" :value="activeTab">
 
 <!-- Search -->
-<div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
 <input type="text" name="q" placeholder="Search schools, clusters, activities..." class="bg-transparent focus:outline-none w-48 font-bold placeholder-slate-400">
 </div>
 
 <!-- Fiscal Year -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
 <select name="fy" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
@@ -119,7 +119,7 @@ class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex fle
 </div>
 
 <!-- Quarter -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Quarter: Q1</option>
 <option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Quarter: Q2</option>
@@ -129,7 +129,7 @@ class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex fle
 </div>
 
 <!-- Month -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <select name="month" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="October" {% if selected_month == 'October' %}selected{% endif %}>Month: October</option>
 <option value="November" {% if selected_month == 'November' %}selected{% endif %}>Month: November</option>
@@ -147,7 +147,7 @@ class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex fle
 </div>
 
 <!-- Week -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <select name="week" class="bg-transparent focus:outline-none cursor-pointer" x-model="selectedWeek">
 {% for wk in dropdown_weeks %}
 <option value="{{ wk.val }}">{{ wk.label }}</option>
@@ -157,7 +157,7 @@ class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex fle
 
 {% if show_team_filters %}
 <!-- District -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <select name="district" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">District: All</option>
 {% for d in districts %}
@@ -167,7 +167,7 @@ class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex fle
 </div>
 
 <!-- Staff -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">Staff: All</option>
 {% for p in staff_profiles %}
@@ -178,7 +178,7 @@ class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex fle
 {% endif %}
 
 <!-- Request Type -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <select name="request_type" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">Request Type: All</option>
 <option value="school visits" {% if selected_request_type == 'school visits' %}selected{% endif %}>School Visits</option>
@@ -193,7 +193,7 @@ class="edify-surface p-3.5 rounded-xl border border-slate-100 shadow-sm flex fle
 </div>
 
 <!-- Status -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <select name="status" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">Status: All</option>
 <option value="pending_responsible_confirmation" {% if selected_status == 'pending_responsible_confirmation' %}selected{% endif %}>Draft</option>
@@ -219,40 +219,38 @@ Clear Filters
 {% include "partials/fund_requests/kpis.html" %}
 </div>
 
-<!-- Tabs Switcher Segmented Control -->
+<!-- Related finance destinations -->
 <div class="flex border-b border-slate-100 pb-3">
-  <div class="bg-slate-100/80 p-1.5 rounded-xl flex gap-1.5 border border-slate-200/50">
-    <button
-      @click="activeTab = 'weekly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-      class="px-5 py-2 text-[12px] font-bold rounded-lg transition-all"
-      :class="activeTab === 'weekly' ? 'edify-surface text-slate-800 shadow-sm border border-slate-200/40' : 'text-slate-500 hover:text-slate-700 edify-hover-surface'"
+  <nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Fund planning views">
+    <a
+      href="/fund-requests/weekly"
+      aria-current="page"
+      class="px-5 py-2 text-[12px] font-bold rounded-control transition-all edify-surface text-slate-800 shadow-sm border border-slate-200/40 whitespace-nowrap"
     >
       Weekly Fund Request
-    </button>
-    <button
-      @click="activeTab = 'monthly'; window.location.href='/budgets/monthly'"
-      class="px-5 py-2 text-[12px] font-bold rounded-lg transition-all"
-      :class="activeTab === 'monthly' ? 'edify-surface text-slate-800 shadow-sm border border-slate-200/40' : 'text-slate-500 hover:text-slate-700 edify-hover-surface'"
+    </a>
+    <a
+      href="/budgets/monthly"
+      class="px-5 py-2 text-[12px] font-bold rounded-control transition-all text-slate-500 hover:text-slate-700 edify-hover-surface whitespace-nowrap"
     >
       Monthly Fund Request
-    </button>
-    <button
-      @click="activeTab = 'budget'; window.location.href='/budgets/monthly'"
-      class="px-5 py-2 text-[12px] font-bold rounded-lg transition-all"
-      :class="activeTab === 'budget' ? 'edify-surface text-slate-800 shadow-sm border border-slate-200/40' : 'text-slate-500 hover:text-slate-700 edify-hover-surface'"
+    </a>
+    <a
+      href="/country-budget"
+      class="px-5 py-2 text-[12px] font-bold rounded-control transition-all text-slate-500 hover:text-slate-700 edify-hover-surface whitespace-nowrap"
     >
       Country Budget
-    </button>
-  </div>
+    </a>
+  </nav>
 </div>
 
 <!-- Information Banner -->
 <div
 x-show="infoBannerOpen"
-class="bg-blue-50 text-blue-800 p-3.5 rounded-xl border border-blue-100 flex items-center justify-between text-[12px] font-bold "
+class="bg-blue-50 text-blue-800 p-3.5 rounded-surface border border-blue-100 flex items-center justify-between text-[12px] font-bold "
 >
 <div class="flex items-center gap-2">
-<div class="h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+<div class="h-5 w-5 rounded-pill bg-blue-100 flex items-center justify-center text-blue-700 shrink-0">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
 </div>
 <span>Fund requests are automatically generated from school visits, cluster trainings, and cluster meetings scheduled in My Plan.</span>

@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
   <div>
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">11. Regional and District Summary</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Avg SSA by region · trend vs prior annual cycle{% if regional_summary.prev_fy %} (FY {{ regional_summary.latest_fy }} vs {{ regional_summary.prev_fy }}){% endif %}</p>
@@ -8,7 +8,7 @@
   {# Choropleth-style region tiles #}
   <div class="grid grid-cols-2 gap-2">
     {% for r in regional_summary.rows %}
-    <div class="rounded-lg p-2.5 border cursor-pointer transition-all hover:shadow-sm
+    <div class="rounded-surface p-2.5 border cursor-pointer transition-all hover:shadow-sm
       {% if r.avg_tone == 'success' %}bg-emerald-50 border-emerald-100
       {% elif r.avg_tone == 'lime' %}bg-lime-50 border-lime-100
       {% elif r.avg_tone == 'warning' %}bg-amber-50 border-amber-100
@@ -31,10 +31,10 @@
   </div>
 
   <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 edify-text-caption font-semibold text-slate-400 border-t border-slate-50">
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-emerald-200"></span>80%+</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-lime-200"></span>60–79%</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-amber-200"></span>40–59%</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-rose-200"></span>&lt;40%</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-emerald-200"></span>80%+</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-lime-200"></span>60–79%</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-amber-200"></span>40–59%</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-rose-200"></span>&lt;40%</span>
     <span class="ml-auto italic">Click a region to drill down</span>
   </div>
 </div>

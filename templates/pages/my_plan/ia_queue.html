@@ -15,12 +15,12 @@
 <div class="grid gap-6">
 {% if queue %}
 {% for act in queue %}
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
 <div class="space-y-3 min-w-0 flex-1">
 <div>
 <div class="flex items-center gap-2">
 <h3 class="text-[15px] font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h3>
-<span class="inline-flex items-center rounded px-2 py-0.5 edify-text-caption font-semibold bg-slate-100 text-slate-600">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold bg-slate-100 text-slate-600">
 Salesforce ID: {{ act.salesforceActivityId }}
 </span>
 </div>
@@ -53,7 +53,7 @@ School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline t
 {% csrf_token %}
 <button
 type="submit"
-class="w-full h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
+class="w-full h-10 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Verify &amp; Confirm
 </button>
@@ -63,12 +63,12 @@ Verify &amp; Confirm
 <button
 @click="open = !open"
 type="button"
-class="w-full h-10 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-colors"
+class="w-full h-10 px-4 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Return for Correction
 </button>
 
-<div x-show="open" class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-left" style="display: none;" @click.outside="open = false">
+<div x-show="open" class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-surface space-y-2 text-left" style="display: none;" @click.outside="open = false">
 <form method="POST" action="/ia/verification-queue/{{ act.id }}/return">
 {% csrf_token %}
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Return Reason</label>
@@ -76,11 +76,11 @@ Return for Correction
 name="reason"
 required
 placeholder="Specify correction details..."
-class="w-full p-2 edify-surface border border-slate-200 rounded-lg text-[12px] focus:outline-none h-16 resize-none"
+class="w-full p-2 edify-surface border border-slate-200 rounded-control text-[12px] focus:outline-none h-16 resize-none"
 ></textarea>
 <button
 type="submit"
-class="w-full h-8 mt-2 rounded bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-bold transition-colors"
+class="w-full h-8 mt-2 rounded-control bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-bold transition-colors"
 >
 Submit Return
 </button>
@@ -91,7 +91,7 @@ Submit Return
 </div>
 {% endfor %}
 {% else %}
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-12 text-center text-slate-400 font-semibold">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-12 text-center text-slate-400 font-semibold">
 No completions awaiting IA verification.
 </div>
 {% endif %}

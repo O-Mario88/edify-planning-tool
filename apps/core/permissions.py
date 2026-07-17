@@ -411,7 +411,7 @@ def render_access_denied(request, message: str):
     if is_htmx or (request.META.get("SERVER_NAME") == "testserver" and is_action):
         if is_htmx:
             return HttpResponseForbidden(
-                "<div class='p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12.5px] font-black'>"
+                "<div class='p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-surface text-[12.5px] font-black'>"
                 "Security Warning: Your role is not authorized to access this action."
                 "</div>"
             )

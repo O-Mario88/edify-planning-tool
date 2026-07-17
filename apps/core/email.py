@@ -18,7 +18,7 @@ import json
 import logging
 import os
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 logger = logging.getLogger("edify.mailer")
 
@@ -29,6 +29,10 @@ class MailMessage:
     subject: str
     text: str
     html: str | None = None
+    # Resend accepts base64-encoded attachment content.  Keeping this on the
+    # transport DTO lets scheduled analytics reports use the same audited,
+    # timeout-bounded provider as authentication mail.
+    attachments: list[dict[str, str]] = field(default_factory=list)
 
 
 class MailerService:
@@ -74,6 +78,8 @@ class MailerService:
         }
         if msg.html:
             payload["html"] = msg.html
+        if msg.attachments:
+            payload["attachments"] = msg.attachments
         body = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             "https://api.resend.com/emails",

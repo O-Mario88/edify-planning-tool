@@ -1,0 +1,67 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Budget Amendments · Edify{% endblock %}
+
+{% block shell_content %}
+<main class="sp-page" id="main-content" tabindex="-1">
+  <header class="sp-page-header">
+    <div>
+      <span class="sp-eyebrow">Finance control</span>
+      <h1>Budget Amendments</h1>
+      <p>Sanctioned changes for finance-locked activities. Approving applies the move without touching the confirmed cost snapshot or its advances.</p>
+    </div>
+  </header>
+
+  {% if not amendments %}
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-8 text-center">
+    <h2 class="text-[15px] font-bold text-slate-800">No amendments</h2>
+    <p class="edify-text-caption text-slate-500 mt-1">When a staff member requests a date change on a locked activity, it appears here for review.</p>
+  </section>
+  {% else %}
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5">
+    <div class="overflow-x-auto">
+      <table class="w-full text-[12px]">
+        <thead>
+          <tr class="text-left text-slate-400 font-semibold">
+            <th class="py-2 pr-3">Activity</th>
+            <th class="py-2 pr-3">School</th>
+            <th class="py-2 pr-3">Move</th>
+            <th class="py-2 pr-3">Amount (UGX)</th>
+            <th class="py-2 pr-3">Reason</th>
+            <th class="py-2 pr-3">Status</th>
+            <th class="py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for amendment in amendments %}
+          <tr class="border-t border-slate-100 align-top">
+            <td class="py-2.5 pr-3 font-semibold text-slate-700">{{ amendment.activity.activity_type }}</td>
+            <td class="py-2.5 pr-3 text-slate-600">{{ amendment.activity.school.name|default:"—" }}</td>
+            <td class="py-2.5 pr-3 text-slate-600">{{ amendment.original_date|date:"d M Y"|default:"—" }} → <strong>{{ amendment.new_date|date:"d M Y" }}</strong><br><span class="text-slate-400">{{ amendment.original_fy }} {{ amendment.original_quarter }} → {{ amendment.new_fy }} {{ amendment.new_quarter }}</span></td>
+            <td class="py-2.5 pr-3 text-slate-600">{{ amendment.original_amount }}</td>
+            <td class="py-2.5 pr-3 text-slate-600 max-w-[260px]">{{ amendment.reason }}</td>
+            <td class="py-2.5 pr-3"><span class="edify-text-caption font-bold {% if amendment.status == 'applied' %}text-emerald-600{% elif amendment.status == 'submitted' or amendment.status == 'under_review' %}text-amber-600{% else %}text-slate-400{% endif %}">{{ amendment.get_status_display }}</span>{% if amendment.review_note %}<br><span class="text-slate-400">{{ amendment.review_note }}</span>{% endif %}</td>
+            <td class="py-2.5">
+              {% if amendment.status == 'submitted' or amendment.status == 'under_review' %}
+              <form method="POST" action="{% url 'frontend:budget_amendment_action' amendment.id %}" class="flex flex-col gap-1.5 min-w-[160px]">
+                {% csrf_token %}
+                <input type="text" name="note" placeholder="Review note (optional)" class="h-8 px-2 border border-slate-200 rounded-control text-[12px]">
+                <div class="flex gap-1.5">
+                  <button type="submit" name="action" value="approve" class="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-semibold rounded-control">Approve &amp; Apply</button>
+                  <button type="submit" name="action" value="return" class="h-8 px-3 bg-amber-500 hover:bg-amber-600 text-white edify-text-caption font-semibold rounded-control">Return</button>
+                  <button type="submit" name="action" value="reject" class="h-8 px-3 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold rounded-control">Reject</button>
+                </div>
+              </form>
+              {% else %}
+              <span class="edify-text-caption text-slate-400">Reviewed by {{ amendment.reviewed_by|default:"—" }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}

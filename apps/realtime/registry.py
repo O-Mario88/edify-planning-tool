@@ -123,6 +123,18 @@ JOB_REGISTRY: list[JobSpec] = [
         retryable=True,
         max_retries=2,
     ),
+    JobSpec(
+        name="analytics_report_delivery",
+        description="Delivers due user-configured analytics CSV digests by email.",
+        cron="every 15 min Africa/Kampala",
+        cron_kwargs={"minute": "*/15"},
+        expected_runtime_seconds=120,
+        max_interval_minutes=45,
+        idempotent=True,
+        idempotency_note="Due rows are atomically claimed by advancing next_run_at before network delivery.",
+        retryable=True,
+        max_retries=2,
+    ),
 ]
 
 JOB_NAMES = {spec.name for spec in JOB_REGISTRY}

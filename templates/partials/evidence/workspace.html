@@ -1,0 +1,112 @@
+<section id="evidence-workspace" class="space-y-4" aria-live="polite" aria-busy="false">
+  <div class="overflow-x-auto border-b border-slate-100" role="tablist" aria-label="Evidence workflow states">
+    <div class="flex items-center gap-1 min-w-max">
+      {% for tab in tabs %}
+      <a href="?tab={{ tab.key }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+         role="tab"
+         aria-selected="{% if active_tab == tab.key %}true{% else %}false{% endif %}"
+         aria-controls="evidence-tab-panel"
+         tabindex="{% if active_tab == tab.key %}0{% else %}-1{% endif %}"
+         hx-get="?tab={{ tab.key }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+         hx-target="#evidence-workspace"
+         hx-swap="outerHTML"
+         hx-push-url="true"
+         class="min-h-11 px-3.5 inline-flex items-center gap-2 border-b-2 text-[12px] font-semibold whitespace-nowrap transition-colors {% if active_tab == tab.key %}border-[var(--edify-primary)] text-[var(--edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700{% endif %}">
+        <span>{{ tab.label }}</span>
+        <span class="rounded-pill px-2 py-0.5 bg-slate-100 text-slate-600 tabular-nums">{{ tab.count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <form method="get"
+        action="/evidence/"
+        hx-get="/evidence/"
+        hx-target="#evidence-workspace"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+        class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3 flex flex-col sm:flex-row gap-2">
+    <input type="hidden" name="tab" value="{{ active_tab }}">
+    <label class="sr-only" for="evidence-search">Search evidence records</label>
+    <input id="evidence-search"
+           name="q"
+           value="{{ search_query }}"
+           type="search"
+           maxlength="100"
+           placeholder="Search school, cluster, activity, or SF ID"
+           class="h-11 flex-1 min-w-0 rounded-control border border-slate-200 bg-slate-50 px-3 text-[16px] sm:text-[12px] text-slate-700 focus:outline-none">
+    <button type="submit" class="min-h-11 px-4 rounded-control btn-premium-primary text-[12px] font-bold">Search</button>
+    {% if search_query %}
+    <a href="?tab={{ active_tab }}"
+       hx-get="?tab={{ active_tab }}"
+       hx-target="#evidence-workspace"
+       hx-swap="outerHTML"
+       hx-push-url="true"
+       class="min-h-11 px-4 inline-flex items-center justify-center rounded-control btn-premium-secondary text-[12px] font-bold">Clear</a>
+    {% endif %}
+  </form>
+
+  <div id="evidence-tab-panel" role="tabpanel" aria-label="Evidence records for the selected workflow state">
+  {% if rows %}
+  <ul class="grid grid-cols-1 lg:grid-cols-2 gap-3" aria-label="{{ page_obj.paginator.count }} evidence records">
+    {% for row in rows %}
+    <li class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 sm:p-5 min-w-0">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-[14px] font-bold text-slate-800">{{ row.activity_type }}</h2>
+            <span class="rounded-pill border border-slate-200 bg-slate-50 px-2 py-0.5 edify-text-caption font-semibold text-slate-600">{{ row.status }}</span>
+          </div>
+          <p class="text-[13px] font-semibold text-slate-700 mt-1 truncate">{{ row.location }}</p>
+          <p class="edify-text-caption text-slate-400 mt-0.5">{% if row.location_id %}{{ row.location_id }} · {% endif %}{{ row.district|default:"District not assigned" }}</p>
+        </div>
+        {% if row.action.drawer %}
+        <button type="button"
+                hx-get="{{ row.action.url }}"
+                hx-target="#drawer-container"
+                hx-swap="innerHTML"
+                class="min-h-11 shrink-0 px-4 rounded-control btn-premium-primary text-[12px] font-bold">{{ row.action.label }}</button>
+        {% else %}
+        <a href="{{ row.action.url }}" class="min-h-11 shrink-0 px-4 inline-flex items-center justify-center rounded-control btn-premium-primary text-[12px] font-bold">{{ row.action.label }}</a>
+        {% endif %}
+      </div>
+      <dl class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-100">
+        <div><dt class="edify-text-caption font-bold uppercase tracking-wide text-slate-400">Evidence</dt><dd class="text-[12px] font-semibold text-slate-700 mt-1">{{ row.evidence }}</dd></div>
+        <div><dt class="edify-text-caption font-bold uppercase tracking-wide text-slate-400">IA review</dt><dd class="text-[12px] font-semibold text-slate-700 mt-1">{{ row.verification }}</dd></div>
+        <div><dt class="edify-text-caption font-bold uppercase tracking-wide text-slate-400">Owner</dt><dd class="text-[12px] font-semibold text-slate-700 mt-1 truncate">{{ row.owner }}</dd></div>
+        <div><dt class="edify-text-caption font-bold uppercase tracking-wide text-slate-400">Updated</dt><dd class="text-[12px] font-semibold text-slate-700 mt-1">{{ row.updated_at|date:"d M Y" }}</dd></div>
+      </dl>
+      {% if row.salesforce_id %}
+      <p class="mt-3 edify-text-caption text-slate-500">Salesforce ID <span class="font-bold text-slate-700">{{ row.salesforce_id }}</span></p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center">
+    <h2 class="text-[15px] font-bold text-slate-800">No records in this workflow state</h2>
+    <p class="text-[12px] text-slate-500 mt-1">{% if search_query %}Try a broader search or clear the filter.{% else %}New evidence will appear here as activities move through review.{% endif %}</p>
+  </div>
+  {% endif %}
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" aria-label="Evidence pagination">
+    <p class="edify-text-caption text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} records</p>
+    <div class="flex items-center gap-2">
+      {% if page_obj.has_previous %}
+      <a href="?tab={{ active_tab }}&amp;page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+         hx-get="?tab={{ active_tab }}&amp;page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+         hx-target="#evidence-workspace" hx-swap="outerHTML" hx-push-url="true"
+         class="min-h-11 px-4 inline-flex items-center rounded-control btn-premium-secondary text-[12px] font-bold">Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a href="?tab={{ active_tab }}&amp;page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+         hx-get="?tab={{ active_tab }}&amp;page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}"
+         hx-target="#evidence-workspace" hx-swap="outerHTML" hx-push-url="true"
+         class="min-h-11 px-4 inline-flex items-center rounded-control btn-premium-secondary text-[12px] font-bold">Next</a>
+      {% endif %}
+    </div>
+  </nav>
+  {% endif %}
+  </div>
+</section>

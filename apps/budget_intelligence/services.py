@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.utils import timezone
 
+from apps.analytics.platform_engine import variance_analysis
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.leadership.models import (
@@ -225,8 +226,9 @@ def _detect_cash_variance(fy: str, now) -> list[dict]:
         accounted = w.accounted_amount or 0
         if disbursed == 0:
             continue
-        variance = disbursed - accounted
-        pct = abs(variance) / disbursed
+        analysis = variance_analysis(disbursed, accounted)
+        variance = int(analysis["absolute_variance"] or 0)
+        pct = abs(analysis["variance_pct"] or 0) / 100
         if pct > 0.05:
             insights.append(
                 {
@@ -252,6 +254,7 @@ def _detect_cash_variance(fy: str, now) -> list[dict]:
                         "disbursed": disbursed,
                         "accounted": accounted,
                         "variance_pct": round(pct, 4),
+                        "analytics_status": analysis["status"],
                     },
                 }
             )

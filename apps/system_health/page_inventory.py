@@ -273,7 +273,10 @@ def _template_findings(source: str) -> list[Finding]:
         (
             "legacy-white-surface",
             "medium",
-            re.search(r"\bbg-white(?:\b|/)", source),
+            # A fully opaque white surface is a theme leak; translucent white
+            # overlays (for example ``bg-white/10`` on blue-mode glass) are a
+            # deliberate compositing layer and remain compatible with themes.
+            re.search(r"\bbg-white\b(?!/)", source),
             "A literal white surface can flatten Light mode and break Dark/System themes.",
             "Use the semantic card, elevated or muted surface token.",
         ),

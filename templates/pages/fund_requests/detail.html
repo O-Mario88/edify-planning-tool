@@ -15,7 +15,7 @@
 Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-semibold">{{ req.responsibleUser }}</span>
 </p>
 </div>
-<span class="inline-flex items-center rounded-full px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if req.status == 'disbursed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif req.status == 'confirmed_for_advance' %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}bg-slate-100 text-slate-600{% endif %}">
+<span class="inline-flex items-center rounded-pill px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if req.status == 'disbursed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif req.status == 'confirmed_for_advance' %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}bg-slate-100 text-slate-600{% endif %}">
 {{ req.status|replace_underscore }}
 </span>
 </div>
@@ -24,7 +24,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <div class="grid md:grid-cols-3 gap-6 items-start">
 <!-- Main Itemized Lines -->
 <div class="md:col-span-2 space-y-6">
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--edify-border)] bg-slate-50/50">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Itemized Line Items</h3>
 </div>
@@ -63,7 +63,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 
 <!-- Actions Sidebar Panel -->
 <div class="space-y-6">
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Total Request Amount</p>
 <p class="text-[24px] font-semibold text-[var(--edify-accent)] mt-0.5">{{ req.totalAmount|ugx }}</p>
@@ -75,7 +75,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 {% csrf_token %}
 <button
 type="submit"
-class="w-full h-10 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
+class="w-full h-10 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
 >
 Confirm &amp; Request Advance
 </button>
@@ -100,7 +100,7 @@ name="amount"
 id="amount"
 value="{{ req.totalAmount }}"
 required
-class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50"
+class="w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50"
 >
 </div>
 
@@ -109,7 +109,7 @@ class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-sl
 <select
 name="method"
 id="method"
-class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50"
+class="w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50"
 >
 <option value="mobile_money">Mobile Money</option>
 <option value="bank_transfer">Bank Transfer</option>
@@ -126,14 +126,14 @@ name="reference"
 id="reference"
 placeholder="e.g. TXN-998877"
 required
-class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50"
+class="w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50"
 >
 </div>
 </div>
 
 <button
 type="submit"
-class="w-full h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
+class="w-full h-10 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
 >
 Disburse Funds
 </button>

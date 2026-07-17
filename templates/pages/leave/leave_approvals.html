@@ -21,7 +21,7 @@
           name="q"
           value="{{ search_q|default:'' }}"
           placeholder="Search staff, reason..."
-          class="pl-8 pr-4 py-1.5 text-xs rounded-lg border font-semibold w-60 transition"
+          class="pl-8 pr-4 py-1.5 text-xs rounded-control border font-semibold w-60 transition"
           style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
         >
         <span class="absolute left-2.5 top-2.5 text-slate-400">
@@ -33,7 +33,7 @@
 
       <select
         name="type"
-        class="px-3 py-1.5 text-xs rounded-lg border font-bold transition"
+        class="px-3 py-1.5 text-xs rounded-control border font-bold transition"
         style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
         @change="$el.form.requestSubmit()"
       >
@@ -47,7 +47,7 @@
 
       <select
         name="status"
-        class="px-3 py-1.5 text-xs rounded-lg border font-bold transition"
+        class="px-3 py-1.5 text-xs rounded-control border font-bold transition"
         style="background:var(--edify-surface); border-color:var(--edify-border); color:var(--edify-text);"
         @change="$el.form.requestSubmit()"
       >
@@ -68,7 +68,7 @@
   {% if messages %}
   <div class="space-y-2">
     {% for msg in messages %}
-    <div class="p-4 rounded-xl border font-semibold text-[13px] flex items-center justify-between shadow-sm
+    <div class="p-4 rounded-surface border font-semibold text-[13px] flex items-center justify-between shadow-sm
       {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
       {% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-100
       {% else %}bg-rose-50 text-rose-700 border-rose-100{% endif %}"
@@ -86,7 +86,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
     <!-- Left Column: Queue (3/12 cols) -->
-    <div class="lg:col-span-3 rounded-lg border flex flex-col shadow-sm overflow-hidden"
+    <div class="lg:col-span-3 rounded-surface border flex flex-col shadow-sm overflow-hidden"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--edify-border);">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Approval Queue ({{ requests|length }})</h3>
@@ -109,14 +109,14 @@
         >
           <div class="flex items-start gap-3">
             <!-- User avatar stub -->
-            <div class="h-9 w-9 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-bold text-blue-500 text-xs shadow-sm">
+            <div class="h-9 w-9 rounded-pill bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-bold text-blue-500 text-xs shadow-sm">
               {{ r.staff.user.name|slice:":2"|upper }}
             </div>
 
             <div class="flex-1 space-y-1">
               <div class="flex items-center justify-between">
                 <span class="font-bold text-slate-200 text-xs group-hover:text-blue-400 transition">{{ r.staff.user.name }}</span>
-                <span class="px-1.5 py-0.5 rounded edify-text-caption font-bold uppercase tracking-wider
+                <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wider
                   {% if r.status == 'pending' %}bg-amber-500/10 text-amber-500
                   {% elif r.status == 'approved' %}bg-emerald-500/10 text-emerald-500
                   {% elif r.status == 'rejected' %}bg-rose-500/10 text-rose-500
@@ -128,7 +128,7 @@
               <p class="edify-text-caption text-slate-400 font-semibold">{{ r.staff.user.active_role }} · {{ r.staff.country }}</p>
 
               <div class="flex items-center gap-1.5 pt-1">
-                <span class="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-md edify-text-caption font-bold uppercase tracking-wider">
+                <span class="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-pill edify-text-caption font-bold uppercase tracking-wider">
                   {{ r.type|replace_underscore|title }}
                 </span>
                 <span class="edify-text-caption text-slate-400 font-semibold">
@@ -140,12 +140,12 @@
                 <span>Days: <b class="text-slate-200">{{ r.days_charged }} working</b></span>
                 {% if r.covering_staff %}
                 <span class="flex items-center gap-1">
-                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                  <span class="h-1.5 w-1.5 rounded-pill bg-emerald-500 inline-block"></span>
                   Cover assigned
                 </span>
                 {% else %}
                 <span class="flex items-center gap-1">
-                  <span class="h-1.5 w-1.5 rounded-full bg-slate-500 inline-block"></span>
+                  <span class="h-1.5 w-1.5 rounded-pill bg-slate-500 inline-block"></span>
                   No cover
                 </span>
                 {% endif %}
@@ -158,7 +158,7 @@
         </article>
         {% empty %}
         <div class="p-8 text-center text-slate-400">
-          <div class="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-400">
+          <div class="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-pill flex items-center justify-center mx-auto mb-2 text-slate-400">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -175,9 +175,9 @@
       {% if selected_leave %}
         {% include "partials/leave/impact_panel.html" with leave=selected_leave impact=selected_leave_impact conflicts=selected_leave_conflicts eligible_cover_staff=eligible_cover_staff heatmap=heatmap holidays=holidays blackouts=blackouts %}
       {% else %}
-        <div class="rounded-lg border p-20 text-center shadow-sm"
+        <div class="rounded-surface border p-20 text-center shadow-sm"
              style="background:var(--edify-surface); border-color:var(--edify-border);">
-          <div class="h-12 w-12 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto shadow-sm">
+          <div class="h-12 w-12 rounded-surface bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto shadow-sm">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -192,7 +192,7 @@
   </div>
 
   <!-- Bottom Row: Recent Approval Activity -->
-  <div class="rounded-lg border shadow-sm overflow-hidden"
+  <div class="rounded-surface border shadow-sm overflow-hidden"
        style="background:var(--edify-surface); border-color:var(--edify-border);">
     <div class="p-4 border-b flex items-center justify-between" style="border-color:var(--edify-border);">
       <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Approval Activity</h3>
@@ -219,7 +219,7 @@
             <td class="px-4 py-3 text-slate-400">{{ act.datetime|date:"N j, Y H:i" }}</td>
             <td class="px-4 py-3 text-slate-200">{{ act.staff.name }}</td>
             <td class="px-4 py-3">
-              <span class="px-2 py-0.5 rounded-full edify-text-caption font-extrabold uppercase
+              <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase
                 {% if act.action == 'Approved' %}bg-emerald-500/10 text-emerald-400
                 {% elif act.action == 'Rejected' %}bg-rose-500/10 text-rose-400
                 {% else %}bg-amber-500/10 text-amber-400{% endif %}"

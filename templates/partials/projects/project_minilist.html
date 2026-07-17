@@ -1,7 +1,7 @@
 {% comment %}Mini project list card. Params: title, tone (success|warning|danger), rows, empty{% endcomment %}
 <div class="card p-4">
   <div class="flex items-center gap-2 mb-3">
-    <span class="h-2 w-2 rounded-full shrink-0 {% if tone == 'success' %}bg-emerald-500{% elif tone == 'warning' %}bg-amber-500{% elif tone == 'danger' %}bg-rose-500{% else %}bg-slate-400{% endif %}"></span>
+    <span class="h-2 w-2 rounded-pill shrink-0 {% if tone == 'success' %}bg-emerald-500{% elif tone == 'warning' %}bg-amber-500{% elif tone == 'danger' %}bg-rose-500{% else %}bg-slate-400{% endif %}"></span>
     <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">{{ title }}</h3>
   </div>
   <div class="space-y-2">

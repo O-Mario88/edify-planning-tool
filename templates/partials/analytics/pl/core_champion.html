@@ -1,18 +1,18 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full"
      x-data="{
        chart: null,
        initChart() {
          if (this.chart) { this.chart.destroy(); }
          const el = document.querySelector('#plCoreChampionChart');
          if (!el) return;
-         const labels = {{ core_champion.core.labels|safe }}.length ? {{ core_champion.core.labels|safe }} : {{ core_champion.champion.labels|safe }};
+         const labels = {{ core_champion.core.labels|escape }}.length ? {{ core_champion.core.labels|escape }} : {{ core_champion.champion.labels|escape }};
          this.chart = new ApexCharts(el, {
            series: [
-             { name: 'Core Schools', data: {{ core_champion.core.series|safe }} },
-             { name: 'Champion Schools', data: {{ core_champion.champion.series|safe }} }
+             { name: 'Core Schools', data: {{ core_champion.core.series|escape }} },
+             { name: 'Champion Schools', data: {{ core_champion.champion.series|escape }} }
            ],
-           chart: { height: 210, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+           chart: { height: 210, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
            stroke: { width: 2.5, curve: 'smooth' },
            markers: { size: 4, strokeWidth: 0 },
            colors: ['var(--edify-chart-blue)', 'var(--edify-chart-amber)'],
@@ -32,8 +32,8 @@
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">J. Core &amp; Champion School Performance</h3>
   </div>
   <div class="flex items-center gap-4 -mt-1">
-    <span class="edify-text-caption font-semibold text-slate-500"><span class="inline-block h-2 w-2 rounded-full align-middle" style="background:var(--edify-chart-blue)"></span> Core Schools <span class="text-slate-400">(n={{ core_champion.core.count }})</span></span>
-    <span class="edify-text-caption font-semibold text-slate-500"><span class="inline-block h-2 w-2 rounded-full align-middle" style="background:var(--edify-chart-amber)"></span> Champion Schools <span class="text-slate-400">(n={{ core_champion.champion.count }})</span></span>
+    <span class="edify-text-caption font-semibold text-slate-500"><span class="inline-block h-2 w-2 rounded-pill align-middle" style="background:var(--edify-chart-blue)"></span> Core Schools <span class="text-slate-400">(n={{ core_champion.core.count }})</span></span>
+    <span class="edify-text-caption font-semibold text-slate-500"><span class="inline-block h-2 w-2 rounded-pill align-middle" style="background:var(--edify-chart-amber)"></span> Champion Schools <span class="text-slate-400">(n={{ core_champion.champion.count }})</span></span>
   </div>
   {% if core_champion.core.count or core_champion.champion.count %}
   <div class="h-[210px] w-full" id="plCoreChampionChart"></div>

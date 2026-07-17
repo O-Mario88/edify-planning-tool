@@ -15,12 +15,12 @@
 <div class="grid gap-6">
 {% if queue %}
 {% for act in queue %}
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
 <div class="space-y-3 min-w-0 flex-1">
 <div>
 <div class="flex items-center gap-2">
 <h3 class="text-[15px] font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h3>
-<span class="inline-flex items-center rounded px-2 py-0.5 edify-text-caption font-semibold bg-slate-100 text-slate-600">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold bg-slate-100 text-slate-600">
 Salesforce ID: {{ act.salesforceActivityId }}
 </span>
 </div>
@@ -58,7 +58,7 @@ School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline t
 {% csrf_token %}
 <button
 type="submit"
-class="w-full h-9 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
+class="w-full h-9 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Approve Completion
 </button>
@@ -71,11 +71,11 @@ type="text"
 name="reason"
 placeholder="Return reason..."
 required
-class="w-full h-8 px-2 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none"
+class="w-full h-8 px-2 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none"
 >
 <button
 type="submit"
-class="w-full h-8 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-[12px] font-bold flex items-center justify-center transition-colors"
+class="w-full h-8 rounded-control border border-rose-200 text-rose-700 hover:bg-rose-50 text-[12px] font-bold flex items-center justify-center transition-colors"
 >
 Return for Corrections
 </button>
@@ -84,7 +84,7 @@ Return for Corrections
 </div>
 {% endfor %}
 {% else %}
-<div class="edify-surface rounded-lg border border-[var(--edify-border)]">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)]">
 {% include "components/empty_state.html" with title="Queue is clear" message="Completed activities submitted by your CCEOs will appear here for review." tone="success" icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" %}
 </div>
 {% endif %}

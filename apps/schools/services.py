@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from django.db.models import Q
 
-from apps.core.enums import DuplicateStatus, SchoolType
+from apps.core.enums import DuplicateStatus, PlanningReadiness, SchoolType
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.geography.models import District, Region, SubCounty
@@ -317,13 +317,97 @@ def next_actions(school_id: str, principal, fy: str | None = None) -> dict:
     """Scope-aware 'Plan Action' resolver."""
     school = get_one(school_id, principal)
     actions: list[dict] = []
-    if school.planning_readiness != "ready":
+    if school.planning_readiness == PlanningReadiness.READY_FOR_BASELINE_SSA:
         actions.append(
-            {"action": "collect_ssa", "reason": "Readiness locked — collect SSA."}
+            {
+                "action": "collect_ssa",
+                "reason": "Current fiscal-year SSA is required before support planning.",
+            }
         )
-    if school.cluster_status == "unclustered":
+    if school.planning_readiness == PlanningReadiness.REQUIRES_CLUSTER:
         actions.append({"action": "assign_cluster", "reason": "School is unclustered."})
     return {"schoolId": school.school_id, "fy": fy, "nextActions": actions}
+
+
+# Activity statuses that no longer represent in-flight work; anything outside
+# this set blocks school deletion (live planning, execution, or verification).
+_TERMINAL_ACTIVITY_STATUSES = (
+    "closed",
+    "completed",
+    "cancelled",
+    "rejected",
+    "deferred",
+    "not_planned",
+)
+
+# Advance money out of the account but not yet settled by the accountant.
+_UNSETTLED_ADVANCE_STATUSES = (
+    "disbursed",
+    "accountability_pending",
+    "reimbursement_submitted",
+    "reimbursement_disbursed",
+)
+
+
+def delete_school(school_id: str, principal) -> dict:
+    """Admin-only school deletion (soft delete, history retained).
+
+    Blocked while the school has in-flight activities or unsettled advances —
+    delete is for cleanup (duplicates, wrong entries), never a shortcut around
+    live workflow state. The tombstone is written with a queryset update()
+    because School.save() runs cluster-reassignment and data-quality side
+    effects that must not fire on deletion.
+    """
+    from django.utils import timezone
+
+    from apps.activities.models import Activity
+    from apps.audit.services import log as audit_log
+    from apps.core.navigation import get_user_role_slug
+    from apps.fund_requests.models import AdvanceRequest
+
+    if get_user_role_slug(principal) != "ADMIN":
+        raise BadRequest("Only an Admin can delete schools.")
+
+    school = School.objects.filter(school_id=school_id, deleted_at__isnull=True).first()
+    if not school:
+        raise NotFoundError("School not found.")
+
+    in_flight = (
+        Activity.objects.filter(school=school, deleted_at__isnull=True)
+        .exclude(status__in=_TERMINAL_ACTIVITY_STATUSES)
+        .count()
+    )
+    if in_flight:
+        raise BadRequest(
+            f"Cannot delete '{school.name}': {in_flight} activit"
+            f"{'y is' if in_flight == 1 else 'ies are'} still in flight. "
+            "Complete, cancel, or close them first."
+        )
+
+    if AdvanceRequest.objects.filter(
+        activity__school=school, status__in=_UNSETTLED_ADVANCE_STATUSES
+    ).exists():
+        raise BadRequest(
+            f"Cannot delete '{school.name}': disbursed funds are not yet "
+            "accounted. Settle the accountability first."
+        )
+
+    now = timezone.now()
+    School.objects.filter(pk=school.pk).update(deleted_at=now, updated_at=now)
+
+    audit_log(
+        action="admin.school_deleted",
+        subject_kind="school",
+        subject_id=school.id,
+        actor_id=principal.id,
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            "school_id": school.school_id,
+            "name": school.name,
+            "district": school.district.name if school.district_id else None,
+        },
+    )
+    return {"ok": True, "name": school.name}
 
 
 __all__ = [
@@ -336,4 +420,5 @@ __all__ = [
     "proposals",
     "workflow",
     "next_actions",
+    "delete_school",
 ]

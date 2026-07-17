@@ -16,18 +16,18 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 <!-- Step 1: Upload Evidence -->
 <div class="space-y-2.5">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-blue-50 text-blue-600 edify-text-caption">1</span>
 Upload Verification Evidence
 </h4>
 <p class="edify-text-caption text-slate-500 font-semibold leading-normal">
 Upload a photo of the meeting, participant list, stamp, or report. This is required to complete verification.
 </p>
 
-<div class="mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
+<div class="mt-2 p-3 bg-slate-50 rounded-surface border border-slate-200/60 flex items-center justify-between">
 <input
 type="file"
 name="evidence_file"
-class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 >
 </div>
 
@@ -37,7 +37,7 @@ class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:ro
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
 <div class="space-y-1">
 {% for ev in evidence_list %}
-<div class="flex items-center justify-between edify-text-caption bg-slate-50 border border-slate-100 rounded-lg p-2">
+<div class="flex items-center justify-between edify-text-caption bg-slate-50 border border-slate-100 rounded-surface p-2">
 <span class="font-bold text-slate-700 truncate max-w-[200px]">{{ ev.original_name }}</span>
 <span class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
 </div>
@@ -51,7 +51,7 @@ class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:ro
 <hr class="border-slate-100">
 <div class="space-y-3" x-data="{ ssaCollected: true }">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--edify-chart-blue)] text-white edify-text-caption font-bold">1.5</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-[var(--edify-chart-blue)] text-white edify-text-caption font-bold">1.5</span>
 SSA Assessment Collection
 </h4>
 <p class="edify-text-caption text-slate-500 font-semibold leading-normal">
@@ -70,20 +70,20 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 </div>
 
 <!-- SSA Scores Grid (data-driven from SsaIntervention enum) -->
-<div x-show="ssaCollected" class="bg-slate-50 p-4 rounded-xl grid grid-cols-2 gap-3 mt-2">
+<div x-show="ssaCollected" class="bg-slate-50 p-4 rounded-surface grid grid-cols-2 gap-3 mt-2">
 <p class="col-span-2 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Intervention Scores (0 - 10)</p>
 {% for code, label in interventions %}
 <div>
 <label class="block edify-text-caption font-semibold text-slate-600">{{ label }}</label>
-<input type="number" step="0.1" min="0" max="10" name="score_{{ code }}" class="w-full h-8 px-2 rounded-md border border-slate-200 text-[12px] edify-surface mt-1">
+<input type="number" step="0.1" min="0" max="10" name="score_{{ code }}" class="w-full h-8 px-2 rounded-control border border-slate-200 text-[12px] edify-surface mt-1">
 </div>
 {% endfor %}
 </div>
 
 <!-- SSA Bypass Reason -->
-<div x-show="!ssaCollected" class="bg-rose-50 p-4 rounded-xl border border-rose-200 mt-2 space-y-2">
+<div x-show="!ssaCollected" class="bg-rose-50 p-4 rounded-surface border border-rose-200 mt-2 space-y-2">
 <label for="ssa_not_collected_reason" class="block edify-text-caption font-bold uppercase text-rose-800">Reason for not collecting SSA</label>
-<select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="w-full h-10 px-3 rounded-lg border border-rose-200 edify-surface text-[12px] focus:outline-none">
+<select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="w-full h-10 px-3 rounded-control border border-rose-200 edify-surface text-[12px] focus:outline-none">
 <option value="">-- Choose reason --</option>
 <option value="School leader unavailable">School leader unavailable</option>
 <option value="Assessment not completed">Assessment not completed</option>
@@ -101,7 +101,7 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 <!-- Step 2: Finalize Completion -->
 <div class="space-y-4">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 edify-text-caption">2</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-blue-50 text-blue-600 edify-text-caption">2</span>
 Finalize details
 </h4>
 
@@ -115,14 +115,14 @@ id="salesforce_id"
 required
 placeholder="e.g. SVE-11223344 or TS-998877"
 value="{{ act.salesforceActivityId|default:'' }}"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
 >
 </div>
 
 <!-- Accountability (If accountability pending) — submits for Accountant review,
      it does not close accountability itself (see advance_service.approve_accountability). -->
 {% if needs_netsuite_id %}
-<div class="space-y-3 p-3 rounded-lg bg-amber-50/40 border border-amber-100">
+<div class="space-y-3 p-3 rounded-surface bg-amber-50/40 border border-amber-100">
 <p class="edify-text-caption text-slate-500 font-semibold">This activity was disbursed{% if disbursed_amount %} (UGX {{ disbursed_amount }}){% endif %} and requires accountability before the Accountant can clear it.</p>
 <div>
 <label for="netsuite_id" class="block edify-text-caption font-bold uppercase tracking-wider text-amber-600">NetSuite Expense ID <span class="text-rose-500">*</span></label>
@@ -133,7 +133,7 @@ id="netsuite_id"
 required
 placeholder="e.g. EXP-2026-00889"
 value="{{ act.netsuite_id|default:'' }}"
-class="w-full h-10 px-3 rounded-lg border border-amber-200 text-[12px] mt-1 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-bold"
+class="w-full h-10 px-3 rounded-control border border-amber-200 text-[12px] mt-1 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-bold"
 >
 </div>
 <div class="grid grid-cols-2 gap-3">
@@ -146,7 +146,7 @@ id="amount_spent"
 required
 min="0"
 placeholder="{{ disbursed_amount|default:'0' }}"
-class="w-full h-10 px-3 rounded-lg border border-amber-200 text-[12px] mt-1 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-bold"
+class="w-full h-10 px-3 rounded-control border border-amber-200 text-[12px] mt-1 bg-amber-50/20 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-bold"
 >
 </div>
 <div>
@@ -157,7 +157,7 @@ name="amount_returned"
 id="amount_returned"
 min="0"
 placeholder="0"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
 >
 </div>
 </div>
@@ -165,7 +165,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 <label for="variance_note" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Variance Explanation <span class="text-slate-300 normal-case">(required if spend + returned ≠ disbursed)</span></label>
 <textarea name="variance_note" id="variance_note" rows="2"
 placeholder="Explain any difference between disbursed and accounted amounts"
-class="w-full px-3 py-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
+class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
 </div>
 </div>
 {% endif %}
@@ -181,7 +181,7 @@ name="teachers_attended"
 id="teachers_attended"
 min="0"
 value="{{ act.teachersAttended|default:0 }}"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
 >
 </div>
 <div>
@@ -192,7 +192,7 @@ name="leaders_attended"
 id="leaders_attended"
 min="0"
 value="{{ act.leadersAttended|default:0 }}"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
 >
 </div>
 </div>
@@ -218,7 +218,7 @@ class="edify-text-caption font-semibold text-blue-600 hover:text-blue-800 hover:
 <button
 type="button"
 @click="openDropdown = !openDropdown"
-class="w-full h-10 px-4 rounded-lg border border-slate-200 edify-surface text-left text-[12px] font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
+class="w-full h-10 px-4 rounded-control border border-slate-200 edify-surface text-left text-[12px] font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
 >
 <span>Click to view/select schools</span>
 <svg class="h-4 w-4 text-slate-400 transition-transform" :class="openDropdown ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -230,7 +230,7 @@ class="w-full h-10 px-4 rounded-lg border border-slate-200 edify-surface text-le
 <div
 x-show="openDropdown"
 @click.away="openDropdown = false"
-class="absolute left-0 right-0 mt-1 z-20 border border-slate-200 rounded-xl divide-y divide-slate-100 edify-surface shadow-lg max-h-48 overflow-y-auto"
+class="absolute left-0 right-0 mt-1 z-20 border border-slate-200 rounded-surface divide-y divide-slate-100 edify-surface shadow-lg max-h-48 overflow-y-auto"
 x-transition
 x-cloak
 >
@@ -241,7 +241,7 @@ type="checkbox"
 name="attended_school_ids"
 value="{{ school.id }}"
 {% if not act.attendedSchoolIds or school.id in act.attendedSchoolIds %}checked{% endif %}
-class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+class="h-4 w-4 text-blue-600 rounded-control border-slate-300 focus:ring-blue-500"
 >
 <div class="flex-1">
 <span class="font-bold text-slate-800 block leading-tight">{{ school.name }}</span>

@@ -14,14 +14,14 @@
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">School ID: <span class="font-mono text-slate-600 font-bold">{{ school.school_id }}</span></p>
 </div>
 <div class="flex items-center gap-2">
-<span class="inline-flex items-center rounded-full px-2.5 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if school.planning_readiness == 'ready' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif school.planning_readiness == 'limited' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+<span class="inline-flex items-center rounded-pill px-2.5 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if school.planning_readiness == 'ready' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif school.planning_readiness == 'limited' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-500{% endif %}">
 Readiness: {{ school.get_planning_readiness_display }}
 </span>
 <button
 hx-get="/schools/{{ school.id }}/edit-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-bold rounded-lg shadow-sm transition-all focus:outline-none"
+class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
 >
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z"/></svg> Edit Details
 </button>
@@ -33,7 +33,7 @@ class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-
 <!-- Left Column: School Profile & Activities -->
 <div class="lg:col-span-2 space-y-6">
 <!-- School Information Card -->
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
@@ -64,10 +64,10 @@ class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-
 </div>
 
 <!-- SSA Intervention Impact Tracking -->
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--edify-border)] flex items-center justify-between">
 <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Intervention Impact Timeline</h3>
-<span class="inline-flex items-center rounded-full px-2 py-0.5 edify-text-caption font-bold bg-slate-100 text-slate-600">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold bg-slate-100 text-slate-600">
 Improved: {{ impact_data.improvedCount }}
 </span>
 </div>
@@ -78,9 +78,9 @@ Improved: {{ impact_data.improvedCount }}
 {% for act in impact_data.activities %}
 <div class="relative">
 <!-- Bullet point on timeline -->
-<div class="absolute -left-[30px] top-1 h-5 w-5 rounded-full border-4 border-white bg-slate-300 {% if act.impact.status == 'Improved' %}bg-emerald-500{% elif act.impact.status == 'Declined' %}bg-rose-500{% endif %}"></div>
+<div class="absolute -left-[30px] top-1 h-5 w-5 rounded-pill border-4 border-white bg-slate-300 {% if act.impact.status == 'Improved' %}bg-emerald-500{% elif act.impact.status == 'Declined' %}bg-rose-500{% endif %}"></div>
 
-<div class="bg-slate-50/50 rounded-xl border border-slate-100 p-4 space-y-3">
+<div class="bg-slate-50/50 rounded-surface border border-slate-100 p-4 space-y-3">
 <div class="flex items-center justify-between">
 <div>
 <h4 class="text-[14px] font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
@@ -88,13 +88,13 @@ Improved: {{ impact_data.improvedCount }}
 </div>
 <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold">
 {% if act.impact.status == 'Improved' %}
-<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
 <span>Improved</span>
 {% elif act.impact.status == 'Declined' %}
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+<span class="w-1.5 h-1.5 rounded-pill bg-rose-500"></span>
 <span>Declined</span>
 {% else %}
-<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+<span class="w-1.5 h-1.5 rounded-pill bg-slate-400"></span>
 <span>No Change</span>
 {% endif %}
 </span>
@@ -128,7 +128,7 @@ Improved: {{ impact_data.improvedCount }}
 </div>
 
 <!-- Activities History -->
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--edify-border)]">
 <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Recent Field Work</h3>
 </div>
@@ -146,16 +146,16 @@ Improved: {{ impact_data.improvedCount }}
 <div class="text-right flex items-center">
 <span class="inline-flex items-center gap-1.5 text-[12px] font-bold">
 {% if act.status == 'completed' or act.status == 'ia_verified' or act.status == 'confirmed' %}
-<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
 <span>Completed</span>
 {% elif act.status == 'rejected' or act.status == 'returned' %}
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+<span class="w-1.5 h-1.5 rounded-pill bg-rose-500"></span>
 <span>Returned</span>
 {% elif act.status == 'cancelled' %}
-<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+<span class="w-1.5 h-1.5 rounded-pill bg-slate-400"></span>
 <span>Cancelled</span>
 {% else %}
-<span class="w-1.5 h-1.5 rounded-full bg-[var(--edify-primary)] animate-pulse"></span>
+<span class="w-1.5 h-1.5 rounded-pill bg-[var(--edify-primary)] animate-pulse"></span>
 <span class="capitalize">{{ act.status|replace_underscore }}</span>
 {% endif %}
 </span>
@@ -172,10 +172,10 @@ Improved: {{ impact_data.improvedCount }}
 <!-- Right Column: SSA Assessment scores -->
 <div class="space-y-6">
 <!-- Data Quality Status Card -->
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Data Quality Score</h3>
-<span class="inline-flex items-center rounded-full px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider
 {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border border-emerald-200
 {% elif school.data_quality_status == 'Needs Review' %}bg-blue-50 text-blue-700 border border-blue-200
 {% elif school.data_quality_status == 'Needs Cleanup' %}bg-amber-50 text-amber-700 border border-amber-200
@@ -206,7 +206,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 {% for issue in school.data_quality_issues.all %}
 {% if issue.status == 'open' %}
 <li class="flex items-center gap-1.5">
-<span class="h-1.5 w-1.5 rounded-full {% if issue.severity == 'critical' %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
+<span class="h-1.5 w-1.5 rounded-pill {% if issue.severity == 'critical' %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
 <span>{{ issue.suggested_fix }}</span>
 </li>
 {% endif %}
@@ -217,7 +217,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 </div>
 
 <!-- Latest SSA Scorecard -->
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
 <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
 <div>
 <h3 class="text-[15px] font-semibold text-slate-800">Current SSA Assessment</h3>
@@ -238,8 +238,8 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 <span class="font-semibold">{{ sc.score }}</span>
 </div>
 <!-- Progress bar -->
-<div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
-<div class="h-full bg-[var(--edify-accent)] rounded-full" style="width: {{ sc.score|multiply:10 }}%"></div>
+<div class="h-1.5 w-full bg-slate-100 rounded-pill mt-1 overflow-hidden">
+<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ sc.score|multiply:10 }}%"></div>
 </div>
 </div>
 {% endfor %}
@@ -251,7 +251,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 
 <!-- Year-over-Year SSA Progress Tracker -->
 {% if ssa_progress_history %}
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
 <h3 class="text-[15px] font-semibold text-slate-800">Annual SSA Progress</h3>
 <div class="space-y-3">
 {% for item in ssa_progress_history %}
@@ -260,8 +260,8 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 <span>FY{{ item.fy }}</span>
 <span class="font-bold text-slate-800">{{ item.avg_score|floatformat:1 }} / 10.0</span>
 </div>
-<div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full bg-[var(--edify-accent)] rounded-full" style="width: {{ item.avg_score|multiply:10 }}%"></div>
+<div class="h-2 w-full bg-slate-100 rounded-pill overflow-hidden">
+<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ item.avg_score|multiply:10 }}%"></div>
 </div>
 </div>
 {% endfor %}
@@ -271,7 +271,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 
 <!-- Historical Assessments -->
 {% if historical_ssas %}
-<div class="edify-surface rounded-lg border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
 <h3 class="text-[15px] font-semibold text-slate-800">Historical Averages</h3>
 <div class="space-y-2.5">
 {% for h_ssa in historical_ssas %}
@@ -280,7 +280,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 <p class="font-bold">SSA Date: {{ h_ssa.date_of_ssa|date:"Y-m-d" }}</p>
 <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">FY{{ h_ssa.fy }} &bull; Quarter {{ h_ssa.quarter }}</p>
 </div>
-<span class="inline-flex items-center rounded-full px-2 py-0.5 edify-text-caption font-bold bg-slate-50 border border-slate-200">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold bg-slate-50 border border-slate-200">
 {{ h_ssa.average_score|floatformat:1 }}
 </span>
 </div>
@@ -290,5 +290,28 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 {% endif %}
 </div>
 </div>
+
+{% if can_delete_school %}
+<!-- Danger Zone (Admin only — deletion is enforced server-side too) -->
+<div class="bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4">
+<h3 class="text-[12px] font-semibold text-rose-800 uppercase tracking-wider border-b border-red-200/50 pb-2">Danger Zone</h3>
+<p class="edify-text-caption text-rose-700 font-semibold leading-relaxed">
+Deleting this school removes it from every directory, dashboard, and analysis. SSA history and audit logs are retained. Deletion is blocked while activities are in flight or disbursed funds are unaccounted.
+</p>
+<form
+method="POST"
+action="{% url 'frontend:school_delete' school.school_id %}"
+@submit="if (!window.confirm('Delete {{ school.name|escapejs }}? It disappears from directories and analyses; SSA history and audit logs are retained.')) $event.preventDefault()"
+>
+{% csrf_token %}
+<button
+type="submit"
+class="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+>
+Delete School
+</button>
+</form>
+</div>
+{% endif %}
 </div>
 {% endblock %}

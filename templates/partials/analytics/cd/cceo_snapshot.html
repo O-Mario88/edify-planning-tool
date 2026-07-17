@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2 h-full">
   <div class="flex items-center justify-between">
     <div>
       <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">9. CCEO Performance Snapshot</h3>
@@ -25,7 +25,7 @@
             hx-target="#drawer-container" hx-swap="innerHTML">
           <td class="text-left py-1.5 pl-1">
             <span class="inline-flex items-center gap-1.5">
-              <span class="h-5 w-5 rounded-full bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0">{{ r.initials }}</span>
+              <span class="h-5 w-5 rounded-pill bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0">{{ r.initials }}</span>
               <span class="font-semibold text-slate-700 max-w-[86px] truncate">{{ r.name }}</span>
             </span>
           </td>
@@ -34,7 +34,7 @@
             {% if r.ssa_improve is not None %}{% if r.ssa_improve > 0 %}▲{% endif %}{{ r.ssa_improve }}{% else %}—{% endif %}
           </td>
           <td class="text-right py-1.5">
-            <span class="inline-block min-w-[20px] px-1 rounded edify-text-caption font-bold tabular-nums {% if r.risk_tone == 'danger' %}bg-rose-100 text-rose-700{% elif r.risk_tone == 'amber' %}bg-amber-100 text-amber-700{% else %}text-slate-400{% endif %}">{{ r.overdue }}</span>
+            <span class="inline-block min-w-[20px] px-1 rounded-pill edify-text-caption font-bold tabular-nums {% if r.risk_tone == 'danger' %}bg-rose-100 text-rose-700{% elif r.risk_tone == 'amber' %}bg-amber-100 text-amber-700{% else %}text-slate-400{% endif %}">{{ r.overdue }}</span>
           </td>
           <td class="text-left text-slate-500 py-1.5 pl-2 pr-1 max-w-[80px] truncate">{{ r.owner_pl }}</td>
         </tr>

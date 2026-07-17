@@ -396,3 +396,361 @@
 .dark .drawer-surface.type-right_top {
   border-color: var(--edify-border);
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CREATE CLUSTER — wide, guided geography workflow
+   ════════════════════════════════════════════════════════════════════════════ */
+.drawer-surface.type-center:has(.cluster-create-drawer) {
+  inline-size: min(70rem, calc(100vw - 2rem));
+  max-inline-size: 70rem;
+  max-block-size: min(92vh, 70rem);
+  border-radius: 1.5rem;
+  background: var(--edify-surface-raised);
+}
+
+.drawer-surface:has(.cluster-create-drawer) .drawer-header {
+  min-block-size: 8.25rem;
+  align-items: flex-start;
+  padding: 1.75rem 2rem 1.5rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface-raised);
+}
+
+.drawer-surface:has(.cluster-create-drawer) .drawer-header > div {
+  max-inline-size: 62rem;
+}
+
+.drawer-surface:has(.cluster-create-drawer) .drawer-header h3 {
+  color: var(--edify-text) !important;
+  font-size: clamp(1.25rem, 1.1rem + 0.45vw, 1.625rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.drawer-surface:has(.cluster-create-drawer) .drawer-header p {
+  max-inline-size: 72ch;
+  margin-block-start: 0.5rem !important;
+  color: var(--edify-text-muted) !important;
+  font-size: 0.9375rem !important;
+  font-weight: 450 !important;
+  line-height: 1.55 !important;
+}
+
+.drawer-surface:has(.cluster-create-drawer) .drawer-close-btn {
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 2px solid var(--edify-border-strong);
+  border-radius: 1rem;
+  background: var(--edify-surface-raised);
+  color: var(--edify-text-muted);
+}
+
+.drawer-surface:has(.cluster-create-drawer) .drawer-close-btn:hover {
+  border-color: var(--edify-accent);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.drawer-surface:has(.cluster-create-drawer) .drawer-body {
+  padding: 0;
+  background: var(--edify-surface);
+}
+
+.cluster-create-form {
+  min-block-size: 100%;
+}
+
+.cluster-create-fields {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.75rem 2rem 2rem;
+}
+
+.cluster-create-field {
+  min-inline-size: 0;
+}
+
+.drawer-body .cluster-create-field > label,
+.drawer-body .cluster-create-subcounties > legend,
+.drawer-body .cluster-create-leader__title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0 0 0.625rem;
+  color: var(--edify-text) !important;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.cluster-create-required {
+  color: var(--edify-danger) !important;
+}
+
+.cluster-create-optional {
+  padding: 0.125rem 0.425rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-subtle) !important;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.cluster-create-count {
+  color: var(--edify-text-muted) !important;
+  font-weight: 500;
+}
+
+.drawer-body .cluster-create-field > :where(input, select) {
+  min-block-size: 3.25rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 0.875rem;
+  background-color: var(--edify-surface-raised);
+  color: var(--edify-text);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.drawer-body .cluster-create-field > :where(input, select):focus-visible {
+  border-color: var(--edify-accent);
+  outline: 2px solid color-mix(in oklab, var(--edify-accent) 36%, transparent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.drawer-body .cluster-create-field > :where(input, select):user-invalid {
+  border-color: var(--edify-danger);
+}
+
+.drawer-body .cluster-create-field > input::placeholder {
+  color: var(--edify-text-subtle);
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.drawer-body .cluster-create-help {
+  margin: 0.625rem 0 0;
+  color: var(--edify-text-muted) !important;
+  font-size: 0.8125rem;
+  font-weight: 450;
+  line-height: 1.45;
+}
+
+.cluster-create-subcounties {
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cluster-create-checklist {
+  max-block-size: 20rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 0.875rem;
+  background: var(--edify-surface-raised);
+  scrollbar-width: thin;
+  scrollbar-color: var(--edify-border-strong) transparent;
+}
+
+.drawer-body .cluster-create-check {
+  display: flex;
+  min-block-size: 3.5rem;
+  align-items: center;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-block-end: 1px solid var(--edify-border);
+  color: var(--edify-text) !important;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.drawer-body .cluster-create-check:last-of-type {
+  border-block-end: 0;
+}
+
+.drawer-body .cluster-create-check:hover {
+  background: var(--edify-surface-hover);
+}
+
+.drawer-body .cluster-create-check:has(input:focus-visible) {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: -2px;
+}
+
+.drawer-body .cluster-create-check:has(input:checked) {
+  background: color-mix(in oklab, var(--edify-accent-light) 72%, var(--edify-surface-raised));
+}
+
+.drawer-body .cluster-create-check input[type="checkbox"] {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--edify-accent);
+}
+
+.cluster-create-empty {
+  display: grid;
+  min-block-size: 7rem;
+  place-content: center;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  color: var(--edify-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.cluster-create-empty svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--edify-accent);
+}
+
+.cluster-create-leader {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 0.875rem;
+  background: var(--edify-surface-raised);
+}
+
+.drawer-body .cluster-create-leader__title {
+  align-items: center;
+  margin-block-end: 0;
+  padding: 0;
+}
+
+.cluster-create-leader__title svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--edify-accent);
+}
+
+.cluster-create-leader__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-block-start: 1.125rem;
+}
+
+.cluster-create-footer {
+  position: sticky;
+  z-index: 3;
+  inset-block-end: 0;
+  display: flex;
+  min-block-size: 5.75rem;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.125rem 2rem;
+  border-block-start: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface-raised) 94%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.cluster-create-footer :where(button) {
+  min-block-size: 3rem;
+  padding-inline: 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.cluster-create-cancel {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--edify-text);
+}
+
+.cluster-create-cancel:hover {
+  background: var(--edify-surface-hover);
+}
+
+.cluster-create-submit {
+  display: inline-flex;
+  min-inline-size: 10.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  border: 1px solid var(--edify-accent);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent, #fff);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.cluster-create-submit:hover {
+  border-color: var(--edify-accent-hover);
+  background: var(--edify-accent-hover);
+}
+
+.cluster-create-submit svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+@media (max-width: 47.99rem) {
+  .drawer-surface.type-center:has(.cluster-create-drawer) {
+    inline-size: 100% !important;
+    max-block-size: 94vh !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+  }
+
+  .drawer-surface:has(.cluster-create-drawer) .drawer-header {
+    min-block-size: auto;
+    padding: 1.25rem 1rem 1rem;
+  }
+
+  .drawer-surface:has(.cluster-create-drawer) .drawer-header h3 {
+    font-size: 1.25rem !important;
+  }
+
+  .drawer-surface:has(.cluster-create-drawer) .drawer-header p {
+    font-size: 0.8125rem !important;
+  }
+
+  .drawer-surface:has(.cluster-create-drawer) .drawer-close-btn {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: 0.75rem;
+  }
+
+  .cluster-create-fields {
+    gap: 1.25rem;
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .cluster-create-leader__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cluster-create-footer {
+    min-block-size: 5rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .cluster-create-footer :where(button) {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cluster-create-drawer *,
+  .cluster-create-drawer *::before,
+  .cluster-create-drawer *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

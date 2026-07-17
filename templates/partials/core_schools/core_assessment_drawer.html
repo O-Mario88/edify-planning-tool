@@ -39,7 +39,7 @@ class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
 </div>
 
 <!-- School details card -->
-<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-[12px]">
+<div class="bg-slate-50 border border-slate-200 rounded-surface p-4 space-y-2 text-[12px]">
 <div class="flex justify-between">
 <span class="text-slate-500 font-semibold uppercase edify-text-caption">School Name</span>
 <span class="text-slate-800 font-semibold">{{ school.name }}</span>
@@ -75,8 +75,8 @@ class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
 {{ score.score }}/10 ({{ score.score_pct }}%)
 </span>
 </div>
-<div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
-<div class="h-full rounded-full
+<div class="w-full bg-slate-100 h-1.5 rounded-pill overflow-hidden border border-slate-200/50">
+<div class="h-full rounded-pill
 {% if score.score_pct < 50 %}bg-rose-500
 {% elif score.score_pct < 70 %}bg-amber-500
 {% else %}bg-emerald-500{% endif %}"
@@ -98,7 +98,7 @@ No individual intervention scores available.
 <button
 type="button"
 @click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
-class="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl edify-text-caption font-semibold uppercase tracking-wider transition-colors"
+class="w-full h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-surface edify-text-caption font-semibold uppercase tracking-wider transition-colors"
 >
 Close Assessment Details
 </button>

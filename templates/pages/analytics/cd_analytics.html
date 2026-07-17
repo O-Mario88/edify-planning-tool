@@ -15,12 +15,12 @@
       </p>
     </div>
     <div class="flex items-center gap-2">
-      <span class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-500">
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+      <span class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-500">
+        <span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
         Scope: Country Wide · {{ scope_meta.pl_count }} PLs · {{ scope_meta.cceo_count }} CCEOs
       </span>
       <a href="/analytics/country-director/export?fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}{% if month %}&month={{ month }}{% endif %}"
-         class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-lg transition-colors">
+         class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-control transition-colors">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Export Report
       </a>
@@ -32,64 +32,64 @@
         hx-get="/analytics/country-director"
         hx-target="#cd-analytics-body" hx-swap="innerHTML"
         hx-trigger="change delay:80ms" hx-push-url="true"
-        class="flex flex-wrap items-center gap-2 edify-surface p-2.5 rounded-xl border border-slate-100 shadow-sm edify-text-caption font-bold text-slate-500">
+        class="flex flex-wrap items-center gap-2 edify-surface p-2.5 rounded-surface border border-slate-100 shadow-sm edify-text-caption font-bold text-slate-500">
 
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">FY</span>
       <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
         {% for opt in filter_options.fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>
     </div>
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Quarter</span>
       <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
         <option value="">FY Cumulative</option>
         {% for q in filter_options.quarters %}<option value="{{ q }}" {% if quarter == q %}selected{% endif %}>{{ q }}</option>{% endfor %}
       </select>
     </div>
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Month</span>
       <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
         <option value="">All Months</option>
         {% for v, lbl in month_options %}<option value="{{ v }}" {% if month == v %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
       </select>
     </div>
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">PL</span>
       <select name="pl" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All PLs</option>
         {% for p in filter_options.pls %}<option value="{{ p.id }}" {% if filters.pl == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
       </select>
     </div>
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">District</span>
       <select name="district" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All Districts</option>
         {% for d in filter_options.districts %}<option value="{{ d.id }}" {% if filters.district == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
       </select>
     </div>
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Partner</span>
       <select name="partner" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All Partners</option>
         {% for p in filter_options.partners %}<option value="{{ p.id }}" {% if filters.partner == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
       </select>
     </div>
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Cluster</span>
       <select name="cluster" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All Clusters</option>
         {% for c in filter_options.clusters %}<option value="{{ c.id }}" {% if filters.cluster == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
       </select>
     </div>
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Activity</span>
       <select name="activity_type" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All Activity Types</option>
         {% for v, lbl in filter_options.activity_types %}<option value="{{ v }}" {% if filters.activity_type == v %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
       </select>
     </div>
-    <span class="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-100 text-blue-600">
+    <span class="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1.5 rounded-pill border border-blue-100 text-blue-600">
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>
       <span class="uppercase tracking-wider edify-text-caption">Country Wide</span>
     </span>

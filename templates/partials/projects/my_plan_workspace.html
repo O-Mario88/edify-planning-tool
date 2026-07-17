@@ -1,0 +1,116 @@
+{% if is_htmx %}
+<a id="sp-plan-export-link" class="sp-button sp-button--secondary" href="{{ export_url }}" aria-label="Export filtered project plan as CSV" hx-swap-oob="outerHTML"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M5 17v3h14v-3"></path></svg>Export</a>
+<a id="sp-plan-calendar-link" class="sp-button sp-button--primary" href="{{ calendar_url }}" hx-swap-oob="outerHTML"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>Open Calendar</a>
+{% endif %}
+{% if not has_projects %}
+<section class="sp-empty" aria-labelledby="sp-empty-title">
+  <div class="sp-empty__icon" aria-hidden="true">+</div>
+  <h2 id="sp-empty-title">No special projects are assigned to your role</h2>
+  <p>Once schools are assigned to a project you oversee, planning and partner activity will appear here.</p>
+  <a class="sp-button sp-button--primary" href="/projects">Open Special Projects</a>
+</section>
+{% else %}
+<form
+  id="sp-plan-filters"
+  class="sp-filter-panel"
+  method="get"
+  action="/projects/my-plan"
+  x-show="filtersOpen"
+  hx-get="/projects/my-plan"
+  hx-target="#special-project-plan-workspace"
+  hx-swap="innerHTML"
+  hx-push-url="true"
+  hx-trigger="change, submit"
+  hx-indicator="#sp-plan-updating"
+>
+  <input type="hidden" name="period" value="{{ selected.period }}">
+  <div class="sp-filter-grid">
+    <label class="sp-field"><span>Fiscal Year</span><select name="fy">{% for option in fy_options %}<option value="{{ option }}" {% if selected.fy == option %}selected{% endif %}>FY {{ option }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Quarter</span><select name="quarter">{% for option in quarters %}<option value="{{ option }}" {% if selected.quarter == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Month</span><select name="month">{% for option in months %}<option value="{{ option.value }}" {% if selected.month == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    <label class="sp-field sp-field--wide"><span>Week</span><select name="week">{% for option in weeks %}<option value="{{ option.value }}" {% if selected.week == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Region</span><select name="region"><option value="">All regions</option>{% for option in regions %}<option value="{{ option.id }}" {% if selected.region == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>District</span><select name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Project</span><select name="project"><option value="">All projects</option>{% for option in projects %}<option value="{{ option.id }}" {% if selected.project == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Partner</span><select name="partner"><option value="">All partners</option>{% for option in partners %}<option value="{{ option.id }}" {% if selected.partner == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Activity Type</span><select name="activity_type"><option value="">All types</option>{% for option in activity_types %}<option value="{{ option.value }}" {% if selected.activity_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Status</span><select name="status"><option value="">All active statuses</option>{% for option in status_options %}<option value="{{ option.value }}" {% if selected.status == option.value|stringformat:'s' %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+  </div>
+  <div class="sp-filter-panel__footer">
+    <span id="sp-plan-updating" class="htmx-indicator">Updating plan…</span>
+    <a href="/projects/my-plan" class="sp-filter-reset">Reset filters</a>
+  </div>
+</form>
+
+<section class="sp-kpi-grid" aria-label="Special project plan summary">
+  {% for item in kpis %}
+  <article class="sp-kpi sp-kpi--{{ item.tone }}">
+    <span class="sp-kpi__icon" aria-hidden="true">
+      {% include "partials/projects/my_plan_icon.html" with name=item.icon %}
+    </span>
+    <span class="sp-kpi__content"><span class="sp-kpi__label">{{ item.label }}</span><strong>{{ item.value }}</strong><span class="sp-kpi__helper">{{ item.helper }}</span></span>
+  </article>
+  {% endfor %}
+</section>
+
+<nav class="sp-period-bar" aria-label="Plan period">
+  <div class="sp-period-tabs" role="tablist" aria-label="Choose reporting period">
+    <button id="sp-plan-tab-week" role="tab" aria-controls="special-project-plan-workspace" aria-selected="{% if selected.period == 'week' %}true{% else %}false{% endif %}" tabindex="{% if selected.period == 'week' %}0{% else %}-1{% endif %}" form="sp-plan-filters" type="submit" name="period" value="week" @click="$el.form.elements.period.value = 'week'" class="{% if selected.period == 'week' %}is-active{% endif %}">Week</button>
+    <button id="sp-plan-tab-month" role="tab" aria-controls="special-project-plan-workspace" aria-selected="{% if selected.period == 'month' %}true{% else %}false{% endif %}" tabindex="{% if selected.period == 'month' %}0{% else %}-1{% endif %}" form="sp-plan-filters" type="submit" name="period" value="month" @click="$el.form.elements.period.value = 'month'" class="{% if selected.period == 'month' %}is-active{% endif %}">Month</button>
+    <button id="sp-plan-tab-quarter" role="tab" aria-controls="special-project-plan-workspace" aria-selected="{% if selected.period == 'quarter' %}true{% else %}false{% endif %}" tabindex="{% if selected.period == 'quarter' %}0{% else %}-1{% endif %}" form="sp-plan-filters" type="submit" name="period" value="quarter" @click="$el.form.elements.period.value = 'quarter'" class="{% if selected.period == 'quarter' %}is-active{% endif %}">Quarter</button>
+    <button id="sp-plan-tab-fy" role="tab" aria-controls="special-project-plan-workspace" aria-selected="{% if selected.period == 'fy' %}true{% else %}false{% endif %}" tabindex="{% if selected.period == 'fy' %}0{% else %}-1{% endif %}" form="sp-plan-filters" type="submit" name="period" value="fy" @click="$el.form.elements.period.value = 'fy'" class="{% if selected.period == 'fy' %}is-active{% endif %}">FY</button>
+  </div>
+  <p>Showing plans for <strong>{{ period_label }}</strong></p>
+  <a href="{{ calendar_url }}">View calendar <span aria-hidden="true">→</span></a>
+</nav>
+
+<div class="sp-plan-layout">
+  <div class="sp-plan-main">
+    {% include "partials/projects/my_plan_activity_table.html" with title="Project School Visits Planned" count=visits|length rows=visits kind="visits" accent="blue" empty="No project school visits match this period." %}
+    {% include "partials/projects/my_plan_activity_table.html" with title="Project Trainings Planned" count=trainings|length rows=trainings kind="trainings" accent="purple" empty="No project trainings match this period." %}
+    {% include "partials/projects/my_plan_activity_table.html" with title="Partner-Planned Project Activities" count=partner_activities|length rows=partner_activities kind="partners" accent="teal" readonly=True empty="No partner-planned project activities match this period." %}
+
+    <section class="sp-card sp-breakdown" aria-labelledby="plan-breakdown-title">
+      <div class="sp-card__header"><div><p class="sp-card__eyebrow">Portfolio view</p><h2 id="plan-breakdown-title">Plan Breakdown by Period</h2></div></div>
+      <div class="sp-breakdown__grid">
+        <div><span>This Week</span><strong>{{ breakdown.week }}</strong><small>activities</small></div>
+        <div><span>This Month</span><strong>{{ breakdown.month }}</strong><small>activities</small></div>
+        <div><span>This Quarter</span><strong>{{ breakdown.quarter }}</strong><small>activities</small></div>
+        <div><span>This FY</span><strong>{{ breakdown.fy }}</strong><small>activities</small></div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="sp-insights" aria-label="Project planning insights">
+    <section class="sp-card">
+      <div class="sp-card__header sp-card__header--compact"><div><p class="sp-card__eyebrow">Planning intelligence</p><h2>Upcoming Today</h2></div><span class="sp-count">{{ upcoming|length }}</span></div>
+      <div class="sp-stack">
+        {% for item in upcoming %}
+        <article class="sp-upcoming"><span class="sp-upcoming__icon" aria-hidden="true">{% include "partials/projects/my_plan_icon.html" with name="school" %}</span><div><strong>{{ item.school }}</strong><span>{{ item.project }}</span><small>{{ item.purpose|truncatechars:48 }}</small></div><a href="{{ item.detail_url }}" hx-get="{{ item.detail_url }}" hx-target="#drawer-container" hx-swap="innerHTML">View</a></article>
+        {% empty %}<p class="sp-muted-empty">No project activity is scheduled for today.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="sp-card">
+      <div class="sp-card__header sp-card__header--compact"><div><p class="sp-card__eyebrow sp-card__eyebrow--danger">Action queue</p><h2>Attention Needed</h2></div><span class="sp-count sp-count--danger">{{ attention|length }}</span></div>
+      <div class="sp-stack">
+        {% for item in attention %}<a class="sp-attention sp-attention--{{ item.tone }}" href="{{ item.url }}" hx-get="{{ item.url }}" hx-target="#drawer-container" hx-swap="innerHTML"><span aria-hidden="true">!</span><div><strong>{{ item.issue }}</strong><small>{{ item.title }}</small></div><b aria-hidden="true">→</b></a>{% empty %}<p class="sp-muted-empty">Nothing needs attention in this period.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="sp-card">
+      <div class="sp-card__header sp-card__header--compact"><div><p class="sp-card__eyebrow">Workflow health</p><h2>Budget &amp; Workflow Status</h2></div></div>
+      <ul class="sp-workflow-list">
+        {% for item in workflow %}<li><span class="sp-workflow-dot sp-workflow-dot--{{ item.tone }}" aria-hidden="true">{% if item.tone == 'success' %}<svg class="sp-workflow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>{% else %}!{% endif %}</span><span>{{ item.label }}</span><strong>{{ item.value }}</strong></li>{% endfor %}
+      </ul>
+    </section>
+
+    <section class="sp-card sp-recommendation">
+      <div class="sp-card__header sp-card__header--compact"><div><p class="sp-card__eyebrow">Next best action</p><h2>{{ recommendation.title }}</h2></div></div>
+      <p>{{ recommendation.message }}</p>
+      <a href="{{ recommendation.action_url }}" {% if recommendation.drawer %}hx-get="{{ recommendation.action_url }}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %}>{{ recommendation.action_text }} <span aria-hidden="true">→</span></a>
+    </section>
+  </aside>
+</div>
+{% include "components/analytics_provenance.html" with engine=analytics.engine %}
+{% endif %}

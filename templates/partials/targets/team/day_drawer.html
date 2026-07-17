@@ -10,11 +10,11 @@
   {% if completed %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-emerald-600 mb-1.5">Valid completed ({{ completed|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+    <div class="divide-y divide-slate-50 rounded-surface border border-slate-100">
       {% for r in completed %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
         <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
-        <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 edify-text-caption font-bold shrink-0">{{ r.status }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill bg-emerald-50 text-emerald-700 edify-text-caption font-bold shrink-0">{{ r.status }}</span>
       </div>
       {% endfor %}
     </div>
@@ -24,7 +24,7 @@
   {% if pending_sf %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600 mb-1.5">Completed — Activity SF ID missing ({{ pending_sf|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-amber-100 bg-amber-50/40">
+    <div class="divide-y divide-slate-50 rounded-surface border border-amber-100 bg-amber-50/40">
       {% for r in pending_sf %}
       <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
       {% endfor %}
@@ -35,11 +35,11 @@
   {% if planned %}
   <div>
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5">Planned / scheduled ({{ planned|length }})</p>
-    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+    <div class="divide-y divide-slate-50 rounded-surface border border-slate-100">
       {% for r in planned %}
       <div class="px-3 py-2 flex items-center justify-between gap-2">
         <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
-        <span class="px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 edify-text-caption font-bold shrink-0">{{ r.status }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill bg-slate-50 text-slate-500 edify-text-caption font-bold shrink-0">{{ r.status }}</span>
       </div>
       {% endfor %}
     </div>
@@ -47,7 +47,7 @@
   {% endif %}
 
   {% if not completed and not planned and not pending_sf %}
-  <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-center">
+  <div class="rounded-surface border border-slate-100 bg-slate-50 p-4 text-center">
     <p class="text-[12px] font-semibold text-slate-500">Nothing planned or completed by the team on this day.</p>
   </div>
   {% endif %}

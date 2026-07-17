@@ -19,7 +19,7 @@
           name="q"
           value="{{ search_q }}"
           placeholder="Search team member..."
-          class="edify-surface border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[12px] font-semibold placeholder-slate-400 focus:outline-none focus:border-indigo-650 w-64 transition shadow-sm"
+          class="edify-surface border border-slate-200 rounded-control pl-9 pr-4 py-2.5 text-[12px] font-semibold placeholder-slate-400 focus:outline-none focus:border-indigo-650 w-64 transition shadow-sm"
         />
         <span class="absolute left-3.5 top-3 text-slate-400">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -28,7 +28,7 @@
         </span>
       </form>
       {% if search_q %}
-      <a href="{% url 'frontend:leave_tracker' %}" class="px-4 py-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-xl edify-text-caption font-bold uppercase transition">Clear</a>
+      <a href="{% url 'frontend:leave_tracker' %}" class="px-4 py-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-surface edify-text-caption font-bold uppercase transition">Clear</a>
       {% endif %}
     </div>
   </div>
@@ -39,18 +39,18 @@
     <h3 class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Active Delegated Coverages</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {% for cov in coverages %}
-      <div class="edify-surface border border-slate-100 rounded-lg p-5 shadow-sm space-y-4 hover:shadow-md transition">
+      <div class="edify-surface border border-slate-100 rounded-surface p-5 shadow-sm space-y-4 hover:shadow-md transition">
         <div class="flex items-center justify-between">
-          <span class="px-2.5 py-0.5 bg-indigo-50 border border-indigo-150 rounded-full edify-text-caption font-bold text-indigo-700 uppercase tracking-wider">Active Coverage</span>
+          <span class="px-2.5 py-0.5 bg-indigo-50 border border-indigo-150 rounded-pill edify-text-caption font-bold text-indigo-700 uppercase tracking-wider">Active Coverage</span>
           <span class="edify-text-caption text-slate-400 font-bold">Expires: {{ cov.end_datetime|date:"d M" }}</span>
         </div>
 
         <div class="flex items-center gap-3">
           <div class="flex -space-x-2">
-            <span class="w-8 h-8 rounded-full bg-indigo-650 text-white border-2 border-white flex items-center justify-center font-extrabold edify-text-caption" title="Covering: {{ cov.covering_staff.user.name }}">
+            <span class="w-8 h-8 rounded-pill bg-indigo-650 text-white border-2 border-white flex items-center justify-center font-extrabold edify-text-caption" title="Covering: {{ cov.covering_staff.user.name }}">
               {{ cov.covering_staff.user.name|slice:":2"|upper }}
             </span>
-            <span class="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center font-bold edify-text-caption text-slate-600" title="Original: {{ cov.original_staff.user.name }}">
+            <span class="w-8 h-8 rounded-pill bg-slate-200 border-2 border-white flex items-center justify-center font-bold edify-text-caption text-slate-600" title="Original: {{ cov.original_staff.user.name }}">
               {{ cov.original_staff.user.name|slice:":2"|upper }}
             </span>
           </div>
@@ -60,7 +60,7 @@
           </div>
         </div>
 
-        <div class="bg-slate-50 rounded-xl p-3 edify-text-caption text-slate-600 font-medium leading-relaxed">
+        <div class="bg-slate-50 rounded-surface p-3 edify-text-caption text-slate-600 font-medium leading-relaxed">
           <p class="font-bold edify-text-caption uppercase text-slate-400 mb-1">Handover Instructions</p>
           {{ cov.leave_request.coverage_notes|default:"No instructions provided"|truncatechars:120 }}
         </div>
@@ -71,10 +71,10 @@
   {% endif %}
 
   <!-- Team Leave Tracker Table (matching bottom card design of Reference 2) -->
-  <div class="edify-surface rounded-lg border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden flex flex-col">
     <div class="p-5 border-b border-slate-100 flex items-center justify-between">
       <h3 class="text-[15px] font-bold text-slate-850">Team Resource Cockpit</h3>
-      <span class="edify-text-caption bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-bold">Active Year: {% now "Y" %}</span>
+      <span class="edify-text-caption bg-slate-100 text-slate-600 px-2 py-0.5 rounded-pill font-bold">Active Year: {% now "Y" %}</span>
     </div>
 
     <div class="overflow-x-auto">
@@ -94,7 +94,7 @@
           {% for sp in team %}
           <tr class="hover:bg-slate-50/50 transition">
             <td class="px-5 py-4 flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-150 text-indigo-700 font-extrabold flex items-center justify-center edify-text-caption">
+              <div class="w-8 h-8 rounded-pill bg-indigo-50 border border-indigo-150 text-indigo-700 font-extrabold flex items-center justify-center edify-text-caption">
                 {{ sp.name|slice:":2"|upper }}
               </div>
               <span class="font-bold text-slate-850 block text-[13px]">{{ sp.name }}</span>
@@ -104,13 +104,13 @@
               <span class="edify-text-caption text-slate-400 font-bold block uppercase mt-0.5">{{ sp.role }}</span>
             </td>
             <td class="px-4 py-4 text-center">
-              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-150 text-slate-800">{{ sp.pto_remaining }} days</span>
+              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-150 text-slate-800">{{ sp.pto_remaining }} days</span>
             </td>
             <td class="px-4 py-4 text-center">
-              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-150 text-slate-800">{{ sp.sick_remaining }} days</span>
+              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-150 text-slate-800">{{ sp.sick_remaining }} days</span>
             </td>
             <td class="px-4 py-4">
-              <span class="px-2.5 py-0.5 rounded-full edify-text-caption font-bold uppercase tracking-wider border
+              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wider border
                 {% if sp.status == 'On Leave' %}bg-rose-50 text-rose-700 border-rose-200
                 {% else %}bg-emerald-50 text-emerald-700 border-emerald-200{% endif %}">
                 {{ sp.status }}
@@ -119,7 +119,7 @@
             <td class="px-4 py-4">
               {% if sp.status == 'On Leave' %}
               <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                <span class="w-2.5 h-2.5 rounded-pill bg-indigo-600 animate-pulse"></span>
                 <span class="font-bold text-indigo-700">{{ sp.covering_person }}</span>
               </div>
               {% else %}
@@ -149,7 +149,7 @@
   </div>
 
   <!-- Heatmap Matrix Component at bottom of tracker page (matching design specifications) -->
-  <div class="edify-surface rounded-lg border border-slate-100 p-5 shadow-sm space-y-4">
+  <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
     <div class="flex items-center justify-between border-b pb-3">
       <h3 class="text-[14px] font-bold text-slate-850">Team Availability Matrix (Heatmap)</h3>
       <a href="{% url 'frontend:team_availability' %}" class="edify-text-caption text-indigo-600 font-bold hover:underline">View full report &rarr;</a>
@@ -166,7 +166,7 @@
         <div class="w-2/3 flex gap-1 justify-end">
           {% for wk in row.weeks %}
           <div
-            class="w-8 h-6 rounded-md flex items-center justify-center edify-text-caption font-bold text-white shadow-sm transition hover:scale-105"
+            class="w-8 h-6 rounded-surface flex items-center justify-center edify-text-caption font-bold text-white shadow-sm transition hover:scale-105"
             title="Wk starting {{ wk.start }}: {{ wk.status }}"
             style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-text-muted){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
           >

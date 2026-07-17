@@ -8,7 +8,7 @@
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
 Cluster Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
 </h2>
-<span class="px-2 py-0.5 rounded-full edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] border border-[var(--edify-primary)]/20">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] border border-[var(--edify-primary)]/20">
 {{ cluster_trainings|length }}
 </span>
 </div>
@@ -37,14 +37,14 @@ Open Planning
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]">{{ row.cluster_name }}</td>
 <td>
-<span class="inline-flex items-center rounded px-2 py-0.5 edify-text-caption font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 border ">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 border ">
 {{ row.focus_intervention }}
 </span>
 </td>
 <td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td class="text-center font-semibold text-slate-700">{{ row.expected_participants }}</td>
 <td>
-<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded edify-text-caption">
+<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded-pill edify-text-caption">
 {{ row.status_label }}
 </span>
 {% include "partials/my_plan/row_badges.html" %}

@@ -159,6 +159,20 @@ ADVANCE_TYPES = (
     ("not_requested", "Do Not Request Funds Yet"),
 )
 
+# Advance statuses meaning money has actually left the account (or is in a
+# post-disbursement leg). The AdvanceRequest rows are the one shared ledger
+# every disbursement channel (advance, weekly, period) converges on — each
+# channel must refuse to release money for a budget line whose advance is
+# already in one of these states, or the same line gets paid twice.
+MONEY_MOVED_ADVANCE_STATUSES = (
+    AdvanceRequestStatus.DISBURSED,
+    AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
+    AdvanceRequestStatus.ACCOUNTED,
+    AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
+    AdvanceRequestStatus.REIMBURSEMENT_DISBURSED,
+    AdvanceRequestStatus.REIMBURSED,
+)
+
 
 class AdvanceRequest(TimeStampedModel):
     """A weekly advance request, auto-created from an activity's budget line when

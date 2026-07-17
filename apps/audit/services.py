@@ -105,7 +105,7 @@ def log(
             prev_hash = last.hash if last else None
             next_seq = (last.seq + 1) if last else 1
             hash_value = chain_hash(prev_hash or "", canonical_audit(fields))
-            AuditLog.objects.create(
+            audit_row = AuditLog.objects.create(
                 seq=next_seq,
                 action=fields.action,
                 subject_kind=fields.subject_kind,
@@ -121,6 +121,35 @@ def log(
                 prev_hash=prev_hash,
                 hash=hash_value,
             )
+            # DomainEventLog/realtime are projections of the immutable audit
+            # chain. Waiting for the outermost transaction prevents phantom UI
+            # updates for a workflow that later rolls back.
+            event_payload = (
+                fields.payload
+                if isinstance(fields.payload, dict)
+                else {"value": fields.payload}
+            )
+
+            def _project_committed_audit() -> None:
+                try:
+                    from apps.realtime.domain_events import publish_audit_event
+
+                    publish_audit_event(
+                        event_type=fields.action,
+                        subject_kind=fields.subject_kind,
+                        subject_id=fields.subject_id,
+                        actor_id=fields.actor_id,
+                        payload=event_payload,
+                        audit_seq=audit_row.seq,
+                        success=fields.success,
+                        reason=fields.reason,
+                    )
+                except Exception as exc:  # pragma: no cover - defensive seam
+                    logger.error(
+                        "Failed to project audit event (%s): %s", fields.action, exc
+                    )
+
+            transaction.on_commit(_project_committed_audit)
     except Exception as exc:  # noqa: BLE001 — audit must never break the workflow
         logger.error("Failed to write audit (%s): %s", action, exc)
 

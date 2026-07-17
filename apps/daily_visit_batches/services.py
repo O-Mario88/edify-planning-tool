@@ -24,6 +24,18 @@ from .models import DailyVisitBatch
 from .pricing import KEY_LABELS, allocate_pool, compute_daily_pool
 
 
+def _catalogue_for_batch_date(visit_date: date):
+    """Resolve the CD rate card effective for this batch's activity date.
+
+    A batch has one visit date, so it must never borrow a catalogue from a
+    different fiscal year merely because that catalogue has a higher version.
+    """
+    from apps.budget.costing_service import active_catalogue
+    from apps.core.fy import get_operational_fy
+
+    return active_catalogue(get_operational_fy(visit_date))
+
+
 def _is_locked(responsible_user: str, visit_date: date) -> bool:
     """The exact lock boundary already used everywhere else in this codebase:
     a batch may be recalculated only while its week's WeeklyFundRequest is
@@ -227,8 +239,6 @@ def remove_school(*, activity_id: str) -> dict:
     permission checks are the caller's responsibility (the activity lifecycle
     functions already run _get_in_scope before calling this)."""
     from apps.activities.models import Activity
-    from apps.budget.costing_service import active_catalogue
-
     with transaction.atomic():
         activity = Activity.objects.select_for_update().get(id=activity_id)
         batch = activity.daily_visit_batch
@@ -241,7 +251,7 @@ def remove_school(*, activity_id: str) -> dict:
             )
         activity.daily_visit_batch = None
         activity.save(update_fields=["daily_visit_batch", "updated_at"])
-        catalogue = active_catalogue()
+        catalogue = _catalogue_for_batch_date(batch.visit_date)
         _recalculate_and_write_lines(batch, catalogue, batch.responsible_user)
         return {"batchId": batch.id}
 
@@ -253,8 +263,6 @@ def reschedule_within_batch(
     already be saved by the caller — see activities.services.reschedule) into
     the new date's batch, subject to the same validation as fresh scheduling.
     Call this AFTER detaching the activity from its old batch."""
-    from apps.budget.costing_service import active_catalogue
-
     school = activity.school
     if not school or not school.district_id:
         raise BadRequest(
@@ -302,7 +310,7 @@ def reschedule_within_batch(
         if incoming_type == "secondary":
             _assert_common_approved_group(all_district_ids)
 
-        catalogue = active_catalogue()
+        catalogue = _catalogue_for_batch_date(new_date)
         target = catalogue.required_school_visits_per_day if catalogue else 5
         total_after = len(existing_activities) + 1
         if total_after > target:
@@ -352,7 +360,7 @@ def _recalculate_and_write_lines(
     )
     from apps.fund_requests.weekly_service import trigger_generate_for_activity
 
-    catalogue = catalogue or active_catalogue()
+    catalogue = catalogue or _catalogue_for_batch_date(batch.visit_date)
     rates, _settings_by_key = _rate_card(catalogue)
     pool = compute_daily_pool(rates, batch.district_type)
 
