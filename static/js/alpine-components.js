@@ -6,6 +6,9 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('theme', {
     preference: document.documentElement.dataset.themePref || 'system',
     actualTheme: document.documentElement.dataset.theme || 'light',
+    lastNonDarkPreference: document.documentElement.dataset.themePref === 'dark'
+      ? 'light'
+      : (document.documentElement.dataset.themePref || 'system'),
     systemTimer: null,
 
     resolveSystemTheme() {
@@ -57,6 +60,7 @@ document.addEventListener('alpine:init', () => {
     applyTheme(mode, persist = true) {
       if (!['system', 'light', 'blue', 'dark'].includes(mode)) mode = 'system';
       const actual = mode === 'system' ? this.resolveSystemTheme() : mode;
+      if (actual !== 'dark') this.lastNonDarkPreference = mode;
       this.preference = mode;
       this.actualTheme = actual;
 
@@ -71,7 +75,7 @@ document.addEventListener('alpine:init', () => {
       var schemeMeta = document.querySelector('meta[name="color-scheme"]');
       var themeMeta = document.querySelector('meta[name="theme-color"]');
       if (schemeMeta) schemeMeta.content = mode === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
-      if (themeMeta) themeMeta.content = actual === 'light' ? '#edf1f3' : (actual === 'blue' ? '#001d39' : '#080e16');
+      if (themeMeta) themeMeta.content = actual === 'light' ? '#edf1f3' : (actual === 'blue' ? '#001d39' : '#000000');
 
       if (persist) {
         try { localStorage.setItem('edify_theme', mode); } catch (error) { /* Storage can be blocked. */ }
@@ -81,6 +85,14 @@ document.addEventListener('alpine:init', () => {
     },
 
     setTheme(mode) { this.applyTheme(mode, true); },
+    toggleNight() {
+      if (this.actualTheme === 'dark') {
+        this.setTheme(this.preference === 'dark' ? this.lastNonDarkPreference : 'light');
+        return;
+      }
+      this.lastNonDarkPreference = this.preference;
+      this.setTheme('dark');
+    },
     isDark()   { return this.actualTheme === 'dark'; },
     isBlue()   { return this.actualTheme === 'blue'; },
     isLight()  { return this.actualTheme === 'light'; },

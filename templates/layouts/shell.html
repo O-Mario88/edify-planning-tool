@@ -157,6 +157,23 @@ aria-label="Help Center"
 </svg>
 </a>
 
+<!-- Quick night-mode control. Settings remains the full appearance picker. -->
+<button
+type="button"
+@click="$store.theme.toggleNight()"
+:aria-pressed="$store.theme.actualTheme === 'dark'"
+:aria-label="$store.theme.actualTheme === 'dark' ? 'Turn off night black mode' : 'Turn on night black mode'"
+:title="$store.theme.actualTheme === 'dark' ? 'Use daytime workspace' : 'Use night black workspace'"
+class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
+>
+<svg x-show="$store.theme.actualTheme !== 'dark'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+</svg>
+<svg x-show="$store.theme.actualTheme === 'dark'" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 3V1m0 22v-2m9-9h2M1 12h2m15.364-6.364 1.414-1.414M4.222 19.778l1.414-1.414m12.728 0 1.414 1.414M4.222 4.222l1.414 1.414M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+</svg>
+</button>
+
 <!-- Initials User Avatar Dropdown -->
 <div class="relative" x-data="{ open: false }">
 <button

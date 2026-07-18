@@ -39,7 +39,7 @@
     var schemeMeta = document.querySelector('meta[name="color-scheme"]');
     var themeMeta = document.querySelector('meta[name="theme-color"]');
     if (schemeMeta) schemeMeta.content = pref === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
-    if (themeMeta) themeMeta.content = actual === 'light' ? 'var(--edify-bg)' : (actual === 'blue' ? 'var(--edify-primary-active)' : 'var(--edify-primary-active)');
+    if (themeMeta) themeMeta.content = actual === 'light' ? '#edf1f3' : (actual === 'blue' ? '#001d39' : '#000000');
 
     requestAnimationFrame(function() {
       requestAnimationFrame(function() { html.classList.add('theme-fade'); });
@@ -58,8 +58,8 @@
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260717enterprise1">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260717d12">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260718night1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260718night1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260717d10">
   <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260717enterprise1">
 <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260715a">
@@ -193,7 +193,7 @@ button, a, select, input, textarea {
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260717enterprise1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260718night1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>

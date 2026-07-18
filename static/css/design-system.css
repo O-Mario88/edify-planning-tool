@@ -363,12 +363,12 @@ html.theme-blue body {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   DARK THEME — editorial charcoal and ink-blue.
+   NIGHT BLACK — true-black canvas with restrained charcoal depth.
 
-   This theme intentionally follows the approved workflow-report reference:
-   a quiet near-black canvas, opaque ink-blue planes, hairline borders,
-   white body type and blue decision accents. It is not a
-   dimmed Light theme and it is not the translucent, image-backed Blue theme.
+   The page canvas is pure black so OLED displays can switch those pixels off.
+   Cards remain slightly lifted from the canvas for long-session readability,
+   with hairline borders, white body type and blue decision accents. It is not
+   a dimmed Light theme and it is not the translucent, image-backed Blue theme.
    ════════════════════════════════════════════════════════════════════════════ */
 :root.theme-dark {
   color-scheme: dark;
@@ -405,15 +405,15 @@ html.theme-blue body {
   --edify-notification-text: #ffffff;
   --edify-notification-glow: rgba(240, 138, 62, 0.32);
 
-  /* Five-step low-light surface ladder. The canvas stays genuinely dark;
-     structure comes from controlled luminance, not heavy outlines. */
-  --edify-bg: #080b10;
-  --edify-section-bg: #0b1016;
-  --edify-surface-muted: #0d1218;
-  --edify-surface: #11161d;
-  --edify-surface-raised: #161d26;
-  --edify-surface-hover: #1c2530;
-  --edify-surface-selected: #202e3e;
+  /* Five-step low-light surface ladder. True black is reserved for the page
+     and shell; content planes use neutral charcoal so hierarchy stays clear. */
+  --edify-bg: #000000;
+  --edify-section-bg: #050505;
+  --edify-surface-muted: #080809;
+  --edify-surface: #0d0d0f;
+  --edify-surface-raised: #151518;
+  --edify-surface-hover: #1c1c20;
+  --edify-surface-selected: #172237;
   --edify-border: rgba(255, 255, 255, 0.10);
   --edify-border-strong: rgba(255, 255, 255, 0.18);
   --edify-divider: rgba(255, 255, 255, 0.075);
@@ -424,13 +424,10 @@ html.theme-blue body {
   --edify-text-subtle: #aeb9c7;
   --edify-text-disabled: #7f8b9a;
 
-  --edify-canvas-treatment:
-    radial-gradient(circle at 82% -12%, rgba(86, 119, 158, 0.12), transparent 34rem),
-    radial-gradient(circle at 18% 104%, rgba(37, 99, 235, 0.065), transparent 28rem),
-    linear-gradient(180deg, #080b10 0%, #090d13 54%, #070a0f 100%);
+  --edify-canvas-treatment: none;
   --edify-surface-treatment:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.034), transparent 32%),
-    linear-gradient(145deg, #121820 0%, #0f141b 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 34%),
+    linear-gradient(145deg, #0f0f11 0%, #0b0b0d 100%);
   --edify-button-primary-treatment:
     linear-gradient(180deg, #3478ee 0%, var(--edify-accent) 62%, #1e40af 100%);
   --edify-button-secondary-treatment:
@@ -445,15 +442,15 @@ html.theme-blue body {
   --edify-shadow-lg: 0 38px 82px -40px rgba(0,0,0,.98), 0 12px 28px -18px rgba(0,0,0,.72);
   --edify-shadow-drawer: -24px 0 64px -28px rgba(0,0,0,.96);
 
-  --edify-topbar-bg: rgba(8, 11, 16, 0.88);
+  --edify-topbar-bg: rgba(0, 0, 0, 0.94);
   --edify-topbar-border: var(--edify-border);
   --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.025), 0 20px 46px -32px rgba(0,0,0,.96);
   --edify-scrim: rgba(0, 2, 6, 0.82);
   --edify-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.32);
   --edify-sidebar-bg:
-    radial-gradient(circle at 16% 0%, rgba(143, 177, 232, 0.065), transparent 22rem),
-    linear-gradient(180deg, #090d12 0%, #080c11 100%);
-  --edify-scrollbar-thumb: #37414e;
+    radial-gradient(circle at 16% 0%, rgba(143, 177, 232, 0.05), transparent 22rem),
+    linear-gradient(180deg, #030303 0%, #000000 100%);
+  --edify-scrollbar-thumb: #34343a;
 }
 
 /* Theme changes feel immediate but not abrupt. Avoid overriding component

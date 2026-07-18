@@ -1335,7 +1335,27 @@ input:focus, select:focus, textarea:focus {
 }
 
 .appearance-theme-preview--dark {
-  background: radial-gradient(circle at 80% 0%, rgba(10,65,116,.42), transparent 68%), linear-gradient(135deg,#080e16,#182636 60%,#203249);
+  position: relative;
+  background: #000000;
+}
+
+.appearance-theme-preview--dark::before,
+.appearance-theme-preview--dark::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 5px;
+  background: #0d0d0f;
+}
+
+.appearance-theme-preview--dark::before {
+  inset: 0.65rem 0.55rem 0.65rem 2.35rem;
+}
+
+.appearance-theme-preview--dark::after {
+  inset: 0.65rem auto 0.65rem 0.55rem;
+  width: 1.4rem;
+  background: #050505;
 }
 
 .settings-detail-tile {
