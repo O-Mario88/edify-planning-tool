@@ -133,7 +133,7 @@ Assign to Partner
       <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         {% for item in cluster.all_intervention_scores %}
           <div class="p-3 rounded-surface border border-slate-100 bg-slate-50/30 flex flex-col justify-between gap-1.5 shadow-sm min-w-0">
-            <span class="edify-text-caption font-black uppercase text-slate-400 tracking-wider truncate" title="{{ item.label }}">
+            <span class="edify-kpi-label edify-text-caption text-slate-400 truncate" title="{{ item.label }}">
               {{ item.label }}
             </span>
             <div class="flex items-baseline justify-between mt-0.5">

@@ -80,25 +80,29 @@ def login_view(request):
 
     if request.method == "POST":
         from apps.accounts.models import User
+        from apps.accounts.auth_failure_service import AuthenticationFailureService
         from apps.accounts.lockout_service import AuthenticationLockoutService
 
         email = request.POST.get("email", "").strip().lower()
         password = request.POST.get("password", "")
         remember_me = request.POST.get("remember_me") == "on"
 
-        # Pre-check purely for the user-facing message (locked vs. wrong
-        # credentials) — authenticate() below is still the actual gate and
-        # re-checks this itself, so there's no race/bypass between the two.
+        # Pre-check so a locked account never reaches the password compare.
+        # authenticate() below re-checks this itself, so there's no
+        # race/bypass between the two. The PUBLIC message is identical to
+        # every other rejection below (SEC-02) — locked, wrong password, and
+        # unknown email must be externally indistinguishable; only the
+        # audit log (via AuthenticationFailureService) records the real cause.
         existing = User.objects.filter(email=email, deleted_at__isnull=True).first()
         if existing:
             state = AuthenticationLockoutService.check_lockout(existing)
             if state.locked:
-                message = (
-                    "This account has been locked due to too many failed login "
-                    "attempts. Please contact your administrator."
+                message = AuthenticationFailureService.reject(
+                    email=email,
+                    user=existing,
+                    reason="account_locked_escalated"
                     if state.escalated
-                    else "This account is temporarily locked due to repeated failed "
-                    "sign-ins. Try again later."
+                    else "account_locked",
                 )
                 return render(
                     request,
@@ -122,24 +126,16 @@ def login_view(request):
         user = authenticate(request, email=email, password=password)
 
         if user is None:
-            if existing:
-                existing.refresh_from_db(fields=["lockout_escalated"])
-                if existing.lockout_escalated:
-                    return render(
-                        request,
-                        "pages/auth/login.html",
-                        {
-                            "error": "This account has been locked due to too many failed login attempts. Please contact your administrator.",
-                            "email": email,
-                            "remember_me": remember_me,
-                            **_login_stats(),
-                        },
-                    )
+            message = AuthenticationFailureService.reject(
+                email=email,
+                user=existing,
+                reason="invalid_password" if existing else "unknown_email",
+            )
             return render(
                 request,
                 "pages/auth/login.html",
                 {
-                    "error": "Invalid email or password.",
+                    "error": message,
                     "email": email,
                     "remember_me": remember_me,
                     **_login_stats(),

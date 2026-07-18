@@ -415,6 +415,8 @@ class TeamTargetsPageTest(TestCase):
         self.assertIn('@click="expandedStaff = expandedStaff ===', html)
         self.assertIn("@click.window=", html)
         self.assertIn('colspan="8"', html)
+        self.assertIn('class="tt-matrix__period-column"', html)
+        self.assertIn('class="tt-area-matrix__action-spacer"', html)
 
     def test_team_targets_uses_an_accessible_line_chart_without_weekly_pacing(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)

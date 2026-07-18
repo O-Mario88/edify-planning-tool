@@ -1500,7 +1500,12 @@ class PLAnalyticsService:
     # ── K. School risk & attention list ──────────────────────────────────────
     @staticmethod
     def risk_list(
-        pls: PLScope, fy: str, quarter: str | None, filters: dict, limit: int = 12
+        pls: PLScope,
+        fy: str,
+        quarter: str | None,
+        filters: dict,
+        limit: int = 12,
+        offset: int = 0,
     ) -> dict:
         acts = _team_activity_qs(pls, fy, quarter, filters).filter(
             status__in=COMPLETED_STATUSES
@@ -1646,7 +1651,8 @@ class PLAnalyticsService:
                 }
             )
         rows.sort(key=lambda r: -r["severity"])
-        return {"rows": rows[:limit], "total": len(rows)}
+        offset = max(int(offset or 0), 0)
+        return {"rows": rows[offset : offset + limit], "total": len(rows)}
 
     # ── L. Donor / reporting snapshot ────────────────────────────────────────
     @staticmethod

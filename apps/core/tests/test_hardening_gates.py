@@ -21,6 +21,7 @@ from django.db import connection, connections
 from django.test import Client, TestCase, TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -168,6 +169,11 @@ class QueryBudgetScalingTest(TestCase):
         self.assert_scales("/impact", self.cd)
 
 
+@freeze_time("2026-08-03")  # fixed Monday — REG-02 §1.1: keeps self.fy
+# (get_operational_fy(), used in setUp) and target_date ("+7 days", used in
+# the scheduling race) mutually consistent and independent of the real
+# suite run date. freezegun does not touch time.monotonic(), so the real
+# threading.Barrier timeouts below are unaffected.
 class ConcurrentMutationTest(TransactionTestCase):
     """Two real threads race the same mutation; exactly one wins (H02)."""
 
@@ -443,14 +449,19 @@ class BoundaryTest(TestCase):
         catalogue = CostCatalogue.objects.get_or_create(
             fy="2027", version=1, defaults={"label": "FY 2027 boundary test catalogue"}
         )[0]
+        # update_or_create, not get_or_create: migration budget/0005 already
+        # seeds these exact keys (globally unique) attached to whichever
+        # catalogue was active at migration time — get_or_create would
+        # silently return that row as-is on a fresh database, leaving THIS
+        # test's FY2027 catalogue with no attached rates at all.
         for key, label in (
             ("primary_transport_per_day", "Primary transport"),
             ("primary_lunch_per_day", "Primary lunch"),
         ):
-            CostSetting.objects.get_or_create(
+            CostSetting.objects.update_or_create(
                 key=key,
                 defaults={"label": label, "unit_cost": 10_000, "catalogue": catalogue},
-            )[0]
+            )
         activity = Activity.objects.create(
             school=school,
             activity_type="school_visit",

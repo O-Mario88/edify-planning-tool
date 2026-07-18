@@ -175,6 +175,33 @@ class PLDashboardTest(TestCase):
             rows["School PL-OWN"]["schedule_url"],
         )
 
+    def test_urgent_schools_use_four_row_pages_without_losing_scope(self):
+        for index in range(5):
+            school = self._school(f"PAGE-{index}", self.dist_a, ssa_done=False)
+            StaffSchoolAssignment.objects.create(staff=self.a1_sp, school_id=school.id)
+
+        from apps.analytics.pl_analytics_service import resolve_pl_scope
+
+        pls = resolve_pl_scope(self.pl_a)
+        first_page = S.urgent_schools_page(self.pl_a, pls, FY, {}, page=1)
+        second_page = S.urgent_schools_page(self.pl_a, pls, FY, {}, page=2)
+
+        self.assertEqual(first_page["page_size"], 4)
+        self.assertEqual(first_page["total"], 6)
+        self.assertEqual(len(first_page["rows"]), 4)
+        self.assertEqual(len(second_page["rows"]), 2)
+        self.assertTrue(first_page["has_next"])
+        self.assertTrue(second_page["has_previous"])
+        self.assertFalse(second_page["has_next"])
+        self.assertFalse(
+            {row["id"] for row in first_page["rows"]}
+            & {row["id"] for row in second_page["rows"]}
+        )
+        self.assertNotIn(
+            self.sch_b1.id,
+            {row["id"] for row in first_page["rows"] + second_page["rows"]},
+        )
+
     def test_pl_can_send_urgent_school_to_its_supervised_cceo_idempotently(self):
         self.client.force_login(self.pl_a)
         url = f"/dashboard/pl-send-urgent-action?school_id={self.sch_a2.id}&fy={FY}"

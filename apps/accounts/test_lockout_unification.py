@@ -95,14 +95,19 @@ class LockoutUnificationTest(TestCase):
             authenticate(email="all-paths@edify.test", password="CorrectPassword1!")
         )
 
-        # Surface 2: web session login.
+        # Surface 2: web session login. SEC-02 — the public response must be
+        # the same generic message a wrong password gets, not a "locked"
+        # disclosure (the real cause is only in the audit log).
         res = self._web_login("all-paths@edify.test", "CorrectPassword1!")
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "locked")
+        self.assertContains(res, "Invalid email or password")
+        self.assertNotContains(res, "locked")
 
-        # Surface 3: DRF API login.
+        # Surface 3: DRF API login — same status (401, not a distinct 403)
+        # and same message as any other rejected login.
         res = self._api_login("all-paths@edify.test", "CorrectPassword1!")
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.json()["message"], "Invalid email or password.")
 
     # ── 2. Atomic increment ──────────────────────────────────────────────────
     def test_failed_logins_increment_atomically(self):
@@ -205,15 +210,18 @@ class LockoutUnificationTest(TestCase):
         self.assertEqual(web_user.lockout_cycle_count, api_user.lockout_cycle_count)
         self.assertEqual(web_user.lockout_escalated, api_user.lockout_escalated)
 
-        # Both now reject the CORRECT password identically (locked, not a
-        # credentials error). The 10 failed attempts above consumed the whole
+        # Both now reject the CORRECT password identically to a wrong-password
+        # rejection — SEC-02: the public response must not disclose that the
+        # account is locked. The 10 failed attempts above consumed the whole
         # default 10/min API rate window, so clear it -- this asserts the
-        # lockout's 403, not the throttle's 429.
+        # lockout's rejection, not the throttle's 429.
         _rate_window._hits.clear()
         web_res = self._web_login("web-lock@edify.test", "CorrectPassword1!")
-        self.assertContains(web_res, "locked")
+        self.assertContains(web_res, "Invalid email or password")
+        self.assertNotContains(web_res, "locked")
         api_res = self._api_login("api-lock@edify.test", "CorrectPassword1!")
-        self.assertEqual(api_res.status_code, 403)
+        self.assertEqual(api_res.status_code, 401)
+        self.assertEqual(api_res.json()["message"], "Invalid email or password.")
 
     # ── 8. Switching endpoints doesn't bypass the lock ─────────────────────────
     def test_switching_login_endpoint_does_not_bypass_lock(self):
@@ -225,7 +233,7 @@ class LockoutUnificationTest(TestCase):
 
         # Correct password via the API endpoint must still be rejected.
         api_res = self._api_login("switcher@edify.test", "CorrectPassword1!")
-        self.assertEqual(api_res.status_code, 403)
+        self.assertEqual(api_res.status_code, 401)
 
         # ...and via the raw authenticate() call (the admin-login mechanism).
         self.assertIsNone(

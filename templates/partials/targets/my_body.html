@@ -6,7 +6,7 @@
     {% for c in period_cards %}
     <div class="flex-1 edify-surface rounded-surface border {% if c.current %}border-blue-200 ring-2 ring-blue-100{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
       <div class="flex items-center justify-between">
-        <p class="edify-text-caption font-bold uppercase tracking-wider {% if c.current %}text-blue-600{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
+        <p class="edify-kpi-label edify-text-caption {% if c.current %}text-blue-600{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
         <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-300 shrink-0">{{ c.sublabel }}</span>
       </div>
       <div class="flex items-center gap-2.5">

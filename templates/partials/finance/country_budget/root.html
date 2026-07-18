@@ -126,7 +126,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
         </span>
         {% endif %}
       </div>
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mt-2.5">{{ k.label }}</p>
+      <p class="edify-kpi-label edify-text-caption text-slate-400 mt-2.5">{{ k.label }}</p>
       <p class="text-[18px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
       <div class="flex items-center justify-between mt-1.5">
         <span class="edify-text-caption font-semibold text-slate-400">{{ k.helper }}</span>
@@ -268,10 +268,10 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
       <div class="card p-4">
         <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Month Summary</h3>
         <div class="grid grid-cols-2 gap-2">
-          <div class="rounded-surface bg-amber-50 border border-amber-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-amber-600">Awaiting Approval</p><p class="text-[13px] font-bold text-amber-800 tabular-nums mt-0.5">{{ month_summary.awaiting_approval }}</p></div>
-          <div class="rounded-surface bg-emerald-50 border border-emerald-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-emerald-600">Plan-Backed Cost</p><p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ month_summary.plan_backed_cost }}</p><p class="edify-text-caption font-semibold text-emerald-500">({{ month_summary.plan_backed_pct }}%)</p></div>
-          <div class="rounded-surface bg-rose-50 border border-rose-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-rose-600">Admin Budget</p><p class="text-[13px] font-bold text-rose-800 tabular-nums mt-0.5">{{ month_summary.admin_budget }}</p><p class="edify-text-caption font-semibold text-rose-500">({{ month_summary.admin_pct }}%)</p></div>
-          <div class="rounded-surface bg-slate-50 border border-slate-100 p-2.5"><p class="edify-text-caption font-bold uppercase text-slate-500">Staff Included</p><p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ month_summary.staff_included }} Staff</p></div>
+          <div class="rounded-surface bg-amber-50 border border-amber-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-amber-600">Awaiting Approval</p><p class="text-[13px] font-bold text-amber-800 tabular-nums mt-0.5">{{ month_summary.awaiting_approval }}</p></div>
+          <div class="rounded-surface bg-emerald-50 border border-emerald-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-emerald-600">Plan-Backed Cost</p><p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ month_summary.plan_backed_cost }}</p><p class="edify-text-caption font-semibold text-emerald-500">({{ month_summary.plan_backed_pct }}%)</p></div>
+          <div class="rounded-surface bg-rose-50 border border-rose-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-rose-600">Admin Budget</p><p class="text-[13px] font-bold text-rose-800 tabular-nums mt-0.5">{{ month_summary.admin_budget }}</p><p class="edify-text-caption font-semibold text-rose-500">({{ month_summary.admin_pct }}%)</p></div>
+          <div class="rounded-surface bg-slate-50 border border-slate-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-slate-500">Staff Included</p><p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ month_summary.staff_included }} Staff</p></div>
         </div>
       </div>
 
@@ -300,7 +300,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
         <div class="h-7 w-7 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
           {% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}
         </div>
-        <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 leading-tight">{{ s.label }}</p>
+        <p class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ s.label }}</p>
       </div>
       <p class="text-[15px] font-bold text-slate-800 mt-2 truncate">{{ s.value }}</p>
       <p class="edify-text-caption font-semibold text-slate-400">{{ s.sub }}</p>

@@ -42,9 +42,14 @@ class LockoutEnforcingModelBackend(ModelBackend):
         # Reject before checking the password — locked means locked,
         # regardless of whether this attempt would have had the right
         # password (don't let a locked-out attacker "test" the lock state
-        # by seeing whether the error message changes).
+        # by seeing whether the error message changes). Still run the real
+        # password check (result discarded) so a locked account takes
+        # roughly the same time to reject as an unlocked one — otherwise the
+        # lockout branch's early return is a response-timing side channel
+        # distinguishing "locked" from every other rejection (SEC-02).
         state = AuthenticationLockoutService.check_lockout(user)
         if state.locked:
+            user.check_password(password)
             return None
 
         # Lifecycle gate (a "pending"/"suspended"/etc. account may not sign

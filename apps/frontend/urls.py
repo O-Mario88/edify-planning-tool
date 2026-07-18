@@ -39,9 +39,19 @@ urlpatterns = [
     # Dashboards
     path("dashboard", dashboard_views.dashboard_view, name="dashboard"),
     path(
+        "dashboard/pl",
+        dashboard_views.program_lead_dashboard_view,
+        name="pl_dashboard",
+    ),
+    path(
         "dashboard/pl-drilldown",
         dashboard_views.pl_dashboard_drilldown_view,
         name="pl_dashboard_drilldown",
+    ),
+    path(
+        "dashboard/pl-urgent-schools",
+        dashboard_views.pl_urgent_schools_page_view,
+        name="pl_urgent_schools_page",
     ),
     path(
         "dashboard/pl-approve",

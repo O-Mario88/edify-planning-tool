@@ -13,7 +13,7 @@ from apps.core.permissions import (
 from apps.core.scoping import resolve_user_scope, school_queryset
 from django.db import transaction
 from django.db.models import Q, Avg, Count, Sum
-from datetime import date
+from datetime import date, timedelta
 
 from apps.ssa.models import SsaRecord
 from apps.schools.models import School
@@ -98,9 +98,12 @@ def fy_overview_view(request):
 @require_page_permission("planning")
 def calendar_view(request):
     """Activity calendar — role scoped, with an optional Special Projects lens."""
+    from apps.core.clock import ClockService
+
     user = request.user
-    month = int(request.GET.get("month", date.today().month))
-    year = int(request.GET.get("year", date.today().year))
+    today = ClockService.today()
+    month = int(request.GET.get("month", today.month))
+    year = int(request.GET.get("year", today.year))
 
     activities = (
         Activity.objects.filter(
@@ -142,12 +145,32 @@ def calendar_view(request):
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
 
+    # REG-02 — surface the same Sunday/holiday/blackout dates the scheduling
+    # gate enforces so users don't attempt (and get rejected on) a blocked
+    # date. Leave is intentionally per-staff and not shown here.
+    from apps.hr.leave_services import BlackoutDateService, PublicHolidayService
+
+    month_start = date(year, month, 1)
+    month_end = date(
+        year + (1 if month == 12 else 0), 1 if month == 12 else month + 1, 1
+    )
+    month_last_day = month_end - timedelta(days=1)
+    blocked_dates = {
+        d.isoformat(): "Public holiday"
+        for d in PublicHolidayService.get_holidays_in_range(month_start, month_last_day)
+    }
+    for d in BlackoutDateService.get_blackout_dates_in_range(
+        month_start, month_last_day
+    ):
+        blocked_dates.setdefault(d.isoformat(), "Blackout date")
+
     context = {
         "activities": activities,
         "calendar_weeks": cal,
         "month": month,
         "year": year,
         "month_name": month_name,
+        "blocked_dates": blocked_dates,
         "prev_month": month - 1 if month > 1 else 12,
         "prev_year": year if month > 1 else year - 1,
         "next_month": month + 1 if month < 12 else 1,
@@ -798,6 +821,16 @@ def admin_user_detail_view(request, user_id):
             member.status = "disabled"
             member.is_active = False
             member.save(update_fields=["status", "is_active"])
+            # SEC-03 — a disabled user's live refresh tokens must not be able
+            # to mint new access tokens even during the window before their
+            # current access token naturally expires.
+            from django.utils import timezone as _timezone
+
+            from apps.accounts.models import RefreshToken
+
+            RefreshToken.objects.filter(
+                user_id=member.id, revoked_at__isnull=True
+            ).update(revoked_at=_timezone.now())
             messages.warning(request, f"User '{member.name}' deactivated.")
 
         elif action == "delete":

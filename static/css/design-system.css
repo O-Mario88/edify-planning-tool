@@ -23,13 +23,13 @@
   --edify-sky-400: #7bbde8;
   --edify-sky-100: #bdd8e9;
 
-  /* Official Edify product brand. The blue range above remains available to
-     the image-backed Edify Blue workspace; product actions use this quieter,
-     highly legible enterprise pair in Light and System-daytime modes. */
-  --edify-brand-primary: #4d7187;
-  --edify-brand-primary-hover: #3f6174;
-  --edify-brand-primary-active: #334f5f;
-  --edify-brand-primary-soft: #dfe8ed;
+  /* Official Edify product brand. Light mode uses the same confident blue as
+     the approved sign-in reference: calm white surfaces, navy type, and one
+     unmistakable action colour. */
+  --edify-brand-primary: #105fa6;
+  --edify-brand-primary-hover: #064984;
+  --edify-brand-primary-active: #075397;
+  --edify-brand-primary-soft: #e7f4fc;
   --edify-brand-secondary: #ef564b;
   --edify-brand-secondary-hover: #dc4b42;
   --edify-brand-secondary-soft: #fce3e1;
@@ -46,7 +46,7 @@
   --edify-accent-hover: var(--edify-brand-primary-hover);
   --edify-on-accent: #ffffff;
   --edify-accent-light: var(--edify-brand-primary-soft);
-  --edify-accent-border: #aebcc4;
+  --edify-accent-border: #9fc9e6;
 
   /* ── SEMANTIC COLORS (3-tone ramp each: base / light-bg / border) ──────── */
   --edify-success: #10b981;
@@ -61,9 +61,9 @@
   --edify-danger-light: #fef2f2;
   --edify-danger-border: #fca5a5;
 
-  --edify-info: #3b82f6;
-  --edify-info-light: #eff6ff;
-  --edify-info-border: #bfdbfe;
+  --edify-info: #1872bd;
+  --edify-info-light: #eef7fd;
+  --edify-info-border: #bfdcf1;
 
   --edify-purple: #8b5cf6;
   --edify-purple-light: #f5f3ff;
@@ -95,28 +95,41 @@
   --edify-notification-glow: rgba(216, 91, 19, 0.28);
 
   /* ── LIGHT WORKSPACE SURFACES ─────────────────────────────────────────── */
-  --edify-surface: #f8fafb;
-  --edify-surface-muted: #e5eaed;
+  --edify-surface: #ffffff;
+  --edify-surface-muted: #f6fbff;
   --edify-surface-raised: #ffffff;
-  --edify-surface-hover: #e9eef1;
-  --edify-surface-selected: #dfe8ed;
-  --edify-border: #c7d1d7;
-  --edify-border-strong: #aebcc4;
-  --edify-divider: #d7dee2;
-  --edify-text: #17232b;
-  --edify-text-muted: #3f515c;
-  --edify-text-subtle: #5f707a;
-  --edify-text-disabled: #6b7b84;
+  --edify-surface-hover: #eef7fd;
+  --edify-surface-selected: #e2f3fe;
+  --edify-border: #c7d8e8;
+  --edify-border-strong: #9dbad1;
+  --edify-divider: #dbeaf5;
+  /* Text uses an intentionally high-contrast three-step hierarchy. Even
+     metadata, table headers, field labels and placeholders remain readable
+     on the bright workspace and white card planes. */
+  --edify-text: #071e35;
+  --edify-text-muted: #405a73;
+  --edify-text-subtle: #526b84;
+  --edify-text-disabled: #5f748b;
   --edify-text-secondary: var(--edify-text-muted);
-  --edify-bg: #edf1f3;
-  --edify-section-bg: #f2f5f6;
+  --edify-bg: #e7f4fc;
+  --edify-section-bg: #f5fbff;
   --edify-canvas-treatment:
-    radial-gradient(circle at 92% -10%, rgba(77, 113, 135, 0.12), transparent 34rem),
-    linear-gradient(180deg, #f2f5f6 0%, var(--edify-bg) 48%, #e7edef 100%);
-  --edify-surface-treatment: linear-gradient(180deg, rgba(255,255,255,.82), rgba(248,250,251,.96));
+    radial-gradient(circle at 8% 58%, rgba(126, 205, 246, .32), transparent 42rem),
+    radial-gradient(circle at 92% 4%, rgba(235, 249, 255, .92), transparent 38rem),
+    linear-gradient(135deg, #dff1fb 0%, #eef9fe 48%, #dceefa 100%);
+  --edify-surface-treatment: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
   --edify-glass-blur: 0px;
   --edify-glass-saturation: 100%;
   --edify-glass-highlight: rgba(255, 255, 255, 0.72);
+
+  /* Shared card contract. Component CSS consumes these through the platform
+     layer so a new card cannot accidentally reintroduce a heavy outline. */
+  --edify-card-surface: var(--edify-surface-raised);
+  --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
+  --edify-card-shadow: var(--edify-shadow-sm);
+  --edify-card-backdrop-filter: none;
+  --edify-button-primary-treatment: linear-gradient(105deg, #075397 0%, #105fa6 100%);
+  --edify-button-secondary-treatment: linear-gradient(180deg, #ffffff 0%, #f6fbff 100%);
 
   /* Legacy aliases consumed by base.html <style> and some components. */
   --color-edify-primary: var(--edify-primary);
@@ -177,6 +190,11 @@
   --edify-text-label-tracking: 0;
   --edify-text-micro-tracking: 0.06em;
 
+  /* KPI names are read as labels, not machine metadata. The lower tracking
+     keeps title case calm and fast to scan in compact operational tiles. */
+  --edify-kpi-label-weight: 600;
+  --edify-kpi-label-tracking: var(--edify-text-label-tracking);
+
   /* Convenience composed shorthands (use as: font: var(--edify-font-body)) */
   --edify-font-display: 700 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-display-family);
   --edify-font-heading: 600 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
@@ -224,10 +242,10 @@
   /* ── SHADOWS / ELEVATION (warm, multi-stop, very subtle at rest) ──────────
      A-tier cards float — barely-there shadow at rest, gentle lift on hover.
      Opacities kept low (0.02–0.06) so the surface reads as calm, not heavy. */
-  --edify-shadow-sm: 0 1px 2px rgba(0, 29, 57, 0.04), 0 4px 12px -8px rgba(10, 65, 116, 0.10);
-  --edify-shadow-md: 0 10px 30px -18px rgba(0, 29, 57, 0.30), 0 2px 8px rgba(10, 65, 116, 0.05);
-  --edify-shadow-lg: 0 24px 56px -28px rgba(0, 29, 57, 0.42), 0 8px 20px -12px rgba(10, 65, 116, 0.16);
-  --edify-shadow-drawer: -18px 0 48px -20px rgba(0, 29, 57, 0.28);
+  --edify-shadow-sm: 0 5px 18px -13px rgba(18, 74, 112, .18), inset 0 1px 0 rgba(255,255,255,.96);
+  --edify-shadow-md: 0 15px 34px -22px rgba(18, 74, 112, .24), 0 2px 8px rgba(18, 74, 112, .04);
+  --edify-shadow-lg: 0 28px 70px -34px rgba(18, 74, 112, .30), 0 8px 20px -14px rgba(18, 74, 112, .10);
+  --edify-shadow-drawer: -18px 0 48px -20px rgba(18, 74, 112, .24);
 
   /* ── MOTION (fast for hovers; normal for overlays; never bounce) ───────── */
   --edify-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -238,11 +256,11 @@
      Frosted glass and translucent panels that adapt to light/dark. These
      aren't pure tokens — they're composite surface treatments consumed by
      base.html / shell.html. */
-  --edify-topbar-bg: rgba(248, 250, 251, 0.90);
+  --edify-topbar-bg: rgba(255, 255, 255, 0.90);
   --edify-topbar-border: var(--edify-border);
-  --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.8), 0 12px 30px -24px rgba(0,29,57,.35);
-  --edify-scrim: rgba(0, 29, 57, 0.58);
-  --edify-focus-ring: 0 0 0 3px rgba(77, 113, 135, 0.24);
+  --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.92), 0 12px 30px -24px rgba(18,74,112,.24);
+  --edify-scrim: rgba(7, 30, 53, 0.58);
+  --edify-focus-ring: 0 0 0 3px rgba(24, 114, 189, 0.20);
   --edify-sidebar-bg:
     radial-gradient(circle at 10% 5%, rgba(123,189,232,.12), transparent 22rem),
     linear-gradient(180deg, var(--edify-navy-950) 0%, #032a50 56%, #00162c 100%);
@@ -250,6 +268,10 @@
   --edify-scrollbar-track: transparent;
   --edify-scrollbar-thumb: var(--edify-sky-100);
   --edify-page-gutter: clamp(1rem, 0.7rem + 1.1vw, 1.75rem);
+}
+
+:root.light {
+  color-scheme: light;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -321,6 +343,11 @@
   --edify-glass-blur: 18px;
   --edify-glass-saturation: 150%;
   --edify-glass-highlight: rgba(220, 240, 252, 0.24);
+
+  --edify-card-surface: rgb(5 54 96 / 0.93);
+  --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
+  --edify-card-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md);
+  --edify-card-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
 
   --color-edify-divider: rgba(189, 216, 233, 0.12);
   --bg-page: var(--edify-bg);
@@ -433,6 +460,11 @@ html.theme-blue body {
   --edify-button-secondary-treatment:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
   --edify-glass-highlight: rgba(255, 255, 255, 0.055);
+
+  --edify-card-surface: #101012;
+  --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
+  --edify-card-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-sm);
+  --edify-card-backdrop-filter: none;
   --edify-font-display-family: var(--edify-font-sans);
   --color-edify-divider: var(--edify-divider);
   --bg-page: var(--edify-bg);

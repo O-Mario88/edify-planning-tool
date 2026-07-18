@@ -110,8 +110,8 @@
   color: var(--edify-text-muted);
   line-height: 1.3;
   display: block;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  text-transform: none;
+  letter-spacing: var(--edify-text-label-tracking);
 }
 
 .card.kpi strong {
@@ -441,6 +441,5 @@
     grid-template-columns: 1fr;
   }
 }
-
 
 

@@ -1,4 +1,5 @@
 import csv
+from urllib.parse import urlencode
 
 from django.shortcuts import render, redirect
 from django.db.models import Q
@@ -285,9 +286,18 @@ def dashboard_view(request):
         fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
         month = (request.GET.get("month") or "").strip() or None
         filters = {"activity_type": request.GET.get("activity_type")}
+        raw_urgent_page = (request.GET.get("urgent_page") or "").strip()
+        urgent_page = int(raw_urgent_page) if raw_urgent_page.isdigit() else 1
         data = ProgramLeadDashboardService.get_dashboard(
-            request.user, fy=fy, month=month, filters=filters
+            request.user,
+            fy=fy,
+            month=month,
+            filters=filters,
+            urgent_page=urgent_page,
         )
+        urgent_pagination_query = {"fy": fy}
+        if filters["activity_type"]:
+            urgent_pagination_query["activity_type"] = filters["activity_type"]
         context = {
             **data,
             "role": role,
@@ -295,6 +305,7 @@ def dashboard_view(request):
             "avatar_initials": avatar_initials,
             "today_context": today_context,
             "fy_options": fy_options(),
+            "urgent_pagination_query": urlencode(urgent_pagination_query),
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, "partials/dashboards/pl/body.html", context)
@@ -401,8 +412,6 @@ def dashboard_view(request):
         # the same SSA/activity risk contract as the PL dashboard, then exposes
         # both valid CCEO responses: schedule direct support or hand it to a
         # partner. The drawers enforce object scope and permissions again.
-        from urllib.parse import urlencode
-
         from apps.analytics.pl_analytics_service import PLScope, PLAnalyticsService
 
         _dashboard_fy = get_operational_fy()
@@ -847,6 +856,16 @@ def dashboard_view(request):
     return render(request, "pages/dashboards/main.html", context)
 
 
+@require_page_permission("dashboard")
+def program_lead_dashboard_view(request):
+    """Stable Program Lead dashboard URL for direct links and bookmarks."""
+    if request.user.active_role != "Program Lead":
+        from django.http import HttpResponseForbidden
+
+        return HttpResponseForbidden("Program Lead only.")
+    return dashboard_view.__wrapped__(request)
+
+
 # ── Program Lead Command Dashboard — drill-downs + inline approve ────────────
 @require_page_permission("dashboard")
 def pl_dashboard_drilldown_view(request):
@@ -865,6 +884,41 @@ def pl_dashboard_drilldown_view(request):
         request,
         "partials/dashboards/pl/drilldown.html",
         {"drawer_size": "lg", "fy": fy, **payload},
+    )
+
+
+@require_page_permission("dashboard")
+def pl_urgent_schools_page_view(request):
+    """Return one compact, role-scoped page of urgent schools for HTMX."""
+    from django.http import HttpResponseForbidden
+
+    if request.user.active_role != "Program Lead":
+        return HttpResponseForbidden("Program Lead only.")
+
+    from apps.analytics.pl_analytics_service import resolve_pl_scope
+    from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService
+    from apps.core.fy import get_operational_fy
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    filters = {"activity_type": request.GET.get("activity_type")}
+    raw_page = (request.GET.get("urgent_page") or "").strip()
+    page = int(raw_page) if raw_page.isdigit() else 1
+    pls = resolve_pl_scope(request.user, filters)
+    urgent_pagination = ProgramLeadDashboardService.urgent_schools_page(
+        request.user, pls, fy, filters, page=page
+    )
+    pagination_query = {"fy": fy}
+    if filters["activity_type"]:
+        pagination_query["activity_type"] = filters["activity_type"]
+    return render(
+        request,
+        "partials/dashboards/pl/urgent_schools_page.html",
+        {
+            "fy": fy,
+            "urgent_schools": urgent_pagination["rows"],
+            "urgent_pagination": urgent_pagination,
+            "urgent_pagination_query": urlencode(pagination_query),
+        },
     )
 
 
@@ -892,7 +946,12 @@ def pl_dashboard_approve_view(request):
         except Exception as e:  # noqa: BLE001
             error = str(e)
     data = ProgramLeadDashboardService.get_dashboard(request.user, fy=fy)
-    context = {**data, "fy_options": fy_options(), "approve_error": error}
+    context = {
+        **data,
+        "fy_options": fy_options(),
+        "approve_error": error,
+        "urgent_pagination_query": urlencode({"fy": fy}),
+    }
     return render(request, "partials/dashboards/pl/body.html", context)
 
 

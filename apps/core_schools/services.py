@@ -9,6 +9,7 @@ from django.utils import timezone
 from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.fy import get_operational_fy
+from apps.core.calendar_policy import SchedulingPolicyService, resolve_scheduling_user
 from apps.schools.models import School
 
 from .models import (
@@ -263,9 +264,18 @@ def slot_action(slot_id: str, action: str, data: dict, principal) -> dict:
         slot.owner = "partner" if data.get("assignedPartnerId") else "staff"
         slot.status = "Assigned"
     elif action == "schedule":
+        scheduled_for = data.get("scheduledFor")
+        if scheduled_for:
+            # REG-02 — same calendar gate every other scheduling surface
+            # applies; a core slot must never land on a date Planning/My
+            # Plan would have blocked.
+            resp_user = resolve_scheduling_user(slot.assigned_staff_id)
+            avail = SchedulingPolicyService.check(resp_user, scheduled_for)
+            if avail["status"] == "blocked":
+                raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
         slot.scheduled_month = data.get("scheduledMonth")
         slot.scheduled_week = data.get("scheduledWeek")
-        slot.scheduled_for = data.get("scheduledFor")
+        slot.scheduled_for = scheduled_for
         slot.status = "Scheduled"
     elif action == "start":
         slot.status = "In Progress"
@@ -360,8 +370,16 @@ def schedule_follow_up(plan_id: str, data: dict, principal) -> dict:
     plan = CorePlan.objects.filter(id=plan_id).first()
     if not plan:
         raise NotFoundError("Plan not found.")
-    plan.follow_up_scheduled_for = data.get("scheduledFor")
-    plan.follow_up_assignee = data.get("assignee")
+    scheduled_for = data.get("scheduledFor")
+    assignee = data.get("assignee")
+    if scheduled_for:
+        # REG-02 — same calendar gate every other scheduling surface applies.
+        resp_user = resolve_scheduling_user(assignee)
+        avail = SchedulingPolicyService.check(resp_user, scheduled_for)
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+    plan.follow_up_scheduled_for = scheduled_for
+    plan.follow_up_assignee = assignee
     plan.save(update_fields=["follow_up_scheduled_for", "follow_up_assignee"])
     return _serialize_plan(plan)
 

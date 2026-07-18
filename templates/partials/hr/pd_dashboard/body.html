@@ -10,7 +10,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
     <div class="rounded-surface border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
          style="background:var(--edify-surface); border-color:var(--edify-border);">
       <div class="flex items-center justify-between">
-        <span class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
+        <span class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ k.label }}</span>
         <div class="h-7 w-7 rounded-surface flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50/10 text-blue-400 border border-blue-500/20
           {% elif k.variant == 'success' %}bg-emerald-50/10 text-emerald-400 border border-emerald-500/20
@@ -46,7 +46,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
       {% for g in action_center %}
       <div class="rounded-surface border p-3 space-y-2" style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
         <div class="flex items-center justify-between">
-          <span class="edify-text-caption font-extrabold uppercase tracking-wide text-slate-400 leading-tight">{{ g.label }}</span>
+          <span class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ g.label }}</span>
           <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-black tabular-nums shrink-0
             {% if g.count %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ g.count }}</span>
         </div>

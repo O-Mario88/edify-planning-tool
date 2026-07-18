@@ -12,6 +12,7 @@ from datetime import date, timedelta
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
+from freezegun import freeze_time
 
 from apps.accounts.models import Leave, PublicHoliday, StaffProfile
 from apps.core.rbac import EdifyRole
@@ -99,6 +100,7 @@ class RoleDashboardsTest(TestCase):
         self.assertEqual(c.post("/dashboard/cd-approve?id=x").status_code, 403)
 
     # ── HR dashboard ─────────────────────────────────────────────────────────
+    @freeze_time("2026-08-03")  # fixed Monday, mid-FY2026 — REG-02 §1.1
     def test_hr_dashboard_counts_real_leave_workflow(self):
         Leave.objects.create(
             staff=self.cceo_sp,
@@ -126,6 +128,7 @@ class RoleDashboardsTest(TestCase):
         self.assertEqual(d["holidays"][0]["name"], "Independence Day")
         self.assertTrue(any(r["count"] for r in d["roles"]))
 
+    @freeze_time("2026-08-03")  # fixed Monday, mid-FY2026 — REG-02 §1.1
     def test_hr_coverage_clash_requires_scheduled_work(self):
         from django.utils import timezone as tz
         from apps.activities.models import Activity

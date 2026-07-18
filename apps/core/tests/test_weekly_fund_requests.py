@@ -14,10 +14,10 @@ from apps.schools.models import School
 
 class WeeklyFundRequestsTest(APITestCase):
     def setUp(self):
-        CostCatalogue.objects.create(
+        CostCatalogue.objects.get_or_create(
             fy=get_operational_fy(),
             version=1,
-            label="Weekly fund request test catalogue",
+            defaults={"label": "Weekly fund request test catalogue"},
         )
         self.region = Region.objects.create(name="Central")
         self.district = District.objects.create(name="Kampala", region=self.region)

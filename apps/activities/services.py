@@ -22,6 +22,16 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
+# Staff/user identity resolution now lives at apps.core.calendar_policy
+# (REG-02) so route/core-schools/budget/partner surfaces share the exact
+# same lookup — imported below under the historical private names so every
+# existing call site in this module keeps working unchanged.
+from apps.core.calendar_policy import (
+    resolve_scheduling_user as _user_for_staff_identity,
+    canonical_staff_identity as _canonical_staff_identity,
+    SchedulingPolicyService as _SchedulingPolicyService,
+)
+
 from .models import Activity, ActivityCompletionVerification
 from .salesforce import (
     ENTRY_SOURCE_MANAGING_STAFF,
@@ -54,30 +64,6 @@ TRAINING_TYPES = {
 }
 RESCHEDULE_SLIP_LIMIT = 3
 _SLOT_RELEASED_STATUSES = ("cancelled", "rejected", "deferred", "not_planned")
-
-
-def _user_for_staff_identity(staff_or_user_id: str | None):
-    """Resolve the app's compatible staff/user identity to its User row.
-
-    Operational records now use the StaffProfile id as their canonical staff
-    identity, while a small amount of legacy data (and Admin users without a
-    profile) still carries a User id.  Availability checks must understand
-    both shapes; otherwise a staff member on leave could be scheduled simply
-    because the lookup only attempted the legacy User-id representation.
-    """
-    if not staff_or_user_id:
-        return None
-    from apps.accounts.models import User
-
-    return User.objects.filter(
-        Q(id=staff_or_user_id) | Q(staff_profile__id=staff_or_user_id)
-    ).first()
-
-
-def _canonical_staff_identity(staff_or_user_id: str | None) -> str | None:
-    """Prefer a StaffProfile id, retaining a valid legacy User id as fallback."""
-    user = _user_for_staff_identity(staff_or_user_id)
-    return user.staff_profile_id if user and user.staff_profile_id else staff_or_user_id
 
 
 def _client_entitlement_slot_types(activity_type: str) -> tuple[str, ...] | None:
@@ -469,14 +455,16 @@ def create(data: dict, principal) -> dict:
     # branch of My Plan filters by monitored_by_staff_id).
     monitored_by_staff_id = principal_owner_id if is_partner else None
 
-    if scheduled_date and responsible_staff_id:
-        resp_user = _user_for_staff_identity(responsible_staff_id)
-        if resp_user:
-            from apps.hr.leave_services import PlanningAvailabilityService
-
-            avail = PlanningAvailabilityService.check(resp_user, scheduled_date)
-            if avail["status"] == "blocked":
-                raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+    # The Sunday/holiday/blackout gate applies to every activity regardless of
+    # delivery type; partner-delivered activities have no responsible_staff_id
+    # (see above) but still have a monitoring staff member whose leave should
+    # block scheduling — fall back to that identity when present.
+    if scheduled_date:
+        check_staff_id = responsible_staff_id or monitored_by_staff_id
+        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
+        avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
 
     # Central cost gate: block scheduling if the activity cannot be priced from
     # the active CD Cost Catalogue (missing rate / no catalogue / missing
@@ -1012,14 +1000,12 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
 
-    if new_date and a.responsible_staff_id:
-        resp_user = _user_for_staff_identity(a.responsible_staff_id)
-        if resp_user:
-            from apps.hr.leave_services import PlanningAvailabilityService
-
-            avail = PlanningAvailabilityService.check(resp_user, new_date)
-            if avail["status"] == "blocked":
-                raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+    if new_date:
+        check_staff_id = a.responsible_staff_id or a.monitored_by_staff_id
+        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
+        avail = _SchedulingPolicyService.check(resp_user, new_date)
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
 
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
@@ -1174,6 +1160,13 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         quarter = get_quarter_for_date(scheduled_date)
         planned_type = pa.expected_activity_type or "core_visit"
 
+        # Same REG-02 calendar gate the canonical create()/reschedule() apply
+        # — partner scheduling must never allow a date another surface blocks.
+        resp_user = _user_for_staff_identity(pa.assigning_staff_id)
+        avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
         # Same duplicate-submission guard the canonical create() applies.
         if (
             Activity.objects.filter(
@@ -1276,6 +1269,14 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
     with transaction.atomic():
         a = _get_in_scope(activity_id, principal)
         new_date = _parse_date(data["scheduledDate"])
+
+        # Same REG-02 calendar gate the canonical create()/reschedule() apply.
+        check_staff_id = a.responsible_staff_id or a.monitored_by_staff_id
+        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
+        avail = _SchedulingPolicyService.check(resp_user, new_date)
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
         a.scheduled_date = new_date
         a.fy = get_operational_fy(new_date)
         a.quarter = get_quarter_for_date(new_date)

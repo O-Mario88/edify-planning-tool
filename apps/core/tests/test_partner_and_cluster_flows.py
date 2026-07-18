@@ -130,7 +130,12 @@ class PartnerAndClusterFlowTest(APITestCase):
             "/api/planning/assign-school-visit-to-partner",
             {
                 "schoolId": school.school_id,
-                "scheduledDate": "2026-07-12T09:00:00+03:00",
+                # 2026-07-13 is a Monday — 2026-07-12 (Sunday) previously
+                # slipped through here because partner-delivered activities
+                # had no responsible_staff_id and skipped the REG-02 gate
+                # entirely; that gap is now closed (create() always checks),
+                # so this fixture must use a schedulable date.
+                "scheduledDate": "2026-07-13T09:00:00+03:00",
                 "plannedMonth": 7,
                 "plannedWeek": 2,
                 "purposeIntervention": "enrolment",

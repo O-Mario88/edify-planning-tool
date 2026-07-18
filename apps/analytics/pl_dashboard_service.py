@@ -66,12 +66,17 @@ class ProgramLeadDashboardService:
     """Single entry point for the PL Command Dashboard. Every method takes
     (user, fy, month, filters) and enforces the supervised-team scope."""
 
+    URGENT_SCHOOLS_PAGE_SIZE = 4
+
     @staticmethod
-    def get_dashboard(user, fy=None, month=None, filters=None) -> dict:
+    def get_dashboard(user, fy=None, month=None, filters=None, urgent_page=1) -> dict:
         fy = fy or get_operational_fy()
         filters = dict(filters or {})
         pls = resolve_pl_scope(user, filters)
         acts = ProgramLeadDashboardService._team_acts(pls, fy, filters)
+        urgent_pagination = ProgramLeadDashboardService.urgent_schools_page(
+            user, pls, fy, filters, page=urgent_page
+        )
 
         return {
             "fy": fy,
@@ -97,9 +102,8 @@ class ProgramLeadDashboardService:
                 pls, fy, filters, acts
             ),
             "ssa_matrix": ProgramLeadDashboardService.ssa_cluster_matrix(pls, fy),
-            "urgent_schools": ProgramLeadDashboardService.urgent_schools(
-                user, pls, fy, filters, limit=8
-            ),
+            "urgent_schools": urgent_pagination["rows"],
+            "urgent_pagination": urgent_pagination,
             "route_capacity": ProgramLeadDashboardService.route_capacity(
                 pls, fy, filters, acts
             ),
@@ -113,17 +117,53 @@ class ProgramLeadDashboardService:
 
     @staticmethod
     def urgent_schools(user, pls, fy, filters, limit=8) -> list[dict]:
+        """Compatibility helper for callers that only need the first page."""
+        return ProgramLeadDashboardService.urgent_schools_page(
+            user, pls, fy, filters, page_size=limit
+        )["rows"]
+
+    @staticmethod
+    def urgent_schools_page(user, pls, fy, filters, page=1, page_size=None) -> dict:
         """Return the PL's combined personal + supervised urgent queue.
 
         Ownership is explicit on every row so the dashboard can schedule the
         PL's own work while delegating a supervised CCEO's school to that CCEO.
+        The dashboard deliberately renders four rows per page so the urgent
+        queue stays immediately actionable instead of becoming a long table.
         """
         from urllib.parse import urlencode
 
         from apps.accounts.models import StaffSchoolAssignment
         from apps.core.scoping import resolve_user_scope
 
-        rows = PLAnalyticsService.risk_list(pls, fy, None, filters, limit=limit)["rows"]
+        try:
+            page = max(int(page), 1)
+        except (TypeError, ValueError):
+            page = 1
+        page_size = page_size or ProgramLeadDashboardService.URGENT_SCHOOLS_PAGE_SIZE
+        page_size = max(int(page_size), 1)
+
+        risk_page = PLAnalyticsService.risk_list(
+            pls,
+            fy,
+            None,
+            filters,
+            limit=page_size,
+            offset=(page - 1) * page_size,
+        )
+        total = risk_page["total"]
+        page_count = max((total + page_size - 1) // page_size, 1)
+        if page > page_count:
+            page = page_count
+            risk_page = PLAnalyticsService.risk_list(
+                pls,
+                fy,
+                None,
+                filters,
+                limit=page_size,
+                offset=(page - 1) * page_size,
+            )
+        rows = risk_page["rows"]
         scope = resolve_user_scope(user)
         own_school_ids = set(scope.own_school_ids)
         cceo_by_staff = {item["staff_id"]: item for item in pls.cceos}
@@ -151,7 +191,20 @@ class ProgramLeadDashboardService:
             if row["weakest_intervention_code"]:
                 query["focus_intervention"] = row["weakest_intervention_code"]
             row["schedule_url"] = f"/planning/schedule-modal?{urlencode(query)}"
-        return rows
+        first_row = (page - 1) * page_size + 1 if total else 0
+        return {
+            "rows": rows,
+            "total": total,
+            "page": page,
+            "page_count": page_count,
+            "page_size": page_size,
+            "first_row": first_row,
+            "last_row": first_row + len(rows) - 1 if rows else 0,
+            "has_previous": page > 1,
+            "has_next": page < page_count,
+            "previous_page": page - 1 if page > 1 else None,
+            "next_page": page + 1 if page < page_count else None,
+        }
 
     # ── shared scoped querysets ──────────────────────────────────────────────
     @staticmethod

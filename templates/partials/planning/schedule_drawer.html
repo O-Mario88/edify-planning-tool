@@ -121,8 +121,12 @@ this.currentMonth++;
 }
 this.getDays();
 },
+isSunday(day) {
+if (day === null) return false;
+return new Date(this.currentYear, this.currentMonth, day).getDay() === 0;
+},
 selectDay(day) {
-if (day === null) return;
+if (day === null || this.isSunday(day)) return;
 let monthStr = String(this.currentMonth + 1).padStart(2, '0');
 let dayStr = String(day).padStart(2, '0');
 this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
@@ -201,8 +205,10 @@ x-transition:leave-end="opacity-0 transform scale-95"
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
+:disabled="isSunday(day)"
+:title="isSunday(day) ? 'Sundays are blocked for scheduling' : ''"
 class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
-:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+:class="isSunday(day) ? 'text-slate-300 line-through cursor-not-allowed' : (isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50')"
 x-text="day"
 ></button>
 </div>

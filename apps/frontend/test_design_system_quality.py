@@ -126,25 +126,153 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "background-image: var(--edify-button-primary-treatment)", platform
         )
 
-    def test_program_lead_funding_card_is_intrinsically_responsive(self):
+    def test_light_workspace_uses_the_approved_edify_reference_treatment(self):
+        tokens = _read("static/css/design-system.css")
+        platform = _read("static/css/platform.css")
+        base = _read("templates/base.html")
+
+        for declaration in (
+            "--edify-brand-primary: #105fa6",
+            "--edify-brand-primary-hover: #064984",
+            "--edify-brand-primary-soft: #e7f4fc",
+            "--edify-surface: #ffffff",
+            "--edify-surface-muted: #f6fbff",
+            "--edify-border: #c7d8e8",
+            "--edify-text: #071e35",
+            "--edify-text-muted: #405a73",
+            "--edify-bg: #e7f4fc",
+            "--edify-button-primary-treatment: linear-gradient(105deg, #075397 0%, #105fa6 100%)",
+        ):
+            self.assertIn(declaration, tokens)
+
+        self.assertIn(
+            "Light workspace: the approved Edify sign-in visual language", platform
+        )
+        self.assertIn(":root:not(.theme-blue):not(.theme-dark)", platform)
+        self.assertIn("#e7f4fc", base)
+
+    def test_light_workspace_text_hierarchy_meets_high_contrast_standard(self):
+        tokens = _read("static/css/design-system.css")
+        platform = _read("static/css/platform.css")
+
+        for declaration in (
+            "--edify-text: #071e35",
+            "--edify-text-muted: #405a73",
+            "--edify-text-subtle: #526b84",
+            "--edify-text-disabled: #5f748b",
+        ):
+            self.assertIn(declaration, tokens)
+
+        for colour in ("#071e35", "#405a73", "#526b84", "#5f748b"):
+            self.assertGreaterEqual(_contrast_ratio(colour, "#ffffff"), 4.5)
+
+        self.assertIn(".text-gray-400, .text-gray-500", platform)
+        self.assertIn(".text-slate-300, .text-gray-300", platform)
+
+    def test_recovery_plan_call_to_action_uses_the_shared_primary_treatment(self):
+        team_targets = _read("templates/partials/targets/team/body.html")
+        pages = _read("static/css/pages.css")
+
+        self.assertIn("tt-button--primary tt-button--recovery", team_targets)
+        self.assertIn(".tt-button--recovery", pages)
+        self.assertIn("min-height: 3rem", pages)
+        self.assertIn("background-image: var(--edify-button-primary-treatment)", pages)
+
+    def test_shared_card_contract_covers_named_feature_surfaces(self):
+        tokens = _read("static/css/design-system.css")
+        platform = _read("static/css/platform.css")
+
+        for declaration in (
+            "--edify-card-surface:",
+            "--edify-card-border:",
+            "--edify-card-shadow:",
+            "--edify-card-backdrop-filter:",
+        ):
+            self.assertIn(declaration, tokens)
+
+        for selector in (
+            '[class*="-card"]:not([class*="-card-"])',
+            '[class*="-panel"]:not([class*="-panel-"])',
+            '[class*="-kpi"]:not([class*="-kpi-"])',
+            ".kpi-strip__item",
+            ".spp-empty",
+            ".spa-empty",
+            ".tt-modal__panel",
+            ".theme-blue main :is(",
+            ".theme-dark main :is(",
+            ".edify-risk-card, .card-alert",
+        ):
+            self.assertIn(selector, platform)
+
+    def test_kpi_labels_use_the_shared_title_case_contract(self):
+        tokens = _read("static/css/design-system.css")
+        platform = _read("static/css/platform.css")
+
+        self.assertIn("--edify-kpi-label-weight: 600", tokens)
+        self.assertIn("--edify-kpi-label-tracking:", tokens)
+        self.assertIn("KPI label typography", platform)
+        self.assertIn("text-transform: none !important", platform)
+
+        for template in (
+            "templates/partials/professional_development/body.html",
+            "templates/partials/hr/pd_dashboard/body.html",
+            "templates/pages/ia/analytics_dashboard.html",
+            "templates/partials/dashboards/pl/body.html",
+            "templates/partials/dashboards/cd/body.html",
+            "templates/partials/dashboards/hr/body.html",
+            "templates/partials/analytics/cd/body.html",
+            "templates/partials/analytics/pl/body.html",
+            "templates/partials/analytics/pl/activity_tracking.html",
+            "templates/partials/debriefs/dashboard_body.html",
+            "templates/partials/targets/my_body.html",
+            "templates/partials/finance/country_budget/root.html",
+            "templates/pages/reports/index.html",
+            "templates/pages/projects/index.html",
+            "templates/partials/clusters/cluster_card.html",
+        ):
+            self.assertIn("edify-kpi-label", _read(template), template)
+
+        program_lead_dashboard = _read("templates/partials/dashboards/pl/body.html")
+        self.assertNotIn(
+            'class="text-[12px] font-semibold tracking-[0.06em] uppercase"',
+            program_lead_dashboard,
+        )
+
+    def test_program_lead_funding_card_is_separate_from_the_urgent_schools_row(self):
         dashboard = _read("templates/partials/dashboards/pl/body.html")
         funding = _read("templates/partials/dashboards/pl/funding_execution.html")
         pages = _read("static/css/pages.css")
 
         self.assertIn('class="pl-intelligence-grid"', dashboard)
-        self.assertNotIn(
-            "lg:col-span-5", dashboard[dashboard.index("SSA Intelligence") :]
+        intelligence_row = dashboard[
+            dashboard.index("SSA Intelligence") : dashboard.index("Team Backlog")
+        ]
+        self.assertNotIn("Funding &amp; Execution", intelligence_row)
+        self.assertIn("pl-funding-card pl-funding-card--wide", dashboard)
+        self.assertGreater(
+            dashboard.index("Funding &amp; Execution"), dashboard.index("Team Backlog")
         )
+        self.assertIn("pl-funding-card__body", dashboard)
         self.assertIn("pl-funding-summary", funding)
         self.assertLess(
             funding.index("pl-funding-donut"), funding.index("pl-funding-statuses")
         )
         self.assertIn("container: pl-dashboard / inline-size", pages)
         self.assertIn(
-            "grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr) minmax(10.5rem, 0.48fr)",
+            "grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.64fr)",
             pages,
         )
+        self.assertIn("pl-funding-card--wide .pl-funding-card__body", pages)
         self.assertIn("overflow-x: clip", pages)
+
+    def test_program_lead_urgent_schools_card_uses_compact_server_pagination(self):
+        dashboard = _read("templates/partials/dashboards/pl/body.html")
+        pager = _read("templates/partials/dashboards/pl/urgent_schools_page.html")
+
+        self.assertIn("urgent_pagination.total", dashboard)
+        self.assertIn("urgent-schools-content", dashboard)
+        self.assertIn("Showing {{ urgent_pagination.first_row }}", pager)
+        self.assertIn('hx-get="/dashboard/pl-urgent-schools?', pager)
 
     def test_operational_analytics_domains_use_the_shared_python_engine(self):
         domain_files = (

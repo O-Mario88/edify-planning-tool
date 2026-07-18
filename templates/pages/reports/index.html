@@ -39,8 +39,8 @@
 {% for period in periods %}
 <div class="flex-1 edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center justify-between gap-3 {% if period.dimmed %}opacity-60{% endif %}">
 <div class="space-y-1">
-<span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide block">{{ period.chevron_label }}</span>
-<span class="edify-text-caption font-semibold text-slate-400 block uppercase">{{ period.kind_label }}</span>
+<span class="edify-kpi-label edify-text-caption text-slate-500 block">{{ period.chevron_label }}</span>
+<span class="edify-kpi-label edify-text-caption text-slate-400 block">{{ period.kind_label }}</span>
 {% if period.has_target %}
 <h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }} / {{ period.target|floatformat:0 }}</h3>
 <span class="edify-text-caption font-bold text-slate-400 block">Targets Achieved</span>
@@ -82,7 +82,7 @@
 {% for card in core_cards %}
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-3 flex flex-col justify-between">
 <div>
-<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider block">{{ card.label }}</span>
+<span class="edify-kpi-label edify-text-caption text-slate-400 block">{{ card.label }}</span>
 {% if card.has_target %}
 <h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ card.achieved }} / {{ card.target|floatformat:0 }}</h3>
 <span class="edify-text-caption {{ card.color }} font-semibold block mt-1.5">{{ card.pct }}% of FY{{ fy }} Target</span>

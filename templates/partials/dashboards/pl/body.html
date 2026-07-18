@@ -23,7 +23,7 @@
           {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
         </div>
         <div class="flex-1 min-w-0">
-          <p class="text-[12px] font-semibold tracking-[0.06em] uppercase" style="color:var(--edify-text-subtle);">{{ k.label }}</p>
+          <p class="edify-kpi-label text-[12px]" style="color:var(--edify-text-subtle);">{{ k.label }}</p>
           <p class="text-[17px] font-semibold leading-none mt-[3px] tracking-[-0.02em] tabular-nums" style="
                     color:{% if k.variant == 'danger' %}var(--edify-danger){% elif k.variant == 'warning' %}var(--edify-warning){% else %}var(--edify-text){% endif %};">
             {{ k.value }}
@@ -94,7 +94,7 @@
         {% for c in personal_targets.cards %}
         <div class="flex items-center gap-2.5 p-2.5 rounded-surface" style="background:var(--edify-surface-muted);">
           <div>
-            <p class="text-[12px] font-semibold tracking-[0.06em] uppercase" style="color:var(--edify-text-subtle);">{{ c.label }}</p>
+            <p class="edify-kpi-label text-[12px]" style="color:var(--edify-text-subtle);">{{ c.label }}</p>
             <p class="text-[15px] font-semibold tabular-nums" style="color:var(--edify-text);">{{ c.done }}<span class="text-[12px] font-semibold" style="color:var(--edify-text-subtle);">/{{ c.target }}</span></p>
             <p class="text-[12px] font-semibold" style="color:
               {% if c.pct >= 80 %}var(--edify-success)
@@ -140,7 +140,7 @@
     </div>
   </div>
 
-  {# ── SSA Intelligence + Urgent Schools + Funding ─────────────────────── #}
+  {# ── SSA Intelligence + Urgent Schools ───────────────────────────────── #}
   <div class="pl-intelligence-grid">
     <div class="pl-intelligence-card rounded-surface p-4 flex flex-col"
          style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
@@ -156,17 +156,12 @@
           <p class="mt-0.5 text-[12px]" style="color:var(--edify-text-muted);">Your schools and the portfolios of your supervised CCEOs.</p>
         </div>
         <span class="inline-flex min-w-6 items-center justify-center rounded-pill px-2 py-1 text-[12px] font-semibold"
-              style="color:var(--edify-danger);background:var(--edify-danger-light);">{{ urgent_schools|length }}</span>
+              style="color:var(--edify-danger);background:var(--edify-danger-light);">{{ urgent_pagination.total }}</span>
       </div>
-      <div class="flex-1">
-        {% include "partials/dashboards/urgent_schools_table.html" with urgent_action_mode="pl" %}
+      <div id="urgent-schools-content" class="flex-1" aria-live="polite">
+        {% include "partials/dashboards/pl/urgent_schools_page.html" %}
       </div>
       <a href="/analytics/program-lead" class="block px-4 py-3 text-[12px] font-semibold" style="color:var(--edify-info);border-top:1px solid var(--edify-border);">View all schools at risk &rarr;</a>
-    </div>
-    <div class="pl-funding-card rounded-surface p-4 flex flex-col"
-         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
-      <h2 class="text-[13px] font-semibold mb-2" style="color:var(--edify-text);">Funding &amp; Execution</h2>
-      {% include "partials/dashboards/pl/funding_execution.html" %}
     </div>
   </div>
 
@@ -181,6 +176,15 @@
          style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
       <h2 class="text-[13px] font-semibold mb-3" style="color:var(--edify-text);">Smart Route &amp; Capacity</h2>
       {% include "partials/dashboards/pl/route_capacity.html" %}
+    </div>
+  </div>
+
+  {# ── Funding & Execution: supporting financial context, kept below risk ── #}
+  <div class="pl-funding-card pl-funding-card--wide rounded-surface p-4"
+       style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+    <h2 class="text-[13px] font-semibold mb-3" style="color:var(--edify-text);">Funding &amp; Execution</h2>
+    <div class="pl-funding-card__body">
+      {% include "partials/dashboards/pl/funding_execution.html" %}
     </div>
   </div>
 

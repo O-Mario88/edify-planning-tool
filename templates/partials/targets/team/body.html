@@ -49,6 +49,11 @@
       </div>
       <div class="tt-matrix-scroll tt-desktop-matrix" tabindex="0" aria-label="Scrollable team performance table. Scroll horizontally to compare every quarter and the full fiscal year.">
         <table class="tt-matrix">
+          <colgroup>
+            <col class="tt-matrix__member-column">
+            {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
+            <col class="tt-matrix__action-column">
+          </colgroup>
           <thead>
             <tr>
               <th scope="col">Team member</th>
@@ -97,11 +102,15 @@
               </td>
             </tr>
             <tr id="tt-desktop-areas-{{ member.user_id }}" class="tt-area-row" x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
-              <td colspan="8">
+              <td colspan="{{ matrix_heads|length|add:'2' }}">
                 <div class="tt-area-matrix-shell">
                   <table class="tt-area-matrix">
                     <caption class="sr-only">{{ member.name }} target-area performance by reporting period</caption>
-                    <colgroup><col class="tt-area-matrix__name-column"><col span="6"></colgroup>
+                    <colgroup>
+                      <col class="tt-matrix__member-column">
+                      {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
+                      <col class="tt-matrix__action-column">
+                    </colgroup>
                     <thead>
                       <tr>
                         <th scope="col"><span>Target area breakdown</span><small>Validated achievement</small></th>
@@ -110,6 +119,7 @@
                           {% if forloop.first %}<span>Monthly</span><small>{{ head.label }} · selected month</small>{% else %}<span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small>{% endif %}
                         </th>
                         {% endfor %}
+                        <th scope="col" class="tt-area-matrix__action-spacer"><span class="sr-only">Review</span></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -128,6 +138,7 @@
                           </span>
                         </td>
                         {% endfor %}
+                        <td class="tt-area-matrix__action-spacer" aria-label="No review action"></td>
                       </tr>
                       {% endfor %}
                     </tbody>
@@ -261,7 +272,7 @@
           <div class="tt-rail-empty"><strong>No active recovery plans</strong><span>Create one when performance needs structured intervention.</span></div>
           {% endfor %}
         </div>
-        <button type="button" @click="catchupStaff=''; showCatchup=true" class="tt-button tt-button--soft tt-button--block">Create recovery plan</button>
+        <button type="button" @click="catchupStaff=''; showCatchup=true" class="tt-button tt-button--primary tt-button--recovery tt-button--block">Create recovery plan</button>
       </section>
 
       <section class="tt-panel tt-rail-panel">

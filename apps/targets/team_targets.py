@@ -1154,12 +1154,15 @@ class PLTeamTargetsService:
     # ── calendar ─────────────────────────────────────────────────────────────
     @staticmethod
     def _calendar(fy, month_of_fy, today, m_start, m_end, team_ids, is_current_fy):
-        from apps.accounts.models import PublicHoliday
+        from apps.hr.leave_services import PublicHolidayService
         from apps.targets.models import TargetAchievementLedger
 
+        # Union both holiday sources (PublicHoliday rows + CalendarBlock
+        # PUBLIC_HOLIDAY rows) — querying PublicHoliday alone silently missed
+        # holidays added only via the /public-holidays admin surface.
         holidays = set(
-            PublicHoliday.objects.filter(date__gte=m_start, date__lt=m_end).values_list(
-                "date", flat=True
+            PublicHolidayService.get_holidays_in_range(
+                m_start, m_end - timedelta(days=1)
             )
         )
         valid_by_day = {}

@@ -13,6 +13,7 @@ from datetime import timedelta
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import User
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -62,6 +63,9 @@ def _line(activity, amount, owner="", planned=None):
     )
 
 
+@freeze_time("2026-08-03")  # fixed Monday — REG-02 §1.1: _request()'s
+# "+30 days from now" must not spuriously land on a Sunday (now enforced by
+# request_amendment()'s calendar gate) depending on the real suite run date.
 class BudgetAmendmentTest(TestCase):
     def setUp(self):
         self.owner = _user("gate-owner@edify.test", EdifyRole.ADMIN.value)
@@ -247,13 +251,17 @@ class PartnerScheduleScopeTest(TestCase):
         )
         with self.assertRaises(Forbidden):
             partner_schedule(
+                # Fixed date — REG-02 §1.1: the scope check this test
+                # exercises must fail for the intended reason regardless of
+                # what the real suite run date is.
                 pa.id,
-                {"scheduledDate": timezone.now().strftime("%Y-%m-%d")},
+                {"scheduledDate": "2026-08-10"},
                 partner_user,
             )
 
 
 class DisbursementRoundingTest(TestCase):
+    @freeze_time("2026-08-03")  # fixed Monday — REG-02 §1.1
     def test_largest_remainder_children_sum_exactly(self):
         from apps.fund_requests import weekly_service
         from apps.fund_requests.models import (
@@ -455,6 +463,10 @@ class FinanceSeamVerificationTest(TestCase):
             )
 
 
+@freeze_time("2026-08-03")  # fixed Monday, mid-FY2026 — REG-02 §1.1: the
+# relative-day scheduling helpers below (_schedule_visit/_schedule_training/
+# core_visit) must not spuriously land on a Sunday depending on real-world
+# suite run date.
 class EntitlementGateTest(TestCase):
     """Final-mandate entitlements: client 1+1 per FY; staff 2+2 core cap."""
 

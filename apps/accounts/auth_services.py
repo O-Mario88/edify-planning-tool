@@ -21,7 +21,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.email import mailer
-from apps.core.exceptions import BadRequest, Forbidden, Unauthorized
+from apps.core.exceptions import BadRequest, Unauthorized
 from apps.core.rbac import permissions_for_role
 from apps.core.security import (
     expiry_from_now,
@@ -60,27 +60,40 @@ def login(email: str, password: str, requested_active_role: str | None = None) -
     errors throughout to avoid user enumeration."""
     from django.contrib.auth import authenticate
 
+    from apps.accounts.auth_failure_service import AuthenticationFailureService
     from apps.accounts.lockout_service import AuthenticationLockoutService
 
     email = (email or "").lower().strip()
     existing = User.objects.filter(email=email, deleted_at__isnull=True).first()
 
     # Locked? Reject before checking the password (don't reset the clock).
-    # authenticate() re-checks this itself; this pre-check exists only to
-    # give a more specific error message (locked vs. wrong credentials) —
-    # it is not itself the security gate.
+    # authenticate() re-checks this itself; this pre-check exists only so a
+    # locked account never even reaches the password compare. The PUBLIC
+    # response is identical to every other rejection (SEC-02) — only the
+    # audit log records the real reason.
     if existing:
         state = AuthenticationLockoutService.check_lockout(existing)
         if state.locked:
-            raise Forbidden(
-                "Account is temporarily locked due to repeated failed sign-ins. "
-                "Try again later."
+            message = AuthenticationFailureService.reject(
+                email=email,
+                user=existing,
+                reason="account_locked_escalated"
+                if state.escalated
+                else "account_locked",
             )
+            raise Unauthorized(message)
 
     user = authenticate(email=email, password=password)
     if user is None:
-        # Generic error either way to avoid user enumeration.
-        raise Unauthorized("Invalid credentials")
+        # Same status code + message regardless of cause — unknown email,
+        # wrong password, or inactive/suspended status must be externally
+        # indistinguishable (SEC-02).
+        message = AuthenticationFailureService.reject(
+            email=email,
+            user=existing,
+            reason="invalid_password" if existing else "unknown_email",
+        )
+        raise Unauthorized(message)
 
     user = User.objects.select_related("staff_profile").get(id=user.id)
 
@@ -118,24 +131,103 @@ def _staff_profile_id(user) -> str | None:
 
 
 # ── Refresh + logout ─────────────────────────────────────────────────────────
-def refresh(refresh_token: str) -> dict:
-    """Validate a refresh token, revoke it (single-use), and issue a fresh pair."""
-    token_hash = hash_token(refresh_token or "")
-    record = (
-        RefreshToken.objects.select_related("user")
-        .filter(
-            token_hash=token_hash,
-            revoked_at__isnull=True,
-            expires_at__gt=timezone.now(),
-        )
-        .first()
+def _revoke_family(family_id: str) -> None:
+    """Revoke every still-live token in a family — used when a consumed (or
+    already-revoked) token is replayed, since the whole chain may be
+    compromised (SEC-03)."""
+    RefreshToken.objects.filter(family_id=family_id, revoked_at__isnull=True).update(
+        revoked_at=timezone.now()
     )
-    if not record or not record.user or record.user.status != "active":
+
+
+def _audit_refresh_reuse(record: RefreshToken) -> None:
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="auth.refresh_token_reuse_detected",
+            subject_kind="User",
+            subject_id=record.user_id,
+            actor_id=record.user_id,
+            actor_role=getattr(record.user, "active_role", None) or "Unknown",
+            success=False,
+            reason=(
+                "A refresh token that was already consumed or revoked was "
+                "presented again — the entire token family has been revoked."
+            ),
+            payload={"family_id": record.family_id, "token_id": record.id},
+        )
+    except Exception:  # noqa: BLE001 — reuse handling must never itself crash
+        pass
+
+
+def refresh(refresh_token: str) -> dict:
+    """Validate a refresh token, revoke it (single-use), and issue a fresh
+    pair in the same family.
+
+    SEC-03 — reuse detection: a refresh token is consumed (both revoked_at
+    and consumed_at stamped) the moment it's rotated. If that SAME token is
+    ever presented again — the token was already consumed by a legitimate
+    rotation, or already revoked by a prior reuse event — it's treated as a
+    stolen token being replayed, and the entire family is revoked, forcing
+    re-authentication everywhere that family's descendants were live.
+
+    Concurrency: select_for_update() serializes two simultaneous refreshes
+    of the same raw token on the same DB row — the first to commit its
+    consumption wins; the second re-reads the now-revoked row and takes the
+    reuse-detected path, which also revokes the winner's freshly-issued
+    child. The winner's child token is minted INSIDE the same atomic block
+    as its consumption write (not after) — otherwise there's a window,
+    between that commit and the child's creation, where a concurrently
+    unblocking loser's family-wide revocation could run before the child
+    exists and miss it entirely, leaving two valid descendants. Two
+    concurrent presentations of one token can therefore never both end up
+    with a valid descendant.
+
+    The reuse branch's writes (family revocation, reuse_detected_at) must
+    outlive this function — raising inside transaction.atomic() rolls back
+    everything written in that block, which would silently undo the very
+    revocation this is meant to enforce. So the atomic block only writes and
+    decides; the exception (and the audit log entry, a separate write) are
+    raised/recorded AFTER it has committed.
+    """
+    token_hash = hash_token(refresh_token or "")
+    reused_record = None
+    new_tokens = None
+    with transaction.atomic():
+        record = (
+            RefreshToken.objects.select_for_update()
+            .select_related("user")
+            .filter(token_hash=token_hash)
+            .first()
+        )
+        if not record or not record.user or record.user.status != "active":
+            raise Unauthorized("Invalid or expired refresh token.")
+        if record.expires_at <= timezone.now():
+            raise Unauthorized("Invalid or expired refresh token.")
+
+        if record.revoked_at is not None:
+            record.reuse_detected_at = timezone.now()
+            record.save(update_fields=["reuse_detected_at"])
+            _revoke_family(record.family_id)
+            reused_record = record
+        else:
+            now = timezone.now()
+            record.revoked_at = now
+            record.consumed_at = now
+            record.save(update_fields=["revoked_at", "consumed_at"])
+            new_tokens = issue_token_pair(
+                record.user_id,
+                record.user.active_role,
+                family_id=record.family_id,
+                parent_id=record.id,
+            )
+
+    if reused_record is not None:
+        _audit_refresh_reuse(reused_record)
         raise Unauthorized("Invalid or expired refresh token.")
-    # Revoke the consumed token.
-    record.revoked_at = timezone.now()
-    record.save(update_fields=["revoked_at"])
-    return issue_token_pair(record.user_id, record.user.active_role)
+
+    return new_tokens
 
 
 def logout(refresh_token: str | None) -> dict:
@@ -150,9 +242,38 @@ def logout(refresh_token: str | None) -> dict:
 
 
 # ── Forgot / reset password ──────────────────────────────────────────────────
+def _send_password_reset_async(to: str, name: str, token: str) -> None:
+    """Fire-and-forget the real (network-bound, up to 15s) provider send on
+    a background thread — SEC-04. If forgot_password() awaited this like the
+    unknown-email branch's instant return, response timing alone would
+    reveal whether the account exists. Needs no DB access, so no
+    request-scoped connection crosses the thread boundary."""
+    import logging
+    import threading
+
+    def _run() -> None:
+        try:
+            mailer.send_password_reset(to=to, name=name, token=token)
+        except Exception:  # noqa: BLE001 — a background send must never surface here
+            logging.getLogger("edify.auth").exception(
+                "Background password-reset email failed"
+            )
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
 def forgot_password(email: str) -> dict:
-    """If the email exists, generate a single-use reset token + email it. Always
-    returns the same generic response (no user enumeration)."""
+    """If the email exists, generate a single-use reset token + email it.
+    Always returns the same generic response (no user enumeration).
+
+    SEC-04 — timing: the real provider send is network-bound and only ever
+    happens on the known-email path; awaiting it synchronously would make
+    response latency itself an account-existence oracle. In production
+    (mailer.is_configured) it's backgrounded so both branches return in
+    comparable time. Console/dev delivery has no network cost, so it stays
+    synchronous there to keep the devPreview/devResetToken convenience for
+    local testing.
+    """
     user = User.objects.filter(
         email=(email or "").lower().strip(), deleted_at__isnull=True
     ).first()
@@ -164,13 +285,17 @@ def forgot_password(email: str) -> dict:
     user.password_reset_expires = expiry_from_now(_reset_ttl_minutes())
     user.save(update_fields=["password_reset_token_hash", "password_reset_expires"])
 
-    # Email delivery (console in dev, Resend in prod). We surface the dev token
-    # so the flow is testable without an email provider.
+    if mailer.is_configured:
+        _send_password_reset_async(user.email, user.name, raw_token)
+        return {"ok": True}
+
+    # Console/dev — cheap (a log line, no network I/O), so send synchronously
+    # and surface the dev token/preview so the flow is testable without a
+    # real email provider.
     result = mailer.send_password_reset(to=user.email, name=user.name, token=raw_token)
-    dev_reset_token = raw_token if not settings.IS_PRODUCTION else None
     response = {"ok": True}
-    if dev_reset_token:
-        response["devResetToken"] = dev_reset_token
+    if not settings.IS_PRODUCTION:
+        response["devResetToken"] = raw_token
     if result.get("devPreview"):
         response["devPreview"] = result["devPreview"]
     return response

@@ -19,40 +19,13 @@ from apps.accounts.models import (
 )
 from apps.core.rbac import EdifyRole
 from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.calendar_policy import (
+    SchedulingPolicyService as PlanningAvailabilityService,  # noqa: F401 — re-exported for existing `from apps.hr.leave_services import PlanningAvailabilityService` call sites
+    activity_owner_ids as _activity_owner_ids,
+    scheduled_datetime_window as _scheduled_datetime_window,
+)
 
 logger = logging.getLogger("edify.hr.leave")
-
-
-def _activity_owner_ids(staff_or_user: StaffProfile | User) -> list[str]:
-    """Return every persisted Activity owner identity for a staff member.
-
-    Activities historically stored a User id in ``responsible_staff_id``. New
-    activities use the StaffProfile id so that a person has one staff identity
-    throughout planning, assignments, and reporting. Availability must see
-    both representations until the historical Activity data is normalized.
-    """
-    if isinstance(staff_or_user, StaffProfile):
-        ids = [staff_or_user.id, staff_or_user.user_id]
-    else:
-        profile_id = (
-            StaffProfile.objects.filter(user_id=staff_or_user.id)
-            .values_list("id", flat=True)
-            .first()
-        )
-        ids = [staff_or_user.id, profile_id]
-    return list(dict.fromkeys(value for value in ids if value))
-
-
-def _scheduled_datetime_window(
-    start_date: date, end_date: date
-) -> tuple[datetime, datetime]:
-    """Return an aware, half-open scheduled-date range for inclusive dates."""
-    tz = timezone.get_current_timezone()
-    start = timezone.make_aware(datetime.combine(start_date, datetime.min.time()), tz)
-    end = timezone.make_aware(
-        datetime.combine(end_date + timedelta(days=1), datetime.min.time()), tz
-    )
-    return start, end
 
 
 def check_staff_availability(staff_id: str, check_date) -> bool:
@@ -1190,117 +1163,9 @@ class LeaveConflictDetectionService:
         return conflicts
 
 
-class PlanningAvailabilityService:
-    @staticmethod
-    def check(user: User, check_date) -> dict:
-        from datetime import date, datetime
-
-        if isinstance(check_date, datetime):
-            d = check_date.date()
-        elif isinstance(check_date, date):
-            d = check_date
-        else:
-            try:
-                d = date.fromisoformat(str(check_date)[:10])
-            except ValueError:
-                return {
-                    "status": "available",
-                    "reasons": [],
-                    "blockers": [],
-                    "warnings": [],
-                }
-
-        blockers = []
-        warnings = []
-
-        if d.weekday() == 6:
-            blockers.append("Scheduling on Sundays is blocked.")
-
-        from apps.accounts.models import StaffProfile, Leave
-
-        sp = StaffProfile.objects.filter(user=user).first()
-        if sp:
-            d_str = d.isoformat()
-            if Leave.objects.filter(
-                staff=sp, status="approved", start_date__lte=d_str, end_date__gte=d_str
-            ).exists():
-                blockers.append(f"{user.name} is on approved leave on this date.")
-            elif Leave.objects.filter(
-                staff=sp, status="pending", start_date__lte=d_str, end_date__gte=d_str
-            ).exists():
-                warnings.append(
-                    f"{user.name} has a pending leave request on this date."
-                )
-
-        h_blocks = CalendarBlock.objects.filter(
-            is_active=True, start_date__lte=d, end_date__gte=d
-        )
-        for b in h_blocks:
-            if b.block_type == "PUBLIC_HOLIDAY":
-                blockers.append(f"This date is a public holiday: {b.title}.")
-            elif b.block_type == "BLACKOUT_DATE":
-                blockers.append(
-                    f"This date is an organizational blackout date: {b.title}."
-                )
-            elif b.block_type == "STAFF_CONFERENCE":
-                role_restricted = False
-                if b.applies_to_roles and user.active_role not in b.applies_to_roles:
-                    role_restricted = True
-                if not b.applies_to_all_roles and not role_restricted:
-                    pass
-                else:
-                    blockers.append(
-                        f"Staff Conference Week: {b.title} blocks scheduling."
-                    )
-            elif b.block_type in ["REGIONAL_EVENT", "ORG_EVENT", "CUSTOM_BLOCK"]:
-                geo_blocked = True
-                if b.region:
-                    from apps.accounts.models import StaffGeographyAssignment
-
-                    if (
-                        sp
-                        and not StaffGeographyAssignment.objects.filter(
-                            staff=sp, region=b.region
-                        ).exists()
-                    ):
-                        geo_blocked = False
-                if geo_blocked:
-                    blockers.append(f"Blocked by calendar event: {b.title}.")
-
-        from apps.activities.models import Activity
-
-        start_of_week = d - timedelta(days=d.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
-        scheduled_start, scheduled_end = _scheduled_datetime_window(
-            start_of_week, end_of_week
-        )
-        week_count = (
-            Activity.objects.filter(
-                responsible_staff_id__in=_activity_owner_ids(user),
-                scheduled_date__gte=scheduled_start,
-                scheduled_date__lt=scheduled_end,
-            )
-            .exclude(status__in=["cancelled", "completed"])
-            .count()
-        )
-
-        if week_count >= 5:
-            warnings.append(
-                f"High workload warning: {user.name} has {week_count} activities scheduled this week."
-            )
-
-        status = "available"
-        if blockers:
-            status = "blocked"
-        elif warnings:
-            status = "warning"
-
-        return {
-            "status": status,
-            "reasons": blockers + warnings,
-            "blockers": blockers,
-            "warnings": warnings,
-        }
+# PlanningAvailabilityService now lives at apps.core.calendar_policy as
+# SchedulingPolicyService (REG-02) — imported above under the historical name
+# so every existing call site keeps working unchanged.
 
 
 class LeaveImpactPreviewService:

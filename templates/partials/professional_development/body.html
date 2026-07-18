@@ -6,7 +6,7 @@
     {% for k in kpis %}
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <div class="flex items-center justify-between">
-        <span class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</span>
+        <span class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ k.label }}</span>
         <div class="h-7 w-7 rounded-surface flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-blue-50 text-blue-500
           {% elif k.variant == 'success' %}bg-emerald-50 text-emerald-500

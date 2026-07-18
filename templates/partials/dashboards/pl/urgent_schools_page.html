@@ -1,0 +1,34 @@
+{% include "partials/dashboards/urgent_schools_table.html" with urgent_action_mode="pl" %}
+
+{% if urgent_pagination.total %}
+<nav class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5"
+     style="border-top:1px solid var(--edify-border);"
+     aria-label="Urgent schools pagination">
+  <p class="text-[12px]" style="color:var(--edify-text-muted);">
+    Showing {{ urgent_pagination.first_row }}–{{ urgent_pagination.last_row }} of {{ urgent_pagination.total }}
+  </p>
+  {% if urgent_pagination.page_count > 1 %}
+  <div class="inline-flex items-center gap-1.5">
+    {% if urgent_pagination.has_previous %}
+    <a href="/dashboard?{{ urgent_pagination_query }}&amp;urgent_page={{ urgent_pagination.previous_page }}#urgent-schools"
+       hx-get="/dashboard/pl-urgent-schools?{{ urgent_pagination_query }}&amp;urgent_page={{ urgent_pagination.previous_page }}"
+       hx-target="#urgent-schools-content"
+       hx-swap="innerHTML"
+       class="rounded-control px-2.5 py-1 text-[12px] font-semibold no-underline"
+       style="border:1px solid var(--edify-border);color:var(--edify-text-muted);">Previous</a>
+    {% endif %}
+    <span class="px-1 text-[12px] font-semibold tabular-nums" style="color:var(--edify-text-subtle);">
+      {{ urgent_pagination.page }} / {{ urgent_pagination.page_count }}
+    </span>
+    {% if urgent_pagination.has_next %}
+    <a href="/dashboard?{{ urgent_pagination_query }}&amp;urgent_page={{ urgent_pagination.next_page }}#urgent-schools"
+       hx-get="/dashboard/pl-urgent-schools?{{ urgent_pagination_query }}&amp;urgent_page={{ urgent_pagination.next_page }}"
+       hx-target="#urgent-schools-content"
+       hx-swap="innerHTML"
+       class="rounded-control px-2.5 py-1 text-[12px] font-semibold no-underline"
+       style="border:1px solid var(--edify-border);color:var(--edify-text-muted);">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</nav>
+{% endif %}

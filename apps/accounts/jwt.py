@@ -16,6 +16,7 @@ from django.conf import settings
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.request import Request
 
+from apps.core.cuid import cuid
 from apps.core.exceptions import Unauthorized
 from apps.core.security import generate_token, hash_token, expiry_from_now_days
 
@@ -46,13 +47,28 @@ def issue_access_token(user_id: str, active_role: str) -> str:
     return pyjwt.encode(payload, _secret(), algorithm=_algo())
 
 
-def issue_token_pair(user_id: str, active_role: str) -> dict[str, str]:
-    """Mint an access JWT (15m) + a persisted, hashed refresh token (7d)."""
+def issue_token_pair(
+    user_id: str,
+    active_role: str,
+    *,
+    family_id: str | None = None,
+    parent_id: str | None = None,
+) -> dict[str, str]:
+    """Mint an access JWT (15m) + a persisted, hashed refresh token (7d).
+
+    A fresh login starts a NEW token family (family_id=None here). Rotating
+    an existing session (apps.accounts.auth_services.refresh) passes that
+    session's family_id and the just-consumed token's id as parent, so the
+    whole lineage can be revoked together if a consumed token is ever
+    replayed (SEC-03 reuse detection).
+    """
     access_token = issue_access_token(user_id, active_role)
     raw_refresh = generate_token()
     RefreshToken.objects.create(
         user_id=user_id,
         token_hash=hash_token(raw_refresh),
+        family_id=family_id or cuid(),
+        parent_id=parent_id,
         expires_at=expiry_from_now_days(getattr(settings, "REFRESH_TOKEN_TTL_DAYS", 7)),
     )
     return {"accessToken": access_token, "refreshToken": raw_refresh}

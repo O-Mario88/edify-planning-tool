@@ -88,6 +88,33 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "Schedule Baseline SSA Visit")
         self.assertContains(response, "Assign to Partner")
 
+    def test_program_lead_dashboard_renders_successfully(self):
+        User = get_user_model()
+        pl_user = User.objects.create(
+            id="pl-dashboard-1",
+            email="pl-dashboard@edify.org",
+            name="PL Dashboard User",
+            roles=["Program Lead"],
+            active_role="Program Lead",
+            is_active=True,
+        )
+        pl_profile = StaffProfile.objects.create(
+            id="staff-pl-dashboard-1", user=pl_user, title="Program Lead"
+        )
+        from apps.accounts.models import StaffSupervisorAssignment
+
+        StaffSupervisorAssignment.objects.create(
+            supervisor=pl_profile, supervisee=self.cceo_profile
+        )
+
+        self.client.force_login(pl_user)
+        for url in ("/dashboard", "/dashboard/pl"):
+            response = self.client.get(url)
+
+            self.assertEqual(response.status_code, 200, url)
+            self.assertTemplateUsed(response, "pages/dashboards/pl.html")
+            self.assertContains(response, "Program Lead Dashboard")
+
     def test_urgent_action_prefills_the_real_scheduling_drawer(self):
         self.client.force_login(self.cceo_user)
         self.school.current_fy_ssa_status = "done"

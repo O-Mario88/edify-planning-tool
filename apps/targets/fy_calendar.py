@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from apps.core.clock import ClockService
 from apps.core.fy import (
     get_fy_date_range,
     get_month_date_range,
@@ -59,7 +60,7 @@ class FinancialYearCalendarService:
     @staticmethod
     def current(at: date | None = None) -> dict:
         """Resolve today's FY, month-of-FY and quarter dynamically."""
-        today = at or date.today()
+        today = at or ClockService.today()
         fy = get_operational_fy(today)
         month_of_fy = FinancialYearCalendarService.month_of_fy_for(today, fy) or 1
         return {
@@ -81,12 +82,14 @@ class FinancialYearCalendarService:
     def working_days(start: date, end: date, user=None) -> int:
         """Weekdays in [start, end) minus public holidays minus the user's own
         approved leave days."""
-        from apps.accounts.models import Leave, PublicHoliday
+        from apps.accounts.models import Leave
+        from apps.hr.leave_services import PublicHolidayService
 
+        # Union both holiday sources (PublicHoliday rows + CalendarBlock
+        # PUBLIC_HOLIDAY rows) — querying PublicHoliday alone silently missed
+        # holidays added only via the /public-holidays admin surface.
         holidays = set(
-            PublicHoliday.objects.filter(date__gte=start, date__lt=end).values_list(
-                "date", flat=True
-            )
+            PublicHolidayService.get_holidays_in_range(start, end - timedelta(days=1))
         )
         leave_days: set[date] = set()
         if user is not None:
@@ -122,7 +125,7 @@ class FinancialYearCalendarService:
     ) -> int:
         """Expected achievement %% for a period at `at`: working days elapsed /
         working days total. 0 before the period, 100 after it."""
-        today = at or date.today()
+        today = at or ClockService.today()
         if today < start:
             return 0
         if today >= end:

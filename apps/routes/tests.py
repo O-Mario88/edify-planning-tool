@@ -7,6 +7,7 @@ from __future__ import annotations
 from datetime import date
 
 from django.test import TestCase
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.budget.models import CostCatalogue, CostSetting
@@ -44,6 +45,13 @@ SECONDARY_RATES = [
 VISIT_DAY = date(2026, 8, 3)
 
 
+@freeze_time("2026-07-27")  # fixed Monday on/before VISIT_DAY — REG-02 §1.1:
+# apps.command_center.todo_service._route_todos and
+# apps.routes.health.route_intelligence_checks both filter route batches by
+# `visit_date__gte=date.today()`, so this whole class implicitly needs
+# "today" to be on or before VISIT_DAY for those to see it as upcoming —
+# without freezing, this test class silently breaks once the real
+# wall-clock date passes VISIT_DAY.
 class RouteIntelligenceTestCase(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Route Region")

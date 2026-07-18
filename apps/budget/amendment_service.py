@@ -56,6 +56,21 @@ def request_amendment(activity_id: str, data: dict, principal) -> BudgetAmendmen
         raise BadRequest("An amendment requires a reason.")
     new_date = _parse_date(data["newDate"])
 
+    # REG-02 — moving a locked activity's date is still scheduling; it must
+    # respect the same Sunday/holiday/blackout/leave gate as every other
+    # scheduling surface, checked here (at request time) so the requester
+    # gets immediate feedback instead of a silent reviewer-side rejection.
+    from apps.core.calendar_policy import (
+        SchedulingPolicyService,
+        resolve_scheduling_user,
+    )
+
+    check_staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
+    resp_user = resolve_scheduling_user(check_staff_id) if check_staff_id else None
+    avail = SchedulingPolicyService.check(resp_user, new_date)
+    if avail["status"] == "blocked":
+        raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
     if BudgetAmendment.objects.filter(
         activity=activity,
         status__in=[
@@ -143,6 +158,25 @@ def approve_amendment(amendment_id: str, data: dict, principal) -> BudgetAmendme
         activity = amendment.activity
 
         new_day = amendment.new_date
+
+        # REG-02 — re-check at apply time: calendar policy (e.g. a holiday
+        # declared after the amendment was requested) may have changed since
+        # request_amendment() first validated this date.
+        from apps.core.calendar_policy import (
+            SchedulingPolicyService,
+            resolve_scheduling_user,
+        )
+
+        check_staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
+        resp_user = resolve_scheduling_user(check_staff_id) if check_staff_id else None
+        avail = SchedulingPolicyService.check(resp_user, new_day)
+        if avail["status"] == "blocked":
+            raise BadRequest(
+                "Scheduling blocked: "
+                + " · ".join(avail["blockers"])
+                + " Ask the requester to submit a new amendment with a different date."
+            )
+
         new_dt = datetime.combine(new_day, time(9, 0), tzinfo=dt_tz.utc)
         week_start = new_day - timedelta(days=new_day.weekday())
         week_end = week_start + timedelta(days=6)

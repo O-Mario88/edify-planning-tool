@@ -264,6 +264,20 @@ def reschedule_within_batch(
     already be saved by the caller — see activities.services.reschedule) into
     the new date's batch, subject to the same validation as fresh scheduling.
     Call this AFTER detaching the activity from its old batch."""
+    # REG-02 — self-defending: don't rely solely on the caller
+    # (activities.services.reschedule) having already validated the date;
+    # any future call site must not be able to silently skip this gate.
+    from apps.core.calendar_policy import (
+        SchedulingPolicyService,
+        resolve_scheduling_user,
+    )
+
+    check_staff_id = activity.responsible_staff_id or activity.monitored_by_staff_id
+    resp_user = resolve_scheduling_user(check_staff_id) if check_staff_id else None
+    avail = SchedulingPolicyService.check(resp_user, new_date)
+    if avail["status"] == "blocked":
+        raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
     school = activity.school
     if not school or not school.district_id:
         raise BadRequest(

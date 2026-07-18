@@ -89,6 +89,12 @@
   min-inline-size: 0;
 }
 
+.pl-funding-card__body {
+  display: grid;
+  gap: 0.75rem;
+  min-inline-size: 0;
+}
+
 .pl-dashboard-stack :is(.pl-ssa-matrix-scroll, .pl-urgent-table-scroll) {
   max-inline-size: 100%;
   overflow-x: clip;
@@ -177,9 +183,9 @@
   color: var(--edify-text-subtle);
   font-size: 0.48rem;
   font-weight: 700;
-  letter-spacing: 0.07em;
+  letter-spacing: var(--edify-text-label-tracking);
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .pl-funding-summary__copy {
@@ -286,13 +292,13 @@
 
 @container pl-dashboard (min-width: 48rem) {
   .pl-intelligence-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.48fr);
   }
 }
 
 @container pl-dashboard (min-width: 68rem) {
   .pl-intelligence-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr) minmax(10.5rem, 0.48fr);
+    grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.64fr);
   }
 }
 
@@ -300,6 +306,40 @@
   .pl-funding-statuses {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 0.85rem;
+  }
+}
+
+@container pl-funding (min-width: 40rem) {
+  .pl-funding-card--wide .pl-funding-card__body {
+    grid-template-columns: minmax(12rem, 0.78fr) minmax(18rem, 1.5fr) minmax(10rem, 0.62fr);
+    align-items: center;
+  }
+
+  .pl-funding-card--wide .pl-funding-summary {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    padding-block: 0;
+    text-align: start;
+  }
+
+  .pl-funding-card--wide .pl-funding-statuses {
+    gap: 0.5rem;
+    border-block: 0;
+  }
+
+  .pl-funding-card--wide .pl-funding-status {
+    min-block-size: 100%;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--edify-card-border, var(--edify-border));
+    border-radius: var(--edify-radius-sm);
+    background: var(--edify-surface-muted);
+  }
+
+  .pl-funding-card--wide .pl-funding-footer {
+    align-self: stretch;
+    align-content: center;
+    padding-inline-start: 0.85rem;
+    border-inline-start: 1px solid var(--edify-card-border, var(--edify-border));
   }
 }
 
@@ -401,8 +441,8 @@
   color: var(--edify-text-muted);
   line-height: 1.3;
   display: block;
-  text-transform: uppercase;
-  letter-spacing: var(--edify-text-micro-tracking);
+  text-transform: none;
+  letter-spacing: var(--edify-text-label-tracking);
 }
 
 .card.kpi strong {
@@ -984,8 +1024,8 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--edify-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  text-transform: none;
+  letter-spacing: var(--edify-text-label-tracking);
 }
 
 .summary-card {
@@ -1631,7 +1671,7 @@
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .pto-readiness__facts {
@@ -1692,8 +1732,8 @@
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--edify-text-label-tracking);
+  text-transform: none;
 }
 
 .pto-recommendation p {
@@ -2025,8 +2065,8 @@
   color: var(--edify-warning);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: var(--edify-text-label-tracking);
+  text-transform: none;
 }
 
 .pto-coverage-card strong,
@@ -2855,6 +2895,19 @@
 .tt-button svg { width: 1rem; height: 1rem; }
 .tt-button--primary { background: var(--edify-accent); color: #fff; box-shadow: var(--edify-shadow-sm); }
 .tt-button--primary:hover { background: var(--edify-accent-hover); transform: translateY(-1px); }
+.tt-button--recovery {
+  min-height: 3rem;
+  border-color: rgba(8, 76, 137, 0.36);
+  background-color: var(--edify-accent);
+  background-image: var(--edify-button-primary-treatment);
+  box-shadow: 0 10px 20px -12px rgba(8, 76, 137, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.tt-button--recovery:hover {
+  background-color: var(--edify-accent-hover);
+  background-image: linear-gradient(105deg, #064984 0%, #0a5597 100%);
+  box-shadow: 0 12px 24px -12px rgba(8, 76, 137, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
 .tt-button--quiet { border-color: var(--edify-border); background: var(--edify-surface-muted); color: var(--edify-text-muted); }
 .tt-button--quiet:hover { border-color: var(--edify-border-strong); color: var(--edify-text); }
 .tt-button--soft { border-color: var(--edify-accent-border); background: var(--edify-accent-light); color: var(--edify-accent); }
@@ -3002,10 +3055,15 @@
 
 .tt-matrix {
   width: 100%;
-  min-width: 65rem;
+  min-width: 66.25rem;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
 }
+
+.tt-matrix__member-column { width: 16.5rem; }
+.tt-matrix__period-column { width: 7.5rem; }
+.tt-matrix__action-column { width: 4.75rem; }
 
 .tt-matrix th {
   position: sticky;
@@ -3324,10 +3382,9 @@
 .tt-status[data-tone="danger"] { background: var(--edify-danger-light); color: var(--edify-danger); }
 .tt-status[data-tone="info"] { background: var(--edify-info-light); color: var(--edify-info); }
 
-.tt-area-row > td { padding: 0; border-bottom: 1px solid var(--edify-border); background: var(--edify-surface-muted); }
+.tt-area-row > td { padding: 0 !important; border-bottom: 1px solid var(--edify-border); background: var(--edify-surface-muted); }
 .tt-area-matrix-shell { overflow: clip; padding-block-end: 0.35rem; }
-.tt-area-matrix { width: 100%; table-layout: fixed; border-collapse: collapse; }
-.tt-area-matrix__name-column { width: 16.5rem; }
+.tt-area-matrix { width: 100%; min-width: 66.25rem; table-layout: fixed; border-collapse: collapse; }
 .tt-matrix .tt-area-matrix th,
 .tt-matrix .tt-area-matrix td {
   position: static;
@@ -3341,6 +3398,13 @@
 .tt-matrix .tt-area-matrix thead th {
   padding-block: 0.65rem;
   background: color-mix(in oklab, var(--edify-surface-muted) 84%, var(--edify-accent-light));
+}
+.tt-matrix .tt-area-matrix .tt-area-matrix__action-spacer {
+  width: 4.75rem;
+  min-width: 4.75rem;
+  padding-inline: 0;
+  border-inline-start: 1px solid color-mix(in oklab, var(--edify-border) 58%, transparent);
+  background: transparent;
 }
 .tt-matrix .tt-area-matrix th:first-child {
   position: sticky;

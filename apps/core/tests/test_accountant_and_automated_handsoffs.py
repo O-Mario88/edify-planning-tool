@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import date, timedelta
+from freezegun import freeze_time
 
 from apps.accounts.models import StaffProfile
 from apps.fund_requests.models import (
@@ -25,6 +26,7 @@ from apps.core.rbac import EdifyRole
 User = get_user_model()
 
 
+@freeze_time("2026-08-03")  # fixed Monday, matches hardcoded fy="2026" — REG-02 §1.1
 class AccountantAndAutomatedHandoffsTest(TestCase):
     def setUp(self):
         # Create users

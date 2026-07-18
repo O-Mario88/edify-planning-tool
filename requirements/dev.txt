@@ -6,6 +6,9 @@ pytest==8.3.4
 pytest-django==4.9.0
 pytest-cov==6.0.0
 factory-boy==3.3.1
+# Frozen-clock test mechanism (REG-02) — pins "today"/"now" for
+# scheduling-policy tests instead of relying on the real wall-clock date.
+freezegun==1.5.1
 # Serializes tracebacks across `manage.py test --parallel` workers — without
 # it a failing test crashes the runner with "cannot pickle 'traceback'".
 tblib==3.2.2

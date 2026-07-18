@@ -147,6 +147,32 @@ class AllExceptionsMiddleware:
 
         # Unknown/5xx — never leak internals.
         status = 500
+        # The client only receives a safe generic envelope, but retain the
+        # correlation, request shape and exception class in the immutable
+        # audit trail. This gives support a usable lead when an exception
+        # occurs before a feature-level audit event can be written.
+        from apps.audit.services import log as audit_log
+
+        user = getattr(request, "user", None)
+        actor_id = (
+            str(user.id)
+            if getattr(user, "is_authenticated", False) and getattr(user, "id", None)
+            else None
+        )
+        audit_log(
+            action="request_failed",
+            subject_kind="Request",
+            subject_id=request.path[:30] or "/",
+            actor_id=actor_id,
+            actor_role=getattr(user, "active_role", None) if actor_id else None,
+            success=False,
+            reason=f"Unhandled {type(exception).__name__}",
+            payload={
+                "method": request.method,
+                "path": request.path,
+                "exception_type": type(exception).__name__,
+            },
+        )
         logger.exception(
             "[%s] %s %s -> 500 : %s",
             correlation_id,

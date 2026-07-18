@@ -295,12 +295,23 @@ class AdminUserOperationsTest(TestCase):
         self.assertFalse(target.lockout_escalated)
         self.assertEqual(target.lockout_cycle_count, 1)
 
-        # Verify login is blocked even with correct password while locked.
+        # Verify login is blocked even with correct password while locked —
+        # SEC-02: the public response must be the SAME generic message a
+        # wrong password or unknown email gets, not a "locked" disclosure.
         res = self.client.post(
             "/login", {"email": "lockme@edify.test", "password": "CorrectPassword1!"}
         )
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "locked")
+        self.assertContains(res, "Invalid email or password")
+        self.assertNotContains(res, "locked")
+
+        from apps.audit.models import AuditLog
+
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="auth.login_failed", reason="account_locked"
+            ).exists()
+        )
 
     def test_repeated_lockout_cycles_escalate_and_notify_admin(self):
         """AUTH_LOCKOUT_ESCALATION_COUNT separate lock cycles within the
@@ -430,13 +441,15 @@ class AdminUserOperationsTest(TestCase):
         self.assertTrue(target.lockout_escalated)
 
         # Login must be blocked even with the correct password while
-        # manually locked.
+        # manually locked — SEC-02: same generic public response as any
+        # other rejection, not a "locked" disclosure.
         self.client.logout()
         res = self.client.post(
             "/login", {"email": "manuallock@edify.test", "password": "Password1!"}
         )
         self.assertEqual(res.status_code, 200)
-        self.assertContains(res, "locked")
+        self.assertContains(res, "Invalid email or password")
+        self.assertNotContains(res, "locked")
 
     def test_force_change_password_flow(self):
         """Test that a user with must_change_password=True is forced to change password."""

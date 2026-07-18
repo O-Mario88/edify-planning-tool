@@ -19,6 +19,7 @@ from datetime import timedelta
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import User
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -238,6 +239,9 @@ class PeriodFundRequestGuardTest(TestCase):
 class WeeklyCrossChannelTest(TestCase):
     """Weekly disburse must refuse lines already paid elsewhere (F4.5)."""
 
+    @freeze_time(
+        "2026-08-03"
+    )  # fixed Monday, matches hardcoded fy="2026" — REG-02 §1.1
     def test_weekly_disburse_blocked_when_child_advance_disbursed(self):
         from apps.fund_requests import weekly_service
         from apps.fund_requests.models import (

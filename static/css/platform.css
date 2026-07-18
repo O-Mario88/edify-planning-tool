@@ -116,11 +116,23 @@ main :where(.tracking-widest, .tracking-wider) {
   letter-spacing: 0.055em !important;
 }
 
-main :where(.text-slate-400, .text-slate-500) {
+/* Legacy utility colours resolve to the same accessible hierarchy as native
+   components, so old templates cannot quietly ship low-contrast copy. */
+main :where(.text-slate-400, .text-slate-500,
+  .text-gray-400, .text-gray-500,
+  .text-zinc-400, .text-zinc-500,
+  .text-neutral-400, .text-neutral-500) {
   color: var(--edify-text-muted) !important;
 }
 
-main :where(.text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900) {
+main :where(.text-slate-300, .text-gray-300, .text-zinc-300, .text-neutral-300) {
+  color: var(--edify-text-subtle) !important;
+}
+
+main :where(.text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900,
+  .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+  .text-zinc-600, .text-zinc-700, .text-zinc-800, .text-zinc-900,
+  .text-neutral-600, .text-neutral-700, .text-neutral-800, .text-neutral-900) {
   color: var(--edify-text) !important;
 }
 
@@ -129,15 +141,51 @@ main :where(.tabular-nums, [class*="text-[19px]"], [class*="text-[20px]"],
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-/* ── Surface hierarchy: one family, with quieter nested tiles. ──────────── */
-main :where(.card, .panel, .premium-card, .premium-card-elevated,
-  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
-  .bg-white[class*="rounded"],
-  [style*="--edify-surface"][class*="rounded"]) {
-  border-color: var(--edify-border) !important;
-  background-color: var(--edify-surface) !important;
-  background-image: var(--edify-surface-treatment);
-  box-shadow: var(--edify-shadow-sm) !important;
+/* ── KPI label typography: clear title case, reserved all-caps metadata. ── */
+.edify-kpi-label,
+main :where(
+  .card.kpi > div > small, .mini > small, .kpi-strip__label,
+  .admin-kpi__label, .sp-kpi__label, .sp-kpi > div > span,
+  .spp-kpi > div > span, .spa-kpi small, .tt-kpi__copy > span,
+  .pl-funding-donut__label, .pto-availability-ring > span,
+  .pto-recommendation div > span, .pto-coverage-card > div:first-child > span,
+  .rounded-surface :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
+  .card :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
+  .rounded-surface:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase,
+  .rounded-control:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase
+) {
+  font-weight: var(--edify-kpi-label-weight) !important;
+  letter-spacing: var(--edify-kpi-label-tracking) !important;
+  text-transform: none !important;
+}
+
+/* ── Surface hierarchy: one contract for every workspace card and panel. ── */
+main :where(
+  .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
+  .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
+  .panel, .kpi, .kpi-strip__item, .admin-mini, .admin-budget-grid > article,
+  .platform-filter-bar, .spp-empty, .spa-empty, .tt-modal__panel,
+  .pto-balance-tile, .pto-recommendation, .pto-signal, .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]),
+  [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
+  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"]
+) {
+  /* Card planes are deliberate workspaces; outlines stay subordinate to data. */
+  border-color: var(--edify-card-border) !important;
+  background-color: var(--edify-card-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+  -webkit-backdrop-filter: var(--edify-card-backdrop-filter) !important;
+  backdrop-filter: var(--edify-card-backdrop-filter) !important;
+}
+
+/* Alert cards intentionally retain semantic colour; active cards retain their
+   own specialised treatment rather than inheriting the default neutral plane. */
+main :where(.edify-risk-card, .card-alert) {
+  background-color: var(--edify-danger-light) !important;
+  border-color: var(--edify-danger-border) !important;
 }
 
 main :where(.card, .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
@@ -204,12 +252,12 @@ main .platform-support-grid > :nth-child(n + 4) {
 }
 
 main :where(section, article, aside, div)[class*="rounded-xl"][class*="border"] {
-  border-color: var(--edify-border) !important;
+  border-color: color-mix(in oklab, var(--edify-border) 36%, transparent) !important;
   border-radius: var(--edify-radius-lg) !important;
 }
 
 main :where(section, article, aside, div)[class*="rounded-lg"][class*="border"] {
-  border-color: var(--edify-border) !important;
+  border-color: color-mix(in oklab, var(--edify-border) 36%, transparent) !important;
   border-radius: var(--edify-radius-md) !important;
 }
 
@@ -222,27 +270,83 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   translate: 0 -1px;
 }
 
-/* Blue is image-backed glass. Dark is intentionally opaque and layered. */
-.theme-blue main :where(.card, .panel, .premium-card, .premium-card-elevated,
-  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
-  .bg-white[class*="rounded"],
-  [style*="--edify-surface"][class*="rounded"],
-  section[class*="rounded-xl"][class*="border"],
-  article[class*="rounded-xl"][class*="border"],
-  div[class*="rounded-xl"][class*="border"]) {
-  background-color: var(--edify-surface) !important;
-  background-image: var(--edify-surface-treatment) !important;
-  border-color: var(--edify-border) !important;
-  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md) !important;
-  -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-  backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+/* ── Light workspace: the approved Edify sign-in visual language. ──────── */
+:root:not(.theme-blue):not(.theme-dark) :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: var(--edify-button-primary-treatment) !important;
+  border: 1px solid rgba(8, 76, 137, .36) !important;
+  box-shadow: 0 10px 20px -12px rgba(8, 76, 137, .28), inset 0 1px 0 rgba(255,255,255,.15) !important;
 }
 
-.theme-dark main :where(.card, .panel, .premium-card, .premium-card-elevated,
-  .bg-white[class*="rounded"], [style*="--edify-surface"][class*="rounded"]) {
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent) !important;
+:root:not(.theme-blue):not(.theme-dark) :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
+  background-color: var(--edify-accent-hover) !important;
+  background-image: linear-gradient(105deg, #064984 0%, #0a5597 100%) !important;
+  box-shadow: 0 12px 24px -12px rgba(8, 76, 137, .34), inset 0 1px 0 rgba(255,255,255,.15) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :where(.btn-ghost, .edify-action-button.secondary,
+  .premium-button-secondary, .premium-button-outline, .pto-button--secondary,
+  .sp-button--secondary, .spa-button--secondary, .spp-button--secondary,
+  .hcos-button--secondary, .admin-button--secondary) {
+  color: var(--edify-accent) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: var(--edify-button-secondary-treatment) !important;
   border-color: var(--edify-border) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025), var(--edify-shadow-sm) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) main :where(input[type="text"], input[type="email"],
+  input[type="password"], input[type="number"], input[type="search"], input[type="tel"],
+  input[type="url"], input[type="date"], input[type="datetime-local"], input[type="time"],
+  select, textarea) {
+  background-color: var(--edify-surface-raised) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: inset 0 1px 2px rgba(7, 38, 65, .025);
+}
+
+/* Match the specificity of legacy theme rules so all registered card families
+   receive the opaque theme treatment, including feature-local components. */
+.theme-blue main :is(
+  .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
+  .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
+  .panel, .kpi, .kpi-strip__item, .admin-mini, .admin-budget-grid > article,
+  .platform-filter-bar, .spp-empty, .spa-empty, .tt-modal__panel,
+  .pto-balance-tile, .pto-recommendation, .pto-signal, .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]),
+  [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
+  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"]
+),
+.theme-dark main :is(
+  .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
+  .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
+  .panel, .kpi, .kpi-strip__item, .admin-mini, .admin-budget-grid > article,
+  .platform-filter-bar, .spp-empty, .spa-empty, .tt-modal__panel,
+  .pto-balance-tile, .pto-recommendation, .pto-signal, .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]),
+  [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
+  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"]
+) {
+  background-color: var(--edify-card-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+  -webkit-backdrop-filter: var(--edify-card-backdrop-filter) !important;
+  backdrop-filter: var(--edify-card-backdrop-filter) !important;
 }
 
 /* ── Page headers and breadcrumbs. ─────────────────────────────────────── */
@@ -277,7 +381,7 @@ main :where(.btn, .edify-action-button,
 }
 
 main :where(button, a)[class*="border-slate-"][class*="rounded"] {
-  border-color: var(--edify-border-strong) !important;
+  border-color: color-mix(in oklab, var(--edify-border-strong) 68%, transparent) !important;
   background-color: var(--edify-surface) !important;
   color: var(--edify-text) !important;
 }
@@ -310,7 +414,7 @@ main :where(input[type="text"], input[type="email"], input[type="password"],
   input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
   input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
   min-block-size: var(--edify-control-block-size);
-  border: 1px solid var(--edify-border) !important;
+  border: 1px solid color-mix(in oklab, var(--edify-border) 70%, transparent) !important;
   border-radius: var(--edify-radius-sm) !important;
   background-color: var(--edify-surface-muted) !important;
   color: var(--edify-text) !important;
@@ -429,6 +533,53 @@ main table tbody tr {
 
 main table tbody tr:hover > :where(td, th) {
   background-color: color-mix(in oklab, var(--edify-accent-light) 54%, var(--edify-surface)) !important;
+}
+
+/* ── Row-led table system. ────────────────────────────────────────────────
+   Tables are comparison tools, not spreadsheets: remove the boxed cell grid,
+   retain a quiet header rule and a low-contrast row rhythm. Matrix views are
+   deliberately exempt because their column boundaries carry meaning. */
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix),
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) {
+  border: 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) :where(tr, th, td),
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) :where(tr, th, td) {
+  border-inline: 0 !important;
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) thead th,
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) thead th {
+  background: transparent !important;
+  border-block-start: 0 !important;
+  border-block-end: 1px solid color-mix(in oklab, var(--edify-border) 54%, transparent) !important;
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr,
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr {
+  background: transparent !important;
+  border-block: 0 !important;
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody td,
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody td {
+  border-block-start: 0 !important;
+  border-block-end: 1px solid color-mix(in oklab, var(--edify-border) 38%, transparent) !important;
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:last-child > td,
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:last-child > td {
+  border-block-end: 0 !important;
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(odd),
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(even),
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(odd),
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(even) {
+  background: transparent !important;
 }
 
 main :where(.card, .panel, .bg-white[class*="rounded"]):has(> table),
@@ -713,16 +864,6 @@ main .platform-responsive-table [data-priority="low"] {
   backdrop-filter: blur(20px) saturate(118%);
 }
 
-.theme-dark main :where(.card, .panel, .premium-card, .premium-card-elevated,
-  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
-  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
-  [style*="--edify-surface"][class*="rounded"], .platform-filter-bar) {
-  background-color: var(--edify-surface) !important;
-  background-image: var(--edify-surface-treatment) !important;
-  border-color: var(--edify-border) !important;
-  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-sm) !important;
-}
-
 .theme-dark main :where(.bg-slate-50, .bg-slate-100,
   [class*="bg-slate-50/"], [class*="bg-slate-100/"]) {
   background-color: var(--edify-surface-muted) !important;
@@ -765,7 +906,7 @@ main .platform-responsive-table [data-priority="low"] {
   color: var(--edify-text) !important;
   background-color: var(--edify-surface-raised) !important;
   background-image: var(--edify-button-secondary-treatment) !important;
-  border-color: var(--edify-border-strong) !important;
+  border-color: color-mix(in oklab, var(--edify-border-strong) 68%, transparent) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 8px 20px -16px rgba(0,0,0,.9) !important;
 }
 
@@ -783,7 +924,7 @@ main .platform-responsive-table [data-priority="low"] {
   input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
   background-color: var(--edify-surface-muted) !important;
   background-image: linear-gradient(180deg, rgba(0,0,0,.13), transparent) !important;
-  border-color: var(--edify-border) !important;
+  border-color: color-mix(in oklab, var(--edify-border) 70%, transparent) !important;
   color: var(--edify-text) !important;
   box-shadow: inset 0 1px 2px rgba(0,0,0,.22);
 }
@@ -798,19 +939,19 @@ main .platform-responsive-table [data-priority="low"] {
   box-shadow: var(--edify-focus-ring) !important;
 }
 
-.theme-dark main table th {
-  background: var(--edify-surface-muted) !important;
+.theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) th {
+  background: transparent !important;
   color: var(--edify-text-subtle) !important;
-  border-block-end-color: var(--edify-border-strong) !important;
+  border-block-end-color: color-mix(in oklab, var(--edify-border) 54%, transparent) !important;
 }
 
-.theme-dark main table td {
+.theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) td {
   color: var(--edify-text-muted);
-  border-block-end-color: var(--edify-divider) !important;
+  border-block-end-color: color-mix(in oklab, var(--edify-border) 38%, transparent) !important;
 }
 
-.theme-dark main table tbody tr:nth-child(even) > :where(td, th) {
-  background-color: rgba(255,255,255,.014) !important;
+.theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(even) > :where(td, th) {
+  background-color: transparent !important;
 }
 
 .theme-dark main table tbody tr:hover > :where(td, th) {

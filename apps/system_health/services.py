@@ -61,7 +61,20 @@ def report() -> dict:
     data["backgroundAutomation"] = _background_automation()
     data["authLockout"] = _auth_lockout()
     data["unmatchedSsa"] = _unmatched_ssa()
+    data["evidenceStorage"] = _evidence_storage()
     return data
+
+
+def _evidence_storage() -> dict:
+    """Persistent evidence storage writability + free-space checks (§41:
+    "Storage failure") — runtime, not just at-boot (apps.core.boot_gates
+    only covers static assets at process start)."""
+    try:
+        from apps.evidence.health import evidence_storage_health
+
+        return evidence_storage_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
 
 
 def _background_automation() -> dict:

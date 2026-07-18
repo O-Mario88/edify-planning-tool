@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from django.db.models import Count, Q
 
 from apps.accounts.models import (
+    CalendarBlock,
     Leave,
     PublicHoliday,
     StaffProfile,
@@ -411,7 +412,23 @@ class HRDashboardService:
                 "status": lv.status,
             }
 
-        holidays = list(PublicHoliday.objects.filter(date__gte=today).order_by("date"))
+        # Two independent holiday sources — PublicHoliday rows and
+        # CalendarBlock(PUBLIC_HOLIDAY) rows — must be unioned; a holiday
+        # added only via the /public-holidays admin surface (a CalendarBlock)
+        # is otherwise silently missing from this list.
+        holiday_days = {
+            h.date: h.name for h in PublicHoliday.objects.filter(date__gte=today)
+        }
+        for b in CalendarBlock.objects.filter(
+            block_type="PUBLIC_HOLIDAY", is_active=True, end_date__gte=today
+        ):
+            d = max(b.start_date, today)
+            while d <= b.end_date:
+                holiday_days.setdefault(d, b.title)
+                d += timedelta(days=1)
+        holidays = [
+            {"date": d, "name": name} for d, name in sorted(holiday_days.items())
+        ]
 
         # Build roles counts list as expected by tests
         role_counts = (
@@ -453,7 +470,7 @@ class HRDashboardService:
             "pending_total": pending.count(),
             "on_leave_now": [leave_row(lv) for lv in on_leave_today_qs[:6]],
             "upcoming_leave": [leave_row(lv) for lv in upcoming_leave[:6]],
-            "holidays": [{"name": h.name, "date": h.date} for h in holidays],
+            "holidays": holidays,
             "roles": roles_list,
             "field_debrief_intel": field_debrief_intel,
             # Leadership Attention banner values (real, reused from the KPIs above).

@@ -92,6 +92,30 @@
     transform: translateY(-0.5px);
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   }
+  /* REG-02 — same Sunday/holiday/blackout dates the scheduling gate
+     enforces, flagged here so users don't attempt a date that will be
+     rejected server-side. */
+  .fc-day-blocked {
+    background-color: var(--edify-danger-light, rgba(239,68,68,0.06)) !important;
+  }
+  .fc-day-blocked .fc-daygrid-day-number {
+    color: var(--edify-danger, #ef4444) !important;
+  }
+  .calendar-blocked-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--edify-text-muted);
+  }
+  .calendar-blocked-legend .swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background-color: var(--edify-danger-light, rgba(239,68,68,0.15));
+    border: 1px solid var(--edify-danger, #ef4444);
+  }
 </style>
 
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
@@ -100,6 +124,7 @@
       <h1 class="text-[21px] font-extrabold tracking-tight">Calendar</h1>
       <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Edify Operations · Interactive Planner</p>
     </div>
+    <span class="calendar-blocked-legend"><span class="swatch"></span> Blocked for scheduling (Sunday / holiday / blackout)</span>
   </div>
 
   <!-- FullCalendar Container -->
@@ -127,10 +152,14 @@
   ]
 </script>
 
+{{ blocked_dates|json_script:"blocked-dates-data" }}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('fullcalendar-view');
     const eventsData = JSON.parse(document.getElementById('calendar-events-data').textContent);
+    // REG-02 — server-computed public-holiday/blackout dates for this month;
+    // Sunday is derived client-side from the day-of-week.
+    const blockedDates = JSON.parse(document.getElementById('blocked-dates-data').textContent);
 
     // Set initial date dynamically based on context month/year if available
     const initialDate = '{{ year }}-{{ month|stringformat:"02d" }}-01';
@@ -146,6 +175,15 @@
       events: eventsData,
       themeSystem: 'standard',
       height: 'auto',
+      dayCellDidMount: function(arg) {
+        const iso = arg.date.toISOString().slice(0, 10);
+        const isSunday = arg.date.getDay() === 0;
+        const reason = blockedDates[iso] || (isSunday ? 'Sunday' : null);
+        if (reason) {
+          arg.el.classList.add('fc-day-blocked');
+          arg.el.setAttribute('title', 'Blocked for scheduling: ' + reason);
+        }
+      },
       eventClick: function(info) {
         // Show details in a modal or drawer
         const props = info.event.extendedProps;

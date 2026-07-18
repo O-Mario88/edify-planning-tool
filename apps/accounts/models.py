@@ -218,19 +218,40 @@ class UserInvitation(TimeStampedModel):
 class RefreshToken(TimeStampedModel):
     """Rotating, revocable refresh token (7d). The access JWT is short-lived
     (15m); this lets a user stay signed in, and logout revokes it so the
-    session can't be refreshed."""
+    session can't be refreshed.
+
+    SEC-03 — family/lineage tracking: every token minted from one login
+    shares a `family_id`. A refresh token is single-use (`consumed_at` is
+    stamped when it's rotated away); presenting an already-consumed or
+    already-revoked token again is treated as reuse (e.g. a stolen token
+    replayed after the legitimate client already rotated past it) and
+    revokes every other live token in the family, forcing a fresh login.
+    """
 
     id = CuidField()
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="refresh_tokens"
     )
     token_hash = models.CharField(max_length=255, unique=True)
+    family_id = models.CharField(max_length=30, db_index=True, default="")
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="children",
+    )
     expires_at = models.DateTimeField()
+    consumed_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
+    reuse_detected_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "refresh_token"
-        indexes = [models.Index(fields=["user"])]
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["family_id"]),
+        ]
 
 
 class Permission(TimeStampedModel):

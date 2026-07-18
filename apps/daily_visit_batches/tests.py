@@ -301,10 +301,13 @@ class DailyVisitBatchTestCase(TestCase):
 
     # ── 6. Under-target soft block, then success with reason ───────────────
     def test_under_target_requires_reason(self):
+        # 2026-08-11 is a Tuesday — a hardcoded Sunday here would trip the
+        # REG-02 scheduling-calendar gate for a reason unrelated to what this
+        # test exercises (the under-target reason requirement).
         with self.assertRaises(ReasonRequiredError):
-            self._schedule(["BATCH-P-1"], date(2026, 8, 9))
+            self._schedule(["BATCH-P-1"], date(2026, 8, 11))
         result = self._schedule(
-            ["BATCH-P-1"], date(2026, 8, 9), reason="staff on leave this week"
+            ["BATCH-P-1"], date(2026, 8, 11), reason="staff on leave this week"
         )
         from .models import DailyVisitBatch
 
