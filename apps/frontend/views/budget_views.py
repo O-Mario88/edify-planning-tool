@@ -231,8 +231,8 @@ def _build_fund_requests_context(request):
 
     # 1. Filters & Defaults
     fy = request.GET.get("fy", "2026").strip()
-    quarter = request.GET.get("quarter", "Q2").strip()
-    month_name = request.GET.get("month", "April").strip()
+    quarter = request.GET.get("quarter", "").strip()
+    month_name = request.GET.get("month", "").strip()
     active_tab = request.GET.get("tab", "weekly").strip()
     request_type = request.GET.get("request_type", "").strip()
 
@@ -250,14 +250,6 @@ def _build_fund_requests_context(request):
         "november": 11,
         "december": 12,
     }
-    month_num = MONTH_MAP.get(month_name.lower(), 4)
-    # This org's FY runs Oct→Sep: Oct-Dec belong to fy-1, Jan-Sep belong to fy
-    # (mirrors apps.fund_requests.pl_approval_service._month_end).
-    year_num = int(fy) - 1 if month_num >= 10 else int(fy)
-
-    # Find all weeks in selected month
-    weeks_in_month = get_weeks_of_month(year_num, month_num)
-
     # 2. Scope & Filter Base Queries
     base = _scoped_base_querysets(request, fy)
     scope = base["scope"]
@@ -268,6 +260,31 @@ def _build_fund_requests_context(request):
     staff_id = base["staff_id"]
     status_filter = base["status_filter"]
     supervised_user_ids = base["supervised_user_ids"]
+
+    # Open on the newest scheduled work the user can see.  The old hard-coded
+    # April default made a newly scheduled July activity look as though no
+    # weekly request or budget existed until the user manually changed filters.
+    if month_name:
+        month_num = MONTH_MAP.get(month_name.lower(), date.today().month)
+    else:
+        latest_for_month = (
+            activities_qs.filter(fy=fy, scheduled_date__isnull=False)
+            .order_by("-scheduled_date")
+            .only("scheduled_date")
+            .first()
+        )
+        month_num = (
+            latest_for_month.scheduled_date.date().month
+            if latest_for_month and latest_for_month.scheduled_date
+            else date.today().month
+        )
+        month_name = calendar.month_name[month_num]
+    if not quarter:
+        quarter = f"Q{((month_num - 1) // 3) + 1}"
+    # This org's FY runs Oct→Sep: Oct-Dec belong to fy-1, Jan-Sep belong to fy
+    # (mirrors apps.fund_requests.pl_approval_service._month_end).
+    year_num = int(fy) - 1 if month_num >= 10 else int(fy)
+    weeks_in_month = get_weeks_of_month(year_num, month_num)
 
     # Default week selection: week containing the latest scheduled activity
     # IN SCOPE (own + supervised team), or the first week of the month.

@@ -228,7 +228,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "templates/partials/finance/country_budget/root.html",
             "templates/pages/reports/index.html",
             "templates/pages/projects/index.html",
-            "templates/partials/clusters/cluster_card.html",
+            # cluster_card.html no longer belongs here: its SSA intervention
+            # scores moved from KPI-style metric cards into the shared
+            # partials/ssa/score_group_columns.html grouped-list presentation
+            # (normal-case <strong> labels, not the uppercase-tracking KPI
+            # label pattern this contract enforces). The KPI-label contract is
+            # still enforced for every surface that actually renders KPI cards.
         ):
             self.assertIn("edify-kpi-label", _read(template), template)
 

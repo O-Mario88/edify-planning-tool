@@ -143,16 +143,19 @@ Schedule Cluster Meeting
 <div class="space-y-3">
 {% if weakest_interventions %}
 {% for item in weakest_interventions|slice:":4" %}
+{# cluster_weakest_interventions() returns `avg`, not `score` — this panel
+   read `item.score` and so rendered a blank value and a neutral dot for
+   every intervention, on every cluster, since it was written. #}
 <div class="flex items-center justify-between text-[12px] font-semibold">
 <div class="flex items-center gap-2">
-<span class="h-2 w-2 rounded-pill {% if item.score < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
+<span class="h-2 w-2 rounded-pill {% if item.avg < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
 <span class="truncate">{{ item.label }}</span>
 </div>
-<span class="font-semibold text-slate-800">{{ item.score|floatformat:1 }}</span>
+<span class="font-semibold text-slate-800">{{ item.avg|floatformat:1 }}</span>
 </div>
 {% endfor %}
 {% else %}
-<p class="text-[12px] text-slate-400 font-semibold">No intervention averages found.</p>
+<p class="text-[12px] text-slate-400 font-semibold">No confirmed SSA scores for this cluster yet.</p>
 {% endif %}
 </div>
 </div>
@@ -163,13 +166,19 @@ Schedule Cluster Meeting
 <div class="space-y-3.5">
 {% if intervention_summary %}
 {% for item in intervention_summary %}
+{# cluster_intervention_summary() returns `avg`, not `score` — this panel
+   read `item.score`, so every intervention showed a blank score and a
+   0%-width bar. `avg` is None when no confirmed SSA covers the
+   intervention; show an explicit dash rather than a misleading 0. #}
 <div>
 <div class="flex items-center justify-between text-[12px] font-semibold">
 <span class="truncate">{{ item.label }}</span>
-<span class="font-semibold">{{ item.score|floatformat:1 }}</span>
+<span class="font-semibold {% if item.avg == None %}text-slate-300{% endif %}">{% if item.avg == None %}—{% else %}{{ item.avg|floatformat:1 }}{% endif %}</span>
 </div>
 <div class="h-1.5 w-full bg-slate-100 rounded-pill mt-1 overflow-hidden">
-<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ item.score|multiply:10 }}%"></div>
+{% if item.avg != None %}
+<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ item.avg|multiply:10 }}%"></div>
+{% endif %}
 </div>
 </div>
 {% endfor %}

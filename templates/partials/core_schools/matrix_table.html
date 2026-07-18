@@ -1,14 +1,14 @@
 <input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}" hx-swap-oob="true">
-<div class="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-[12px] font-bold text-slate-500 rounded-t-xl select-none">
+<div class="core-school-matrix__header px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-[12px] font-bold text-slate-500 rounded-t-xl select-none">
   <div class="flex items-center gap-2">
-    <span class="text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">Core Schools Matrix ({{ matrix_rows|length }} Schools)</span>
+    <span class="core-school-matrix__title text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">Core Schools Matrix ({{ matrix_rows|length }} Schools)</span>
   </div>
-  <div class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
-    Click chevron to view package status &amp; actions
+  <div class="core-school-matrix__helper edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
+    Click a school to view package status and SSA scores
   </div>
 </div>
 
-<div class="p-4 bg-slate-50/30 space-y-4 rounded-b-xl border border-slate-100">
+<div class="p-4 bg-slate-50/30 space-y-4 rounded-b-xl border border-slate-100" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
   {% if matrix_rows %}
     {% for r in matrix_rows %}
       {% include "components/school_list_card.html" with school=r context_page="core_schools" %}

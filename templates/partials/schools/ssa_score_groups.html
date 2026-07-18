@@ -1,0 +1,11 @@
+<section class="school-record-ssa" aria-labelledby="{{ detail_id }}-ssa-title">
+  <div class="school-record-ssa__heading">
+    <div>
+      <p class="school-record-ssa__eyebrow">SSA detail</p>
+      <h3 id="{{ detail_id }}-ssa-title">Intervention scores</h3>
+    </div>
+    <p>Latest confirmed assessment{% if selected_fy %} · FY {{ selected_fy }}{% endif %}</p>
+  </div>
+
+  {% include "partials/ssa/score_group_columns.html" with detail_id=detail_id ssa_groups=ssa_groups has_ssa_scores=has_ssa_scores %}
+</section>

@@ -9,7 +9,7 @@ active cluster per sub-county by default — a 2nd requires CLUSTER_OVERRIDE.
 from __future__ import annotations
 
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -17,8 +17,29 @@ from apps.core.rbac import Permission
 from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.geography.models import District, SubCounty
 from apps.schools.models import School
+from apps.ssa.presentation import build_ssa_score_summary
+from apps.ssa.models import SsaRecord
 
 from .models import Cluster, ClusterSubCounty, SchoolClusterAssignment
+
+
+def _latest_confirmed_ssa(school):
+    """The canonical latest-SSA lookup for cluster intelligence.
+
+    Delegates to apps.ssa.services.latest_applicable_record so cluster
+    surfaces obey the same rule as every other decision surface: only a
+    CONFIRMED record may rank, justify or gate work, and the newest record
+    is chosen with a deterministic (-date_of_ssa, -created_at) tiebreak.
+
+    These call sites previously filtered on deleted_at alone and ordered by
+    date only, so an unverified upload could drive a cluster's average and
+    weakest-intervention ranking — while the per-school table on the same
+    page already excluded unverified records, letting one page disagree
+    with itself about the same schools.
+    """
+    from apps.ssa.services import latest_applicable_record
+
+    return latest_applicable_record(school)
 
 
 def _scope_filter(principal):
@@ -364,6 +385,7 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
 
     with transaction.atomic():
         school = School.objects.select_for_update().get(pk=school.pk)
+        old_cluster_id = school.cluster_id
         target_cluster_id = cluster.id if cluster else None
         school.cluster_id = target_cluster_id
         school.cluster_status = "clustered" if target_cluster_id else "unclustered"
@@ -387,6 +409,21 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
             SchoolClusterAssignment.objects.create(
                 school=school, cluster=cluster, assigned_by=assigned_by
             )
+
+    if old_cluster_id != target_cluster_id:
+        # Audit here (the canonical service), not per-caller — audit found
+        # only 3 of 6+ call sites (REST APIs, bulk-assign, and critically
+        # the school-edit-drawer's cluster dropdown) bolted this on ad hoc
+        # in view code, leaving most paths silently unaudited.
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="cluster.membership_changed",
+            subject_kind="school",
+            subject_id=school.id,
+            actor_id=assigned_by,
+            payload={"oldClusterId": old_cluster_id, "newClusterId": target_cluster_id},
+        )
     return school
 
 
@@ -433,7 +470,19 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
     schools = (
         School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
         .select_related("district", "sub_county", "parish")
-        .prefetch_related("ssa_records__scores", "activities")
+        .prefetch_related(
+            Prefetch(
+                "ssa_records",
+                queryset=SsaRecord.objects.filter(
+                    deleted_at__isnull=True,
+                    verification_status="confirmed",
+                )
+                .prefetch_related("scores")
+                .order_by("-date_of_ssa", "-created_at"),
+                to_attr="confirmed_ssa_records",
+            ),
+            "activities",
+        )
         .order_by("name")
     )
 
@@ -467,24 +516,25 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         # Canonical decision rule: confirmed SSA only (see
         # apps.ssa.services.latest_applicable_record) — cluster intelligence
         # previously ranked weakest areas from unverified uploads.
-        latest_ssa = (
-            s.ssa_records.filter(
-                deleted_at__isnull=True, verification_status="confirmed"
-            )
-            .order_by("-date_of_ssa", "-created_at")
-            .first()
-        )
+        latest_ssa = next(iter(s.confirmed_ssa_records), None)
         avg_score = None
         weakest_label = "None"
         struggling = []
         rec_action = "No recommended action (no SSA)"
+        ssa_summary = build_ssa_score_summary([])
 
         if latest_ssa:
-            avg_score = latest_ssa.average_score
             scores = sorted(
                 list(latest_ssa.scores.all()),
                 key=lambda x: (x.score, x.intervention),
             )
+            ssa_summary = build_ssa_score_summary(
+                [
+                    {"intervention": score.intervention, "score": score.score}
+                    for score in scores
+                ]
+            )
+            avg_score = ssa_summary["average_score"]
             if scores:
                 weakest_label = scores[0].get_intervention_display()
                 weakest_key = scores[0].intervention
@@ -558,8 +608,17 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 "subCounty": s.sub_county.name if s.sub_county_id else None,
                 "parish": s.parish.name if s.parish_id else None,
                 "schoolType": s.school_type,
+                "schoolTypeLabel": s.get_school_type_display(),
+                "shippingAddress": s.shipping_address or "—",
+                "enrolment": s.enrollment or 0,
+                "phone": s.primary_contact_phone or s.school_phone or "—",
+                "schoolContact": s.primary_contact_name or "—",
+                "clusterName": cluster.name,
                 "assignedStaff": assigned_staff,
                 "currentSsaAverage": avg_score,
+                "hasSsaScores": ssa_summary["has_scores"],
+                "ssaAverageTone": ssa_summary["average_tone"],
+                "ssaGroups": ssa_summary["groups"],
                 "weakestSsaIntervention": weakest_label,
                 "topStrugglingInterventions": struggling,
                 "lastVisitDate": last_visit_date,
@@ -587,11 +646,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     # Calculate average SSA
     latest_ssas = []
     for s in schools:
-        latest = (
-            s.ssa_records.filter(deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
-            .first()
-        )
+        latest = _latest_confirmed_ssa(s)
         if latest and latest.average_score is not None:
             latest_ssas.append(latest.average_score)
     avg_ssa = round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
@@ -663,11 +718,7 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
     intervention_scores = {key.value: [] for key in SsaIntervention}
 
     for s in schools:
-        latest = (
-            s.ssa_records.filter(deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
-            .first()
-        )
+        latest = _latest_confirmed_ssa(s)
         if latest:
             for score in latest.scores.all():
                 if score.score is not None:
@@ -696,17 +747,21 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
             }
         )
 
-    # Filter out interventions with no scores to prevent ranking empty data, but fallback if empty
+    # Only rank interventions that actually have confirmed scores. When no
+    # school in the cluster has a confirmed SSA yet, return an empty list —
+    # NOT a fabricated ranking. This previously fell back to the first four
+    # interventions in enum order with their averages forced to 0.0, which
+    # invented four "weakest interventions" out of missing data and banded
+    # them Critical (ssa_score_band(0.0) -> Critical), driving cluster
+    # training recommendations off assessments that were never collected.
     scored = [r for r in results if r["avg"] is not None]
     if not scored:
-        # Fallback if no SSAs recorded yet
-        scored = results[:4]
-        for item in scored:
-            item["avg"] = 0.0
-        return scored
+        return []
 
-    # Sort ascending by average score
-    scored.sort(key=lambda x: x["avg"])
+    # Ascending by average score, with a deterministic alphabetical tiebreak
+    # so tied interventions always rank in the same order (matching
+    # apps.ssa.services.weakest_interventions_for).
+    scored.sort(key=lambda x: (x["avg"], x["intervention"]))
     return scored[:4]
 
 
@@ -719,11 +774,7 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
 
     intervention_scores = {key.value: [] for key in SsaIntervention}
     for s in schools:
-        latest = (
-            s.ssa_records.filter(deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
-            .first()
-        )
+        latest = _latest_confirmed_ssa(s)
         if latest:
             for score in latest.scores.all():
                 if score.score is not None:
@@ -731,7 +782,10 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
     results = []
     for key in SsaIntervention:
         scores = intervention_scores[key.value]
-        avg = round(sum(scores) / len(scores), 1) if scores else 0.0
+        # None (not 0.0) when no confirmed SSA covers this intervention —
+        # 0.0 is a real, terrible score and reporting it for missing data
+        # both misleads the reader and bands the intervention Critical.
+        avg = round(sum(scores) / len(scores), 1) if scores else None
         below_count = sum(1 for x in scores if x < 5.5)
         results.append(
             {
@@ -1066,11 +1120,7 @@ class ClusterDashboardService:
 
             latest_ssas = []
             for s in schools:
-                latest = (
-                    s.ssa_records.filter(deleted_at__isnull=True)
-                    .order_by("-date_of_ssa")
-                    .first()
-                )
+                latest = _latest_confirmed_ssa(s)
                 if latest and latest.average_score is not None:
                     latest_ssas.append(latest.average_score)
             avg_ssa = (
@@ -1112,6 +1162,14 @@ class ClusterDashboardService:
                 activity_type="cluster_meeting", status="completed", fy=fy
             ).count()
 
+            intervention_scores = cluster_intervention_summary(c.id, user)
+            ssa_summary = build_ssa_score_summary(
+                {
+                    "intervention": item["intervention"],
+                    "score": item["avg"],
+                }
+                for item in intervention_scores
+            )
             weakest = cluster_weakest_interventions(c.id, user)
             planning_info = planning_map.get(c.id, {})
 
@@ -1152,7 +1210,8 @@ class ClusterDashboardService:
                     "last_meeting_date": last_meeting_date,
                     "last_training_date": last_training_date,
                     "weakest_interventions": weakest,
-                    "all_intervention_scores": cluster_intervention_summary(c.id, user),
+                    "has_ssa_scores": ssa_summary["has_scores"],
+                    "ssa_groups": ssa_summary["groups"],
                     "risk": risk,
                     "next_action": next_action,
                     "planning": planning_info,
@@ -1342,15 +1401,6 @@ class ClusterActionPlannerService:
     @staticmethod
     def schedule_activity(data: dict, user) -> dict:
         from apps.activities.services import create as create_activity
-
-        # Ensure we have active cost catalogue
-        from apps.budget.costing_service import active_catalogue
-
-        catalogue = active_catalogue(data.get("fy", "2026"))
-        if not catalogue:
-            raise BadRequest(
-                "Active Cost Catalogue required before cluster activity can be scheduled."
-            )
 
         act_dict = create_activity(data, user)
 

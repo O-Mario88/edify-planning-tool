@@ -1028,12 +1028,49 @@ def leave_coverage_view(request):
 @require_POST
 @require_page_permission("leave_coverage")
 def revoke_coverage_action(request, assignment_id):
-    """Manually revoke temporary delegated access."""
+    """Manually revoke temporary delegated access.
+
+    The "leave_coverage" page ACL is broad ({CCEO, PL, CD, RVP, HR,
+    Accountant, IA, Admin}) since many roles legitimately need to SEE
+    coverage state, but revoking one is a real access-delegation change and
+    must not be doable by an arbitrary role with no relationship to the
+    original staff member's leave — audit found any CCEO/RVP/Accountant/IA
+    could revoke ANY org-wide coverage assignment by id. Mirror the same
+    ownership check leave_reassign_coverage_action/leave_escalate_action
+    already use, with an explicit HR carve-out (HR has org-wide people-ops
+    oversight by design, but is_authorized_approver's hierarchy rules don't
+    grant HR-as-reviewer blanket rights the way they do CD/RVP).
+    """
+    from apps.core.navigation import get_user_role_slug
+
     cov = get_object_or_404(TemporaryCoverageAssignment, id=assignment_id)
+    authorized = get_user_role_slug(request.user) == "HR" or (
+        LeaveApprovalService.is_authorized_approver(request.user, cov.leave_request)
+    )
+    if not authorized:
+        messages.error(
+            request, "You are not authorized to revoke this coverage assignment."
+        )
+        return redirect("frontend:leave_coverage")
+
     cov.status = "revoked"
     cov.revoked_at = timezone.now()
     cov.revoked_by_user_id = request.user.id
     cov.save(update_fields=["status", "revoked_at", "revoked_by_user_id", "updated_at"])
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="hr.coverage_revoked",
+        subject_kind="temporary_coverage_assignment",
+        subject_id=cov.id,
+        actor_id=request.user.id,
+        actor_role=getattr(request.user, "active_role", None),
+        payload={
+            "originalStaffId": cov.original_staff_id,
+            "coveringStaffId": cov.covering_staff_id,
+        },
+    )
     messages.success(
         request,
         f"Delegated access for {cov.covering_staff.user.name} has been revoked.",
@@ -1383,11 +1420,26 @@ def leave_reassign_coverage_action(request, leave_id):
         if covering_staff_id:
             covering_staff = get_object_or_404(StaffProfile, id=covering_staff_id)
 
+        old_covering_staff_id = leave.covering_staff_id
         leave.covering_staff = covering_staff
         leave.coverage_status = (
             "Awaiting Acceptance" if covering_staff else "Not Required"
         )
         leave.save(update_fields=["covering_staff", "coverage_status", "updated_at"])
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="hr.coverage_reassigned",
+            subject_kind="leave",
+            subject_id=leave.id,
+            actor_id=request.user.id,
+            actor_role=getattr(request.user, "active_role", None),
+            payload={
+                "oldCoveringStaffId": old_covering_staff_id,
+                "newCoveringStaffId": covering_staff.id if covering_staff else None,
+            },
+        )
 
         # Trigger notification
         if covering_staff:

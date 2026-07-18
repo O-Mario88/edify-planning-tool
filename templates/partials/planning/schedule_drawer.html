@@ -121,12 +121,8 @@ this.currentMonth++;
 }
 this.getDays();
 },
-isSunday(day) {
-if (day === null) return false;
-return new Date(this.currentYear, this.currentMonth, day).getDay() === 0;
-},
 selectDay(day) {
-if (day === null || this.isSunday(day)) return;
+if (day === null) return;
 let monthStr = String(this.currentMonth + 1).padStart(2, '0');
 let dayStr = String(day).padStart(2, '0');
 this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
@@ -205,10 +201,8 @@ x-transition:leave-end="opacity-0 transform scale-95"
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
-:disabled="isSunday(day)"
-:title="isSunday(day) ? 'Sundays are blocked for scheduling' : ''"
 class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
-:class="isSunday(day) ? 'text-slate-300 line-through cursor-not-allowed' : (isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50')"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
 </div>
@@ -218,16 +212,13 @@ x-text="day"
 </div>
 </div>
 
-<!-- Training participants are required by the canonical cost engine. This is
-     intentionally tied to the selected activity type, not a separate UI rule. -->
+<!-- Participant numbers improve the estimate but are optional. -->
 <div x-show="activityType === 'school_improvement_training'" style="display: none;">
 <label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participants</label>
 <input
 type="number"
 name="expected_participants"
 id="expected_participants"
-min="1"
-:required="activityType === 'school_improvement_training'"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
 >
 </div>
@@ -261,7 +252,6 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <select
 name="delivery_type"
 id="delivery_type"
-required
 x-model="delivery"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
 >
@@ -276,7 +266,6 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 name="assigned_partner_id"
 id="assigned_partner_id"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-:required="delivery === 'partner'"
 >
 <option value="">Select Partner Field Officer...</option>
 {% for p in partners %}
@@ -292,7 +281,6 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <textarea
 name="activity_purpose_text"
 id="activity_purpose_text"
-required
 rows="2"
 placeholder="What needs to be achieved in this activity?"
 class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"

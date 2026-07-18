@@ -44,7 +44,11 @@ class ActivityPurposeAndImpactTest(TestCase):
         # Staff School Assignment to bypass target scoping check
         StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
 
-        # SsaRecords
+        # SsaRecords. verification_status must be set explicitly: the model
+        # defaults to PENDING, and every decision surface (cluster rankings,
+        # impact, planning gates) is required to ignore unverified records —
+        # see apps.ssa.services.latest_applicable_record. These fixtures
+        # represent real decision-driving assessments, so they are confirmed.
         # Pre SSA (before activity date: 2026-06-15)
         self.pre_ssa = SsaRecord.objects.create(
             school=self.school,
@@ -53,6 +57,7 @@ class ActivityPurposeAndImpactTest(TestCase):
             quarter="Q4",
             uploaded_by="STF-01",
             average_score=5.0,
+            verification_status="confirmed",
         )
         for intervention in SsaIntervention:
             SsaScore.objects.create(
@@ -69,6 +74,7 @@ class ActivityPurposeAndImpactTest(TestCase):
             quarter="Q4",
             uploaded_by="STF-01",
             average_score=6.0,
+            verification_status="confirmed",
         )
         for intervention in SsaIntervention:
             SsaScore.objects.create(
@@ -77,8 +83,8 @@ class ActivityPurposeAndImpactTest(TestCase):
                 score=3.0 if intervention.value == "leadership" else 5.0,
             )
 
-    def test_visit_creation_validation(self):
-        # Visit requires purpose text and focus intervention
+    def test_visit_creation_allows_optional_purpose_and_focus(self):
+        # Purpose and focus help reporting, but they no longer block a visit.
         data = {
             "activityType": "school_visit",
             "schoolId": "SCH-99",
@@ -86,25 +92,10 @@ class ActivityPurposeAndImpactTest(TestCase):
             "responsibleStaffId": self.staff.id,
             "strict_validation": True,
         }
-        with self.assertRaises(BadRequest) as ctx:
-            create(data, self.user)
-        self.assertIn("must have a Visit Purpose", str(ctx.exception))
-
-        data["activityPurposeText"] = "Follow up on leadership"
-        with self.assertRaises(BadRequest) as ctx:
-            create(data, self.user)
-        self.assertIn("must have a focus intervention", str(ctx.exception))
-
-        data["focusIntervention"] = "leadership"
-
-        # Mock assert_schedulable to avoid CD Catalog requirement details
-        from unittest.mock import patch
-
-        with patch("apps.budget.costing_service.assert_schedulable") as mock_assert:
-            res = create(data, self.user)
-            self.assertIsNotNone(res["id"])
-            self.assertEqual(res["activityPurposeText"], "Follow up on leadership")
-            self.assertEqual(res["focusIntervention"], "leadership")
+        res = create(data, self.user)
+        self.assertIsNotNone(res["id"])
+        self.assertIsNone(res["activityPurposeText"])
+        self.assertIsNone(res["focusIntervention"])
 
     def test_impact_delta_calculation(self):
         # We need leadership to improve for this test to match delta calculation test
@@ -127,6 +118,40 @@ class ActivityPurposeAndImpactTest(TestCase):
         self.assertEqual(impact["preScore"], 4.0)
         self.assertEqual(impact["postScore"], 6.0)
         self.assertEqual(impact["delta"], 2.0)
+        # The pre/post pair here is 29 days apart — real, but NOT an annual
+        # comparison. Callers must be able to tell the difference rather
+        # than presenting it as official annual impact (spec §12).
+        self.assertEqual(impact["intervalDays"], 29)
+        self.assertFalse(impact["annualComparison"])
+
+    def test_activity_impact_ignores_unverified_ssa(self):
+        """Official impact must be computed only from CONFIRMED SSA — a
+        pending partner-collected upload must never set the before/after
+        scores shown on the school-impact page. Both the pre and post
+        queries previously filtered on deleted_at alone."""
+        leadership_post = self.post_ssa.scores.filter(intervention="leadership").first()
+        leadership_post.score = 6.0
+        leadership_post.save()
+
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            planned_date=datetime.date(2026, 6, 15),
+            focus_intervention="leadership",
+            activity_purpose_text="Visit for leadership support",
+            status="completed",
+        )
+
+        # Sanity: measurable while both records are confirmed.
+        self.assertEqual(calculate_activity_impact(activity)["status"], "Improved")
+
+        # Un-verify the follow-up: impact must become not-measurable rather
+        # than silently reporting a delta from unverified data.
+        SsaRecord.objects.filter(id=self.post_ssa.id).update(
+            verification_status="pending"
+        )
+        impact = calculate_activity_impact(activity)
+        self.assertEqual(impact["status"], "Not Enough Data")
 
     def test_cluster_weakest_interventions(self):
         # Use the canonical membership transition. The compatibility join is
@@ -139,3 +164,40 @@ class ActivityPurposeAndImpactTest(TestCase):
         self.assertEqual(len(weakest), 4)
         self.assertEqual(weakest[0]["intervention"], "leadership")
         self.assertEqual(weakest[0]["avg"], 3.0)
+
+    def test_cluster_weakest_interventions_ignores_unverified_ssa(self):
+        """Only CONFIRMED SSA may rank a cluster's weakest interventions —
+        the same canonical rule every other decision surface obeys
+        (apps.ssa.services.latest_applicable_record). This surface used to
+        filter on deleted_at alone, so a pending partner-collected upload
+        could drive cluster training recommendations while the per-school
+        table on the same page excluded it."""
+        from apps.clusters.services import set_school_cluster_membership
+
+        set_school_cluster_membership(self.school, self.cluster, self.user.id)
+        SsaRecord.objects.filter(school=self.school).update(
+            verification_status="pending"
+        )
+
+        self.assertEqual(cluster_weakest_interventions(self.cluster.id, self.user), [])
+
+    def test_cluster_weakest_interventions_never_fabricates_scores(self):
+        """A cluster with no confirmed SSA must return an empty list, not an
+        invented ranking. This previously fell back to the first four
+        interventions in enum order with their averages forced to 0.0 —
+        fabricating four 'weakest interventions' out of missing data, at a
+        score that bands Critical."""
+        from apps.clusters.services import (
+            cluster_intervention_summary,
+            set_school_cluster_membership,
+        )
+
+        set_school_cluster_membership(self.school, self.cluster, self.user.id)
+        SsaRecord.objects.filter(school=self.school).delete()
+
+        self.assertEqual(cluster_weakest_interventions(self.cluster.id, self.user), [])
+        # The scorecard still lists all 8 interventions, but with an honest
+        # None rather than a 0.0 that would read as a real, terrible score.
+        summary = cluster_intervention_summary(self.cluster.id, self.user)
+        self.assertEqual(len(summary), 8)
+        self.assertTrue(all(row["avg"] is None for row in summary))

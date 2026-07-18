@@ -26,7 +26,13 @@
 </div>
 
 {% if view_models %}
-  <ul class="school-directory-list" role="list" aria-label="Schools">
+  <ul
+    class="school-directory-list school-record-list"
+    role="list"
+    aria-label="Schools"
+    x-data="{ openSchoolId: null }"
+    @click.outside="openSchoolId = null"
+  >
   {% for school in view_models %}
     {% include "partials/schools/directory_row.html" with school=school %}
   {% endfor %}

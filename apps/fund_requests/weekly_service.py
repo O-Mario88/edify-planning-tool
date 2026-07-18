@@ -126,8 +126,31 @@ def trigger_generate_for_activity(
     """
     owner = responsible_user_id or activity.responsible_staff_id
     if activity.scheduled_date and owner and activity.status != "cancelled":
-        planned_date = activity.scheduled_date.date()
+        planned_date = timezone.localtime(activity.scheduled_date).date()
         week_start = planned_date - timedelta(days=planned_date.weekday())
+        generate_weekly_fund_request(owner, week_start.isoformat())
+
+
+def sync_weekly_requests_for_activity(activity: Activity, *, prior_buckets=()) -> None:
+    """Refresh every weekly draft bucket affected by a cost-line rebuild.
+
+    A schedule can move between staff members or weeks.  Regenerating both the
+    old and new line buckets makes the new owner's request appear immediately
+    and removes an emptied old draft instead of leaving a stale total behind.
+    """
+    buckets = {
+        (owner, week_start)
+        for owner, _fy, _month, week_start in prior_buckets
+        if owner and week_start
+    }
+    buckets.update(
+        (owner, week_start)
+        for owner, week_start in ActivityScheduleCostLine.objects.filter(
+            activity=activity
+        ).values_list("responsible_user", "week_start_date")
+        if owner and week_start
+    )
+    for owner, week_start in buckets:
         generate_weekly_fund_request(owner, week_start.isoformat())
 
 

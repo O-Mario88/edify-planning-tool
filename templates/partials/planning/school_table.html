@@ -129,7 +129,7 @@
     <!-- Partner Assigned School List -->
     <div class="planning-school-list-wrap">
       {% if schools %}
-        <ul class="planning-school-list" role="list" aria-label="Partner-assigned schools">
+        <ul class="planning-school-list school-record-list" role="list" aria-label="Partner-assigned schools" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
           {% for r in schools %}
             {% include "partials/planning/school_row.html" with school=r can_assign_partner=can_assign_partner %}
           {% endfor %}
@@ -145,7 +145,7 @@
     <!-- Default (Client / Core) School List -->
     <div class="planning-school-list-wrap">
       {% if schools %}
-        <ul class="planning-school-list" role="list" aria-label="Schools ready for planning">
+        <ul class="planning-school-list school-record-list" role="list" aria-label="Schools ready for planning" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
           {% for r in schools %}
             {% include "partials/planning/school_row.html" with school=r can_assign_partner=can_assign_partner %}
           {% endfor %}

@@ -535,3 +535,254 @@ class AdminUserOperationsTest(TestCase):
         res = self.client.post(url, create_data)
         self.assertEqual(res.status_code, 302)
         self.assertFalse(User.objects.filter(email="nopwd@edify.test").exists())
+
+
+class UpdateUserPrivilegeEscalationTest(TestCase):
+    """A HumanResources or CountryDirector principal holds USER_MANAGE (the
+    same permission that gates user creation/editing) but must never be able
+    to grant themselves or anyone else the unrestricted Admin role, or touch
+    an existing Admin's account at all — closing a real self/lateral
+    privilege-escalation hole found by audit (update_user() previously had
+    none of delete_user()'s guard rails)."""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="admin2@edify.test",
+            name="Admin User",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="pwd",
+            is_active=True,
+        )
+        self.hr = User.objects.create_user(
+            email="hr@edify.test",
+            name="HR User",
+            roles=[EdifyRole.HUMAN_RESOURCES.value],
+            active_role=EdifyRole.HUMAN_RESOURCES.value,
+            password="pwd",
+            is_active=True,
+        )
+        self.cd = User.objects.create_user(
+            email="cd@edify.test",
+            name="CD User",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="pwd",
+            is_active=True,
+        )
+        self.staffer = User.objects.create_user(
+            email="staffer@edify.test",
+            name="Ordinary Staffer",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="pwd",
+            is_active=True,
+        )
+
+    def test_hr_cannot_self_promote_to_admin(self):
+        from apps.admin_users.services import update_user
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaises(BadRequest) as ctx:
+            update_user(self.hr.id, {"role": EdifyRole.ADMIN.value}, self.hr)
+        self.assertIn("own role", str(ctx.exception.detail))
+        self.hr.refresh_from_db()
+        self.assertEqual(self.hr.active_role, EdifyRole.HUMAN_RESOURCES.value)
+
+    def test_cd_cannot_grant_admin_role_to_another_user(self):
+        from apps.admin_users.services import update_user
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaises(BadRequest) as ctx:
+            update_user(self.staffer.id, {"role": EdifyRole.ADMIN.value}, self.cd)
+        self.assertIn("Only an Admin can grant", str(ctx.exception.detail))
+        self.staffer.refresh_from_db()
+        self.assertEqual(self.staffer.active_role, EdifyRole.CCEO.value)
+
+    def test_hr_cannot_edit_an_existing_admin_account(self):
+        """Blocks the email-change + forgot-password takeover vector, not
+        just direct role escalation."""
+        from apps.admin_users.services import update_user
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaises(BadRequest) as ctx:
+            update_user(self.admin.id, {"email": "hijacked@edify.test"}, self.hr)
+        self.assertIn("Only an Admin", str(ctx.exception.detail))
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, "admin2@edify.test")
+
+    def test_admin_can_still_grant_admin_role_and_edit_admins(self):
+        from apps.admin_users.services import update_user
+
+        update_user(self.staffer.id, {"role": EdifyRole.ADMIN.value}, self.admin)
+        self.staffer.refresh_from_db()
+        self.assertEqual(self.staffer.active_role, EdifyRole.ADMIN.value)
+
+        update_user(self.admin.id, {"name": "Renamed Admin"}, self.admin)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.name, "Renamed Admin")
+
+    def test_hr_can_still_perform_routine_non_admin_role_change(self):
+        """The fix must not block HR/CD's legitimate day-to-day staff role
+        management — only the Admin-role and self-role escalation vectors."""
+        from apps.admin_users.services import update_user
+
+        update_user(
+            self.staffer.id, {"role": EdifyRole.COUNTRY_PROGRAM_LEAD.value}, self.hr
+        )
+        self.staffer.refresh_from_db()
+        self.assertEqual(self.staffer.active_role, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+
+    def test_frontend_edit_action_enforces_same_guard(self):
+        self.client.force_login(self.hr)
+        detail_url = reverse(
+            "frontend:admin_user_detail", kwargs={"user_id": self.staffer.id}
+        )
+        res = self.client.post(
+            detail_url,
+            {
+                "action": "edit",
+                "name": self.staffer.name,
+                "email": self.staffer.email,
+                "role": EdifyRole.ADMIN.value,
+            },
+        )
+        self.assertEqual(res.status_code, 302)
+        self.staffer.refresh_from_db()
+        self.assertEqual(self.staffer.active_role, EdifyRole.CCEO.value)
+
+
+class AccountLifecycleAuditTest(TestCase):
+    """Every account-lifecycle transition must enter the tamper-evident
+    audit chain — audit found create/suspend/disable/reactivate/invite were
+    all silently missing it (only delete_user() was audited)."""
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="audit-admin@edify.test",
+            name="Audit Admin",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="pwd",
+            is_active=True,
+        )
+        self.target = User.objects.create_user(
+            email="audit-target@edify.test",
+            name="Audit Target",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="pwd",
+            is_active=True,
+        )
+
+    def test_create_suspend_disable_reactivate_are_all_audited(self):
+        from apps.admin_users.services import create, suspend, disable, reactivate
+        from apps.audit.models import AuditLog
+
+        result = create(
+            {
+                "email": "newperson@edify.test",
+                "name": "New Person",
+                "role": EdifyRole.CCEO.value,
+                "password": "StrongPassword1!",
+            },
+            self.admin,
+        )
+        new_user_id = result["user"]["id"]
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="admin.user_created", subject_id=new_user_id
+            ).exists()
+        )
+
+        suspend(self.target.id, self.admin)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="admin.user_suspended", subject_id=self.target.id
+            ).exists()
+        )
+
+        disable(self.target.id, self.admin)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="admin.user_disabled", subject_id=self.target.id
+            ).exists()
+        )
+        # Disabling must also revoke live refresh tokens (SEC-03 hygiene).
+        from apps.accounts.models import RefreshToken
+        from apps.accounts.jwt import issue_token_pair
+
+        tokens = issue_token_pair(self.target.id, self.target.active_role)
+        from apps.core.security import hash_token
+
+        disable(self.target.id, self.admin)
+        rt = RefreshToken.objects.filter(
+            token_hash=hash_token(tokens["refreshToken"])
+        ).first()
+        if rt:
+            self.assertIsNotNone(rt.revoked_at)
+
+        reactivate(self.target.id, self.admin)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="admin.user_active", subject_id=self.target.id
+            ).exists()
+        )
+
+    def test_invite_resend_and_revoke_are_audited(self):
+        from apps.admin_users.services import resend_invite, revoke_invite
+        from apps.audit.models import AuditLog
+
+        resend_invite(self.target.id, self.admin)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="admin.invite_resent", subject_id=self.target.id
+            ).exists()
+        )
+
+        revoke_invite(self.target.id, self.admin)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="admin.invite_revoked", subject_id=self.target.id
+            ).exists()
+        )
+
+    def test_invite_accepted_is_audited(self):
+        from apps.accounts.auth_services import set_password
+        from apps.admin_users.services import _create_invitation
+        from apps.audit.models import AuditLog
+
+        token = _create_invitation(self.target.id, self.admin.id)
+        set_password(token, "BrandNewPassword1!", "BrandNewPassword1!")
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="auth.invite_accepted", subject_id=self.target.id
+            ).exists()
+        )
+
+    def test_supervisor_reassignment_is_audited(self):
+        from apps.accounts.supervisor_service import assign_supervisor
+        from apps.audit.models import AuditLog
+
+        supervisee_profile = StaffProfile.objects.create(
+            user=self.target, title=EdifyRole.CCEO.value
+        )
+        supervisor_user = User.objects.create_user(
+            email="pl-supervisor@edify.test",
+            name="PL Supervisor",
+            roles=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+            active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            password="pwd",
+            is_active=True,
+        )
+        supervisor_profile = StaffProfile.objects.create(
+            user=supervisor_user, title=EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        assign_supervisor(
+            supervisee_profile.id, {"supervisorId": supervisor_profile.id}, self.admin
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="admin.supervisor_reassigned", subject_id=supervisee_profile.id
+            ).exists()
+        )

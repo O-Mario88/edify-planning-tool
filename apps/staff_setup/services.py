@@ -105,7 +105,7 @@ def create_user(candidate_id: str, data: dict, principal) -> dict:
             user.save()
             sp = StaffProfile.objects.create(user=user, title=role)
 
-        _link_schools(c, sp.id)
+        _link_schools(c, sp.id, principal)
         c.matched_user_id = user.id
         c.email = email
         c.phone = data.get("phone") or c.phone
@@ -121,6 +121,31 @@ def create_user(candidate_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
+
+        # status="pending_invited" above means the account cannot actually
+        # authenticate (LockoutEnforcingModelBackend requires status ==
+        # "active") until an invitation is accepted — this used to be a
+        # dead end: nothing on this path ever created the UserInvitation
+        # the login gate is waiting on.
+        from apps.admin_users.services import _create_invitation
+        from apps.core.email import mailer
+
+        invite_token = _create_invitation(user.id, getattr(principal, "id", None))
+
+    mailer.send_invitation(
+        to=email, name=user.name, invited_by_name=principal.name, token=invite_token
+    )
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="admin.user_created",
+        subject_kind="user",
+        subject_id=user.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={"email": email, "roles": [role], "source": "staff_setup"},
+    )
     return _serialize(c)
 
 
@@ -141,7 +166,7 @@ def match_existing(candidate_id: str, data: dict, principal) -> dict:
         sp = StaffProfile.objects.create(user=user, title=user.active_role)
 
     with transaction.atomic():
-        _link_schools(c, sp.id)
+        _link_schools(c, sp.id, principal)
         c.matched_user_id = user.id
         c.status = StaffSetupCandidateStatus.MERGED.value
         c.save(update_fields=["matched_user_id", "status", "updated_at"])
@@ -158,7 +183,7 @@ def ignore(candidate_id: str, principal) -> dict:
 
 
 def _link_schools(
-    candidate: StaffSetupCandidate, staff_profile_id: str
+    candidate: StaffSetupCandidate, staff_profile_id: str, principal=None
 ) -> tuple[int, int]:
     """Link every School whose account_owner_name_raw normalizes to the
     candidate's name to the resolved staff profile. Writes StaffSchoolAssignment
@@ -192,6 +217,17 @@ def _link_schools(
     ]
     if new_assignments:
         StaffSchoolAssignment.objects.bulk_create(new_assignments)
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="admin.schools_reassigned",
+        subject_kind="staff_profile",
+        subject_id=staff_profile_id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={"schoolIds": [s.id for s in affected]},
+    )
     return len(affected), len(new_assignments)
 
 

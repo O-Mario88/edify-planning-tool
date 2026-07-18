@@ -264,6 +264,8 @@ def cluster_schools_partial(request, cluster_id):
     context = {
         "schools": schools,
         "cluster_id": cluster_id,
+        "can_schedule": RolePermissionService.can_schedule_activity(request.user),
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
     }
     return render(request, "partials/clusters/cluster_schools_table.html", context)
 
@@ -305,6 +307,7 @@ def cluster_schedule_activity_view(request):
         focus_intervention = request.POST.get("focus_intervention", "").strip()
         scheduled_date_str = request.POST.get("scheduled_date", "").strip()
         assigned_partner_id = request.POST.get("assigned_partner_id", "").strip()
+        responsible_staff_id = request.POST.get("responsible_staff_id", "").strip()
 
         if not scheduled_date_str:
             scheduled_date_str = (datetime.now() + timedelta(days=7)).strftime(
@@ -324,6 +327,7 @@ def cluster_schedule_activity_view(request):
             "activityPurposeText": purpose,
             "focusIntervention": focus_intervention,
             "scheduledDate": scheduled_date_str,
+            "responsibleStaffId": responsible_staff_id or None,
             "assignedPartnerId": assigned_partner_id or None,
             "deliveryType": "partner" if assigned_partner_id else "staff",
         }
@@ -464,24 +468,11 @@ def create_cluster_view(request):
                     cluster = get_scoped_object_or_404(
                         Cluster, request.user, id=cluster_id, deleted_at__isnull=True
                     )
+                    # Audited inside set_school_cluster_membership() (the
+                    # canonical service assign_school_to_cluster delegates
+                    # to) — not duplicated here.
                     assign_school_to_cluster(
                         school.school_id, {"clusterId": cluster.id}, request.user
-                    )
-
-                    # Log audit event
-                    from apps.audit.services import log as audit_log
-
-                    audit_log(
-                        action="school.assign_cluster",
-                        subject_kind="School",
-                        subject_id=school.id,
-                        actor_id=request.user.user_id,
-                        actor_role=request.user.active_role,
-                        success=True,
-                        payload={
-                            "cluster_id": cluster.id,
-                            "cluster_name": cluster.name,
-                        },
                     )
                     messages.success(
                         request,
@@ -683,8 +674,6 @@ def intervention_impact_drawer_view(request, cluster_id):
 
 @require_page_permission("planning")
 def cluster_bulk_assign_drawer_view(request, cluster_id):
-    from apps.audit.services import log as audit_log
-
     cluster = get_scoped_object_or_404(
         Cluster, request.user, id=cluster_id, deleted_at__isnull=True
     )
@@ -720,24 +709,13 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
                     .first()
                 )
             if school:
+                # Audited inside set_school_cluster_membership() (the
+                # canonical service assign_school_to_cluster delegates to)
+                # — not duplicated here.
                 assign_school_to_cluster(
                     school.school_id, {"clusterId": cluster.id}, user
                 )
                 assigned_schools.append(school.name)
-
-                audit_log(
-                    action="school.assign_cluster",
-                    subject_kind="School",
-                    subject_id=school.id,
-                    actor_id=user.user_id,
-                    actor_role=user.active_role,
-                    success=True,
-                    payload={
-                        "cluster_id": cluster.id,
-                        "cluster_name": cluster.name,
-                        "bulk": True,
-                    },
-                )
 
         msg = (
             f"Successfully assigned {len(assigned_schools)} schools to {cluster.name}."

@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
+from urllib.parse import urlencode
 
 from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
@@ -27,6 +28,25 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
+
+
+def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
+    """Open My Plan on the exact week containing a just-saved activity."""
+    from datetime import date
+
+    try:
+        scheduled_for = date.fromisoformat(str(raw_date or "")[:10])
+    except ValueError:
+        return "/my-plan"
+
+    return "/my-plan?" + urlencode(
+        {
+            "fy": get_operational_fy(scheduled_for),
+            "month": scheduled_for.month,
+            "week": min(5, (scheduled_for.day - 1) // 7 + 1),
+            "period": "week",
+        }
+    )
 
 
 def _scoped_project_assignments(request, raw_ids):
@@ -600,30 +620,12 @@ def schedule_action_view(request):
     if project_id:
         payload["projectId"] = project_id
 
-    from apps.daily_visit_batches.exceptions import ReasonRequiredError
-
     try:
-        if (
-            activity_type == "school_visit"
-            and delivery_type == "staff"
-            and school_id
-            and not project_id
-        ):
-            # Staff-conducted school visits route through DailyVisitBatchService
-            # so this day's transport/lunch(/accommodation/dinner) cost pool is
-            # shared with any other schools already scheduled for this staff
-            # member on the same date, rather than costed for this school alone.
-            from apps.daily_visit_batches.services import schedule_visits
-
-            schedule_visits(
-                school_ids=[school_id],
-                scheduled_date=date.fromisoformat(scheduled_date),
-                activity_common_fields=payload,
-                reason=request.POST.get("reason", "").strip() or None,
-                principal=request.user,
-            )
-            messages.success(request, "School visit scheduled successfully.")
-        elif school_id:
+        if school_id:
+            # A single scheduled visit uses the same direct, immediate-cost
+            # workflow as training and meetings.  Daily batching remains a
+            # planning/reporting tool for deliberate bulk schedules, not a
+            # set of rules that can prevent a field worker from booking work.
             schedule_school_visit(payload, request.user)
             messages.success(request, "School visit scheduled successfully.")
         else:
@@ -633,19 +635,16 @@ def schedule_action_view(request):
         # APPEND_SLASH is off and "/my-plan" has no trailing-slash route, so a
         # redirect to "/my-plan/" 404s — the activity saves but the user lands
         # on an error page and never sees confirmation.
-        plan_url = "/projects/my-plan" if project_id else "/my-plan"
+        plan_url = (
+            "/projects/my-plan"
+            if project_id
+            else _my_plan_url_for_scheduled_date(scheduled_date)
+        )
         response = HttpResponse(
             f'<script>window.location.href = "{plan_url}";</script>'
         )
         response["HX-Trigger"] = "close-drawer"
         return response
-    except ReasonRequiredError as e:
-        return render(
-            request,
-            "partials/planning/reason_required_notice.html",
-            {"message": str(e)},
-            status=400,
-        )
     except Exception as e:
         return HttpResponse(
             f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
@@ -1119,10 +1118,10 @@ def bulk_action_view(request):
         return HttpResponse("<script>window.location.reload();</script>")
 
     elif action == "schedule":
-        # Bulk schedule staff-conducted school visits for one day — routes
-        # through DailyVisitBatchService so the day's transport/lunch(/
-        # accommodation/dinner) cost pool is shared and split across every
-        # school selected here, not costed per school in isolation.
+        # Bulk school visits use the same direct scheduling path as an
+        # individual visit.  This deliberately avoids daily-target, grouping,
+        # and reason rules while still creating a real cost snapshot and
+        # budget line for every selected school immediately.
         if not RolePermissionService.can_schedule_activity(request.user):
             return HttpResponseForbidden(
                 "Access Denied: You do not have permission to schedule activities."
@@ -1131,7 +1130,6 @@ def bulk_action_view(request):
         from datetime import date as _date
 
         scheduled_date_raw = request.POST.get("scheduled_date", "").strip()
-        reason = request.POST.get("reason", "").strip() or None
         if not scheduled_date_raw:
             return HttpResponse(
                 '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Scheduled date is required.</div>',
@@ -1145,41 +1143,33 @@ def bulk_action_view(request):
                 status=400,
             )
 
+        from apps.activities.services import create as create_activity
         from apps.core.exceptions import BadRequest
-        from apps.daily_visit_batches.exceptions import ReasonRequiredError
-        from apps.daily_visit_batches.services import schedule_visits
 
         try:
-            schedule_visits(
-                school_ids=school_ids,
-                scheduled_date=scheduled_date,
-                activity_common_fields={
-                    "activityType": "school_visit",
-                    "activityPurposeText": request.POST.get(
-                        "activity_goal", "Bulk-scheduled visit"
-                    ),
-                    "focusIntervention": request.POST.get("focus_intervention") or None,
-                    "deliveryType": "staff",
-                },
-                reason=reason,
-                principal=request.user,
-            )
+            with transaction.atomic():
+                for school in schools:
+                    create_activity(
+                        {
+                            "activityType": "school_visit",
+                            "schoolId": school.school_id,
+                            "scheduledDate": scheduled_date_raw,
+                            "activityPurposeText": request.POST.get(
+                                "activity_goal", "Bulk-scheduled visit"
+                            ),
+                            "focusIntervention": request.POST.get(
+                                "focus_intervention"
+                            )
+                            or None,
+                            "deliveryType": "staff",
+                        },
+                        principal=request.user,
+                    )
             response = HttpResponse(
-                '<script>window.location.href = "/my-plan";</script>'
+                f'<script>window.location.href = "{_my_plan_url_for_scheduled_date(scheduled_date_raw)}";</script>'
             )
             response["HX-Trigger"] = "close-drawer"
             return response
-        except ReasonRequiredError as e:
-            return render(
-                request,
-                "partials/planning/reason_required_notice.html",
-                {
-                    "message": str(e),
-                    "school_ids": school_ids,
-                    "scheduled_date": scheduled_date_raw,
-                },
-                status=400,
-            )
         except BadRequest as e:
             return HttpResponse(
                 f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {e}</div>',

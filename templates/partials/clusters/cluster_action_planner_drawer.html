@@ -158,7 +158,7 @@ class="h-5 w-5 text-[var(--edify-chart-blue)] border-slate-300 focus:ring-[var(-
 <!-- Parameters: Expected Participants & Focus Intervention -->
 <div class="grid grid-cols-2 gap-4">
 <div>
-<label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Expected Participants <span class="text-rose-500">*</span></label>
+<label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Expected Participants <span class="text-slate-400">(optional)</span></label>
 <div class="relative">
 <input
 type="number"
@@ -169,8 +169,6 @@ hx-target="#planner-cost-preview-container"
 hx-trigger="change delay:200ms, keyup delay:200ms"
 hx-include="#action-planner-form"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none"
-required
-min="1"
 >
 <span class="absolute right-3 top-[26%] text-slate-400">
 <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -180,11 +178,10 @@ min="1"
 </div>
 </div>
 <div>
-<label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention <span class="text-rose-500">*</span></label>
+<label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention <span class="text-slate-400">(optional)</span></label>
 <select
 name="focus_intervention"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
-required
 >
 {% for item in interventions %}
 <option value="{{ item.value }}" {% if recommendation.focus_intervention == item.value %}selected{% endif %}>{{ item.label }}</option>
@@ -196,13 +193,12 @@ required
 <!-- Purpose & Date -->
 <div class="grid grid-cols-2 gap-4">
 <div>
-<label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Purpose for Meeting / Training <span class="text-rose-500">*</span></label>
+<label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Purpose for Meeting / Training <span class="text-slate-400">(optional)</span></label>
 <input
 type="text"
 name="purpose"
 placeholder="{{ recommendation.headline|default:'e.g. Focus on Leadership strategies' }}"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none text-slate-700"
-required
 >
 </div>
 <div>
@@ -357,7 +353,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 >
 <option value="">-- Choose Staff --</option>
 {% for p in staff_profiles %}
-<option value="{{ p.staff_id }}" {% if selected_cluster.responsible_staff_id == p.staff_id %}selected{% elif not selected_cluster.responsible_staff_id and request.user.staff_profile.staff_id == p.staff_id %}selected{% endif %}>{{ p.user.name }}</option>
+<option value="{{ p.id }}" {% if selected_cluster.responsible_staff_id == p.id %}selected{% elif not selected_cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}selected{% endif %}>{{ p.user.name }}</option>
 {% endfor %}
 </select>
 {% else %}
@@ -366,7 +362,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 disabled
 >
 {% for p in staff_profiles %}
-{% if selected_cluster.responsible_staff_id == p.staff_id or not selected_cluster.responsible_staff_id and request.user.staff_profile.staff_id == p.staff_id %}
+{% if selected_cluster.responsible_staff_id == p.id or not selected_cluster.responsible_staff_id and request.user.staff_profile_id == p.id %}
 <option selected>{{ p.user.name }}</option>
 {% endif %}
 {% endfor %}
@@ -374,7 +370,7 @@ disabled
 <input
 type="hidden"
 name="responsible_staff_id"
-value="{% if selected_cluster.responsible_staff_id %}{{ selected_cluster.responsible_staff_id }}{% else %}{{ request.user.staff_profile.staff_id }}{% endif %}"
+value="{% if selected_cluster.responsible_staff_id %}{{ selected_cluster.responsible_staff_id }}{% else %}{{ request.user.staff_profile_id }}{% endif %}"
 >
 {% endif %}
 </div>
@@ -402,7 +398,7 @@ disabled
 {% for b in cost_preview.blockers %}
 <div>{{ b }}</div>
 {% empty %}
-Active Cost Catalogue required before cluster activity can be scheduled.
+Cost details need attention. You can still schedule now; the item will be marked for a rate update.
 {% endfor %}
 </div>
 {% else %}
@@ -448,8 +444,7 @@ Cancel
 <!-- Schedule Button -->
 <button
 type="submit"
-{% if cost_preview and not cost_preview.can_schedule %}disabled{% endif %}
-class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5 {% if cost_preview and not cost_preview.can_schedule %}opacity-50 cursor-not-allowed{% endif %}"
+class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
 @click="
 let partnerSelect = document.getElementById('assigned-partner-select');
 if (partnerSelect) partnerSelect.value = '';
@@ -465,8 +460,7 @@ Schedule
 {% if request.user.active_role != 'PartnerAdmin' and request.user.active_role != 'PartnerFieldOfficer' %}
 <button
 type="submit"
-{% if cost_preview and not cost_preview.can_schedule %}disabled{% endif %}
-class="px-6 h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5 {% if cost_preview and not cost_preview.can_schedule %}opacity-50 cursor-not-allowed{% endif %}"
+class="px-6 h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
 @click="
 let partnerSelect = document.getElementById('assigned-partner-select');
 if (partnerSelect && !partnerSelect.value) {

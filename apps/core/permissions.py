@@ -153,14 +153,9 @@ class RolePermissionService:
         elif obj_type == "Cluster":
             if scope.country_scope:
                 return True
-            from apps.schools.models import School
+            from apps.core.scoping import cluster_in_scope
 
-            return (
-                obj.id in scope.cluster_ids
-                or School.objects.filter(
-                    cluster_id=obj.id, id__in=scope.school_ids
-                ).exists()
-            )
+            return cluster_in_scope(scope, obj)
 
         elif obj_type == "Activity":
             if scope.country_scope:

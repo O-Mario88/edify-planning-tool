@@ -61,7 +61,7 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
 <!-- Training Number -->
 <div>
 <label for="training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Slot</label>
-<select name="training_number" id="training_number" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="training_number" id="training_number" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="1" {% if next_train_seq == 1 %}selected{% endif %}>T1 Training</option>
 <option value="2" {% if next_train_seq == 2 %}selected{% endif %}>T2 Training</option>
 <option value="3" {% if next_train_seq == 3 %}selected{% endif %}>T3 Training</option>
@@ -119,12 +119,8 @@ this.currentMonth++;
 }
 this.getDays();
 },
-isSunday(day) {
-if (day === null) return false;
-return new Date(this.currentYear, this.currentMonth, day).getDay() === 0;
-},
 selectDay(day) {
-if (day === null || this.isSunday(day)) return;
+if (day === null) return;
 let monthStr = String(this.currentMonth + 1).padStart(2, '0');
 let dayStr = String(day).padStart(2, '0');
 this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
@@ -203,10 +199,8 @@ x-transition:leave-end="opacity-0 transform scale-95"
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
-:disabled="isSunday(day)"
-:title="isSunday(day) ? 'Sundays are blocked for scheduling' : ''"
 class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
-:class="isSunday(day) ? 'text-slate-300 line-through cursor-not-allowed' : (isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50')"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
 </div>
@@ -220,7 +214,7 @@ x-text="day"
 <!-- Primary Focus Intervention -->
 <div>
 <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention</label>
-<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="focus_intervention" id="focus_intervention" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="">Select Intervention...</option>
 {% for code, label in interventions %}
 <option value="{{ code }}" {% if recommendations and recommendations.0.code == code %}selected{% endif %}>{{ label }}</option>
@@ -240,13 +234,13 @@ x-text="day"
 <!-- Expected Participants -->
 <div>
 <label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Participants</label>
-<input type="number" name="expected_participants" id="expected_participants" required min="1" max="1000" placeholder="e.g. 15" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
+<input type="number" name="expected_participants" id="expected_participants" placeholder="e.g. 15" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
 </div>
 
 <!-- Total Duration -->
 <div>
 <label for="duration_hours" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Duration (Hours)</label>
-<input type="number" name="duration_hours" id="duration_hours" required min="1" max="72" placeholder="e.g. 4" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
+<input type="number" name="duration_hours" id="duration_hours" placeholder="e.g. 4" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700">
 </div>
 </div>
 
@@ -273,7 +267,7 @@ x-text="day"
 <!-- Purpose text -->
 <div>
 <label for="training_purpose" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Training Purpose &amp; Meeting Description</label>
-<textarea name="training_purpose" id="training_purpose" rows="2.5" required class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this support training..."></textarea>
+<textarea name="training_purpose" id="training_purpose" rows="2.5" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this support training..."></textarea>
 </div>
 
 <!-- Cost Preview (Automated Catalogue rates) -->

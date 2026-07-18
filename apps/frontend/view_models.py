@@ -10,32 +10,49 @@ if TYPE_CHECKING:
 
 class SchoolDirectoryViewModel:
     @staticmethod
-    def bulk_progress(school_ids: list[str]) -> dict[str, dict]:
+    def bulk_progress(school_ids: list[str], fy: str | None = None) -> dict[str, dict]:
         """Batch-compute the SSA/visit/training progress counters that
         from_school() needs for a page of schools, in a handful of queries
         instead of ~5-7 queries per school (avoids N+1 on the directory list).
 
-        Returns {school_id: {"has_ssa": bool, "visits_count": int,
-        "trainings_count": int}}. Pass the result as ``progress`` to
-        from_school() for each school on the page.
+        When a financial year is supplied, score groups come from each
+        school's latest confirmed assessment in that selected year. Returns
+        {school_id: {"has_ssa": bool, "visits_count": int,
+        "trainings_count": int, "ssa_groups": list}}. Pass the result as
+        ``progress`` to from_school() for each school on the page.
         """
         from django.db.models import Count
         from apps.ssa.models import SsaRecord
         from apps.activities.models import Activity
+        from apps.ssa.presentation import build_ssa_score_summary
 
         school_ids = list(school_ids)
         if not school_ids:
             return {}
 
-        ssa_school_ids = set(
-            SsaRecord.objects.filter(
-                school_id__in=school_ids,
-                verification_status="confirmed",
-                deleted_at__isnull=True,
-            )
-            .values_list("school_id", flat=True)
-            .distinct()
+        ssa_records = SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            verification_status="confirmed",
+            deleted_at__isnull=True,
         )
+        if fy:
+            ssa_records = ssa_records.filter(fy=fy)
+
+        latest_ssa_by_school = {}
+        for record in ssa_records.prefetch_related("scores").order_by(
+            "school_id", "-date_of_ssa", "-created_at"
+        ):
+            latest_ssa_by_school.setdefault(record.school_id, record)
+
+        ssa_by_school = {
+            school_id: build_ssa_score_summary(
+                [
+                    {"intervention": score.intervention, "score": score.score}
+                    for score in record.scores.all()
+                ]
+            )
+            for school_id, record in latest_ssa_by_school.items()
+        }
 
         visits_by_school: dict[str, int] = dict(
             Activity.objects.filter(
@@ -80,9 +97,13 @@ class SchoolDirectoryViewModel:
 
         return {
             sid: {
-                "has_ssa": sid in ssa_school_ids,
+                "has_ssa": sid in latest_ssa_by_school,
                 "visits_count": visits_by_school.get(sid, 0),
                 "trainings_count": trainings_by_school.get(sid, 0),
+                "has_ssa_scores": ssa_by_school.get(sid, {}).get("has_scores", False),
+                "ssa_average": ssa_by_school.get(sid, {}).get("average_score"),
+                "ssa_average_tone": ssa_by_school.get(sid, {}).get("average_tone", "neutral"),
+                "ssa_groups": ssa_by_school.get(sid, {}).get("groups", []),
             }
             for sid in school_ids
         }
@@ -94,6 +115,7 @@ class SchoolDirectoryViewModel:
         clusters_dict: dict[str, str],
         active_projects_exist: bool,
         progress: dict | None = None,
+        staff_names_by_owner_id: dict[str, str] | None = None,
     ) -> dict:
         is_clustered = (
             school.cluster_id is not None or school.cluster_status == "clustered"
@@ -135,6 +157,12 @@ class SchoolDirectoryViewModel:
         if is_clustered and school.cluster_id:
             cluster_name = clusters_dict.get(school.cluster_id, "—")
 
+        staff_name = (
+            (staff_names_by_owner_id or {}).get(school.account_owner_id)
+            or school.account_owner_name_raw
+            or "Unassigned"
+        )
+
         is_core_school = school.school_type == "core"
 
         # Calculate dynamic planning gaps for cards. Callers rendering a
@@ -146,7 +174,16 @@ class SchoolDirectoryViewModel:
         # precompute step.
         if progress is None:
             progress = SchoolDirectoryViewModel.bulk_progress([school.id]).get(
-                school.id, {"has_ssa": False, "visits_count": 0, "trainings_count": 0}
+                school.id,
+                {
+                    "has_ssa": False,
+                    "visits_count": 0,
+                    "trainings_count": 0,
+                    "has_ssa_scores": False,
+                    "ssa_average": None,
+                    "ssa_average_tone": "neutral",
+                    "ssa_groups": [],
+                },
             )
 
         has_ssa = progress["has_ssa"]
@@ -224,9 +261,11 @@ class SchoolDirectoryViewModel:
             "school_type": school.get_school_type_display(),
             "district": school.district.name if school.district else "—",
             "sub_county": school.sub_county.name if school.sub_county else "—",
+            "shipping_address": school.shipping_address or "—",
             "enrolment": school.enrollment or 0,
             "phone": school.school_phone or "—",
             "school_contact": school.primary_contact_name or "—",
+            "staff_name": staff_name,
             "is_clustered": is_clustered,
             "cluster_id": school.cluster_id,
             "cluster_name": cluster_name,
@@ -238,6 +277,12 @@ class SchoolDirectoryViewModel:
             "has_ssa": has_ssa,
             "has_visit": has_visit,
             "has_training": has_training,
+            "visit_count": visits_count_raw,
+            "training_count": trainings_count_raw,
+            "has_ssa_scores": progress.get("has_ssa_scores", False),
+            "ssa_average": progress.get("ssa_average"),
+            "ssa_average_tone": progress.get("ssa_average_tone", "neutral"),
+            "ssa_groups": progress.get("ssa_groups", []),
             "is_high_priority": is_high_priority,
             "is_core_school": is_core_school,
             "visit_status_label": visit_status_label,

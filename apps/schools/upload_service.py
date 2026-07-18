@@ -22,6 +22,70 @@ from apps.core.exceptions import BadRequest
 from . import upload_mapping as M
 
 
+def _resolve_geography(district_name: str, sub_county_name: str):
+    """Resolve (district, sub_county, ambiguous_district_names) from raw
+    upload text.
+
+    If district_name is blank but sub_county_name is present, infer the
+    district from an unambiguous sub-county name match instead of leaving
+    district None — callers used to fall through to an arbitrary
+    alphabetically-first District in that case (School.objects.create's old
+    `district or District.objects.first()`), silently misassigning the
+    school's geography with no warning and discarding the sub-county text
+    entirely (sub_county resolution requires district). When the sub-county
+    name matches more than one district, it's genuinely ambiguous —
+    ambiguous_district_names lists the candidates so the caller can block
+    the row instead of guessing.
+    """
+    from apps.geography.models import District, GeographyAlias, SubCounty
+
+    district = None
+    if district_name:
+        district = District.objects.filter(name__iexact=district_name).first()
+        if not district:
+            norm = district_name.strip().lower()
+            alias = GeographyAlias.objects.filter(
+                admin_level="district", normalized_alias=norm
+            ).first()
+            if alias:
+                district = District.objects.filter(id=alias.admin_id).first()
+        if not district:
+            district = District.objects.filter(
+                name__icontains=district_name.strip()
+            ).first()
+
+    ambiguous_district_names: list[str] = []
+    if not district and sub_county_name:
+        matches = list(
+            SubCounty.objects.filter(
+                name__iexact=sub_county_name.strip()
+            ).select_related("district")
+        )
+        if not matches:
+            matches = list(
+                SubCounty.objects.filter(
+                    name__icontains=sub_county_name.strip()
+                ).select_related("district")
+            )
+        districts_by_id = {m.district_id: m.district for m in matches}
+        if len(districts_by_id) == 1:
+            district = next(iter(districts_by_id.values()))
+        elif len(districts_by_id) > 1:
+            ambiguous_district_names = sorted(d.name for d in districts_by_id.values())
+
+    sub_county = None
+    if sub_county_name and district:
+        sub_county = SubCounty.objects.filter(
+            district=district, name__iexact=sub_county_name
+        ).first()
+        if not sub_county:
+            sub_county = SubCounty.objects.filter(
+                district=district, name__icontains=sub_county_name
+            ).first()
+
+    return district, sub_county, ambiguous_district_names
+
+
 # ── Parsing ──────────────────────────────────────────────────────────────────
 def _read_rows(file) -> tuple[list[str], list[tuple[int, list[str]]]]:
     """Parse an uploaded file into (raw_headers, [(row_number, cells)]).
@@ -219,7 +283,6 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     """Parse + validate + stage a school onboarding file. Returns the staging
     response contract. Raises BadRequest (→ 400) on file/header errors."""
     from apps.schools.models import SchoolImportBatch, SchoolImportRow, School
-    from apps.geography.models import District, GeographyAlias
 
     raw_headers, data_rows = _read_rows(file)
     if not raw_headers:
@@ -288,21 +351,12 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
             if school_id_raw:
                 counts["failed"] += 1
 
-        # Check location (district and sub_county)
-        district = None
-        if district_name:
-            district = District.objects.filter(name__iexact=district_name).first()
-            if not district:
-                norm = district_name.strip().lower()
-                alias = GeographyAlias.objects.filter(
-                    admin_level="district", normalized_alias=norm
-                ).first()
-                if alias:
-                    district = District.objects.filter(id=alias.admin_id).first()
-            if not district:
-                district = District.objects.filter(
-                    name__icontains=district_name.strip()
-                ).first()
+        # Check location (district and sub_county) — inferring district from
+        # sub_county when district_name is blank, rather than silently
+        # falling through to an arbitrary district at import time.
+        district, _sub_county_preview, ambiguous_district_names = _resolve_geography(
+            district_name, sub_county_name
+        )
 
         if not district_name and not sub_county_name:
             validation_errors.append("No usable location at all")
@@ -311,6 +365,23 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
                 counts["failed"] += 1
         elif district_name and not district:
             validation_errors.append(f"District '{district_name}' could not be matched")
+            status = "blocked"
+            if school_id_raw:
+                counts["failed"] += 1
+        elif not district_name and ambiguous_district_names:
+            validation_errors.append(
+                f"Sub-county '{sub_county_name}' exists in multiple districts "
+                f"({', '.join(ambiguous_district_names)}) — a District column "
+                "value is required to disambiguate."
+            )
+            status = "blocked"
+            if school_id_raw:
+                counts["failed"] += 1
+        elif not district_name and sub_county_name and not district:
+            validation_errors.append(
+                f"Sub-county '{sub_county_name}' could not be matched to any "
+                "district."
+            )
             status = "blocked"
             if school_id_raw:
                 counts["failed"] += 1
@@ -399,7 +470,14 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     if rows_to_create:
         SchoolImportRow.objects.bulk_create(rows_to_create)
 
-    # Legacy parallel write to keep REST endpoints and unit tests 100% green
+    # Legacy parallel write to keep REST endpoints and unit tests 100% green.
+    # status starts "uploaded" (not "imported") and is only flipped to
+    # "imported" once import_school_batch actually succeeds below — it used
+    # to be stamped "imported" here unconditionally, so a failed import left
+    # the batch history permanently showing false success counts, AND
+    # (since UploadBatchActionView's "import" action short-circuits when
+    # status is already "imported") made the failed import unretryable
+    # through the same endpoint.
     from apps.schools.models import UploadBatch, UploadBatchRowResult
 
     legacy_batch = UploadBatch.objects.create(
@@ -408,7 +486,7 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         file_name=getattr(file, "name", "salesforce_import.xlsx"),
         original_file_name=getattr(file, "name", "salesforce_import.xlsx"),
         uploaded_by=principal.user_id,
-        status="imported",
+        status="uploaded",
         total_rows=len(data_rows),
         created_rows=counts["created"],
         updated_rows=counts["updated"],
@@ -440,10 +518,22 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     if legacy_rows:
         UploadBatchRowResult.objects.bulk_create(legacy_rows)
 
-    # Automatically import if not blocked
+    # Automatically import if not blocked. A failure here must not leave the
+    # batch history lying about what happened (previously: status was
+    # already stamped "imported" before this even ran) or crash out to the
+    # caller as a bare 500 — record the honest failure and surface it as a
+    # normal, handleable error.
     success = counts["created"] > 0 or (update_existing and counts["updated"] > 0)
     if success:
-        import_school_batch(batch, principal)
+        try:
+            import_school_batch(batch, principal)
+        except Exception as exc:
+            legacy_batch.status = "failed"
+            legacy_batch.error_summary = str(exc)
+            legacy_batch.save(update_fields=["status", "error_summary", "updated_at"])
+            raise BadRequest(f"School import failed: {exc}") from exc
+        legacy_batch.status = "imported"
+        legacy_batch.save(update_fields=["status", "updated_at"])
 
     message = _build_message(success, counts, len(data_rows))
     return {
@@ -471,7 +561,6 @@ def import_school_batch(batch, user) -> dict:
         UploadBatch,
         SchoolImportBatch,
     )
-    from apps.geography.models import District, SubCounty
     from apps.accounts.staff_matching import match as staff_match
 
     if isinstance(batch, UploadBatch):
@@ -500,23 +589,19 @@ def import_school_batch(batch, user) -> dict:
 
     with transaction.atomic():
         for r in rows:
-            district = None
-            if r.district_name:
-                district = District.objects.filter(name__iexact=r.district_name).first()
-                if not district:
-                    district = District.objects.filter(
-                        name__icontains=r.district_name.strip()
-                    ).first()
-
-            sub_county = None
-            if r.sub_county_name and district:
-                sub_county = SubCounty.objects.filter(
-                    district=district, name__iexact=r.sub_county_name
-                ).first()
-                if not sub_county:
-                    sub_county = SubCounty.objects.filter(
-                        district=district, name__icontains=r.sub_county_name
-                    ).first()
+            # Same resolution the staging/validation phase used (including
+            # the sub-county-infers-district fallback) — using independent
+            # logic here previously meant a row that passed validation could
+            # still land on a different (or, when district_name was blank,
+            # an arbitrary alphabetically-first) District at import time.
+            district, sub_county, _ambiguous = _resolve_geography(
+                r.district_name, r.sub_county_name
+            )
+            if district is None and (r.district_name or r.sub_county_name):
+                # Re-validated at import time defensively — should already
+                # have been staged as "blocked" and excluded above, but a
+                # row must never silently land on a fabricated geography.
+                continue
 
             owner_id = None
             owner_status = "pending"
@@ -528,7 +613,11 @@ def import_school_batch(batch, user) -> dict:
                         owner_id = new_owner_id
                         owner_status = "matched"
 
-            school_type, _recognized = M.map_school_type(r.school_type)
+            # map_school_type() always returns a concrete value (defaults to
+            # "client" for a blank/unrecognized cell) — never None/"" — so it
+            # would defeat the blank-doesn't-overwrite guard below unless we
+            # separately track whether the source cell actually had text.
+            school_type, _ = M.map_school_type(r.school_type)
 
             last_enroll_date = None
             led_val = r.raw_data.get("last_enrollment_date")
@@ -547,7 +636,6 @@ def import_school_batch(batch, user) -> dict:
                 # Keep history in SchoolChangeLog
                 fields_to_update = {
                     "name": r.name,
-                    "school_type": school_type,
                     "district": district,
                     "region": district.region if district else existing.region,
                     "sub_county": sub_county,
@@ -558,10 +646,19 @@ def import_school_batch(batch, user) -> dict:
                     "shipping_address": r.address,
                     "director_name": r.director_name,
                     "headteacher_name": r.headteacher_name,
-                    "account_owner_name_raw": r.account_owner_name,
-                    "account_owner_id": owner_id,
-                    "account_owner_status": owner_status,
                 }
+                # school_type/account_owner_* are computed defaults that are
+                # never blank/None even when the source cell was — only
+                # touch them when the uploader actually supplied that column
+                # for this row, so a partial re-upload (e.g. only enrollment
+                # changed) can't silently demote a Core school back to
+                # "client" or reset an already-matched owner to "pending".
+                if r.school_type:
+                    fields_to_update["school_type"] = school_type
+                if r.account_owner_name:
+                    fields_to_update["account_owner_name_raw"] = r.account_owner_name
+                    fields_to_update["account_owner_id"] = owner_id
+                    fields_to_update["account_owner_status"] = owner_status
 
                 changes = []
                 for field, val in fields_to_update.items():
@@ -591,18 +688,21 @@ def import_school_batch(batch, user) -> dict:
                 updated_count += 1
                 saved_school = existing
             else:
-                region = district.region if district else None
-                if not region:
-                    from apps.geography.models import Region
-
-                    region = Region.objects.first()
-
+                # `district` is guaranteed non-None here: the only way to
+                # reach this branch with an unresolved district is a row
+                # with no district_name AND no sub_county_name, which is
+                # already staged as "blocked" and excluded from `rows`
+                # above — District.region is a required (non-nullable) FK,
+                # so no separate Region fallback is needed either. No more
+                # falling back to an arbitrary alphabetically-first
+                # District/Region for a school whose actual location just
+                # couldn't be resolved.
                 saved_school = School.objects.create(
                     school_id=r.school_id,
                     name=r.name,
                     school_type=school_type,
-                    region=region,
-                    district=district or District.objects.first(),
+                    region=district.region,
+                    district=district,
                     sub_county=sub_county,
                     enrollment=r.enrollment,
                     last_enrollment_date=last_enroll_date,

@@ -280,8 +280,13 @@ def ssa_performance(principal, query: dict) -> dict:
     schools, scope = _scoped_schools(principal)
     fy = query.get("fy") or get_operational_fy()
     school_ids = list(schools.values_list("id", flat=True))
+    # Confirmed-only: an unverified upload must not move a reported average
+    # (apps.ssa.services.latest_applicable_record is the canonical rule).
     records = SsaRecord.objects.filter(
-        school_id__in=school_ids, fy=fy, deleted_at__isnull=True
+        school_id__in=school_ids,
+        fy=fy,
+        deleted_at__isnull=True,
+        verification_status="confirmed",
     )
     avg = records.aggregate(a=Avg("average_score"))["a"]
     return {

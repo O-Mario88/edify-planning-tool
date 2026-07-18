@@ -1,5 +1,5 @@
 import logging
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from django.db.models.functions import TruncMonth
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
@@ -9,6 +9,7 @@ from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
 from apps.activities.models import Activity
 from apps.ssa.models import SsaRecord, SsaScore
+from apps.ssa.presentation import build_ssa_score_summary
 from apps.core_schools.models import (
     CorePlan,
     CoreActivitySlot,
@@ -179,24 +180,57 @@ class CorePackageProgressService:
     @staticmethod
     def get_matrix_data(core_schools_qs, fy: str) -> list[dict]:
         """Prepares matrix progress rows for the dashboard."""
-        if hasattr(core_schools_qs, "values_list"):
-            school_ids = list(core_schools_qs.values_list("school_id", flat=True))
-            db_ids = list(core_schools_qs.values_list("id", flat=True))
-        else:
-            school_ids = [s.school_id for s in core_schools_qs]
-            db_ids = [s.id for s in core_schools_qs]
+        iterator = list(
+            core_schools_qs.select_related("district", "region", "sub_county")
+            if hasattr(core_schools_qs, "select_related")
+            else core_schools_qs
+        )
+        school_ids = [school.school_id for school in iterator]
+        db_ids = [school.id for school in iterator]
 
         plans = CorePlan.objects.filter(
             school_id__in=school_ids, fy=fy
         ).prefetch_related("slots")
         plans_map = {p.school_id: p for p in plans}
 
+        # The matrix is paginated, so load each visible school's latest
+        # confirmed assessment and all eight scores in two bounded queries.
+        # This lets the expandable recommendation show saved intervention
+        # scores without issuing a query for every core school card.
+        latest_ssa_by_school = {}
+        confirmed_ssa_records = (
+            SsaRecord.objects.filter(
+                school_id__in=db_ids,
+                fy=fy,
+                deleted_at__isnull=True,
+                verification_status="confirmed",
+            )
+            .prefetch_related("scores")
+            .order_by("school_id", "-date_of_ssa", "-created_at")
+        )
+        for record in confirmed_ssa_records:
+            latest_ssa_by_school.setdefault(record.school_id, record)
+
         # Load cluster names
         from apps.clusters.models import Cluster
 
-        cluster_ids = [s.cluster_id for s in core_schools_qs if s.cluster_id]
+        cluster_ids = [school.cluster_id for school in iterator if school.cluster_id]
         clusters = Cluster.objects.filter(id__in=cluster_ids, deleted_at__isnull=True)
         clusters_map = {c.id: c.name for c in clusters}
+
+        owner_ids = {
+            school.account_owner_id for school in iterator if school.account_owner_id
+        }
+        staff_names_by_owner_id = {}
+        if owner_ids:
+            for staff in (
+                StaffProfile.objects.filter(deleted_at__isnull=True)
+                .filter(Q(id__in=owner_ids) | Q(user_id__in=owner_ids))
+                .select_related("user")
+            ):
+                if staff.user_id and staff.user.name:
+                    staff_names_by_owner_id[staff.id] = staff.user.name
+                    staff_names_by_owner_id[staff.user_id] = staff.user.name
 
         # Load project assignment counts
         from apps.projects.models import ProjectSchoolAssignment
@@ -212,32 +246,28 @@ class CorePackageProgressService:
 
         # Prefetch school geo details and latest SSA
         schools_data = []
-        # Support both querysets (select_related) and pre-fetched lists
-        iterator = (
-            core_schools_qs.select_related("district", "region", "sub_county")
-            if hasattr(core_schools_qs, "select_related")
-            else core_schools_qs
-        )
         for s in iterator:
             plan = plans_map.get(s.school_id)
 
-            # Map assessment score
-            latest_ssa = (
-                s.ssa_records.filter(
-                    deleted_at__isnull=True,
-                    verification_status="confirmed",
-                )
-                .order_by("-date_of_ssa", "-created_at")
-                .first()
+            # Calculate the average and recommendation bands from the actual
+            # saved intervention scores, not the denormalized record average.
+            latest_ssa = latest_ssa_by_school.get(s.id)
+            ssa_summary = build_ssa_score_summary(
+                [
+                    {"intervention": score.intervention, "score": score.score}
+                    for score in latest_ssa.scores.all()
+                ]
+                if latest_ssa
+                else []
             )
-            score_val = latest_ssa.average_score if latest_ssa else None
+            score_val = ssa_summary["average_score"]
 
             # Map score to percentage and label
-            score_pct = 0
+            score_pct = None
             score_label = "No SSA"
             badge_class = "bg-slate-50 text-slate-400 border-slate-200"
             if score_val is not None:
-                score_pct = int(score_val * 10)
+                score_pct = round(score_val * 10)
                 if score_pct < 50:
                     score_label = "Needs Support"
                     badge_class = "bg-rose-50 text-rose-700 border-rose-200"
@@ -369,8 +399,13 @@ class CorePackageProgressService:
                     "geo_label": f"{s.district.name} / {s.region.name}",
                     "district_name": s.district.name,
                     "sub_county_name": s.sub_county.name if s.sub_county else "—",
+                    "shipping_address": s.shipping_address or "—",
+                    "school_type": s.get_school_type_display(),
                     "phone": s.primary_contact_phone or s.school_phone or "—",
                     "school_contact": s.primary_contact_name or "—",
+                    "staff_name": staff_names_by_owner_id.get(s.account_owner_id)
+                    or s.account_owner_name_raw
+                    or "Unassigned",
                     "enrolment": s.enrollment or 0,
                     "data_quality_score": s.data_quality_score,
                     "data_quality_status": s.data_quality_status,
@@ -381,6 +416,11 @@ class CorePackageProgressService:
                     "score_pct": score_pct,
                     "score_label": score_label,
                     "score_badge_class": badge_class,
+                    "has_ssa": latest_ssa is not None,
+                    "has_ssa_scores": ssa_summary["has_scores"],
+                    "ssa_average": ssa_summary["average_score"],
+                    "ssa_average_tone": ssa_summary["average_tone"],
+                    "ssa_groups": ssa_summary["groups"],
                     "assessment": assessment_cell,
                     "visits": visits,
                     "trainings": trainings,
@@ -1089,33 +1129,27 @@ class CoreInterventionRecommendationService:
     @staticmethod
     def recommend(school, fy: str | None = None) -> dict:
         from apps.partners.models import Partner
+        from apps.ssa.recommendation_engine import prioritized_interventions
 
-        latest = (
-            school.ssa_records.filter(
-                deleted_at__isnull=True, verification_status="confirmed"
-            )
-            .order_by("-date_of_ssa")
-            .first()
-        )
-        if latest is None:
+        # Delegate the ranking to the canonical analytics engine
+        # (verified-SSA-only, deterministic, analytics-backed). This replaces
+        # a `sorted(..., key=score)` with no tie-break, which selected the
+        # weakest FOUR — and therefore which two go to Partner vs Staff, and
+        # what gets persisted as the school's core package — non-
+        # deterministically whenever scores tied at the 4th/5th boundary
+        # (re-running could reshuffle the persisted package). The engine ranks
+        # by priority (severity anchored, refined by trend/peer/persistence);
+        # with a single confirmed baseline that reduces exactly to ascending
+        # score, so an unambiguous baseline yields the same four as before.
+        ranked = prioritized_interventions(school)
+        if not ranked:
             return {
                 "available": False,
                 "reason": "Baseline Required",
                 "rows": [],
                 "maintenance": False,
             }
-        scores = sorted(
-            latest.scores.all().values("intervention", "score"),
-            key=lambda r: r["score"],
-        )
-        if not scores:
-            return {
-                "available": False,
-                "reason": "Baseline Required",
-                "rows": [],
-                "maintenance": False,
-            }
-        if all((r["score"] or 0) >= 8.0 for r in scores):
+        if all((r["score"] or 0) >= 8.0 for r in ranked):
             return {
                 "available": True,
                 "maintenance": True,
@@ -1125,20 +1159,19 @@ class CoreInterventionRecommendationService:
                     "mentorship, peer learning and Champion preparation."
                 ),
             }
-        labels = dict(SsaIntervention.choices)
         partner_exists = (
             Partner.objects.filter(deleted_at__isnull=True).exists()
             if hasattr(Partner, "deleted_at")
             else Partner.objects.exists()
         )
         rows = []
-        for i, r in enumerate(scores[:4]):
+        for i, r in enumerate(ranked[:4]):
             owner = "Partner" if i < 2 else "Staff"
             rows.append(
                 {
                     "priority": i + 1,
                     "code": r["intervention"],
-                    "label": labels.get(r["intervention"], r["intervention"]),
+                    "label": r["label"],
                     "score": r["score"],
                     "owner": owner,
                     "owner_available": partner_exists if owner == "Partner" else True,

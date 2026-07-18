@@ -389,6 +389,17 @@ def set_password(token: str, new_password: str, confirm: str) -> dict:
     with transaction.atomic():
         user.save(update_fields=["password", "password_set_at", "status", "is_active"])
         invitation.save(update_fields=["accepted_at"])
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="auth.invite_accepted",
+        subject_kind="user",
+        subject_id=user.id,
+        actor_id=user.id,
+        actor_role=getattr(user, "active_role", None),
+        payload={"email": user.email},
+    )
     return {"ok": True}
 
 

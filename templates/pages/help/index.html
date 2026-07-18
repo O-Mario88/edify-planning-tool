@@ -1,93 +1,96 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
 
-{% block title %}Help Center · Edify{% endblock %}
+{% block title %}Knowledge Center · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 max-w-[1000px] mx-auto space-y-5">
+<main class="help-center-main" aria-labelledby="help-title">
+  <header class="help-center-hero">
+    <div class="help-center-hero__intro">
+      <p class="help-center-kicker">Edify Knowledge Center</p>
+      <h1 id="help-title" class="help-center-title">Find the right answer before your next step.</h1>
+      <p class="help-center-summary">Practical, role-aware guidance for every part of Edify. Start with a topic or describe the task you are trying to complete.</p>
+      <dl class="help-stat-list">
+        {% for stat in help_stats %}
+        <div><dt>{{ stat.value }}</dt><dd>{{ stat.label }}</dd></div>
+        {% endfor %}
+      </dl>
+    </div>
+    <div class="help-center-hero__search">
+      <p class="help-search-label">Search by task, feature, status or question</p>
+      <search class="help-search-panel" aria-label="Search the Knowledge Center">
+        <form action="/help/search" method="get">
+          <label class="sr-only" for="help-search">Search the Knowledge Center</label>
+          <input id="help-search" name="q" type="search" required placeholder="For example: ‘I need to submit evidence’">
+          <button class="help-search-button" type="submit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+            Search
+          </button>
+        </form>
+      </search>
+      <p class="help-role-note"><svg aria-hidden="true" class="help-role-note-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4 4 8-9"/></svg> Showing guidance for your active role: <strong>{{ help_role }}</strong>.</p>
+    </div>
+  </header>
 
-  <div>
-    <h1 class="text-[21px] font-extrabold tracking-tight">Help Center</h1>
-    <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">How the Edify operating system fits together — from school upload to closed, accounted activities.</p>
-  </div>
+  <section class="help-topic-section" aria-labelledby="topics-title">
+    <div class="help-topic-section__heading">
+      <div>
+        <p class="help-section-kicker">Explore by topic</p>
+        <h2 id="topics-title" class="help-section-heading">What would you like help with?</h2>
+        <p class="help-section-summary">Choose a learning area to see every guide available to you. The highlighted links give you a useful place to start.</p>
+      </div>
+      <p class="help-topic-section__hint">Pick a topic to open its full guide collection.</p>
+    </div>
 
-  {# ── The operating flow ────────────────────────────────────────────────── #}
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
-    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">The Workflow, End to End</h2>
-    <div class="flex flex-wrap items-center gap-1.5 edify-text-caption font-bold">
-      {% for step in "School Upload,Clustering,Planning,Scheduling,Fund Request,Execution,Evidence + SF ID,IA Verification,Accountability,Closure,Analytics"|split:"," %}
-      <span class="px-2 py-1 rounded-pill bg-slate-50 border border-slate-200 text-slate-600">{{ step }}</span>
-      {% if not forloop.last %}<svg class="h-3 w-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>{% endif %}
+    <ul class="help-topic-grid" role="list">
+      {% for topic in topic_cards %}
+      <li class="help-topic-card help-topic-card--{{ topic.tone }}">
+        <div class="help-topic-card__top">
+          <span class="help-topic-card__number">{{ forloop.counter|stringformat:"02d" }}</span>
+          <span class="help-topic-card__icon">{% include "partials/help/topic_icon.html" with icon=topic.icon %}</span>
+          <p class="help-topic-card__eyebrow">Learning area</p>
+          <h3><a class="help-topic-card__title" href="/help/categories/{{ topic.category.slug }}">{{ topic.category.name }}</a></h3>
+          <p class="help-topic-card__description">{{ topic.category.description }}</p>
+        </div>
+        <div class="help-topic-card__body">
+          <p class="help-topic-card__start">Start with one of these guides</p>
+          <ul class="help-topic-card__list" role="list">
+            {% for article in topic.articles %}
+            <li><a href="/help/articles/{{ article.slug }}"><span>{{ article.title }}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="help-topic-card__footer">
+          <span>{{ topic.count }} guide{{ topic.count|pluralize }}</span>
+          <a href="/help/categories/{{ topic.category.slug }}">View all <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </li>
       {% endfor %}
-    </div>
-    <p class="edify-text-caption text-slate-500 leading-relaxed">
-      Every number on every dashboard derives from this chain. Activities carry their own cost lines, fund
-      requests and verification status — nothing is entered twice, and nothing is displayed that the workflow
-      didn't produce.
-    </p>
-  </div>
+    </ul>
+  </section>
 
-  {# ── Role guides ───────────────────────────────────────────────────────── #}
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"
-       x-data="{ open: '' }">
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
-      <h3 class="text-[12.5px] font-bold text-slate-800">CCEO — Field Execution</h3>
-      <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
-        <li><b>Plan</b> your school visits in <a href="/planning" class="text-blue-600 font-semibold">Planning</a> — select schools, pick a day; the live route preview scores feasibility, travel load and cost per school before you confirm.</li>
-        <li>Meet the CD's daily visit target; below-target days require a reason.</li>
-        <li>Execute from <a href="/my-plan" class="text-blue-600 font-semibold">My Plan</a>: complete visits, upload evidence, enter the Activity SF ID.</li>
-        <li>Confirm your weekly fund request so it reaches your Program Lead for approval.</li>
-        <li>Watch <a href="/todos" class="text-blue-600 font-semibold">To-Do</a> — it derives live from your actual workflow state and clears itself when you act.</li>
-      </ul>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
-      <h3 class="text-[12.5px] font-bold text-slate-800">Program Lead — Team Command</h3>
-      <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
-        <li>Your <a href="/dashboard" class="text-blue-600 font-semibold">dashboard</a> is scoped to your supervised CCEOs only — targets, backlog, SSA risk, route quality.</li>
-        <li>Approve/return CCEO weekly fund requests from the dashboard queue; your own requests route to the CD.</li>
-        <li>Use <a href="/analytics/program-lead" class="text-blue-600 font-semibold">PL Analytics</a> for SSA-by-intervention, district/cluster performance and the school risk list.</li>
-        <li>Review completed activities in the PL queue before they proceed to IA verification.</li>
-      </ul>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
-      <h3 class="text-[12.5px] font-bold text-slate-800">Country Director — National Oversight</h3>
-      <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
-        <li>The <a href="/dashboard" class="text-blue-600 font-semibold">CD dashboard</a> surfaces what needs you today: escalated fund requests, the monthly budget stage, PL risk.</li>
-        <li><a href="/analytics/country-director" class="text-blue-600 font-semibold">CD Analytics</a> is the national intelligence cockpit — country-wide, drillable, oversight-only.</li>
-        <li>Own the <a href="/country-budget/" class="text-blue-600 font-semibold">Country Monthly Budget</a>: review, add the admin plan, submit to the RVP.</li>
-        <li>Maintain <a href="/cost-settings" class="text-blue-600 font-semibold">Cost Settings</a> and district classifications — scheduling depends on them.</li>
-      </ul>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
-      <h3 class="text-[12.5px] font-bold text-slate-800">IA · Accountant · RVP · HR</h3>
-      <ul class="edify-text-caption text-slate-600 space-y-1.5 list-disc pl-4">
-        <li><b>IA</b> verifies completed work in the <a href="/ia/verification/" class="text-blue-600 font-semibold">Verification Queue</a> — evidence, duplicates, SSA uploads.</li>
-        <li><b>Accountant</b> runs disbursement and accountability from the <a href="/disbursements" class="text-blue-600 font-semibold">Disbursement Dashboard</a>; NetSuite codes close the loop.</li>
-        <li><b>RVP</b> approves or returns the country monthly budget from their dashboard.</li>
-        <li><b>HR</b> manages leave approvals, coverage clashes and public holidays from the HR dashboard.</li>
-      </ul>
-    </div>
-  </div>
+  <section class="help-learning-row" aria-label="Start learning and get support">
+    {% if role_article %}
+    <article class="help-learning-card">
+      <div class="help-learning-card__content">
+        <div>
+          <p class="help-section-kicker">Start with your role</p>
+          <h2>{{ role_article.title }}</h2>
+          <p>{{ role_article.summary }}</p>
+        </div>
+        <a class="help-primary-link" href="/help/articles/{{ role_article.slug }}">Open my guide</a>
+      </div>
+    </article>
+    {% endif %}
 
-  {# ── FAQs ──────────────────────────────────────────────────────────────── #}
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-1" x-data="{ open: 0 }">
-    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight pb-2">Frequently Asked</h2>
-    {% for q, a in faqs %}
-    <div class="border-t border-slate-50">
-      <button type="button" @click="open = open === {{ forloop.counter }} ? 0 : {{ forloop.counter }}"
-              class="w-full py-2.5 flex items-center justify-between text-left">
-        <span class="text-[12px] font-semibold">{{ q }}</span>
-        <svg class="h-3.5 w-3.5 text-slate-400 transition-transform" :class="open === {{ forloop.counter }} ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-      </button>
-      <p x-show="open === {{ forloop.counter }}" x-cloak class="edify-text-caption text-slate-500 leading-relaxed pb-3">{{ a }}</p>
-    </div>
-    {% endfor %}
-  </div>
-
-  <div class="rounded-surface border border-slate-200 bg-slate-50 px-4 py-3 flex items-center justify-between gap-3">
-    <p class="edify-text-caption font-semibold text-slate-600">Still stuck? Message your supervisor or the Admin team directly.</p>
-    <a href="/messages/new" class="h-8 px-3 rounded-control bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold inline-flex items-center transition-colors shrink-0">New Message</a>
-  </div>
-
-</div>
+    <aside class="help-quick-card" aria-labelledby="quick-help-title">
+      <p class="help-section-kicker">Quick help</p>
+      <h2 id="quick-help-title">Need an answer now?</h2>
+      <ul class="help-quick-links" role="list">
+        <li><a href="/help/troubleshooting">Fix a common problem</a></li>
+        <li><a href="/help/glossary">Understand a word or status</a></li>
+        {% if release_notes %}<li><a href="/help/release-notes">See what changed in Edify</a></li>{% endif %}
+      </ul>
+    </aside>
+  </section>
+</main>
 {% endblock %}

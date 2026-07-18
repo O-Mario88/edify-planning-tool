@@ -611,7 +611,13 @@ def board(principal, query: dict) -> dict:
 
     grouped = []
     for cat, rows in category_groups.items():
-        grouped.append({"category": cat, "rows": rows})
+        grouped.append(
+            {
+                "category": cat,
+                "rows": rows,
+                "amount": category_data.get(cat, 0),
+            }
+        )
 
     period_total = total_fy
     req_month = query.get("month")

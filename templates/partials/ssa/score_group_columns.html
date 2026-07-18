@@ -1,0 +1,22 @@
+{% if has_ssa_scores %}
+  <div class="school-ssa-groups">
+    {% for group in ssa_groups %}
+      <section class="school-ssa-group school-ssa-group--{{ group.tone }}" aria-labelledby="{{ detail_id }}-{{ group.key }}">
+        <h4 id="{{ detail_id }}-{{ group.key }}">{{ group.title }}</h4>
+        <ul role="list">
+          {% for item in group.items %}
+            <li>
+              <span class="school-ssa-group__dot" aria-hidden="true"></span>
+              <strong>{{ item.label }}</strong>
+              <span class="school-ssa-group__score">({{ item.score|floatformat:"-1" }}/10)</span>
+            </li>
+          {% empty %}
+            <li class="school-ssa-group__empty">No confirmed scores in this group.</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="school-record-ssa__empty">No confirmed SSA scores are available yet.</p>
+{% endif %}

@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import include, path
+from apps.help_center import views as help_views
 from .views import (
     rvp_views,
     auth_views,
@@ -1396,7 +1397,10 @@ urlpatterns = [
         name="completed_activities",
     ),
     path("quality-checks", extended_views.quality_checks_view, name="quality_checks"),
-    path("help", extended_views.help_view, name="help"),
+    # Knowledge Center home is retained at /help; all rich Help routes are
+    # included immediately below using the no-trailing-slash web convention.
+    path("help", help_views.home, name="help"),
+    path("help/", include("apps.help_center.urls")),
     # Cost catalogue inline row edits
     path(
         "cost-settings/row/<str:key>",

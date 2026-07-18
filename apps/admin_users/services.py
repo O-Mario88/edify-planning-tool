@@ -131,6 +131,17 @@ def create(data: dict, principal) -> dict:
             to=email, name=user.name, invited_by_name=principal.name, token=invite_token
         )
 
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="admin.user_created",
+        subject_kind="user",
+        subject_id=user.id,
+        actor_id=principal.id,
+        actor_role=getattr(principal, "active_role", None),
+        payload={"email": email, "roles": roles, "invited": invite_token is not None},
+    )
+
     return {
         "user": {
             "id": user.id,
@@ -155,30 +166,33 @@ def _create_invitation(user_id: str, invited_by_id: str) -> str:
 
 def resend_invite(user_id: str, principal) -> dict:
     user = _get_user(user_id)
-    token = _create_invitation(user.id, principal.user_id)
+    token = _create_invitation(user.id, principal.id)
     mailer.send_invitation(
         to=user.email, name=user.name, invited_by_name=principal.name, token=token
     )
+    _audit_lifecycle("admin.invite_resent", user, principal)
     return {"ok": True, "inviteToken": token if not settings.IS_PRODUCTION else None}
 
 
 def revoke_invite(user_id: str, principal) -> dict:
+    user = _get_user(user_id)
     UserInvitation.objects.filter(user_id=user_id, revoked_at__isnull=True).update(
         revoked_at=timezone.now()
     )
+    _audit_lifecycle("admin.invite_revoked", user, principal)
     return {"ok": True}
 
 
 def suspend(user_id: str, principal) -> dict:
-    return _set_status(user_id, "suspended", is_active=False)
+    return _set_status(user_id, "suspended", is_active=False, principal=principal)
 
 
 def disable(user_id: str, principal) -> dict:
-    return _set_status(user_id, "disabled", is_active=False)
+    return _set_status(user_id, "disabled", is_active=False, principal=principal)
 
 
 def reactivate(user_id: str, principal) -> dict:
-    return _set_status(user_id, "active", is_active=True)
+    return _set_status(user_id, "active", is_active=True, principal=principal)
 
 
 def force_password_reset(user_id: str, principal) -> dict:
@@ -191,16 +205,47 @@ def force_password_reset(user_id: str, principal) -> dict:
 
     user.password_reset_expires = expiry_from_now(45)
     user.save(update_fields=["password_reset_expires"])
+    # A forced reset is exactly the moment a credential may be compromised —
+    # revoke live refresh tokens the same way self-service reset_password
+    # does, rather than leaving the old session usable until the new
+    # password is actually set.
+    from apps.accounts.models import RefreshToken
+
+    RefreshToken.objects.filter(user_id=user.id, revoked_at__isnull=True).update(
+        revoked_at=timezone.now()
+    )
     mailer.send_password_reset(to=user.email, name=user.name, token=raw)
+    _audit_lifecycle("admin.password_reset_forced", user, principal)
     return {"ok": True, "resetToken": raw if not settings.IS_PRODUCTION else None}
 
 
-def _set_status(user_id: str, status: str, is_active: bool) -> dict:
+def _set_status(user_id: str, status: str, is_active: bool, principal=None) -> dict:
     user = _get_user(user_id)
     user.status = status
     user.is_active = is_active
     user.save(update_fields=["status", "is_active"])
+    if not is_active:
+        from apps.accounts.models import RefreshToken
+
+        RefreshToken.objects.filter(user_id=user.id, revoked_at__isnull=True).update(
+            revoked_at=timezone.now()
+        )
+    if principal is not None:
+        _audit_lifecycle(f"admin.user_{status}", user, principal)
     return {"id": user.id, "status": user.status, "isActive": user.is_active}
+
+
+def _audit_lifecycle(action: str, user: User, principal) -> None:
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action=action,
+        subject_kind="user",
+        subject_id=user.id,
+        actor_id=principal.id,
+        actor_role=getattr(principal, "active_role", None),
+        payload={"email": user.email},
+    )
 
 
 def _get_user(user_id: str) -> User:
@@ -211,8 +256,42 @@ def _get_user(user_id: str) -> User:
 
 
 def update_user(user_id: str, data: dict, principal) -> dict:
-    """Updates a user's details, email, roles, and status."""
+    """Updates a user's details, email, roles, and status.
+
+    Guard rails (mirrors delete_user()'s Admin-only protections, closing a
+    privilege-escalation hole: USER_MANAGE is also held by CountryDirector
+    and HumanResources, who must be able to do routine staff-role changes
+    (e.g. CCEO -> Program Lead) but must never be able to grant the
+    unrestricted Admin role to themselves or anyone else, or tamper with an
+    existing Admin's account to take it over via a changed email + a
+    forgot-password reset):
+      - Only an acting Admin may change ANY field on another Admin's account.
+      - Only an acting Admin may grant the Admin role to anyone.
+      - Nobody may change their own role/roles through this endpoint (that
+        would let a non-Admin silently self-promote); role switching among
+        already-granted roles goes through auth_views.switch_role_view.
+    """
+    from apps.core.navigation import get_user_role_slug
+    from apps.core.rbac import EdifyRole
+
     user = _get_user(user_id)
+    acting_role = get_user_role_slug(principal)
+    admin_role = EdifyRole.ADMIN.value
+
+    if acting_role != "ADMIN" and admin_role in (user.roles or []):
+        raise BadRequest("Only an Admin can modify another Admin's account.")
+
+    role = data.get("role")
+    additional = data.get("additionalRoles") or []
+    requested_roles = list(dict.fromkeys([role, *additional])) if role else additional
+    if requested_roles:
+        if user.id == principal.id:
+            raise BadRequest(
+                "You cannot change your own role. Switch among your already-"
+                "granted roles from the role switcher, or ask another Admin."
+            )
+        if admin_role in requested_roles and acting_role != "ADMIN":
+            raise BadRequest("Only an Admin can grant the Admin role.")
 
     email = (data.get("email") or "").lower().strip()
     if email and email != user.email:
@@ -232,10 +311,8 @@ def update_user(user_id: str, data: dict, principal) -> dict:
     if phone is not None:
         user.phone = phone.strip()
 
-    role = data.get("role")
     if role:
-        additional = data.get("additionalRoles") or []
-        user.roles = list(dict.fromkeys([role, *additional]))
+        user.roles = requested_roles
         user.active_role = role
 
         # Sync with StaffProfile title if profile exists
@@ -247,6 +324,17 @@ def update_user(user_id: str, data: dict, principal) -> dict:
             sp.save(update_fields=["title"])
 
     user.save()
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="admin.user_updated",
+        subject_kind="user",
+        subject_id=user.id,
+        actor_id=principal.id,
+        actor_role=getattr(principal, "active_role", None),
+        payload={"email": user.email, "roles": user.roles},
+    )
     return {"ok": True, "id": user.id}
 
 

@@ -1,11 +1,12 @@
 """Central CostingService — the single entry point for activity cost.
 
 Every scheduling path (school visit, partner visit, cluster training, cluster
-meeting, reschedule, partner self-schedule) calls THIS service. No other module
-computes or persists activity cost. The service:
+meeting, reschedule, partner self-schedule) calls THIS service to persist the
+activity cost. No other module computes or persists activity cost. The service:
 
   • preview(input)        — itemized cost from the ACTIVE catalogue (no writes).
-  • assert_schedulable()  — raises BadRequest naming the exact missing rate.
+  • assert_schedulable()  — optional validation for callers that want a strict
+                            preview; it is not a schedule-time blocker.
   • apply_to_activity()   — the canonical budget-line writer: clears + rebuilds
                              ActivityScheduleCostLine rows, stamps catalogue
                              id/version onto every line, sets est_cost_cents.
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest
@@ -299,7 +301,10 @@ def apply_to_activity(
     fiscal_year = None
 
     if scheduled_date:
-        planned_date = scheduled_date.date()
+        # A schedule is shown in the team's operational timezone.  Using the
+        # raw UTC date here can put an evening booking into the wrong My Plan
+        # week/month (and overwrite the correct values derived at creation).
+        planned_date = timezone.localtime(scheduled_date).date()
         # Monday is weekday 0, Sunday is 6
         week_start = planned_date - timedelta(days=planned_date.weekday())
         week_end = week_start + timedelta(days=6)

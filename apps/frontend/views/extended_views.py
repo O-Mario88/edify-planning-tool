@@ -767,26 +767,30 @@ def admin_user_detail_view(request, user_id):
             primary_district = request.POST.get("primary_district")
             additional_districts = request.POST.getlist("additional_districts")
 
-            # Uniqueness check
-            if email and email != member.email:
-                if (
-                    User.objects.filter(email=email, deleted_at__isnull=True)
-                    .exclude(id=member.id)
-                    .exists()
-                ):
-                    messages.error(request, "A user with this email already exists.")
-                    return redirect("frontend:admin_user_detail", user_id=user_id)
-                member.email = email
+            # Delegate identity/role mutation to the canonical service — it
+            # holds the Admin-only guards against granting the Admin role or
+            # touching another Admin's account, and self-role-change denial,
+            # which a second hand-rolled copy here would silently diverge
+            # from (that divergence is exactly how this hole was found).
+            from apps.admin_users.services import update_user
+            from apps.core.exceptions import BadRequest, ConflictError
 
-            if name:
-                member.name = name
-            member.phone = phone
-
-            if primary_role:
-                member.roles = list(dict.fromkeys([primary_role, *additional]))
-                member.active_role = primary_role
-
-            member.save()
+            try:
+                update_user(
+                    member.id,
+                    {
+                        "email": email,
+                        "name": name,
+                        "phone": phone,
+                        "role": primary_role,
+                        "additionalRoles": additional,
+                    },
+                    request.user,
+                )
+            except (BadRequest, ConflictError) as exc:
+                messages.error(request, str(exc.detail))
+                return redirect("frontend:admin_user_detail", user_id=user_id)
+            member.refresh_from_db()
 
             from apps.accounts.models import StaffProfile, StaffGeographyAssignment
 
@@ -812,25 +816,22 @@ def admin_user_detail_view(request, user_id):
             messages.success(request, f"User '{member.name}' updated successfully.")
 
         elif action == "activate":
-            member.status = "active"
-            member.is_active = True
-            member.save(update_fields=["status", "is_active"])
+            from apps.admin_users.services import reactivate
+
+            reactivate(member.id, request.user)
+            member.refresh_from_db()
             messages.success(request, f"User '{member.name}' activated.")
 
         elif action == "deactivate":
-            member.status = "disabled"
-            member.is_active = False
-            member.save(update_fields=["status", "is_active"])
-            # SEC-03 — a disabled user's live refresh tokens must not be able
-            # to mint new access tokens even during the window before their
-            # current access token naturally expires.
-            from django.utils import timezone as _timezone
+            # Delegates to the canonical service, which also revokes live
+            # refresh tokens (SEC-03 — a disabled user's refresh tokens must
+            # not be able to mint new access tokens even during the window
+            # before their current access token naturally expires) and
+            # writes the audit event.
+            from apps.admin_users.services import disable
 
-            from apps.accounts.models import RefreshToken
-
-            RefreshToken.objects.filter(
-                user_id=member.id, revoked_at__isnull=True
-            ).update(revoked_at=_timezone.now())
+            disable(member.id, request.user)
+            member.refresh_from_db()
             messages.warning(request, f"User '{member.name}' deactivated.")
 
         elif action == "delete":
@@ -850,10 +851,6 @@ def admin_user_detail_view(request, user_id):
             return redirect("frontend:admin_users")
 
         elif action == "invite":
-            # Send invite
-            from apps.admin_users.services import _create_invitation
-            from apps.core.email import mailer
-
             # Ensure email is valid and not a placeholder before sending invite
             if "pending" in member.email and "@edify.org" in member.email:
                 messages.error(
@@ -862,14 +859,9 @@ def admin_user_detail_view(request, user_id):
                 )
                 return redirect("frontend:admin_user_detail", user_id=user_id)
 
-            token = _create_invitation(member.id, request.user.id)
-            mailer.send_invitation(
-                to=member.email,
-                name=member.name,
-                invited_by_name=request.user.name,
-                token=token,
-            )
+            from apps.admin_users.services import resend_invite
 
+            resend_invite(member.id, request.user)
             member.status = "pending_invited"
             member.save(update_fields=["status"])
             messages.success(
@@ -914,10 +906,31 @@ def admin_user_detail_view(request, user_id):
             # still unable to log in after their "reset".
             AuthenticationLockoutService.admin_unlock(member.id, actor=request.user)
 
+            # A credential reset is exactly the moment old sessions should
+            # stop working — revoke live refresh tokens the same way
+            # self-service reset_password and the API's force_password_reset
+            # do.
+            from apps.accounts.models import RefreshToken
+
+            RefreshToken.objects.filter(
+                user_id=member.id, revoked_at__isnull=True
+            ).update(revoked_at=timezone.now())
+
             from apps.core.email import mailer
 
             mailer.send_password_reset_by_admin_notification(
                 to=member.email, name=member.name, reset_by_name=request.user.name
+            )
+
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="admin.password_reset_direct",
+                subject_kind="user",
+                subject_id=member.id,
+                actor_id=request.user.id,
+                actor_role=getattr(request.user, "active_role", None),
+                payload={"email": member.email},
             )
             messages.success(
                 request,
@@ -1760,7 +1773,14 @@ def admin_school_upload_history_view(request):
     """School and SSA upload history batches."""
     from apps.schools.models import SchoolImportBatch, SSAImportBatch, UploadBatch
 
-    # Process simulated rollback action
+    # Flags a batch as failed/cancelled for bookkeeping only — this does NOT
+    # delete or revert any School row the batch created or updated. A real
+    # data-reverting rollback would need to (a) delete schools this batch
+    # newly created and (b) replay SchoolChangeLog in reverse for schools it
+    # updated, which is a substantial feature with real data-integrity
+    # implications (cascading School-dependent records) that needs explicit
+    # product scoping, not a same-turn implementation. The UI/copy here must
+    # not claim more than this actually does.
     if request.method == "POST" and "rollback_id" in request.POST:
         batch_id = request.POST.get("rollback_id")
         # Try finding in both batches
@@ -1776,7 +1796,10 @@ def admin_school_upload_history_view(request):
 
             messages.success(
                 request,
-                f"Successfully rolled back upload batch '{getattr(batch, 'file_name', '') or batch.id}'.",
+                f"Marked upload batch '{getattr(batch, 'file_name', '') or batch.id}' as failed. "
+                "This flags the batch record only — schools it already created or "
+                "updated are NOT reverted. Correct affected schools directly in "
+                "the School Directory if needed.",
             )
         return redirect("/admin-panel/school-upload-history")
 

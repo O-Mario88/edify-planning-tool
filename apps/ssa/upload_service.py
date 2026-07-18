@@ -242,7 +242,12 @@ def upload_ssa_file(file, principal) -> dict:
     if rows_to_create:
         SSAImportRow.objects.bulk_create(rows_to_create)
 
-    # Legacy parallel write to keep REST endpoints and unit tests 100% green
+    # Legacy parallel write to keep REST endpoints and unit tests 100% green.
+    # status starts "uploaded" (not "imported") and is only flipped to
+    # "imported" once import_ssa_batch actually succeeds below — it used to
+    # be stamped "imported" here unconditionally, so a failed import left the
+    # batch history permanently showing false success counts. Same defect,
+    # and same fix, as the school-upload path (SCH-03).
     from apps.schools.models import UploadBatch, UploadBatchRowResult
 
     legacy_batch = UploadBatch.objects.create(
@@ -251,7 +256,7 @@ def upload_ssa_file(file, principal) -> dict:
         file_name=getattr(file, "name", "ssa_import.xlsx"),
         original_file_name=getattr(file, "name", "ssa_import.xlsx"),
         uploaded_by=principal.user_id,
-        status="imported",
+        status="uploaded",
         total_rows=len(data_rows),
         created_rows=counts["created"],
         updated_rows=0,
@@ -290,7 +295,15 @@ def upload_ssa_file(file, principal) -> dict:
     success = counts["created"] > 0
     # But we still run import to process rows into directory / unmatched queue!
     if (counts["created"] + counts["unmatched"]) > 0:
-        import_ssa_batch(batch, principal)
+        try:
+            import_ssa_batch(batch, principal)
+        except Exception as exc:
+            legacy_batch.status = "failed"
+            legacy_batch.error_summary = str(exc)
+            legacy_batch.save(update_fields=["status", "error_summary", "updated_at"])
+            raise BadRequest(f"SSA import failed: {exc}") from exc
+        legacy_batch.status = "imported"
+        legacy_batch.save(update_fields=["status", "updated_at"])
 
     if len(data_rows) == 0:
         message = "No data rows were found in the file."
@@ -422,8 +435,15 @@ def import_ssa_batch(batch, user) -> dict:
             )
             unmatched_count += 1
 
-    batch.status = "imported"
-    batch.save()
+    # Per-row failures are recorded on the row itself (status="blocked" with
+    # the error appended above), so the batch is legitimately "imported" —
+    # but only say so when at least one row actually landed. A batch where
+    # every row failed stays "staged" rather than claiming a successful
+    # import. ("failed" is deliberately not used here: SSAImportBatch.STATUSES
+    # only permits staged/imported/cancelled.)
+    if created_count or unmatched_count:
+        batch.status = "imported"
+        batch.save()
 
     return {"created": created_count, "unmatched": unmatched_count}
 

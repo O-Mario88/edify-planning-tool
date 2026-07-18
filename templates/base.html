@@ -64,9 +64,10 @@ live here. Templates consume tokens via var(--edify-*). -->
   <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260718recovery1">
 <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260715a">
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260715c">
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260718b">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260719clustercreate1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
-    <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260718contrast1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260719schoolrecords4">
+    <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260718supporthub3">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -189,6 +190,23 @@ button, a, select, input, textarea {
       e.detail.shouldSwap = true;
       e.detail.isError = false;
     }
+  });
+
+  // Contextual Help is inserted by HTMX. Open it with the native dialog API
+  // after the swap so focus, Escape and the modal backdrop work consistently
+  // without depending on a page-specific Alpine component.
+  document.addEventListener('htmx:afterSwap', function (e) {
+    e.target.querySelectorAll('dialog[data-auto-open]').forEach(function (dialog) {
+      if (!dialog.open) {
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
+      }
+      var closeButton = dialog.querySelector('[data-help-close]');
+      if (closeButton) closeButton.focus();
+    });
+  });
+  document.addEventListener('close', function (e) {
+    if (e.target.matches && e.target.matches('dialog[data-contextual-help]')) e.target.remove();
   });
 </script>
 

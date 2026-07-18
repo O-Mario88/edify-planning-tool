@@ -61,7 +61,7 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
 <!-- Visit Number -->
 <div>
 <label for="visit_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Visit Slot</label>
-<select name="visit_number" id="visit_number" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="visit_number" id="visit_number" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="1" {% if next_visit_seq == 1 %}selected{% endif %}>V1 Visit</option>
 <option value="2" {% if next_visit_seq == 2 %}selected{% endif %}>V2 Visit</option>
 <option value="3" {% if next_visit_seq == 3 %}selected{% endif %}>V3 Visit</option>
@@ -119,12 +119,8 @@ this.currentMonth++;
 }
 this.getDays();
 },
-isSunday(day) {
-if (day === null) return false;
-return new Date(this.currentYear, this.currentMonth, day).getDay() === 0;
-},
 selectDay(day) {
-if (day === null || this.isSunday(day)) return;
+if (day === null) return;
 let monthStr = String(this.currentMonth + 1).padStart(2, '0');
 let dayStr = String(day).padStart(2, '0');
 this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
@@ -203,10 +199,8 @@ x-transition:leave-end="opacity-0 transform scale-95"
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
-:disabled="isSunday(day)"
-:title="isSunday(day) ? 'Sundays are blocked for scheduling' : ''"
 class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
-:class="isSunday(day) ? 'text-slate-300 line-through cursor-not-allowed' : (isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50')"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
 x-text="day"
 ></button>
 </div>
@@ -220,7 +214,7 @@ x-text="day"
 <!-- Primary Focus Intervention -->
 <div>
 <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention</label>
-<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="focus_intervention" id="focus_intervention" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="">Select Intervention...</option>
 {% for code, label in interventions %}
 <option value="{{ code }}" {% if recommendations and recommendations.0.code == code %}selected{% endif %}>{{ label }}</option>
@@ -239,7 +233,7 @@ x-text="day"
 <!-- Responsible Staff -->
 <div>
 <label for="responsible_staff_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Responsible Staff Owner</label>
-<select name="responsible_staff_id" id="responsible_staff_id" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<select name="responsible_staff_id" id="responsible_staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
 <option value="">Select Staff Member...</option>
 {% for s in staff_members %}
 <option value="{{ s.user_id }}" {% if school.account_owner_id == s.user_id %}selected{% endif %}>{{ s.user.name }}</option>
@@ -270,7 +264,7 @@ x-text="day"
 <!-- Activity Goal -->
 <div>
 <label for="activity_goal" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Activity Goal</label>
-<textarea name="activity_goal" id="activity_goal" rows="2" required class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this school visit..."></textarea>
+<textarea name="activity_goal" id="activity_goal" rows="2" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this school visit..."></textarea>
 </div>
 
 <!-- Expected Outcome -->

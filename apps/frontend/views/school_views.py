@@ -1,5 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import require_page_permission, get_scoped_object_or_404
+from apps.core.permissions import (
+    RolePermissionService,
+    get_scoped_object_or_404,
+    require_page_permission,
+)
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q, Count
@@ -367,7 +371,22 @@ def school_directory_view(request):
     # a handful of queries instead of ~5-7 per-row queries inside from_school
     # (was a confirmed N+1 on the school directory list).
     page_school_ids = [s.id for s in page_obj]
-    progress_by_school = SchoolDirectoryViewModel.bulk_progress(page_school_ids)
+    progress_by_school = SchoolDirectoryViewModel.bulk_progress(page_school_ids, fy=fy)
+    owner_ids = {
+        school.account_owner_id
+        for school in page_obj
+        if school.account_owner_id
+    }
+    staff_names_by_owner_id = {}
+    if owner_ids:
+        for staff in (
+            StaffProfile.objects.filter(deleted_at__isnull=True)
+            .filter(Q(id__in=owner_ids) | Q(user_id__in=owner_ids))
+            .select_related("user")
+        ):
+            if staff.user_id and staff.user.name:
+                staff_names_by_owner_id[staff.id] = staff.user.name
+                staff_names_by_owner_id[staff.user_id] = staff.user.name
 
     view_models = [
         SchoolDirectoryViewModel.from_school(
@@ -376,6 +395,7 @@ def school_directory_view(request):
             clusters_dict,
             active_projects_exist,
             progress=progress_by_school.get(s.id),
+            staff_names_by_owner_id=staff_names_by_owner_id,
         )
         for s in page_obj
     ]
@@ -445,6 +465,7 @@ def school_directory_view(request):
         "intelligence": selected_school_data,
         "can_toggle_core": user.active_role
         in ("Admin", "CountryDirector", "ImpactAssessment"),
+        "can_schedule": RolePermissionService.can_schedule_activity(user),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -717,19 +738,10 @@ def add_to_cluster_drawer_view(request, school_id):
             cluster_id = cluster_data["id"]
 
         cluster = get_object_or_404(Cluster, id=cluster_id, deleted_at__isnull=True)
+        # Audited inside set_school_cluster_membership() (the canonical
+        # service assign_school_to_cluster delegates to) — not duplicated
+        # here.
         assign_school_to_cluster(school.school_id, {"clusterId": cluster.id}, user)
-
-        from apps.audit.services import log as audit_log
-
-        audit_log(
-            action="school.assign_cluster",
-            subject_kind="School",
-            subject_id=school.id,
-            actor_id=user.user_id,
-            actor_role=user.active_role,
-            success=True,
-            payload={"cluster_id": cluster.id, "cluster_name": cluster.name},
-        )
 
         response = render(
             request,

@@ -62,6 +62,7 @@ def report() -> dict:
     data["authLockout"] = _auth_lockout()
     data["unmatchedSsa"] = _unmatched_ssa()
     data["evidenceStorage"] = _evidence_storage()
+    data["documentationCoverage"] = _documentation_coverage()
     return data
 
 
@@ -75,6 +76,22 @@ def _evidence_storage() -> dict:
         return evidence_storage_health()
     except Exception:  # noqa: BLE001 — the health page must render regardless
         return {"checks": []}
+
+
+def _documentation_coverage() -> dict:
+    """Knowledge Center route/status drift summary for authorised operations."""
+    try:
+        from apps.help_center.services import documentation_drift_report
+
+        report = documentation_drift_report()
+        return {
+            "coveragePercent": report["coverage_percent"],
+            "missingRoutes": len(report["missing_routes"]),
+            "unknownStatuses": len(report["unknown_statuses"]),
+            "overdueArticles": len(report["overdue_articles"]),
+        }
+    except Exception as exc:  # health must remain available during a docs failure
+        return {"coveragePercent": None, "error": str(exc)}
 
 
 def _background_automation() -> dict:

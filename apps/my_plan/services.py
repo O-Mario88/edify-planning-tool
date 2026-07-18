@@ -37,6 +37,20 @@ def get_week_date_range(year: int, month: int, week: int) -> tuple[date, date]:
     return date(year, month, start_day), date(year, month, end_day)
 
 
+def _scheduled_in_range(start: date, end: date) -> Q:
+    """Match an activity by its real planned date, with a legacy fallback.
+
+    ``planned_month`` and ``planned_week`` are convenience fields.  They were
+    missing on some older scheduled rows, which made a real dated activity
+    disappear from My Plan.  The date is the source of truth; the timestamp
+    fallback keeps imported legacy records visible until they are repaired.
+    """
+    return Q(planned_date__range=(start, end)) | Q(
+        planned_date__isnull=True,
+        scheduled_date__date__range=(start, end),
+    )
+
+
 def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     """Resolves operational status pill color and text for row tables."""
     status = activity.status
@@ -118,14 +132,26 @@ def get(principal, query: dict) -> dict:
     if period == "week":
         w_val = query.get("week")
         m_val = query.get("month")
-        if w_val:
+        if w_val and m_val:
+            month_int = int(m_val)
+            year_int = int(fy) - 1 if month_int >= 10 else int(fy)
+            start, end = get_week_date_range(year_int, month_int, int(w_val))
+            qs = qs.filter(_scheduled_in_range(start, end))
+        elif w_val:
             qs = qs.filter(planned_week=int(w_val))
-        if m_val:
+        elif m_val:
             qs = qs.filter(planned_month=int(m_val))
     elif period == "month":
         m_val = query.get("month")
         if m_val:
-            qs = qs.filter(planned_month=int(m_val))
+            month_int = int(m_val)
+            year_int = int(fy) - 1 if month_int >= 10 else int(fy)
+            last_day = calendar.monthrange(year_int, month_int)[1]
+            qs = qs.filter(
+                _scheduled_in_range(
+                    date(year_int, month_int, 1), date(year_int, month_int, last_day)
+                )
+            )
     elif period == "quarter":
         q_val = query.get("quarter")
         if q_val:
@@ -474,11 +500,12 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     if period == "week":
         period_label = f"{w_start.strftime('%B %-d')} – {w_end.strftime('%B %-d, %Y')}"
-        qs_period = qs.filter(planned_month=month_int, planned_week=week_int)
+        qs_period = qs.filter(_scheduled_in_range(w_start, w_end))
     elif period == "month":
         month_name = date(year_int, month_int, 1).strftime("%B")
         period_label = f"{month_name} {year_int}"
-        qs_period = qs.filter(planned_month=month_int)
+        month_end = date(year_int, month_int, calendar.monthrange(year_int, month_int)[1])
+        qs_period = qs.filter(_scheduled_in_range(date(year_int, month_int, 1), month_end))
     elif period == "quarter":
         period_label = f"{quarter} FY{fy}"
         qs_period = qs.filter(quarter=quarter)
@@ -487,10 +514,18 @@ def get_frontend_context(principal, query: dict) -> dict:
         qs_period = qs
 
     # 7. Compute KPI values
+    current_week_start, current_week_end = get_week_date_range(
+        today.year, today.month, min(5, (today.day - 1) // 7 + 1)
+    )
     planned_this_week = qs.filter(
-        planned_month=today.month, planned_week=min(5, (today.day - 1) // 7 + 1)
+        _scheduled_in_range(current_week_start, current_week_end)
     ).count()
-    planned_this_month = qs.filter(planned_month=today.month).count()
+    planned_this_month = qs.filter(
+        _scheduled_in_range(
+            date(today.year, today.month, 1),
+            date(today.year, today.month, calendar.monthrange(today.year, today.month)[1]),
+        )
+    ).count()
     planned_this_quarter = qs.filter(quarter=get_quarter_for_date(today)).count()
     planned_this_fy = qs.count()
 

@@ -1,131 +1,89 @@
-<li class="school-directory-row" x-data="{ actionsOpen: false }">
-  <div class="school-directory-row__select">
-    <input
-      type="checkbox"
-      id="select-school-{{ school.id }}"
-      value="{{ school.id }}"
-      x-model="selectedSchools"
-      aria-label="Select {{ school.school_name }}"
-    >
-  </div>
+<li class="school-directory-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
+  <div class="school-record-row__summary">
+    <label class="school-record-row__select" for="select-school-{{ school.id }}">
+      <input
+        type="checkbox"
+        id="select-school-{{ school.id }}"
+        value="{{ school.id }}"
+        x-model="selectedSchools"
+      >
+      <span class="sr-only">Select {{ school.school_name }}</span>
+    </label>
 
-  <div class="school-directory-row__icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/>
-    </svg>
-  </div>
+    <div class="school-record-row__content">
+      <button
+        type="button"
+        class="school-record-row__expander"
+        @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
+        @keydown.escape.window="openSchoolId = null"
+        :aria-expanded="(openSchoolId === '{{ school.id }}').toString()"
+        :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide SSA details for {{ school.school_name|escapejs }}' : 'Show SSA details for {{ school.school_name|escapejs }}'"
+        aria-controls="school-directory-details-{{ school.id }}"
+      ></button>
+      <span class="school-record-row__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/>
+        </svg>
+      </span>
 
-  <div class="school-directory-row__body">
-    <div class="school-directory-row__title-line">
-      <a class="school-directory-row__name" href="/schools/{{ school.school_id }}">
-        {{ school.school_name }}
-      </a>
-      <span class="school-directory-row__id">{{ school.school_id }}</span>
+      <div class="school-record-row__identity">
+        <h2 class="school-record-row__title">{{ school.school_name }}</h2>
+        <dl class="school-record-row__metadata">
+          <div><dt>District:</dt><dd>{{ school.district }}</dd></div>
+          <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address }}</dd></div>
+          <div><dt>School Type:</dt><dd>{{ school.school_type }}</dd></div>
+          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{{ school.cluster_name }}{% else %}Not assigned{% endif %}</dd></div>
+          <div><dt>Enrollment:</dt><dd>{{ school.enrolment }}</dd></div>
+          <div><dt>Phone:</dt><dd>{{ school.phone }}</dd></div>
+          <div><dt>Primary Contact:</dt><dd>{{ school.school_contact }}</dd></div>
+          <div><dt>Staff Name:</dt><dd>{{ school.staff_name }}</dd></div>
+          <div class="school-record-row__ssa {% if school.ssa_average_tone %}is-{{ school.ssa_average_tone }}{% endif %}"><dt>SSA:</dt><dd>{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+          <div><dt>Visit:</dt><dd class="{% if school.visit_count %}is-positive{% else %}is-attention{% endif %}">{{ school.visit_count }}</dd></div>
+          <div><dt>Training:</dt><dd class="{% if school.training_count %}is-positive{% else %}is-attention{% endif %}">{{ school.training_count }}</dd></div>
+        </dl>
+      </div>
     </div>
 
-    <p class="school-directory-row__location">
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/>
-        <circle cx="12" cy="10" r="2.5"/>
-      </svg>
-      <span>{{ school.district }}{% if school.sub_county and school.sub_county != "—" %}, {{ school.sub_county }}{% endif %}</span>
-    </p>
-
-    <div class="school-directory-row__statuses" aria-label="School workflow status">
-      <span class="school-directory-status {% if school.has_ssa %}is-complete{% else %}is-missing{% endif %}">
-        {% if school.has_ssa %}SSA Complete{% else %}No SSA{% endif %}
-      </span>
-      <span class="school-directory-status {% if school.has_visit %}is-complete{% else %}is-missing{% endif %}">
-        {% if school.has_visit %}Visit Complete{% else %}No Visit{% endif %}
-      </span>
-      <span class="school-directory-status {% if school.has_training %}is-complete{% else %}is-missing{% endif %}">
-        {% if school.has_training %}Training Complete{% else %}No Training{% endif %}
-      </span>
-      <span class="school-directory-status {% if school.is_clustered %}is-complete{% else %}is-missing{% endif %}">
-        {% if school.is_clustered %}Clustered{% else %}No Cluster{% endif %}
-      </span>
-    </div>
-  </div>
-
-  {% if "add_to_cluster" in school.available_actions or "assign_to_project" in school.available_actions %}
-    <div class="school-directory-row__quick-actions" aria-label="Workflow actions for {{ school.school_name }}">
+    <div class="school-record-row__actions">
       {% if "add_to_cluster" in school.available_actions %}
         <button
           type="button"
-          class="school-directory-row__quick-action is-cluster"
-          aria-label="Add {{ school.school_name }} to Cluster"
+          class="school-record-action school-record-action--assign"
           hx-get="/schools/{{ school.id }}/add-to-cluster"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 5.5h8M6.5 9.5h11M5 13.5h14M12 3v13m-3.5 3h7M12 16v6"/>
-          </svg>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5.5h8M6.5 9.5h11M5 13.5h14M12 3v13m-3.5 3h7M12 16v6"/></svg>
+          <span>Add to Cluster</span>
+        </button>
+      {% else %}
+        <button type="button" class="school-record-action school-record-action--assign" disabled>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5.5h8M6.5 9.5h11M5 13.5h14M12 3v13m-3.5 3h7M12 16v6"/></svg>
           <span>Add to Cluster</span>
         </button>
       {% endif %}
+
       {% if "assign_to_project" in school.available_actions %}
         <button
           type="button"
-          class="school-directory-row__quick-action is-project"
-          aria-label="Add {{ school.school_name }} to Project"
+          class="school-record-action school-record-action--assign"
           hx-get="/schools/{{ school.id }}/assign-to-project"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.5 7.5h6l1.8 2h9.2v8.7a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8V7.5Zm0 0V5.8A1.8 1.8 0 0 1 5.3 4h4.2l1.8 2h7.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/>
-            <path stroke-linecap="round" d="M12 12.5v4m-2-2h4"/>
-          </svg>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.5 7.5h6l1.8 2h9.2v8.7a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8V7.5Zm0 0V5.8A1.8 1.8 0 0 1 5.3 4h4.2l1.8 2h7.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M12 12.5v4m-2-2h4"/></svg>
+          <span>Add to Project</span>
+        </button>
+      {% else %}
+        <button type="button" class="school-record-action school-record-action--assign" disabled>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3"/></svg>
           <span>Add to Project</span>
         </button>
       {% endif %}
     </div>
-  {% endif %}
-
-  <div class="school-directory-row__priority">
-    {% if school.is_high_priority or not school.is_clustered or not school.has_ssa %}
-      <span class="school-directory-priority is-high">High</span>
-    {% elif school.data_quality_score < 85 %}
-      <span class="school-directory-priority is-medium">Medium</span>
-    {% else %}
-      <span class="school-directory-priority is-low">Low</span>
-    {% endif %}
   </div>
 
-  <div class="school-directory-row__actions">
-    <button
-      type="button"
-      class="school-directory-row__action-trigger"
-      @click="actionsOpen = !actionsOpen"
-      @keydown.escape.window="actionsOpen = false"
-      :aria-expanded="actionsOpen.toString()"
-      aria-haspopup="menu"
-      aria-label="Actions for {{ school.school_name }}"
-    >
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/>
-      </svg>
-    </button>
-    <div
-      class="school-directory-row__menu"
-      x-show="actionsOpen"
-      x-transition.opacity.duration.120ms
-      @click.outside="actionsOpen = false"
-      role="menu"
-      style="display: none;"
-    >
-      <a role="menuitem" href="/schools/{{ school.school_id }}">Open school profile</a>
-    </div>
+  <div id="school-directory-details-{{ school.id }}" class="school-record-row__details" x-show="openSchoolId === '{{ school.id }}'" x-transition.opacity.duration.150ms x-cloak>
+    {% include "partials/schools/ssa_score_groups.html" with detail_id="school-directory-details-"|add:school.id ssa_groups=school.ssa_groups has_ssa_scores=school.has_ssa_scores selected_fy=selected_fy %}
   </div>
-
-  <a
-    class="school-directory-row__open"
-    href="/schools/{{ school.school_id }}"
-    aria-label="Open {{ school.school_name }} profile"
-  >
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/>
-    </svg>
-  </a>
 </li>

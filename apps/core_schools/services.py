@@ -87,9 +87,17 @@ def create_package_slots(
 
 
 def list_candidates(principal) -> list[dict]:
-    """Best-SSA client/potential-core schools → candidate for core onboarding."""
+    """Best-SSA client/potential-core/potential-champion schools → candidate
+    for core onboarding. potential_champion is included here (not on a
+    separate Champion-candidates pipeline) because ChampionEligibilityService
+    only evaluates schools that already have a CoreSchoolProfile, which is
+    only created through this same Core onboarding path — a "potential
+    champion" school's actual next step is identical to a "potential core"
+    school's, and it used to be invisible to every workflow (not client-only,
+    not core, no CoreSchoolProfile) until it went through here."""
     qs = School.objects.filter(
-        deleted_at__isnull=True, school_type__in=["client", "potential_core"]
+        deleted_at__isnull=True,
+        school_type__in=["client", "potential_core", "potential_champion"],
     )
     out = []
     for s in qs:

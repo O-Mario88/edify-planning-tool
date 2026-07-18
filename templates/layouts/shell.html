@@ -145,17 +145,22 @@ aria-label="Notifications"
 </div>
 </button>
 
-<!-- Help icon -->
-<a
-href="/help"
+<!-- Contextual Help is mapped from the current server route to a reviewed
+Knowledge Center article. The dialog keeps the workspace visible and links to
+the full manual; the server still filters content by active role. -->
+<button
+type="button"
+hx-get="/help/context?for={{ request.path|urlencode }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
 class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
-title="Help Center"
-aria-label="Help Center"
+title="Help for this page"
+aria-label="Help for this page"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 </svg>
-</a>
+</button>
 
 <!-- Quick night-mode control. Settings remains the full appearance picker. -->
 <button

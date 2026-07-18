@@ -322,6 +322,26 @@ def resolve_partner_ids(user) -> list[str]:
     return []
 
 
+def cluster_in_scope(scope: UserScope, cluster) -> bool:
+    """Return whether a cluster is inside an operational user's scope.
+
+    Clusters are assigned and managed at district level.  A CCEO or Program
+    Lead who has an assigned school in a district can work the district's
+    clusters, even before one of their individual schools has been added to a
+    particular cluster.  This mirrors the cluster list and assignment rules;
+    keeping the rule here prevents a drawer from offering a cluster that the
+    activity service later rejects.
+    """
+    if scope.country_scope:
+        return True
+    if getattr(cluster, "id", None) in scope.cluster_ids:
+        return True
+    return bool(
+        getattr(cluster, "district_id", None)
+        and cluster.district_id in scope.district_ids
+    )
+
+
 # ── ORM query constraints (legacy schoolWhere / aggregateSchoolWhere) ────────
 def school_queryset(scope: UserScope):
     """Return the base queryset for the School model, scope-constrained.
@@ -379,6 +399,7 @@ def _get_partner_model():
 __all__ = [
     "UserScope",
     "resolve_user_scope",
+    "cluster_in_scope",
     "resolve_partner_ids",
     "school_queryset",
     "aggregate_school_filter",

@@ -9,7 +9,7 @@
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
 <h1 class="text-[21px] font-extrabold tracking-tight">School Upload History</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Audit uploaded school files, successful records, row breakdowns, and rollback status</p>
+<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Audit uploaded school files, successful records, and row breakdowns. "Mark Failed" flags a batch record only — it does not revert school data.</p>
 </div>
 </div>
 
@@ -23,7 +23,7 @@
 <th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Type / Source</th>
 <th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Row Breakdown</th>
 <th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Status</th>
-<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Rollback</th>
+<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Action</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
@@ -53,15 +53,15 @@
 </div>
 </td>
 <td class="px-4 py-4">
-{% if batch.status == 'completed' %}
+{% if batch.status == 'completed' or batch.status == 'imported' %}
 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700">
 <span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
-<span>Completed</span>
+<span>Imported</span>
 </span>
 {% elif batch.status == 'failed' %}
 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700">
 <span class="h-1.5 w-1.5 rounded-pill bg-rose-500"></span>
-<span>Failed / Rolled Back</span>
+<span>Failed</span>
 </span>
 {% else %}
 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-blue-50 text-blue-700">
@@ -76,15 +76,15 @@
 {% endif %}
 </td>
 <td class="px-5 py-4 text-right">
-{% if batch.status == 'completed' %}
-<form method="post" action="/admin/school-upload-history" @submit="if (!window.confirm('Are you sure you want to rollback all rows created by this file? This will restore original database records.')) $event.preventDefault()">
+{% if batch.status == 'completed' or batch.status == 'imported' %}
+<form method="post" action="{% url 'frontend:admin_school_upload_history' %}" @submit="if (!window.confirm('Mark this upload batch as failed? This only flags the batch record — schools it already created or updated will NOT be reverted; correct them directly in the School Directory.')) $event.preventDefault()">
 {% csrf_token %}
 <input type="hidden" name="rollback_id" value="{{ batch.id }}">
 <button
 type="submit"
 class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
-Rollback
+Mark Failed
 </button>
 </form>
 {% else %}

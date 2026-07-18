@@ -169,3 +169,80 @@ class CountryLevelBudgetUtilizationTest(TestCase):
         card = _kpi(metrics["kpi_strip_items"], "Country Target Achievement")
         self.assertIsNotNone(card)
         self.assertNotIn("trend", card)
+
+
+class WeakestInterventionsRankingTest(TestCase):
+    """The Admin/CD dashboard's "Weakest interventions" panel must actually
+    list the LOWEST-scoring interventions.
+
+    ssa_averages is ordered by -avg_val (best first). After the top 3 are
+    taken as `best_interventions`, the remainder is still descending, so the
+    old `weakest_interventions[:3]` returned the 4th/5th/6th BEST and
+    labelled them "Weakest" — while the two genuinely worst interventions
+    were never displayed at all.
+    """
+
+    def setUp(self):
+        from apps.geography.models import District, Region
+        from apps.schools.models import School
+
+        self.user = User.objects.create(
+            id="admin-weakest-1",
+            email="admin-weakest@edify.org",
+            name="Admin Weakest",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+        )
+        region = Region.objects.create(name="Weakest Region")
+        district = District.objects.create(name="Weakest District", region=region)
+        self.school = School.objects.create(
+            school_id="SCH-WEAKEST-1",
+            name="Weakest Primary",
+            region=region,
+            district=district,
+        )
+
+    def test_weakest_panel_lists_the_lowest_scoring_interventions(self):
+        from datetime import datetime, timezone as dt_tz
+
+        from apps.core.enums import SsaIntervention
+        from apps.ssa.models import SsaRecord, SsaScore
+
+        record = SsaRecord.objects.create(
+            school=self.school,
+            date_of_ssa=datetime(2026, 6, 1, tzinfo=dt_tz.utc),
+            fy="2026",
+            quarter="Q3",
+            average_score=5.0,
+            verification_status="confirmed",
+            uploaded_by=self.user.id,
+        )
+        # Give all eight interventions distinct, strictly descending scores in
+        # canonical enum order: 9.0, 8.0, ... 2.0.
+        ordered = list(SsaIntervention)
+        for i, interv in enumerate(ordered):
+            SsaScore.objects.create(
+                ssa_record=record, intervention=interv.value, score=9.0 - i
+            )
+
+        metrics = DashboardMetricsService.get_dashboard_metrics(self.user)
+        labels = dict(SsaIntervention.choices)
+
+        best_names = [row["name"] for row in metrics["best_interventions"]]
+        weakest_names = [row["name"] for row in metrics["weakest_interventions"]]
+
+        # Best = the three highest (9.0, 8.0, 7.0).
+        self.assertEqual(best_names, [labels[i.value] for i in ordered[:3]])
+
+        # Weakest = the three lowest (2.0, 3.0, 4.0), worst first — NOT the
+        # 4th/5th/6th best (6.0, 5.0, 4.0) the old slice produced.
+        self.assertEqual(
+            weakest_names, [labels[i.value] for i in reversed(ordered[-3:])]
+        )
+        weakest_scores = [row["score"] for row in metrics["weakest_interventions"]]
+        self.assertEqual(weakest_scores, [2.0, 3.0, 4.0])
+
+        # The two genuinely worst interventions must be present.
+        self.assertIn(labels[ordered[-1].value], weakest_names)
+        self.assertIn(labels[ordered[-2].value], weakest_names)

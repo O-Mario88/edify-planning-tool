@@ -10,11 +10,16 @@ Also pins the partner-attribution fix: a partner-delivered activity now sets
 monitored_by_staff_id = scheduling staff, so it surfaces on their My Plan.
 """
 
+from datetime import datetime, time
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.utils import timezone
 
 from apps.accounts.models import User, StaffProfile, StaffSchoolAssignment
 from apps.activities.models import Activity
+from apps.budget.models import CostCatalogue, CostSetting
+from apps.fund_requests.models import FundRequest, WeeklyFundRequest
 from apps.core.fy import get_operational_fy
 from apps.geography.models import Region, District
 from apps.my_plan.services import get_frontend_context
@@ -92,6 +97,217 @@ class PlanningToMyPlanFlowTest(TestCase):
             str(activity.id),
             _activity_ids(ctx),
             "Scheduled activity with StaffProfile attribution must appear in My Plan",
+        )
+
+    def test_cluster_schedule_derives_my_plan_period_fields(self):
+        """The cluster planner only sends a date, not planning month/week fields.
+
+        Scheduling must derive all three period fields so the activity is
+        present in My Plan's default week filter immediately after saving.
+        """
+        from apps.activities.services import create
+        from apps.clusters.models import Cluster
+
+        user, profile = self._cceo_with_profile(email="cluster@plan.test")
+        cluster = Cluster.objects.create(
+            name="Mbale Planning Cluster",
+            region=self.region,
+            district=self.district,
+        )
+        scheduled_for = timezone.localdate()
+        scheduled_at = timezone.make_aware(
+            datetime.combine(scheduled_for, time(9)), timezone.get_current_timezone()
+        )
+
+        with patch("apps.activities.services._apply_schedule_cost_snapshot"):
+            result = create(
+                {
+                    "activityType": "cluster_training",
+                    "clusterId": cluster.id,
+                    "scheduledDate": scheduled_at.isoformat(),
+                    "expectedParticipants": 12,
+                    "activityPurposeText": "Build stronger teaching practices",
+                    "focusIntervention": "teaching_environment",
+                },
+                user,
+            )
+
+        activity = Activity.objects.get(id=result["id"])
+        expected_week = min(5, (scheduled_for.day - 1) // 7 + 1)
+        self.assertEqual(activity.responsible_staff_id, profile.id)
+        self.assertEqual(activity.planned_date, scheduled_for)
+        self.assertEqual(activity.planned_month, scheduled_for.month)
+        self.assertEqual(activity.planned_week, expected_week)
+
+        ctx = get_frontend_context(
+            user,
+            {
+                "fy": activity.fy,
+                "period": "week",
+                "month": str(scheduled_for.month),
+                "week": str(expected_week),
+            },
+        )
+        self.assertIn(str(activity.id), _activity_ids(ctx))
+
+    def test_legacy_period_fields_do_not_hide_a_scheduled_activity(self):
+        """My Plan uses the real scheduled date when old grouping fields are blank."""
+        user, profile = self._cceo_with_profile(email="legacy-period@plan.test")
+        scheduled_for = timezone.localdate()
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=get_operational_fy(scheduled_for),
+            quarter="Q4",
+            responsible_staff_id=profile.id,
+            status="scheduled",
+            scheduled_date=timezone.make_aware(
+                datetime.combine(scheduled_for, time(9)),
+                timezone.get_current_timezone(),
+            ),
+            planned_date=scheduled_for,
+            planned_month=None,
+            planned_week=None,
+            delivery_type="staff",
+        )
+
+        ctx = get_frontend_context(
+            user,
+            {
+                "fy": activity.fy,
+                "period": "week",
+                "month": str(scheduled_for.month),
+                "week": str(min(5, (scheduled_for.day - 1) // 7 + 1)),
+            },
+        )
+        self.assertIn(str(activity.id), _activity_ids(ctx))
+
+    def test_permissive_schedule_creates_cost_and_budget_immediately(self):
+        """Business rules do not block a schedule, but costing still writes now."""
+        from apps.activities.services import create
+
+        user, profile = self._cceo_with_profile(email="permissive@plan.test")
+        self.district.district_type = "primary"
+        self.district.save(update_fields=["district_type"])
+        fy = get_operational_fy()
+        catalogue, _ = CostCatalogue.objects.update_or_create(
+            country="Scheduling Test",
+            fy=fy,
+            version=999,
+            defaults={"is_active": True, "label": "Scheduling Test Catalogue"},
+        )
+        CostSetting.objects.update_or_create(
+            key="staff_visit_transport_primary",
+            defaults={
+                "label": "Transport",
+                "unit_cost": 50_000,
+                "fy": fy,
+                "catalogue": catalogue,
+                "version": 1,
+            },
+        )
+        CostSetting.objects.update_or_create(
+            key="lunch",
+            defaults={
+                "label": "Lunch",
+                "unit_cost": 10_000,
+                "fy": fy,
+                "catalogue": catalogue,
+                "version": 1,
+            },
+        )
+
+        result = create(
+            {
+                "activityType": "school_visit",
+                "schoolId": self.school.school_id,
+                "scheduledDate": timezone.localdate().isoformat(),
+                # This would previously fail strict-purpose and SSA gates.
+                "strict_validation": True,
+            },
+            user,
+        )
+        activity = Activity.objects.get(id=result["id"])
+
+        self.assertEqual(activity.responsible_staff_id, profile.id)
+        self.assertFalse(activity.cost_missing)
+        self.assertEqual(activity.est_cost_cents, 60_000)
+        self.assertGreater(activity.schedule_cost_lines.count(), 0)
+        self.assertEqual(
+            set(
+                activity.schedule_cost_lines.values_list("responsible_user", flat=True)
+            ),
+            {user.id},
+        )
+        self.assertTrue(
+            WeeklyFundRequest.objects.filter(
+                responsible_user=user.id,
+                week_start_date=activity.week_start_date,
+                total_amount=60_000,
+            ).exists()
+        )
+        self.assertTrue(
+            FundRequest.objects.filter(
+                submitted_by_user_id=user.id,
+                period="monthly",
+                period_key=f"{activity.fy}-M{activity.month}",
+                total_amount=60_000,
+                status="draft",
+            ).exists()
+        )
+
+    def test_admin_scheduling_for_staff_uses_staff_finance_owner(self):
+        """The assigned staff member, not the admin who clicks Save, owns funding."""
+        from apps.activities.services import create
+
+        staff_user, profile = self._cceo_with_profile(email="owner@plan.test")
+        admin = User.objects.create_user(
+            email="admin-owner@plan.test",
+            name="Admin Owner",
+            roles=["Admin"],
+            active_role="Admin",
+            password="x",
+            is_active=True,
+        )
+        self.district.district_type = "primary"
+        self.district.save(update_fields=["district_type"])
+        fy = get_operational_fy()
+        catalogue = CostCatalogue.objects.create(
+            country="Owner Test", fy=fy, version=778, is_active=True
+        )
+        CostSetting.objects.create(
+            key="staff_visit_transport_primary",
+            label="Transport",
+            unit_cost=50_000,
+            fy=fy,
+            catalogue=catalogue,
+        )
+        CostSetting.objects.create(
+            key="lunch", label="Lunch", unit_cost=10_000, fy=fy, catalogue=catalogue
+        )
+
+        result = create(
+            {
+                "activityType": "school_visit",
+                "schoolId": self.school.school_id,
+                "scheduledDate": timezone.localdate().isoformat(),
+                "responsibleStaffId": profile.id,
+            },
+            admin,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertEqual(activity.responsible_staff_id, profile.id)
+        self.assertEqual(
+            set(
+                activity.schedule_cost_lines.values_list("responsible_user", flat=True)
+            ),
+            {staff_user.id},
+        )
+        self.assertTrue(
+            WeeklyFundRequest.objects.filter(
+                responsible_user=staff_user.id,
+                week_start_date=activity.week_start_date,
+            ).exists()
         )
 
     def test_staff_activity_appears_in_my_plan_without_staffprofile(self):

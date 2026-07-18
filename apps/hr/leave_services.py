@@ -619,7 +619,7 @@ class LeaveApprovalService:
                     revoked_by_user_id=reviewer_user.id,
                 )
 
-                TemporaryCoverageAssignment.objects.create(
+                coverage = TemporaryCoverageAssignment.objects.create(
                     leave_request=leave,
                     original_staff=leave.staff,
                     covering_staff=leave.covering_staff,
@@ -628,6 +628,25 @@ class LeaveApprovalService:
                     scope="operational_work",
                     status="active",
                     created_by_user_id=reviewer_user.id,
+                )
+
+                # A coverage grant is a real access-delegation event — it
+                # widens can_view_record for the covering staff member and
+                # causes their actions to be auto-attributed back to the
+                # person they're covering for (see apps/audit/services.py).
+                from apps.audit.services import log as audit_log
+
+                audit_log(
+                    action="hr.coverage_granted",
+                    subject_kind="temporary_coverage_assignment",
+                    subject_id=coverage.id,
+                    actor_id=reviewer_user.id,
+                    actor_role=getattr(reviewer_user, "active_role", None),
+                    payload={
+                        "originalStaffId": leave.staff_id,
+                        "coveringStaffId": leave.covering_staff_id,
+                        "leaveId": leave.id,
+                    },
                 )
 
                 # Trigger notifications

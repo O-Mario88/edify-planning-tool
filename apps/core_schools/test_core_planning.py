@@ -281,6 +281,43 @@ class CoreSchoolsPlanningTest(TestCase):
         for head in ("V1", "V2", "V3", "V4", "T1", "T2", "T3", "T4"):
             self.assertIn(head, html)
 
+    def test_core_school_expansion_shows_real_grouped_ssa_recommendations(self):
+        """The core matrix must use its confirmed saved scores, not a summary."""
+        self.school.shipping_address = "Plot 12, Kampala Road"
+        self.school.save(update_fields=["shipping_address"])
+        response = self._client(self.cceo).get(f"/core-schools?fy={FY}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'x-data="{ openSchoolId: null }"')
+        self.assertContains(response, '@click.outside="openSchoolId = null"')
+        self.assertContains(response, "SSA interventions needing urgent attention")
+        self.assertContains(response, "SSA interventions performing well")
+        self.assertContains(response, "SSA interventions to watch")
+        self.assertContains(response, "Teacher&#x27;s Environment")
+        self.assertContains(response, "(2/10)")
+        self.assertContains(response, "Christlike Behaviour")
+        self.assertContains(response, "(9/10)")
+        self.assertContains(response, "Plot 12, Kampala Road")
+        self.assertContains(response, "Staff Name:")
+        self.assertContains(response, "Core Cceo")
+        self.assertContains(response, ">Core<")
+        self.assertContains(
+            response, 'class="school-record-action school-record-action--schedule"'
+        )
+        self.assertContains(
+            response, 'class="school-record-action school-record-action--assign"'
+        )
+        self.assertContains(response, "Schedule Now")
+        self.assertContains(response, ">Assign<")
+
+        row = next(
+            item
+            for item in response.context["matrix_rows"]
+            if item["school_id"] == self.school.school_id
+        )
+        self.assertTrue(row["has_ssa_scores"])
+        self.assertEqual(row["ssa_average"], 5.6)
+        self.assertEqual(row["staff_name"], "Core Cceo")
+
     # ── 8–11: scheduling through the real funnel ─────────────────────────────
     def test_scheduling_core_slot_creates_activity(self):
         resp = self._schedule_visit()

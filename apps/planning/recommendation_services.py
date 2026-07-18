@@ -1,7 +1,4 @@
 import logging
-from apps.core.enums import SsaIntervention
-from apps.core.fy import get_operational_fy
-from apps.ssa.models import SsaRecord
 
 logger = logging.getLogger(__name__)
 
@@ -11,16 +8,18 @@ class InterventionSeverityClassifier:
 
     @staticmethod
     def classify_severity(score: float | None) -> str:
-        if score is None:
-            return "Critical"  # Treat unassessed/no SSA as critical/high priority by default
-        if score < 5.0:
-            return "Critical"
-        elif score < 7.0:
-            return "Warning"
-        elif score < 8.0:
-            return "Improving"
-        else:
-            return "Strong"
+        # Single source of truth for the 0-10 bands
+        # (apps.core.enums.ssa_score_band): Critical 0-4.9 / Warning 5-6.9 /
+        # Improving 7-7.9 / Strong 8-10. Those band labels are identical to
+        # this classifier's historical vocabulary, so delegating removes a
+        # duplicate threshold definition without changing any classification.
+        # None (no SSA) now yields the honest canonical "No SSA" instead of
+        # the old "Critical", which fabricated an urgent need out of missing
+        # data (callers that face a no-SSA school handle it explicitly before
+        # reaching here — see get_recommendation).
+        from apps.core.enums import ssa_score_band
+
+        return ssa_score_band(score)[0]
 
     @staticmethod
     def get_color(score: float | None) -> str:
@@ -87,12 +86,13 @@ class PlanningRecommendationService:
             }
 
         # 2. SSA check
-        # Fetch latest SSA record
-        latest_ssa = (
-            school.ssa_records.filter(deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
-            .first()
-        )
+        # Latest *confirmed* SSA — an unverified upload must never drive an
+        # official planning recommendation (this used to read any latest
+        # record regardless of verification_status; see
+        # apps.ssa.services.latest_applicable_record).
+        from apps.ssa.services import latest_applicable_record
+
+        latest_ssa = latest_applicable_record(school)
         if not latest_ssa:
             return {
                 "planningReadiness": "SSA Required",
@@ -119,15 +119,14 @@ class PlanningRecommendationService:
                 score_val = 0.0
         severity = InterventionSeverityClassifier.classify_severity(score_val)
 
-        # Get weakest area
-        scores = sorted(
-            list(latest_ssa.scores.all().values("intervention", "score")),
-            key=lambda x: x["score"],
-        )
-        weakest_area = "general"
-        if scores:
-            code = scores[0]["intervention"]
-            weakest_area = dict(SsaIntervention.choices).get(code, code)
+        # Weakest area — the single most urgent intervention from the
+        # canonical analytics engine (deterministic; this used to sort by
+        # score alone over an unordered list, so tied scores picked the
+        # weakest area non-deterministically).
+        from apps.ssa.recommendation_engine import prioritized_interventions
+
+        ranked = prioritized_interventions(school, n=1)
+        weakest_area = ranked[0]["label"] if ranked else "general"
 
         if severity == "Critical":
             return {
@@ -163,42 +162,12 @@ class PlanningRecommendationService:
             }
 
 
-class CoreInterventionRecommendationService:
-    """Selects the four weakest SSA interventions (2 for partner, 2 for staff)."""
-
-    @staticmethod
-    def get_weakest_interventions(school_id, fy=None) -> dict:
-        if not fy:
-            fy = get_operational_fy()
-
-        latest_ssa = (
-            SsaRecord.objects.filter(school_id=school_id, deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
-            .first()
-        )
-
-        # All choices from SsaIntervention
-        all_interventions = [choice[0] for choice in SsaIntervention.choices]
-
-        if not latest_ssa:
-            return {
-                "partner": all_interventions[:2],
-                "staff": all_interventions[2:4],
-            }
-
-        # Get sorted scores
-        scores = list(latest_ssa.scores.all().order_by("score"))
-        scored_interventions = [s.intervention for s in scores]
-
-        # Fill in missing interventions
-        remaining = [i for i in all_interventions if i not in scored_interventions]
-
-        weakest_4 = scored_interventions[:4]
-        while len(weakest_4) < 4 and remaining:
-            weakest_4.append(remaining.pop(0))
-
-        # 2 weakest to partner, next 2 to staff
-        return {
-            "partner": weakest_4[:2],
-            "staff": weakest_4[2:4],
-        }
+# NOTE: a `CoreInterventionRecommendationService` used to live here too, with
+# a get_weakest_interventions() that (a) read unverified SSA, (b) sorted by
+# score with no tie-break, and (c) fabricated the first four enum
+# interventions when a school had no SSA at all. It had zero callers — the
+# real, used one is apps.core_schools.core_planning_services
+# .CoreInterventionRecommendationService.recommend(), which is verified-only
+# and now delegates its ranking to apps.ssa.recommendation_engine. The dead
+# duplicate was removed to eliminate the fabrication trap and the confusing
+# name collision.

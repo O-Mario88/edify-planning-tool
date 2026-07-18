@@ -551,20 +551,20 @@ class EntitlementGateTest(TestCase):
             self.cceo,
         )
 
-    def test_client_second_visit_blocked_and_slot_reopens_on_cancel(self):
+    def test_client_can_schedule_multiple_visits_without_entitlement_block(self):
         first = self._schedule_visit(5)
-        with self.assertRaises(BadRequest) as ctx:
-            self._schedule_visit(12)
-        self.assertIn("entitlement", str(ctx.exception.detail))
-        # Cancelling the reserved slot reopens it.
+        second = self._schedule_visit(12)
+        self.assertNotEqual(first["id"], second["id"])
+        # Cancelling remains a normal lifecycle action, not a prerequisite to
+        # scheduling another visit.
         Activity.objects.filter(id=first["id"]).update(status="cancelled")
-        self._schedule_visit(12)
+        third = self._schedule_visit(12)
+        self.assertNotEqual(second["id"], third["id"])
 
-    def test_client_training_is_a_real_school_level_slot(self):
-        self._schedule_training(5)
-        with self.assertRaises(BadRequest) as ctx:
-            self._schedule_training(12)
-        self.assertIn("entitlement", str(ctx.exception.detail))
+    def test_client_can_schedule_multiple_trainings_without_entitlement_block(self):
+        first = self._schedule_training(5)
+        second = self._schedule_training(12)
+        self.assertNotEqual(first["id"], second["id"])
 
     def test_client_slots_are_scoped_to_the_scheduled_activity_fy(self):
         self._schedule_visit(5)
@@ -616,7 +616,7 @@ class EntitlementGateTest(TestCase):
         self.assertEqual(issues["clientDuplicateActiveEntitlements"], 1)
         self.assertFalse(issues["clean"])
 
-    def test_core_staff_cap_two_visits(self):
+    def test_core_staff_can_schedule_more_than_two_visits(self):
         self.school.school_type = "core"
         self.school.save()
         from apps.activities.services import create
@@ -638,6 +638,12 @@ class EntitlementGateTest(TestCase):
 
         core_visit(3)
         core_visit(4)
-        with self.assertRaises(BadRequest) as ctx:
-            core_visit(5)
-        self.assertIn("at most two", str(ctx.exception.detail))
+        core_visit(5)
+        self.assertEqual(
+            Activity.objects.filter(
+                school=self.school,
+                activity_type="core_visit",
+                deleted_at__isnull=True,
+            ).count(),
+            3,
+        )

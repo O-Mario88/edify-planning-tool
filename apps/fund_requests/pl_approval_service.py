@@ -116,9 +116,19 @@ def _scoped_cceos(scope):
     """The CCEO records this PL supervises. Returns dicts with both id spaces."""
     from apps.accounts.models import StaffProfile
 
+    # Administrators have country-wide finance authority.  Their Fund
+    # Approval page should therefore show the same CCEO plans they are allowed
+    # to review, even when no explicit supervisor assignment was seeded for
+    # the admin account.
+    profile_ids = scope.supervised_staff_ids
+    if scope.active_role == "Admin" and scope.country_scope:
+        profile_ids = StaffProfile.objects.filter(
+            user__active_role="CCEO", deleted_at__isnull=True
+        ).values_list("id", flat=True)
+
     cceos = []
     for sp in StaffProfile.objects.filter(
-        id__in=scope.supervised_staff_ids
+        id__in=profile_ids
     ).select_related("user"):
         cceos.append(
             {

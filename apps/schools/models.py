@@ -381,6 +381,24 @@ def create_data_quality_issues(school):
                 suggested_fix="Specify whether school is Core, Client, or Partner",
             )
         )
+    # school_type="other" has no actionable workflow anywhere in the
+    # platform (not Client Planning, not Core Planning/Dashboard, not the
+    # Core/Champion candidate pipelines) — it used to silently disappear
+    # from the School Directory's filters with no signal that it needed
+    # human triage.
+    if school.school_type == "other":
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="unclassified_school_type",
+                severity="critical",
+                field_name="school_type",
+                current_value="other",
+                suggested_fix="Reclassify as Client, Core, Potential Core, "
+                "Champion, or Potential Champion so this school enters an "
+                "actionable planning workflow.",
+            )
+        )
     # Missing Sub-county
     if not school.sub_county_id:
         issues.append(

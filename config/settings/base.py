@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     "apps.budget_intelligence",
     "apps.audit",
     "apps.realtime",
+    "apps.help_center",
     "apps.frontend",
     # ... (registered as each module is built)
 ]

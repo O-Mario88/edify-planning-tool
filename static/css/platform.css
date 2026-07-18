@@ -8,6 +8,10 @@
 :root {
   --edify-page-max-size: 112rem;
   --edify-control-block-size: 2.5rem;
+  --edify-action-button-block-size: 2.5rem;
+  --edify-action-button-padding-inline: 1rem;
+  --edify-action-button-icon-size: 1rem;
+  --edify-action-button-radius: var(--edify-radius-pill);
   --edify-panel-padding: clamp(0.75rem, 0.66rem + 0.35vw, 1.0625rem);
   --edify-panel-gap: clamp(0.6875rem, 0.61rem + 0.28vw, 0.9375rem);
   --edify-focus-outline: 2px solid var(--edify-accent);
@@ -378,6 +382,83 @@ main :where(.btn, .edify-action-button,
   line-height: 1.2 !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
+}
+
+/* The platform has a single action-button contract. Legacy button classes
+   still work, but resolve to the same readable type, pill geometry and
+   primary/secondary hierarchy as the shared school actions. */
+main :is(a, button, input):is(.btn, .edify-action-button, .btn-premium-primary,
+  .btn-premium-secondary, .school-record-action) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: var(--edify-action-button-block-size);
+  padding-inline: var(--edify-action-button-padding-inline) !important;
+  border-radius: var(--edify-action-button-radius) !important;
+  font: var(--edify-font-label) !important;
+  font-weight: var(--edify-text-title-weight) !important;
+  letter-spacing: var(--edify-text-label-tracking) !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+
+main :is(a, button, input):is(.btn, .edify-action-button, .btn-premium-primary,
+  .btn-premium-secondary, .school-record-action) svg {
+  inline-size: var(--edify-action-button-icon-size);
+  block-size: var(--edify-action-button-icon-size);
+  flex: 0 0 auto;
+}
+
+main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
+  .school-record-action--schedule) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: var(--edify-button-primary-treatment) !important;
+  border: 1px solid color-mix(in oklab, var(--edify-accent) 72%, var(--edify-primary-hover)) !important;
+  box-shadow: 0 10px 20px -12px color-mix(in oklab, var(--edify-accent) 42%, transparent), inset 0 1px 0 rgba(255,255,255,.15) !important;
+}
+
+main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
+  .school-record-action--schedule):hover:not(:disabled) {
+  background-color: var(--edify-accent-hover) !important;
+  background-image: linear-gradient(105deg, var(--edify-primary-hover), var(--edify-accent-hover)) !important;
+}
+
+main :where(.btn-ghost, .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign) {
+  color: var(--edify-text-muted) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: var(--edify-button-secondary-treatment) !important;
+  border: 1px solid var(--edify-border-strong) !important;
+  box-shadow: 0 6px 14px -12px color-mix(in oklab, var(--edify-text) 32%, transparent) !important;
+}
+
+main :where(.btn-ghost, .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign):hover:not(:disabled) {
+  color: var(--edify-accent) !important;
+  background-color: var(--edify-accent-light) !important;
+  border-color: var(--edify-accent) !important;
+}
+
+/* Match the legacy light-theme selector's specificity so every secondary
+   action reads as the same calm outlined button, including header controls. */
+:root:not(.theme-blue):not(.theme-dark) main :where(.btn-ghost,
+  .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign) {
+  color: var(--edify-text-muted) !important;
+  border-color: var(--edify-border-strong) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: var(--edify-button-secondary-treatment) !important;
+  box-shadow: 0 6px 14px -12px color-mix(in oklab, var(--edify-text) 32%, transparent) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) main :where(.btn-ghost,
+  .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign):hover:not(:disabled) {
+  color: var(--edify-accent) !important;
+  border-color: var(--edify-accent) !important;
+  background-color: var(--edify-accent-light) !important;
 }
 
 main :where(button, a)[class*="border-slate-"][class*="rounded"] {
@@ -2200,5 +2281,443 @@ main .platform-responsive-table [data-priority="low"] {
 
   .planning-school-row__details {
     margin-inline-start: 0.875rem;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Shared school record — reference-style school identity + real SSA detail.
+   Used by Planning and School Directory so a school always scans the same way.
+   ════════════════════════════════════════════════════════════════════════════ */
+.school-record-list {
+  container: school-record / inline-size;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--edify-surface);
+}
+
+.school-record-row {
+  position: relative;
+  display: block;
+  min-block-size: 0;
+  gap: 0;
+  padding: 0;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface);
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+  font: var(--edify-font-body);
+  transition: background-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+
+.school-record-row:last-child { border-block-end: 0; }
+
+.school-record-row:hover,
+.school-record-row.is-expanded {
+  background: color-mix(in oklab, var(--edify-accent-light) 24%, var(--edify-surface));
+}
+
+.school-record-row:focus-within {
+  z-index: 2;
+  box-shadow: inset 3px 0 0 var(--edify-accent);
+}
+
+.school-record-row__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1.1rem;
+  padding: clamp(1rem, 1.7vw, 1.5rem);
+}
+
+.school-record-row__content {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.8rem minmax(0, 1fr);
+  align-items: start;
+  gap: .8rem;
+  min-inline-size: 0;
+}
+
+.school-record-row__expander {
+  position: absolute;
+  z-index: 1;
+  inset: -.35rem;
+  border: 0;
+  border-radius: .9rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.school-record-row__expander:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
+  outline-offset: 2px;
+}
+
+.school-record-row__content > :not(.school-record-row__expander) {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.school-record-row__select {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: 0.85rem;
+  inset-inline-start: 1.95rem;
+  display: grid;
+  place-items: center;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  border-radius: 999px;
+  background: var(--edify-surface-raised);
+  box-shadow: 0 1px 4px rgba(15, 37, 58, .14);
+  cursor: pointer;
+}
+
+.school-record-row__select input {
+  inline-size: 0.8rem;
+  block-size: 0.8rem;
+  margin: 0;
+  accent-color: var(--edify-accent);
+  cursor: pointer;
+}
+
+.school-record-row__icon {
+  display: grid;
+  inline-size: 2.8rem;
+  block-size: 2.8rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--edify-accent-border) 68%, transparent);
+  border-radius: .75rem;
+  background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
+  color: var(--edify-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72);
+}
+
+.school-record-row__icon svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+.school-record-row__identity { min-inline-size: 0; }
+
+.school-record-row__title {
+  max-inline-size: 55rem;
+  margin: 0;
+  color: var(--edify-text);
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-heading-size);
+  font-weight: var(--edify-text-heading-weight);
+  letter-spacing: var(--edify-text-heading-tracking);
+  line-height: var(--edify-text-heading-leading);
+  text-wrap: balance;
+}
+
+.school-record-row__title a { color: inherit; text-decoration: none; }
+.school-record-row__title a:hover { color: var(--edify-accent); text-decoration: underline; }
+
+.school-record-row__metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1.15rem;
+  max-inline-size: 74rem;
+  margin: 0.45rem 0 0;
+}
+
+.school-record-row__metadata div {
+  display: inline-flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: var(--edify-text-label-leading);
+}
+
+.school-record-row__metadata dt,
+.school-record-row__metadata dd { margin: 0; }
+
+.school-record-row__metadata dt {
+  flex: 0 0 auto;
+  color: var(--edify-text);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.school-record-row__metadata dd {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: var(--edify-accent);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.school-record-row__metadata dd.is-attention { color: var(--edify-danger); }
+.school-record-row__metadata dd.is-positive { color: var(--edify-success); }
+.school-record-row__ssa.is-danger dd { color: var(--edify-danger); }
+.school-record-row__ssa.is-warning dd { color: var(--edify-warning); }
+.school-record-row__ssa.is-success dd { color: var(--edify-success); }
+.school-record-row__ssa.is-neutral dd { color: var(--edify-text-muted); }
+
+.school-record-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  max-inline-size: 17rem;
+  padding-block-start: 0.1rem;
+}
+
+.school-record-action {
+  display: inline-flex;
+  min-block-size: var(--edify-action-button-block-size);
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--edify-action-button-radius);
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: 1;
+  transition: transform var(--edify-transition-fast), background-color var(--edify-transition-fast), border-color var(--edify-transition-fast);
+}
+
+.school-record-action { padding-inline: var(--edify-action-button-padding-inline); }
+
+.school-record-action svg {
+  inline-size: var(--edify-action-button-icon-size);
+  block-size: var(--edify-action-button-icon-size);
+}
+
+.school-record-action:disabled {
+  border-color: color-mix(in oklab, var(--edify-border) 72%, transparent);
+  background: color-mix(in oklab, var(--edify-surface-muted) 82%, var(--edify-surface));
+  color: var(--edify-text-subtle);
+  cursor: not-allowed;
+}
+
+.school-record-row__details {
+  margin: 0 clamp(1rem, 1.7vw, 1.5rem);
+  padding: clamp(1rem, 1.7vw, 1.35rem) 0 clamp(1rem, 1.7vw, 1.5rem);
+  border: 0;
+  border-block-start: 1px solid var(--edify-border);
+  background: transparent;
+}
+
+.school-record-ssa__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: .5rem 1rem;
+  padding-block-end: .85rem;
+  border-block-end: 1px solid var(--edify-border);
+}
+
+.school-record-ssa__eyebrow {
+  margin: 0;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  text-transform: uppercase;
+}
+
+.school-record-ssa h3 {
+  margin: .2rem 0 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-title-leading);
+}
+
+.school-record-ssa__heading > p {
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.school-ssa-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding-block-start: 1rem;
+}
+
+.school-ssa-group {
+  min-inline-size: 0;
+  padding-inline-start: 0;
+}
+
+.school-ssa-group--danger { color: var(--edify-danger); }
+.school-ssa-group--success { color: var(--edify-success); }
+.school-ssa-group--warning { color: var(--edify-warning); }
+
+.school-ssa-group h4 {
+  margin: 0 0 .5rem;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-label-leading);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .16em;
+}
+
+.school-ssa-group ul {
+  display: grid;
+  gap: .32rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.school-ssa-group li {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: .38rem;
+  font-size: var(--edify-text-label-size);
+  line-height: var(--edify-text-label-leading);
+}
+
+.school-ssa-group__dot {
+  inline-size: .32rem;
+  block-size: .32rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.school-ssa-group strong {
+  min-inline-size: 0;
+  font-weight: var(--edify-text-title-weight);
+}
+
+.school-ssa-group__score { font-weight: 800; white-space: nowrap; }
+
+.school-ssa-group__empty {
+  color: var(--edify-text-subtle);
+  font-size: .72rem !important;
+  font-weight: 600;
+}
+
+.school-record-ssa__empty {
+  margin: 1rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.school-record-row__detail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1rem;
+  margin-block-start: 1rem;
+  padding-block-start: .85rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.school-record-row__detail-footer p {
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.school-record-row__detail-footer div { display: inline-flex; flex-wrap: wrap; gap: .75rem; }
+
+.school-record-row__detail-footer :where(a, button) {
+  border: 0;
+  background: transparent;
+  color: var(--edify-accent);
+  font-size: .75rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.school-record-row__detail-footer :where(a, button):hover { text-decoration: underline; }
+
+/* Core Schools uses the same school identity scale as the Directory, Planning
+   and Cluster lists even though it is rendered as a richer service card. */
+.school-list-card {
+  font: var(--edify-font-body);
+}
+
+.school-list-card__title {
+  font: var(--edify-font-title) !important;
+  letter-spacing: var(--edify-text-title-tracking) !important;
+}
+
+.school-list-card :where(.school-list-card__location, .school-list-card__shipping,
+  .school-list-card__contact) {
+  font: var(--edify-font-label) !important;
+}
+
+.school-list-card :where(.edify-text-caption):not(.school-list-card__shipping):not(.school-list-card__contact) {
+  font: var(--edify-font-micro) !important;
+}
+
+.school-list-card__actions {
+  font-family: var(--edify-font-sans);
+}
+
+.core-school-matrix__header {
+  font: var(--edify-font-label);
+}
+
+.core-school-matrix__title {
+  font: var(--edify-font-micro);
+}
+
+.core-school-matrix__helper {
+  font: var(--edify-font-micro);
+  text-transform: none !important;
+  letter-spacing: var(--edify-text-micro-tracking) !important;
+}
+
+@media (max-width: 52rem) {
+  .school-record-row__summary { grid-template-columns: 1fr; }
+  .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+  .school-ssa-groups { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 33rem) {
+  .school-record-row__summary { gap: .75rem; padding: 1rem; }
+  .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
+  .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
+  .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
+  .school-record-row__select { inset-inline-start: 1.7rem; inset-block-start: .75rem; }
+  .school-record-row__title { font-size: 1.13rem; }
+  .school-record-row__metadata { gap: .38rem .75rem; }
+  .school-record-action { padding-inline: .65rem; }
+  .school-record-action span { font-size: .68rem; }
+  .school-record-row__actions { padding-inline-start: 3.15rem; }
+  .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
+}
+
+@supports (container-type: inline-size) {
+  @container school-record (max-width: 58rem) {
+    .school-record-row__summary { grid-template-columns: 1fr; }
+    .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+  }
+
+  @container school-record (max-width: 38rem) {
+    .school-record-row__summary { gap: .75rem; padding: 1rem; }
+    .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
+    .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
+    .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
+    .school-record-row__select { inset-inline-start: 1.7rem; inset-block-start: .75rem; }
+    .school-record-row__title { font-size: 1.13rem; }
+    .school-record-row__metadata { gap: .38rem .75rem; }
+    .school-record-action { padding-inline: .65rem; }
+    .school-record-action span { font-size: .68rem; }
+    .school-record-row__actions { padding-inline-start: 3.15rem; }
+    .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
+    .school-ssa-groups { grid-template-columns: 1fr; }
   }
 }

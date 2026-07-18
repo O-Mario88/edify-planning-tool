@@ -434,6 +434,51 @@ class ClusterSetupTest(APITestCase):
         self.assertEqual(school.planning_readiness, "ready_for_baseline_ssa")
         self.assertEqual(school.data_quality_score, 30)
 
+    def test_cluster_assignment_and_reassignment_are_audited(self):
+        """set_school_cluster_membership() is the ONE canonical write path
+        for cluster (re)assignment — audit_log must fire from there so every
+        caller (REST APIs, bulk-assign, the school-edit-drawer's cluster
+        dropdown) gets coverage automatically, instead of 3 of 6+ call
+        sites bolting it on ad hoc in view code while the rest (including
+        the most literal "reassignment" UI) stayed silently unaudited."""
+        from apps.audit.models import AuditLog
+        from apps.clusters.services import assign_school
+
+        school = School.objects.create(
+            school_id="SCH-AUDIT-1",
+            name="Audit Cluster School",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        StaffSchoolAssignment.objects.create(staff=self.profile, school_id=school.id)
+
+        assign_school(school.school_id, {"clusterId": self.cluster1.id}, self.user)
+        entry = AuditLog.objects.filter(
+            action="cluster.membership_changed", subject_id=school.id
+        ).first()
+        self.assertIsNotNone(entry)
+        self.assertIsNone(entry.payload["oldClusterId"])
+        self.assertEqual(entry.payload["newClusterId"], self.cluster1.id)
+
+        # Reassignment to a different cluster is a second, distinct event.
+        assign_school(school.school_id, {"clusterId": self.cluster2.id}, self.user)
+        self.assertEqual(
+            AuditLog.objects.filter(
+                action="cluster.membership_changed", subject_id=school.id
+            ).count(),
+            2,
+        )
+        latest = (
+            AuditLog.objects.filter(
+                action="cluster.membership_changed", subject_id=school.id
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        self.assertEqual(latest.payload["oldClusterId"], self.cluster1.id)
+        self.assertEqual(latest.payload["newClusterId"], self.cluster2.id)
+
     # ── Regressions: SchoolClusterAssignment desync (§3) ────────────────────────
 
     def test_sync_school_cluster_assignment_removes_stale_rows(self):

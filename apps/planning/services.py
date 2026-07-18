@@ -502,13 +502,13 @@ CLUSTER_ACTIVITY_KINDS = {"cluster_training", "cluster_meeting"}
 def schedule_cluster_activity(data: dict, principal) -> dict:
     """Schedule a cluster activity (Group Training OR Cluster Meeting).
 
-    The user MUST choose the kind — this drives the cost computation:
+    The selected kind drives the cost computation:
       • cluster_training (group training) → venue + facilitation + group-training
         participant meals (+ mobilisation if configured).
       • cluster_meeting → cluster-meeting participant meals ONLY (no venue, no
         facilitation, never the group-training meal rate).
-    Both require a cluster + an expected participant count > 0, enforced by the
-    central CostingService.assert_schedulable before the activity is created."""
+    A cluster is the only target requirement. Participant counts improve the
+    estimate but are optional, and the activity is always costed after saving."""
     from apps.activities.services import create as create_activity
     from apps.core.exceptions import BadRequest
 

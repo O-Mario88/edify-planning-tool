@@ -16,7 +16,6 @@ from apps.activities import services as asvc
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.enums import ActivityType
-from apps.core.exceptions import BadRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -179,24 +178,24 @@ class ActivitySchedulingAtomicityTest(TestCase):
         self.assertEqual(activity.reschedule_count, 1)
         self.assertGreater(activity.schedule_cost_lines.count(), 0)
 
-    # ── create(): duplicate-submission guard ─────────────────────────────────
-    def test_double_submit_identical_activity_is_rejected(self):
-        """A double-click on the Schedule Activity drawer fires create() twice
-        with identical params. The second call must be rejected, not silently
-        create a second, fully-costed, identical Activity."""
+    # ── create(): permissive scheduling ─────────────────────────────────────
+    def test_identical_schedules_are_allowed_and_each_is_costed(self):
+        """The scheduler no longer applies duplicate business-policy blocks.
+
+        Each saved activity must still receive its own complete cost snapshot.
+        """
         data = self._create_data()
         first = asvc.create(data, self.admin)
-
-        with self.assertRaises(BadRequest):
-            asvc.create(data, self.admin)
+        second = asvc.create(data, self.admin)
 
         acts = Activity.objects.filter(
             school=self.school,
             activity_type=ActivityType.CORE_VISIT,
             scheduled_date__date="2026-07-20",
         )
-        self.assertEqual(acts.count(), 1)
-        self.assertEqual(acts.first().id, first["id"])
+        self.assertEqual(acts.count(), 2)
+        self.assertNotEqual(first["id"], second["id"])
+        self.assertTrue(all(a.schedule_cost_lines.exists() for a in acts))
 
     def test_undated_activity_via_skip_cost_snapshot_is_not_blocked(self):
         """assert_schedulable unconditionally requires a scheduledDate, so

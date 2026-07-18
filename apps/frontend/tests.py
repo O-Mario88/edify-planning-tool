@@ -264,6 +264,9 @@ class FrontendViewsTestCase(TestCase):
     def test_schools_directory_view_renders(self):
         from apps.projects.models import Project
 
+        self.school.shipping_address = "Plot 12, Kampala Road"
+        self.school.account_owner_id = self.cceo_profile.id
+        self.school.save(update_fields=["shipping_address", "account_owner_id"])
         Project.objects.create(
             name="School Directory Action Project",
             code="SDAP-26",
@@ -273,18 +276,75 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/schools")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/schools/index.html")
-        self.assertContains(response, 'class="school-directory-list"')
-        self.assertContains(response, 'class="school-directory-row"')
+        self.assertContains(response, 'class="school-directory-list school-record-list"')
+        self.assertContains(response, 'class="school-directory-row school-record-row"')
+        self.assertContains(response, 'x-data="{ openSchoolId: null }"')
+        self.assertContains(response, '@click.outside="openSchoolId = null"')
+        self.assertContains(response, "openSchoolId ===")
         self.assertContains(response, "Kampola High School")
-        self.assertContains(response, "No SSA")
-        self.assertContains(response, "No Visit")
-        self.assertContains(response, "No Training")
-        self.assertContains(response, "No Cluster")
+        self.assertContains(response, "Not assessed")
+        self.assertContains(response, "Visit:")
+        self.assertContains(response, "Training:")
+        self.assertContains(response, "Not assigned")
+        self.assertContains(response, "Plot 12, Kampala Road")
+        self.assertContains(response, "School Type:")
+        self.assertContains(response, "Staff Name:")
+        self.assertContains(response, self.cceo_user.name)
         self.assertContains(response, "Add to Cluster")
         self.assertContains(response, "Add to Project")
+        self.assertNotContains(response, "Schedule Now")
         self.assertContains(response, f"/schools/{self.school.id}/add-to-cluster")
         self.assertContains(response, f"/schools/{self.school.id}/assign-to-project")
         self.assertNotContains(response, "Column Settings")
+
+    def test_school_lists_show_real_grouped_ssa_scores(self):
+        """Both school lists must show the stored scores, never placeholders."""
+        from apps.core.fy import get_operational_fy
+        from apps.ssa.models import SsaRecord, SsaScore
+
+        record = SsaRecord.objects.create(
+            school=self.school,
+            fy=get_operational_fy(),
+            quarter="Q1",
+            date_of_ssa=timezone.now(),
+            verification_status="confirmed",
+            uploaded_by=self.cceo_user.id,
+        )
+        for intervention, score in (
+            ("exposure_to_word_of_god", 3.0),
+            ("learning_environment", 1.0),
+            ("financial_health", 4.0),
+            ("leadership", 7.0),
+            ("christlike_behaviour", 8.0),
+            ("teaching_environment", 8.5),
+            ("government_requirement", 6.0),
+            ("enrolment", 6.0),
+        ):
+            SsaScore.objects.create(
+                ssa_record=record, intervention=intervention, score=score
+            )
+
+        self.client.force_login(self.cceo_user)
+        for url in ("/schools", "/planning"):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(
+                    response, "SSA interventions needing urgent attention"
+                )
+                self.assertContains(response, "SSA interventions performing well")
+                self.assertContains(response, "SSA interventions to watch")
+                self.assertContains(response, "Exposure to the Word of God")
+                self.assertContains(response, "(3/10)")
+                self.assertContains(response, "Teacher&#x27;s Environment")
+                self.assertContains(response, "(8.5/10)")
+
+        planning_school = next(
+            item
+            for item in response.context["schools"]
+            if item["id"] == self.school.id
+        )
+        self.assertEqual(planning_school["ssaAverage"], 5.4)
 
     def test_school_directory_tabs_and_page_size_are_server_owned(self):
         """Tab clicks must send one canonical value and every later filter
@@ -335,10 +395,72 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/schools/detail.html")
 
     def test_clusters_directory_view_renders(self):
+        self.cluster.cluster_leader_name = "Jane Leader"
+        self.cluster.cluster_leader_phone = "+256 700 123456"
+        self.cluster.save(
+            update_fields=["cluster_leader_name", "cluster_leader_phone"]
+        )
         self.client.force_login(self.cceo_user)
         response = self.client.get("/clusters")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/clusters/index.html")
+        self.assertContains(response, "Cluster Leader:")
+        self.assertContains(response, "Jane Leader")
+        self.assertContains(response, "Cluster Leader Phone:")
+        self.assertContains(response, "+256 700 123456")
+
+    def test_cluster_directory_groups_actual_intervention_scores(self):
+        """Cluster cards present confirmed aggregate SSA scores as recommendations."""
+        from apps.core.fy import get_operational_fy
+        from apps.ssa.models import SsaRecord, SsaScore
+
+        self.school.cluster_id = self.cluster.id
+        self.school.cluster_status = "clustered"
+        self.school.save(update_fields=["cluster_id", "cluster_status"])
+        ssa = SsaRecord.objects.create(
+            school=self.school,
+            fy=get_operational_fy(),
+            quarter="Q4",
+            date_of_ssa=timezone.now(),
+            verification_status="confirmed",
+            uploaded_by=self.cceo_user.id,
+        )
+        for intervention, score in (
+            ("leadership", 3.0),
+            ("financial_health", 7.0),
+            ("learning_environment", 6.0),
+        ):
+            SsaScore.objects.create(
+                ssa_record=ssa,
+                intervention=intervention,
+                score=score,
+            )
+
+        self.client.force_login(self.cceo_user)
+        response = self.client.get("/clusters")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "SSA interventions needing urgent attention")
+        self.assertContains(response, "SSA interventions performing well")
+        self.assertContains(response, "SSA interventions to watch")
+        self.assertContains(response, "(3/10)")
+        self.assertContains(response, "(7/10)")
+        self.assertContains(response, "(6/10)")
+        self.assertContains(response, "Schedule Now")
+        self.assertContains(
+            response,
+            'class="school-record-action school-record-action--assign"',
+        )
+        self.assertNotContains(response, "Cluster Intervention Scores")
+
+        cluster_card = next(
+            item for item in response.context["clusters"] if item["id"] == self.cluster.id
+        )
+        self.assertTrue(cluster_card["has_ssa_scores"])
+        self.assertEqual(
+            [item["code"] for item in cluster_card["ssa_groups"][0]["items"]],
+            ["leadership"],
+        )
 
     def test_cluster_detail_view_renders(self):
         self.client.force_login(self.cceo_user)
@@ -383,10 +505,18 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/planning/index.html")
         self.assertTemplateUsed(response, "partials/planning/school_row.html")
-        self.assertContains(response, 'class="planning-school-list"')
-        self.assertContains(response, "3 lowest SSA areas")
+        self.assertContains(response, 'class="planning-school-list school-record-list"')
+        self.assertContains(response, 'x-data="{ openSchoolId: null }"')
+        self.assertContains(response, '@click.outside="openSchoolId = null"')
+        self.assertContains(response, "SSA interventions needing urgent attention")
+        self.assertContains(response, "(3.5/10)")
         self.assertContains(response, self.cluster.name)
         self.assertContains(response, "Plot 12, Kampala Road")
+        self.assertContains(response, "School Type:")
+        self.assertContains(response, "Staff Name:")
+        self.assertContains(response, self.cceo_user.name)
+        self.assertContains(response, "Schedule Now")
+        self.assertContains(response, ">Assign<")
 
         school_row = next(
             item for item in response.context["schools"] if item["id"] == self.school.id
@@ -395,6 +525,26 @@ class FrontendViewsTestCase(TestCase):
             [item["code"] for item in school_row["weakestInterventions"]],
             ["leadership", "financial_health", "learning_environment"],
         )
+        self.assertEqual(school_row["ssaAverage"], 5.4)
+
+    def test_cluster_school_list_uses_shared_clickable_school_records(self):
+        self.school.cluster_id = self.cluster.id
+        self.school.cluster_status = "clustered"
+        self.school.shipping_address = "Plot 12, Kampala Road"
+        self.school.save(update_fields=["cluster_id", "cluster_status", "shipping_address"])
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.get(f"/partials/clusters/{self.cluster.id}/schools")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="cluster-school-list school-record-list"')
+        self.assertContains(response, 'class="school-record-row__expander"')
+        self.assertContains(response, 'x-data="{ openSchoolId: null }"')
+        self.assertContains(response, '@click.outside="openSchoolId = null"')
+        self.assertContains(response, "Plot 12, Kampala Road")
+        self.assertContains(response, "School Type:")
+        self.assertContains(response, "Schedule Now")
+        self.assertContains(response, ">Assign<")
 
     def test_planning_filters_return_one_table_and_refresh_tab_state(self):
         self.client.force_login(self.cceo_user)
@@ -512,10 +662,13 @@ class FrontendViewsTestCase(TestCase):
             response, "partials/clusters/create_cluster_drawer.html"
         )
         self.assertContains(response, 'class="cluster-create-drawer"')
+        self.assertContains(response, 'class="cluster-create-basics"')
         self.assertContains(response, 'name="district_id"')
         self.assertContains(response, 'name="sub_county_ids"')
         self.assertContains(response, 'name="cluster_leader_name"')
         self.assertContains(response, 'name="cluster_leader_phone"')
+        self.assertContains(response, "school-record-action--assign")
+        self.assertContains(response, "school-record-action--schedule")
         self.assertContains(response, "Create cluster")
         self.assertNotContains(response, "Assigned Staff")
         self.assertNotContains(response, "Outside Drawer District")
@@ -1108,11 +1261,8 @@ class FrontendViewsTestCase(TestCase):
             ).exists()
         )
 
-    def test_assign_partner_action_blocked_when_no_cost_rate_configured(self):
-        """The cost-catalogue gate (assert_schedulable) must apply: with a
-        target date but no partner rate configured in the Cost Catalogue, the
-        whole assignment is rejected atomically, so neither the
-        PartnerAssignment nor a fake-cost Activity is left behind."""
+    def test_assign_partner_action_saves_when_no_cost_rate_is_configured(self):
+        """A missing rate flags the snapshot but never blocks scheduling."""
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity
 
@@ -1129,23 +1279,14 @@ class FrontendViewsTestCase(TestCase):
                 "expected_date": "2026-07-20",
             },
         )
-        self.assertEqual(response.status_code, 400, response.content)
-        self.assertFalse(
-            PartnerAssignment.objects.filter(
-                school=self.school, partner=partner
-            ).exists()
-        )
-        self.assertFalse(
-            Activity.objects.filter(
-                school=self.school, assigned_partner_id=partner.id
-            ).exists()
-        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(PartnerAssignment.objects.filter(school=self.school, partner=partner).exists())
+        activity = Activity.objects.get(school=self.school, assigned_partner_id=partner.id)
+        self.assertTrue(activity.cost_missing)
+        self.assertGreater(activity.schedule_cost_lines.count(), 0)
 
-    def test_assign_partner_action_blocked_by_ssa_justification(self):
-        """The SSA-justification check must apply: a focus intervention whose
-        latest SSA score is neither weak nor among the two weakest cannot be
-        scheduled to a partner — this used to be silently bypassed entirely
-        by the raw ORM write."""
+    def test_assign_partner_action_allows_an_ssa_non_recommended_focus(self):
+        """SSA recommendations guide the work but do not block it."""
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity
         from apps.budget.models import CostSetting
@@ -1190,18 +1331,9 @@ class FrontendViewsTestCase(TestCase):
                 "expected_date": "2026-07-20",
             },
         )
-        self.assertEqual(response.status_code, 400, response.content)
-        self.assertIn(b"not justified", response.content)
-        self.assertFalse(
-            PartnerAssignment.objects.filter(
-                school=self.school, partner=partner
-            ).exists()
-        )
-        self.assertFalse(
-            Activity.objects.filter(
-                school=self.school, assigned_partner_id=partner.id
-            ).exists()
-        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(PartnerAssignment.objects.filter(school=self.school, partner=partner).exists())
+        self.assertTrue(Activity.objects.filter(school=self.school, assigned_partner_id=partner.id).exists())
 
     def test_bulk_assign_partner_with_date_creates_activities(self):
         """Bulk partner assignment with a shared date must create BOTH the
@@ -1339,11 +1471,8 @@ class FrontendViewsTestCase(TestCase):
             1,
         )
 
-    def test_bulk_assign_partner_blocked_when_no_cost_rate_configured(self):
-        """The cost-catalogue gate must apply to bulk assignment too: a
-        shared date with no partner rate configured must reject cleanly
-        (400, error surfaced) — not a raw 500 from an unhandled BadRequest —
-        and must not leave a PartnerAssignment dangling for that school."""
+    def test_bulk_assign_partner_saves_when_no_cost_rate_is_configured(self):
+        """Bulk scheduling also records an unpriced snapshot instead of blocking."""
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity
 
@@ -1361,28 +1490,13 @@ class FrontendViewsTestCase(TestCase):
                 "scheduled_date": "2026-07-21",
             },
         )
-        self.assertEqual(response.status_code, 400, response.content)
-        self.assertFalse(
-            PartnerAssignment.objects.filter(
-                school=self.school, partner=partner
-            ).exists()
-        )
-        self.assertFalse(
-            Activity.objects.filter(
-                school=self.school, assigned_partner_id=partner.id
-            ).exists()
-        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(PartnerAssignment.objects.filter(school=self.school, partner=partner).exists())
+        activity = Activity.objects.get(school=self.school, assigned_partner_id=partner.id)
+        self.assertTrue(activity.cost_missing)
 
-    def test_assign_partner_action_cluster_with_date_needs_participant_count(self):
-        """Cluster training/meeting activities are training-like, so the
-        assert_schedulable() cost gate correctly requires a participant
-        count to price them — a real, surfaced requirement the raw ORM
-        write used to skip entirely. The Planning "Assign to Partner"
-        drawer doesn't collect a participant count today, so a cluster
-        assignment made together with a date is safely rejected (clear
-        error, nothing persisted) rather than silently creating a
-        zero-cost Activity; assigning without a date (deferred) still
-        works exactly as tested above."""
+    def test_assign_partner_action_cluster_uses_default_participant_costing(self):
+        """Cluster scheduling uses a sensible default when no count is supplied."""
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity
         from apps.budget.models import CostSetting
@@ -1407,20 +1521,9 @@ class FrontendViewsTestCase(TestCase):
                 "expected_date": "2026-07-20",
             },
         )
-        self.assertEqual(response.status_code, 400, response.content)
-        self.assertIn(b"Participant count", response.content)
-        # Atomic: the PartnerAssignment must not be left dangling when the
-        # Activity side of the same transaction is rejected.
-        self.assertFalse(
-            PartnerAssignment.objects.filter(
-                cluster=self.cluster, partner=partner
-            ).exists()
-        )
-        self.assertFalse(
-            Activity.objects.filter(
-                cluster=self.cluster, assigned_partner_id=partner.id
-            ).exists()
-        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue(PartnerAssignment.objects.filter(cluster=self.cluster, partner=partner).exists())
+        self.assertTrue(Activity.objects.filter(cluster=self.cluster, assigned_partner_id=partner.id).exists())
 
     def test_notification_drawer_and_mark_read(self):
         from apps.notifications.models import Notification

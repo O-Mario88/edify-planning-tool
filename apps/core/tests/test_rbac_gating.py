@@ -253,6 +253,44 @@ class RbacGatingTestCase(TestCase):
             response, "partials/planning/schedule_cluster_drawer.html"
         )
 
+    def test_cceo_can_schedule_a_cluster_in_their_assigned_district(self):
+        """Cluster work is district-scoped, not limited to an existing membership.
+
+        The cluster planner lists active clusters in the CCEO's assigned
+        district.  The final create-time guard must apply the same boundary so
+        a newly created or not-yet-populated cluster is schedulable.
+        """
+        from apps.activities.services import _assert_target_in_scope
+        from apps.clusters.models import Cluster
+        from apps.core.permissions import RolePermissionService
+
+        cluster = Cluster.objects.create(
+            name="District Planning Cluster",
+            district=self.district,
+            region=self.region,
+        )
+        self.assertTrue(RolePermissionService.can_view_record(self.cceo_user, cluster))
+        _assert_target_in_scope(
+            school=None, cluster_id=cluster.id, principal=self.cceo_user
+        )
+
+        outside_region = Region.objects.create(name="Outside Scope Region")
+        outside_district = District.objects.create(
+            name="Outside Scope District", region=outside_region
+        )
+        outside_cluster = Cluster.objects.create(
+            name="Outside Scope Cluster",
+            district=outside_district,
+            region=outside_region,
+        )
+        self.assertFalse(
+            RolePermissionService.can_view_record(self.cceo_user, outside_cluster)
+        )
+        with self.assertRaises(Forbidden):
+            _assert_target_in_scope(
+                school=None, cluster_id=outside_cluster.id, principal=self.cceo_user
+            )
+
     def test_partner_onboarding_rbac(self):
         """Verify that only Admin, CD, or IA can onboard partners, and others are blocked."""
         from apps.partners import services as partner_services

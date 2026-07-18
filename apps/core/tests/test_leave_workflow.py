@@ -232,6 +232,77 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         finally:
             timezone.now = original_now
 
+    def test_coverage_grant_is_audited(self):
+        """Approving leave with a covering staff member must write an
+        hr.coverage_granted audit event — a coverage grant is a real
+        access-delegation event, not just an internal bookkeeping row."""
+        leave = Leave.objects.create(
+            staff=self.cceo2_profile,
+            type="personal_time_off",
+            start_date="2026-10-08",
+            end_date="2026-10-12",
+            days=5,
+            days_charged=2,
+            status="pending",
+            covering_staff=self.cceo1_profile,
+        )
+        LeaveApprovalService.approve_request(leave.id, self.pl_user)
+        entry = (
+            AuditLog.objects.filter(action="hr.coverage_granted")
+            .order_by("-created_at")
+            .first()
+        )
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.payload["coveringStaffId"], self.cceo1_profile.id)
+        self.assertEqual(entry.payload["originalStaffId"], self.cceo2_profile.id)
+
+    def test_revoke_coverage_requires_authorization(self):
+        """Audit found any role in the broad leave_coverage page ACL
+        (CCEO/RVP/Accountant/IA included) could revoke ANY org-wide coverage
+        assignment by id — closing it: only the leave's authorized approver
+        (here, the CCEO's supervising PL) or HR/Admin may revoke it."""
+        start_dt = timezone.make_aware(datetime(2026, 10, 8, 8, 0, 0))
+        end_dt = timezone.make_aware(datetime(2026, 10, 12, 17, 0, 0))
+        leave = Leave.objects.create(
+            staff=self.cceo2_profile,
+            type="personal_time_off",
+            start_date="2026-10-08",
+            end_date="2026-10-12",
+            days=5,
+            days_charged=2,
+            status="approved",
+            covering_staff=self.cceo1_profile,
+        )
+        cov = TemporaryCoverageAssignment.objects.create(
+            original_staff=self.cceo2_profile,
+            covering_staff=self.cceo1_profile,
+            leave_request=leave,
+            start_datetime=start_dt,
+            end_datetime=end_dt,
+            scope="full",
+            status="active",
+        )
+
+        # An unrelated CCEO (the covering staff member themselves — no
+        # supervisory relationship to the leave) must be rejected.
+        self.client.force_login(self.cceo1_user)
+        res = self.client.post(f"/leave/coverage/{cov.id}/revoke")
+        self.assertEqual(res.status_code, 302)
+        cov.refresh_from_db()
+        self.assertEqual(cov.status, "active")
+
+        # The CCEO's supervising PL (the authorized approver for this leave)
+        # succeeds.
+        self.client.force_login(self.pl_user)
+        res = self.client.post(f"/leave/coverage/{cov.id}/revoke")
+        self.assertEqual(res.status_code, 302)
+        cov.refresh_from_db()
+        self.assertEqual(cov.status, "revoked")
+
+        entry = AuditLog.objects.filter(action="hr.coverage_revoked").first()
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.subject_id, cov.id)
+
     def test_prevent_activity_during_leave(self):
         """Verify scheduling/rescheduling activity during approved leave is blocked."""
         # Create approved leave for CCEO-2 on Oct 8 to Oct 12

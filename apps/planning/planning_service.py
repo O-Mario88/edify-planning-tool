@@ -1,11 +1,13 @@
-from django.db.models import Q
+from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
 from apps.core.enums import SsaIntervention
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.activities.models import Activity
 from apps.partners.models import PartnerAssignment
+from apps.accounts.models import StaffProfile
 from apps.ssa.models import SsaRecord
+from apps.ssa.presentation import build_ssa_score_summary
 from apps.core_schools.models import CoreActivitySlot
 from apps.core_schools.services import CORE_SLOT_DONE_STATUSES
 
@@ -414,9 +416,15 @@ class PlanningDashboardService:
 
             # Resolve weakest interventions
             weakest_map = {}
+            ssa_summary_map = {}
             for sch_id, record in latest_school_ssa.items():
+                scores = [
+                    {"intervention": score.intervention, "score": score.score}
+                    for score in record.scores.all()
+                ]
+                ssa_summary_map[sch_id] = build_ssa_score_summary(scores)
                 scores = sorted(
-                    list(record.scores.all().values("intervention", "score")),
+                    scores,
                     key=lambda x: x["score"],
                 )
                 weakest_list = []
@@ -434,6 +442,26 @@ class PlanningDashboardService:
             ).select_related("partner")
             assignment_map = {a.school_id: a for a in assignments}
 
+            # Schools store an owner as either a StaffProfile ID or a User ID,
+            # depending on the source that assigned it. Build a display-name
+            # map for both ID spaces once for this page instead of resolving
+            # staff inside the school loop.
+            owner_ids = {
+                school.account_owner_id
+                for school in paginated_schools
+                if school.account_owner_id
+            }
+            staff_names_by_owner_id = {}
+            if owner_ids:
+                for staff in (
+                    StaffProfile.objects.filter(deleted_at__isnull=True)
+                    .filter(Q(id__in=owner_ids) | Q(user_id__in=owner_ids))
+                    .select_related("user")
+                ):
+                    if staff.user_id and staff.user.name:
+                        staff_names_by_owner_id[staff.id] = staff.user.name
+                        staff_names_by_owner_id[staff.user_id] = staff.user.name
+
             # Resolve scheduled activities
             scheduled_activities = Activity.objects.filter(
                 school_id__in=school_ids, deleted_at__isnull=True, fy=fy
@@ -446,9 +474,51 @@ class PlanningDashboardService:
                     scheduled_map[s_id] = []
                 scheduled_map[s_id].append(act)
 
+            completed_visits_by_school = dict(
+                Activity.objects.filter(
+                    school_id__in=school_ids,
+                    activity_type__in=["school_visit", "core_visit", "baseline_ssa_visit"],
+                    status="completed",
+                    deleted_at__isnull=True,
+                )
+                .values("school_id")
+                .annotate(count=Count("id"))
+                .values_list("school_id", "count")
+            )
+            completed_trainings_by_school = dict(
+                Activity.objects.filter(
+                    school_id__in=school_ids,
+                    activity_type__in=["training", "core_training"],
+                    status="completed",
+                    deleted_at__isnull=True,
+                )
+                .values("school_id")
+                .annotate(count=Count("id"))
+                .values_list("school_id", "count")
+            )
+
+            # Cluster delivery stores attendance as a school-id array, so it
+            # needs one bounded query and a small in-memory tally instead of
+            # a query for every school row.
+            wanted_school_ids = set(school_ids)
+            cluster_attendance = Activity.objects.filter(
+                activity_type__in=["cluster_training", "cluster_meeting"],
+                status="completed",
+                deleted_at__isnull=True,
+                attended_school_ids__overlap=list(wanted_school_ids),
+            ).values_list("attended_school_ids", flat=True)
+            for attended_school_ids in cluster_attendance:
+                for attended_school_id in attended_school_ids or []:
+                    if attended_school_id in wanted_school_ids:
+                        completed_trainings_by_school[attended_school_id] = (
+                            completed_trainings_by_school.get(attended_school_id, 0)
+                            + 1
+                        )
+
             # Serialize Schools
             for s in paginated_schools:
                 weak = weakest_map.get(s.id, [])
+                ssa_summary = ssa_summary_map.get(s.id, {})
                 weakest_area = weak[0]["label"] if len(weak) > 0 else "—"
                 weakest_code = weak[0]["code"] if len(weak) > 0 else None
 
@@ -472,11 +542,15 @@ class PlanningDashboardService:
                         "subCounty": s.sub_county.name if s.sub_county else "—",
                         "shippingAddress": s.shipping_address or "—",
                         "cluster": s.cluster_id or "—",
-                        "schoolType": s.school_type.capitalize(),
+                        "schoolType": s.get_school_type_display(),
                         "ssaStatus": s.ssa_readiness_state,
                         "weakestIntervention": weakest_area,
                         "weakestInterventionCode": weakest_code,
                         "weakestInterventions": weak,
+                        "hasSsaScores": ssa_summary.get("has_scores", False),
+                        "ssaAverage": ssa_summary.get("average_score"),
+                        "ssaAverageTone": ssa_summary.get("average_tone", "neutral"),
+                        "ssaGroups": ssa_summary.get("groups", []),
                         "planningReadiness": readiness_details["planningReadiness"],
                         "planning_readiness": readiness_details["planningReadiness"],
                         "recommendedAction": readiness_details["recommendedAction"],
@@ -498,14 +572,16 @@ class PlanningDashboardService:
                         if readiness_details["blockedActions"]
                         else None,
                         "ownerId": s.account_owner_id,
-                        "ownerName": s.account_owner_name_raw
-                        or s.account_owner_id
-                        or "—",
+                        "ownerName": staff_names_by_owner_id.get(s.account_owner_id)
+                        or s.account_owner_name_raw
+                        or "Unassigned",
                         "schoolContact": s.primary_contact_name or "—",
                         "phone": s.primary_contact_phone
                         or s.school_phone
                         or "No phone",
                         "enrolment": s.enrollment,
+                        "visitCount": completed_visits_by_school.get(s.id, 0),
+                        "trainingCount": completed_trainings_by_school.get(s.id, 0),
                         "data_quality_score": s.data_quality_score,
                         "data_quality_status": s.data_quality_status,
                         "currentPartnerType": partner_assignment.partner.name

@@ -1,181 +1,92 @@
-<li
-  class="planning-school-row"
-  x-data="{ expanded: false }"
-  :class="{ 'is-expanded': expanded }"
->
-  <div class="planning-school-row__summary">
-    <div class="planning-school-row__select">
+<li class="planning-school-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
+  <div class="school-record-row__summary">
+    <label class="school-record-row__select" for="select-planning-school-{{ school.id }}">
       <input
         type="checkbox"
         id="select-planning-school-{{ school.id }}"
         value="{{ school.schoolId }}"
         x-model="selectedSchools"
-        aria-label="Select {{ school.name }}"
       >
-    </div>
+      <span class="sr-only">Select {{ school.name }}</span>
+    </label>
 
-    <div class="planning-school-row__icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/>
-      </svg>
-    </div>
-
-    <div class="planning-school-row__identity">
-      <div class="planning-school-row__title-line">
-        <a href="/schools/{{ school.schoolId }}" class="planning-school-row__name">
-          {{ school.name }}
-        </a>
-        <span class="planning-school-row__id">{{ school.schoolId }}</span>
-      </div>
-
-      <p class="planning-school-row__address">
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/>
-          <circle cx="12" cy="10" r="2.5"/>
+    <div class="school-record-row__content">
+      <button
+        type="button"
+        class="school-record-row__expander"
+        @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
+        @keydown.escape.window="openSchoolId = null"
+        :aria-expanded="(openSchoolId === '{{ school.id }}').toString()"
+        :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide SSA details for {{ school.name|escapejs }}' : 'Show SSA details for {{ school.name|escapejs }}'"
+        aria-controls="planning-school-details-{{ school.id }}"
+      ></button>
+      <span class="school-record-row__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/>
         </svg>
-        <span>
-          {{ school.district }}{% if school.subCounty and school.subCounty != "—" %}, {{ school.subCounty }}{% endif %}
-          {% if school.shippingAddress and school.shippingAddress != "—" %} · {{ school.shippingAddress }}{% endif %}
-        </span>
-      </p>
-
-      <div class="planning-school-row__signals">
-        <span class="school-directory-status {% if school.ssaStatus == 'Verified' %}is-complete{% else %}is-missing{% endif %}">
-          {% if school.ssaStatus == "Verified" %}SSA Complete{% else %}{{ school.ssaStatus }}{% endif %}
-        </span>
-        {% if school.isScheduled or school.my_plan_status %}
-          <span class="school-directory-status is-complete">In My Plan</span>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="planning-school-row__focus">
-      <span class="planning-school-row__meta-label">3 lowest SSA areas</span>
-      <div class="planning-school-row__interventions" aria-label="Three lowest SSA intervention scores">
-        {% for intervention in school.weakestInterventions %}
-          <span class="planning-school-intervention {% if intervention.score < 5 %}is-critical{% elif intervention.score < 7 %}is-warning{% else %}is-improving{% endif %}">
-            <span>{{ intervention.label }}</span>
-            <strong>{{ intervention.score|floatformat:1 }}</strong>
-          </span>
-        {% empty %}
-          <span class="planning-school-intervention is-unassessed">SSA baseline required</span>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="planning-school-row__cluster">
-      <span class="planning-school-row__meta-label">Cluster</span>
-      {% if school.clusterName and school.clusterName != "—" %}
-        <span class="planning-school-row__cluster-name">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8-1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM2.5 19a5.5 5.5 0 0 1 11 0m0 0h8a4.5 4.5 0 0 0-7.2-3.6"/>
-          </svg>
-          {{ school.clusterName }}
-        </span>
-      {% else %}
-        <span class="planning-school-row__cluster-name is-missing">No cluster</span>
-      {% endif %}
-    </div>
-
-    <div class="planning-school-row__readiness">
-      <span class="planning-school-row__meta-label">Readiness</span>
-      <span class="planning-school-readiness {% if school.planningReadiness == 'Ready for Support' %}is-ready{% elif school.planningReadiness == 'In My Plan' %}is-ready{% elif school.planningReadiness == 'SSA Required' %}is-warning{% else %}is-blocked{% endif %}">
-        {{ school.planningReadiness }}
       </span>
+
+      <div class="school-record-row__identity">
+        <h2 class="school-record-row__title">{{ school.name }}</h2>
+        <dl class="school-record-row__metadata">
+          <div><dt>District:</dt><dd>{{ school.district }}</dd></div>
+          <div><dt>Shipping Address:</dt><dd>{{ school.shippingAddress }}</dd></div>
+          <div><dt>School Type:</dt><dd>{{ school.schoolType }}</dd></div>
+          <div><dt>Cluster:</dt><dd>{% if school.clusterName and school.clusterName != "—" %}{{ school.clusterName }}{% else %}Not assigned{% endif %}</dd></div>
+          <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
+          <div><dt>Phone:</dt><dd>{{ school.phone }}</dd></div>
+          <div><dt>Primary Contact:</dt><dd>{{ school.schoolContact }}</dd></div>
+          <div><dt>Staff Name:</dt><dd>{{ school.ownerName }}</dd></div>
+          <div class="school-record-row__ssa {% if school.ssaAverageTone %}is-{{ school.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd>{% if school.ssaAverage is not None %}{{ school.ssaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+          <div><dt>Visit:</dt><dd class="{% if school.visitCount %}is-positive{% else %}is-attention{% endif %}">{{ school.visitCount }}</dd></div>
+          <div><dt>Training:</dt><dd class="{% if school.trainingCount %}is-positive{% else %}is-attention{% endif %}">{{ school.trainingCount }}</dd></div>
+        </dl>
+      </div>
     </div>
 
-    <button
-      type="button"
-      class="planning-school-row__toggle"
-      @click="expanded = !expanded"
-      @keydown.escape.window="expanded = false"
-      :aria-expanded="expanded.toString()"
-      aria-controls="planning-school-details-{{ school.id }}"
-    >
-      <span x-text="expanded ? 'Hide' : 'Details'">Details</span>
-      <svg aria-hidden="true" :class="{ 'is-rotated': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/>
-      </svg>
-      <span class="sr-only"> for {{ school.name }}</span>
-    </button>
+    <div class="school-record-row__actions">
+      {% if can_schedule and "Schedule visit" not in school.blockedActions %}
+        <button
+          type="button"
+          class="school-record-action school-record-action--schedule"
+          {% if school.isScheduled %}
+            hx-get="/my-plan/{{ school.scheduledActivityId }}/reschedule-drawer"
+          {% else %}
+            hx-get="/planning/schedule-modal?school_id={{ school.schoolId }}"
+          {% endif %}
+          hx-target="#drawer-container"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
+          <span>Schedule Now</span>
+        </button>
+      {% else %}
+        <button type="button" class="school-record-action school-record-action--assign" disabled title="{{ school.reason }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>
+          <span>Schedule Now</span>
+        </button>
+      {% endif %}
+
+      {% if can_assign_partner and "Assign to Partner" not in school.blockedActions %}
+        <button
+          type="button"
+          class="school-record-action school-record-action--assign"
+          hx-get="/planning/assign-partner-modal?school_id={{ school.schoolId }}"
+          hx-target="#drawer-container"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
+          <span>Assign</span>
+        </button>
+      {% else %}
+        <button type="button" class="school-record-action school-record-action--assign" disabled title="{{ school.reason }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3"/></svg>
+          <span>Assign</span>
+        </button>
+      {% endif %}
+
+    </div>
   </div>
 
-  <div
-    id="planning-school-details-{{ school.id }}"
-    class="planning-school-row__details"
-    x-show="expanded"
-    x-transition.opacity.duration.150ms
-    x-cloak
-  >
-    <div class="planning-school-row__detail-grid">
-      <section class="planning-school-detail">
-        <h4>School and ownership</h4>
-        <dl>
-          <div><dt>Owner / CCEO</dt><dd>{{ school.ownerName }}</dd></div>
-          <div><dt>School contact</dt><dd>{{ school.schoolContact }}</dd></div>
-          <div><dt>Phone</dt><dd>{{ school.phone }}</dd></div>
-          <div><dt>Enrolment</dt><dd>{% if school.enrolment is not None %}{{ school.enrolment }} pupils{% else %}—{% endif %}</dd></div>
-          <div><dt>Data quality</dt><dd>{{ school.data_quality_score }}% · {{ school.data_quality_status }}</dd></div>
-        </dl>
-      </section>
-
-      <section class="planning-school-detail">
-        <h4>Planning intelligence</h4>
-        <dl>
-          <div><dt>SSA status</dt><dd>{{ school.ssaStatus }}</dd></div>
-          <div><dt>Primary focus</dt><dd>{{ school.weakestIntervention }}</dd></div>
-          <div><dt>Partner support</dt><dd>{{ school.currentPartnerType }}</dd></div>
-          <div><dt>Cost catalogue</dt><dd>{% if school.cost_ready %}Ready{% else %}Blocked{% endif %}</dd></div>
-        </dl>
-      </section>
-
-      <section class="planning-school-detail is-recommendation">
-        <h4>Recommended next step</h4>
-        <strong>{{ school.recommendedAction }}</strong>
-        <p>{{ school.reason }}</p>
-      </section>
-    </div>
-
-    <div class="planning-school-row__actions">
-      <div>
-        {% if school.planningReadiness == "Cluster Required" %}
-          <button
-            type="button"
-            class="edify-action-button primary"
-            hx-get="/schools/{{ school.id }}/add-to-cluster"
-            hx-target="#drawer-container"
-          >Add to Cluster</button>
-        {% elif school.planningReadiness == "Data Cleanup Required" %}
-          <span class="planning-school-row__blocked">Complete missing school data before scheduling.</span>
-        {% elif school.planningReadiness == "Cost Catalogue Required" %}
-          <span class="planning-school-row__blocked">An active cost catalogue is required.</span>
-        {% elif school.planningReadiness == "In My Plan" %}
-          <a href="/my-plan" class="edify-action-button primary">Open My Plan</a>
-        {% else %}
-          <button
-            type="button"
-            class="edify-action-button primary"
-            {% if school.isScheduled %}
-              hx-get="/my-plan/{{ school.scheduledActivityId }}/reschedule-drawer"
-            {% else %}
-              hx-get="/planning/schedule-modal?school_id={{ school.schoolId }}"
-            {% endif %}
-            hx-target="#drawer-container"
-          >{% if school.isScheduled %}Reschedule{% else %}Schedule Visit{% endif %}</button>
-          {% if can_assign_partner %}
-            <button
-              type="button"
-              class="edify-action-button secondary"
-              hx-get="/planning/assign-partner-modal?school_id={{ school.schoolId }}"
-              hx-target="#drawer-container"
-            >Assign Partner</button>
-          {% endif %}
-        {% endif %}
-      </div>
-
-      <a href="/schools/{{ school.schoolId }}" class="edify-action-button secondary">
-        Open School Profile
-      </a>
-    </div>
+  <div id="planning-school-details-{{ school.id }}" class="school-record-row__details" x-show="openSchoolId === '{{ school.id }}'" x-transition.opacity.duration.150ms x-cloak>
+    {% include "partials/schools/ssa_score_groups.html" with detail_id="planning-school-details-"|add:school.id ssa_groups=school.ssaGroups has_ssa_scores=school.hasSsaScores selected_fy=selected_fy %}
   </div>
 </li>

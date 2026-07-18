@@ -856,11 +856,17 @@ def ia_dashboard_view(request):
     ]
 
     # ── SSA monitoring: lowest-performing interventions (0–10 score scale) ──
+    # Confirmed-only (an unverified upload must not rank interventions), and
+    # scoped strictly to the selected FY. There used to be a silent
+    # all-time fallback here when the current FY had no rows, which
+    # presented historical scores under a current-FY heading with nothing
+    # telling the reader the period had changed — better to show an honest
+    # empty state.
     score_rows = SsaScore.objects.filter(
-        ssa_record__deleted_at__isnull=True, ssa_record__fy=fy
+        ssa_record__deleted_at__isnull=True,
+        ssa_record__fy=fy,
+        ssa_record__verification_status="confirmed",
     )
-    if not score_rows.exists():
-        score_rows = SsaScore.objects.filter(ssa_record__deleted_at__isnull=True)
     intervention_labels = dict(SsaIntervention.choices)
     lowest_performing = [
         {

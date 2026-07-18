@@ -94,6 +94,17 @@ def assign_supervisor(staff_id: str, data: dict, principal) -> dict:
         supervisee=supervisee,
         defaults={"supervisor": supervisor},
     )
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="admin.supervisor_reassigned",
+        subject_kind="staff_profile",
+        subject_id=supervisee.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={"oldSupervisorId": old_id, "newSupervisorId": supervisor.id},
+    )
     return {
         "staffId": supervisee.id,
         "oldSupervisorId": old_id,

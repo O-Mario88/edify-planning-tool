@@ -171,12 +171,17 @@ class RegionalInvestmentDetectorTest(TestCase):
             region=region,
             district=district,
         )
+        # verification_status must be explicit: the model defaults to
+        # PENDING, and a leadership REGIONAL_INVESTMENT recommendation must
+        # never be generated from unverified assessments. These represent
+        # real, decision-driving SSA, so they are confirmed.
         SsaRecord.objects.create(
             school=school,
             date_of_ssa=timezone.now() - timedelta(days=400),
             fy="2025",
             quarter="Q2",
             average_score=7.5,
+            verification_status="confirmed",
         )
         SsaRecord.objects.create(
             school=school,
@@ -184,6 +189,7 @@ class RegionalInvestmentDetectorTest(TestCase):
             fy="2026",
             quarter="Q2",
             average_score=4.0,
+            verification_status="confirmed",
         )
         result = services.recompute({"fy": "2026"}, principal=None)
         self.assertGreaterEqual(result["generatedCount"], 1)

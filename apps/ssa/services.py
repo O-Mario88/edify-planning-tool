@@ -256,52 +256,40 @@ def latest_applicable_record(school):
 
 
 def weakest_interventions_for(school, *, n=2):
-    """Canonical weakest-intervention ranking from the latest confirmed SSA.
-    Returns (record, rows) where rows is an ascending-score list of
-    {"intervention", "score"} dicts, at most n long ([] when no confirmed
-    SSA exists — never fabricate a need)."""
+    """Canonical weakest-intervention ranking. Returns (record, rows) where
+    rows is a {"intervention", "score"} list at most n long ([] when no
+    confirmed SSA exists — never fabricate a need).
+
+    Delegates the ranking to the analytics recommendation engine
+    (apps.ssa.recommendation_engine), so planning, activities, Core and the
+    SSA API all pick interventions from ONE analytically-backed ordering
+    (severity anchored, refined by trend / peer gap / persistence) instead
+    of a bare "two lowest scores on the newest assessment". With a single
+    confirmed record and no measurable peers/trend, the engine reduces
+    exactly to ascending-score + alphabetical tie-break, so single-assessment
+    behaviour is unchanged."""
+    from apps.ssa.recommendation_engine import prioritized_interventions
+
     record = latest_applicable_record(school)
     if not record:
         return None, []
-    rows = list(
-        record.scores.all()
-        .order_by("score", "intervention")
-        .values("intervention", "score")[:n]
-    )
+    ranked = prioritized_interventions(school, n=n)
+    rows = [{"intervention": r["intervention"], "score": r["score"]} for r in ranked]
     return record, rows
 
 
 def recommendation(school_id: str, principal) -> dict:
-    """The two weakest interventions + a severity band (from the latest
-    confirmed SSA — the canonical decision rule)."""
+    """Analytics-backed recommendation for a school — the two most urgent
+    interventions, a canonical severity band, and the full prioritised
+    ranking with its analytics breakdown (delegates to the single canonical
+    recommendation engine, verified-SSA-only and deterministic)."""
     school = School.objects.filter(school_id=school_id).first()
     if not school:
         raise NotFoundError("School not found.")
-    latest = latest_applicable_record(school)
-    if not latest:
-        return {
-            "schoolId": school_id,
-            "hasSsa": False,
-            "weakest": [],
-            "severity": "none",
-            "averageScore": None,
-        }
-    scores = sorted(
-        latest.scores.all().values("intervention", "score"), key=lambda s: s["score"]
-    )
-    weakest = scores[:2]
-    # Canonical classification (§5) — never a locally hand-rolled scheme.
-    from apps.core.enums import ssa_score_band
 
-    band_label, _hex, _tone = ssa_score_band(latest.average_score)
-    return {
-        "schoolId": school_id,
-        "hasSsa": True,
-        "fy": latest.fy,
-        "averageScore": latest.average_score,
-        "weakest": weakest,
-        "severity": band_label,
-    }
+    from apps.ssa.recommendation_engine import school_recommendation
+
+    return school_recommendation(school, n=2)
 
 
 def list_records(principal, query: dict) -> Iterable[SsaRecord]:

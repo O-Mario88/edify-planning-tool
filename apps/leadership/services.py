@@ -495,17 +495,22 @@ def _detect_regional_investment(fy: str, now) -> list[dict]:
         return insights
 
     for region in Region.objects.all():
+        # Confirmed-only: these two averages drive a REGIONAL_INVESTMENT
+        # leadership recommendation (thresholds below), so an unverified
+        # upload must never be able to trigger or suppress one.
         current = SsaRecord.objects.filter(
             school__region=region,
             fy=fy,
             deleted_at__isnull=True,
             average_score__isnull=False,
+            verification_status="confirmed",
         ).aggregate(a=Avg("average_score"))["a"]
         previous = SsaRecord.objects.filter(
             school__region=region,
             fy=prev_fy,
             deleted_at__isnull=True,
             average_score__isnull=False,
+            verification_status="confirmed",
         ).aggregate(a=Avg("average_score"))["a"]
         if current is None:
             continue

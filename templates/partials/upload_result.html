@@ -46,10 +46,16 @@
 {{ result.message }}
 </div>
 
-<!-- Actions -->
+<!-- Actions — the import above has already run (this report is the result,
+     not a pending state), so these link to where the outcome actually
+     lives rather than to a "confirm before import" step that doesn't
+     exist. -->
 <div class="flex items-center gap-3 pt-2">
-<a href="/schools/upload/{{ result.upload_batch_id }}/preview" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold rounded-surface shadow-sm transition-all" hx-boost="false">
-Open Staging Preview & Validate &rarr;
+<a href="/schools" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold rounded-surface shadow-sm transition-all" hx-boost="false">
+View School Directory &rarr;
+</a>
+<a href="/admin-panel/school-upload-history" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[12px] font-semibold rounded-surface shadow-sm transition-all" hx-boost="false">
+View Upload History
 </a>
 </div>
 

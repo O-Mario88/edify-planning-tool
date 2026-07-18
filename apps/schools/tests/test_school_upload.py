@@ -234,6 +234,72 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(rows.filter(status="created").count(), 1)
         self.assertEqual(rows.filter(status="failed").count(), 1)
 
+    def test_blank_current_partner_type_does_not_demote_existing_core_school(self):
+        """A re-upload that only touches enrollment (Current Partner Type
+        cell left blank) must not silently demote a Core school back to
+        Client — map_school_type() defaults blank text to "client", which
+        used to defeat the upsert's blank-doesn't-overwrite guard."""
+        core_body = f"{EXACT_HEADERS}\n,SCH-CORE,Core Primary,Gulu,Core,100,,,,\n"
+        self.assertEqual(self._post_and_import(self._csv(core_body)).status_code, 200)
+        self.assertEqual(School.objects.get(school_id="SCH-CORE").school_type, "core")
+
+        # Re-upload with the Current Partner Type column blank.
+        partial_body = f"{EXACT_HEADERS}\n,SCH-CORE,Core Primary,Gulu,,150,,,,\n"
+        res = self._post_and_import(self._csv(partial_body), update_existing=True)
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-CORE")
+        self.assertEqual(school.school_type, "core")
+        self.assertEqual(school.enrollment, 150)
+
+    def test_blank_account_owner_does_not_reset_matched_status_to_pending(self):
+        """A re-upload that leaves the Account Owner column blank must not
+        reset an already-matched account_owner_status back to "pending" —
+        that value used to always be written (even when no name was given),
+        defeating the upsert's blank-doesn't-overwrite guard."""
+        owned_body = (
+            f"{EXACT_HEADERS}\nAisha Dar,SCH-OWNED,Owned Primary,Gulu,Client,100,,,,\n"
+        )
+        self.assertEqual(self._post_and_import(self._csv(owned_body)).status_code, 200)
+        school = School.objects.get(school_id="SCH-OWNED")
+        self.assertEqual(school.account_owner_status, "matched")
+        self.assertEqual(school.account_owner_id, self.staff.id)
+
+        # Re-upload with Account Owner blank.
+        partial_body = (
+            f"{EXACT_HEADERS}\n,SCH-OWNED,Owned Primary,Gulu,Client,150,,,,\n"
+        )
+        res = self._post_and_import(self._csv(partial_body), update_existing=True)
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-OWNED")
+        self.assertEqual(school.account_owner_status, "matched")
+        self.assertEqual(school.account_owner_id, self.staff.id)
+        self.assertEqual(school.enrollment, 150)
+
+    def test_auto_import_failure_is_recorded_honestly_not_swallowed(self):
+        """A failure during the auto-import step used to be stamped
+        status="imported" (set before the import even ran) and the raw
+        exception propagated uncaught to the caller. Now: the batch is
+        marked "failed" with the real error recorded, and the caller gets a
+        normal, handleable 400 instead of a bare 500."""
+        from unittest.mock import patch
+
+        from apps.schools.models import UploadBatch
+
+        body = f"{EXACT_HEADERS}\n,SCH-BOOM,Boom Primary,Gulu,Client,100,,,,\n"
+        with patch(
+            "apps.schools.upload_service.import_school_batch",
+            side_effect=RuntimeError("simulated import crash"),
+        ):
+            res = self._post(self._csv(body))
+
+        self.assertEqual(res.status_code, 400, res.content)
+        self.assertIn("simulated import crash", res.json()["message"])
+        self.assertFalse(School.objects.filter(school_id="SCH-BOOM").exists())
+
+        batch = UploadBatch.objects.get(file_name="schools.csv")
+        self.assertEqual(batch.status, "failed")
+        self.assertIn("simulated import crash", batch.error_summary)
+
     def test_directory_returns_uploaded_rows(self):
         body = f"{EXACT_HEADERS}\n,SCH-DIR,Directory Primary,Gulu,Client,100,,,,\n"
         self.assertEqual(self._post_and_import(self._csv(body)).status_code, 200)
@@ -257,3 +323,66 @@ class SchoolUploadTest(APITestCase):
         rows = self.client.get(f"/api/uploads/{batch_id}/rows")
         self.assertEqual(rows.status_code, 200, rows.content)
         self.assertEqual(rows.json()[0]["schoolId"], "SCH-RD")
+
+
+class ResolveGeographyTest(APITestCase):
+    """Direct coverage for upload_service._resolve_geography(). Today's
+    school-upload CSV template has no "sub county" header mapping at all
+    (SCHOOL_HEADER_MAP has no sub_county entry), so the district-blank/
+    sub_county-present combination this function guards against can't
+    currently be triggered through the live upload endpoint or the manual
+    create_one() API (which requires an explicit districtId). This is
+    still real, worthwhile coverage: it proves the fix is correct for
+    whenever a sub-county column is wired up, and proves the dangerous
+    District.objects.first()/Region.objects.first() arbitrary-fallback
+    that used to run is gone for good."""
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Northern")
+        self.gulu = District.objects.create(name="Gulu", region=self.region)
+        self.lira = District.objects.create(name="Lira", region=self.region)
+
+    def test_district_name_resolves_directly(self):
+        from apps.schools.upload_service import _resolve_geography
+
+        district, sub_county, ambiguous = _resolve_geography("Gulu", "")
+        self.assertEqual(district, self.gulu)
+        self.assertIsNone(sub_county)
+        self.assertEqual(ambiguous, [])
+
+    def test_unique_sub_county_infers_correct_district(self):
+        from apps.geography.models import SubCounty
+        from apps.schools.upload_service import _resolve_geography
+
+        sc = SubCounty.objects.create(name="Bardege", district=self.gulu)
+        district, sub_county, ambiguous = _resolve_geography("", "Bardege")
+        self.assertEqual(district, self.gulu)
+        self.assertEqual(sub_county, sc)
+        self.assertEqual(ambiguous, [])
+
+    def test_ambiguous_sub_county_name_is_reported_not_guessed(self):
+        from apps.geography.models import SubCounty
+        from apps.schools.upload_service import _resolve_geography
+
+        SubCounty.objects.create(name="Central", district=self.gulu)
+        SubCounty.objects.create(name="Central", district=self.lira)
+        district, sub_county, ambiguous = _resolve_geography("", "Central")
+        self.assertIsNone(district)
+        self.assertIsNone(sub_county)
+        self.assertEqual(sorted(ambiguous), ["Gulu", "Lira"])
+
+    def test_no_location_info_resolves_to_none_never_an_arbitrary_district(self):
+        from apps.schools.upload_service import _resolve_geography
+
+        district, sub_county, ambiguous = _resolve_geography("", "")
+        self.assertIsNone(district)
+        self.assertIsNone(sub_county)
+        self.assertEqual(ambiguous, [])
+
+    def test_unmatched_sub_county_resolves_to_none(self):
+        from apps.schools.upload_service import _resolve_geography
+
+        district, sub_county, ambiguous = _resolve_geography("", "Nowhereville")
+        self.assertIsNone(district)
+        self.assertIsNone(sub_county)
+        self.assertEqual(ambiguous, [])

@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Create a new cluster{% endblock %}
-{% block drawer_subtitle %}Pick the district and the sub-counties it covers, then name its leader. Assign schools from the workspace afterwards.{% endblock %}
+{% block drawer_subtitle %}Set the cluster coverage and leader details. You can add schools after it is created.{% endblock %}
 
 {% block drawer_body %}
 <div
@@ -34,22 +34,45 @@
     {% endif %}
 
     <div class="cluster-create-fields">
-      <div class="cluster-create-field">
-        <label for="cluster-district">
-          District <span class="cluster-create-required" aria-hidden="true">*</span>
-        </label>
-        <select
-          id="cluster-district"
-          name="district_id"
-          x-model="selectedDistrictId"
-          @change="resetDistrict()"
-          required
-        >
-          <option value="">Select a district</option>
-          {% for district in districts %}
-            <option value="{{ district.id }}">{{ district.name }}</option>
-          {% endfor %}
-        </select>
+      <div class="cluster-create-basics">
+        <div class="cluster-create-field">
+          <label for="cluster-district">
+            District <span class="cluster-create-required" aria-hidden="true">*</span>
+          </label>
+          <select
+            id="cluster-district"
+            name="district_id"
+            x-model="selectedDistrictId"
+            @change="resetDistrict()"
+            required
+          >
+            <option value="">Select a district</option>
+            {% for district in districts %}
+              <option value="{{ district.id }}">{{ district.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="cluster-create-field">
+          <label for="cluster-name">
+            Cluster name <span class="cluster-create-required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="cluster-name"
+            type="text"
+            name="name"
+            x-model="clusterName"
+            @input="clusterNameEdited = true"
+            placeholder="e.g. Mukono Central Cluster"
+            maxlength="255"
+            aria-describedby="cluster-name-help"
+            autocomplete="off"
+            required
+          >
+          <p id="cluster-name-help" class="cluster-create-help">
+            Suggested from the first selected sub-county. You can edit it.
+          </p>
+        </div>
       </div>
 
       <fieldset class="cluster-create-field cluster-create-subcounties" aria-describedby="cluster-subcounties-help">
@@ -95,27 +118,6 @@
         </div>
       </fieldset>
 
-      <div class="cluster-create-field">
-        <label for="cluster-name">
-          Cluster name <span class="cluster-create-required" aria-hidden="true">*</span>
-        </label>
-        <input
-          id="cluster-name"
-          type="text"
-          name="name"
-          x-model="clusterName"
-          @input="clusterNameEdited = true"
-          placeholder="e.g. Mukono Central Cluster"
-          maxlength="255"
-          aria-describedby="cluster-name-help"
-          autocomplete="off"
-          required
-        >
-        <p id="cluster-name-help" class="cluster-create-help">
-          Suggested from the first selected sub-county. You can edit it; the name must be unique within the district.
-        </p>
-      </div>
-
       <fieldset class="cluster-create-leader">
         <legend class="cluster-create-leader__title">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -158,12 +160,12 @@
     <footer class="cluster-create-footer">
       <button
         type="button"
-        class="cluster-create-cancel"
+        class="school-record-action school-record-action--assign cluster-create-cancel"
         @click="$dispatch('close-drawer')"
       >
         Cancel
       </button>
-      <button type="submit" class="cluster-create-submit">
+      <button type="submit" class="school-record-action school-record-action--schedule cluster-create-submit">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 20h16M7 20v-6h10v6M5 10l7-6 7 6M9 11h6"/>
         </svg>

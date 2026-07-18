@@ -195,7 +195,15 @@ class DashboardMetricsService:
 
         # No verified SSA data -> empty lists (template sections render empty,
         # never invented interventions).
-        weakest_interventions = weakest_interventions[:3]
+        #
+        # ssa_averages is ordered by -avg_val (BEST first), so after the top 3
+        # are taken as `best_interventions` the remainder is still in
+        # descending order. Slicing [:3] therefore returned the 4th/5th/6th
+        # BEST interventions and labelled them "Weakest" on the dashboard,
+        # while the two genuinely lowest-scoring interventions were never
+        # shown at all. Take the tail and reverse it so this panel actually
+        # lists the worst performers, worst first.
+        weakest_interventions = list(reversed(weakest_interventions[-3:]))
 
         # 6. Team Target Progress — real completion rate per horizon.
         def _target_row(name, qs):
