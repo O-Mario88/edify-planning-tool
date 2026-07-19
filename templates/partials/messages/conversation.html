@@ -70,7 +70,7 @@
       </span>
       {% endfor %}
       <a href="/messages/new/?forward={{ selected.thread.id }}"
-         class="inline-flex items-center px-2 py-0.5 rounded-pill border border-dashed border-slate-300 edify-text-caption font-bold text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-colors">
+         class="inline-flex items-center px-2 py-0.5 rounded-pill border border-dashed border-slate-300 edify-text-caption font-bold text-slate-400 edify-primary-text-hover edify-primary-border-hover transition-colors">
         Add
       </a>
     </div>
@@ -108,7 +108,7 @@
           {% elif ".xls" in a.name %}
           <span class="h-8 w-8 rounded-pill bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 edify-text-caption font-black uppercase">XLS</span>
           {% elif ".doc" in a.name %}
-          <span class="h-8 w-8 rounded-pill bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 edify-text-caption font-black uppercase">DOC</span>
+          <span class="h-8 w-8 rounded-pill edify-primary-soft edify-primary-text flex items-center justify-center shrink-0 edify-text-caption font-black uppercase">DOC</span>
           {% else %}
           <span class="h-8 w-8 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
@@ -142,7 +142,7 @@
     {% endif %}
     <div class="rounded-surface border border-slate-200 overflow-hidden">
       <div class="flex items-center px-3 min-h-10 bg-slate-50/60 border-b border-slate-100">
-        <span class="edify-text-caption font-bold text-blue-700">Reply to conversation</span>
+        <span class="edify-text-caption font-bold edify-primary-text">Reply to conversation</span>
       </div>
       <form hx-post="/messages/thread/{{ selected.thread.id }}/reply"
             hx-target="#conversation-pane" hx-swap="innerHTML"
@@ -195,28 +195,28 @@
       </a>
       {% endif %}
       <button type="submit" form="reply-form"
-              class="inline-flex items-center gap-1 h-8 px-3.5 rounded-control bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-bold shadow-sm transition-colors ml-auto">
+              class="inline-flex items-center gap-1 h-8 px-3.5 rounded-control edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold shadow-sm transition-colors ml-auto">
         Reply
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
       </button>
     </div>
     {% else %}
-    <div class="rounded-surface border border-blue-100 bg-blue-50/70 px-4 py-3">
-      <p class="text-[12px] font-bold text-blue-800">System update</p>
-      <p class="mt-1 text-[12px] font-medium leading-relaxed text-blue-700">
+    <div class="rounded-surface border edify-primary-border edify-primary-soft-alpha-70 px-4 py-3">
+      <p class="text-[12px] font-bold edify-primary-text">System update</p>
+      <p class="mt-1 text-[12px] font-medium leading-relaxed edify-primary-text">
         This delivery is read-only. Use the linked workflow to act on the current data.
       </p>
       <div class="mt-3 flex items-center gap-2">
         {% if selected.panel.actions %}
         <a href="{{ selected.panel.actions.0.href }}"
-           class="inline-flex min-h-11 items-center gap-1.5 rounded-control bg-blue-600 px-3.5 text-[12px] font-bold text-white shadow-sm transition-colors hover:bg-blue-700">
+           class="inline-flex min-h-11 items-center gap-1.5 rounded-control edify-primary-solid px-3.5 text-[12px] font-bold text-white shadow-sm transition-colors edify-primary-hover">
           {{ selected.panel.actions.0.label }}
         </a>
         {% endif %}
         <form hx-post="/messages/thread/{{ selected.thread.id }}/archive">
           {% csrf_token %}
           <button type="submit"
-                  class="inline-flex min-h-11 items-center rounded-control border border-blue-200 edify-surface px-3.5 text-[12px] font-bold text-blue-700 transition-colors hover:bg-blue-50">
+                  class="inline-flex min-h-11 items-center rounded-control border edify-primary-border edify-surface px-3.5 text-[12px] font-bold edify-primary-text transition-colors edify-primary-soft-hover">
             Archive
           </button>
         </form>

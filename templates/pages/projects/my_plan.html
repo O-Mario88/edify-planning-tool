@@ -3,14 +3,16 @@
 
 {% block title %}My Plan — Special Projects{% endblock %}
 
-{% block shell_content %}
-<link rel="stylesheet" href="{% static 'css/pages/special-project-my-plan.css' %}?v=20260717a">
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/pages/special-project-my-plan.css' %}?v=20260719platformwide1">
+{% endblock %}
 
+{% block shell_content %}
 <div class="sp-plan" x-data="{ filtersOpen: true }">
   <header class="sp-plan__header">
     <div class="sp-plan__heading">
       <p class="sp-plan__eyebrow">Special Projects</p>
-      <h1>My Plan</h1>
+      <h1 class="edify-page-title">My Plan</h1>
       <p>Manage scheduled special-project activities by week, month, quarter, and fiscal year.</p>
     </div>
 

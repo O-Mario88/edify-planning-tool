@@ -755,7 +755,7 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
     context = {
         "cluster": cluster,
         "schools": unassigned_schools,
-        "drawer_type": "right",
+        "drawer_type": "center",
         "drawer_size": "md",
     }
     return render(request, "partials/clusters/bulk_assign_drawer.html", context)

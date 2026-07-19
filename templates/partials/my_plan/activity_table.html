@@ -17,7 +17,7 @@
 <!-- Column 1: Details & Context -->
 <td class="px-4 py-3.5 space-y-1">
 <div class="flex items-center gap-1.5 flex-wrap">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-150/45">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wide edify-primary-soft edify-primary-text border edify-primary-border-alpha-45">
 {{ act.activity_type_label }}
 </span>
 {% if act.is_core %}
@@ -27,7 +27,7 @@
 <span class="edify-text-caption text-[var(--edify-primary)] font-bold">({{ act.core_progress }})</span>
 {% endif %}
 {% if act.partner_name %}
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold bg-blue-50 text-blue-700 border /30">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold edify-primary-soft edify-primary-text border /30">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg> Partner ({{ act.partner_name }})
 </span>
 {% endif %}
@@ -50,7 +50,7 @@
 <span>District: {{ act.school_district }}</span>
 {% if act.school_sub_county %}&bull; <span>Sub-county: {{ act.school_sub_county }}</span>{% endif %}
 {% if act.school_cluster_name %}&bull; <span>Cluster: {{ act.school_cluster_name }}</span>{% endif %}
-&bull; <span class="text-indigo-700">SSA Status: {{ act.school_ssa_status }}</span>
+&bull; <span class="edify-primary-text">SSA Status: {{ act.school_ssa_status }}</span>
 {% elif act.cluster_name %}
 <span>District: {{ act.cluster_district }}</span>
 &bull; <span>Schools: {{ act.cluster_school_count }}</span>
@@ -97,7 +97,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 {% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
 {% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
 {% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150
-{% elif variant == 'purple' %}bg-indigo-50 text-indigo-700 border-indigo-150
+{% elif variant == 'purple' %}edify-primary-soft edify-primary-text edify-primary-border
 {% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
 {{ label }}
 </span>
@@ -111,7 +111,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 {% if act.execution_role == 'Partner' and not viewer_is_partner %}
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider">Monitoring — partner-owned</span>
 <p class="mt-1">
-<a href="/my-plan/{{ act.id }}" class="edify-text-caption font-semibold text-indigo-600 hover:text-indigo-700">View</a>
+<a href="/my-plan/{{ act.id }}" class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover">View</a>
 </p>
 {% elif act.next_action.action == 'view_status' %}
 <button
@@ -177,11 +177,14 @@ class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
 <!-- Reschedule -->
 {% if act.status != 'completed' %}
 <button
+type="button"
+data-reschedule-trigger
 hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
+hx-trigger="click consume"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 @click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-amber-600 hover:text-amber-700"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 edify-primary-text edify-primary-soft-hover edify-primary-text-hover"
 >
 <span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span> Reschedule Activity
 </button>
@@ -194,7 +197,7 @@ hx-get="/activities/{{ act.id }}/start"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 @click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-indigo-600 hover:text-indigo-700"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 edify-primary-text edify-primary-text-hover"
 >
 <span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8m0 0h-5m5 0v5"/></svg></span> Start Activity
 </button>
@@ -241,7 +244,7 @@ hx-get="/activities/{{ act.id }}/submit"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 @click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-blue-600 hover:text-blue-700"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 edify-primary-text edify-primary-text-hover"
 >
 <span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12V4m0 0L9 7m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></span> Submit for Review
 </button>

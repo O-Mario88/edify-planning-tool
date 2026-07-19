@@ -8,27 +8,13 @@
   <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-4 gap-4">
     <div>
-      <h1 class="text-[21px] font-extrabold tracking-tight">Team Leave & Coverage Tracker</h1>
+      <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Team Leave & Coverage Tracker</h1>
       <p class="text-[12px] text-slate-455 font-semibold mt-0.5">Monitor leave balances, active coverage handovers, and department availability</p>
     </div>
 
     <div class="flex items-center gap-2">
-      <form method="GET" class="relative">
-        <input
-          type="text"
-          name="q"
-          value="{{ search_q }}"
-          placeholder="Search team member..."
-          class="edify-surface border border-slate-200 rounded-control pl-9 pr-4 py-2.5 text-[12px] font-semibold placeholder-slate-400 focus:outline-none focus:border-indigo-650 w-64 transition shadow-sm"
-        />
-        <span class="absolute left-3.5 top-3 text-slate-400">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </span>
-      </form>
       {% if search_q %}
-      <a href="{% url 'frontend:leave_tracker' %}" class="px-4 py-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-surface edify-text-caption font-bold uppercase transition">Clear</a>
+      <a href="{% url 'frontend:leave_tracker' %}" class="px-4 py-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-surface edify-text-caption font-bold uppercase transition">Clear search</a>
       {% endif %}
     </div>
   </div>
@@ -41,13 +27,13 @@
       {% for cov in coverages %}
       <div class="edify-surface border border-slate-100 rounded-surface p-5 shadow-sm space-y-4 hover:shadow-md transition">
         <div class="flex items-center justify-between">
-          <span class="px-2.5 py-0.5 bg-indigo-50 border border-indigo-150 rounded-pill edify-text-caption font-bold text-indigo-700 uppercase tracking-wider">Active Coverage</span>
+          <span class="px-2.5 py-0.5 edify-primary-soft border edify-primary-border rounded-pill edify-text-caption font-bold edify-primary-text uppercase tracking-wider">Active Coverage</span>
           <span class="edify-text-caption text-slate-400 font-bold">Expires: {{ cov.end_datetime|date:"d M" }}</span>
         </div>
 
         <div class="flex items-center gap-3">
           <div class="flex -space-x-2">
-            <span class="w-8 h-8 rounded-pill bg-indigo-650 text-white border-2 border-white flex items-center justify-center font-extrabold edify-text-caption" title="Covering: {{ cov.covering_staff.user.name }}">
+            <span class="w-8 h-8 rounded-pill edify-primary-solid text-white border-2 border-white flex items-center justify-center font-extrabold edify-text-caption" title="Covering: {{ cov.covering_staff.user.name }}">
               {{ cov.covering_staff.user.name|slice:":2"|upper }}
             </span>
             <span class="w-8 h-8 rounded-pill bg-slate-200 border-2 border-white flex items-center justify-center font-bold edify-text-caption text-slate-600" title="Original: {{ cov.original_staff.user.name }}">
@@ -94,7 +80,7 @@
           {% for sp in team %}
           <tr class="hover:bg-slate-50/50 transition">
             <td class="px-5 py-4 flex items-center gap-3">
-              <div class="w-8 h-8 rounded-pill bg-indigo-50 border border-indigo-150 text-indigo-700 font-extrabold flex items-center justify-center edify-text-caption">
+              <div class="w-8 h-8 rounded-pill edify-primary-soft border edify-primary-border edify-primary-text font-extrabold flex items-center justify-center edify-text-caption">
                 {{ sp.name|slice:":2"|upper }}
               </div>
               <span class="font-bold text-slate-850 block text-[13px]">{{ sp.name }}</span>
@@ -119,8 +105,8 @@
             <td class="px-4 py-4">
               {% if sp.status == 'On Leave' %}
               <div class="flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-pill bg-indigo-600 animate-pulse"></span>
-                <span class="font-bold text-indigo-700">{{ sp.covering_person }}</span>
+                <span class="w-2.5 h-2.5 rounded-pill edify-primary-solid animate-pulse"></span>
+                <span class="font-bold edify-primary-text">{{ sp.covering_person }}</span>
               </div>
               {% else %}
               <span class="text-slate-400 font-semibold">—</span>
@@ -152,7 +138,7 @@
   <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
     <div class="flex items-center justify-between border-b pb-3">
       <h3 class="text-[14px] font-bold text-slate-850">Team Availability Matrix (Heatmap)</h3>
-      <a href="{% url 'frontend:team_availability' %}" class="edify-text-caption text-indigo-600 font-bold hover:underline">View full report &rarr;</a>
+      <a href="{% url 'frontend:team_availability' %}" class="edify-text-caption edify-primary-text font-bold hover:underline">View full report &rarr;</a>
     </div>
 
     <div class="space-y-4">

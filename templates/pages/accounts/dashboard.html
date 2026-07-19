@@ -37,7 +37,7 @@ return matchesStatus && (!query || haystack.includes(query));
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2">
-<h1 class="text-[21px] font-extrabold tracking-tight">Fund Disbursement Dashboard</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Fund Disbursement Dashboard</h1>
 <span class="inline-flex h-4 w-4 items-center justify-center text-slate-400 cursor-help" title="Reconcile and disburse funds" aria-label="Fund disbursement information">
   <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
     <circle cx="12" cy="12" r="9"></circle>
@@ -103,14 +103,14 @@ class="h-9 w-full edify-surface border border-slate-200 rounded-control pl-9 pr-
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_disbursed }}</h3>
-<span class="edify-text-caption text-blue-600 font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }} made</span>
+<span class="edify-text-caption edify-primary-text font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }} made</span>
 </div>
 
 <!-- Awaiting Approval -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approvals</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.awaiting_approval }}</h3>
-<span class="edify-text-caption text-indigo-600 font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
+<span class="edify-text-caption edify-primary-text font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
 </div>
 
 <!-- Reconciliation Rate -->
@@ -143,7 +143,7 @@ class="h-9 w-full edify-surface border border-slate-200 rounded-control pl-9 pr-
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-pill px-1.5 py-0.5 edify-text-caption flex items-center justify-center">{{ all_funds|length }}</span>
+<span class="edify-primary-solid text-white font-semibold rounded-pill px-1.5 py-0.5 edify-text-caption flex items-center justify-center">{{ all_funds|length }}</span>
 </div>
 
 <span class="edify-text-caption font-semibold text-slate-400" x-text="`${filteredFunds().length} shown`"></span>
@@ -217,7 +217,7 @@ class="p-3 border rounded-surface cursor-pointer flex items-center gap-3 transit
 </div>
 <div class="space-y-0.5">
 <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider block">Disbursed</span>
-<span class="text-[12px] font-semibold text-blue-600 block" x-text="selectedItem ? formatCurrency(selectedItem.disbursed) : ''"></span>
+<span class="text-[12px] font-semibold edify-primary-text block" x-text="selectedItem ? formatCurrency(selectedItem.disbursed) : ''"></span>
 </div>
 <div class="space-y-0.5 col-span-2 sm:col-span-1">
 <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider block">Remaining Balance</span>
@@ -340,7 +340,7 @@ No documents or receipts attached to this request yet.
 </div>
 </div>
 <div class="flex items-start gap-2.5 text-[12px] font-bold">
-<span class="h-2 w-2 rounded-pill bg-blue-500 mt-1.5 shrink-0"></span>
+<span class="h-2 w-2 rounded-pill edify-primary-solid mt-1.5 shrink-0"></span>
 <div>
 <p class="text-slate-800">Weekly Fund Request generated from schedule plan</p>
 <span class="edify-text-caption text-slate-400">17 May 2025, 09:00 AM</span>
@@ -374,13 +374,13 @@ Open Canonical Disbursement Queue
 <a href="/accounts/weekly-requests" class="flex items-center justify-between hover:bg-slate-50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">{{ month_overview.waiting_for_approval }}</span></a>
 <a href="/accounts/returned" class="flex items-center justify-between text-rose-600 hover:bg-rose-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Returned</span> <span class="font-semibold">{{ month_overview.returned }}</span></a>
 <a href="/accounts/advances" class="flex items-center justify-between text-amber-600 hover:bg-amber-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Approved (Not Disbursed)</span> <span class="font-semibold">{{ month_overview.approved_not_disbursed }}</span></a>
-<a href="/accounts/accountability" class="flex items-center justify-between text-blue-700 hover:bg-blue-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Disbursed</span> <span class="font-semibold">{{ month_overview.disbursed }}</span></a>
+<a href="/accounts/accountability" class="flex items-center justify-between edify-primary-text edify-primary-soft-hover -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Disbursed</span> <span class="font-semibold">{{ month_overview.disbursed }}</span></a>
 <a href="/accounts/cleared" class="flex items-center justify-between text-emerald-600 hover:bg-emerald-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Reconciled</span> <span class="font-semibold">{{ month_overview.reconciled }}</span></a>
 </div>
 <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-50">
 <a href="/accounts/blocked" class="edify-text-caption font-semibold text-slate-500 hover:text-rose-600 hover:underline uppercase tracking-wider">Blocked</a>
 <a href="/accounts/variance-review" class="edify-text-caption font-semibold text-slate-500 hover:text-amber-600 hover:underline uppercase tracking-wider">Variance</a>
-<a href="/accounts/audit-log" class="edify-text-caption font-semibold text-blue-600 hover:underline uppercase tracking-wider">All activity &rarr;</a>
+<a href="/accounts/audit-log" class="edify-text-caption font-semibold edify-primary-text hover:underline uppercase tracking-wider">All activity &rarr;</a>
 </div>
 </div>
 
@@ -398,7 +398,7 @@ Open Canonical Disbursement Queue
 <!-- Pending -->
 <path class="text-amber-500" stroke-dasharray="{{ donut.pending_pct }}, 100" stroke-dashoffset="-{{ donut.pending_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 <!-- Disbursed -->
-<path class="text-blue-500" stroke-dasharray="{{ donut.disbursed_pct }}, 100" stroke-dashoffset="-{{ donut.disbursed_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<path class="edify-primary-text" stroke-dasharray="{{ donut.disbursed_pct }}, 100" stroke-dashoffset="-{{ donut.disbursed_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 <!-- Returned -->
 <path class="text-rose-500" stroke-dasharray="{{ donut.returned_pct }}, 100" stroke-dashoffset="-{{ donut.returned_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 {% endif %}
@@ -411,7 +411,7 @@ Open Canonical Disbursement Queue
 <div class="edify-text-caption space-y-1 font-bold text-slate-500">
 <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500"></span> Approved ({{ donut.approved_pct }}%)</div>
 <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-500"></span> Pending ({{ donut.pending_pct }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-blue-500"></span> Disbursed ({{ donut.disbursed_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill edify-primary-solid"></span> Disbursed ({{ donut.disbursed_pct }}%)</div>
 <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-500"></span> Returned ({{ donut.returned_pct }}%)</div>
 </div>
 </div>
@@ -457,14 +457,14 @@ Open Canonical Disbursement Queue
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Disbursement Activity</h3>
-<a href="/accounts/audit-log" class="edify-text-caption font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
+<a href="/accounts/audit-log" class="edify-text-caption font-semibold edify-primary-text hover:underline">View all activity &rarr;</a>
 </div>
 
 <div class="space-y-3.5 mt-4">
 {% for item in recent_activity %}
 <div class="flex items-center justify-between text-[12px] font-bold">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-pill bg-blue-50 text-blue-600 flex items-center justify-center edify-text-caption font-semibold">{{ item.name|slice:":2"|upper }}</span>
+<span class="h-6 w-6 rounded-pill edify-primary-soft edify-primary-text flex items-center justify-center edify-text-caption font-semibold">{{ item.name|slice:":2"|upper }}</span>
 <div>
 <span class="text-slate-800 block leading-tight">{{ item.name }} &bull; {{ item.region }}</span>
 <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ item.when }}</span>
@@ -472,7 +472,7 @@ Open Canonical Disbursement Queue
 </div>
 <div class="text-right">
 <span class="text-slate-800 block">{{ item.amount }}</span>
-<span class="edify-text-caption text-blue-600 font-semibold uppercase tracking-wide">Disbursed</span>
+<span class="edify-text-caption edify-primary-text font-semibold uppercase tracking-wide">Disbursed</span>
 </div>
 </div>
 {% empty %}
@@ -487,7 +487,7 @@ Open Canonical Disbursement Queue
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Reconciliation &amp; Proof Tracker</h3>
-<a href="/accounts/accountability" class="edify-text-caption font-semibold text-blue-600 hover:underline">View reconciliation queue &rarr;</a>
+<a href="/accounts/accountability" class="edify-text-caption font-semibold edify-primary-text hover:underline">View reconciliation queue &rarr;</a>
 </div>
 
 <!-- mini status labels -->
@@ -534,7 +534,7 @@ Open Canonical Disbursement Queue
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cash Position / Budget Balance</h3>
-<a href="/accounts/batch-payments" class="edify-text-caption font-semibold text-blue-600 hover:underline">View cash report &rarr;</a>
+<a href="/accounts/batch-payments" class="edify-text-caption font-semibold edify-primary-text hover:underline">View cash report &rarr;</a>
 </div>
 
 <div class="grid grid-cols-2 gap-3 mt-4">

@@ -36,7 +36,7 @@
     {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
     class="w-full h-9 px-3 rounded-control border edify-surface text-[14px] text-slate-800 placeholder-slate-400 outline-none transition-colors
            {% if error %}border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100
-           {% else %}border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100{% endif %}
+           {% else %}border-slate-200 edify-primary-focus focus:ring-2 edify-primary-focus{% endif %}
            {{ extra_attrs|default:'' }}"
   />
   {% if error %}

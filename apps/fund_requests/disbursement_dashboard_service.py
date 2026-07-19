@@ -1083,7 +1083,7 @@ def get_disbursement_dashboard(principal, filters=None):
     extra_colors = [
         "bg-rose-500",
         "bg-cyan-500",
-        "bg-indigo-500",
+        "edify-primary-solid",
         "bg-fuchsia-500",
         "bg-lime-600",
         "bg-slate-500",

@@ -16,7 +16,7 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 <!-- Step 1: Upload Evidence -->
 <div class="space-y-2.5">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-blue-50 text-blue-600 edify-text-caption">1</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">1</span>
 Upload Verification Evidence
 </h4>
 <p class="edify-text-caption text-slate-500 font-semibold leading-normal">
@@ -27,7 +27,7 @@ Upload a photo of the meeting, participant list, stamp, or report. This is requi
 <input
 type="file"
 name="evidence_file"
-class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
 >
 </div>
 
@@ -60,11 +60,11 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 
 <div class="flex items-center gap-4 py-1">
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collected" value="yes" x-model="ssaCollected" :value="true" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+<input type="radio" name="ssa_collected" value="yes" x-model="ssaCollected" :value="true" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>Yes, collected SSA scores</span>
 </label>
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collected" value="no" x-model="ssaCollected" :value="false" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+<input type="radio" name="ssa_collected" value="no" x-model="ssaCollected" :value="false" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>No, was not able to collect</span>
 </label>
 </div>
@@ -101,7 +101,7 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 <!-- Step 2: Finalize Completion -->
 <div class="space-y-4">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-blue-50 text-blue-600 edify-text-caption">2</span>
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">2</span>
 Finalize details
 </h4>
 
@@ -115,7 +115,7 @@ id="salesforce_id"
 required
 placeholder="e.g. SVE-11223344 or TS-998877"
 value="{{ act.salesforceActivityId|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -157,7 +157,7 @@ name="amount_returned"
 id="amount_returned"
 min="0"
 placeholder="0"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 </div>
@@ -165,7 +165,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1
 <label for="variance_note" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Variance Explanation <span class="text-slate-300 normal-case">(required if spend + returned ≠ disbursed)</span></label>
 <textarea name="variance_note" id="variance_note" rows="2"
 placeholder="Explain any difference between disbursed and accounted amounts"
-class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"></textarea>
+class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"></textarea>
 </div>
 </div>
 {% endif %}
@@ -181,7 +181,7 @@ name="teachers_attended"
 id="teachers_attended"
 min="0"
 value="{{ act.teachersAttended|default:0 }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 <div>
@@ -192,7 +192,7 @@ name="leaders_attended"
 id="leaders_attended"
 min="0"
 value="{{ act.leadersAttended|default:0 }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 </div>
@@ -206,7 +206,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.clusterId }}"
 hx-target="#drawer-container"
-class="edify-text-caption font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline"
 >
 + Onboard New School
 </button>
@@ -241,7 +241,7 @@ type="checkbox"
 name="attended_school_ids"
 value="{{ school.id }}"
 {% if not act.attendedSchoolIds or school.id in act.attendedSchoolIds %}checked{% endif %}
-class="h-4 w-4 text-blue-600 rounded-control border-slate-300 focus:ring-blue-500"
+class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
 >
 <div class="flex-1">
 <span class="font-bold text-slate-800 block leading-tight">{{ school.name }}</span>

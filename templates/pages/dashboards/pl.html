@@ -7,31 +7,25 @@
 <div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
   <!-- Header — premium glass band -->
-  <div class="rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap backdrop-blur-xl"
-       style="background:var(--header-band-bg, rgba(255,255,255,.10));
-              border:1px solid var(--header-band-border, rgba(255,255,255,.15));
-              box-shadow:var(--edify-shadow-md);">
+  <div class="rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap backdrop-blur-xl edify-shadow-md"
+       style="background:var(--header-band-bg, rgba(255,255,255,.10)); border:1px solid var(--header-band-border, rgba(255,255,255,.15))">
     <div>
-      <h1 class="text-[21px] font-semibold leading-[1.15] tracking-[-0.025em]" style="color:var(--edify-text);">Program Lead Dashboard</h1>
-      <p class="text-[12px] mt-0.5" style="color:var(--edify-text-muted);">Team execution, approvals, targets, planning quality &amp; operations.</p>
+      <h1 class="text-[21px] font-semibold leading-[1.15] tracking-[-0.025em] edify-text edify-page-title">Program Lead Dashboard</h1>
+      <p class="text-[12px] mt-0.5 edify-text-muted">Team execution, approvals, targets, planning quality &amp; operations.</p>
     </div>
     <form id="pl-dashboard-filters"
           hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
           hx-trigger="change delay:80ms" hx-push-url="false"
           class="flex flex-wrap items-stretch sm:items-center gap-2">
-      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5"
-           style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase" style="color:var(--edify-text-subtle);">FY</span>
-        <select name="fy" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
-                style="color:var(--edify-text);">
+      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5 edify-surface border edify-border edify-shadow-sm">
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
+        <select name="fy" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </div>
-      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5"
-           style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase" style="color:var(--edify-text-subtle);">Activity</span>
-        <select name="activity_type" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
-                style="color:var(--edify-text);">
+      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5 edify-surface border edify-border edify-shadow-sm">
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">Activity</span>
+        <select name="activity_type" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           <option value="">All</option>
           <option value="school_visit" {% if filters.activity_type == 'school_visit' %}selected{% endif %}>School Visits</option>
           <option value="training" {% if filters.activity_type == 'training' %}selected{% endif %}>Trainings</option>
@@ -39,8 +33,7 @@
           <option value="partner_activity" {% if filters.activity_type == 'partner_activity' %}selected{% endif %}>Partner</option>
         </select>
       </div>
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold"
-            style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);color:var(--edify-text-muted);">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold edify-surface border edify-border edify-shadow-sm edify-text-muted">
         <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-success);"></span>{{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count }} schools
       </span>
     </form>

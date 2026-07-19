@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Upload Preview & Validate</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Upload Preview & Validate</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Review and authorize records before committing them to the active School Directory.</p>
 </div>
 
@@ -24,7 +24,7 @@ Cancel Import
 <form method="post" action="" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="confirm">
-<button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold rounded-control shadow-sm transition-all">
+<button type="submit" class="px-4 py-2 edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold rounded-control shadow-sm transition-all">
 Confirm & Import
 </button>
 </form>
@@ -37,13 +37,13 @@ Confirm & Import
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Ready to Import</span>
 <span class="text-[21px] font-extrabold tracking-tight text-emerald-600 mt-2">{{ stats.ready }}</span>
 </a>
-<a id="upload-tab-update" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'update' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'update' %}0{% else %}-1{% endif %}" href="?tab=update" class="p-4 rounded-surface border transition-all {% if tab == 'update' %}bg-indigo-50/50 border-indigo-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
+<a id="upload-tab-update" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'update' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'update' %}0{% else %}-1{% endif %}" href="?tab=update" class="p-4 rounded-surface border transition-all {% if tab == 'update' %}edify-primary-soft-alpha-50 edify-primary-border{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Will Update</span>
-<span class="text-[21px] font-extrabold tracking-tight text-indigo-600 mt-2">{{ stats.update }}</span>
+<span class="text-[21px] font-extrabold tracking-tight edify-primary-text mt-2">{{ stats.update }}</span>
 </a>
-<a id="upload-tab-review" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'review' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'review' %}0{% else %}-1{% endif %}" href="?tab=review" class="p-4 rounded-surface border transition-all {% if tab == 'review' %}bg-blue-50/50 border-blue-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
+<a id="upload-tab-review" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'review' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'review' %}0{% else %}-1{% endif %}" href="?tab=review" class="p-4 rounded-surface border transition-all {% if tab == 'review' %}edify-primary-soft-alpha-50 edify-primary-border{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Needs Review</span>
-<span class="text-[21px] font-extrabold tracking-tight text-blue-600 mt-2">{{ stats.review }}</span>
+<span class="text-[21px] font-extrabold tracking-tight edify-primary-text mt-2">{{ stats.review }}</span>
 </a>
 <a id="upload-tab-duplicate" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'duplicate' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'duplicate' %}0{% else %}-1{% endif %}" href="?tab=duplicate" class="p-4 rounded-surface border transition-all {% if tab == 'duplicate' %}bg-amber-50/50 border-amber-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Duplicate Risk</span>

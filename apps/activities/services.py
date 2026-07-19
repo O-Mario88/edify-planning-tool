@@ -24,7 +24,9 @@ from apps.schools.models import School
 # Staff/user identity resolution lives in the shared calendar-policy module.
 # Scheduling itself no longer runs calendar policy as a blocking business rule,
 # but partner assignments still need the canonical staff identifier.
-from apps.core.calendar_policy import canonical_staff_identity as _canonical_staff_identity
+from apps.core.calendar_policy import (
+    canonical_staff_identity as _canonical_staff_identity,
+)
 
 from .models import Activity, ActivityCompletionVerification
 from .salesforce import (
@@ -36,12 +38,15 @@ from .salesforce import (
 
 TRAINING_TYPES = {
     "training",
+    "in_school_training",
     "school_improvement_training",
     "cluster_meeting",
     "cluster_training",
     "ssa_activity",
     "core_training",
 }
+
+
 def sf_kind(activity_type: str) -> str:
     return "training" if activity_type in TRAINING_TYPES else "visit"
 
@@ -174,6 +179,7 @@ def _serialize(a: Activity) -> dict:
 
 def _costing_input(activity: Activity, data: dict) -> dict:
     """Build the canonical CostingService input from an activity + schedule data."""
+
     # A reschedule/reassignment form normally only posts the fields the user
     # changed.  Keep the attendance snapshot already on the activity when a
     # field is absent, otherwise a harmless date or ownership change can
@@ -271,9 +277,7 @@ def create(data: dict, principal) -> dict:
     scheduled_date = (
         _parse_date(data["scheduledDate"]) if data.get("scheduledDate") else None
     )
-    planned_date, planned_month, planned_week = _schedule_period(
-        scheduled_date, data
-    )
+    planned_date, planned_month, planned_week = _schedule_period(scheduled_date, data)
     fy = (
         get_operational_fy(scheduled_date)
         if scheduled_date
@@ -432,7 +436,9 @@ def _schedule_period(
     planned_date = timezone.localtime(scheduled_date).date()
     raw_month = data.get("plannedMonth")
     raw_week = data.get("plannedWeek")
-    planned_month = int(raw_month) if raw_month not in (None, "") else planned_date.month
+    planned_month = (
+        int(raw_month) if raw_month not in (None, "") else planned_date.month
+    )
     planned_week = (
         int(raw_week)
         if raw_week not in (None, "")
@@ -991,6 +997,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
                 focus_intervention=pa.focus_intervention,
                 purpose_intervention=pa.focus_intervention,
                 activity_purpose_text=pa.notes or "Scheduled partner core support",
+                purpose_type=pa.purpose_of_visit,
                 expected_participants=data.get("expectedParticipants"),
                 scheduled_date=scheduled_date,
                 planned_date=planned_date,

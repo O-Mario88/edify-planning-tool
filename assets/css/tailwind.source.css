@@ -21,22 +21,25 @@
 
   /* Edify brand tokens (referenced by templates as e.g. text-edify-primary,
      bg-[var(--color-edify-soft)], border-edify-border). */
-  --color-edify-primary: #50758b;
-  --color-edify-dark: #2f4a59;
-  --color-edify-deep: #2f4a59;
-  --color-edify-darker: #28404d;
-  --color-edify-soft: #eaeff3;
-  --color-edify-border: #d8e0e6;
-  --color-edify-divider: #eaeff2;
-  --color-edify-muted: #5f7078;
-  --color-edify-text: #15292e;
-  --color-edify-orange: #f59e0b;
-  --color-page: #eaf1f3;
-  --color-danger: #d93b50;
-  --color-danger-soft: #fdf0f1;
-  --color-success: #0f8a5f;
-  --color-success-soft: #e6f5ee;
-  --color-warn-soft: #fbf3e3;
+  /* The Tailwind aliases resolve at runtime to the same semantic token layer
+     consumed by the component CSS.  Keeping literal values here created a
+     second, stale colour system every time the main bundle was rebuilt. */
+  --color-edify-primary: var(--brand-primary);
+  --color-edify-dark: var(--brand-primary-hover);
+  --color-edify-deep: var(--brand-primary-hover);
+  --color-edify-darker: var(--brand-primary-active);
+  --color-edify-soft: var(--brand-primary-soft);
+  --color-edify-border: var(--brand-primary-border);
+  --color-edify-divider: var(--edify-divider);
+  --color-edify-muted: var(--edify-text-muted);
+  --color-edify-text: var(--edify-text);
+  --color-edify-orange: var(--edify-brand-secondary);
+  --color-page: var(--edify-bg);
+  --color-danger: var(--edify-danger);
+  --color-danger-soft: var(--edify-danger-light);
+  --color-success: var(--edify-success);
+  --color-success-soft: var(--edify-success-light);
+  --color-warn-soft: var(--edify-warning-light);
 
   /* Templates use non-standard "150" shades (between Tailwind's 100 and 200).
      Define them so border-rose-150 etc. compile instead of silently no-oping. */

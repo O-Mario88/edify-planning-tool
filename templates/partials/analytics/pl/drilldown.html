@@ -39,9 +39,9 @@
     <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Visits</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ cluster.visits_done }}/{{ cluster.visits_planned }}</p></div>
     <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Trainings</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ cluster.trainings_done }}/{{ cluster.trainings_planned }}</p></div>
   </div>
-  <div class="rounded-surface bg-blue-50 border border-blue-100 p-3">
-    <p class="edify-text-caption font-bold text-blue-800">Recommended: {{ cluster.next_action }}</p>
-    <p class="edify-text-caption text-blue-600 mt-0.5">Weakest intervention: {{ cluster.weakest_label }}{% if cluster.weakest_pct is not None %} ({{ cluster.weakest_pct|floatformat:0 }}%){% endif %}</p>
+  <div class="rounded-surface edify-primary-soft border edify-primary-border p-3">
+    <p class="edify-text-caption font-bold edify-primary-text">Recommended: {{ cluster.next_action }}</p>
+    <p class="edify-text-caption edify-primary-text mt-0.5">Weakest intervention: {{ cluster.weakest_label }}{% if cluster.weakest_pct is not None %} ({{ cluster.weakest_pct|floatformat:0 }}%){% endif %}</p>
   </div>
   {% include "partials/analytics/pl/_school_rows.html" with schools=schools %}
 

@@ -7,7 +7,7 @@
 
   <!-- Header -->
   <div class="border-b border-slate-200 pb-4">
-    <h1 class="text-[21px] font-extrabold tracking-tight">HR Leave Policies & Holiday Settings</h1>
+    <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">HR Leave Policies & Holiday Settings</h1>
     <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Configure entitlements, required documents, approval roles, and global public holidays</p>
   </div>
 
@@ -58,7 +58,7 @@
                 type="number"
                 name="entitlement"
                 value="{{ p.annual_entitlement }}"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
                 required
               />
             </div>
@@ -68,7 +68,7 @@
               <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Review/Approver Role</label>
               <select
                 name="approver_role"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
               >
                 {% for role in approver_roles %}
                 <option value="{{ role }}" {% if p.approver_role == role %}selected{% endif %}>{{ role }}</option>
@@ -83,7 +83,7 @@
               <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Requires Supporting Doc?</label>
               <select
                 name="requires_attachment"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
               >
                 <option value="yes" {% if p.requires_attachment %}selected{% endif %}>Yes</option>
                 <option value="no" {% if not p.requires_attachment %}selected{% endif %}>No</option>
@@ -94,7 +94,7 @@
               <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Calculate Weekends?</label>
               <select
                 name="weekends_count"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
               >
                 <option value="yes" {% if p.weekends_count %}selected{% endif %}>Include Weekends</option>
                 <option value="no" {% if not p.weekends_count %}selected{% endif %}>Exclude Weekends</option>
@@ -106,7 +106,7 @@
             <span class="edify-text-caption text-slate-400 font-semibold">Last updated: {{ p.updated_at|date:"d M H:i" }}</span>
             <button
               type="submit"
-              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white edify-text-caption font-bold uppercase rounded-control tracking-wider transition"
+              class="px-4 py-2 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold uppercase rounded-control tracking-wider transition"
             >
               Update Policy
             </button>
@@ -170,7 +170,7 @@
             type="text"
             name="holiday_name"
             placeholder="e.g. Independence Day"
-            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
+            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
             required
           />
         </div>
@@ -180,14 +180,14 @@
           <input
             type="date"
             name="holiday_date"
-            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none focus:border-indigo-600 transition"
+            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
             required
           />
         </div>
 
         <button
           type="submit"
-          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white edify-text-caption font-bold uppercase rounded-control tracking-wider transition"
+          class="w-full py-2.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold uppercase rounded-control tracking-wider transition"
         >
           Add Holiday
         </button>

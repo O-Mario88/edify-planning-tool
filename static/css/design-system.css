@@ -16,15 +16,21 @@
      The login experience is the visual north star for the application.
      These literal values come from the approved brand reference. */
   --edify-navy-950: #001d39;
-  --edify-navy-800: #0a4174;
+  --edify-navy-800: #0a4d86;
   --edify-steel-600: #49769f;
   --edify-teal-600: #4e8ea2;
   --edify-teal-400: #6ea2b3;
   --edify-sky-400: #7bbde8;
   --edify-sky-100: #bdd8e9;
 
-  /* Official Edify product brand (spec §5).
-       primary   #4d7187 — primary buttons, active navigation, selected tabs,
+  /* Official Edify product brand (spec §4 / §5).
+       The reference login experience supplies the authoritative Edify blue.
+       The darker navy remains an atmospheric shell/background colour; it is
+       no longer the light-mode interaction colour. Every primary interaction
+       consumes this token or an approved tonal variant — never a page-local
+       Tailwind blue.
+
+       primary   #0d5b9e — primary buttons, active navigation, selected tabs,
                            primary links, focus rings, primary chart series
        secondary #ef564b — secondary actions and supporting emphasis ONLY
 
@@ -36,10 +42,21 @@
      emphasis therefore uses the soft tint with the darkened brand text
      (5.22:1). It is also never used as the danger colour — destructive states
      keep the separate semantic --edify-danger ramp (spec §5, §17). */
-  --edify-brand-primary: #4d7187;
-  --edify-brand-primary-hover: #405e71;
-  --edify-brand-primary-active: #385363;
-  --edify-brand-primary-soft: #edf0f3;
+  --brand-primary: #0d5b9e;
+  --brand-primary-hover: #0a4d86;
+  --brand-primary-active: #083f70;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: #e4f2fb;
+  --brand-primary-border: #8ac6ea;
+  --brand-primary-focus: rgba(13, 91, 158, 0.28);
+  --brand-primary-text: #0a4d86;
+  --brand-primary-text-hover: var(--brand-primary);
+  --brand-primary-on-solid: #ffffff;
+
+  --edify-brand-primary: var(--brand-primary);
+  --edify-brand-primary-hover: var(--brand-primary-hover);
+  --edify-brand-primary-active: var(--brand-primary-active);
+  --edify-brand-primary-soft: var(--brand-primary-soft);
   --edify-brand-secondary: #ef564b;
   --edify-brand-secondary-hover: #d84a40;
   --edify-brand-secondary-soft: #fdeae9;
@@ -57,28 +74,33 @@
   --edify-accent-hover: var(--edify-brand-primary-hover);
   --edify-on-accent: #ffffff;
   --edify-accent-light: var(--edify-brand-primary-soft);
-  --edify-accent-border: #aebfc9;
+  --edify-accent-border: var(--brand-primary-border);
 
   /* ── SEMANTIC COLORS (3-tone ramp each: base / light-bg / border) ──────── */
   --edify-success: #10b981;
   --edify-success-light: #ecfdf5;
   --edify-success-border: #a7f3d0;
+  --edify-success-text: #047857;
 
   --edify-warning: #f59e0b;
   --edify-warning-light: #fffbeb;
   --edify-warning-border: #fde68a;
+  --edify-warning-text: #b45309;
 
   --edify-danger: #ef4444;
   --edify-danger-light: #fef2f2;
   --edify-danger-border: #fca5a5;
+  --edify-danger-text: #be123c;
 
   --edify-info: #1872bd;
   --edify-info-light: #eef7fd;
   --edify-info-border: #bfdcf1;
+  --edify-info-text: #1d4ed8;
 
   --edify-purple: #8b5cf6;
   --edify-purple-light: #f5f3ff;
   --edify-purple-border: #ddd6fe;
+  --edify-purple-text: #6d28d9;
 
   --edify-teal: #14b8a6;
   --edify-teal-light: #f0fdfa;
@@ -87,8 +109,8 @@
   /* Data-visualization palette. Charts consume semantic variables so their
      axes, series and annotations remain legible when the workspace theme
      changes without rebuilding the chart configuration. */
-  --edify-chart-blue: var(--edify-info);
-  --edify-chart-blue-soft: var(--edify-info-border);
+  --edify-chart-blue: var(--brand-primary);
+  --edify-chart-blue-soft: var(--brand-primary-soft);
   --edify-chart-green: var(--edify-success);
   --edify-chart-amber: var(--edify-warning);
   --edify-chart-red: var(--edify-danger);
@@ -148,8 +170,11 @@
   --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
   --edify-card-shadow: var(--edify-shadow-sm);
   --edify-card-backdrop-filter: none;
-  --edify-button-primary-treatment: linear-gradient(180deg, var(--edify-brand-primary) 0%, var(--edify-brand-primary-hover) 100%);
-  --edify-button-secondary-treatment: linear-gradient(180deg, var(--edify-surface-raised) 0%, var(--edify-surface) 100%);
+  /* Buttons are deliberately flat in light mode. The reference treatment is
+     a confident Edify blue or a quiet blue outline — gradients introduced
+     competing button styles between workspaces. */
+  --edify-button-primary-treatment: none;
+  --edify-button-secondary-treatment: none;
 
   /* Legacy aliases consumed by base.html <style> and some components. */
   --color-edify-primary: var(--edify-primary);
@@ -283,10 +308,10 @@
   --edify-topbar-border: var(--edify-border);
   --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.92), 0 12px 30px -24px rgba(18,74,112,.24);
   --edify-scrim: rgba(7, 30, 53, 0.58);
-  --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 20%, transparent);
+  --edify-focus-ring: 0 0 0 3px var(--brand-primary-focus);
   --edify-sidebar-bg:
     radial-gradient(circle at 10% 5%, rgba(123,189,232,.12), transparent 22rem),
-    linear-gradient(180deg, var(--edify-navy-950) 0%, #032a50 56%, #00162c 100%);
+    linear-gradient(180deg, var(--edify-navy-950) 0%, #062847 56%, var(--edify-navy-800) 100%);
   --edify-sidebar-active: var(--edify-accent);
   --edify-scrollbar-track: transparent;
   --edify-scrollbar-thumb: var(--edify-sky-100);
@@ -295,6 +320,16 @@
 
 :root.light {
   color-scheme: light;
+  /* Explicitly re-state the reference-blue light-mode scale so it cannot be
+     shadowed by legacy theme rules loaded earlier in the cascade. */
+  --brand-primary: #0d5b9e;
+  --brand-primary-hover: #0a4d86;
+  --brand-primary-active: #083f70;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: #e4f2fb;
+  --brand-primary-border: #8ac6ea;
+  --brand-primary-focus: rgba(13, 91, 158, 0.28);
+  --brand-primary-text: #0a4d86;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -305,30 +340,48 @@
 :root.theme-blue {
   color-scheme: dark;
 
-  --edify-primary: var(--edify-sky-400);
-  --edify-primary-hover: var(--edify-sky-100);
-  --edify-primary-light: rgba(123, 189, 232, 0.13);
-  --edify-accent: var(--edify-sky-400);
-  --edify-accent-hover: var(--edify-sky-100);
-  --edify-on-accent: var(--edify-navy-950);
-  --edify-accent-light: rgba(123, 189, 232, 0.13);
-  --edify-accent-border: rgba(123, 189, 232, 0.32);
+  /* The dark workspace uses a brighter step from the same login-reference
+     blue scale so labels and focus states stay visible on dark surfaces. */
+  --brand-primary: #1872bd;
+  --brand-primary-hover: #0d5b9e;
+  --brand-primary-active: #0a4d86;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: rgba(24, 114, 189, 0.16);
+  --brand-primary-border: rgba(113, 197, 244, 0.58);
+  --brand-primary-focus: rgba(113, 197, 244, 0.52);
+
+  --edify-primary: var(--brand-primary);
+  --edify-primary-hover: var(--brand-primary-hover);
+  --edify-primary-active: var(--brand-primary-active);
+  --edify-primary-light: var(--brand-primary-soft);
+  --edify-accent: var(--brand-primary);
+  --edify-accent-hover: var(--brand-primary-hover);
+  --edify-on-accent: #ffffff;
+  --edify-accent-light: var(--brand-primary-soft);
+  --edify-accent-border: var(--brand-primary-border);
+  --brand-primary-text: var(--edify-sky-100);
+  --brand-primary-text-hover: #ffffff;
 
   --edify-success: #55d6b3;
   --edify-success-light: rgba(85, 214, 179, 0.12);
   --edify-success-border: rgba(85, 214, 179, 0.28);
+  --edify-success-text: var(--edify-success);
   --edify-warning: #f8c56b;
   --edify-warning-light: rgba(248, 197, 107, 0.12);
   --edify-warning-border: rgba(248, 197, 107, 0.28);
+  --edify-warning-text: var(--edify-warning);
   --edify-danger: #ff8796;
   --edify-danger-light: rgba(255, 135, 150, 0.12);
   --edify-danger-border: rgba(255, 135, 150, 0.28);
+  --edify-danger-text: var(--edify-danger);
   --edify-info: var(--edify-sky-400);
   --edify-info-light: rgba(123, 189, 232, 0.13);
   --edify-info-border: rgba(123, 189, 232, 0.30);
+  --edify-info-text: var(--edify-info);
   --edify-purple: #b7a6f4;
   --edify-purple-light: rgba(183, 166, 244, 0.12);
   --edify-purple-border: rgba(183, 166, 244, 0.26);
+  --edify-purple-text: var(--edify-purple);
   --edify-teal: #78d5d0;
   --edify-teal-light: rgba(120, 213, 208, 0.12);
   --edify-teal-border: rgba(120, 213, 208, 0.26);
@@ -384,7 +437,7 @@
   --edify-topbar-border: rgba(123, 189, 232, 0.22);
   --edify-topbar-shadow: 0 1px 0 rgba(123,189,232,.08), 0 20px 42px -32px rgba(0,0,0,.8);
   --edify-scrim: rgba(0, 12, 28, 0.76);
-  --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 26%, transparent);
+  --edify-focus-ring: 0 0 0 3px var(--brand-primary-focus);
   --edify-sidebar-bg:
     radial-gradient(circle at 10% 5%, rgba(123,189,232,.14), transparent 24rem),
     linear-gradient(180deg, #00152a 0%, #001d39 48%, #062f58 100%);
@@ -423,30 +476,46 @@ html.theme-blue body {
 :root.theme-dark {
   color-scheme: dark;
 
-  --edify-primary: #8fb1e8;
-  --edify-primary-hover: #b7cdf0;
-  --edify-primary-light: rgba(143, 177, 232, 0.13);
-  --edify-accent: #2563eb;
-  --edify-accent-hover: #1d4ed8;
+  --brand-primary: #1872bd;
+  --brand-primary-hover: #0d5b9e;
+  --brand-primary-active: #0a4d86;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: rgba(24, 114, 189, 0.16);
+  --brand-primary-border: rgba(113, 197, 244, 0.50);
+  --brand-primary-focus: rgba(113, 197, 244, 0.48);
+
+  --edify-primary: var(--brand-primary);
+  --edify-primary-hover: var(--brand-primary-hover);
+  --edify-primary-active: var(--brand-primary-active);
+  --edify-primary-light: var(--brand-primary-soft);
+  --edify-accent: var(--brand-primary);
+  --edify-accent-hover: var(--brand-primary-hover);
   --edify-on-accent: #ffffff;
-  --edify-accent-light: rgba(37, 99, 235, 0.18);
-  --edify-accent-border: rgba(96, 165, 250, 0.42);
+  --edify-accent-light: var(--brand-primary-soft);
+  --edify-accent-border: var(--brand-primary-border);
+  --brand-primary-text: #bdd8e9;
+  --brand-primary-text-hover: #ffffff;
 
   --edify-success: #79ca98;
   --edify-success-light: rgba(43, 126, 75, 0.22);
   --edify-success-border: rgba(121, 202, 152, 0.30);
+  --edify-success-text: var(--edify-success);
   --edify-warning: #fb923c;
   --edify-warning-light: rgba(154, 52, 18, 0.34);
   --edify-warning-border: rgba(251, 146, 60, 0.38);
+  --edify-warning-text: var(--edify-warning);
   --edify-danger: #e88c91;
   --edify-danger-light: rgba(121, 43, 47, 0.34);
   --edify-danger-border: rgba(232, 140, 145, 0.30);
+  --edify-danger-text: var(--edify-danger);
   --edify-info: #8fb1e8;
   --edify-info-light: rgba(41, 73, 119, 0.48);
   --edify-info-border: rgba(143, 177, 232, 0.28);
+  --edify-info-text: var(--edify-info);
   --edify-purple: #b7a6f4;
   --edify-purple-light: rgba(183, 166, 244, 0.11);
   --edify-purple-border: rgba(183, 166, 244, 0.24);
+  --edify-purple-text: var(--edify-purple);
   --edify-teal: #78d5d0;
   --edify-teal-light: rgba(120, 213, 208, 0.11);
   --edify-teal-border: rgba(120, 213, 208, 0.24);
@@ -479,7 +548,7 @@ html.theme-blue body {
     linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 34%),
     linear-gradient(145deg, #0f0f11 0%, #0b0b0d 100%);
   --edify-button-primary-treatment:
-    linear-gradient(180deg, #3478ee 0%, var(--edify-accent) 62%, #1e40af 100%);
+    linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-primary-hover) 62%, var(--brand-primary-active) 100%);
   --edify-button-secondary-treatment:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
   --edify-glass-highlight: rgba(255, 255, 255, 0.055);

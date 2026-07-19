@@ -35,7 +35,7 @@
   {% endfor %}
 
   {% for r in preview.recommendations %}
-  <p class="edify-text-caption font-semibold text-blue-700 bg-blue-50 rounded-surface px-2 py-1 flex gap-1.5">
+  <p class="edify-text-caption font-semibold edify-primary-text edify-primary-soft rounded-surface px-2 py-1 flex gap-1.5">
     <svg class="h-3 w-3 shrink-0 mt-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.7 17h4.6M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1.2 2.1h4.6c.2-.9.6-1.6 1.2-2.1A6 6 0 0012 3z"/></svg>
     Recommended: {{ r.message }}
   </p>

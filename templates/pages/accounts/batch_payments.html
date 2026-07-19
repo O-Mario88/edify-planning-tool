@@ -8,12 +8,12 @@
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 edify-primary-text edify-text-caption font-semibold uppercase tracking-widest">
 Bulk Dispatcher
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Batch Payments Center</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Batch Payments Center</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Execute batch payouts for advances, partner invoices, or staff expenses. Review aggregate volumes and export banking files.
 </p>
@@ -60,7 +60,7 @@ Reimbursements ({{ reimbursements|length }})
 {% for act in advances %}
 <div class="py-3 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<input type="checkbox" class="w-4 h-4 rounded-control text-blue-700 border-slate-300 focus:ring-blue-500">
+<input type="checkbox" class="w-4 h-4 rounded-control edify-primary-text border-slate-300 edify-primary-focus">
 <div>
 <span class="font-semibold text-[12px] text-slate-800 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ act.school.name|default:"Cluster-wide" }}</span>
@@ -84,7 +84,7 @@ Reimbursements ({{ reimbursements|length }})
 {% for act in partners %}
 <div class="py-3 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<input type="checkbox" class="w-4 h-4 rounded-control text-blue-700 border-slate-300 focus:ring-blue-500">
+<input type="checkbox" class="w-4 h-4 rounded-control edify-primary-text border-slate-300 edify-primary-focus">
 <div>
 <span class="font-semibold text-[12px] text-slate-800 block">{{ act.assigned_partner_id }} &bull; #{{ act.id|slice:":8" }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ act.get_activity_type_display }}</span>
@@ -108,7 +108,7 @@ Reimbursements ({{ reimbursements|length }})
 {% for claim in reimbursements %}
 <div class="py-3 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<input type="checkbox" class="w-4 h-4 rounded-control text-blue-700 border-slate-300 focus:ring-blue-500">
+<input type="checkbox" class="w-4 h-4 rounded-control edify-primary-text border-slate-300 edify-primary-focus">
 <div>
 <span class="font-semibold text-[12px] text-slate-800 block">Claim ID: {{ claim.id|slice:":8" }} &bull; Staff: {{ claim.staff_id }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ claim.activity.get_activity_type_display }}</span>

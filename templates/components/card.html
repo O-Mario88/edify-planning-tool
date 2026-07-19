@@ -33,7 +33,7 @@
 <div class="flex items-start justify-between gap-3 {% if divider == 'true' %}pb-3 border-b border-slate-100{% endif %}">
   <div class="min-w-0">
     <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight leading-tight
-               {% if tone == 'info' %}text-blue-700{% elif tone == 'success' %}text-emerald-700{% elif tone == 'warning' %}text-amber-700{% elif tone == 'danger' %}text-rose-700{% endif %}">
+               {% if tone == 'info' %}edify-primary-text{% elif tone == 'success' %}text-emerald-700{% elif tone == 'warning' %}text-amber-700{% elif tone == 'danger' %}text-rose-700{% endif %}">
       {{ title }}
     </h3>
     {% if subtitle %}
@@ -41,7 +41,7 @@
     {% endif %}
   </div>
   {% if action_label and action_href %}
-    <a href="{{ action_href }}" class="shrink-0 text-[12px] font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+    <a href="{{ action_href }}" class="shrink-0 text-[12px] font-semibold edify-primary-text edify-primary-text-hover hover:underline">
       {{ action_label }} &rarr;
     </a>
   {% endif %}

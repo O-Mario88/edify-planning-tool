@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Notification & Alert Logs</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Notification & Alert Logs</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Monitor system-generated notifications, trigger dates, delivery states, and error codes</p>
 </div>
 </div>
@@ -56,8 +56,8 @@
 <span>Delivered & Read</span>
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-blue-50 text-blue-700">
-<span class="h-1.5 w-1.5 rounded-pill bg-blue-500"></span>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text">
+<span class="h-1.5 w-1.5 rounded-pill edify-primary-solid"></span>
 <span>Sent (Unread)</span>
 </span>
 {% endif %}
@@ -68,7 +68,7 @@
 <input type="hidden" name="resend_id" value="{{ log.id }}">
 <button
 type="submit"
-class="px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-600 hover:text-blue-800 rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 border border-slate-200 edify-primary-border-hover edify-primary-soft-hover text-slate-600 edify-primary-text-hover rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Resend Alert
 </button>

@@ -173,7 +173,7 @@ type="number"
 name="expected_participants"
 id="expected_participants"
 placeholder="e.g. 15"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -184,7 +184,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 name="delivery_type"
 id="delivery_type"
 x-model="delivery"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="staff">Internal Field Staff (CCEO)</option>
 <option value="partner">Certified Partner Agency</option>
@@ -196,7 +196,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <select
 name="assigned_partner_id"
 id="assigned_partner_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Select Partner...</option>
 {% for p in partners %}
@@ -213,7 +213,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <select
 name="focus_intervention"
 id="focus_intervention"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Select Focus Intervention...</option>
 {% for code, label in interventions %}
@@ -231,7 +231,7 @@ name="activity_goal"
 id="activity_goal"
 rows="2"
 placeholder="What needs to be achieved in this activity?"
-class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
 
@@ -243,7 +243,7 @@ name="expected_outcome"
 id="expected_outcome"
 rows="2"
 placeholder="Checklist outcome or goals for the cluster..."
-class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
 

@@ -13,8 +13,8 @@
       {% for row in urgent_schools %}
       <tr>
         <th scope="row" class="px-3 py-3 align-top">
-          <a href="/schools/{{ row.school_id }}" class="font-semibold no-underline" style="color:var(--edify-text);">{{ row.school }}</a>
-          <span class="mt-0.5 block font-normal" style="color:var(--edify-text-muted);">{{ row.district }}</span>
+          <a href="/schools/{{ row.school_id }}" class="font-semibold no-underline edify-text">{{ row.school }}</a>
+          <span class="mt-0.5 block font-normal edify-text-muted">{{ row.district }}</span>
           {% if urgent_action_mode == "pl" %}
           <span class="mt-1 inline-flex items-center rounded-pill px-2 py-0.5 font-semibold"
                 style="font-size: 12px;color:{% if row.owner_kind == 'pl' %}var(--edify-info){% else %}var(--edify-purple){% endif %};background:{% if row.owner_kind == 'pl' %}var(--edify-info-light){% else %}var(--edify-purple-light){% endif %};">
@@ -23,15 +23,15 @@
           {% endif %}
         </th>
         <td class="px-3 py-3 align-top">
-          <span class="inline-flex rounded-pill px-2 py-0.5 font-semibold"
-                style="font-size: 12px;background:var(--edify-danger-light);color:var(--edify-danger);border:1px solid var(--edify-danger-border);">
+          <span class="inline-flex rounded-pill px-2 py-0.5 font-semibold edify-danger-soft edify-danger-text border edify-danger-border"
+                style="font-size: 12px">
             {{ row.issue }}
           </span>
           {% if row.weakest_intervention %}
-          <span class="mt-1 block" style="color:var(--edify-text-muted);">Weakest: {{ row.weakest_intervention }}</span>
+          <span class="mt-1 block edify-text-muted">Weakest: {{ row.weakest_intervention }}</span>
           {% endif %}
         </td>
-        <td class="px-3 py-3 align-top font-medium" style="color:var(--edify-text);">
+        <td class="px-3 py-3 align-top font-medium edify-text">
           {{ row.recommended_activity_label }}
         </td>
         <td class="px-3 py-3 align-top text-right">
@@ -68,7 +68,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="4" class="px-4 py-8 text-center font-semibold" style="color:var(--edify-text-muted);">
+        <td colspan="4" class="px-4 py-8 text-center font-semibold edify-text-muted">
           No schools require urgent action in your portfolio.
         </td>
       </tr>

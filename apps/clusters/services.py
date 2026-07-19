@@ -1408,12 +1408,20 @@ class ClusterActionPlannerService:
         partner_id = data.get("assignedPartnerId")
         if partner_id:
             from apps.partners.models import PartnerAssignment
+            from apps.partners.purposes import normalise_visit_purpose
+
+            purpose_of_visit = normalise_visit_purpose(
+                data.get("purposeOfVisit") or data.get("purposeType"),
+                for_partner=True,
+                fallback_activity_type=data.get("activityType"),
+            )
 
             PartnerAssignment.objects.create(
                 cluster_id=data.get("clusterId"),
                 partner_id=partner_id,
                 assigning_staff_id=user.staff_profile_id or user.id,
                 purpose=data.get("activityPurposeText"),
+                purpose_of_visit=purpose_of_visit,
                 focus_intervention=data.get("focusIntervention"),
                 expected_activity_type=data.get("activityType"),
                 status="partner_pending_schedule",

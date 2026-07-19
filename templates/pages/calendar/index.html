@@ -1,196 +1,121 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Calendar — Edify{% endblock %}
 
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20260719platformwide1">
+{% endblock %}
+
 {% block shell_content %}
-<!-- FullCalendar CSS and JS -->
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-
-<style>
-  /* Custom premium styles to blend FullCalendar with Edify Design language */
-  #fullcalendar-view {
-    font-family: var(--edify-font-sans);
-    background-color: var(--edify-surface-raised);
-    border-radius: var(--edify-radius-lg, 16px);
-  }
-  .fc {
-    --fc-border-color: var(--edify-surface-muted);
-    --fc-daygrid-event-dot-width: 6px;
-  }
-  .fc .fc-toolbar {
-    margin-bottom: 1.5rem !important;
-  }
-  .fc .fc-toolbar-title {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    color: var(--edify-text) !important;
-    font-family: var(--edify-font-sans);
-  }
-  .fc .fc-button-primary {
-    background-color: var(--edify-primary) !important;
-    border-color: var(--edify-primary) !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    padding: 0.5rem 0.75rem !important;
-    border-radius: 8px !important;
-    transition: all 0.15s ease-in-out !important;
-    color: var(--edify-surface-raised) !important;
-  }
-  .fc .fc-button-primary:hover {
-    opacity: 0.9 !important;
-    background-color: var(--edify-primary) !important;
-    border-color: var(--edify-primary) !important;
-  }
-  .fc .fc-button-primary:disabled {
-    opacity: 0.5 !important;
-    background-color: var(--edify-primary) !important;
-  }
-  .fc .fc-button-primary:not(:disabled).fc-button-active,
-  .fc .fc-button-primary:not(:disabled):active {
-    background-color: var(--edify-text) !important;
-    border-color: var(--edify-text) !important;
-  }
-  .fc .fc-col-header-cell-cushion {
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    color: var(--edify-text-subtle) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    padding: 8px 0 !important;
-  }
-  .fc .fc-daygrid-day-number {
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    color: var(--edify-text-muted) !important;
-    padding: 6px 8px !important;
-  }
-  .fc .fc-daygrid-day.fc-day-today {
-    background-color: var(--edify-surface-muted) !important;
-  }
-  .fc-event-completed {
-    background-color: var(--edify-success-light) !important;
-    color: var(--edify-chart-green) !important;
-    border: 1px solid var(--edify-success-border) !important;
-    border-radius: 6px !important;
-    padding: 3px 6px !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-  }
-  .fc-event-planned {
-    background-color: var(--edify-info-light) !important;
-    color: var(--edify-chart-blue) !important;
-    border: 1px solid var(--edify-info-border) !important;
-    border-radius: 6px !important;
-    padding: 3px 6px !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-  }
-  .fc-event-completed:hover, .fc-event-planned:hover {
-    transform: translateY(-0.5px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  }
-  /* REG-02 — same Sunday/holiday/blackout dates the scheduling gate
-     enforces, flagged here so users don't attempt a date that will be
-     rejected server-side. */
-  .fc-day-blocked {
-    background-color: var(--edify-danger-light, rgba(239,68,68,0.06)) !important;
-  }
-  .fc-day-blocked .fc-daygrid-day-number {
-    color: var(--edify-danger, #ef4444) !important;
-  }
-  .calendar-blocked-legend {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--edify-text-muted);
-  }
-  .calendar-blocked-legend .swatch {
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
-    background-color: var(--edify-danger-light, rgba(239,68,68,0.15));
-    border: 1px solid var(--edify-danger, #ef4444);
-  }
-</style>
-
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
-  <div class="flex items-center justify-between">
+<section class="calendar-workspace" x-data="{ eventFilter: 'all' }" aria-label="Operations calendar">
+  <header class="calendar-workspace__header">
     <div>
-      <h1 class="text-[21px] font-extrabold tracking-tight">Calendar</h1>
-      <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Edify Operations · Interactive Planner</p>
+      <p class="calendar-workspace__eyebrow">Operations calendar</p>
+      <h1 class="edify-page-title">Calendar</h1>
+      <p class="calendar-workspace__intro">See your scheduled work, approved leave, and important holidays in one place.</p>
     </div>
-    <span class="calendar-blocked-legend"><span class="swatch"></span> Blocked for scheduling (Sunday / holiday / blackout)</span>
+    <a href="{% url 'frontend:personal_time_off' %}" class="btn btn-primary calendar-workspace__leave-action">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 2v4m8-4v4M4 10h16M6 5h12a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14v4m-2-2h4" />
+      </svg>
+      <span>Apply for Leave</span>
+    </a>
+  </header>
+
+  <div class="calendar-workspace__filters" role="tablist" aria-label="Calendar event type">
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'all'" :aria-selected="eventFilter === 'all'" :class="eventFilter === 'all' ? 'is-active' : ''">
+      All events <span>{{ event_total }}</span>
+    </button>
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'activity'" :aria-selected="eventFilter === 'activity'" :class="eventFilter === 'activity' ? 'is-active' : ''">
+      Activities <span>{{ event_counts.activity }}</span>
+    </button>
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'leave'" :aria-selected="eventFilter === 'leave'" :class="eventFilter === 'leave' ? 'is-active' : ''">
+      Leave <span>{{ event_counts.leave }}</span>
+    </button>
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'holiday'" :aria-selected="eventFilter === 'holiday'" :class="eventFilter === 'holiday' ? 'is-active' : ''">
+      Holidays <span>{{ event_counts.holiday }}</span>
+    </button>
   </div>
 
-  <!-- FullCalendar Container -->
-  <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm">
-    <div id="fullcalendar-view"></div>
-  </div>
-</div>
+  <section class="calendar-month" aria-labelledby="calendar-month-heading">
+    <header class="calendar-month__toolbar">
+      <div class="calendar-month__heading">
+        <div class="calendar-month__date-card" aria-hidden="true">
+          <span>{{ month_name|slice:":3"|upper }}</span>
+          <strong>01</strong>
+        </div>
+        <div>
+          <h2 id="calendar-month-heading">{{ month_name }} {{ year }}</h2>
+          <p>{{ month_name }} 1, {{ year }} – {{ month_name }} {{ month_last_day|date:"j" }}, {{ year }}</p>
+        </div>
+      </div>
 
-<!-- Embedded JSON Events Payload -->
-<script id="calendar-events-data" type="application/json">
-  [
-    {% for a in activities %}
-      {
-        "id": "{{ a.id }}",
-        "title": "{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}",
-        "start": "{{ a.planned_date|date:'Y-m-d' }}",
-        "classNames": ["{% if a.status == 'completed' %}fc-event-completed{% else %}fc-event-planned{% endif %}"],
-        "extendedProps": {
-          "status": "{{ a.status }}",
-          "school": "{{ a.school.name|default:'' }}",
-          "activity_type": "{{ a.activity_type|title }}"
-        }
-      }{% if not forloop.last %},{% endif %}
-    {% endfor %}
-  ]
-</script>
+      <nav class="calendar-month__controls" aria-label="Calendar date controls">
+        <a class="btn btn-secondary calendar-month__icon-control" href="?year={{ prev_year }}&amp;month={{ prev_month }}{% if project_scope %}&amp;project_scope={{ project_scope }}{% endif %}{% if selected_project %}&amp;project={{ selected_project }}{% endif %}" aria-label="Previous month">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" /></svg>
+        </a>
+        <a class="btn btn-secondary calendar-month__today-control" href="?year={{ today.year }}&amp;month={{ today.month }}{% if project_scope %}&amp;project_scope={{ project_scope }}{% endif %}{% if selected_project %}&amp;project={{ selected_project }}{% endif %}">Today</a>
+        <a class="btn btn-secondary calendar-month__icon-control" href="?year={{ next_year }}&amp;month={{ next_month }}{% if project_scope %}&amp;project_scope={{ project_scope }}{% endif %}{% if selected_project %}&amp;project={{ selected_project }}{% endif %}" aria-label="Next month">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+        </a>
+        <span class="calendar-month__view-label" aria-label="Current calendar view">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2" /><path stroke-linecap="round" d="M3 10h18M8 4v6m8-6v6" /></svg>
+          Month view
+        </span>
+      </nav>
+    </header>
 
-{{ blocked_dates|json_script:"blocked-dates-data" }}
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('fullcalendar-view');
-    const eventsData = JSON.parse(document.getElementById('calendar-events-data').textContent);
-    // REG-02 — server-computed public-holiday/blackout dates for this month;
-    // Sunday is derived client-side from the day-of-week.
-    const blockedDates = JSON.parse(document.getElementById('blocked-dates-data').textContent);
+    <div id="calendar-event-grid" role="tabpanel" aria-label="{{ month_name }} {{ year }}">
+    <div class="calendar-month__grid" role="grid" aria-label="{{ month_name }} {{ year }}">
+      {% for weekday in weekday_labels %}
+      <div class="calendar-month__weekday" role="columnheader">{{ weekday }}</div>
+      {% endfor %}
 
-    // Set initial date dynamically based on context month/year if available
-    const initialDate = '{{ year }}-{{ month|stringformat:"02d" }}-01';
+      {% for week in calendar_weeks %}
+        {% for day in week %}
+        <article class="calendar-day{% if not day.is_current_month %} calendar-day--outside{% endif %}{% if day.is_today %} calendar-day--today{% endif %}" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}">
+          <div class="calendar-day__topline">
+            <time datetime="{{ day.date|date:'Y-m-d' }}" class="calendar-day__number">{{ day.date|date:"j" }}</time>
+            {% if day.is_today %}<span class="calendar-day__today-label">Today</span>{% endif %}
+          </div>
+          <div class="calendar-day__events">
+            {% for event in day.events %}
+              {% if event.href %}
+              <a
+                href="{{ event.href }}"
+                class="calendar-event calendar-event--{{ event.kind }}"
+                x-show="eventFilter === 'all' || eventFilter === '{{ event.kind }}'"
+                title="{{ event.title }}{% if event.meta %} — {{ event.meta }}{% endif %}"
+              >
+                <span class="calendar-event__dot" aria-hidden="true"></span>
+                <span class="calendar-event__copy"><strong>{{ event.title }}</strong>{% if event.meta %}<small>{{ event.meta }}</small>{% endif %}</span>
+              </a>
+              {% else %}
+              <span
+                class="calendar-event calendar-event--{{ event.kind }}"
+                x-show="eventFilter === 'all' || eventFilter === '{{ event.kind }}'"
+                title="{{ event.title }}{% if event.meta %} — {{ event.meta }}{% endif %}"
+              >
+                <span class="calendar-event__dot" aria-hidden="true"></span>
+                <span class="calendar-event__copy"><strong>{{ event.title }}</strong>{% if event.meta %}<small>{{ event.meta }}</small>{% endif %}</span>
+              </span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    </div>
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      initialDate: initialDate,
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek'
-      },
-      events: eventsData,
-      themeSystem: 'standard',
-      height: 'auto',
-      dayCellDidMount: function(arg) {
-        const iso = arg.date.toISOString().slice(0, 10);
-        const isSunday = arg.date.getDay() === 0;
-        const reason = blockedDates[iso] || (isSunday ? 'Sunday' : null);
-        if (reason) {
-          arg.el.classList.add('fc-day-blocked');
-          arg.el.setAttribute('title', 'Blocked for scheduling: ' + reason);
-        }
-      },
-      eventClick: function(info) {
-        // Show details in a modal or drawer
-        const props = info.event.extendedProps;
-        alert(`${props.activity_type}\nStatus: ${props.status.toUpperCase()}\nSchool: ${props.school || 'N/A'}\nPlanned: ${info.event.startStr}`);
-      }
-    });
-    calendar.render();
-  });
-</script>
+    <footer class="calendar-month__legend">
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--activity"></i> Scheduled activity</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--leave"></i> Leave</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--holiday"></i> Holiday</span>
+      <p>Holidays set by government are added only for the year they apply.</p>
+    </footer>
+  </section>
+</section>
 {% endblock %}

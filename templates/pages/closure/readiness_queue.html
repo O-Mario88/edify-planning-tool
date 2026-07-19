@@ -7,22 +7,22 @@
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
 <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-pill bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
 <div class="space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 edify-primary-text edify-text-caption font-semibold uppercase tracking-widest">
 Audit & Closure
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Closure Readiness Workspace</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Closure Readiness Workspace</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Controlled activity closure pipeline. Monitor readiness checks, clear pending analytics publishing, resolve blockers, and lock historic audit files.
 </p>
 </div>
 
 <div class="shrink-0 flex items-center gap-3">
-<a href="/completed-activities" class="h-10 px-5 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold flex items-center justify-center shadow-md transition-all">
+<a href="/completed-activities" class="h-10 px-5 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold flex items-center justify-center shadow-md transition-all">
 View Completed Archive
 </a>
 <a href="/activities/closure/blocked/" class="h-10 px-4 rounded-control border border-slate-700 hover:bg-slate-800 text-slate-300 text-[12px] font-bold flex items-center justify-center transition-all">
@@ -92,7 +92,7 @@ Blocked ({{ blocked|length }})
 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Ready
 </span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control bg-blue-700 hover:bg-blue-700 text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
 Open Workspace
 </a>
 </div>
@@ -157,7 +157,7 @@ Workspace
 <span class="edify-text-caption text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold uppercase text-blue-600 bg-blue-50 px-2 py-0.5 border  rounded-pill">Awaiting Publish</span>
+<span class="edify-text-caption font-semibold uppercase edify-primary-text edify-primary-soft px-2 py-0.5 border  rounded-pill">Awaiting Publish</span>
 <a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-control border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>

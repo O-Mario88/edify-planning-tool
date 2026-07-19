@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Duplicate Review Queue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Duplicate Review Queue</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Resolve schools with potential name or location duplicate risks.</p>
 </div>
 <a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
@@ -42,7 +42,7 @@
 {% csrf_token %}
 <input type="hidden" name="issue_id" value="{{ issue.id }}">
 <input type="hidden" name="action" value="resolve_unique">
-<button type="submit" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold edify-text-caption rounded-control transition-all">
+<button type="submit" class="px-3 py-1.5 edify-primary-soft edify-primary-soft-hover edify-primary-text font-bold edify-text-caption rounded-control transition-all">
 Mark as Unique
 </button>
 </form>

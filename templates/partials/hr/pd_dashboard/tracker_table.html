@@ -2,7 +2,7 @@
 <div class="overflow-x-auto">
   <table class="w-full min-w-[1080px] text-left edify-text-caption font-semibold">
     <thead>
-      <tr class="border-b" style="border-color:var(--edify-border);">
+      <tr class="border-b edify-border">
         <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Staff</th>
         <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Supervisor</th>
         <th class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Course</th>
@@ -16,28 +16,28 @@
         <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase">Next Action</th>
       </tr>
     </thead>
-    <tbody class="divide-y" style="border-color:var(--edify-border);">
+    <tbody class="divide-y edify-border">
       {% for r in tracker_rows %}
       <tr class="hover:bg-slate-50/5">
         <td class="py-2.5 pr-3">
-          <span class="block" style="color:var(--edify-text);">{{ r.staff_name }}</span>
+          <span class="block edify-text">{{ r.staff_name }}</span>
           <span class="edify-text-caption text-slate-400">{{ r.role }}</span>
         </td>
         <td class="py-2.5 pr-3 text-slate-400">{{ r.supervisor }}</td>
         <td class="py-2.5 pr-3">
-          <span class="block" style="color:var(--edify-text);">{{ r.course_name }}</span>
+          <span class="block edify-text">{{ r.course_name }}</span>
           <span class="edify-text-caption text-slate-400">{{ r.course_type }}</span>
         </td>
         <td class="py-2.5 pr-3 text-slate-400 tabular-nums whitespace-nowrap">{{ r.start_date|date:"d M Y" }} – {{ r.end_date|date:"d M Y" }}</td>
         <td class="py-2.5 pr-3 text-right tabular-nums whitespace-nowrap">
-          <span class="block" style="color:var(--edify-text);">{{ r.allocation }}</span>
+          <span class="block edify-text">{{ r.allocation }}</span>
           <span class="block edify-text-caption text-slate-400">Used {{ r.fund_used }} · Rem. {{ r.remaining }}</span>
         </td>
         <td class="py-2.5 pr-3">
           <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase whitespace-nowrap
             {% if r.bucket == 'signed_off' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
-            {% elif r.bucket == 'completed' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
-            {% elif r.bucket == 'in_progress' %}bg-blue-500/10 text-blue-400 border border-blue-500/20
+            {% elif r.bucket == 'completed' %}edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20
+            {% elif r.bucket == 'in_progress' %}edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20
             {% elif r.bucket == 'pending_certificate' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
             {% elif r.bucket == 'inactive' %}bg-rose-500/10 text-rose-400 border border-rose-500/20
             {% else %}bg-slate-500/10 text-slate-400 border border-slate-500/20{% endif %}">{{ r.status }}</span>
@@ -60,14 +60,13 @@
 </div>
 
 {% if tracker_pages > 1 %}
-<div class="flex items-center justify-between pt-3 mt-1 border-t" style="border-color:var(--edify-border);">
+<div class="flex items-center justify-between pt-3 mt-1 border-t edify-border">
   <span class="edify-text-caption font-semibold text-slate-400">{{ tracker_total }} request{{ tracker_total|pluralize }} · Page {{ tracker_page }} of {{ tracker_pages }}</span>
   <div class="flex items-center gap-2">
     <button type="button" {% if tracker_page <= 1 %}disabled{% endif %}
       hx-get="/cpd-learning?partial=tracker&fy={{ fy }}&country={{ country }}&role={{ role_filter }}&status={{ status_filter }}&reminder={{ reminder_filter }}&q={{ search|urlencode }}&page={{ tracker_page|add:'-1' }}"
       hx-target="#pd-tracker-wrap" hx-swap="innerHTML"
-      class="h-8 px-3 rounded-control border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed"
-      style="border-color:var(--edify-border); color:var(--edify-text);">Previous</button>
+      class="h-8 px-3 rounded-control border edify-text-caption font-bold disabled:opacity-40 disabled:cursor-not-allowed edify-border edify-text">Previous</button>
     <button type="button" {% if tracker_page >= tracker_pages %}disabled{% endif %}
       hx-get="/cpd-learning?partial=tracker&fy={{ fy }}&country={{ country }}&role={{ role_filter }}&status={{ status_filter }}&reminder={{ reminder_filter }}&q={{ search|urlencode }}&page={{ tracker_page|add:'1' }}"
       hx-target="#pd-tracker-wrap" hx-swap="innerHTML"

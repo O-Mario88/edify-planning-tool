@@ -32,7 +32,7 @@ from apps.evidence.services import (
     evidence_records_for_activity,
     infer_kind_from_upload,
 )
-from apps.core.enums import SsaIntervention
+from apps.core.enums import ActivityType, SsaIntervention
 from apps.pl_review.services import (
     queue as pl_queue,
     confirm as pl_confirm,
@@ -453,25 +453,36 @@ def reschedule_drawer_view(request, activity_id):
             "Access Denied: You do not have permission to access this activity drawer."
         )
 
-    act = get_activity(activity_id, request.user)
-
+    # Rescheduling deliberately reuses the shared schedule drawer in its safe
+    # edit mode. The existing activity remains the subject of the POST, so a
+    # date change cannot accidentally create a second planned activity.
+    subject_name = (
+        a.school.name
+        if a.school_id
+        else a.cluster.name
+        if a.cluster_id
+        else "this activity"
+    )
+    activity_label = dict(ActivityType.choices).get(
+        a.activity_type, a.activity_type.replace("_", " ").title()
+    )
     assigning_staff_name = None
     if a.delivery_type == "partner":
         staff_id = a.monitored_by_staff_id
         if not staff_id:
             from apps.partners.models import PartnerAssignment
 
-            pa = None
-            if a.cluster:
-                pa = PartnerAssignment.objects.filter(
+            assignment = None
+            if a.cluster_id:
+                assignment = PartnerAssignment.objects.filter(
                     cluster=a.cluster, partner_id=a.assigned_partner_id
                 ).first()
-            if not pa and a.school:
-                pa = PartnerAssignment.objects.filter(
+            if not assignment and a.school_id:
+                assignment = PartnerAssignment.objects.filter(
                     school=a.school, partner_id=a.assigned_partner_id
                 ).first()
-            if pa:
-                staff_id = pa.assigning_staff_id
+            if assignment:
+                staff_id = assignment.assigning_staff_id
         if staff_id:
             from apps.accounts.models import User
 
@@ -480,13 +491,17 @@ def reschedule_drawer_view(request, activity_id):
             ).first()
             if staff_user:
                 assigning_staff_name = staff_user.name
-
     context = {
-        "act": act,
+        "reschedule_mode": True,
+        "reschedule_activity": a,
+        "reschedule_action_url": f"/my-plan/{a.id}/reschedule",
+        "schedule_subject_name": subject_name,
+        "recommended_activity_type": a.activity_type,
+        "recommended_activity_label": activity_label,
         "assigning_staff_name": assigning_staff_name,
         "drawer_size": "md",
     }
-    return render(request, "partials/my_plan/reschedule_drawer.html", context)
+    return render(request, "partials/planning/schedule_drawer.html", context)
 
 
 @require_page_permission("my_plan")
@@ -1130,6 +1145,7 @@ def submit_for_review_drawer_view(request, activity_id):
     has_participants = True
     if a.activity_type in [
         "training",
+        "in_school_training",
         "cluster_training",
         "cluster_meeting",
         "core_training",

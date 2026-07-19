@@ -25,25 +25,25 @@
   {% endif %}
 
   <!-- Header -->
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
     <div class="flex items-start justify-between gap-3">
-      <h1 class="text-[19px] font-extrabold tracking-tight" style="color:var(--edify-text);">{{ debrief.title }}</h1>
+      <h1 class="text-[19px] font-extrabold tracking-tight edify-text edify-page-title">{{ debrief.title }}</h1>
       <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase whitespace-nowrap
         {% if debrief.status == 'resolved' or debrief.status == 'closed' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
         {% elif debrief.status == 'action_required' or debrief.status == 'escalated' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
-        {% else %}bg-blue-500/10 text-blue-400 border border-blue-500/20{% endif %}">{{ debrief.get_status_display }}</span>
+        {% else %}edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20{% endif %}">{{ debrief.get_status_display }}</span>
     </div>
     <p class="edify-text-caption text-slate-400">{{ debrief.submitted_by_role }} · {{ debrief.date|date:"d M Y, H:i" }} · Risk: {{ debrief.get_risk_level_display }}</p>
-    {% if debrief.summary %}<p class="text-[12.5px]" style="color:var(--edify-text);">{{ debrief.summary }}</p>{% endif %}
+    {% if debrief.summary %}<p class="text-[12.5px] edify-text">{{ debrief.summary }}</p>{% endif %}
   </div>
 
   <!-- Linked activities -->
   {% if activity_links %}
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Linked Activities</h2>
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Linked Activities</h2>
     {% for link in activity_links %}
     <div class="edify-text-caption py-1">
-      <span class="font-bold" style="color:var(--edify-text);">{{ link.activity.get_activity_type_display }}</span>
+      <span class="font-bold edify-text">{{ link.activity.get_activity_type_display }}</span>
       <span class="text-slate-400"> — {{ link.activity.school.name|default:"No school" }}</span>
     </div>
     {% endfor %}
@@ -51,25 +51,25 @@
   {% endif %}
 
   <!-- Execution + observations -->
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Execution &amp; Observations</h2>
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Execution &amp; Observations</h2>
     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 edify-text-caption">
-      {% if debrief.completion_status %}<div><dt class="text-slate-400 edify-text-caption uppercase font-bold">Completion Status</dt><dd style="color:var(--edify-text);">{{ debrief.get_completion_status_display }}</dd></div>{% endif %}
-      {% if debrief.engagement_level %}<div><dt class="text-slate-400 edify-text-caption uppercase font-bold">Engagement</dt><dd style="color:var(--edify-text);">{{ debrief.get_engagement_level_display }}</dd></div>{% endif %}
+      {% if debrief.completion_status %}<div><dt class="text-slate-400 edify-text-caption uppercase font-bold">Completion Status</dt><dd class="edify-text">{{ debrief.get_completion_status_display }}</dd></div>{% endif %}
+      {% if debrief.engagement_level %}<div><dt class="text-slate-400 edify-text-caption uppercase font-bold">Engagement</dt><dd class="edify-text">{{ debrief.get_engagement_level_display }}</dd></div>{% endif %}
     </dl>
-    {% if debrief.what_happened %}<p class="edify-text-caption" style="color:var(--edify-text);"><span class="text-slate-400 font-bold">What happened: </span>{{ debrief.what_happened }}</p>{% endif %}
-    {% if debrief.what_observed %}<p class="edify-text-caption" style="color:var(--edify-text);"><span class="text-slate-400 font-bold">What was observed: </span>{{ debrief.what_observed }}</p>{% endif %}
-    {% if debrief.what_improved %}<p class="edify-text-caption" style="color:var(--edify-text);"><span class="text-slate-400 font-bold">What improved: </span>{{ debrief.what_improved }}</p>{% endif %}
-    {% if debrief.what_remains_weak %}<p class="edify-text-caption" style="color:var(--edify-text);"><span class="text-slate-400 font-bold">What remains weak: </span>{{ debrief.what_remains_weak }}</p>{% endif %}
+    {% if debrief.what_happened %}<p class="edify-text-caption edify-text"><span class="text-slate-400 font-bold">What happened: </span>{{ debrief.what_happened }}</p>{% endif %}
+    {% if debrief.what_observed %}<p class="edify-text-caption edify-text"><span class="text-slate-400 font-bold">What was observed: </span>{{ debrief.what_observed }}</p>{% endif %}
+    {% if debrief.what_improved %}<p class="edify-text-caption edify-text"><span class="text-slate-400 font-bold">What improved: </span>{{ debrief.what_improved }}</p>{% endif %}
+    {% if debrief.what_remains_weak %}<p class="edify-text-caption edify-text"><span class="text-slate-400 font-bold">What remains weak: </span>{{ debrief.what_remains_weak }}</p>{% endif %}
   </div>
 
   <!-- Challenges -->
   {% if challenges %}
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Challenges</h2>
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Challenges</h2>
     {% for c in challenges %}
-    <div class="edify-text-caption py-1.5 border-b last:border-0" style="border-color:var(--edify-border);">
-      <span class="font-bold" style="color:var(--edify-text);">{{ c.get_challenge_type_display }}</span>
+    <div class="edify-text-caption py-1.5 border-b last:border-0 edify-border">
+      <span class="font-bold edify-text">{{ c.get_challenge_type_display }}</span>
       <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase ml-1
         {% if c.severity == 'high' %}bg-rose-500/10 text-rose-400{% elif c.severity == 'medium' %}bg-amber-500/10 text-amber-400{% else %}bg-slate-500/10 text-slate-400{% endif %}">{{ c.severity }}</span>
       {% if c.description %}<span class="block text-slate-400">{{ c.description }}</span>{% endif %}
@@ -80,16 +80,16 @@
 
   <!-- Commitments -->
   {% if commitments %}
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Commitments</h2>
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Commitments</h2>
     {% for c in commitments %}
-    <div class="edify-text-caption py-1.5 border-b last:border-0 flex items-center justify-between gap-2" style="border-color:var(--edify-border);">
-      <span style="color:var(--edify-text);"><span class="font-bold">{{ c.get_party_display }}: </span>{{ c.commitment_text }}</span>
+    <div class="edify-text-caption py-1.5 border-b last:border-0 flex items-center justify-between gap-2 edify-border">
+      <span class="edify-text"><span class="font-bold">{{ c.get_party_display }}: </span>{{ c.commitment_text }}</span>
       <div class="flex items-center gap-2 shrink-0">
         <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase {% if c.status == 'resolved' %}bg-emerald-500/10 text-emerald-400{% else %}bg-amber-500/10 text-amber-400{% endif %}">{{ c.status }}</span>
         {% if c.status != 'resolved' and can_manage or c.status != 'resolved' and is_own %}
         <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="resolve_commitment"><input type="hidden" name="debrief_id" value="{{ debrief.id }}"><input type="hidden" name="commitment_id" value="{{ c.id }}">
-          <button type="submit" class="h-6 px-2 rounded-control border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Resolve</button>
+          <button type="submit" class="h-6 px-2 rounded-control border edify-text-caption font-bold edify-border edify-text">Resolve</button>
         </form>
         {% endif %}
       </div>
@@ -100,16 +100,16 @@
 
   <!-- Recommendation -->
   {% if debrief.recommended_next_activity_type %}
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Recommendation</h2>
-    <p class="edify-text-caption" style="color:var(--edify-text);">{{ debrief.get_recommended_next_activity_type_display }} — <span class="text-slate-400">{{ debrief.get_recommendation_status_display }}</span></p>
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Recommendation</h2>
+    <p class="edify-text-caption edify-text">{{ debrief.get_recommended_next_activity_type_display }} — <span class="text-slate-400">{{ debrief.get_recommendation_status_display }}</span></p>
     {% if can_manage and debrief.recommendation_status == "proposed" %}
     <div class="flex gap-2 pt-1">
       <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="accept_recommendation"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
         <button type="submit" class="h-8 px-3 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-bold">Accept &amp; Draft Activity</button>
       </form>
       <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="reject_recommendation"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
-        <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Reject</button>
+        <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold edify-border edify-text">Reject</button>
       </form>
     </div>
     {% endif %}
@@ -118,14 +118,14 @@
 
   <!-- Support requests -->
   {% if support_requests %}
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Support Requested</h2>
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Support Requested</h2>
     {% for s in support_requests %}
-    <div class="edify-text-caption py-1 flex items-center justify-between gap-2" style="color:var(--edify-text);">
+    <div class="edify-text-caption py-1 flex items-center justify-between gap-2 edify-text">
       <span>{{ s.get_support_type_display }} <span class="text-slate-400">from {{ s.requested_from_role }} — {{ s.status }}</span></span>
       {% if s.status != 'resolved' and can_manage or s.status != 'resolved' and is_own %}
       <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="resolve_support_request"><input type="hidden" name="debrief_id" value="{{ debrief.id }}"><input type="hidden" name="support_request_id" value="{{ s.id }}">
-        <button type="submit" class="h-6 px-2 rounded-control border edify-text-caption font-bold shrink-0" style="border-color:var(--edify-border); color:var(--edify-text);">Resolve</button>
+        <button type="submit" class="h-6 px-2 rounded-control border edify-text-caption font-bold shrink-0 edify-border edify-text">Resolve</button>
       </form>
       {% endif %}
     </div>
@@ -134,15 +134,15 @@
   {% endif %}
 
   <!-- Leadership actions -->
-  <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <div class="flex items-center justify-between pb-2 border-b" style="border-color:var(--edify-border);">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">Leadership Actions</h2>
+  <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
+    <div class="flex items-center justify-between pb-2 border-b edify-border">
+      <h2 class="text-[12.5px] font-bold uppercase tracking-wide edify-text">Leadership Actions</h2>
     </div>
     {% for a in actions %}
-    <div class="edify-text-caption py-2 border-b last:border-0" style="border-color:var(--edify-border);">
+    <div class="edify-text-caption py-2 border-b last:border-0 edify-border">
       <div class="flex items-center justify-between">
-        <span class="font-bold" style="color:var(--edify-text);">{{ a.issue }}</span>
-        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase bg-blue-500/10 text-blue-400">{{ a.get_status_display }}</span>
+        <span class="font-bold edify-text">{{ a.issue }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase edify-primary-tint-10 edify-primary-text">{{ a.get_status_display }}</span>
       </div>
       <span class="text-slate-400 block">{{ a.action }}</span>
       {% if a.owner_user_id == request.user.user_id and a.status != "resolved" and a.status != "closed" %}
@@ -160,25 +160,25 @@
     {% if can_manage %}
     <form method="post" action="/debriefs/action" class="pt-2 space-y-2">
       {% csrf_token %}<input type="hidden" name="action" value="create_leadership_action"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
-      <input type="text" name="issue" placeholder="Issue" required class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
-      <input type="text" name="action_text" placeholder="Action" required class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
-      <input type="text" name="owner_user_id" placeholder="Owner user ID" required class="w-full h-8 px-2 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);">
-      <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">+ Create Action</button>
+      <input type="text" name="issue" placeholder="Issue" required class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text">
+      <input type="text" name="action_text" placeholder="Action" required class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text">
+      <input type="text" name="owner_user_id" placeholder="Owner user ID" required class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text">
+      <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold edify-border edify-text">+ Create Action</button>
     </form>
     {% endif %}
   </div>
 
   <!-- Peer solutions -->
   {% if not debrief.is_restricted_incident %}
-  <div class="rounded-surface border p-5 space-y-3" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Peer Solutions</h2>
+  <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Peer Solutions</h2>
     {% for s in peer_solutions %}
-    <div class="edify-text-caption py-2 border-b last:border-0" style="border-color:var(--edify-border);">
-      <p style="color:var(--edify-text);">{{ s.suggestion }}</p>
+    <div class="edify-text-caption py-2 border-b last:border-0 edify-border">
+      <p class="edify-text">{{ s.suggestion }}</p>
       <span class="text-slate-400 edify-text-caption">{{ s.endorsed_by_user_ids|length }} endorsement{{ s.endorsed_by_user_ids|length|pluralize }}{% if s.pl_classification %} · {{ s.get_pl_classification_display }}{% endif %}</span>
       <form method="post" action="/debriefs/action" class="inline">
         {% csrf_token %}<input type="hidden" name="action" value="endorse_peer_solution"><input type="hidden" name="debrief_id" value="{{ debrief.id }}"><input type="hidden" name="solution_id" value="{{ s.id }}">
-        <button type="submit" class="edify-text-caption font-bold ml-2" style="color:var(--edify-accent, var(--edify-chart-blue));">Endorse</button>
+        <button type="submit" class="edify-text-caption font-bold ml-2 edify-primary-text">Endorse</button>
       </form>
     </div>
     {% empty %}
@@ -187,32 +187,32 @@
     {% if not is_own %}
     <form method="post" action="/debriefs/action" class="pt-2 space-y-2">
       {% csrf_token %}<input type="hidden" name="action" value="propose_peer_solution"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
-      <textarea name="suggestion" rows="2" placeholder="Propose a solution…" required class="w-full px-2 py-1.5 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-      <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Propose Solution</button>
+      <textarea name="suggestion" rows="2" placeholder="Propose a solution…" required class="w-full px-2 py-1.5 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text"></textarea>
+      <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold edify-border edify-text">Propose Solution</button>
     </form>
     {% endif %}
   </div>
   {% endif %}
 
   {% if can_manage and debrief.status != "clarification_requested" %}
-  <div class="rounded-surface border p-5 space-y-2" style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Supervisor Review</h2>
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Supervisor Review</h2>
     <form method="post" action="/debriefs/action" class="space-y-2">
       {% csrf_token %}<input type="hidden" name="action" value="request_clarification"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
-      <textarea name="note" rows="2" placeholder="What needs clarifying?" class="w-full px-2 py-1.5 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-      <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold" style="border-color:var(--edify-border); color:var(--edify-text);">Request Clarification</button>
+      <textarea name="note" rows="2" placeholder="What needs clarifying?" class="w-full px-2 py-1.5 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text"></textarea>
+      <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold edify-border edify-text">Request Clarification</button>
     </form>
   </div>
   {% endif %}
 
   {% if is_own and debrief.status == "clarification_requested" %}
-  <div class="rounded-surface border p-5 space-y-2 border-amber-500/30" style="background:var(--edify-surface);">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b border-amber-500/20" style="color:var(--edify-text);">Clarification Requested</h2>
+  <div class="rounded-surface border p-5 space-y-2 border-amber-500/30 edify-surface">
+    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b border-amber-500/20 edify-text">Clarification Requested</h2>
     <p class="edify-text-caption text-amber-400">{{ debrief.review_note }}</p>
     <form method="post" action="/debriefs/action" class="space-y-2">
       {% csrf_token %}<input type="hidden" name="action" value="update_after_clarification"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
-      <textarea name="next_action" rows="2" placeholder="Your response / update…" class="w-full px-2 py-1.5 rounded-control border edify-text-caption" style="border-color:var(--edify-border); background:var(--edify-surface-muted); color:var(--edify-text);"></textarea>
-      <button type="submit" class="h-8 px-3 rounded-control bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-bold">Submit Update</button>
+      <textarea name="next_action" rows="2" placeholder="Your response / update…" class="w-full px-2 py-1.5 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text"></textarea>
+      <button type="submit" class="h-8 px-3 rounded-control edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold">Submit Update</button>
     </form>
   </div>
   {% endif %}

@@ -21,7 +21,7 @@
 <span class="font-semibold text-slate-800">{{ staff_partner_performance.chart.staff_pct }}%</span>
 </div>
 <div class="h-2 w-full bg-slate-50  rounded-pill overflow-hidden">
-<div class="h-full bg-blue-600 rounded-pill" style="width: {{ staff_partner_performance.chart.staff_pct }}%"></div>
+<div class="h-full edify-primary-solid rounded-pill" style="width: {{ staff_partner_performance.chart.staff_pct }}%"></div>
 </div>
 </div>
 <div class="space-y-1">
@@ -30,7 +30,7 @@
 <span class="font-semibold text-slate-800">{{ staff_partner_performance.chart.partner_pct }}%</span>
 </div>
 <div class="h-2 w-full bg-slate-50  rounded-pill overflow-hidden">
-<div class="h-full bg-indigo-500 rounded-pill" style="width: {{ staff_partner_performance.chart.partner_pct }}%"></div>
+<div class="h-full edify-primary-solid rounded-pill" style="width: {{ staff_partner_performance.chart.partner_pct }}%"></div>
 </div>
 </div>
 </div>
@@ -42,7 +42,7 @@
 {% for st in staff_partner_performance.leaderboard %}
 <div class="flex items-center justify-between edify-text-caption font-bold text-slate-600">
 <div class="flex items-center gap-2">
-<span class="h-5 w-5 bg-blue-50 text-blue-600 font-semibold edify-text-caption rounded-pill flex items-center justify-center border border-blue-100">{{ forloop.counter }}</span>
+<span class="h-5 w-5 edify-primary-soft edify-primary-text font-semibold edify-text-caption rounded-pill flex items-center justify-center border edify-primary-border">{{ forloop.counter }}</span>
 <div>
 <p class="font-bold text-slate-800 text-[12px] leading-tight">{{ st.name }}</p>
 <p class="edify-text-caption text-slate-400 font-semibold leading-none">{{ st.role }}</p>

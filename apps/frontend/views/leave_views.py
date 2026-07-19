@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
@@ -609,6 +610,11 @@ def leave_tracker_view(request):
         "availability_preview": availability_preview,
         "search_q": q,
         "role": role,
+        "topbar_search": {
+            "placeholder": "Search team member…",
+            "value": q,
+            "action": reverse("frontend:leave_tracker"),
+        },
     }
     return render(request, "pages/leave/leave_tracker.html", context)
 

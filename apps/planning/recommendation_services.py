@@ -81,7 +81,6 @@ class PlanningRecommendationService:
                 "blockedActions": [
                     "Schedule visit",
                     "Schedule training",
-                    "Assign to Partner",
                 ],
             }
 

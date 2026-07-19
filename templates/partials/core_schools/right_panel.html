@@ -85,14 +85,14 @@ All schools have full support planned.
 <!-- Card D: Next Action -->
 <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-3 hover:shadow-md transition-shadow">
 <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
-<div class="h-7 w-7 rounded-surface bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+<div class="h-7 w-7 rounded-surface edify-primary-soft border edify-primary-border flex items-center justify-center edify-primary-text">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
 </div>
 <h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Next Action</h3>
 </div>
 <div class="space-y-2">
 {% for na in reco_data.next_actions %}
-<a href="{{ na.url }}" class="flex items-start gap-2 edify-text-caption font-semibold text-slate-600 hover:text-blue-700 transition-colors">
+<a href="{{ na.url }}" class="flex items-start gap-2 edify-text-caption font-semibold text-slate-600 edify-primary-text-hover transition-colors">
 <span class="mt-1 h-3.5 w-3.5 rounded-pill border-2 border-slate-300 shrink-0"></span>{{ na.label }}
 </a>
 {% empty %}

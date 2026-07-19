@@ -1,47 +1,178 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
-{% block title %}Partners — Edify{% endblock %}
+{% block title %}Partner Activities — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="partner-workspace">
+  <header class="partner-workspace__header">
+    <div>
+      <p class="partner-workspace__eyebrow">Delivery partners</p>
+      <h1 class="edify-page-title">Partner Activities</h1>
+      <p>See assigned schools, confirm delivery dates, monitor support, and follow up before work falls behind.</p>
+    </div>
+    <form id="partner-activity-filters" method="get" class="partner-workspace__filters">
+      <label>
+        <span>Financial Year</span>
+        <select name="fy" aria-label="Financial Year">
+          {% for fy in fy_options %}<option value="{{ fy }}" {% if fy == selected_fy %}selected{% endif %}>FY {{ fy|add:"-1" }}/{{ fy }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Region</span>
+        <select name="region" aria-label="Region">
+          <option value="">All Regions</option>
+          {% for region in regions %}<option value="{{ region.id }}" {% if region.id == selected_region %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Partner</span>
+        <select name="partner" aria-label="Partner">
+          <option value="">All Partners</option>
+          {% for partner in partners %}<option value="{{ partner.id }}" {% if partner.id == selected_partner %}selected{% endif %}>{{ partner.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Status</span>
+        <select name="status" aria-label="Activity status">
+          <option value="">All Statuses</option>
+          <option value="scheduled" {% if selected_status == "scheduled" %}selected{% endif %}>Scheduled</option>
+          <option value="yet_to_schedule" {% if selected_status == "yet_to_schedule" %}selected{% endif %}>Yet to Schedule</option>
+          <option value="overdue" {% if selected_status == "overdue" %}selected{% endif %}>Overdue</option>
+        </select>
+      </label>
+      <label class="partner-workspace__search">
+        <span class="sr-only">Search</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2"/></svg>
+        <input type="search" name="q" value="{{ search }}" placeholder="Search schools or support…">
+      </label>
+      <button type="submit" class="btn-premium-secondary partner-workspace__filter-button">Apply</button>
+      <button type="submit" name="export" value="csv" class="btn-premium-primary partner-workspace__export-button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>
+        Export
+      </button>
+    </form>
+  </header>
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Partners</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">{{ total }} partner organisations</p>
-</div>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
-<form method="get" action="/partners" class="flex gap-3">
-<input type="text" name="q" value="{{ search }}" placeholder="Search partners..." class="flex-1 h-9 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-<button type="submit" class="h-9 px-4 bg-[var(--edify-accent)] text-white rounded-control text-[12px] font-bold hover:bg-[var(--edify-accent-hover)] transition-all">Search</button>
-</form>
-</div>
+  <div class="partner-workspace__layout">
+    <section class="partner-workspace__main" aria-label="Partner activity records">
+      <section class="partner-kpi-grid" aria-label="Partner activity overview">
+        <article class="partner-kpi-card partner-kpi-card--violet">
+          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20v-1.5a5.5 5.5 0 0 1 11 0V20m1.5-4.5a4.5 4.5 0 0 1 5.5 4.4"/></svg></span>
+          <div><span>Total Partners</span><strong>{{ kpis.partners }}</strong><small>In this view</small></div>
+        </article>
+        <article class="partner-kpi-card partner-kpi-card--blue">
+          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V5h10v16M15 9h4v12M8 9h4m-4 4h4m-4 4h4"/></svg></span>
+          <div><span>Assigned Schools</span><strong>{{ kpis.assigned_schools }}</strong><small>Across all partners</small></div>
+        </article>
+        <article class="partner-kpi-card partner-kpi-card--green">
+          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M7 11h10m-6 4 2 2 4-4"/></svg></span>
+          <div><span>Scheduled Activities</span><strong>{{ kpis.scheduled }}</strong><small>{{ status_breakdown.scheduled_pct }}% of work</small></div>
+        </article>
+        <article class="partner-kpi-card partner-kpi-card--amber">
+          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span>
+          <div><span>Yet to Schedule</span><strong>{{ kpis.pending }}</strong><small>{{ status_breakdown.pending_pct }}% need a date</small></div>
+        </article>
+        <article class="partner-kpi-card partner-kpi-card--teal">
+          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M8 12h8m-4-4v8"/></svg></span>
+          <div><span>Partner Activity Cost</span><strong>{{ kpis.cost|ugx }}</strong><small>Scheduled work</small></div>
+        </article>
+        <article class="partner-kpi-card partner-kpi-card--rose">
+          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v4m0 3h.01"/></svg></span>
+          <div><span>High-Risk Delays</span><strong>{{ kpis.overdue }}</strong><small>{% if kpis.overdue %}Needs attention{% else %}No late work{% endif %}</small></div>
+        </article>
+      </section>
 
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
-{% if partners %}
-{# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
-<div class="overflow-x-auto">
-<table class="w-full text-[12px]">
-<thead><tr class="bg-slate-50/60 border-b border-slate-100">
-<th class="text-left px-5 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Partner</th>
-<th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Region</th>
-<th class="text-left px-4 py-3 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</th>
-<th class="px-4 py-3"></th>
-</tr></thead>
-<tbody class="divide-y divide-slate-100">
-{% for p in partners %}
-<tr class="hover:bg-slate-50/60 transition-colors group">
-<td class="px-5 py-3.5"><p class="font-bold text-slate-800">{{ p.name }}</p></td>
-<td class="px-4 py-3.5 text-slate-600">{{ p.region_name|default:"—" }}</td>
-<td class="px-4 py-3.5"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold {% if p.active_status %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-500{% endif %}"><span class="h-1.5 w-1.5 rounded-pill {% if p.active_status %}bg-emerald-500{% else %}bg-slate-300{% endif %}"></span>{% if p.active_status %}Active{% else %}Inactive{% endif %}</span></td>
-<td class="px-4 py-3.5 text-right"><a href="/partners/{{ p.id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 edify-text-caption font-bold text-[var(--edify-accent)] transition-opacity">View →</a></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></p><p class="text-[14px] font-bold text-slate-600">No partners found</p></div>{% endif %}
-</div>
+      <section class="partner-activity-groups" aria-label="Partner activity groups">
+        {% for card in partner_cards %}
+        <article class="partner-activity-card">
+          <header class="partner-activity-card__header">
+            <div class="partner-identity">
+              <span class="partner-identity__mark">{{ card.partner.name|avatar_initials }}</span>
+              <div>
+                <h2>{{ card.partner.name }}</h2>
+                <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></svg>{{ card.partner.region_name|default:"Region not set" }}</p>
+              </div>
+            </div>
+            <dl class="partner-activity-card__summary">
+              <div><dt>Contact Person</dt><dd>{{ card.partner.contact_person|default:"Not recorded" }}<small>{{ card.partner.phone|default:"Phone not recorded" }}</small></dd></div>
+              <div><dt>Assigned Schools</dt><dd>{{ card.assigned_school_count }}</dd></div>
+              <div><dt>Scheduled</dt><dd class="partner-activity-card__positive">{{ card.scheduled_count }}</dd></div>
+              <div><dt>Pending</dt><dd class="partner-activity-card__warning">{{ card.pending_count }}</dd></div>
+              <div><dt>Focus</dt><dd>{{ card.focus }}</dd></div>
+            </dl>
+          </header>
+          {% if card.rows %}
+          <div class="partner-activity-card__table-wrap">
+            <table class="partner-activity-table">
+              <thead><tr><th>School</th><th>District / Cluster</th><th>Purpose of Visit</th><th>Intervention Focus</th><th>Scheduled Date / Status</th><th>Cost</th><th><span class="sr-only">Action</span></th></tr></thead>
+              <tbody>
+                {% for row in card.rows %}
+                <tr>
+                  <td><strong>{{ row.school_name }}</strong></td>
+                  <td>{{ row.district_cluster }}</td>
+                  <td>{{ row.purpose }}</td>
+                  <td>{{ row.focus }}</td>
+                  <td><span class="partner-status partner-status--{{ row.status_tone }}">{% if row.date %}{{ row.date|date:"d M Y" }} · {% endif %}{{ row.status_label }}</span></td>
+                  <td>{% if row.cost_pending %}<span class="partner-cost-pending">Set when scheduled</span>{% else %}{{ row.cost|ugx }}{% endif %}</td>
+                  <td><a href="{{ row.detail_url }}" class="partner-activity-table__action">{% if row.is_pending %}Review{% else %}View plan{% endif %}</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="partner-activity-card__empty">No partner work matches these filters.</div>
+          {% endif %}
+        </article>
+        {% empty %}
+        <section class="partner-empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 21h18M5 21V5h10v16M15 9h4v12M8 9h4m-4 4h4m-4 4h4"/></svg>
+          <h2>No partner activities found</h2><p>Try changing the filters, or assign a school to an active partner.</p>
+        </section>
+        {% endfor %}
+      </section>
+    </section>
+
+    <aside class="partner-workspace__aside">
+      <section class="partner-aside-card partner-aside-card--breakdown">
+        <h2>Scheduling Status Breakdown</h2>
+        <div class="partner-status-breakdown">
+          <div class="partner-status-breakdown__donut" style="background: conic-gradient(var(--brand-success) 0 {{ status_breakdown.scheduled_pct }}%, var(--brand-warn) {{ status_breakdown.scheduled_pct }}% {{ status_breakdown.scheduled_pct|add:status_breakdown.pending_pct }}%, var(--brand-danger) {{ status_breakdown.scheduled_pct|add:status_breakdown.pending_pct }}% 100%);"><span><strong>{{ kpis.scheduled|add:kpis.pending }}</strong>Total</span></div>
+          <dl>
+            <div><dt><i class="partner-dot partner-dot--success"></i>Scheduled</dt><dd>{{ status_breakdown.scheduled }} ({{ status_breakdown.scheduled_pct }}%)</dd></div>
+            <div><dt><i class="partner-dot partner-dot--warning"></i>Yet to Schedule</dt><dd>{{ status_breakdown.pending }} ({{ status_breakdown.pending_pct }}%)</dd></div>
+            <div><dt><i class="partner-dot partner-dot--danger"></i>Overdue</dt><dd>{{ status_breakdown.overdue }} ({{ status_breakdown.overdue_pct }}%)</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="partner-aside-card">
+        <div class="partner-aside-card__heading"><h2>Pending Partner Reminders</h2><span>{{ pending_reminders|length }}</span></div>
+        <ul class="partner-reminder-list">
+          {% for row in pending_reminders %}
+          <li><span class="partner-reminder-list__avatar">{{ row.partner.name|avatar_initials }}</span><div><strong>{{ row.partner.name }}</strong><p>{{ row.school_name }} · {{ row.purpose }}</p></div><time>{% if row.date %}{{ row.date|date:"d M" }}{% else %}No date{% endif %}</time></li>
+          {% empty %}<li class="partner-aside-card__blank">Every current assignment has a delivery date.</li>{% endfor %}
+        </ul>
+        <a href="#partner-activity-filters" class="partner-aside-card__link">Review pending work <span>→</span></a>
+      </section>
+
+      <section class="partner-aside-card">
+        <div class="partner-aside-card__heading"><h2>Upcoming Partner Activities</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></svg></div>
+        <ul class="partner-upcoming-list">
+          {% for row in upcoming_activities %}
+          <li><time><b>{{ row.date|date:"M" }}</b><strong>{{ row.date|date:"d" }}</strong></time><div><strong>{{ row.school_name }}</strong><p>{{ row.purpose }} · {{ row.partner.name }}</p></div></li>
+          {% empty %}<li class="partner-aside-card__blank">No future partner activities are scheduled.</li>{% endfor %}
+        </ul>
+        <a href="/calendar" class="partner-aside-card__link">View full calendar <span>→</span></a>
+      </section>
+
+      <section class="partner-aside-card partner-aside-card--actions">
+        <h2>Quick Actions</h2>
+        <a href="/planning" class="btn-premium-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8-8-2Z"/><path d="m11 13 4-4"/></svg>Open Planning</a>
+        <a href="/schools" class="btn-premium-secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18M5 21V5h10v16M15 9h4m-4 4h4m-4 4h4"/></svg>Open Assigned Schools</a>
+      </section>
+    </aside>
+  </div>
 </div>
 {% endblock %}

@@ -114,7 +114,7 @@ Closed
 <div class="relative pl-6 border-l-2 border-slate-100 space-y-5">
 {% for ev in timeline %}
 <div class="relative">
-<span class="absolute -left-[30px] top-1.5 w-2 h-2 rounded-pill bg-blue-600"></span>
+<span class="absolute -left-[30px] top-1.5 w-2 h-2 rounded-pill edify-primary-solid"></span>
 <div class="flex items-center justify-between text-[12px]">
 <span class="font-semibold text-slate-800">{{ ev.event_name }}</span>
 <span class="edify-text-caption text-slate-400 font-bold uppercase">{{ ev.timestamp|date:"M d, Y H:i" }}</span>
@@ -156,7 +156,7 @@ Reopen Closed Activity
 <button
 type="submit"
 :disabled="submittingClose"
-:class="submittingClose ? 'opacity-50 cursor-not-allowed bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'"
+:class="submittingClose ? 'opacity-50 cursor-not-allowed edify-primary-solid' : 'edify-primary-solid edify-primary-hover'"
 class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center transition-all shadow-md"
 >
 <span x-show="!submittingClose">Close & Lock Activity</span>
@@ -211,13 +211,13 @@ style="display: none;"
 name="reason"
 required
 placeholder="Provide exact reason for reopening..."
-class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface focus:border-blue-500 focus:outline-none h-28 resize-none font-semibold"
+class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface edify-primary-focus focus:outline-none h-28 resize-none font-semibold"
 ></textarea>
 </div>
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Category</label>
-<select name="category" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<select name="category" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
 <option value="wrong_evidence">Wrong Evidence File</option>
 <option value="wrong_salesforce_id">Wrong Salesforce ID</option>
 <option value="wrong_school">Wrong School Assignment</option>

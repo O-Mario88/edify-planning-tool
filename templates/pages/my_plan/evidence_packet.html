@@ -17,11 +17,11 @@
 <div class="edify-surface rounded-surface  p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
 <div class="space-y-1">
 <div class="flex items-center gap-2">
-<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-indigo-50 text-indigo-700 border border-indigo-150">{{ act.activity_type|replace_underscore }}</span>
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase edify-primary-soft edify-primary-text border edify-primary-border">{{ act.activity_type|replace_underscore }}</span>
 <span class="text-slate-400 font-bold text-[12px]">&bull;</span>
 <span class="text-[12px] text-slate-500 font-semibold">{{ act.planned_date }}</span>
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight leading-tight">Evidence Proof Packet</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight leading-tight edify-page-title">Evidence Proof Packet</h1>
 {% if act.school %}
 <p class="text-[14px] text-slate-500 font-semibold">School: <strong class="text-slate-700">{{ act.school.name }}</strong> (ID: {{ act.school.school_id }})</p>
 {% endif %}
@@ -63,7 +63,7 @@ Submit for Review
 hx-get="/activities/{{ act.id }}/evidence"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="text-[12px] font-semibold text-blue-600 hover:text-blue-700"
+class="text-[12px] font-semibold edify-primary-text edify-primary-text-hover"
 >
 + Upload File
 </button>

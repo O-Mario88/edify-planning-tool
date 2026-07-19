@@ -1,0 +1,664 @@
+/*
+ * Edify consistency bridge
+ *
+ * This is loaded after page-level legacy styles.  It deliberately maps old
+ * Tailwind primary-blue utilities to the one canonical sidebar-navy token
+ * while routes are migrated to semantic component classes.  Semantic status
+ * colours (success, warning, danger and information) remain separate.
+ */
+
+:root {
+  accent-color: var(--brand-primary);
+}
+
+/* Semantic primary utilities.  These replace framework-colour class names in
+ * templates and server-rendered fragments, so source and rendered output use
+ * the same product vocabulary.  Status colours never use these utilities. */
+.edify-primary-solid {
+  background-color: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  color: var(--brand-primary-on-solid) !important;
+}
+
+.edify-primary-soft {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+.edify-primary-text {
+  color: var(--brand-primary-text) !important;
+}
+
+.edify-primary-on-solid {
+  color: var(--brand-primary-on-solid) !important;
+}
+
+.edify-primary-border {
+  border-color: var(--brand-primary-border) !important;
+}
+
+.edify-primary-hover:hover {
+  background-color: var(--brand-primary-hover) !important;
+  border-color: var(--brand-primary-hover) !important;
+  color: var(--brand-primary-on-solid) !important;
+}
+
+.edify-primary-soft-hover:hover {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+.edify-primary-text-hover:hover {
+  color: var(--brand-primary-text-hover) !important;
+}
+
+.edify-primary-border-hover:hover {
+  border-color: var(--brand-primary) !important;
+}
+
+.edify-primary-focus:focus,
+.edify-primary-focus:focus-visible {
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 3px var(--brand-primary-focus) !important;
+  outline: 0;
+}
+
+.edify-primary-focus-visible:focus-visible {
+  outline: 2px solid var(--brand-primary) !important;
+  outline-offset: 2px;
+}
+
+.group:hover .edify-primary-group-hover-soft {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+.group:hover .edify-primary-group-hover-text {
+  color: var(--brand-primary-text-hover) !important;
+}
+
+.edify-primary-file-soft::file-selector-button {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+.edify-primary-file-text::file-selector-button {
+  color: var(--brand-primary-text) !important;
+}
+
+.edify-primary-file-soft-hover:hover::file-selector-button {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+/* Alpha treatments are used for quiet selection surfaces and visible focus
+ * rings. The strength is encoded in the semantic class, never a colour name. */
+.edify-primary-tint-5 { background-color: color-mix(in srgb, var(--brand-primary) 5%, transparent) !important; }
+.edify-primary-tint-10 { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent) !important; }
+.edify-primary-tint-15 { background-color: color-mix(in srgb, var(--brand-primary) 15%, transparent) !important; }
+.edify-primary-tint-20 { background-color: color-mix(in srgb, var(--brand-primary) 20%, transparent) !important; }
+.edify-primary-soft-alpha-10 { background-color: color-mix(in srgb, var(--brand-primary-soft) 10%, transparent) !important; }
+.edify-primary-soft-alpha-15 { background-color: color-mix(in srgb, var(--brand-primary-soft) 15%, transparent) !important; }
+.edify-primary-soft-alpha-20 { background-color: color-mix(in srgb, var(--brand-primary-soft) 20%, transparent) !important; }
+.edify-primary-soft-alpha-25 { background-color: color-mix(in srgb, var(--brand-primary-soft) 25%, transparent) !important; }
+.edify-primary-soft-alpha-30 { background-color: color-mix(in srgb, var(--brand-primary-soft) 30%, transparent) !important; }
+.edify-primary-soft-alpha-40 { background-color: color-mix(in srgb, var(--brand-primary-soft) 40%, transparent) !important; }
+.edify-primary-soft-alpha-50 { background-color: color-mix(in srgb, var(--brand-primary-soft) 50%, transparent) !important; }
+.edify-primary-soft-alpha-60 { background-color: color-mix(in srgb, var(--brand-primary-soft) 60%, transparent) !important; }
+.edify-primary-soft-alpha-70 { background-color: color-mix(in srgb, var(--brand-primary-soft) 70%, transparent) !important; }
+.edify-primary-soft-alpha-80 { background-color: color-mix(in srgb, var(--brand-primary-soft) 80%, transparent) !important; }
+.edify-primary-border-alpha-20 { border-color: color-mix(in srgb, var(--brand-primary-border) 20%, transparent) !important; }
+.edify-primary-border-alpha-45 { border-color: color-mix(in srgb, var(--brand-primary-border) 45%, transparent) !important; }
+.edify-primary-border-alpha-50 { border-color: color-mix(in srgb, var(--brand-primary-border) 50%, transparent) !important; }
+.edify-primary-border-alpha-60 { border-color: color-mix(in srgb, var(--brand-primary-border) 60%, transparent) !important; }
+.edify-primary-ring-10 { --tw-ring-color: color-mix(in srgb, var(--brand-primary) 10%, transparent); }
+.edify-primary-ring-20 { --tw-ring-color: color-mix(in srgb, var(--brand-primary) 20%, transparent); }
+.edify-primary-ring { --tw-ring-color: var(--brand-primary-focus); }
+.edify-primary-text-alpha-80 { color: color-mix(in srgb, var(--brand-primary-text) 80%, transparent) !important; }
+
+/* Shared surface and semantic helpers replace repeated inline token
+ * declarations in templates. They are deliberately property-specific, so a
+ * component can combine only the surface, border, text, or elevation it needs. */
+.edify-surface { background-color: var(--edify-surface) !important; }
+.edify-surface-muted { background-color: var(--edify-surface-muted) !important; }
+.edify-surface-raised { background-color: var(--edify-surface-raised) !important; }
+.edify-border { border-color: var(--edify-border) !important; }
+.edify-border-strong { border-color: var(--edify-border-strong) !important; }
+.edify-border-top { border-top-color: var(--edify-border) !important; }
+.edify-border-bottom { border-bottom-color: var(--edify-border) !important; }
+.edify-text { color: var(--edify-text) !important; }
+.edify-text-muted { color: var(--edify-text-muted) !important; }
+.edify-text-subtle { color: var(--edify-text-subtle) !important; }
+.edify-shadow-sm { box-shadow: var(--edify-shadow-sm) !important; }
+.edify-shadow-md { box-shadow: var(--edify-shadow-md) !important; }
+.edify-success-text { color: var(--edify-success) !important; }
+.edify-warning-text { color: var(--edify-warning) !important; }
+.edify-danger-text { color: var(--edify-danger) !important; }
+.edify-info-text { color: var(--edify-info) !important; }
+.edify-success-soft { background-color: var(--edify-success-light) !important; }
+.edify-warning-soft { background-color: var(--edify-warning-light) !important; }
+.edify-danger-soft { background-color: var(--edify-danger-light) !important; }
+.edify-info-soft { background-color: var(--edify-info-light) !important; }
+.edify-success-border { border-color: var(--edify-success-border) !important; }
+.edify-warning-border { border-color: var(--edify-warning-border) !important; }
+.edify-danger-border { border-color: var(--edify-danger-border) !important; }
+.edify-info-border { border-color: var(--edify-info-border) !important; }
+
+/* The shared surface treatment keeps feature-specific cards from drifting in
+ * border weight or elevation while preserving their layout and content. */
+main .edify-surface.rounded-surface.border,
+main .edify-surface-raised.rounded-surface.border {
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm);
+}
+
+main .edify-surface-muted.rounded-surface.border {
+  border-color: var(--edify-border) !important;
+}
+
+.edify-touch-target {
+  min-height: 44px;
+}
+
+/* A dark header is a self-contained surface; its title must never inherit the
+ * global dark-text rule used by ordinary page content. */
+main :is(.edify-page-header--dark, [class~="bg-slate-900"], [class~="bg-slate-800"], [class~="bg-gray-900"], [class~="bg-gray-800"]) :is(h1, h2, h3) {
+  color: var(--edify-on-accent) !important;
+}
+
+/* Every page has one predictable title treatment, whether it has a full page
+ * header component or a compact operational layout. */ 
+.edify-page-title {
+  color: var(--edify-text) !important;
+  font-family: var(--edify-font-display-family) !important;
+  font-size: var(--edify-text-display-size) !important;
+  font-weight: var(--edify-text-display-weight) !important;
+  letter-spacing: var(--edify-text-display-tracking) !important;
+  line-height: var(--edify-text-display-leading) !important;
+}
+
+.edify-page-header--dark .edify-page-title,
+:is(.bg-slate-900, .bg-slate-800, .bg-gray-900, .bg-gray-800) .edify-page-title {
+  color: var(--edify-on-accent) !important;
+}
+
+/* Canonical primary state.  Existing page utilities retain their layout and
+ * behaviour but no longer introduce a competing royal-blue action colour. */
+main :is([class*="bg-blue-500"], [class*="bg-blue-600"], [class*="bg-blue-700"], [class*="bg-indigo-500"], [class*="bg-indigo-600"], [class*="bg-indigo-700"]) {
+  background-color: var(--brand-primary) !important;
+  color: var(--edify-on-accent) !important;
+}
+
+main :is(button, a, [role="button"], [role="tab"], input, select, textarea)[class*="bg-blue-600"]:hover,
+main :is(button, a, [role="button"], [role="tab"], input, select, textarea)[class*="bg-blue-700"]:hover,
+main :is(button, a, [role="button"], [role="tab"], input, select, textarea)[class*="bg-indigo-600"]:hover,
+main :is(button, a, [role="button"], [role="tab"], input, select, textarea)[class*="bg-indigo-700"]:hover {
+  background-color: var(--brand-primary-hover) !important;
+}
+
+main :is([class*="bg-blue-50"], [class*="bg-blue-100"], [class*="bg-indigo-50"], [class*="bg-indigo-100"]) {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+main :is([class*="text-blue-500"], [class*="text-blue-600"], [class*="text-blue-700"], [class*="text-indigo-500"], [class*="text-indigo-600"], [class*="text-indigo-700"]) {
+  color: var(--brand-primary) !important;
+}
+
+main :is([class*="border-blue-100"], [class*="border-blue-200"], [class*="border-blue-500"], [class*="border-blue-600"], [class*="border-indigo-100"], [class*="border-indigo-200"], [class*="border-indigo-500"], [class*="border-indigo-600"]) {
+  border-color: var(--brand-primary-border) !important;
+}
+
+main :is(input, select, textarea):focus,
+main :is(input, select, textarea):focus-visible,
+main [class*="focus:border-blue-"]:focus,
+main [class*="focus:ring-blue-"]:focus {
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 3px var(--brand-primary-focus) !important;
+}
+
+main :is(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--brand-primary);
+}
+
+/* Shared selected state for tabs, period cards, pagination and workflow
+ * stages.  New template work uses this semantic class directly. */
+.edify-selected-surface {
+  border-color: var(--brand-primary) !important;
+  background-color: var(--brand-primary) !important;
+  color: var(--edify-on-accent) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+.edify-selected-surface :is(.text-slate-400, .text-slate-500, .text-blue-100) {
+  color: color-mix(in srgb, var(--edify-on-accent) 78%, transparent) !important;
+}
+
+/* Financial and specialist matrices occasionally use the canonical accent as
+ * a full-width category row. The general table type rule must not recolour
+ * the nested label back to dark ink on that dark surface. */
+main table :is(td, th)[style*="var(--edify-accent) !important"] :is(strong, .font-bold, .font-semibold),
+main table :is(td, th)[style*="var(--edify-accent) !important"] {
+  color: var(--edify-on-accent) !important;
+}
+
+main table tbody tr:hover,
+.drawer-body table tbody tr:hover {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+/* One platform action contract. These are the only non-semantic action
+ * appearances in light mode: solid blue (primary), outlined blue
+ * (secondary), and neutral grey (disabled). The broad aliases deliberately
+ * absorb legacy page controls until they can be migrated to the component API. */
+:root:not(.theme-blue):not(.theme-dark) {
+  --edify-action-button-block-size: 2.75rem;
+  --edify-action-button-padding-inline: 1.125rem;
+  --edify-action-button-icon-size: 1.125rem;
+  --edify-action-button-radius: 1rem;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .btn-primary, .btn-premium-primary, .edify-action-button.primary,
+  .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+  .pto-button--primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary
+) {
+  color: var(--brand-primary-on-solid) !important;
+  background-color: var(--brand-primary) !important;
+  background-image: none !important;
+  border: 1px solid var(--brand-primary) !important;
+  box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .btn-primary, .btn-premium-primary, .edify-action-button.primary,
+  .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+  .pto-button--primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary
+):hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--brand-primary-hover) !important;
+  border-color: var(--brand-primary-hover) !important;
+  box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--brand-primary) 50%, transparent) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .btn-ghost, .btn-secondary, .btn-premium-secondary,
+  .edify-action-button.secondary, .school-record-action--assign,
+  .premium-button-secondary, .premium-button-outline, .btn-smooth,
+  .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+  .spp-button--secondary, .tt-button--secondary, .hcos-button--secondary,
+  .admin-button--secondary
+) {
+  color: var(--brand-primary-text) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+  border: 1px solid var(--brand-primary-border) !important;
+  box-shadow: none !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .btn-ghost, .btn-secondary, .btn-premium-secondary,
+  .edify-action-button.secondary, .school-record-action--assign,
+  .premium-button-secondary, .premium-button-outline, .btn-smooth,
+  .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+  .spp-button--secondary, .tt-button--secondary, .hcos-button--secondary,
+  .admin-button--secondary
+):hover:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--brand-primary-text-hover) !important;
+  background-color: var(--brand-primary-soft) !important;
+  border-color: var(--brand-primary) !important;
+}
+
+/* A bare .btn is a quiet action by default. Semantic status buttons retain
+ * their own colour ramps and are intentionally excluded. */
+:root:not(.theme-blue):not(.theme-dark) :is(button, a).btn:not(
+  .btn-primary, .btn-secondary, .btn-ghost, .btn-danger, .btn-success,
+  .btn-warning, .btn-smooth
+) {
+  color: var(--brand-primary-text) !important;
+  background-color: var(--edify-surface-raised) !important;
+  border: 1px solid var(--brand-primary-border) !important;
+  box-shadow: none !important;
+}
+
+/* Complete the contract for the remaining legacy action controls. Some older
+ * templates use one-off component names or direct utility classes instead of
+ * the shared button API. They still resolve to the exact same blue solid or
+ * blue-outline treatments here, so a page cannot create a fourth button
+ * appearance just by using an older template. Compact navigation, tabs and
+ * rich-text formatting controls deliberately keep their compact geometry. */
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-reset,
+  .fc-button-primary,
+  [class~="bg-slate-700"], [class~="bg-slate-800"], [class~="bg-slate-900"],
+  [class~="bg-blue-600"], [class~="bg-blue-700"],
+  [class~="bg-indigo-600"], [class~="bg-indigo-700"]
+) {
+  color: var(--brand-primary-on-solid) !important;
+  background-color: var(--brand-primary) !important;
+  background-image: none !important;
+  border: 1px solid var(--brand-primary) !important;
+  box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-reset,
+  .fc-button-primary,
+  [class~="bg-slate-700"], [class~="bg-slate-800"], [class~="bg-slate-900"],
+  [class~="bg-blue-600"], [class~="bg-blue-700"],
+  [class~="bg-indigo-600"], [class~="bg-indigo-700"]
+):hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color: var(--brand-primary-hover) !important;
+  border-color: var(--brand-primary-hover) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
+  .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
+  .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
+  .app-sidebar__collapse-btn, .action-button,
+  [class*="border-slate-"][class*="rounded"],
+  [class*="border-blue-"][class*="rounded"],
+  [class*="border-indigo-"][class*="rounded"]
+):not(.btn-danger):not(.btn-success):not(.btn-warning) {
+  color: var(--brand-primary-text) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+  border: 1px solid var(--brand-primary-border) !important;
+  box-shadow: none !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+  .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
+  .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
+  .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
+  .app-sidebar__collapse-btn, .action-button,
+  [class*="border-slate-"][class*="rounded"],
+  [class*="border-blue-"][class*="rounded"],
+  [class*="border-indigo-"][class*="rounded"]
+):not(.btn-danger):not(.btn-success):not(.btn-warning):hover:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--brand-primary-text-hover) !important;
+  background-color: var(--brand-primary-soft) !important;
+  border-color: var(--brand-primary) !important;
+}
+
+/* Named legacy actions share the same calm, rounded silhouette as the shared
+ * component API. Their existing compact variants keep their own height, so
+ * dense tables and icon controls do not become oversized. */
+:root:not(.theme-blue):not(.theme-dark) :is(
+  .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-secondary,
+  .tile-filter-btn-reset, .premium-button, .pto-button, .sp-button,
+  .spa-button, .spp-button, .tt-button, .hcos-button, .admin-button,
+  .forgot-button, .action-button
+) {
+  border-radius: var(--edify-action-button-radius) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) .forgot-button {
+  min-block-size: 2.5rem;
+  padding-inline: 1rem;
+}
+
+/* Native file inputs render their own button. Give that browser-owned control
+ * the same quiet outline rather than leaving a fourth, operating-system style. */
+:root:not(.theme-blue):not(.theme-dark) input[type="file"]::file-selector-button {
+  color: var(--brand-primary-text);
+  background-color: var(--edify-surface-raised);
+  border: 1px solid var(--brand-primary-border);
+  border-radius: var(--edify-action-button-radius);
+  font: var(--edify-font-label);
+  font-weight: var(--edify-text-title-weight);
+  cursor: pointer;
+}
+
+/* FullCalendar owns its toolbar markup at runtime. Default view/navigation
+ * controls are secondary; the selected calendar view is the one blue primary
+ * action. This overrides the page-local FullCalendar styles as well. */
+:root:not(.theme-blue):not(.theme-dark) .fc .fc-button-primary {
+  min-block-size: 2.5rem !important;
+  padding-inline: 1rem !important;
+  border-radius: var(--edify-action-button-radius) !important;
+  font: var(--edify-font-label) !important;
+  font-weight: var(--edify-text-title-weight) !important;
+  letter-spacing: var(--edify-text-label-tracking) !important;
+  text-transform: none !important;
+  color: var(--brand-primary-text) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+  border: 1px solid var(--brand-primary-border) !important;
+  box-shadow: none !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) .fc .fc-button-primary:hover:not(:disabled) {
+  color: var(--brand-primary-text-hover) !important;
+  background-color: var(--brand-primary-soft) !important;
+  border-color: var(--brand-primary) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) .fc .fc-button-primary:not(:disabled).fc-button-active,
+:root:not(.theme-blue):not(.theme-dark) .fc .fc-button-primary:not(:disabled):active {
+  color: var(--brand-primary-on-solid) !important;
+  background-color: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
+}
+
+:where(button, input[type="button"], input[type="submit"]):disabled,
+:where(a, [role="button"])[aria-disabled="true"] {
+  color: var(--edify-text-disabled) !important;
+  background: var(--edify-surface-muted) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+
+:where(a, [role="button"])[aria-disabled="true"] { pointer-events: none; }
+
+/* Disabled must win over the primary/secondary aliases above. Keeping this
+ * selector at the same light-mode specificity prevents a blocked Schedule
+ * control from looking actionable just because it also has a primary class. */
+:root:not(.theme-blue):not(.theme-dark) :is(
+  button, input[type="button"], input[type="submit"]
+):disabled,
+:root:not(.theme-blue):not(.theme-dark) :is(a, [role="button"])[aria-disabled="true"] {
+  color: var(--edify-text-disabled) !important;
+  background: var(--edify-surface-muted) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+.btn-smooth:hover {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+:is(.btn-primary, .edify-action-button.primary, .btn-premium-primary, .edify-action-button.secondary, .btn-ghost):focus-visible,
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--brand-primary) !important;
+  outline-offset: 2px;
+}
+
+/* Keep data values visually precise throughout the older templates too. */
+main :is(.tabular-nums, [data-kpi-value], [data-currency], .currency, .amount) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Filter bars live on the page canvas, not inside another card. ───────
+   A filter bar is navigation for the data below it—not a separate piece of
+   content. Keeping its outer wrapper transparent leaves a single calm plane
+   behind the controls in light and dark mode, matching the Partner Activities
+   workspace. Each individual field remains an intentional, accessible control.
+   `!important` is deliberate: some specialised workspaces load page CSS after
+   this shared stylesheet, but must still follow the platform contract. */
+main :is(
+  .platform-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  #filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  .school-filters-form,
+  .school-filter-canvas
+) {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+main :is(
+  .platform-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  #filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  .school-filters-form,
+  .school-filter-canvas
+) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-block-size: var(--edify-action-button-block-size) !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background: var(--edify-surface-raised) !important;
+  color: var(--edify-text) !important;
+  box-shadow: none !important;
+}
+
+main :is(
+  .platform-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  #filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  .school-filters-form,
+  .school-filter-canvas
+) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+  border-color: var(--edify-accent) !important;
+  box-shadow: var(--edify-focus-ring) !important;
+}
+
+main :is(
+  .platform-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  #filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  .school-filters-form,
+  .school-filter-canvas
+) :is(input, select, textarea):disabled {
+  color: var(--edify-text-disabled) !important;
+  border-color: var(--edify-border) !important;
+  background: var(--edify-surface-muted) !important;
+  cursor: not-allowed !important;
+}
+
+/* Special Projects uses the shared cockpit anatomy rather than a parallel
+   visual system. These pages have intentional data-dense layouts, but their
+   cards, fields, titles and actions now resolve through the same tokens as
+   planning, schools, finance and partner workspaces. This stylesheet loads
+   after feature CSS so it is the final, reliable platform contract. */
+main :is(.sp-plan, .spp, .spa) {
+  color: var(--edify-text) !important;
+  font-family: var(--edify-font-sans) !important;
+}
+
+main :is(.sp-plan, .spp, .spa) h1 {
+  color: var(--edify-text) !important;
+  font: var(--edify-font-display) !important;
+  letter-spacing: var(--edify-text-display-tracking) !important;
+}
+
+main :is(.sp-plan, .spp, .spa) :is(.sp-card, .spp-card, .spa-card,
+  .sp-kpi, .spp-kpi, .spa-kpi, .sp-period-bar, .spp-band,
+  .sp-empty, .spp-empty, .spa-empty) {
+  border-color: var(--edify-card-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+  background-color: var(--edify-card-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+  -webkit-backdrop-filter: var(--edify-card-backdrop-filter) !important;
+  backdrop-filter: var(--edify-card-backdrop-filter) !important;
+}
+
+main :is(.sp-kpi-grid, .spp-kpi-grid, .spa-kpi-grid) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)) !important;
+  gap: var(--edify-panel-gap) !important;
+}
+
+main :is(.sp-kpi, .spp-kpi, .spa-kpi) {
+  min-block-size: 6.5rem !important;
+  padding: var(--edify-panel-padding) !important;
+}
+
+main :is(.sp-kpi, .spp-kpi, .spa-kpi) :is(small, p, span:not([class*="icon"])) {
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: var(--edify-text-label-weight) !important;
+  line-height: var(--edify-text-label-leading) !important;
+}
+
+main :is(.sp-button, .spp-button, .spa-button) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  min-block-size: var(--edify-action-button-block-size) !important;
+  padding-inline: var(--edify-action-button-padding-inline) !important;
+  border-radius: var(--edify-action-button-radius) !important;
+  font: var(--edify-font-label) !important;
+  font-weight: var(--edify-text-title-weight) !important;
+  letter-spacing: var(--edify-text-label-tracking) !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+
+main :is(.sp-button, .spp-button, .spa-button) svg {
+  inline-size: var(--edify-action-button-icon-size) !important;
+  block-size: var(--edify-action-button-icon-size) !important;
+  flex: 0 0 auto;
+}
+
+main :is(.sp-search input, .spp-search input, .spa-search input) {
+  min-block-size: var(--edify-action-button-block-size) !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background: var(--edify-surface-raised) !important;
+  color: var(--edify-text) !important;
+  box-shadow: none !important;
+}
+
+main :is(.sp-search input, .spp-search input, .spa-search input):focus-visible {
+  border-color: var(--edify-accent) !important;
+  box-shadow: var(--edify-focus-ring) !important;
+}
+
+main :is(.sp-plan, .spp, .spa) :is(.sp-status, .spp-status, .spa-status,
+  .sp-badge, .spa-delta, .sp-readonly) {
+  border-radius: var(--edify-radius-pill) !important;
+  font-family: var(--edify-font-sans) !important;
+}

@@ -7,18 +7,18 @@ from django.views.decorators.http import require_POST
 from datetime import date
 
 from apps.core.permissions import require_page_permission, get_scoped_object_or_404
+from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.enums import SsaIntervention
 from apps.schools.models import School
 from apps.geography.models import Region, District
 from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
+from apps.partners.purposes import PARTNER_VISIT_PURPOSES
 from apps.activities.models import Activity
 from apps.core_schools.models import (
     CorePlan,
-    CoreActivitySlot,
     CoreSchoolProfile,
-    cslot_id,
 )
 from apps.audit.services import log as audit_log
 from apps.core_schools.champion_services import ChampionEligibilityService
@@ -32,6 +32,7 @@ from apps.core_schools.core_planning_services import (
     CoreInterventionImpactService,
     CoreStaffPartnerPerformanceService,
     CoreRecommendationService,
+    CorePackageSchedulingService,
     build_sparkline_path,
 )
 
@@ -248,30 +249,21 @@ def core_schedule_visit_drawer(request):
     )
     partners = Partner.objects.all().order_by("name")
 
-    # Determine next visit sequence number
     fy = get_operational_fy()
     plan = CorePlan.objects.filter(school_id=school_id, fy=fy).first()
-    next_visit_seq = 1
-    if plan:
-        completed_visits = plan.slots.filter(
-            activity_type="visit",
-            status__in=[
-                "Completed",
-                "Accountant Confirmed",
-                "iaVerify",
-                "ia_verified",
-                "accountant_confirmed",
-                "Scheduled",
-            ],
-        ).count()
-        next_visit_seq = min(4, completed_visits + 1)
+    available_visit_slots = (
+        CorePackageSchedulingService.available_options(plan, "visit") if plan else []
+    )
 
     context = {
         "school": school,
         "recommendations": recommendations,
         "staff_members": staff_members,
         "partners": partners,
-        "next_visit_seq": next_visit_seq,
+        "next_visit_seq": available_visit_slots[0]["sequence"]
+        if available_visit_slots
+        else None,
+        "available_visit_slots": available_visit_slots,
         "interventions": SsaIntervention.choices,
     }
     return render(request, "partials/core_schools/schedule_visit_drawer.html", context)
@@ -282,7 +274,7 @@ def core_schedule_visit_drawer(request):
 def core_schedule_visit_action(request):
     """Handles schedule visit submission."""
     school_id = request.POST.get("school_id")
-    get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
     visit_seq = request.POST.get("visit_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
@@ -290,6 +282,15 @@ def core_schedule_visit_action(request):
     expected_outcome = request.POST.get("expected_outcome", "").strip()
     responsible_staff_id = request.POST.get("responsible_staff_id")
     partner_id = request.POST.get("assigned_partner_id")
+
+    try:
+        visit_sequence = int(visit_seq)
+        scheduled_for = date.fromisoformat(scheduled_date)
+    except (TypeError, ValueError):
+        return HttpResponse(
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Please choose a valid planned date and visit slot.</div>',
+            status=400,
+        )
 
     payload = {
         "schoolId": school_id,
@@ -317,23 +318,38 @@ def core_schedule_visit_action(request):
 
     try:
         with transaction.atomic():
+            plan = (
+                CorePlan.objects.select_for_update()
+                .filter(school_id=school_id, fy=get_operational_fy())
+                .first()
+            )
+            if not plan:
+                raise BadRequest("This school does not have an active core package.")
+            slot = CorePackageSchedulingService.assert_can_schedule(
+                plan=plan,
+                school=school,
+                activity_type="visit",
+                sequence_number=visit_sequence,
+                scheduled_for=scheduled_for,
+                is_partner_delivery=bool(partner_id),
+            )
+
             # 1. Create standard Activity in DB
             act_data = create_activity(payload, request.user)
 
-            # 2. Find and update CoreActivitySlot
-            slot_id = cslot_id(school_id, "v", int(visit_seq))
-            slot = CoreActivitySlot.objects.filter(id=slot_id).first()
-            if slot:
-                slot.status = "Scheduled"
-                slot.activity_id = act_data["id"]
-                slot.scheduled_for = scheduled_date
-                slot.scheduled_month = str(payload.get("plannedMonth"))
-                slot.scheduled_week = payload.get("plannedWeek")
-                slot.assigned_staff_id = responsible_staff_id
-                if partner_id:
-                    slot.assigned_partner_id = partner_id
-                    slot.owner = "partner"
-                slot.save()
+            # 2. Update the policy-checked core support slot.
+            slot.status = "Scheduled"
+            slot.activity_id = act_data["id"]
+            slot.scheduled_for = scheduled_date
+            slot.scheduled_month = str(payload.get("plannedMonth"))
+            slot.scheduled_week = payload.get("plannedWeek")
+            slot.assigned_staff_id = responsible_staff_id
+            if partner_id:
+                slot.assigned_partner_id = partner_id
+                slot.owner = "partner"
+            else:
+                slot.owner = "staff"
+            slot.save()
 
             # Audit log
             audit_log(
@@ -347,7 +363,7 @@ def core_schedule_visit_action(request):
 
             # Success message & direct redirect to My Plan
             messages.success(
-                request, f"Core Visit V{visit_seq} scheduled successfully."
+                request, f"Core Visit V{visit_sequence} scheduled successfully."
             )
             response = HttpResponse(
                 '<script>window.location.href = "/my-plan";</script>'
@@ -385,30 +401,22 @@ def core_schedule_training_drawer(request):
     )
     partners = Partner.objects.all().order_by("name")
 
-    # Determine next training sequence number
     fy = get_operational_fy()
     plan = CorePlan.objects.filter(school_id=school_id, fy=fy).first()
-    next_train_seq = 1
-    if plan:
-        completed_trainings = plan.slots.filter(
-            activity_type="training",
-            status__in=[
-                "Completed",
-                "Accountant Confirmed",
-                "iaVerify",
-                "ia_verified",
-                "accountant_confirmed",
-                "Scheduled",
-            ],
-        ).count()
-        next_train_seq = min(4, completed_trainings + 1)
+    available_training_slots = (
+        CorePackageSchedulingService.available_options(plan, "training") if plan else []
+    )
 
     context = {
         "school": school,
         "recommendations": recommendations,
         "staff_members": staff_members,
         "partners": partners,
-        "next_train_seq": next_train_seq,
+        "next_train_seq": available_training_slots[0]["sequence"]
+        if available_training_slots
+        else None,
+        "available_training_slots": available_training_slots,
+        "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "interventions": SsaIntervention.choices,
     }
     return render(
@@ -421,7 +429,7 @@ def core_schedule_training_drawer(request):
 def core_schedule_training_action(request):
     """Handles schedule training submission."""
     school_id = request.POST.get("school_id")
-    get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
     train_seq = request.POST.get("training_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
@@ -429,6 +437,15 @@ def core_schedule_training_action(request):
     expected_participants = request.POST.get("expected_participants", "10")
     responsible_staff_id = request.POST.get("responsible_staff_id")
     partner_id = request.POST.get("assigned_partner_id")
+
+    try:
+        training_sequence = int(train_seq)
+        scheduled_for = date.fromisoformat(scheduled_date)
+    except (TypeError, ValueError):
+        return HttpResponse(
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Please choose a valid planned date and training slot.</div>',
+            status=400,
+        )
 
     payload = {
         "schoolId": school_id,
@@ -458,23 +475,38 @@ def core_schedule_training_action(request):
 
     try:
         with transaction.atomic():
+            plan = (
+                CorePlan.objects.select_for_update()
+                .filter(school_id=school_id, fy=get_operational_fy())
+                .first()
+            )
+            if not plan:
+                raise BadRequest("This school does not have an active core package.")
+            slot = CorePackageSchedulingService.assert_can_schedule(
+                plan=plan,
+                school=school,
+                activity_type="training",
+                sequence_number=training_sequence,
+                scheduled_for=scheduled_for,
+                is_partner_delivery=bool(partner_id),
+            )
+
             # 1. Create standard Activity in DB
             act_data = create_activity(payload, request.user)
 
-            # 2. Find and update CoreActivitySlot
-            slot_id = cslot_id(school_id, "t", int(train_seq))
-            slot = CoreActivitySlot.objects.filter(id=slot_id).first()
-            if slot:
-                slot.status = "Scheduled"
-                slot.activity_id = act_data["id"]
-                slot.scheduled_for = scheduled_date
-                slot.scheduled_month = str(payload.get("plannedMonth"))
-                slot.scheduled_week = payload.get("plannedWeek")
-                slot.assigned_staff_id = responsible_staff_id
-                if partner_id:
-                    slot.assigned_partner_id = partner_id
-                    slot.owner = "partner"
-                slot.save()
+            # 2. Update the policy-checked core support slot.
+            slot.status = "Scheduled"
+            slot.activity_id = act_data["id"]
+            slot.scheduled_for = scheduled_date
+            slot.scheduled_month = str(payload.get("plannedMonth"))
+            slot.scheduled_week = payload.get("plannedWeek")
+            slot.assigned_staff_id = responsible_staff_id
+            if partner_id:
+                slot.assigned_partner_id = partner_id
+                slot.owner = "partner"
+            else:
+                slot.owner = "staff"
+            slot.save()
 
             # Audit log
             audit_log(
@@ -488,7 +520,8 @@ def core_schedule_training_action(request):
 
             # Success message & redirect to My Plan
             messages.success(
-                request, f"Core Training T{train_seq} scheduled successfully."
+                request,
+                f"Core Training T{training_sequence} scheduled successfully.",
             )
             response = HttpResponse(
                 '<script>window.location.href = "/my-plan";</script>'
@@ -510,13 +543,49 @@ def core_assign_partner_drawer(request):
 
     partners = Partner.objects.all().order_by("name")
     interventions = SsaIntervention.choices
+    plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
+    available_visit_slots = (
+        CorePackageSchedulingService.available_options(plan, "visit") if plan else []
+    )
+    available_training_slots = (
+        CorePackageSchedulingService.available_options(plan, "training") if plan else []
+    )
 
     context = {
         "school": school,
         "partners": partners,
         "interventions": interventions,
+        "available_visit_slots": available_visit_slots,
+        "available_training_slots": available_training_slots,
+        "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
     }
     return render(request, "partials/core_schools/assign_partner_drawer.html", context)
+
+
+@require_page_permission("core_schools")
+def core_schedule_activity_drawer(request):
+    """Choose Core package support or an unrestricted general activity."""
+    school_id = request.GET.get("school_id")
+    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
+    summary = CorePackageSchedulingService.summary(plan) if plan else None
+
+    context = {
+        "school": school,
+        "package_available": bool(plan),
+        "package_complete": bool(summary and summary["package_complete"]),
+        "visits_remaining": max(0, (summary["visits_target"] - summary["visits"]))
+        if summary
+        else 0,
+        "trainings_remaining": max(
+            0, (summary["trainings_target"] - summary["trainings"])
+        )
+        if summary
+        else 0,
+    }
+    return render(
+        request, "partials/core_schools/schedule_activity_drawer.html", context
+    )
 
 
 @require_POST
@@ -528,6 +597,7 @@ def core_assign_partner_action(request):
     support_type = request.POST.get("support_type", "Visit")  # Visit | Training
     visit_training_number = request.POST.get("visit_training_number", "1")
     partner_id = request.POST.get("partner_id")
+    purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     focus_intervention = request.POST.get("focus_intervention")
     notes = request.POST.get("notes", "").strip()
 
@@ -535,12 +605,44 @@ def core_assign_partner_action(request):
 
     try:
         with transaction.atomic():
+            if support_type not in {"Visit", "Training"}:
+                raise BadRequest("Choose either a visit or training support slot.")
+            from apps.partners.purposes import normalise_visit_purpose
+
+            purpose_of_visit = normalise_visit_purpose(
+                purpose_of_visit,
+                for_partner=True,
+                fallback_activity_type=(
+                    "in_school_training"
+                    if support_type == "Training"
+                    else "school_visit"
+                ),
+            )
+            activity_type = "visit" if support_type == "Visit" else "training"
+            try:
+                sequence_number = int(visit_training_number)
+            except (TypeError, ValueError) as error:
+                raise BadRequest("Choose an available support slot.") from error
+            plan = (
+                CorePlan.objects.select_for_update()
+                .filter(school_id=school_id, fy=get_operational_fy())
+                .first()
+            )
+            if not plan:
+                raise BadRequest("This school does not have an active core package.")
+            slot = CorePackageSchedulingService.assert_can_assign(
+                plan=plan,
+                activity_type=activity_type,
+                sequence_number=sequence_number,
+            )
+
             # 1. Create PartnerAssignment in DB
             pa = PartnerAssignment.objects.create(
                 school=school,
                 partner=partner,
                 assigning_staff_id=request.user.staff_profile_id,
                 focus_intervention=focus_intervention,
+                purpose_of_visit=purpose_of_visit,
                 expected_activity_type="core_visit"
                 if support_type == "Visit"
                 else "core_training",
@@ -553,16 +655,12 @@ def core_assign_partner_action(request):
                 support_type=support_type,
             )
 
-            # 2. Update CoreActivitySlot
-            kind_prefix = "v" if support_type == "Visit" else "t"
-            slot_id = cslot_id(school_id, kind_prefix, int(visit_training_number))
-            slot = CoreActivitySlot.objects.filter(id=slot_id).first()
-            if slot:
-                slot.status = "Assigned"
-                slot.assigned_partner_id = partner_id
-                slot.assigned_partner_name = partner.name
-                slot.owner = "partner"
-                slot.save()
+            # 2. Reserve the policy-checked CoreActivitySlot.
+            slot.status = "Assigned"
+            slot.assigned_partner_id = partner_id
+            slot.assigned_partner_name = partner.name
+            slot.owner = "partner"
+            slot.save()
 
             # Audit log
             audit_log(

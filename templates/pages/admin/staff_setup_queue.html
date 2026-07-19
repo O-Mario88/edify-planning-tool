@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Staff Setup Queue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Staff Setup Queue</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Resolve raw staff name mappings from onboarding data to match registered CCEOs</p>
 </div>
 </div>
@@ -48,7 +48,7 @@ Pending Link
 <input type="hidden" name="action" value="match">
 <select
 name="staff_id"
-class="rounded-control border border-slate-200 px-2 py-1 edify-text-caption font-semibold bg-slate-50 focus:outline-none focus:border-blue-500 edify-focus-surface"
+class="rounded-control border border-slate-200 px-2 py-1 edify-text-caption font-semibold bg-slate-50 focus:outline-none edify-primary-focus edify-focus-surface"
 >
 <option value="">Select CCEO profile...</option>
 {% for staff in staff_list %}
@@ -61,7 +61,7 @@ class="rounded-control border border-slate-200 px-2 py-1 edify-text-caption font
 <button
 type="submit"
 form="match-form-{{ school.id }}"
-class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 edify-primary-solid edify-primary-hover text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Match
 </button>

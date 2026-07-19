@@ -175,7 +175,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-text: #f5f7fa",
             "--edify-text-muted: #d6dde7",
             "--edify-text-subtle: #aeb9c7",
-            "--edify-accent: #2563eb",
+            "--edify-accent: var(--brand-primary)",
             "--edify-warning: #fb923c",
         ):
             self.assertIn(declaration, tokens)
@@ -183,7 +183,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertGreaterEqual(_contrast_ratio("#f5f7fa", "#0d0d0f"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#0d0d0f"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#0d0d0f"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#ffffff", "#2563eb"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#ffffff", "#0d5b9e"), 4.5)
         self.assertIn("DARK WORKSPACE — CINEMATIC DEPTH, OPERATIONAL CLARITY", platform)
         self.assertIn(
             "background-image: var(--edify-button-primary-treatment)", platform
@@ -196,8 +196,10 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         # Spec §5 brand + §6 four-step light surface ladder.
         for declaration in (
-            "--edify-brand-primary: #4d7187",
-            "--edify-brand-primary-hover: #405e71",
+            "--brand-primary: #0d5b9e",
+            "--brand-primary-hover: #0a4d86",
+            "--edify-brand-primary: var(--brand-primary)",
+            "--edify-brand-primary-hover: var(--brand-primary-hover)",
             "--edify-brand-secondary: #ef564b",
             "--edify-bg: #edf1f3",
             "--edify-section-bg: #f2f5f6",

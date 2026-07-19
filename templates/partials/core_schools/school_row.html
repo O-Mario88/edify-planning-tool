@@ -1,0 +1,57 @@
+<li class="core-school-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
+  <div class="school-record-row__summary">
+    <div class="school-record-row__content">
+      <button
+        type="button"
+        class="school-record-row__expander"
+        @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
+        @keydown.escape.window="openSchoolId = null"
+        :aria-expanded="(openSchoolId === '{{ school.id }}').toString()"
+        :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide SSA details for {{ school.name|escapejs }}' : 'Show SSA details for {{ school.name|escapejs }}'"
+        aria-controls="core-school-details-{{ school.id }}"
+      ></button>
+      <span class="school-record-row__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/></svg>
+      </span>
+      <div class="school-record-row__identity">
+        <h2 class="school-record-row__title">{{ school.name }}</h2>
+        <dl class="school-record-row__metadata">
+          <div><dt>District:</dt><dd>{{ school.district_name|default:"—" }}</dd></div>
+          <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address|default:"—" }}</dd></div>
+          <div><dt>School Type:</dt><dd>{{ school.school_type|default:"Core" }}</dd></div>
+          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{{ school.cluster_name }}{% else %}Not assigned{% endif %}</dd></div>
+          <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
+          <div><dt>Phone:</dt><dd>{{ school.phone|default:"—" }}</dd></div>
+          <div><dt>Primary Contact:</dt><dd>{{ school.school_contact|default:"—" }}</dd></div>
+          <div><dt>Staff Name:</dt><dd>{{ school.staff_name|default:"Unassigned" }}</dd></div>
+          <div class="school-record-row__ssa {% if school.ssa_average_tone %}is-{{ school.ssa_average_tone }}{% endif %}"><dt>SSA:</dt><dd>{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+          <div><dt>Visits:</dt><dd class="{% if school.scheduled_visit_count %}is-positive{% else %}is-attention{% endif %}">{{ school.scheduled_visit_count }}/{{ school.visits_target }}</dd></div>
+          <div><dt>Trainings:</dt><dd class="{% if school.scheduled_training_count %}is-positive{% else %}is-attention{% endif %}">{{ school.scheduled_training_count }}/{{ school.trainings_target }}</dd></div>
+          {% if school.package_complete %}<div><dt>Package:</dt><dd class="is-positive">Complete</dd></div>{% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <div class="school-record-row__actions">
+      <button type="button" class="school-record-action school-record-action--schedule" hx-get="/core-schools/schedule-activity?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Schedule an activity for {{ school.name }}">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
+        <span>Schedule</span>
+      </button>
+      {% if school.core_package_available %}
+        <button type="button" class="school-record-action school-record-action--assign" hx-get="/core-schools/assign-partner?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Assign core support for {{ school.name }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
+          <span>Assign</span>
+        </button>
+      {% else %}
+        <button type="button" class="school-record-action school-record-action--assign" disabled title="{{ school.blocked_reason|default:'Core package complete' }}">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg>
+          <span>Assign</span>
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div id="core-school-details-{{ school.id }}" class="school-record-row__details" x-show="openSchoolId === '{{ school.id }}'" x-transition.opacity.duration.150ms x-cloak>
+    {% include "partials/schools/ssa_score_groups.html" with detail_id="core-school-details-"|add:school.id ssa_groups=school.ssa_groups has_ssa_scores=school.has_ssa_scores selected_fy=selected_fy %}
+  </div>
+</li>

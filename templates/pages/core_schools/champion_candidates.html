@@ -14,7 +14,7 @@
 <span>&bull;</span>
 <span class="text-slate-500">Champion Pipeline</span>
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Champion Candidate Queue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Champion Candidate Queue</h1>
 <p class="text-[14px] text-slate-500 font-medium mt-1">Review core schools that have completed their support packages and met the performance benchmarks for graduation.</p>
 </div>
 
@@ -69,7 +69,7 @@ class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border bor
 </span>
 </td>
 <td class="py-3.5 text-center">
-<span class="inline-flex items-center rounded-pill px-2.5 py-0.5 text-[12px] font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+<span class="inline-flex items-center rounded-pill px-2.5 py-0.5 text-[12px] font-semibold edify-primary-soft edify-primary-text border edify-primary-border">
 {{ c.score }}
 </span>
 </td>
@@ -77,7 +77,7 @@ class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border bor
 <button
 hx-get="{% url 'frontend:champion_review_drawer' c.school_id %}"
 hx-target="#drawer-container"
-class="bg-blue-600 hover:bg-blue-700 text-white rounded-control px-3 py-1.5 edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-colors"
+class="edify-primary-solid edify-primary-hover text-white rounded-control px-3 py-1.5 edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-colors"
 >
 Review
 </button>

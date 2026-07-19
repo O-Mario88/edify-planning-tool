@@ -7,12 +7,12 @@
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 edify-primary-text edify-text-caption font-semibold uppercase tracking-widest">
 Budget Deviation
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Variance Review Queue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Variance Review Queue</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Review activities where the actual spend differs from the approved/disbursed amount. Verify reasons and approve variance adjustments.
 </p>
@@ -75,7 +75,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-1.5">
-<a href="/accounts/activities/{{ item.activity.id }}/" class="h-8 px-3.5 rounded-control bg-blue-50 text-blue-600 hover:bg-blue-100 edify-text-caption font-semibold flex items-center justify-center transition-colors">
+<a href="/accounts/activities/{{ item.activity.id }}/" class="h-8 px-3.5 rounded-control edify-primary-soft edify-primary-text edify-primary-soft-hover edify-text-caption font-semibold flex items-center justify-center transition-colors">
 Reconcile
 </a>
 </div>

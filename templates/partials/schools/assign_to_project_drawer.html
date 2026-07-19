@@ -78,7 +78,7 @@ class="space-y-4"
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project <span class="text-rose-500">*</span></label>
 <select
 name="project_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 required
 >
 <option value="">-- Choose Project --</option>
@@ -96,7 +96,7 @@ required
 type="text"
 name="project_type"
 placeholder="e.g. Curriculum Support"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 <!-- Expected Support Type -->
@@ -104,7 +104,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-s
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Support Type</label>
 <select
 name="participation_type"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 <option value="">— Select —</option>
 <option value="Staff-led support">Staff-led support</option>
@@ -123,7 +123,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Coordinator</label>
 <select
 name="coordinator_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 <option value="">— Project default —</option>
 {% for c in coordinators %}
@@ -136,7 +136,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project Focus Area</label>
 <select
 name="support_area"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 <option value="">— Select focus area —</option>
 {% for code, label in interventions %}
@@ -294,7 +294,7 @@ x-text="day"
 name="notes"
 rows="3"
 placeholder="Targeted impact objectives..."
-class="w-full p-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
+class="w-full p-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus resize-none"
 ></textarea>
 </div>
 

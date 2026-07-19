@@ -9,7 +9,7 @@
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
   <div>
-    <h1 class="text-[21px] font-extrabold tracking-tight leading-tight">Good morning, {{ user_name }} <span class="inline-block"></span></h1>
+    <h1 class="text-[21px] font-extrabold tracking-tight leading-tight edify-page-title">Good morning, {{ user_name }} <span class="inline-block"></span></h1>
     <p class="text-[13px] text-slate-500 font-normal mt-1">Here's your plan for today. Stay focused, drive impact.</p>
   </div>
 
@@ -47,13 +47,12 @@
 
 <!-- Owner-scoped urgent-school decisions -->
 <section id="urgent-schools" class="card overflow-hidden scroll-mt-20" aria-labelledby="urgent-schools-title">
-  <div class="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style="border-bottom:1px solid var(--edify-border);">
+  <div class="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between border-b edify-border-bottom">
     <div>
-      <h2 id="urgent-schools-title" class="text-[15px] font-semibold" style="color:var(--edify-text);">Schools Needing Urgent Attention</h2>
-      <p class="mt-0.5 text-[12px]" style="color:var(--edify-text-muted);">Choose direct support or assign the response to a partner.</p>
+      <h2 id="urgent-schools-title" class="text-[15px] font-semibold edify-text">Schools Needing Urgent Attention</h2>
+      <p class="mt-0.5 text-[12px] edify-text-muted">Choose direct support or assign the response to a partner.</p>
     </div>
-    <span class="inline-flex w-fit items-center rounded-pill px-2.5 py-1 text-[12px] font-semibold"
-          style="color:var(--edify-danger);background:var(--edify-danger-light);border:1px solid var(--edify-danger-border);">
+    <span class="inline-flex w-fit items-center rounded-pill px-2.5 py-1 text-[12px] font-semibold edify-danger-text edify-danger-soft border edify-danger-border">
       {{ urgent_schools|length }} urgent
     </span>
   </div>
@@ -81,7 +80,7 @@
           <h3 class="text-[15px] font-bold text-rose-600 tracking-tight">Overdue From Last Week</h3>
           <span class="bg-rose-50 text-rose-600 font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ overdue_last_week|length }}</span>
         </div>
-        <a href="/my-plan" class="text-[12px] font-bold text-blue-600 hover:underline">View all →</a>
+        <a href="/my-plan" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -95,7 +94,7 @@
               <td class="px-3 py-3 text-[12px] font-semibold text-slate-600">{{ r.where }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.due }}</td>
               <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wide {% if r.status_tone == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-amber-50 text-amber-700{% endif %}">{{ r.status }}</span></td>
-              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% elif r.action_label == 'Reschedule' %}border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}edify-primary-solid edify-primary-hover text-white{% elif r.action_label == 'Reschedule' %}border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600{% else %}border edify-primary-border edify-primary-soft edify-primary-soft-hover edify-primary-text{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">Nothing overdue — you're on track. <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4m3 8l2.3-6L15 13l6 2.3-6 2.3L12.7 23l-2.4-5.4L4 15l6-2zM19 3l.9 2.1L22 6l-2.1.9L19 9l-.9-2.1L16 6l2.1-.9L19 3z"/></svg></td></tr>
@@ -110,9 +109,9 @@
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">School Visits</h3>
-          <span class="bg-blue-50 text-blue-600 font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ school_visits_week|length }}</span>
+          <span class="edify-primary-soft edify-primary-text font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ school_visits_week|length }}</span>
         </div>
-        <a href="/planning" class="text-[12px] font-bold text-blue-600 hover:underline">View all →</a>
+        <a href="/planning" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -126,7 +125,7 @@
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.district }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.purpose|truncatechars:32 }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
-              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}edify-primary-solid edify-primary-hover text-white{% else %}border edify-primary-border edify-primary-soft edify-primary-soft-hover edify-primary-text{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">No school visits scheduled this week.</td></tr>
@@ -141,9 +140,9 @@
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div class="flex items-center gap-2">
           <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Cluster Activities This Week</h3>
-          <span class="bg-indigo-50 text-indigo-600 font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ cluster_activities_week|length }}</span>
+          <span class="edify-primary-soft edify-primary-text font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ cluster_activities_week|length }}</span>
         </div>
-        <a href="/planning" class="text-[12px] font-bold text-blue-600 hover:underline">View all →</a>
+        <a href="/planning" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -154,10 +153,10 @@
             {% for r in cluster_activities_week %}
             <tr class="hover:bg-slate-50/50">
               <td class="px-5 py-3 text-[12.5px] font-bold text-slate-800">{{ r.cluster }}</td>
-              <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold {% if r.type_tone == 'success' %}bg-emerald-50 text-emerald-700{% else %}bg-blue-50 text-blue-700{% endif %}">{{ r.type_label }}</span></td>
+              <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold {% if r.type_tone == 'success' %}bg-emerald-50 text-emerald-700{% else %}edify-primary-soft edify-primary-text{% endif %}">{{ r.type_label }}</span></td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.focus }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
-              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}bg-blue-600 hover:bg-blue-700 text-white{% else %}border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700{% endif %}">{{ r.action_label }}</a></td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}edify-primary-solid edify-primary-hover text-white{% else %}border edify-primary-border edify-primary-soft edify-primary-soft-hover edify-primary-text{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">No cluster activities scheduled this week.</td></tr>
@@ -179,7 +178,7 @@
     <div class="card p-5 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">At a Glance</h3>
-        <a href="/analytics" class="edify-text-caption font-medium text-blue-600 hover:underline">View full analytics</a>
+        <a href="/analytics" class="edify-text-caption font-medium edify-primary-text hover:underline">View full analytics</a>
       </div>
 
       <div class="flex items-center justify-center gap-6">
@@ -189,7 +188,7 @@
             <!-- Completed -->
             <path class="text-emerald-500" stroke-dasharray="{{ kpis.completed_pct }}, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
             <!-- In Progress -->
-            <path class="text-blue-500" stroke-dasharray="{{ kpis.in_progress_pct }}, 100" stroke-dashoffset="{{ kpis.in_progress_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="edify-primary-text" stroke-dasharray="{{ kpis.in_progress_pct }}, 100" stroke-dashoffset="{{ kpis.in_progress_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
             <!-- Planned -->
             <path class="text-amber-500" stroke-dasharray="{{ kpis.planned_pct }}, 100" stroke-dashoffset="{{ kpis.planned_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
             <!-- Overdue -->
@@ -203,7 +202,7 @@
 
         <div class="text-[12px] space-y-2 text-slate-500 flex-1">
           <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500 shrink-0"></span> Completed</span> <span class="font-medium tabular-nums">{{ kpis.completed }} ({{ kpis.completed_pct }}%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-blue-500 shrink-0"></span> In Progress</span> <span class="font-medium tabular-nums">{{ kpis.in_progress }} ({{ kpis.in_progress_pct }}%)</span></div>
+          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill edify-primary-solid shrink-0"></span> In Progress</span> <span class="font-medium tabular-nums">{{ kpis.in_progress }} ({{ kpis.in_progress_pct }}%)</span></div>
           <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-500 shrink-0"></span> Planned</span> <span class="font-medium tabular-nums">{{ kpis.planned }} ({{ kpis.planned_pct }}%)</span></div>
           <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-500 shrink-0"></span> Overdue</span> <span class="font-medium tabular-nums">{{ kpis.overdue }} ({{ kpis.overdue_pct }}%)</span></div>
         </div>
@@ -214,7 +213,7 @@
     <div class="card p-5 space-y-3.5">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Upcoming This Week</h3>
-        <a href="/planning" class="edify-text-caption font-medium text-blue-600 hover:underline">View all</a>
+        <a href="/planning" class="edify-text-caption font-medium edify-primary-text hover:underline">View all</a>
       </div>
 
       <div class="space-y-3">
@@ -237,7 +236,7 @@
     <div class="card p-5 space-y-3.5">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Pending Approvals</h3>
-        <a href="/fund-requests/weekly" class="edify-text-caption font-medium text-blue-600 hover:underline">View all</a>
+        <a href="/fund-requests/weekly" class="edify-text-caption font-medium edify-primary-text hover:underline">View all</a>
       </div>
 
       <div class="space-y-2.5">

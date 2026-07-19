@@ -17,6 +17,12 @@ DAILY_BATCH_ELIGIBLE_TYPES = {
     "follow_up_visit",
     "coaching_visit",
     "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
 }
 
 REQUIRED_KEYS = {

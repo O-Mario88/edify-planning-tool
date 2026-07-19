@@ -253,7 +253,7 @@ class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-sl
 hx-get="/finance/fund-allocation?page={{ p }}&per_page={{ per_page }}&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
 hx-target="#allocation-table-container"
 hx-swap="outerHTML"
-class="h-7 w-7 rounded-control border flex items-center justify-center {% if page == p %}border-blue-500 bg-blue-50 text-blue-600{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
+class="h-7 w-7 rounded-control border flex items-center justify-center {% if page == p %}edify-primary-border edify-primary-soft edify-primary-text{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
 >
 {{ p }}
 </button>

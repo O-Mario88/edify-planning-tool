@@ -60,7 +60,7 @@
         {% if item.status %}
         <span class="shrink-0 inline-flex px-1.5 py-px rounded-pill edify-text-caption font-bold uppercase
           {% if 'scheduled' in item.status|lower %}bg-emerald-50 text-emerald-700
-          {% elif 'progress' in item.status|lower %}bg-blue-50 text-blue-700
+          {% elif 'progress' in item.status|lower %}edify-primary-soft edify-primary-text
           {% else %}bg-slate-50 text-slate-500{% endif %}">{{ item.status }}</span>
         {% endif %}
       </div>

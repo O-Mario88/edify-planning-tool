@@ -8,10 +8,10 @@
 :root {
   --edify-page-max-size: 112rem;
   --edify-control-block-size: 2.5rem;
-  --edify-action-button-block-size: 2.5rem;
-  --edify-action-button-padding-inline: 1rem;
-  --edify-action-button-icon-size: 1rem;
-  --edify-action-button-radius: var(--edify-radius-pill);
+  --edify-action-button-block-size: 2.75rem;
+  --edify-action-button-padding-inline: 1.125rem;
+  --edify-action-button-icon-size: 1.125rem;
+  --edify-action-button-radius: 1rem;
   --edify-panel-padding: clamp(0.75rem, 0.66rem + 0.35vw, 1.0625rem);
   --edify-panel-gap: clamp(0.6875rem, 0.61rem + 0.28vw, 0.9375rem);
   --edify-focus-outline: 2px solid var(--edify-accent);
@@ -414,31 +414,31 @@ main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
   .school-record-action--schedule) {
   color: var(--edify-on-accent) !important;
   background-color: var(--edify-accent) !important;
-  background-image: var(--edify-button-primary-treatment) !important;
-  border: 1px solid color-mix(in oklab, var(--edify-accent) 72%, var(--edify-primary-hover)) !important;
-  box-shadow: 0 10px 20px -12px color-mix(in oklab, var(--edify-accent) 42%, transparent), inset 0 1px 0 rgba(255,255,255,.15) !important;
+  background-image: none !important;
+  border: 1px solid var(--edify-accent) !important;
+  box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--edify-accent) 44%, transparent) !important;
 }
 
 main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
   .school-record-action--schedule):hover:not(:disabled) {
   background-color: var(--edify-accent-hover) !important;
-  background-image: linear-gradient(105deg, var(--edify-primary-hover), var(--edify-accent-hover)) !important;
+  background-image: none !important;
 }
 
 main :where(.btn-ghost, .edify-action-button.secondary, .btn-premium-secondary,
   .school-record-action--assign) {
-  color: var(--edify-text-muted) !important;
+  color: var(--brand-primary-text) !important;
   background-color: var(--edify-surface-raised) !important;
-  background-image: var(--edify-button-secondary-treatment) !important;
-  border: 1px solid var(--edify-border-strong) !important;
-  box-shadow: 0 6px 14px -12px color-mix(in oklab, var(--edify-text) 32%, transparent) !important;
+  background-image: none !important;
+  border: 1px solid var(--brand-primary-border) !important;
+  box-shadow: none !important;
 }
 
 main :where(.btn-ghost, .edify-action-button.secondary, .btn-premium-secondary,
   .school-record-action--assign):hover:not(:disabled) {
-  color: var(--edify-accent) !important;
-  background-color: var(--edify-accent-light) !important;
-  border-color: var(--edify-accent) !important;
+  color: var(--brand-primary-text-hover) !important;
+  background-color: var(--brand-primary-soft) !important;
+  border-color: var(--brand-primary) !important;
 }
 
 /* Match the legacy light-theme selector's specificity so every secondary
@@ -446,38 +446,38 @@ main :where(.btn-ghost, .edify-action-button.secondary, .btn-premium-secondary,
 :root:not(.theme-blue):not(.theme-dark) main :where(.btn-ghost,
   .edify-action-button.secondary, .btn-premium-secondary,
   .school-record-action--assign) {
-  color: var(--edify-text-muted) !important;
-  border-color: var(--edify-border-strong) !important;
+  color: var(--brand-primary-text) !important;
+  border-color: var(--brand-primary-border) !important;
   background-color: var(--edify-surface-raised) !important;
-  background-image: var(--edify-button-secondary-treatment) !important;
-  box-shadow: 0 6px 14px -12px color-mix(in oklab, var(--edify-text) 32%, transparent) !important;
+  background-image: none !important;
+  box-shadow: none !important;
 }
 
 :root:not(.theme-blue):not(.theme-dark) main :where(.btn-ghost,
   .edify-action-button.secondary, .btn-premium-secondary,
   .school-record-action--assign):hover:not(:disabled) {
-  color: var(--edify-accent) !important;
-  border-color: var(--edify-accent) !important;
-  background-color: var(--edify-accent-light) !important;
+  color: var(--brand-primary-text-hover) !important;
+  border-color: var(--brand-primary) !important;
+  background-color: var(--brand-primary-soft) !important;
 }
 
 main :where(button, a)[class*="border-slate-"][class*="rounded"] {
-  border-color: color-mix(in oklab, var(--edify-border-strong) 68%, transparent) !important;
-  background-color: var(--edify-surface) !important;
-  color: var(--edify-text) !important;
+  border-color: var(--brand-primary-border) !important;
+  background-color: var(--edify-surface-raised) !important;
+  color: var(--brand-primary-text) !important;
 }
 
 main :where(button, a)[class*="border-slate-"][class*="rounded"]:hover:not(:disabled) {
-  border-color: var(--edify-accent) !important;
-  background-color: var(--edify-accent-light) !important;
-  color: var(--edify-accent) !important;
+  border-color: var(--brand-primary) !important;
+  background-color: var(--brand-primary-soft) !important;
+  color: var(--brand-primary-text-hover) !important;
 }
 
 main :where(button, input[type="button"], input[type="submit"]):disabled,
 main :where(.btn, .edify-action-button)[aria-disabled="true"] {
   border-color: var(--edify-border) !important;
   background: var(--edify-surface-muted) !important;
-  color: var(--edify-text-subtle) !important;
+  color: var(--edify-text-disabled) !important;
   box-shadow: none !important;
   opacity: 1 !important;
   cursor: not-allowed;
@@ -830,7 +830,7 @@ main .platform-hero {
   border-radius: var(--edify-radius-xl) !important;
   background:
     radial-gradient(circle at 88% 0%, rgba(73, 118, 159, 0.34), transparent 44%),
-    linear-gradient(125deg, #001d39 0%, #0a4174 64%, #173251 100%) !important;
+    linear-gradient(125deg, var(--brand-primary-active) 0%, var(--brand-primary) 64%, var(--brand-primary-hover) 100%) !important;
   box-shadow: 0 18px 42px rgba(0, 29, 57, 0.18) !important;
 }
 
@@ -986,7 +986,7 @@ main .platform-responsive-table [data-priority="low"] {
   button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
   color: var(--edify-on-accent) !important;
   background-color: var(--edify-accent-hover) !important;
-  background-image: linear-gradient(180deg, #2f6fe7 0%, var(--edify-accent-hover) 62%, #1e3a8a 100%) !important;
+  background-image: linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-primary-hover) 62%, var(--brand-primary-active) 100%) !important;
   border-color: rgba(147, 197, 253, 0.72) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 14px 30px -16px rgba(37,99,235,.82) !important;
 }
@@ -2652,6 +2652,72 @@ main .platform-responsive-table [data-priority="low"] {
 }
 
 .school-record-row__detail-footer :where(a, button):hover { text-decoration: underline; }
+
+/* Core Schools uses the same record-row anatomy as Directory, Planning and
+   Cluster lists.  The package status stays as plain, scannable detail instead
+   of becoming another card inside the expanded record. */
+.core-school-package {
+  margin-block-start: 1.15rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.core-school-package__heading p {
+  margin: 0;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  text-transform: uppercase;
+}
+
+.core-school-package__heading h3 {
+  margin: .2rem 0 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.core-school-package__tracks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-block-start: .8rem;
+}
+
+.core-school-package__tracks h4 {
+  margin: 0 0 .45rem;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  text-decoration: underline;
+  text-underline-offset: .16em;
+}
+
+.core-school-package__tracks ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.core-school-package__tracks li {
+  display: grid;
+  gap: .15rem;
+  padding-inline-start: .55rem;
+  border-inline-start: 2px solid var(--edify-border);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.core-school-package__tracks strong { color: var(--edify-text); font-weight: var(--edify-text-title-weight); }
+
+@media (max-width: 38rem) {
+  .core-school-package__tracks { grid-template-columns: 1fr; }
+}
 
 /* Core Schools uses the same school identity scale as the Directory, Planning
    and Cluster lists even though it is rendered as a richer service card. */

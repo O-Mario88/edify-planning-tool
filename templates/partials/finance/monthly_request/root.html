@@ -14,20 +14,20 @@
   <section class="rounded-surface border border-slate-800 bg-slate-900 px-5 py-5 text-white shadow-sm sm:px-6">
     <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
-        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] text-blue-200">Team funding workspace</p>
+        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">Team funding workspace</p>
         <h1 class="mt-1 text-[24px] font-bold tracking-tight">Monthly Team Budget Request</h1>
         <p class="mt-1 text-[13px] font-medium text-slate-300">{{ month_label }} · FY {{ fy }} · Program Lead team</p>
       </div>
       <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="grid grid-cols-2 gap-2 rounded-surface border border-white/10 bg-white/5 p-2.5 sm:flex sm:items-end">
         <label class="block min-w-0">
           <span class="block px-1 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
-          <select name="month" aria-label="Month" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white focus:border-blue-300 focus:outline-none">
+          <select name="month" aria-label="Month" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white edify-primary-focus focus:outline-none">
             <option value="1" {% if month == 1 %}selected{% endif %}>January</option><option value="2" {% if month == 2 %}selected{% endif %}>February</option><option value="3" {% if month == 3 %}selected{% endif %}>March</option><option value="4" {% if month == 4 %}selected{% endif %}>April</option><option value="5" {% if month == 5 %}selected{% endif %}>May</option><option value="6" {% if month == 6 %}selected{% endif %}>June</option><option value="7" {% if month == 7 %}selected{% endif %}>July</option><option value="8" {% if month == 8 %}selected{% endif %}>August</option><option value="9" {% if month == 9 %}selected{% endif %}>September</option><option value="10" {% if month == 10 %}selected{% endif %}>October</option><option value="11" {% if month == 11 %}selected{% endif %}>November</option><option value="12" {% if month == 12 %}selected{% endif %}>December</option>
           </select>
         </label>
         <label class="block min-w-0">
           <span class="block px-1 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial year</span>
-          <select name="fy" aria-label="Financial year" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white focus:border-blue-300 focus:outline-none">
+          <select name="fy" aria-label="Financial year" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white edify-primary-focus focus:outline-none">
             {% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
           </select>
         </label>
@@ -36,15 +36,15 @@
   </section>
 
   <section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Monthly request progress">
-    <div class="rounded-surface border p-4 {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}border-blue-500 bg-blue-600 text-white shadow-sm{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
-      <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}text-blue-100{% else %}text-slate-400{% endif %}">Team budget</p>
+    <div class="rounded-surface border p-4 {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
+      <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">Team budget</p>
       <p class="mt-1 text-[20px] font-bold tabular-nums">{{ shown_total_fmt }}</p>
-      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}text-blue-100{% else %}text-slate-500{% endif %}">{% if request_state == 'not_fetched' %}Ready to review{% elif request_state == 'returned_by_cd' %}Update needed{% else %}Review and submit{% endif %}</p>
+      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'not_fetched' %}Ready to review{% elif request_state == 'returned_by_cd' %}Update needed{% else %}Review and submit{% endif %}</p>
     </div>
-    <div class="rounded-surface border p-4 {% if request_state == 'submitted_to_cd' %}border-blue-500 bg-blue-600 text-white shadow-sm{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
-      <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'submitted_to_cd' %}text-blue-100{% else %}text-slate-400{% endif %}">CD review</p>
+    <div class="rounded-surface border p-4 {% if request_state == 'submitted_to_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
+      <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">CD review</p>
       <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Approved{% elif request_state == 'submitted_to_cd' %}In review{% else %}Next{% endif %}</p>
-      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'submitted_to_cd' %}text-blue-100{% else %}text-slate-500{% endif %}">{% if request_state == 'approved_by_cd' %}Included in country budget{% elif request_state == 'submitted_to_cd' %}Waiting for decision{% else %}Country Director checks it{% endif %}</p>
+      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'approved_by_cd' %}Included in country budget{% elif request_state == 'submitted_to_cd' %}Waiting for decision{% else %}Country Director checks it{% endif %}</p>
     </div>
     <div class="rounded-surface border border-slate-200 edify-surface p-4 text-slate-800">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country budget</p>
@@ -84,7 +84,7 @@
       <div class="min-w-0">
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="text-[15px] font-bold text-slate-800">Activity cost plan</h2>
-          <span class="inline-flex items-center rounded-pill px-2.5 py-1 text-[11px] font-bold {% if status_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif status_tone == 'warning' %}bg-amber-50 text-amber-700{% elif status_tone == 'danger' %}bg-rose-50 text-rose-700{% elif status_tone == 'info' %}bg-blue-50 text-blue-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ status_label }}</span>
+          <span class="inline-flex items-center rounded-pill px-2.5 py-1 text-[11px] font-bold {% if status_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif status_tone == 'warning' %}bg-amber-50 text-amber-700{% elif status_tone == 'danger' %}bg-rose-50 text-rose-700{% elif status_tone == 'info' %}edify-primary-soft edify-primary-text{% else %}bg-slate-100 text-slate-600{% endif %}">{{ status_label }}</span>
         </div>
         <p class="mt-1 text-[12px] font-medium leading-relaxed text-slate-500">{{ source_label }} for {{ month_label }}. Check each activity and cost before you submit.</p>
         <p class="mt-1 text-[12px] font-semibold leading-relaxed text-slate-600">{{ action_hint }}</p>
@@ -92,7 +92,7 @@
         {% if request_state == 'returned_by_cd' and request.review_note %}<p class="mt-2 text-[12px] font-bold text-rose-700">Country Director’s note: {{ request.review_note }}</p>{% endif %}
       </div>
       <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-        <div class="rounded-control border border-blue-100 edify-surface px-3 py-2 text-left shadow-sm sm:text-right">
+        <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm sm:text-right">
           <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
           <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ shown_total_fmt }}</p>
         </div>
@@ -121,19 +121,19 @@
         <tbody class="divide-y divide-slate-200">
           {% for group in cost_groups %}
           <tr>
-            <td colspan="5" class="px-4 py-2.5" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">
+            <td colspan="5" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
               <div class="flex items-center gap-2"><span class="font-semibold">{{ group.label }}</span><span class="text-[11px] font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
             </td>
           </tr>
           <tr class="font-bold">
-            <th class="px-4 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Item</th>
-            <th class="px-3 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Activity</th>
-            <th class="px-3 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Responsible staff</th>
-            <th class="px-3 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Planned date</th>
-            <th class="px-4 py-3 text-right" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Activity cost</th>
+            <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
+            <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Activity</th>
+            <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Responsible staff</th>
+            <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Planned date</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity cost</th>
           </tr>
           {% for item in group.rows %}
-          <tr class="hover:bg-blue-50/40">
+          <tr class="edify-primary-soft-hover">
             <td class="px-4 py-3 font-semibold text-slate-800">{{ item.item }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.activity }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
@@ -142,15 +142,15 @@
           </tr>
           {% endfor %}
           <tr class="text-[13px] font-extrabold">
-            <td colspan="4" class="px-4 py-2.5" style="background-color: var(--edify-accent-light) !important; color: var(--edify-text) !important;">{{ group.label }} subtotal</td>
-            <td class="px-4 py-2.5 text-right tabular-nums" style="background-color: var(--edify-accent-light) !important; color: var(--edify-text) !important;">{{ group.total_fmt }}</td>
+            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
+            <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total_fmt }}</td>
           </tr>
           {% endfor %}
         </tbody>
         <tfoot>
           <tr class="text-[15px] font-extrabold">
-            <td colspan="4" class="px-4 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Grand total</td>
-            <td class="px-4 py-3 text-right tabular-nums" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">{{ shown_total_fmt }}</td>
+            <td colspan="4" class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Grand total</td>
+            <td class="px-4 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ shown_total_fmt }}</td>
           </tr>
         </tfoot>
       </table>

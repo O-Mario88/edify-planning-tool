@@ -26,7 +26,7 @@ name="school_id"
 id="school_id"
 required
 placeholder="e.g. SCH-9999"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -39,7 +39,7 @@ name="name"
 id="name"
 required
 placeholder="e.g. Kampala Hope Academy"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -50,7 +50,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 name="district_id"
 id="district_id"
 required
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="" disabled selected>Select a District</option>
 {% for d in districts %}
@@ -65,7 +65,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1
 <select
 name="school_type"
 id="school_type"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="client" selected>Client School</option>
 <option value="core">Core School</option>
@@ -82,7 +82,7 @@ name="enrollment"
 id="enrollment"
 min="0"
 placeholder="e.g. 250"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -97,7 +97,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 <select
 name="cluster_id"
 id="cluster_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Unassigned (Select later)</option>
 {% for c in clusters %}

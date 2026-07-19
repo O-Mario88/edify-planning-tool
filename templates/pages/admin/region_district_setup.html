@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Geographical Location Setup</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Geographical Location Setup</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manage administrative levels, regions, districts, and parishes</p>
 </div>
 </div>
@@ -35,7 +35,7 @@
 <div class="border border-slate-100 rounded-surface p-4 space-y-3">
 <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-surface">
 <span class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">{{ region.name }} Region</span>
-<span class="bg-blue-100 text-blue-800 edify-text-caption font-semibold px-2 py-0.5 rounded-pill">
+<span class="edify-primary-soft edify-primary-text edify-text-caption font-semibold px-2 py-0.5 rounded-pill">
 {{ region.districts.count }} District(s)
 </span>
 </div>
@@ -77,7 +77,7 @@
 <form method="post" class="flex items-center gap-2">
 {% csrf_token %}
 <input type="hidden" name="action" value="create_group">
-<input type="text" name="group_name" required placeholder="e.g. Kitgum Secondary Route" class="flex-1 rounded-control border border-slate-200 px-3 py-2 text-[12px] focus:outline-none focus:border-blue-500">
+<input type="text" name="group_name" required placeholder="e.g. Kitgum Secondary Route" class="flex-1 rounded-control border border-slate-200 px-3 py-2 text-[12px] focus:outline-none edify-primary-focus">
 <button type="submit" class="h-9 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-control edify-text-caption font-bold">Create Group</button>
 </form>
 
@@ -95,7 +95,7 @@
 {% csrf_token %}
 <input type="hidden" name="action" value="approve_group">
 <input type="hidden" name="group_id" value="{{ group.id }}">
-<button type="submit" class="edify-text-caption font-bold text-blue-600 hover:underline">Approve</button>
+<button type="submit" class="edify-text-caption font-bold edify-primary-text hover:underline">Approve</button>
 </form>
 {% endif %}
 </div>
@@ -150,7 +150,7 @@ type="text"
 name="district_name"
 placeholder="e.g. Mukono"
 required
-class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] focus:outline-none edify-primary-focus focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -159,7 +159,7 @@ class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] focu
 <select
 name="region_id"
 required
-class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] edify-surface focus:outline-none focus:border-blue-500"
+class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] edify-surface focus:outline-none edify-primary-focus"
 >
 <option value="">Select Region...</option>
 {% for region in regions %}
@@ -170,7 +170,7 @@ class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] edif
 
 <button
 type="submit"
-class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-control edify-text-caption font-semibold uppercase tracking-wider text-center transition-all focus:outline-none"
+class="w-full edify-primary-solid edify-primary-hover text-white py-2 rounded-control edify-text-caption font-semibold uppercase tracking-wider text-center transition-all focus:outline-none"
 >
 Create District
 </button>

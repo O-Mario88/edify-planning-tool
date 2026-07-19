@@ -10,7 +10,7 @@
 <a href="/schools" class="edify-text-caption font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">{{ school.name }}</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">{{ school.name }}</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">School ID: <span class="font-mono text-slate-600 font-bold">{{ school.school_id }}</span></p>
 </div>
 <div class="flex items-center gap-2">
@@ -21,7 +21,7 @@ Readiness: {{ school.get_planning_readiness_display }}
 hx-get="/schools/{{ school.id }}/edit-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
 >
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z"/></svg> Edit Details
 </button>
@@ -177,7 +177,7 @@ Improved: {{ impact_data.improvedCount }}
 <h3 class="text-[15px] font-semibold text-slate-800">Data Quality Score</h3>
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider
 {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border border-emerald-200
-{% elif school.data_quality_status == 'Needs Review' %}bg-blue-50 text-blue-700 border border-blue-200
+{% elif school.data_quality_status == 'Needs Review' %}edify-primary-soft edify-primary-text border edify-primary-border
 {% elif school.data_quality_status == 'Needs Cleanup' %}bg-amber-50 text-amber-700 border border-amber-200
 {% else %}bg-rose-50 text-rose-700 border border-rose-200{% endif %}">
 {{ school.data_quality_status }}

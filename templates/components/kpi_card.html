@@ -17,7 +17,7 @@
   <div class="flex items-start gap-3">
     {% if icon %}
       <div class="kpi-icon-circle shrink-0
-                  {% if tone == 'info' %}bg-blue-50 text-blue-500{% elif tone == 'success' %}bg-emerald-50 text-emerald-500{% elif tone == 'warning' %}bg-amber-50 text-amber-500{% elif tone == 'danger' %}bg-rose-50 text-rose-500{% else %}bg-slate-100 text-slate-500{% endif %}">
+                  {% if tone == 'info' %}edify-primary-soft edify-primary-text{% elif tone == 'success' %}bg-emerald-50 text-emerald-500{% elif tone == 'warning' %}bg-amber-50 text-amber-500{% elif tone == 'danger' %}bg-rose-50 text-rose-500{% else %}bg-slate-100 text-slate-500{% endif %}">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>
       </div>
     {% endif %}
@@ -25,7 +25,7 @@
       <p class="edify-text-caption font-semibold text-slate-400 leading-snug">{{ label }}</p>
       <div class="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span class="text-[22px] font-bold
-                     {% if tone == 'info' %}text-blue-700{% elif tone == 'success' %}text-emerald-700{% elif tone == 'warning' %}text-amber-700{% elif tone == 'danger' %}text-rose-700{% else %}text-slate-800{% endif %}
+                     {% if tone == 'info' %}edify-primary-text{% elif tone == 'success' %}text-emerald-700{% elif tone == 'warning' %}text-amber-700{% elif tone == 'danger' %}text-rose-700{% else %}text-slate-800{% endif %}
                      tabular-nums leading-none">{{ value }}</span>
         {% if delta %}
           <span class="edify-text-caption font-semibold

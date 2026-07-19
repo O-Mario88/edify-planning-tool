@@ -4,13 +4,13 @@
 {% block title %}Team Targets · Edify{% endblock %}
 
 {% block shell_content %}
-<main class="tt-page"
+<section class="tt-page"
       x-data="{ showCatchup: false, catchupStaff: '', catchupArea: 'school_visits', staffFilter: 'all', expandedStaff: '' }"
       @click.window="if (expandedStaff && !$event.target.closest('.tt-member-row, .tt-area-row, .tt-mobile-member')) expandedStaff = ''">
   <header class="tt-page-header">
     <div>
       <div class="tt-eyebrow">Performance intelligence</div>
-      <h1>Team Targets</h1>
+      <h1 class="edify-page-title">Team Targets</h1>
       <p>Track validated team performance across the selected month, quarters, and full fiscal year.</p>
     </div>
     <div class="tt-page-header__context" aria-label="Current reporting context">
@@ -22,5 +22,5 @@
   </header>
 
   {% include "partials/targets/team/workspace.html" %}
-</main>
+</section>
 {% endblock %}

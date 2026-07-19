@@ -76,8 +76,7 @@ class="app-sidebar hidden lg:flex"
 <div class="flex items-center gap-4 flex-1">
 <button
 type="button"
-class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:outline-none"
-style="color:var(--edify-text-muted);"
+class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:outline-none edify-text-muted"
 @click="sidebarOpen = true; $nextTick(() => $refs.mobileSidebarClose?.focus())"
 >
 <span class="sr-only">Open sidebar</span>
@@ -93,31 +92,67 @@ style="color:var(--edify-text-muted);"
 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 </svg>
 </div>
-{% if request.path != '/schools' and request.path != '/schools/' %}
-<form method="get" action="/search">
-{% endif %}
-<label class="sr-only" for="{% if request.path == '/schools' or request.path == '/schools/' %}topbar-search-input{% else %}global-search-input{% endif %}">Search schools, staff and districts</label>
+{% comment %}Context-aware topbar search. A page opts in by passing a `topbar_search`
+context dict (placeholder, value, name, input_id, action, method, hx_get,
+hx_target, hx_trigger, hx_include, hidden, attach_to, autosubmit). Without it
+we fall back to the global /search form. Pages with their own inline filter set
+topbar_search.hide. Use attach_to to bind the input to a page-level filter form
+by id via the HTML5 form= attribute (one visible search, no behavior change),
+and autosubmit to submit that form on keyup via Alpine.
+{% endcomment %}
+{% if topbar_search and not topbar_search.hide %}
+{% if topbar_search.attach_to %}
+<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{{ topbar_search.label|default:topbar_search.placeholder|default:'Search' }}</label>
 <input
 type="search"
-placeholder="Search schools, staff, districts..."
-{% if request.path == '/schools' or request.path == '/schools/' %}
-id="topbar-search-input"
-name="q"
-value="{{ q|default:'' }}"
-hx-get="/schools"
-hx-target="#schools-table-container"
-hx-trigger="keyup delay:300ms, search"
-hx-include="#filters-form"
+form="{{ topbar_search.attach_to }}"
+id="{{ topbar_search.input_id|default:'page-search-input' }}"
+name="{{ topbar_search.name|default:'q' }}"
+value="{{ topbar_search.value|default:'' }}"
+placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
+class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+style="padding-left: 36px"
+{% if topbar_search.autosubmit %}x-data="{ t: null }" @input.debounce.300ms="$el.form ? $el.form.requestSubmit() : null"{% endif %}
+>
 {% else %}
+<form
+  method="{{ topbar_search.method|default:'get' }}"
+  {% if topbar_search.hx_get %}{% else %}action="{{ topbar_search.action|default:'/search' }}"{% endif %}
+  {% if topbar_search.hx_get %}
+  hx-get="{{ topbar_search.hx_get }}"
+  hx-target="{{ topbar_search.hx_target }}"
+  hx-trigger="{{ topbar_search.hx_trigger|default:'keyup delay:300ms, search' }}"
+  hx-push-url="true"
+  {% if topbar_search.hx_include %}hx-include="{{ topbar_search.hx_include }}"{% endif %}
+  {% endif %}
+>
+<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{{ topbar_search.label|default:topbar_search.placeholder|default:'Search' }}</label>
+{% for hidden in topbar_search.hidden|default:'' %}<input type="hidden" name="{{ hidden.name }}" value="{{ hidden.value }}">{% endfor %}
+<input
+type="search"
+id="{{ topbar_search.input_id|default:'page-search-input' }}"
+name="{{ topbar_search.name|default:'q' }}"
+value="{{ topbar_search.value|default:'' }}"
+placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
+class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+style="padding-left: 36px"
+@input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
+>
+</form>
+{% endif %}
+{% elif not topbar_search or not topbar_search.hide %}
+<form method="get" action="/search">
+<label class="sr-only" for="global-search-input">Search schools, staff and districts</label>
+<input
+type="search"
 id="global-search-input"
 name="q"
 value="{{ request.GET.q|default:'' }}"
-{% endif %}
-class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all"
-style="padding-left: 36px; background:var(--edify-surface-muted); border:1px solid var(--edify-border); color:var(--edify-text);"
+placeholder="Search schools, staff, districts..."
+class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+style="padding-left: 36px"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
-{% if request.path != '/schools' and request.path != '/schools/' %}
 </form>
 {% endif %}
 </search>
@@ -185,8 +220,7 @@ class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(-
 @click="open = !open"
 aria-label="Account menu"
 :aria-expanded="open"
-class="h-9 w-9 rounded-pill text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none transition-colors"
-style="background:var(--edify-primary);"
+class="h-9 w-9 rounded-pill text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none transition-colors edify-primary-solid"
 >
 <span>{{ request.user.name|avatar_initials }}</span>
 </button>
@@ -194,16 +228,16 @@ style="background:var(--edify-primary);"
 <div
 x-show="open"
 @click.outside="open = false"
-class="absolute right-0 mt-2 w-56 rounded-surface shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
-style="display: none; background:var(--edify-surface); border:1px solid var(--edify-border);"
+class="absolute right-0 mt-2 w-56 rounded-surface shadow-lg py-1.5 text-[12px] z-50 overflow-hidden edify-surface border edify-border"
+style="display: none"
 >
-<div class="px-4 py-2" style="border-bottom:1px solid var(--edify-border);">
-<p class="font-semibold" style="color:var(--edify-text);">{{ request.user.name|default:"District Admin" }}</p>
-<p class="edify-text-caption font-semibold truncate" style="color:var(--edify-text-muted);">{{ request.user.email|default:"admin@district.edify.org" }}</p>
+<div class="px-4 py-2 border-b edify-border-bottom">
+<p class="font-semibold edify-text">{{ request.user.name|default:"District Admin" }}</p>
+<p class="edify-text-caption font-semibold truncate edify-text-muted">{{ request.user.email|default:"admin@district.edify.org" }}</p>
 </div>
 
 {% if request.user.role_enums|length > 1 %}
-<div class="px-3 py-1 edify-text-caption font-bold uppercase tracking-wider" style="background:var(--edify-surface-muted); color:var(--edify-text-subtle);">Switch Active Role</div>
+<div class="px-3 py-1 edify-text-caption font-bold uppercase tracking-wider edify-surface-muted edify-text-subtle">Switch Active Role</div>
 {% for r in request.user.role_enums %}
 <form action="/auth/switch-role" method="post" class="m-0">
 {% csrf_token %}
@@ -217,12 +251,12 @@ class="w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-s
 </button>
 </form>
 {% endfor %}
-<div class="my-1.5" style="border-top:1px solid var(--edify-border);"></div>
+<div class="my-1.5 border-t edify-border-top"></div>
 {% endif %}
 
-<a href="/profile" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold" style="color:var(--edify-text);">My Profile</a>
-<a href="/settings" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold" style="color:var(--edify-text);">Settings &amp; appearance</a>
-<form action="/logout" method="post" class="m-0 mt-1" style="border-top:1px solid var(--edify-border);">
+<a href="/profile" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text">My Profile</a>
+<a href="/settings" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text">Settings &amp; appearance</a>
+<form action="/logout" method="post" class="m-0 mt-1 border-t edify-border-top">
 {% csrf_token %}
 <button
 type="submit"

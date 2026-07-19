@@ -8,7 +8,7 @@
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Cost Catalogue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Cost Catalogue</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
 </div>
 </div>
@@ -45,7 +45,7 @@
 {% if can_initialize %}
 <form method="post" action="/cost-settings/initialize-default" class="mt-4">
 {% csrf_token %}
-<button type="submit" class="h-9 px-4 rounded-control bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold">Initialize Default Catalogue</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold">Initialize Default Catalogue</button>
 </form>
 {% endif %}
 </div>

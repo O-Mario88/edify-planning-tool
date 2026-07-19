@@ -346,6 +346,23 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertEqual(planning_school["ssaAverage"], 5.4)
 
+    def test_planning_keeps_partner_assignment_available_when_scheduling_is_blocked(self):
+        """A partner handoff does not create a costed activity until dated.
+
+        The Planning list must therefore keep Assign available to authorised
+        staff even if the school's own staff scheduling is blocked by setup
+        readiness checks such as an unassigned cluster or missing catalogue.
+        """
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.get("/planning")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'hx-get="/planning/assign-partner-modal?school_id={self.school.school_id}"',
+        )
+
     def test_school_directory_tabs_and_page_size_are_server_owned(self):
         """Tab clicks must send one canonical value and every later filter
         request must retain it. Page size is a real backend filter, not a
@@ -446,7 +463,7 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "(3/10)")
         self.assertContains(response, "(7/10)")
         self.assertContains(response, "(6/10)")
-        self.assertContains(response, "Schedule Now")
+        self.assertContains(response, "Schedule")
         self.assertContains(
             response,
             'class="school-record-action school-record-action--assign"',
@@ -515,7 +532,7 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, "School Type:")
         self.assertContains(response, "Staff Name:")
         self.assertContains(response, self.cceo_user.name)
-        self.assertContains(response, "Schedule Now")
+        self.assertContains(response, "Schedule")
         self.assertContains(response, ">Assign<")
 
         school_row = next(
@@ -543,7 +560,7 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, '@click.outside="openSchoolId = null"')
         self.assertContains(response, "Plot 12, Kampala Road")
         self.assertContains(response, "School Type:")
-        self.assertContains(response, "Schedule Now")
+        self.assertContains(response, "Schedule")
         self.assertContains(response, ">Assign<")
 
     def test_planning_filters_return_one_table_and_refresh_tab_state(self):

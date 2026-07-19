@@ -86,7 +86,7 @@ hx-swap="innerHTML"
 {% else %}
 <select
 name="cluster_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 hx-get="/clusters/planner-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
@@ -432,7 +432,7 @@ Cost details need attention. You can still schedule now; the item will be marked
 </div>
 
 <!-- Modal Footer Actions (Schedule & Assign to Partner) -->
-<div class="sticky bottom-[-28px] z-10 -mx-7 px-7 py-4 flex items-center justify-end gap-3" style="background:var(--edify-surface); border-top: 1px solid var(--edify-border);">
+<div class="sticky bottom-[-28px] z-10 -mx-7 px-7 py-4 flex items-center justify-end gap-3 edify-surface border-t edify-border-top">
 <button
 type="button"
 @click="$dispatch('close-drawer')"

@@ -1,6 +1,6 @@
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
-from apps.core.enums import SsaIntervention
+from apps.core.enums import ActivityStatus, SsaIntervention
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.activities.models import Activity
@@ -27,7 +27,6 @@ class PlanningReadinessService:
                 "blockedActions": [
                     "Schedule visit",
                     "Schedule training",
-                    "Assign to Partner",
                 ],
             }
 
@@ -51,7 +50,6 @@ class PlanningReadinessService:
                 "blockedActions": [
                     "Schedule visit",
                     "Schedule training",
-                    "Assign to Partner",
                 ],
             }
 
@@ -65,7 +63,6 @@ class PlanningReadinessService:
                 "blockedActions": [
                     "Schedule visit",
                     "Schedule training",
-                    "Assign to Partner",
                 ],
             }
 
@@ -79,7 +76,6 @@ class PlanningReadinessService:
                 "blockedActions": [
                     "Schedule visit",
                     "Schedule training",
-                    "Assign to Partner",
                 ],
             }
 
@@ -95,7 +91,6 @@ class PlanningReadinessService:
                     "blockedActions": [
                         "Schedule visit",
                         "Schedule training",
-                        "Assign to Partner",
                     ],
                 }
             elif status in (
@@ -112,7 +107,6 @@ class PlanningReadinessService:
                     "blockedActions": [
                         "Schedule visit",
                         "Schedule training",
-                        "Assign to Partner",
                     ],
                 }
 
@@ -463,9 +457,26 @@ class PlanningDashboardService:
                         staff_names_by_owner_id[staff.user_id] = staff.user.name
 
             # Resolve scheduled activities
-            scheduled_activities = Activity.objects.filter(
-                school_id__in=school_ids, deleted_at__isnull=True, fy=fy
-            ).exclude(status="cancelled")
+            # A school can have historical activities from the same financial
+            # year.  Only an active activity can be opened from Planning for a
+            # reschedule; choosing an unordered historical record made the
+            # action appear to fail for some schools.
+            scheduled_activities = (
+                Activity.objects.filter(
+                    school_id__in=school_ids, deleted_at__isnull=True, fy=fy
+                )
+                .exclude(
+                    status__in=[
+                        ActivityStatus.COMPLETED,
+                        ActivityStatus.CLOSED,
+                        ActivityStatus.REJECTED,
+                        ActivityStatus.RESCHEDULED,
+                        ActivityStatus.CANCELLED,
+                        ActivityStatus.DEFERRED,
+                    ]
+                )
+                .order_by("-planned_date", "-created_at")
+            )
 
             scheduled_map = {}
             for act in scheduled_activities:

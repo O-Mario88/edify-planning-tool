@@ -1,0 +1,445 @@
+/* Operations Calendar — a native Edify month workspace. It deliberately uses
+   the shared tokens so the calendar never becomes a second visual system. */
+.calendar-workspace {
+  width: min(100%, var(--edify-page-max-size));
+  margin-inline: auto;
+  padding: clamp(1rem, 0.75rem + 1vw, 1.75rem) var(--edify-page-gutter) 2rem;
+}
+
+.calendar-workspace__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.calendar-workspace__header h1 {
+  margin: 0;
+  color: var(--edify-text);
+}
+
+.calendar-workspace__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--brand-primary-text);
+  font: var(--edify-font-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calendar-workspace__intro {
+  max-width: 58ch;
+  margin: 0.35rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-body-size);
+}
+
+.calendar-workspace__leave-action,
+.calendar-month__controls .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: var(--edify-action-button-block-size);
+  padding-inline: var(--edify-action-button-padding-inline);
+  border-radius: var(--edify-action-button-radius);
+  font: var(--edify-font-label);
+  font-weight: var(--edify-text-title-weight);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.calendar-workspace__leave-action svg {
+  width: var(--edify-action-button-icon-size);
+  height: var(--edify-action-button-icon-size);
+}
+
+.calendar-workspace__filters {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  margin-bottom: 0.9rem;
+  padding: 0.25rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.calendar-workspace__filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.2rem;
+  padding: 0.35rem 0.75rem;
+  color: var(--edify-text-muted);
+  border: 1px solid transparent;
+  border-radius: calc(var(--edify-radius-control) - 0.2rem);
+  background: transparent;
+  font: var(--edify-font-label);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--edify-transition-fast), color var(--edify-transition-fast), border-color var(--edify-transition-fast);
+}
+
+.calendar-workspace__filters button:hover {
+  color: var(--brand-primary-text);
+  background: var(--brand-primary-soft);
+}
+
+.calendar-workspace__filters button.is-active {
+  color: var(--brand-primary-on-solid);
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  box-shadow: 0 4px 12px -9px color-mix(in oklab, var(--brand-primary) 60%, transparent);
+}
+
+.calendar-workspace__filters span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  min-height: 1.25rem;
+  padding-inline: 0.3rem;
+  border-radius: var(--edify-radius-pill);
+  background: color-mix(in oklab, currentColor 12%, transparent);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-month {
+  overflow: hidden;
+  border: 1px solid var(--edify-card-border);
+  border-radius: var(--edify-radius-surface);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.calendar-month__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(0.9rem, 0.75rem + 0.55vw, 1.25rem);
+  border-bottom: 1px solid var(--edify-border);
+}
+
+.calendar-month__heading,
+.calendar-month__controls {
+  display: flex;
+  align-items: center;
+}
+
+.calendar-month__heading {
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.calendar-month__date-card {
+  display: grid;
+  flex: 0 0 auto;
+  place-content: center;
+  width: 3.3rem;
+  height: 3.3rem;
+  overflow: hidden;
+  border: 1px solid var(--brand-primary-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary-text);
+  text-align: center;
+}
+
+.calendar-month__date-card span {
+  margin-top: 0.1rem;
+  font-size: 0.59rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+.calendar-month__date-card strong {
+  margin-top: 0.1rem;
+  font-size: 1.3rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-month__heading h2 {
+  margin: 0;
+  color: var(--edify-text);
+}
+
+.calendar-month__heading p {
+  margin: 0.2rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-caption-size);
+}
+
+.calendar-month__controls {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.calendar-month__icon-control {
+  width: var(--edify-action-button-block-size);
+  padding: 0 !important;
+}
+
+.calendar-month__icon-control svg,
+.calendar-month__view-label svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.calendar-month__today-control {
+  padding-inline: 0.85rem !important;
+}
+
+.calendar-month__view-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--edify-action-button-block-size);
+  margin-left: 0.15rem;
+  padding-inline: 0.85rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-action-button-radius);
+  color: var(--edify-text-muted);
+  background: var(--edify-surface-muted);
+  font: var(--edify-font-label);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.calendar-month__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 48rem;
+}
+
+.calendar-month__weekday {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--edify-border);
+  color: var(--edify-text-muted);
+  background: var(--edify-surface-muted);
+  font: var(--edify-font-label);
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.calendar-day {
+  min-height: clamp(7.75rem, 11vw, 10.5rem);
+  padding: 0.55rem;
+  border-right: 1px solid var(--edify-border);
+  border-bottom: 1px solid var(--edify-border);
+  background: var(--edify-surface-raised);
+}
+
+.calendar-day:nth-child(7n) {
+  border-right: 0;
+}
+
+.calendar-day--outside {
+  background: color-mix(in oklab, var(--edify-surface-muted) 70%, transparent);
+}
+
+.calendar-day--outside .calendar-day__number {
+  color: var(--edify-text-subtle);
+}
+
+.calendar-day--today {
+  background: color-mix(in oklab, var(--brand-primary-soft) 38%, var(--edify-surface-raised));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand-primary) 40%, transparent);
+}
+
+.calendar-day__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  min-height: 1.4rem;
+  margin-bottom: 0.3rem;
+}
+
+.calendar-day__number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.45rem;
+  min-height: 1.45rem;
+  border-radius: var(--edify-radius-pill);
+  color: var(--edify-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-day--today .calendar-day__number {
+  color: var(--brand-primary-on-solid);
+  background: var(--brand-primary);
+}
+
+.calendar-day__today-label {
+  color: var(--brand-primary-text);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.calendar-day__events {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.calendar-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.28rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: var(--edify-radius-xs);
+  color: var(--edify-text);
+  text-decoration: none;
+}
+
+a.calendar-event {
+  transition: transform var(--edify-transition-fast), border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+
+a.calendar-event:hover,
+a.calendar-event:focus-visible {
+  transform: translateY(-1px);
+  border-color: currentColor;
+  box-shadow: var(--edify-shadow-sm);
+  outline: none;
+}
+
+.calendar-event--activity {
+  color: color-mix(in oklab, var(--brand-primary-text) 82%, var(--edify-text));
+  background: color-mix(in oklab, var(--brand-primary-soft) 72%, transparent);
+}
+
+.calendar-event--leave {
+  color: var(--edify-warning);
+  background: var(--edify-warning-light);
+}
+
+.calendar-event--holiday {
+  color: var(--edify-danger);
+  background: var(--edify-danger-light);
+}
+
+.calendar-event__dot {
+  flex: 0 0 auto;
+  width: 0.38rem;
+  height: 0.38rem;
+  margin-top: 0.33rem;
+  border-radius: var(--edify-radius-pill);
+  background: currentColor;
+}
+
+.calendar-event__copy {
+  display: grid;
+  min-width: 0;
+}
+
+.calendar-event__copy strong,
+.calendar-event__copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-event__copy strong {
+  font-size: 0.69rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.calendar-event__copy small {
+  margin-top: 0.05rem;
+  color: currentColor;
+  font-size: 0.61rem;
+  line-height: 1.2;
+  opacity: 0.82;
+}
+
+.calendar-month__legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  padding: 0.8rem 1rem;
+  color: var(--edify-text-muted);
+  border-top: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+  font-size: var(--edify-text-caption-size);
+}
+
+.calendar-month__legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.calendar-month__legend p {
+  margin: 0 0 0 auto;
+  color: var(--edify-text-subtle);
+}
+
+.calendar-month__legend-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--edify-radius-pill);
+}
+
+.calendar-month__legend-dot--activity { background: var(--brand-primary); }
+.calendar-month__legend-dot--leave { background: var(--edify-warning); }
+.calendar-month__legend-dot--holiday { background: var(--edify-danger); }
+
+@media (max-width: 52rem) {
+  .calendar-workspace__header,
+  .calendar-month__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendar-workspace__leave-action {
+    align-self: flex-start;
+  }
+
+  .calendar-month__controls {
+    justify-content: flex-start;
+  }
+
+  .calendar-month {
+    overflow-x: auto;
+  }
+
+  .calendar-month__toolbar,
+  .calendar-month__legend {
+    min-width: 48rem;
+  }
+}
+
+@media (max-width: 38rem) {
+  .calendar-workspace {
+    padding-top: 0.9rem;
+  }
+
+  .calendar-workspace__filters {
+    width: 100%;
+  }
+
+  .calendar-workspace__filters button {
+    flex: 0 0 auto;
+  }
+}

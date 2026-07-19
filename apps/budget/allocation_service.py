@@ -10,6 +10,12 @@ VISIT_TYPES = {
     "coaching_visit",
     "in_school_support",
     "core_visit",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
 }
 
 
@@ -75,6 +81,7 @@ class MonthlyFundAllocationService:
                 elif act_type in [
                     "cluster_training",
                     "training",
+                    "in_school_training",
                     "school_improvement_training",
                     "core_training",
                     "cluster_meeting",
@@ -82,7 +89,12 @@ class MonthlyFundAllocationService:
                     cat = "cluster_training"
                 elif act_type == "partner_activity" or (
                     act_type
-                    in ["training", "school_improvement_training", "core_training"]
+                    in [
+                        "training",
+                        "in_school_training",
+                        "school_improvement_training",
+                        "core_training",
+                    ]
                     and delivery == "partner"
                 ):
                     cat = "partner_in_school_training"

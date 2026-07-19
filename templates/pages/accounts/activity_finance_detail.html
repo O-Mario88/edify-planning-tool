@@ -178,7 +178,7 @@ type="text"
 name="netsuite_expense_id"
 required
 placeholder="e.g. EXP-2026-99"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3.5 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all shadow-inner"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3.5 edify-focus-surface edify-primary-focus focus:outline-none transition-all shadow-inner"
 >
 </div>
 <div class="grid grid-cols-2 gap-2">
@@ -189,7 +189,7 @@ type="date"
 name="expense_date"
 required
 value="{% now "Y-m-d" %}"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-2 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-2 edify-focus-surface edify-primary-focus focus:outline-none transition-all"
 >
 </div>
 <div>
@@ -199,7 +199,7 @@ type="number"
 name="amount_entered"
 required
 value="{{ act.est_cost_cents|default:'' }}"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-2 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-2 edify-focus-surface edify-primary-focus focus:outline-none transition-all"
 >
 </div>
 </div>

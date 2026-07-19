@@ -1,8 +1,11 @@
 import logging
+from datetime import date
+
 from django.db.models import Avg, Count, Q
 from django.db.models.functions import TruncMonth
+from apps.core.exceptions import BadRequest
 from apps.core.enums import SsaIntervention
-from apps.core.fy import get_operational_fy
+from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.schools.models import School
 from apps.geography.models import Region
 from apps.accounts.models import StaffProfile
@@ -20,6 +23,219 @@ from apps.core_schools.models import (
 from apps.core_schools.services import EXPECTED_CORE_SLOTS
 
 logger = logging.getLogger(__name__)
+
+
+# A support slot counts toward the annual 4 + 4 package as soon as it has
+# reached the calendar. Review and completion states remain counted as well:
+# the same slot is still reserved and must not be planned a second time.
+CORE_ALLOCATED_SLOT_STATUSES = frozenset(
+    {
+        "scheduled",
+        "in_progress",
+        "in progress",
+        "evidence uploaded",
+        "evidence_uploaded",
+        "evidence accepted",
+        "evidence_accepted",
+        "awaiting_ia_verification",
+        "submitted_to_pl",
+        "ia pending",
+        "iapending",
+        "completed",
+        "closed",
+        "ia_verified",
+        "iaverified",
+        "accountant_confirmed",
+        "accountantconfirmed",
+        "returned",
+        "returned_by_pl",
+        "evidence returned",
+        "evidence_returned",
+    }
+)
+CORE_SLOT_ORDINALS = {
+    1: "First",
+    2: "Second",
+    3: "Third",
+    4: "Fourth",
+}
+
+
+class CorePackageSchedulingService:
+    """One source of truth for the Core Schools 4 visits + 4 trainings rule.
+
+    The activity lifecycle remains the authority for verification and Champion
+    graduation. This service only answers whether support has been allocated
+    on the calendar, which is the right signal for the operational scheduling
+    cap and the live counts shown on the Core Schools list.
+    """
+
+    @staticmethod
+    def _normalise_status(value: str | None) -> str:
+        return (value or "").strip().lower()
+
+    @classmethod
+    def is_allocated(cls, slot: CoreActivitySlot) -> bool:
+        return cls._normalise_status(slot.status) in CORE_ALLOCATED_SLOT_STATUSES
+
+    @classmethod
+    def summary(cls, plan: CorePlan, slots=None) -> dict:
+        slot_list = list(slots if slots is not None else plan.slots.all())
+        visits = sum(
+            cls.is_allocated(slot)
+            for slot in slot_list
+            if slot.activity_type == "visit"
+        )
+        trainings = sum(
+            cls.is_allocated(slot)
+            for slot in slot_list
+            if slot.activity_type == "training"
+        )
+        visits_target = plan.visits_target or 4
+        trainings_target = plan.trainings_target or 4
+        package_complete = visits >= visits_target and trainings >= trainings_target
+        return {
+            "visits": visits,
+            "trainings": trainings,
+            "visits_target": visits_target,
+            "trainings_target": trainings_target,
+            "package_complete": package_complete,
+            "package_status": "Package complete" if package_complete else "In progress",
+        }
+
+    @classmethod
+    def available_sequences(cls, plan: CorePlan, activity_type: str) -> list[int]:
+        slots = plan.slots.filter(activity_type=activity_type).order_by("sequence_number")
+        return [
+            slot.sequence_number
+            for slot in slots
+            if not cls.is_allocated(slot)
+            and cls._normalise_status(slot.status) != "assigned"
+        ]
+
+    @classmethod
+    def available_options(cls, plan: CorePlan, activity_type: str) -> list[dict]:
+        """Return only open slots with plain-language labels for the UI."""
+        support_name = "Visit" if activity_type == "visit" else "Training"
+        return [
+            {
+                "sequence": sequence,
+                "label": f"{CORE_SLOT_ORDINALS.get(sequence, sequence)} {support_name}",
+            }
+            for sequence in cls.available_sequences(plan, activity_type)
+        ]
+
+    @classmethod
+    def assert_can_schedule(
+        cls,
+        *,
+        plan: CorePlan,
+        school: School,
+        activity_type: str,
+        sequence_number: int,
+        scheduled_for: date,
+        is_partner_delivery: bool,
+    ) -> CoreActivitySlot:
+        """Lock one usable slot and enforce the annual/quarterly policy.
+
+        Staff delivery is released one visit and one training at a time in the
+        current operational quarter. Partner delivery can be scheduled in any
+        quarter, but remains inside the non-negotiable annual 4 + 4 cap.
+        """
+        if activity_type not in {"visit", "training"}:
+            raise BadRequest("Core support must be a visit or a training.")
+
+        summary = cls.summary(plan)
+        if summary["package_complete"]:
+            raise BadRequest(
+                "This core package is complete: all 4 visits and 4 trainings are already scheduled or completed."
+            )
+
+        count_key = "visits" if activity_type == "visit" else "trainings"
+        target_key = "visits_target" if activity_type == "visit" else "trainings_target"
+        if summary[count_key] >= summary[target_key]:
+            raise BadRequest(
+                f"All {summary[target_key]} core {activity_type}s are already scheduled or completed."
+            )
+
+        slot = (
+            CoreActivitySlot.objects.select_for_update()
+            .filter(
+                core_plan=plan,
+                activity_type=activity_type,
+                sequence_number=sequence_number,
+            )
+            .first()
+        )
+        if not slot:
+            raise BadRequest("That core support slot is unavailable.")
+        if cls.is_allocated(slot):
+            raise BadRequest("That core support slot is already scheduled or completed.")
+        if cls._normalise_status(slot.status) == "assigned":
+            raise BadRequest(
+                "That slot is assigned to a partner and must be scheduled from the partner queue."
+            )
+
+        requested_fy = get_operational_fy(scheduled_for)
+        if str(requested_fy) != str(plan.fy):
+            raise BadRequest(
+                "Core support must be scheduled within this package's fiscal year."
+            )
+
+        if not is_partner_delivery:
+            current_day = date.today()
+            current_fy = get_operational_fy(current_day)
+            current_quarter = get_quarter_for_date(current_day)
+            requested_quarter = get_quarter_for_date(scheduled_for)
+            if (requested_fy, requested_quarter) != (current_fy, current_quarter):
+                raise BadRequest(
+                    f"Staff core support is released in the current {current_quarter} only. "
+                    "Partner delivery may be scheduled in another quarter."
+                )
+
+            activity_kind = f"core_{activity_type}"
+            staff_already_scheduled = (
+                Activity.objects.filter(
+                    school=school,
+                    activity_type=activity_kind,
+                    fy=current_fy,
+                    quarter=current_quarter,
+                    delivery_type="staff",
+                    deleted_at__isnull=True,
+                )
+                .exclude(status__in=["cancelled", "rejected"])
+                .exists()
+            )
+            if staff_already_scheduled:
+                raise BadRequest(
+                    f"One staff-led core {activity_type} is already scheduled in {current_quarter}. "
+                    "The next staff slot opens at the start of the next quarter; partner delivery remains available."
+                )
+
+        return slot
+
+    @classmethod
+    def assert_can_assign(
+        cls, *, plan: CorePlan, activity_type: str, sequence_number: int
+    ) -> CoreActivitySlot:
+        """Reserve only an untouched slot for a partner assignment."""
+        summary = cls.summary(plan)
+        if summary["package_complete"]:
+            raise BadRequest(
+                "This core package is complete: all 4 visits and 4 trainings are already scheduled or completed."
+            )
+        slot = (
+            CoreActivitySlot.objects.select_for_update()
+            .filter(
+                core_plan=plan,
+                activity_type=activity_type,
+                sequence_number=sequence_number,
+            )
+            .first()
+        )
+        if not slot or cls.is_allocated(slot) or cls._normalise_status(slot.status) == "assigned":
+            raise BadRequest("That core support slot is no longer available to assign.")
+        return slot
 
 
 def build_sparkline_path(
@@ -379,17 +595,23 @@ class CorePackageProgressService:
                     next_missing_milestone = f"Missing {seq_names[seq]} Training"
                     break
 
-            # Determine overall planning readiness
-            blocked_reason = None
-            if not s.account_owner_id:
-                blocked_reason = "Match Staff First"
-            elif s.cluster_status == "unclustered" or not s.cluster_id:
-                blocked_reason = "Assign Cluster First"
-            elif not latest_ssa:
-                blocked_reason = "Complete SSA First"
-
             cluster_name = clusters_map.get(s.cluster_id, "—") if s.cluster_id else "—"
             project_count = project_counts_map.get(s.id, 0)
+            if plan:
+                package_summary = CorePackageSchedulingService.summary(plan, slots)
+                blocked_reason = (
+                    "Package complete" if package_summary["package_complete"] else None
+                )
+            else:
+                package_summary = {
+                    "visits": 0,
+                    "trainings": 0,
+                    "visits_target": 4,
+                    "trainings_target": 4,
+                    "package_complete": False,
+                    "package_status": "Package unavailable",
+                }
+                blocked_reason = "Core package unavailable"
 
             schools_data.append(
                 {
@@ -424,6 +646,14 @@ class CorePackageProgressService:
                     "assessment": assessment_cell,
                     "visits": visits,
                     "trainings": trainings,
+                    "scheduled_visit_count": package_summary["visits"],
+                    "scheduled_training_count": package_summary["trainings"],
+                    "visits_target": package_summary["visits_target"],
+                    "trainings_target": package_summary["trainings_target"],
+                    "package_complete": package_summary["package_complete"],
+                    "package_status": package_summary["package_status"],
+                    "core_package_available": bool(plan)
+                    and not package_summary["package_complete"],
                     "blocked_reason": blocked_reason,
                     "next_missing_milestone": next_missing_milestone,
                 }
@@ -466,7 +696,7 @@ class CorePackageProgressService:
         elif status in ["scheduled", "assigned", "in_progress", "in progress"]:
             return {
                 "status": "Scheduled",
-                "pill_class": "bg-blue-50 text-blue-700 border-blue-200",
+                "pill_class": "edify-primary-soft edify-primary-text edify-primary-border",
                 "label": "Sch",
             }
         elif status in [

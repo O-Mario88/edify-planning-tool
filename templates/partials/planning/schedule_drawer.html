@@ -1,23 +1,49 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}Schedule {{ recommended_activity_label|default:"School Visit" }}{% endblock %}
-{% block drawer_subtitle %}Configure activity details for {{ school.name }}{% endblock %}
+{% block drawer_title %}{% if reschedule_mode %}Reschedule {{ recommended_activity_label|default:"Activity" }}{% else %}Schedule {{ recommended_activity_label|default:"School Visit" }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if reschedule_mode %}Update the planned date for {{ schedule_subject_name }} without creating another activity.{% else %}Configure activity details for {{ school.name }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 <form
-hx-post="/planning/schedule-action"
+hx-post="{% if reschedule_mode %}{{ reschedule_action_url }}{% else %}/planning/schedule-action{% endif %}"
 hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
-x-data="{ delivery: 'staff', ssa_expected: 'yes', activityType: '{{ recommended_activity_type|default:'school_visit' }}' }"
+x-data="{
+delivery: '{% if reschedule_mode %}{{ reschedule_activity.delivery_type|default:'staff' }}{% else %}staff{% endif %}',
+ssa_expected: 'yes',
+purposeOfVisit: '{{ recommended_visit_purpose|default:'ssa_support' }}',
+activityType: '{{ recommended_activity_type|default:'school_visit' }}',
+partnerPurposes: ['in_school_training', 'training_follow_up', 'ssa_support'],
+purposeActivityTypes: {
+in_school_training: 'in_school_training',
+training_follow_up: 'training_follow_up_visit',
+ssa_support: 'school_visit_ssa_collection',
+donor_visit: 'donor_visit',
+story_gathering: 'story_gathering_visit',
+school_invitation: 'school_invitation',
+social_visit: 'social_visit',
+in_school_coaching: 'in_school_coaching_visit'
+},
+setPurpose() { this.activityType = this.purposeActivityTypes[this.purposeOfVisit] || this.activityType },
+setDelivery() {
+if (this.delivery === 'partner' && !this.partnerPurposes.includes(this.purposeOfVisit)) {
+this.purposeOfVisit = 'ssa_support';
+this.setPurpose();
+}
+}
+}"
 >
 {% csrf_token %}
+{% if not reschedule_mode %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
 {% if project_id %}<input type="hidden" name="project_id" value="{{ project_id }}">{% endif %}
+{% endif %}
 
 <!-- Form Error Messages container -->
 <div id="form-errors"></div>
 
-<!-- SSA Missing Warning & Activity Type Select -->
+{% if not reschedule_mode %}
+<!-- SSA Missing Warning & Purpose of Visit Select -->
 {% if school.current_fy_ssa_status != 'done' %}
 <div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-surface text-[12px] font-bold leading-normal shadow-sm">
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> SSA is missing. We recommend collecting SSA during this activity.
@@ -28,48 +54,57 @@ x-data="{ delivery: 'staff', ssa_expected: 'yes', activityType: '{{ recommended_
 <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Will SSA be collected during this activity?</span>
 <div class="flex flex-col sm:flex-row sm:items-center gap-4 mt-1.5 font-medium text-slate-700">
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collection_expected" value="yes" x-model="ssa_expected" @change="delivery = 'staff'" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+<input type="radio" name="ssa_collection_expected" value="yes" x-model="ssa_expected" @change="delivery = 'staff'" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>Collect SSA during this activity</span>
 </label>
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collection_expected" value="no" x-model="ssa_expected" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+<input type="radio" name="ssa_collection_expected" value="no" x-model="ssa_expected" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>Proceed without SSA</span>
 </label>
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collection_expected" value="partner" x-model="ssa_expected" @change="delivery = 'partner'" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
+<input type="radio" name="ssa_collection_expected" value="partner" x-model="ssa_expected" @change="delivery = 'partner'" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>Assign SSA collection to Partner</span>
 </label>
 </div>
 </div>
 {% else %}
-<div class="flex items-start gap-2.5 rounded-surface p-3"
-     style="color:var(--edify-text);background:var(--edify-info-light);border:1px solid var(--edify-info-border);">
+<div class="flex items-start gap-2.5 rounded-surface p-3 edify-text edify-info-soft border edify-info-border">
   <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="var(--edify-info)" stroke-width="1.8" aria-hidden="true">
     <path d="M10 3v14M3 10h14"/>
   </svg>
   <div>
     <p class="font-semibold">Recommended activity: {{ recommended_activity_label|default:"School Visit" }}</p>
     {% if recommended_focus_intervention %}
-    <p class="mt-0.5 font-medium" style="color:var(--edify-text-muted);">The weakest verified intervention is selected below.</p>
+    <p class="mt-0.5 font-medium edify-text-muted">The weakest verified intervention is selected below.</p>
     {% endif %}
   </div>
 </div>
 {% endif %}
 
 <div>
-<label for="activity_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Support Activity</label>
+<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose of Visit</label>
 <select
-name="activity_type"
-id="activity_type"
+name="purpose_of_visit"
+id="purpose_of_visit"
 required
-x-model="activityType"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+x-model="purposeOfVisit"
+@change="setPurpose()"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
-{% for value, label in activity_type_options %}
-<option value="{{ value }}" {% if recommended_activity_type == value %}selected{% endif %}>{{ label }}</option>
+{% for value, label in staff_visit_purposes %}
+<option value="{{ value }}" :disabled="delivery === 'partner' && !partnerPurposes.includes('{{ value }}')">{{ label }}</option>
 {% endfor %}
 </select>
+<p class="mt-1.5 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">Partners can only be assigned In-school Training, Training Follow Up, or SSA Support.</p>
+<input type="hidden" name="activity_type" :value="activityType">
 </div>
+{% else %}
+<div class="edify-primary-soft border edify-primary-border rounded-surface p-3 text-[12px] font-semibold">
+<span class="edify-text-caption uppercase tracking-wider edify-primary-text font-bold">Scheduled activity</span>
+<p class="mt-1 text-slate-700">{{ recommended_activity_label }} for {{ schedule_subject_name }}</p>
+{% if assigning_staff_name %}<p class="mt-1 edify-text-caption text-slate-600">Monitored by: <strong>{{ assigning_staff_name }}</strong></p>{% endif %}
+</div>
+{% endif %}
 
 <!-- Date -->
 <div>
@@ -77,7 +112,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <div
 x-data="{
 open: false,
-selectedDate: '',
+selectedDate: '{% if reschedule_mode %}{{ reschedule_activity.planned_date|date:"Y-m-d" }}{% endif %}',
 currentYear: new Date().getFullYear(),
 currentMonth: new Date().getMonth(),
 months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
@@ -212,14 +247,15 @@ x-text="day"
 </div>
 </div>
 
+{% if not reschedule_mode %}
 <!-- Participant numbers improve the estimate but are optional. -->
-<div x-show="activityType === 'school_improvement_training'" style="display: none;">
+<div x-show="['training', 'in_school_training', 'school_improvement_training'].includes(activityType)" style="display: none;">
 <label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participants</label>
 <input
 type="number"
 name="expected_participants"
 id="expected_participants"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -229,7 +265,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <select
 name="focus_intervention"
 id="focus_intervention"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Select Focus Intervention...</option>
 {% for code, label in interventions %}
@@ -253,7 +289,8 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 name="delivery_type"
 id="delivery_type"
 x-model="delivery"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+@change="setDelivery()"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="staff">Direct Staff Delivery</option>
 <option value="partner">Assigned Partner Delivery</option>
@@ -265,7 +302,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <select
 name="assigned_partner_id"
 id="assigned_partner_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Select Partner Field Officer...</option>
 {% for p in partners %}
@@ -283,9 +320,22 @@ name="activity_purpose_text"
 id="activity_purpose_text"
 rows="2"
 placeholder="What needs to be achieved in this activity?"
-class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
+{% else %}
+<div>
+<label for="reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for changing the date</label>
+<textarea
+name="reason"
+id="reason"
+required
+rows="3"
+placeholder="Briefly explain why this activity needs a new date."
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
+></textarea>
+</div>
+{% endif %}
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">
@@ -308,7 +358,7 @@ Cancel
 type="submit"
 class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >
-Schedule Activity
+{% if reschedule_mode %}Save new date{% else %}Schedule Activity{% endif %}
 </button>
 </div>
 </form>

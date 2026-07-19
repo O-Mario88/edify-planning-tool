@@ -165,6 +165,7 @@ def assert_schedulable(input: dict) -> None:
     activity_type = input.get("activityType", "")
     is_training = activity_type in {
         "training",
+        "in_school_training",
         "school_improvement_training",
         "cluster_training",
         "core_training",

@@ -14,7 +14,7 @@
 <span>&bull;</span>
 <span class="text-slate-500">Edit Profile</span>
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight mt-1">{{ member.name }}</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight mt-1 edify-page-title">{{ member.name }}</h1>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, credentials, and account lifecycle status.</p>
 </div>
 
@@ -84,7 +84,7 @@ type="text"
 name="name"
 value="{{ member.name }}"
 required
-class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 edify-focus-surface focus:ring-2 focus:ring-blue-500/10 transition-all"
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
 >
 </div>
 
@@ -95,7 +95,7 @@ type="email"
 name="email"
 value="{{ member.email }}"
 required
-class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 edify-focus-surface focus:ring-2 focus:ring-blue-500/10 transition-all"
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
 >
 </div>
 </div>
@@ -107,7 +107,7 @@ type="text"
 name="phone"
 value="{{ member.phone|default:'' }}"
 placeholder="+256..."
-class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 edify-focus-surface focus:ring-2 focus:ring-blue-500/10 transition-all"
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
 >
 </div>
 
@@ -117,7 +117,7 @@ class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-non
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary Active Role</label>
 <select
 name="role"
-class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
+class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
 >
 {% for r in available_roles %}
 <option value="{{ r }}" {% if member.active_role == r %}selected{% endif %}>{{ r }}</option>
@@ -135,7 +135,7 @@ type="checkbox"
 name="additional_roles"
 value="{{ r }}"
 {% if r in member.roles and r != member.active_role %}checked{% endif %}
-class="rounded-control border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
 >
 <span>{{ r }}</span>
 </label>
@@ -150,7 +150,7 @@ class="rounded-control border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary District Assignment</label>
 <select
 name="primary_district"
-class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
+class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
 >
 <option value="">None (HQ / Regional)</option>
 {% for d in districts %}
@@ -169,7 +169,7 @@ type="checkbox"
 name="additional_districts"
 value="{{ d.id }}"
 {% if d.id in assigned_districts and d.id != primary_district_id %}checked{% endif %}
-class="rounded-control border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
 >
 <span>{{ d.name }}</span>
 </label>
@@ -181,7 +181,7 @@ class="rounded-control border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-
 <div class="pt-4 border-t border-slate-100 flex justify-end">
 <button
 type="submit"
-class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+class="h-9 px-4 edify-primary-solid edify-primary-hover text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
 >
 Save Profile Updates
 </button>
@@ -261,7 +261,7 @@ Deactivate User Account
 <input type="hidden" name="action" value="activate">
 <button
 type="submit"
-class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+class="w-full h-9 edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
 >
 Activate User Account
 </button>
@@ -303,13 +303,13 @@ type="password"
 name="new_password"
 required
 placeholder="Enter new password for user"
-class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 edify-focus-surface transition-all text-[12px]"
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all text-[12px]"
 >
 </div>
 
 <button
 type="submit"
-class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+class="w-full h-9 edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
 >
 Reset Password
 </button>

@@ -120,7 +120,7 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
           <div class="flex justify-between"><span class="text-slate-400">Returned</span><span class="text-rose-600 tabular-nums">{{ overview.returned }}</span></div>
           <div class="flex justify-between"><span class="text-slate-400">Approved (Not Disbursed)</span><span class="text-amber-600 tabular-nums">{{ overview.approved_not_disbursed }}</span></div>
           <div class="flex justify-between"><span class="text-slate-400">Disbursed</span><span class="text-emerald-600 tabular-nums">{{ overview.disbursed }}</span></div>
-          <div class="flex justify-between"><span class="text-slate-400">Reconciled</span><span class="text-blue-600 tabular-nums">{{ overview.reconciled }}</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Reconciled</span><span class="edify-primary-text tabular-nums">{{ overview.reconciled }}</span></div>
         </div>
       </div>
 
@@ -132,7 +132,7 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
               <path class="text-slate-100" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
               <path class="text-emerald-500" stroke-dasharray="{{ donut.approved }}, 100" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
               <path class="text-amber-400" stroke-dasharray="{{ donut.pending }}, 100" stroke-dashoffset="-{{ donut.approved }}" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              <path class="text-blue-500" stroke-dasharray="{{ donut.disbursed }}, 100" stroke-dashoffset="-{{ donut.approved|add:donut.pending }}" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path class="edify-primary-text" stroke-dasharray="{{ donut.disbursed }}, 100" stroke-dashoffset="-{{ donut.approved|add:donut.pending }}" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
               <span class="text-[12px] font-bold text-slate-800 leading-none">{{ donut.total_fmt }}</span>
@@ -142,7 +142,7 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
           <div class="edify-text-caption space-y-1.5 flex-1">
             <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500"></span>Approved</span><span class="font-bold tabular-nums">{{ donut.approved }}%</span></div>
             <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-400"></span>Pending</span><span class="font-bold tabular-nums">{{ donut.pending }}%</span></div>
-            <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-blue-500"></span>Disbursed</span><span class="font-bold tabular-nums">{{ donut.disbursed }}%</span></div>
+            <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill edify-primary-solid"></span>Disbursed</span><span class="font-bold tabular-nums">{{ donut.disbursed }}%</span></div>
             <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-500"></span>Returned</span><span class="font-bold tabular-nums">{{ donut.returned }}%</span></div>
           </div>
         </div>
@@ -218,7 +218,7 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
         <div class="rounded-surface bg-amber-50 border border-amber-100 p-2 text-center"><p class="text-[14px] font-bold text-amber-700 tabular-nums">{{ recon.counts.receipts }}</p><p class="edify-text-caption font-bold uppercase tracking-wide text-amber-600 leading-tight mt-0.5">Awaiting Receipts</p></div>
         <div class="rounded-surface bg-orange-50 border border-orange-100 p-2 text-center"><p class="text-[14px] font-bold text-orange-700 tabular-nums">{{ recon.counts.sf }}</p><p class="edify-text-caption font-bold uppercase tracking-wide text-orange-600 leading-tight mt-0.5">SF Match</p></div>
         <div class="rounded-surface bg-violet-50 border border-violet-100 p-2 text-center"><p class="text-[14px] font-bold text-violet-700 tabular-nums">{{ recon.counts.netsuite }}</p><p class="edify-text-caption font-bold uppercase tracking-wide text-violet-600 leading-tight mt-0.5">NetSuite ID</p></div>
-        <div class="rounded-surface bg-blue-50 border border-blue-100 p-2 text-center"><p class="text-[14px] font-bold text-blue-700 tabular-nums">{{ recon.counts.partial }}</p><p class="edify-text-caption font-bold uppercase tracking-wide text-blue-600 leading-tight mt-0.5">Partial</p></div>
+        <div class="rounded-surface edify-primary-soft border edify-primary-border p-2 text-center"><p class="text-[14px] font-bold edify-primary-text tabular-nums">{{ recon.counts.partial }}</p><p class="edify-text-caption font-bold uppercase tracking-wide edify-primary-text leading-tight mt-0.5">Partial</p></div>
         <div class="rounded-surface bg-emerald-50 border border-emerald-100 p-2 text-center"><p class="text-[14px] font-bold text-emerald-700 tabular-nums">{{ recon.counts.closed }}</p><p class="edify-text-caption font-bold uppercase tracking-wide text-emerald-600 leading-tight mt-0.5">Closed</p></div>
       </div>
       <div class="divide-y divide-slate-50">
@@ -246,7 +246,7 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
         <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Available to Commit</p><p class="text-[15px] font-bold text-emerald-700 tabular-nums mt-0.5">{{ cash.available }}</p></div>
         <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Committed (Not Disbursed)</p><p class="text-[15px] font-bold text-amber-700 tabular-nums mt-0.5">{{ cash.committed }}</p></div>
         <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Pending Requests</p><p class="text-[15px] font-bold text-slate-700 tabular-nums mt-0.5">{{ cash.pending_requests }}</p></div>
-        <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Program Funds Disbursed</p><p class="text-[15px] font-bold text-blue-700 tabular-nums mt-0.5">{{ cash.program_funds }}</p></div>
+        <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Program Funds Disbursed</p><p class="text-[15px] font-bold edify-primary-text tabular-nums mt-0.5">{{ cash.program_funds }}</p></div>
         <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Special Projects</p><p class="text-[15px] font-bold text-violet-700 tabular-nums mt-0.5">{{ cash.special_projects }}</p></div>
       </div>
     </div>

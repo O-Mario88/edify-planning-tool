@@ -119,18 +119,18 @@ Create New Cluster
 <div class="grid grid-cols-1 gap-2.5">
 {% for rc in recommended_clusters %}
 <label
-class="relative flex items-start gap-3 p-3.5 bg-blue-50/40 border rounded-surface cursor-pointer hover:bg-blue-50 transition-colors"
-:class="selectedClusterId === '{{ rc.id }}' ? 'border-blue-500 bg-blue-50/80' : 'border-blue-100'"
+class="relative flex items-start gap-3 p-3.5 edify-primary-soft-alpha-40 border rounded-surface cursor-pointer edify-primary-soft-hover transition-colors"
+:class="selectedClusterId === '{{ rc.id }}' ? 'edify-primary-border edify-primary-soft-alpha-80' : 'edify-primary-border'"
 >
 <input
 type="radio"
 x-model="selectedClusterId"
 value="{{ rc.id }}"
-class="mt-0.5 rounded-pill border-blue-300 text-blue-600 focus:ring-blue-500"
+class="mt-0.5 rounded-pill edify-primary-border edify-primary-text edify-primary-focus"
 >
 <div class="text-[12px]">
-<p class="font-semibold text-blue-900">{{ rc.name }}</p>
-<p class="text-blue-600/80 font-semibold edify-text-caption mt-0.5">
+<p class="font-semibold edify-primary-text">{{ rc.name }}</p>
+<p class="edify-primary-text-alpha-80 font-semibold edify-text-caption mt-0.5">
 {{ rc.district.name }} &bull; {{ rc.sub_county.name }} &bull; {{ rc.schools_count }} schools capacity
 </p>
 </div>
@@ -146,7 +146,7 @@ class="mt-0.5 rounded-pill border-blue-300 text-blue-600 focus:ring-blue-500"
 <select
 id="all_cluster_id"
 x-model="selectedClusterId"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">-- Choose from Directory --</option>
 {% for ac in all_clusters %}
@@ -166,7 +166,7 @@ type="text"
 name="new_cluster_name"
 id="new_cluster_name"
 placeholder="e.g. Gulu Central Cluster"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold focus:outline-none focus:ring-2 focus:ring-blue-100 edify-surface"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold focus:outline-none focus:ring-2 edify-primary-focus edify-surface"
 >
 </div>
 
@@ -248,7 +248,7 @@ class="rounded-control border-slate-300 text-[var(--edify-primary)] focus:ring-[
 <select
 name="responsible_staff_id"
 id="responsible_staff_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">-- Select Staff Coordinator --</option>
 {% for st in staff_list %}
@@ -265,7 +265,7 @@ name="notes"
 id="notes"
 rows="2.5"
 placeholder="Add context for this assignment, boundary constraints, or coordinator notes..."
-class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 ></textarea>
 </div>
 

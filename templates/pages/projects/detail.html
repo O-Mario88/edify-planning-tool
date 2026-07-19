@@ -9,10 +9,10 @@
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2 mb-0.5">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider edify-primary-soft edify-primary-text border edify-primary-border">
 Project
 </span>
-<h1 class="text-[21px] font-extrabold tracking-tight leading-tight">{{ project.name }}</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight leading-tight edify-page-title">{{ project.name }}</h1>
 </div>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Monitoring and execution tracker for specialized initiative.</p>
 </div>
@@ -32,7 +32,7 @@ Project
 <div class="card overflow-hidden">
 <div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
-<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ school_assignments|length }} Schools</span>
 </div>
 
 <div class="divide-y divide-[var(--edify-border)]">

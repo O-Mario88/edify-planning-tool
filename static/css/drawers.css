@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════════════
    EDIFY PREMIUM DRAWER SYSTEM
-   Enterprise-grade slide-over drawers with frosted backdrop blur,
+   Enterprise-grade centered action dialogs with frosted backdrop blur,
    token-driven surfaces, dark mode support, and premium rounded corners.
    ════════════════════════════════════════════════════════════════════════════ */
 :root {
@@ -84,6 +84,75 @@
 }
 .drawer-surface.type-center.active {
   transform: translate(50%, -50%) scale(1);
+}
+
+/* ── Legacy popup bridge ──────────────────────────────────────────────────
+   A small group of older Core School actions predates base_drawer and used
+   full-height slide-overs.  They share this class so they now behave exactly
+   like every other action dialog: centered, bounded, rounded and scrollable.
+   Keep the class semantic — new popup work should extend base_drawer instead.
+   ─────────────────────────────────────────────────────────────────────── */
+.edify-popup-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--drawer-z-index);
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  isolation: isolate;
+}
+
+.edify-popup-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--drawer-backdrop-color);
+  backdrop-filter: blur(var(--drawer-backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--drawer-backdrop-blur));
+}
+
+.edify-popup-dialog__surface {
+  position: relative;
+  width: min(100%, 36rem) !important;
+  max-width: 36rem !important;
+  max-height: min(88dvh, 48rem) !important;
+  height: auto !important;
+  overflow: auto;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-xl) !important;
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg) !important;
+}
+
+.edify-popup-dialog__surface :is(
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="date"], input[type="time"],
+  input[type="file"], select, textarea
+) {
+  border-radius: var(--edify-radius-md) !important;
+  border-color: var(--edify-border) !important;
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text) !important;
+}
+
+.edify-popup-dialog__surface :is(input, select, textarea):focus,
+.edify-popup-dialog__surface :is(input, select, textarea):focus-visible {
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 0 3px var(--brand-primary-focus) !important;
+  outline: 0;
+}
+
+@media (max-width: 767.98px) {
+  .edify-popup-dialog {
+    padding: 0.75rem;
+  }
+
+  .edify-popup-dialog__surface {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 1.5rem) !important;
+    border-radius: var(--edify-radius-xl) !important;
+  }
 }
 
 /* ── Drawer Header ─────────────────────────────────────────────────────── */

@@ -2,21 +2,21 @@
 <div class="overflow-x-auto flex-1">
   <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
     <thead>
-      <tr style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+      <tr class="edify-text-subtle border-b edify-border-bottom edify-surface-muted" style="font-size: 12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-align:left">
         <th style="padding:8px 10px;">Item</th>
-        <th style="padding:8px 10px;text-align:center;">Count</th>
+        <th class="text-center" style="padding:8px 10px">Count</th>
       </tr>
     </thead>
     <tbody>
       {% for c in backlog_snapshot %}
-      <tr class="edify-data-row" style="border-bottom:1px solid var(--edify-border);cursor:pointer;"
+      <tr class="edify-data-row border-b edify-border-bottom" style="cursor:pointer"
           hx-get="/dashboard/pl-drilldown{{ c.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
           tabindex="0">
-        <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ c.label }}</td>
+        <td class="edify-text" style="padding:7px 10px; font-weight:600">{{ c.label }}</td>
         <td style="padding:7px 10px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:{% if c.tone == 'danger' %}var(--edify-danger){% elif c.tone == 'warning' %}var(--edify-warning){% else %}var(--edify-text){% endif %};">{{ c.value }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
-<div class="p-3 pt-2"><a href="/analytics/program-lead" style="font-size: 12px;font-weight:600;color:var(--edify-accent);text-decoration:none;">View backlog analytics &rarr;</a></div>
+<div class="p-3 pt-2"><a href="/analytics/program-lead" class="edify-primary-text" style="font-size: 12px; font-weight:600; text-decoration:none">View backlog analytics &rarr;</a></div>

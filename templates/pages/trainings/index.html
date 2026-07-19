@@ -7,7 +7,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Group Trainings</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Group Trainings</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">{{ total }} sessions · {{ completed }} completed</p>
 </div>
 <a href="/planning/schedule?action=training" class="h-10 px-4 rounded-control bg-violet-600 hover:bg-violet-700 text-white text-[12px] font-semibold flex items-center gap-2 transition-all">
@@ -60,7 +60,7 @@ class="flex-1 min-w-48 h-9 px-3 rounded-control border border-[var(--edify-borde
 <td class="px-4 py-3.5">
 <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold
 {% if t.status == 'completed' %}bg-emerald-50 text-emerald-700
-{% elif t.status == 'scheduled' %}bg-blue-50 text-blue-700
+{% elif t.status == 'scheduled' %}edify-primary-soft edify-primary-text
 {% else %}bg-slate-100 text-slate-500{% endif %}">
 {{ t.status|title }}
 </span>

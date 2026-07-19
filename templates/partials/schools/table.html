@@ -45,7 +45,7 @@
       </svg>
       <p class="text-[14px] font-semibold text-slate-500">No schools uploaded yet.</p>
       <p class="edify-text-caption text-slate-400">Upload schools to build the directory registry.</p>
-      <a href="/schools/upload" style="background-color:var(--edify-primary); color: var(--edify-surface-raised);" class="inline-flex h-8 px-4 rounded-control text-white text-[12px] font-semibold items-center justify-center shadow-sm hover:opacity-90 transition-all">Upload Schools</a>
+      <a href="/schools/upload" class="edify-primary-solid" style="color: var(--edify-surface-raised)" class="inline-flex h-8 px-4 rounded-control text-white text-[12px] font-semibold items-center justify-center shadow-sm hover:opacity-90 transition-all">Upload Schools</a>
     </div>
   </div>
 {% endif %}
@@ -88,7 +88,7 @@ Previous
 {% if num == "..." %}
 <span class="w-8 text-center text-slate-400 font-bold">...</span>
 {% elif num == page_obj.number %}
-<span class="h-8 w-8 rounded-pill btn-premium-primary text-white font-semibold flex items-center justify-center shadow-sm" style="background-color:var(--edify-primary);">{{ num }}</span>
+<span class="h-8 w-8 rounded-pill btn-premium-primary text-white font-semibold flex items-center justify-center shadow-sm edify-primary-solid">{{ num }}</span>
 {% else %}
 <button
 type="button"

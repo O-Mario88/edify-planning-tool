@@ -110,8 +110,8 @@
               SSA Complete
             </span>
           {% elif school.ssaStatus == 'Pending IA Verification' or school.ssaStatus == 'Pending Verification' %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-150/60 shadow-xs">
-              <span class="w-1.5 h-1.5 rounded-pill bg-indigo-500"></span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase edify-primary-soft edify-primary-text border edify-primary-border-alpha-60 shadow-xs">
+              <span class="w-1.5 h-1.5 rounded-pill edify-primary-solid"></span>
               SSA Pending IA
             </span>
           {% else %}
@@ -159,8 +159,8 @@
 
           <!-- Project linked badge -->
           {% if school.project_assignment_count %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-blue-50 text-blue-700 border border-blue-150/60 shadow-xs">
-              <span class="w-1.5 h-1.5 rounded-pill bg-blue-500"></span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase edify-primary-soft edify-primary-text border edify-primary-border-alpha-60 shadow-xs">
+              <span class="w-1.5 h-1.5 rounded-pill edify-primary-solid"></span>
               Project Linked
             </span>
           {% endif %}
@@ -198,10 +198,10 @@
 
       {% if context_page == 'core_schools' %}
         {% if school.blocked_reason %}
-          <button type="button" disabled title="{{ school.blocked_reason }}" class="school-record-action school-record-action--schedule"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg><span>Schedule Now</span></button>
+          <button type="button" disabled title="{{ school.blocked_reason }}" class="school-record-action school-record-action--schedule"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg><span>Schedule</span></button>
           <button type="button" disabled title="{{ school.blocked_reason }}" class="school-record-action school-record-action--assign"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg><span>Assign</span></button>
         {% else %}
-          <button type="button" hx-get="/core-schools/schedule-visit?school_id={% firstof school.school_id school.schoolId %}" hx-target="#drawer-container" class="school-record-action school-record-action--schedule"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg><span>Schedule Now</span></button>
+          <button type="button" hx-get="/core-schools/schedule-visit?school_id={% firstof school.school_id school.schoolId %}" hx-target="#drawer-container" class="school-record-action school-record-action--schedule"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg><span>Schedule</span></button>
           <button type="button" hx-get="/core-schools/assign-partner?school_id={% firstof school.school_id school.schoolId %}" hx-target="#drawer-container" class="school-record-action school-record-action--assign"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3M16 9h5m-2.5-2.5v5"/></svg><span>Assign</span></button>
         {% endif %}
       {% endif %}
@@ -262,7 +262,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-slate-400">Recommender Focus:</span>
-            <span class="text-blue-600 font-bold">{% firstof school.weakestIntervention school.weakest_interventions "—" %}</span>
+            <span class="edify-primary-text font-bold">{% firstof school.weakestIntervention school.weakest_interventions "—" %}</span>
           </div>
           <div class="flex flex-col gap-0.5">
             <span class="text-slate-400">Action Plan:</span>
@@ -346,8 +346,8 @@
             <button
               hx-get="/schools/{{ school.id }}/add-to-cluster"
               hx-target="#drawer-container"
-              hx-swap="innerHTML"
-              style="background-color:var(--edify-primary); color: var(--edify-surface-raised);"
+              hx-swap="innerHTML" class="edify-primary-solid"
+              style="color: var(--edify-surface-raised)"
               class="inline-flex items-center justify-center h-8 px-4 text-[12px] font-bold rounded-control shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
             >
               Add to Cluster
@@ -362,14 +362,13 @@
             <button
               hx-get="/schools/{{ school.id }}/assign-to-project"
               hx-target="#drawer-container"
-              hx-swap="innerHTML"
-              style="background-color:var(--edify-primary-hover); color: var(--edify-surface-raised);"
+              hx-swap="innerHTML" class="edify-primary-solid edify-primary-on-solid"
               class="inline-flex items-center justify-center h-8 px-4 text-[12px] font-bold rounded-control shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
             >
               Add to Project
             </button>
           {% else %}
-            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-bold uppercase bg-blue-50 text-blue-700 border border-blue-100 shadow-3xs">
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-bold uppercase edify-primary-soft edify-primary-text border edify-primary-border shadow-3xs">
               Added to Project
             </span>
           {% endif %}
@@ -442,7 +441,7 @@
               <button
                 hx-get="/core-schools/schedule-visit?school_id={% firstof school.school_id school.schoolId %}"
                 hx-target="#drawer-container"
-                class="h-8 px-3 rounded-control bg-blue-600 text-white edify-text-caption font-bold uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-all cursor-pointer "
+                class="h-8 px-3 rounded-control edify-primary-solid text-white edify-text-caption font-bold uppercase tracking-wider edify-primary-hover shadow-sm transition-all cursor-pointer "
               >
                 Schedule Visit
               </button>

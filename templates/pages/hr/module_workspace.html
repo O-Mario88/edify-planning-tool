@@ -3,7 +3,7 @@
 {% block title %}{{ title }} · Edify{% endblock %}
 
 {% block shell_content %}
-<main class="hcos-workspace" aria-labelledby="hcos-title">
+<section class="hcos-workspace" aria-labelledby="hcos-title">
   <nav class="hcos-breadcrumbs" aria-label="Breadcrumb">
     <a href="/dashboard">Human Capital</a>
     <span aria-hidden="true">/</span>
@@ -13,7 +13,7 @@
   <header class="hcos-hero">
     <div class="hcos-hero__copy">
       <span class="hcos-eyebrow">Human Capital Operations</span>
-      <h1 id="hcos-title">{{ title }}</h1>
+      <h1 id="hcos-title" class="edify-page-title">{{ title }}</h1>
       <p>{{ description }}</p>
     </div>
     <div class="hcos-hero__actions">
@@ -44,15 +44,7 @@
         <span class="hcos-register__overline">Live register</span>
         <h2 id="hcos-register-title">Current operational records</h2>
       </div>
-      <form class="hcos-search" method="get" role="search">
-        <label for="hcos-search-input">Search this register</label>
-        <div class="hcos-search__control">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2" stroke-linecap="round"/></svg>
-          <input id="hcos-search-input" type="search" name="q" value="{{ search }}" placeholder="Search people, status, role…">
-          <button type="submit">Search</button>
-        </div>
-        {% if search %}<a href="{{ request.path }}">Clear search</a>{% endif %}
-      </form>
+      {% if search %}<a href="{{ request.path }}" class="hcos-clear">Clear search</a>{% endif %}
     </header>
 
     {% if rows %}
@@ -95,5 +87,5 @@
     </nav>
     {% endif %}
   </section>
-</main>
+</section>
 {% endblock %}

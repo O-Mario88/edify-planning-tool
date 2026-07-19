@@ -3,10 +3,12 @@
 
 {% block title %}Special Projects Planning — Edify{% endblock %}
 
-{% block shell_content %}
-<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260716a">
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260719platformwide1">
+{% endblock %}
 
-<main
+{% block shell_content %}
+<section
   class="spp"
   x-data="{
     selected: [],
@@ -23,7 +25,7 @@
   <header class="spp-header">
     <div class="spp-heading">
       <p class="spp-eyebrow">Special Projects</p>
-      <h1>Special Projects Planning</h1>
+      <h1 class="edify-page-title">Special Projects Planning</h1>
       <p>Plan SSA baselines, school support, partner assignments, and delivery for schools assigned from the School Directory.</p>
     </div>
     <div class="spp-header__tools">
@@ -43,5 +45,5 @@
   <div id="spp-workspace" aria-live="polite">
     {% include "partials/projects/planning_workspace.html" %}
   </div>
-</main>
+</section>
 {% endblock %}

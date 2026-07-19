@@ -21,24 +21,31 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <input type="text" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
 </div>
 
-<div class="grid grid-cols-2 gap-4">
+<div
+  class="grid grid-cols-2 gap-4"
+  x-data="{
+    supportType: 'Visit',
+    visitSlots: [{% for slot in available_visit_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}],
+    trainingSlots: [{% for slot in available_training_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}]
+  }"
+>
 <!-- Support Type -->
 <div>
 <label for="support_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Support Type</label>
-<select name="support_type" id="support_type" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-<option value="Visit">School Visit (V1-V4)</option>
-<option value="Training">Group Training (T1-T4)</option>
+<select name="support_type" id="support_type" x-model="supportType" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="Visit">Core Visit</option>
+<option value="Training">Core Training</option>
 </select>
 </div>
 
 <!-- Sequence Number -->
 <div>
-<label for="visit_training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Sequence Number (1-4)</label>
+<label for="visit_training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Available Slot</label>
 <select name="visit_training_number" id="visit_training_number" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
-<option value="1">Slot 1</option>
-<option value="2">Slot 2</option>
-<option value="3">Slot 3</option>
-<option value="4">Slot 4</option>
+<template x-for="slot in (supportType === 'Visit' ? visitSlots : trainingSlots)" :key="slot.sequence">
+  <option :value="slot.sequence" x-text="slot.label"></option>
+</template>
+<option value="" x-show="(supportType === 'Visit' ? visitSlots : trainingSlots).length === 0">No slots available</option>
 </select>
 </div>
 </div>
@@ -63,6 +70,18 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <option value="{{ code }}">{{ label }}</option>
 {% endfor %}
 </select>
+</div>
+
+<!-- Purpose of Visit -->
+<div>
+<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Purpose of Visit</label>
+<select name="purpose_of_visit" id="purpose_of_visit" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select purpose...</option>
+{% for value, label in partner_visit_purposes %}
+<option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+</select>
+<p class="mt-1.5 edify-text-caption font-medium text-slate-400">Partners may deliver In-school Training, Training Follow Up, or SSA Support only.</p>
 </div>
 
 <!-- Notes -->

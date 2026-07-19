@@ -65,9 +65,16 @@ _VISIT_TYPES = {
     "baseline_ssa_visit",
     "school_visit_ssa_collection",
     "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
 }
 _TRAINING_TYPES = {
     "training",
+    "in_school_training",
     "school_improvement_training",
     "cluster_training",
     "cluster_training_ssa_collection",
@@ -124,7 +131,7 @@ def _agenda_type_class(activity_type):
     if activity_type in _TRAINING_TYPES:
         return "bg-emerald-50 text-emerald-600"
     if activity_type in _VISIT_TYPES:
-        return "bg-blue-50 text-blue-600"
+        return "edify-primary-soft edify-primary-text"
     if activity_type in _MEETING_TYPES or activity_type in _PARTNER_TYPES:
         return "bg-violet-50 text-violet-600"
     if activity_type in _SSA_TYPES:

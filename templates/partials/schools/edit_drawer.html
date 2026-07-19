@@ -32,7 +32,7 @@ name="name"
 id="name"
 value="{{ school.name }}"
 required
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -44,7 +44,7 @@ type="text"
 name="school_phone"
 id="school_phone"
 value="{{ school.school_phone|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -56,7 +56,7 @@ type="text"
 name="primary_contact_name"
 id="primary_contact_name"
 value="{{ school.primary_contact_name|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -68,7 +68,7 @@ type="text"
 name="director_name"
 id="director_name"
 value="{{ school.director_name|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -80,7 +80,7 @@ type="text"
 name="headteacher_name"
 id="headteacher_name"
 value="{{ school.headteacher_name|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -92,7 +92,7 @@ type="number"
 name="enrollment"
 id="enrollment"
 value="{{ school.enrollment|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -103,7 +103,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 name="shipping_address"
 id="shipping_address"
 rows="2"
-class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >{{ school.shipping_address|default:'' }}</textarea>
 </div>
 
@@ -113,7 +113,7 @@ class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semib
 <select
 name="cluster_id"
 id="cluster_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 <option value="">-- Unclustered --</option>
 {% for cl in clusters %}
@@ -128,7 +128,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 <select
 name="account_owner_id"
 id="account_owner_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 focus:ring-blue-100"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 <option value="">-- Unassigned --</option>
 {% for st in staff %}
@@ -148,7 +148,7 @@ Cancel
 </button>
 <button
 type="submit"
-class="px-6 h-9 rounded-control bg-blue-600 hover:bg-blue-700 text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
+class="px-6 h-9 rounded-control edify-primary-solid edify-primary-hover text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
 >
 <span>Recalculate & Save</span>
 </button>

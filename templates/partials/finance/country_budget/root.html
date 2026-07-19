@@ -86,7 +86,7 @@ items are the only manual country-level costs.{% endcomment %}
     <button hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML"
             hx-vals='{"action":"send_to_rvp","budget_id":"{{ budget_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
             {% if not can_send_to_rvp %}disabled{% endif %}
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control text-white text-[12px] font-bold shadow-sm transition-colors {% if can_send_to_rvp %}bg-blue-600 hover:bg-blue-700{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control text-white text-[12px] font-bold shadow-sm transition-colors {% if can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       Send to RVP for Approval
     </button>
@@ -125,14 +125,14 @@ items are the only manual country-level costs.{% endcomment %}
 
   {% if is_cd and can_edit_admin %}
   <details class="card group" {% if status == 'returned_by_rvp' %}open{% endif %}>
-    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3.5"><span><span class="block text-[14px] font-semibold text-slate-800">Add Country Director admin budget</span><span class="mt-0.5 block text-[12px] font-medium text-slate-500">Add office and operational costs that are not tied to a Program Lead activity.</span></span><span class="text-[12px] font-bold text-blue-600 group-open:hidden">Add item</span></summary>
+    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3.5"><span><span class="block text-[14px] font-semibold text-slate-800">Add Country Director admin budget</span><span class="mt-0.5 block text-[12px] font-medium text-slate-500">Add office and operational costs that are not tied to a Program Lead activity.</span></span><span class="text-[12px] font-bold edify-primary-text group-open:hidden">Add item</span></summary>
     <form hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML" class="grid grid-cols-1 gap-3 border-t border-slate-100 px-4 py-4 md:grid-cols-6">
       <input type="hidden" name="action" value="add_admin_line"><input type="hidden" name="budget_id" value="{{ budget_id }}"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
       <label class="md:col-span-2"><span class="edify-text-caption font-bold uppercase text-slate-400">Item</span><input required name="description" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="e.g. Office internet"></label>
       <label><span class="edify-text-caption font-bold uppercase text-slate-400">Category</span><input name="cost_category" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="operations"></label>
       <label><span class="edify-text-caption font-bold uppercase text-slate-400">Quantity</span><input required min="0.01" step="0.01" name="quantity" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="1"></label>
       <label><span class="edify-text-caption font-bold uppercase text-slate-400">Unit cost (UGX)</span><input required min="1" name="unit_cost" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="0"></label>
-      <div class="flex items-end"><button type="submit" class="h-9 w-full rounded-control bg-blue-600 px-3 text-[12px] font-bold text-white hover:bg-blue-700">Add admin item</button></div>
+      <div class="flex items-end"><button type="submit" class="h-9 w-full rounded-control edify-primary-solid px-3 text-[12px] font-bold text-white edify-primary-hover">Add admin item</button></div>
       <label class="md:col-span-6"><span class="edify-text-caption font-bold uppercase text-slate-400">Why is this needed? <span class="normal-case text-slate-300">(optional)</span></span><input name="justification" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="Short explanation for the RVP"></label>
     </form>
   </details>
@@ -145,12 +145,12 @@ items are the only manual country-level costs.{% endcomment %}
       <div class="flex items-start justify-between">
         <div class="h-9 w-9 rounded-surface flex items-center justify-center shrink-0
           {% if k.variant == 'primary' %}bg-emerald-50 text-emerald-600
-          {% elif k.variant == 'info' %}bg-blue-50 text-blue-600
+          {% elif k.variant == 'info' %}edify-primary-soft edify-primary-text
           {% elif k.variant == 'success' %}bg-teal-50 text-teal-600
           {% elif k.variant == 'warning' %}bg-amber-50 text-amber-600
           {% elif k.variant == 'finance' %}bg-violet-50 text-violet-600
           {% elif k.variant == 'danger' %}bg-rose-50 text-rose-600
-          {% else %}bg-indigo-50 text-indigo-600{% endif %}">
+          {% else %}edify-primary-soft edify-primary-text{% endif %}">
           {% include "partials/finance/country_budget/_kpi_icon.html" with variant=k.variant %}
         </div>
         {% if k.trend_pct is not None %}
@@ -267,7 +267,7 @@ items are the only manual country-level costs.{% endcomment %}
       <div class="card p-4">
         <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2">Monthly Approval Progress</h3>
         <div class="flex items-center gap-2">
-          <div class="flex-1 h-2 rounded-pill bg-slate-100 overflow-hidden"><div class="h-full rounded-pill bg-blue-500" style="width: {{ progress_pct }}%"></div></div>
+          <div class="flex-1 h-2 rounded-pill bg-slate-100 overflow-hidden"><div class="h-full rounded-pill edify-primary-solid" style="width: {{ progress_pct }}%"></div></div>
           <span class="text-[12px] font-bold text-slate-700 tabular-nums">{{ progress_pct }}%</span>
         </div>
         <p class="edify-text-caption font-semibold text-slate-400 mt-1.5">
@@ -291,10 +291,10 @@ items are the only manual country-level costs.{% endcomment %}
         </ul>
       </div>
 
-      <div class="rounded-surface bg-blue-50 border border-blue-100 p-3.5">
-        <p class="edify-text-caption font-bold text-blue-800 flex items-start gap-1.5">
+      <div class="rounded-surface edify-primary-soft border edify-primary-border p-3.5">
+        <p class="edify-text-caption font-bold edify-primary-text flex items-start gap-1.5">
           <svg class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span><span class="block mb-0.5">Budget source</span><span class="font-semibold text-blue-700">{{ program_source_label }}. CD Admin Budget is the only non-activity exception and must be added by the Country Director.</span></span>
+          <span><span class="block mb-0.5">Budget source</span><span class="font-semibold edify-primary-text">{{ program_source_label }}. CD Admin Budget is the only non-activity exception and must be added by the Country Director.</span></span>
         </p>
       </div>
 

@@ -9,7 +9,7 @@
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
     <div>
-      <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Regional Vice President Dashboard</h1>
+      <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none edify-page-title">Regional Vice President Dashboard</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">
         Executive oversight of country strategy, country budgets, special-project performance, partner growth, and regional execution.
       </p>
@@ -40,10 +40,10 @@
       <p class="edify-text-caption text-slate-600 font-medium mt-1">{{ a.body }}</p>
       {% if a.drill == 'approvals' %}
       <button type="button" hx-get="/rvp/approvals?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="mt-2 edify-text-caption font-bold text-blue-700 hover:underline">{{ a.action }} &rarr;</button>
+              class="mt-2 edify-text-caption font-bold edify-primary-text hover:underline">{{ a.action }} &rarr;</button>
       {% else %}
       <a href="#{% if a.drill == 'regions' %}region-ranking{% elif a.drill == 'projects' %}special-projects{% else %}rvp-approvals{% endif %}"
-         class="inline-block mt-2 edify-text-caption font-bold text-blue-700 hover:underline">{{ a.action }} &rarr;</a>
+         class="inline-block mt-2 edify-text-caption font-bold edify-primary-text hover:underline">{{ a.action }} &rarr;</a>
       {% endif %}
     </div>
     {% endfor %}
@@ -312,7 +312,7 @@
               <span class="font-bold tabular-nums text-slate-700">{{ f.amt }} <span class="text-slate-400 font-semibold">({{ f.share }}%)</span></span>
             </div>
             <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
-              <div class="h-full rounded-pill bg-blue-400" style="width: {{ f.share }}%"></div>
+              <div class="h-full rounded-pill edify-primary-solid" style="width: {{ f.share }}%"></div>
             </div>
             {% if f.flag %}<p class="edify-text-caption font-bold text-amber-600 mt-0.5">{{ f.flag }}</p>{% endif %}
           </div>
@@ -393,7 +393,7 @@
         {% endfor %}
         {% for a in annual_rows %}
         {% if a.status_key == 'submitted_to_rvp' %}
-        <div class="rounded-surface border border-blue-200 bg-blue-50/40 p-3">
+        <div class="rounded-surface border edify-primary-border edify-primary-soft-alpha-40 p-3">
           <div class="flex items-center justify-between">
             <p class="text-[12px] font-bold text-slate-700">Annual FY {{ a.fy }}</p>
             <p class="text-[12px] font-bold tabular-nums text-slate-800">{{ a.total }}</p>
@@ -420,7 +420,7 @@
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Recommended Next Actions</h2>
         {% for a in recommended %}
-        <a href="{{ a.url }}" class="flex items-start gap-2 edify-text-caption font-semibold text-slate-600 hover:text-blue-700 transition-colors">
+        <a href="{{ a.url }}" class="flex items-start gap-2 edify-text-caption font-semibold text-slate-600 edify-primary-text-hover transition-colors">
           <span class="mt-0.5 px-1.5 rounded-pill edify-text-caption font-bold {% if a.priority == 'high' %}bg-rose-50 text-rose-600{% else %}bg-slate-50 text-slate-500{% endif %}">{{ a.priority|upper }}</span>{{ a.label }}
         </a>
         {% empty %}
@@ -450,7 +450,7 @@
       <div id="strategy-notes" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2.5">
         <div class="flex items-center justify-between">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Strategy Notes</h2>
-          <button type="button" @click="showNote = true" class="edify-text-caption font-bold text-blue-600 hover:underline">+ New Note</button>
+          <button type="button" @click="showNote = true" class="edify-text-caption font-bold edify-primary-text hover:underline">+ New Note</button>
         </div>
         {% for n in strategy_notes %}
         <div class="rounded-surface border border-slate-100 p-3">

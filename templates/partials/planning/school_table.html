@@ -39,7 +39,7 @@
                     <span>{{ c.district }}</span>
                   </p>
                   <div class="flex items-center gap-1.5 flex-wrap pt-1.5 select-none">
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-blue-50 text-blue-700 border border-blue-150/60 shadow-xs">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase edify-primary-soft edify-primary-text border edify-primary-border-alpha-60 shadow-xs">
                       {{ c.school_count }} Schools
                     </span>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
@@ -83,7 +83,7 @@
                   <h4 class="edify-text-caption uppercase font-bold tracking-wider text-slate-400 pb-1 border-b border-slate-100">Weakest Interventions</h4>
                   <div class="flex flex-wrap gap-1.5 pt-1">
                     {% for w in c.weakest_interventions %}
-                      <span class="inline-flex items-center rounded-pill px-2.5 py-1 edify-text-caption font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                      <span class="inline-flex items-center rounded-pill px-2.5 py-1 edify-text-caption font-bold edify-primary-soft edify-primary-text border edify-primary-border">
                         {{ w }}
                       </span>
                     {% endfor %}
@@ -103,7 +103,7 @@
                 <button
                   hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training"
                   hx-target="#drawer-container"
-                  class="h-8 px-4 rounded-control bg-blue-600 text-white edify-text-caption font-bold uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-all"
+                  class="h-8 px-4 rounded-control edify-primary-solid text-white edify-text-caption font-bold uppercase tracking-wider edify-primary-hover shadow-sm transition-all"
                 >
                   Group Training
                 </button>
@@ -184,7 +184,7 @@
               hx-get="/planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
               hx-target="#schools-table-container"
               hx-swap="outerHTML"
-              class="h-7 w-7 rounded-control border flex items-center justify-center cursor-pointer {% if page == p %}border-blue-500 bg-blue-50 text-blue-600 font-bold{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
+              class="h-7 w-7 rounded-control border flex items-center justify-center cursor-pointer {% if page == p %}edify-primary-border edify-primary-soft edify-primary-text font-bold{% else %}border-slate-200 edify-surface hover:bg-slate-50{% endif %}"
             >
               {{ p }}
             </button>

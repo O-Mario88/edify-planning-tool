@@ -4,9 +4,9 @@
   {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
   <div class="flex flex-col lg:flex-row items-stretch gap-2">
     {% for c in period_cards %}
-    <div class="flex-1 edify-surface rounded-surface border {% if c.current %}border-blue-200 ring-2 ring-blue-100{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
+    <div class="flex-1 edify-surface rounded-surface border {% if c.current %}edify-primary-border ring-2 edify-primary-ring{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
       <div class="flex items-center justify-between">
-        <p class="edify-kpi-label edify-text-caption {% if c.current %}text-blue-600{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
+        <p class="edify-kpi-label edify-text-caption {% if c.current %}edify-primary-text{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
         <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-300 shrink-0">{{ c.sublabel }}</span>
       </div>
       <div class="flex items-center gap-2.5">
@@ -32,7 +32,7 @@
   </div>
   <div class="flex items-center justify-between -mt-2">
     <p class="edify-text-caption text-slate-400 font-medium">Monthly achievements contribute to their quarter; Q1–Q4 roll into the financial year. Validated work only.</p>
-    <button type="button" @click="showRollup = true" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700 shrink-0">How roll-up works</button>
+    <button type="button" @click="showRollup = true" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">How roll-up works</button>
   </div>
 
   {# ── Five target-area cards ─────────────────────────────────────────────── #}
@@ -69,7 +69,7 @@
           <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
             <th class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">Target Area</th>
             {% for h in matrix_heads %}
-            <th class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}bg-blue-50/40{% endif %}" colspan="3">
+            <th class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}edify-primary-soft-alpha-40{% endif %}" colspan="3">
               <span class="block text-slate-600 font-bold">{{ h.label }}</span>
               <span class="block edify-text-caption text-slate-400 normal-case">{{ h.sub }}</span>
             </th>
@@ -150,7 +150,7 @@
         {% for c in period_cards %}
         <div>
           <div class="flex items-center justify-between edify-text-caption">
-            <span class="font-semibold {% if c.current %}text-blue-700{% else %}text-slate-600{% endif %}">{% if c.kind == 'month' %}{{ c.label }} (Monthly){% elif c.kind == 'fy' %}FY Cumulative{% else %}{{ c.label }}{% endif %}</span>
+            <span class="font-semibold {% if c.current %}edify-primary-text{% else %}text-slate-600{% endif %}">{% if c.kind == 'month' %}{{ c.label }} (Monthly){% elif c.kind == 'fy' %}FY Cumulative{% else %}{{ c.label }}{% endif %}</span>
             <span class="font-bold text-slate-700 tabular-nums">{{ c.pct }}%</span>
           </div>
           <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
@@ -161,39 +161,7 @@
       </div>
     </div>
 
-    <div class="lg:col-span-4 space-y-5">
-      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2"
-           x-data="{
-             chart: null,
-             initChart() {
-               if (this.chart) { this.chart.destroy(); }
-               const el = document.querySelector('#myTargetDist');
-               if (!el) return;
-               this.chart = new ApexCharts(el, {
-                 series: [{% for d in distribution %}{{ d.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
-                 labels: [{% for d in distribution %}'{{ d.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-                 chart: { height: 170, type: 'donut', fontFamily: 'Inter, sans-serif' },
-                 colors: [{% for d in distribution %}{% if d.label == 'On Track' %}'var(--edify-chart-green)'{% elif d.label == 'At Risk' %}'var(--edify-chart-amber)'{% elif d.label == 'Off Track' %}'var(--edify-chart-red)'{% elif d.label == 'Complete / Exceeded' %}'var(--edify-chart-blue)'{% else %}'var(--edify-text-subtle)'{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}],
-                 dataLabels: { enabled: false },
-                 plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
-                   total: { show: true, label: 'Areas', fontSize: '12px', color: 'var(--edify-text-subtle)',
-                            formatter: () => '{{ assigned_count }}' } } } } },
-                 legend: { position: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' } },
-                 stroke: { width: 0 },
-                 tooltip: { theme: 'dark' }
-               });
-               this.chart.render();
-             }
-           }" x-init="$nextTick(() => initChart())">
-        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Performance Distribution</h2>
-        {% if distribution %}
-        <div id="myTargetDist"></div>
-        {% else %}
-        <p class="edify-text-caption text-slate-400 font-medium py-4">No target areas assigned this month — ask your supervisor to set your monthly targets.</p>
-        {% endif %}
-      </div>
-
-      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Top Areas to Focus</h2>
         {% if focus %}
         <div class="divide-y divide-slate-50">
@@ -207,9 +175,9 @@
               </div>
               <p class="edify-text-caption text-slate-500">{{ f.achieved }} of {{ f.target }} achieved · {{ f.reason }}</p>
               {% if f.action_url == '?mscs=new' %}
-              <button type="button" @click="showMscs = true" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700 mt-0.5">{{ f.action_label }} →</button>
+              <button type="button" @click="showMscs = true" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover mt-0.5">{{ f.action_label }} →</button>
               {% else %}
-              <a href="{{ f.action_url }}" class="inline-block edify-text-caption font-bold text-blue-600 hover:text-blue-700 mt-0.5">{{ f.action_label }} →</a>
+              <a href="{{ f.action_url }}" class="inline-block edify-text-caption font-bold edify-primary-text edify-primary-text-hover mt-0.5">{{ f.action_label }} →</a>
               {% endif %}
             </div>
           </div>
@@ -218,7 +186,6 @@
         {% else %}
         <p class="edify-text-caption text-slate-400 font-medium py-3">All assigned areas are on pace — keep executing the plan.</p>
         {% endif %}
-      </div>
     </div>
   </div>
 
@@ -229,7 +196,7 @@
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Core School Tracker</h2>
         <p class="edify-text-caption text-slate-400 font-medium mt-0.5">The core package per school — baseline assessment, 4 visits and 4 trainings.</p>
       </div>
-      {% if core_tracker_data.total %}<a href="/core-schools" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">{% if core_tracker_data.total > 12 %}All {{ core_tracker_data.total }} core schools →{% else %}Open Core Schools →{% endif %}</a>{% endif %}
+      {% if core_tracker_data.total %}<a href="/core-schools" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">{% if core_tracker_data.total > 12 %}All {{ core_tracker_data.total }} core schools →{% else %}Open Core Schools →{% endif %}</a>{% endif %}
     </div>
     {% if core_tracker_data.rows %}
     <div class="overflow-x-auto">

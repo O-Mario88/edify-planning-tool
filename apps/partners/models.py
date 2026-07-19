@@ -78,6 +78,10 @@ class PartnerAssignment(TimeStampedModel):
     assigning_staff_id = models.CharField(max_length=30, null=True, blank=True)
     purpose = models.TextField(null=True, blank=True)
     focus_intervention = models.CharField(max_length=64, null=True, blank=True)
+    # Plain-language reason selected when staff hand the work to a partner.
+    # This is intentionally separate from expected_activity_type, which is
+    # the operational/costing classification used by the activity workflow.
+    purpose_of_visit = models.CharField(max_length=64, null=True, blank=True)
     expected_activity_type = models.CharField(max_length=64, null=True, blank=True)
     scheduled_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=32, default="assigned")

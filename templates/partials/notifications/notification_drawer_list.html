@@ -16,9 +16,9 @@ role="link"
 tabindex="0"
 @click="if (!$event.target.closest('button, a, input')) window.location.assign('{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route|urlencode }}{% else %}{{ n.target_route }}{% endif %}')"
 @keydown.enter="window.location.assign('{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route|urlencode }}{% else %}{{ n.target_route }}{% endif %}')"
-class="cursor-pointer py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}bg-blue-50/20 px-2 -mx-2 rounded-surface{% endif %} hover:bg-slate-50 transition-colors"
+class="cursor-pointer py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}edify-primary-soft-alpha-20 px-2 -mx-2 rounded-surface{% endif %} hover:bg-slate-50 transition-colors"
 {% else %}
-class="py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}bg-blue-50/20 px-2 -mx-2 rounded-surface{% endif %} hover:bg-slate-50 transition-colors"
+class="py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}edify-primary-soft-alpha-20 px-2 -mx-2 rounded-surface{% endif %} hover:bg-slate-50 transition-colors"
 {% endif %}
 >
 <!-- Icon indicator based on priority -->

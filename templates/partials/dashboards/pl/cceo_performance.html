@@ -2,49 +2,49 @@
 <div class="overflow-x-auto">
   <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
     <thead>
-      <tr style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+      <tr class="edify-text-subtle border-b edify-border-bottom edify-surface-muted" style="font-size: 12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-align:left">
         <th style="padding:8px 10px;">CCEO</th>
         <th style="padding:8px 10px;">Region</th>
-        <th style="padding:8px 10px;text-align:center;">Sch</th>
-        <th style="padding:8px 10px;text-align:center;">Pln</th>
-        <th style="padding:8px 10px;text-align:center;">Verified</th>
-        <th style="padding:8px 10px;text-align:center;">SF</th>
-        <th style="padding:8px 10px;text-align:center;">Bklg</th>
-        <th style="padding:8px 10px;text-align:center;">Route</th>
-        <th style="padding:8px 10px;text-align:center;">Risk</th>
+        <th class="text-center" style="padding:8px 10px">Sch</th>
+        <th class="text-center" style="padding:8px 10px">Pln</th>
+        <th class="text-center" style="padding:8px 10px">Verified</th>
+        <th class="text-center" style="padding:8px 10px">SF</th>
+        <th class="text-center" style="padding:8px 10px">Bklg</th>
+        <th class="text-center" style="padding:8px 10px">Route</th>
+        <th class="text-center" style="padding:8px 10px">Risk</th>
       </tr>
     </thead>
     <tbody>
       {% for c in cceo_performance.rows %}
-      <tr class="edify-data-row" style="border-bottom:1px solid var(--edify-border);cursor:pointer;"
+      <tr class="edify-data-row border-b edify-border-bottom" style="cursor:pointer"
           hx-get="/analytics/program-lead/drilldown?drill=cceo&id={{ c.staff_id }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
           tabindex="0">
         <td style="padding:7px 10px;">
           <div class="flex items-center gap-1.5">
-            <span class="inline-flex items-center justify-center rounded-pill font-bold shrink-0"
-                  style="height:24px;width:24px;font-size: 12px;color:var(--edify-surface-raised);background:var(--edify-primary);">{{ c.initials }}</span>
-            <span style="font-weight:600;color:var(--edify-text);">{{ c.name }}</span>
+            <span class="inline-flex items-center justify-center rounded-pill font-bold shrink-0 edify-primary-solid"
+                  style="height:24px; width:24px; font-size: 12px; color:var(--edify-surface-raised)">{{ c.initials }}</span>
+            <span class="edify-text" style="font-weight:600">{{ c.name }}</span>
           </div>
         </td>
-        <td style="padding:7px 10px;font-size: 12px;color:var(--edify-text-muted);">{{ c.region }}</td>
-        <td style="padding:7px 10px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:var(--edify-text);">{{ c.schools_managed }}</td>
-        <td style="padding:7px 10px;text-align:center;font-variant-numeric:tabular-nums;color:var(--edify-text);">{{ c.planned }}</td>
-        <td style="padding:7px 10px;text-align:center;font-weight:600;font-variant-numeric:tabular-nums;color:var(--edify-success);">{{ c.verified }} ({{ c.verified_pct }}%)</td>
+        <td class="edify-text-muted" style="padding:7px 10px; font-size: 12px">{{ c.region }}</td>
+        <td class="text-center tabular-nums edify-text" style="padding:7px 10px; font-weight:600">{{ c.schools_managed }}</td>
+        <td class="text-center tabular-nums edify-text" style="padding:7px 10px">{{ c.planned }}</td>
+        <td class="text-center tabular-nums edify-success-text" style="padding:7px 10px; font-weight:600">{{ c.verified }} ({{ c.verified_pct }}%)</td>
         <td style="padding:7px 10px;text-align:center;font-variant-numeric:tabular-nums;color:{% if c.sf_pending %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.sf_pending }}</td>
         <td style="padding:7px 10px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:{% if c.backlog >= 4 %}var(--edify-danger){% elif c.backlog >= 2 %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.backlog }}</td>
-        <td style="padding:7px 10px;text-align:center;">
+        <td class="text-center" style="padding:7px 10px">
           <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold"
                 style="background:{% if c.route_tone == 'success' %}var(--edify-success-light){% elif c.route_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
                        color:{% if c.route_tone == 'success' %}var(--edify-success){% elif c.route_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.route_quality }}</span>
         </td>
-        <td style="padding:7px 10px;text-align:center;">
+        <td class="text-center" style="padding:7px 10px">
           <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold"
                 style="background:{% if c.risk_tone == 'success' %}var(--edify-success-light){% elif c.risk_tone == 'amber' %}var(--edify-warning-light){% elif c.risk_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
                        color:{% if c.risk_tone == 'success' %}var(--edify-success){% elif c.risk_tone == 'amber' %}var(--edify-warning){% elif c.risk_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.risk }}</span>
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="9" style="padding:20px;text-align:center;font-size:12px;color:var(--edify-text-subtle);font-weight:600;">No supervised CCEOs.</td></tr>
+      <tr><td colspan="9" class="text-center edify-text-subtle" style="padding:20px; font-size:12px; font-weight:600">No supervised CCEOs.</td></tr>
       {% endfor %}
     </tbody>
   </table>

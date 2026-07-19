@@ -17,7 +17,7 @@ addSchoolOpen: false
 <!-- Page Header -->
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight leading-none ">School Directory</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight leading-none edify-page-title">School Directory</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-2 font-semibold ">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
 </div>
 
@@ -58,7 +58,7 @@ addSchoolOpen: false
 </div>
 
 <!-- Filters Bar -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm ">
+<div class="school-filter-canvas">
 <form
 id="filters-form"
 hx-get="/schools"
@@ -139,8 +139,8 @@ class="school-filters-form space-y-3"
 
 <div class="flex items-center justify-between pt-1">
 <!-- Clear Filters -->
-<a href="/schools" class="text-[12px] font-semibold text-[var(--edify-accent)] hover:underline flex items-center gap-1.5">
-<svg class="h-4 w-4 shrink-0 text-[var(--edify-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<a href="/schools" class="edify-touch-target text-[12px] font-semibold edify-primary-text hover:underline flex items-center gap-1.5">
+<svg class="h-4 w-4 shrink-0 edify-primary-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
 </svg>
 <span>Clear Filters</span>
@@ -213,7 +213,7 @@ style="display: none;"
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
 <button type="button" @click="assignClusterOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Assign Cluster</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Assign Cluster</button>
 </div>
 </form>
 </div>
@@ -249,7 +249,7 @@ style="display: none;"
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
 <button type="button" @click="bulkAssignProjectOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Assign Project</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Assign Project</button>
 </div>
 </form>
 </div>
@@ -285,7 +285,7 @@ style="display: none;"
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
 <button type="button" @click="matchStaffOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Match Staff</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Match Staff</button>
 </div>
 </form>
 </div>
@@ -342,7 +342,7 @@ style="display: none;"
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
 <button type="button" @click="addSchoolOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Save School</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Save School</button>
 </div>
 </form>
 </div>

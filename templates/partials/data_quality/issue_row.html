@@ -8,7 +8,7 @@
 {% if issue.status == "resolved" %}
 <span class="inline-flex items-center gap-1 text-emerald-600 font-bold edify-text-caption">Resolved {{ issue.resolved_at|date:"d M Y" }}</span>
 {% elif issue.assigned_to %}
-<span class="inline-flex items-center gap-1 text-indigo-600 font-bold edify-text-caption">Assigned{% if assignee_name %} · {{ assignee_name }}{% endif %}</span>
+<span class="inline-flex items-center gap-1 edify-primary-text font-bold edify-text-caption">Assigned{% if assignee_name %} · {{ assignee_name }}{% endif %}</span>
 {% else %}
 <span class="inline-flex items-center gap-1 text-slate-400 font-bold edify-text-caption">Unassigned</span>
 {% endif %}

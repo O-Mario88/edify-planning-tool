@@ -434,6 +434,15 @@ def school_directory_view(request):
         "readiness_choices": PlanningReadiness.choices,
         # Selected states
         "q": q,
+        "topbar_search": {
+            "placeholder": "Search schools, staff, districts…",
+            "input_id": "topbar-search-input",
+            "value": q,
+            "hx_get": "/schools",
+            "hx_target": "#schools-table-container",
+            "hx_trigger": "keyup delay:300ms, search",
+            "hx_include": "#filters-form",
+        },
         "selected_fy": fy,
         "selected_region": region_id,
         "selected_district": district_id,

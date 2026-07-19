@@ -147,7 +147,14 @@ class ActivityType(models.TextChoices):
     FOLLOW_UP_VISIT = "follow_up_visit", "Follow-up Visit"
     COACHING_VISIT = "coaching_visit", "Coaching Visit"
     IN_SCHOOL_SUPPORT = "in_school_support", "In-school Support"
+    DONOR_VISIT = "donor_visit", "Donor Visit"
+    STORY_GATHERING_VISIT = "story_gathering_visit", "Gathering Story"
+    SCHOOL_INVITATION = "school_invitation", "School Invitation"
+    SOCIAL_VISIT = "social_visit", "Social Visit"
+    TRAINING_FOLLOW_UP_VISIT = "training_follow_up_visit", "Training Follow-up Visit"
+    IN_SCHOOL_COACHING_VISIT = "in_school_coaching_visit", "In-school Coaching Visit"
     TRAINING = "training", "Training"
+    IN_SCHOOL_TRAINING = "in_school_training", "In-school Training"
     SCHOOL_IMPROVEMENT_TRAINING = (
         "school_improvement_training",
         "School Improvement Training",

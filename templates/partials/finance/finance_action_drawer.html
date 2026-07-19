@@ -39,7 +39,7 @@ name="amount"
 id="amount"
 required
 value="{{ item.totalAmount }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -50,7 +50,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50
 name="method"
 id="method"
 required
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="mobile_money">Mobile Money</option>
 <option value="bank_transfer">Bank Transfer</option>
@@ -67,7 +67,7 @@ name="reference"
 id="reference"
 required
 placeholder="e.g. TXN-123456789"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -83,7 +83,7 @@ name="netsuite_id"
 id="netsuite_id"
 required
 placeholder="e.g. EXP-100458"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -96,7 +96,7 @@ name="amount"
 id="amount"
 required
 value="{{ item.estCostCents }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -109,7 +109,7 @@ name="reference"
 id="reference"
 required
 placeholder="e.g. bank transfer code"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -125,7 +125,7 @@ name="netsuite_id"
 id="netsuite_id"
 required
 placeholder="e.g. EXP-200394"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -138,7 +138,7 @@ name="amount"
 id="amount"
 required
 value="{{ item.amount }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -151,7 +151,7 @@ name="reference"
 id="reference"
 required
 placeholder="e.g. Mobile money tx id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -161,8 +161,8 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 mt-1 bg-slate-50
 <!-- Review only: the responsible user entered the NetSuite Code and amounts
      at submission. Clearing enforces the hard gates server-side (code present
      + IA verification) — the Accountant never types the code. -->
-<div class="p-3 bg-blue-50 rounded-surface border border-blue-100 text-[12px] leading-relaxed text-blue-800 space-y-1">
-<p class="font-semibold text-blue-900">Submitted Accountability Summary</p>
+<div class="p-3 edify-primary-soft rounded-surface border edify-primary-border text-[12px] leading-relaxed edify-primary-text space-y-1">
+<p class="font-semibold edify-primary-text">Submitted Accountability Summary</p>
 <p>&bull; Disbursed: {{ item.disbursedTotal|ugx }}</p>
 <p>&bull; Accounted Spent: {{ item.accountedAmount|ugx }}</p>
 <p>&bull; Returned Balance: {{ item.returnedAmount|ugx }}</p>
@@ -199,7 +199,7 @@ id="reason"
 required
 rows="4"
 placeholder="Explain what needs correction (e.g. missing receipts, incorrect amount)..."
-class="w-full p-2.5 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 edify-focus-surface placeholder-slate-400"
+class="w-full p-2.5 rounded-control border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus edify-focus-surface placeholder-slate-400"
 ></textarea>
 </div>
 {% endif %}

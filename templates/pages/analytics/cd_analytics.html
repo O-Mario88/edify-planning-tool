@@ -9,7 +9,7 @@
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
     <div>
-      <h1 class="text-[21px] font-extrabold tracking-tight leading-none">Country Director Analytics</h1>
+      <h1 class="text-[21px] font-extrabold tracking-tight leading-none edify-page-title">Country Director Analytics</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1">
         Leadership oversight of program performance, SSA improvement, field execution, budgets, partner impact, and operational risk.
       </p>
@@ -89,13 +89,13 @@
         {% for v, lbl in filter_options.activity_types %}<option value="{{ v }}" {% if filters.activity_type == v %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
       </select>
     </div>
-    <span class="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1.5 rounded-pill border border-blue-100 text-blue-600">
+    <span class="flex items-center gap-1.5 edify-primary-soft px-2.5 py-1.5 rounded-pill border edify-primary-border edify-primary-text">
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>
       <span class="uppercase tracking-wider edify-text-caption">Country Wide</span>
     </span>
     <a href="/analytics/country-director"
        hx-get="/analytics/country-director" hx-target="#cd-analytics-body" hx-swap="innerHTML" hx-push-url="true"
-       class="ml-auto inline-flex items-center gap-1 edify-text-caption text-blue-600 hover:text-blue-700 font-semibold px-2">
+       class="ml-auto inline-flex items-center gap-1 edify-text-caption edify-primary-text edify-primary-text-hover font-semibold px-2">
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0113-3M20 15a8 8 0 01-13 3"/></svg>
       Reset Filters
     </a>

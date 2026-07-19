@@ -143,7 +143,7 @@ def accountant_dashboard_view(request):
         status_display = w.status.replace("_", " ").title()
         status_class = "bg-amber-50 text-amber-700 border-amber-250"
         if w.status == "disbursed":
-            status_class = "bg-blue-50 text-blue-700 border-blue-250"
+            status_class = "edify-primary-soft edify-primary-text edify-primary-border"
         elif w.status == "accounted":
             status_class = "bg-emerald-50 text-emerald-700 border-emerald-250"
         elif w.status == "returned_by_accountant":

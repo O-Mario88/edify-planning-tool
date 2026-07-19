@@ -2,8 +2,8 @@
 <div class="pl-funding-summary">
   <div class="pl-funding-donut" role="img" aria-label="{{ funding_execution.utilization_pct }} percent of approved funding utilized">
     <div class="absolute inset-0 rounded-pill" style="background:conic-gradient(var(--edify-success) {{ funding_execution.utilization_pct }}%, var(--edify-border) 0);"></div>
-    <div class="absolute rounded-pill flex flex-col items-center justify-center"
-         style="inset:7px;background:var(--edify-surface);box-shadow:var(--edify-shadow-sm);">
+    <div class="absolute rounded-pill flex flex-col items-center justify-center edify-surface edify-shadow-sm"
+         style="inset:7px">
       <span class="pl-funding-donut__value">{{ funding_execution.utilization_pct }}%</span>
       <span class="pl-funding-donut__label">Utilized</span>
     </div>

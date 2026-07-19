@@ -102,6 +102,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "partners": ALL_ROLES,
     "partner_detail": ALL_ROLES,
     "coverage": {CD, PL, RVP, HR, PROJECT_COORDINATOR, ADMIN},
+    # Calendar is a shared read-only operational surface. The view applies its
+    # own role-to-staff audience rule before returning schedules.
+    "calendar": ALL_ROLES,
     "planning": {CCEO, PL, PROJECT_COORDINATOR, ADMIN},
     "weekly_fund_request": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
     "fund_approvals": {PL, ADMIN},

@@ -7,7 +7,7 @@
 
   <!-- Decorative background circles (outside the card, like the reference) -->
   <div class="absolute -top-28 -left-28 h-80 w-80 rounded-pill pointer-events-none" style="background:var(--edify-primary-active);"></div>
-  <div class="absolute top-16 left-44 h-3 w-3 rounded-pill pointer-events-none" style="background:var(--edify-surface-raised);opacity:.7;"></div>
+  <div class="absolute top-16 left-44 h-3 w-3 rounded-pill pointer-events-none edify-surface-raised" style="opacity:.7"></div>
   <div class="absolute -bottom-36 -right-20 h-96 w-96 rounded-pill pointer-events-none" style="background:var(--edify-sky-400);opacity:.55;"></div>
   <div class="absolute bottom-24 right-56 h-4 w-4 rounded-pill pointer-events-none" style="background:var(--edify-navy-800);opacity:.35;"></div>
 
@@ -15,8 +15,8 @@
        Floating card — a fixed, modest max-width so it always reads as a
        centered card (never an edge-to-edge stretch) regardless of viewport.
        ═══════════════════════════════════════════════════════════════ -->
-  <div class="relative w-full max-w-[880px] rounded-surface overflow-hidden flex mx-auto"
-       style="background:var(--edify-surface-raised);box-shadow:0 30px 70px -20px rgba(10,65,116,.4);">
+  <div class="relative w-full max-w-[880px] rounded-surface overflow-hidden flex mx-auto edify-surface-raised"
+       style="box-shadow:0 30px 70px -20px rgba(10,65,116,.4)">
 
     <!-- LEFT — brand panel. One centered flex-col block (logo/headline/
          features/stats together) instead of justify-between, so the
@@ -108,10 +108,10 @@
         {% block auth_content %}{% endblock %}
 
         <!-- Security note -->
-        <div class="mt-6 flex items-center gap-2.5 rounded-surface p-3" style="background:var(--edify-info-light);border:1px solid var(--edify-info-light);">
+        <div class="mt-6 flex items-center gap-2.5 rounded-surface p-3 edify-info-soft" style="border:1px solid var(--edify-info-light)">
           <svg class="h-4 w-4 shrink-0" style="color:var(--edify-navy-800);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
           <div>
-            <p style="font-size: 12px;font-weight:700;color:var(--edify-primary-active);">Enterprise-grade security</p>
+            <p class="edify-primary-text" style="font-size: 12px; font-weight:700">Enterprise-grade security</p>
             <p style="font-size: 12px;color:var(--edify-steel-600);margin-top:1px;">Encrypted, role-scoped, audit-logged.</p>
           </div>
         </div>

@@ -7,13 +7,13 @@
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Fiscal Year Overview</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Fiscal Year Overview</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Edify Operations · Fiscal Year Overview</p>
 </div>
 </div>
 
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-indigo-600">{{ total_schools }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">Total Schools</p></div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold edify-primary-text">{{ total_schools }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">Total Schools</p></div>
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-emerald-600">{{ ssa_done }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">SSA Done</p></div>
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-rose-500">{{ ssa_pending }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">SSA Pending</p></div>
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">Activity Rate</p></div>

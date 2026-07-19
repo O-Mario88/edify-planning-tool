@@ -55,10 +55,10 @@
             {% if can_schedule %}
               <button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?school_id={{ s.schoolId }}" hx-target="#drawer-container" hx-swap="innerHTML">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg>
-                <span>Schedule Now</span>
+                <span>Schedule</span>
               </button>
             {% else %}
-              <button type="button" class="school-record-action school-record-action--schedule" disabled><span>Schedule Now</span></button>
+              <button type="button" class="school-record-action school-record-action--schedule" disabled><span>Schedule</span></button>
             {% endif %}
 
             {% if can_assign_partner %}

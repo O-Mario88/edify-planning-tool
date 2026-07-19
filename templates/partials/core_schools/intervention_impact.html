@@ -21,7 +21,7 @@
 <td class="px-4 py-3 font-semibold text-slate-600">
 <div class="flex items-center gap-2 max-w-[150px]">
 <div class="flex-1 bg-slate-100 rounded-pill h-1.5 overflow-hidden">
-<div class="bg-blue-600 h-full rounded-pill" style="width: {% widthratio row.supported_count 10 100 %}%;"></div>
+<div class="edify-primary-solid h-full rounded-pill" style="width: {% widthratio row.supported_count 10 100 %}%;"></div>
 </div>
 <span class="edify-text-caption font-semibold text-slate-700 shrink-0">{{ row.supported_count }}</span>
 </div>
@@ -48,7 +48,7 @@
 {% if 'Staff' in row.comparison %}
 bg-emerald-50 text-emerald-700 border-emerald-150/60
 {% else %}
-bg-indigo-50 text-indigo-700 border-indigo-150/60
+edify-primary-soft edify-primary-text edify-primary-border-alpha-60
 {% endif %}"
 >
 {{ row.comparison }}

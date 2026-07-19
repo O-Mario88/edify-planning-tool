@@ -7,48 +7,6 @@
 {% endblock %}
 
 {% block drawer_body %}
-<style>
-/* Modal Overrides to match reference exactly */
-.drawer-surface.type-center {
-border-radius: 20px !important;
-box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
-background-color: white !important;
-border: 1px solid var(--edify-border) !important;
-}
-.drawer-header {
-border-bottom: none !important;
-background: white !important;
-padding: 24px 28px 4px 28px !important;
-}
-.drawer-header h3 {
-font-size: 19px !important;
-font-weight: 700 !important;
-color: var(--edify-text) !important;
-letter-spacing: -0.025em !important;
-}
-.drawer-header p {
-font-size: 13px !important;
-font-weight: 400 !important;
-color: var(--edify-text-muted) !important;
-margin-top: 6px !important;
-line-height: 1.5 !important;
-}
-.drawer-close-btn {
-border: 1.5px solid var(--edify-border) !important;
-border-radius: 10px !important;
-padding: 7px !important;
-color: var(--edify-text-muted) !important;
-background: white !important;
-transition: all 0.2s !important;
-}
-.drawer-close-btn:hover {
-background: var(--edify-surface-muted) !important;
-border-color: var(--edify-text-subtle) !important;
-}
-.drawer-body {
-padding: 4px 28px 28px 28px !important;
-}
-</style>
 <form
 hx-post="/planning/assign-partner-action"
 hx-target="#assign-errors"
@@ -81,7 +39,7 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 name="partner_id"
 id="partner_id"
 required
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Select Partner...</option>
 {% for p in partners %}
@@ -90,29 +48,32 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 </select>
 </div>
 
-<!-- Activity Type -->
+<!-- Purpose of Visit -->
+{% if school %}
+<div>
+<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose of Visit</label>
+<select
+name="purpose_of_visit"
+id="purpose_of_visit"
+required
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
+>
+<option value="">Select purpose...</option>
+{% for value, label in partner_visit_purposes %}
+<option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+</select>
+<p class="mt-1.5 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">Partners may be assigned only these three forms of support.</p>
+</div>
+{% else %}
 <div>
 <label for="activity_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Type</label>
-<select
-name="activity_type"
-id="activity_type"
-required
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
->
-{% if school %}
-{% if school.current_fy_ssa_status != 'done' %}
-<option value="baseline_ssa_visit">SSA Visit</option>
-<option value="school_visit_ssa_collection">Visit + SSA Collection</option>
-<option value="school_visit">Normal School Visit</option>
-{% else %}
-<option value="school_visit">School Visit</option>
-{% endif %}
-{% else %}
+<select name="activity_type" id="activity_type" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
 <option value="cluster_training">Cluster Training</option>
 <option value="cluster_meeting">Cluster Meeting</option>
-{% endif %}
 </select>
 </div>
+{% endif %}
 
 <!-- Focus Intervention -->
 <div>
@@ -120,7 +81,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <select
 name="focus_intervention"
 id="focus_intervention"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Select Focus Intervention (Optional)...</option>
 {% for code, label in interventions %}
@@ -286,7 +247,7 @@ id="purpose"
 required
 rows="2"
 placeholder="What needs to be achieved in this activity?"
-class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
 
@@ -298,7 +259,7 @@ name="notes"
 id="notes"
 rows="2"
 placeholder="Specific field instructions or scheduling notes..."
-class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
 

@@ -1,7 +1,7 @@
 {% load frontend_filters %}
 
 {% if mode == 'edit' %}
-<tr id="cost-setting-row-{{ c.key }}" class="bg-indigo-50/50">
+<tr id="cost-setting-row-{{ c.key }}" class="edify-primary-soft-alpha-50">
 <td class="px-4 py-3 font-bold text-slate-800 align-middle">
 {{ c.label }}
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
@@ -18,11 +18,11 @@ type="text"
 name="unit_cost"
 value="{{ c.unit_cost }}"
 required
-class="block w-full h-8 pl-9 pr-2 rounded-control border border-indigo-200 text-[12px] font-semibold text-indigo-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+class="block w-full h-8 pl-9 pr-2 rounded-control border edify-primary-border text-[12px] font-semibold edify-primary-text focus:outline-none focus:ring-1 edify-primary-focus edify-primary-focus"
 >
 </div>
 
-<button type="submit" class="h-8 px-3 rounded-control bg-indigo-600 hover:bg-indigo-700 text-white edify-text-caption font-semibold flex items-center justify-center transition-colors">
+<button type="submit" class="h-8 px-3 rounded-control edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold flex items-center justify-center transition-colors">
 Save
 </button>
 <button
@@ -43,7 +43,7 @@ Cancel
 {{ c.label }}
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
-<td class="px-4 py-3 font-semibold text-indigo-600 align-middle">
+<td class="px-4 py-3 font-semibold edify-primary-text align-middle">
 UGX {{ c.unit_cost|currency }}
 </td>
 <td class="px-4 py-3 text-right align-middle">

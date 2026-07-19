@@ -227,6 +227,7 @@ def from_schedule(principal, query: dict) -> dict:
 
     TRAINING_TYPES = {
         "training",
+        "in_school_training",
         "school_improvement_training",
         "cluster_training",
         "core_training",
@@ -924,6 +925,7 @@ def budget_workspace(principal, query: dict) -> dict:
     # dedicated Activity.expected_participants field was introduced.
     training_types = {
         "training",
+        "in_school_training",
         "school_improvement_training",
         "cluster_training",
         "core_training",

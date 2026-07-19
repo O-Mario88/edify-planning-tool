@@ -1,9 +1,9 @@
 .sp-plan {
-  --sp-blue: #1769e8;
-  --sp-green: #18a865;
-  --sp-purple: #7457ee;
-  --sp-orange: #f28b27;
-  --sp-teal: #20a7b5;
+  --sp-blue: var(--brand-primary);
+  --sp-green: var(--edify-success);
+  --sp-purple: var(--edify-purple);
+  --sp-orange: var(--edify-warning);
+  --sp-teal: var(--edify-teal);
   width: 100%;
   max-width: 1680px;
   margin: 0 auto;

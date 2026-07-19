@@ -7,12 +7,12 @@
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-500 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 edify-primary-text edify-text-caption font-semibold uppercase tracking-widest">
 Compliance Log
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Finance Audit Log Ledger</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Finance Audit Log Ledger</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Complete historic audit logs for all cash flows, payment methods, disbursements, reimbursements, and NetSuite reconciliations.
 </p>
@@ -38,14 +38,14 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Event -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 border ">
+<span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-semibold uppercase tracking-wide edify-primary-soft edify-primary-text border ">
 {{ log.event_type|upper }}
 </span>
 </td>
 <!-- Activity -->
 <td class="px-6 py-4">
 {% if log.activity %}
-<a href="/accounts/activities/{{ log.activity.id }}/" class="text-blue-600 hover:underline font-semibold">#{{ log.activity.id|slice:":8" }}</a>
+<a href="/accounts/activities/{{ log.activity.id }}/" class="edify-primary-text hover:underline font-semibold">#{{ log.activity.id|slice:":8" }}</a>
 {% else %}
 <span class="text-slate-400">Unlinked</span>
 {% endif %}

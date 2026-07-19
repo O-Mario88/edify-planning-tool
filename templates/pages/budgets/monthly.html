@@ -8,8 +8,8 @@
   <div class="rounded-surface border border-slate-800 bg-slate-900 px-5 py-5 text-white shadow-sm sm:px-6">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] text-blue-200">{{ scope_label }} funding workspace</p>
-        <h1 class="mt-1 text-[24px] font-bold tracking-tight">My Budget</h1>
+        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">{{ scope_label }} funding workspace</p>
+        <h1 class="mt-1 text-[24px] font-bold tracking-tight edify-page-title">My Budget</h1>
         <p class="mt-1 text-[13px] font-medium text-slate-300">{{ selected.title }} · FY {{ fy }} · {{ role }}</p>
       </div>
       <div class="rounded-control border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-slate-200">
@@ -26,10 +26,10 @@
 
   <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
     {% for period in comparison %}
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ period.key }}&budget_scope={{ budget_scope }}" class="rounded-surface border p-4 transition-all {% if period.selected %}border-blue-500 bg-blue-600 text-white shadow-sm{% else %}border-slate-200 edify-surface text-slate-800 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-sm{% endif %}">
-      <p class="edify-text-caption font-bold uppercase tracking-wider {% if period.selected %}text-blue-100{% else %}text-slate-400{% endif %}">{% if period.selected %}Grand total{% else %}{{ period.label }}{% endif %}</p>
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ period.key }}&budget_scope={{ budget_scope }}" class="rounded-surface border p-4 transition-all {% if period.selected %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800 hover:-translate-y-0.5 edify-primary-border-hover hover:shadow-sm{% endif %}">
+      <p class="edify-text-caption font-bold uppercase tracking-wider {% if period.selected %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">{% if period.selected %}Grand total{% else %}{{ period.label }}{% endif %}</p>
       <p class="mt-1 text-[20px] font-bold tabular-nums">{{ period.total|ugx }}</p>
-      <p class="mt-1 text-[11px] font-semibold {% if period.selected %}text-blue-100{% else %}text-slate-500{% endif %}">{% if period.selected %}{{ period.label }} · {% endif %}{{ period.title }}</p>
+      <p class="mt-1 text-[11px] font-semibold {% if period.selected %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if period.selected %}{{ period.label }} · {% endif %}{{ period.title }}</p>
     </a>
     {% endfor %}
   </div>
@@ -61,7 +61,7 @@
         <h2 class="text-[15px] font-bold text-slate-800">Activity cost plan</h2>
         <p class="mt-0.5 text-[12px] font-medium text-slate-500">Costs are grouped by activity and item. Training and meeting tables show sessions and participants; weekly and monthly requests trace these same lines, so amounts are not counted twice.</p>
       </div>
-      <div class="rounded-control border border-blue-100 edify-surface px-3 py-2 text-left shadow-sm md:text-right">
+      <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm md:text-right">
         <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
         <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ total|ugx }}</p>
       </div>
@@ -74,7 +74,7 @@
         <tbody class="divide-y divide-slate-200">
           {% for group in groups %}
           <tr>
-            <td colspan="6" class="px-4 py-2.5" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">
+            <td colspan="6" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
               <div class="flex items-center gap-2">
                 <span class="font-semibold">{{ group.label }}</span>
                 <span class="text-[11px] font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
@@ -82,20 +82,20 @@
             </td>
           </tr>
           <tr class="font-bold">
-            <th class="px-4 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Item</th>
-            <th class="px-3 py-3 text-center" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">{% if group.table_kind == 'meeting' %}Meetings{% elif group.table_kind == 'training' %}Training sessions{% elif group.table_kind == 'admin' %}Quantity{% else %}No. of Days{% endif %}</th>
-            <th class="px-3 py-3 text-center" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}Participants{% elif group.table_kind == 'admin' %}—{% else %}No. of Persons{% endif %}</th>
-            <th class="px-3 py-3 text-right" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Rate / Unit</th>
-            <th class="px-3 py-3 text-right" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Staff cost</th>
-            <th class="px-4 py-3 text-right" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Activity</th>
+            <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
+            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' %}Meetings{% elif group.table_kind == 'training' %}Training sessions{% elif group.table_kind == 'admin' %}Quantity{% else %}No. of Days{% endif %}</th>
+            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}Participants{% elif group.table_kind == 'admin' %}—{% else %}No. of Persons{% endif %}</th>
+            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Rate / Unit</th>
+            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Staff cost</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity</th>
           </tr>
           {% for row in group.rows %}
-          <tr class="hover:bg-blue-50/40">
+          <tr class="edify-primary-soft-hover">
             <td class="px-4 py-3">
               <div class="flex min-w-0 items-center gap-3">
                 <p class="min-w-0 font-semibold text-slate-800">{{ row.item }}</p>
                 {% if budget_scope == 'team' %}
-                <span class="ml-auto max-w-[46%] truncate rounded-pill bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-[var(--edify-accent)]" title="Responsible staff: {{ row.owners }}">{{ row.owners }}</span>
+                <span class="ml-auto max-w-[46%] truncate rounded-pill edify-primary-soft px-2 py-0.5 text-[11px] font-bold text-[var(--edify-accent)]" title="Responsible staff: {{ row.owners }}">{{ row.owners }}</span>
                 {% endif %}
               </div>
             </td>
@@ -107,18 +107,18 @@
           </tr>
           {% endfor %}
           <tr class="text-[13px] font-extrabold">
-            <td colspan="4" class="px-4 py-2.5" style="background-color: var(--edify-accent-light) !important; color: var(--edify-text) !important;">{{ group.label }} subtotal</td>
-            <td class="px-3 py-2.5 text-right tabular-nums" style="background-color: var(--edify-accent-light) !important; color: var(--edify-text) !important;">{{ group.staff_total|ugx }}</td>
-            <td class="px-4 py-2.5 text-right tabular-nums" style="background-color: var(--edify-accent-light) !important; color: var(--edify-text) !important;">{{ group.total|ugx }}</td>
+            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
+            <td class="px-3 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.staff_total|ugx }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total|ugx }}</td>
           </tr>
           {% endfor %}
         </tbody>
         {% if groups %}
         <tfoot>
           <tr class="text-[15px] font-extrabold">
-            <td colspan="4" class="px-4 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Grand total</td>
-            <td class="px-3 py-3 text-right tabular-nums" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">{{ staff_total|ugx }}</td>
-            <td class="px-4 py-3 text-right tabular-nums" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">{{ total|ugx }}</td>
+            <td colspan="4" class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Grand total</td>
+            <td class="px-3 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ staff_total|ugx }}</td>
+            <td class="px-4 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ total|ugx }}</td>
           </tr>
         </tfoot>
         {% endif %}

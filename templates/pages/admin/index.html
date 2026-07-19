@@ -8,9 +8,9 @@
 <!-- Header section -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight flex items-center gap-2">
+<h1 class="text-[21px] font-extrabold tracking-tight flex items-center gap-2 edify-page-title">
 <span>Admin Dashboard</span>
-<span class="bg-blue-100 text-blue-800 font-semibold edify-text-caption px-2 py-0.5 rounded-pill">System Control</span>
+<span class="edify-primary-soft edify-primary-text font-semibold edify-text-caption px-2 py-0.5 rounded-pill">System Control</span>
 </h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Platform configuration, user directories, and data integrity center</p>
 </div>
@@ -19,7 +19,7 @@
 <div class="flex items-center gap-2">
 <a
 href="/admin-panel/users"
-class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-surface shadow-sm transition-all focus:outline-none"
+class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-surface shadow-sm transition-all focus:outline-none"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -42,7 +42,7 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <div class="edify-surface rounded-surface  p-5 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">User Directory Health</h3>
-<div class="h-6 w-6 rounded-pill bg-blue-50 text-blue-600 flex items-center justify-center">
+<div class="h-6 w-6 rounded-pill edify-primary-soft edify-primary-text flex items-center justify-center">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
 </svg>
@@ -102,9 +102,9 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 <p class="text-[21px] font-extrabold tracking-tight text-emerald-700">Active</p>
 <p class="edify-text-caption font-bold text-emerald-600 uppercase mt-0.5">Workflow Rules</p>
 </a>
-<a href="/system-health" class="bg-blue-50/50 rounded-surface p-2.5 hover:bg-blue-100/50 transition-all block">
-<p class="text-[21px] font-extrabold tracking-tight text-blue-700">Integrity</p>
-<p class="edify-text-caption font-bold text-blue-600 uppercase mt-0.5">System Health</p>
+<a href="/system-health" class="edify-primary-soft-alpha-50 rounded-surface p-2.5 edify-primary-soft-hover transition-all block">
+<p class="text-[21px] font-extrabold tracking-tight edify-primary-text">Integrity</p>
+<p class="edify-text-caption font-bold edify-primary-text uppercase mt-0.5">System Health</p>
 </a>
 </div>
 <p class="edify-text-caption text-slate-400 font-semibold text-center leading-normal">System health scanners run continuously to flag broken relations and orphan records.</p>
@@ -122,8 +122,8 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <!-- Roles & Permissions Matrix Link -->
-<a href="/admin-panel/roles-permissions" class="flex gap-4 p-4  hover:border-blue-500 rounded-surface hover:shadow-md transition-all group edify-surface">
-<div class="h-10 w-10 rounded-surface bg-blue-50 group-hover:bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+<a href="/admin-panel/roles-permissions" class="flex gap-4 p-4  edify-primary-border-hover rounded-surface hover:shadow-md transition-all group edify-surface">
+<div class="h-10 w-10 rounded-surface edify-primary-soft edify-primary-group-hover-soft edify-primary-text flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
 </svg>
@@ -135,8 +135,8 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </a>
 
 <!-- Page Access Matrix Link -->
-<a href="/admin-panel/page-access-matrix" class="flex gap-4 p-4  hover:border-blue-500 rounded-surface hover:shadow-md transition-all group edify-surface">
-<div class="h-10 w-10 rounded-surface bg-indigo-50 group-hover:bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+<a href="/admin-panel/page-access-matrix" class="flex gap-4 p-4  edify-primary-border-hover rounded-surface hover:shadow-md transition-all group edify-surface">
+<div class="h-10 w-10 rounded-surface edify-primary-soft edify-primary-group-hover-soft edify-primary-text flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
 </svg>
@@ -148,7 +148,7 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </a>
 
 <!-- School Upload History Link -->
-<a href="/admin-panel/school-upload-history" class="flex gap-4 p-4  hover:border-blue-500 rounded-surface hover:shadow-md transition-all group edify-surface">
+<a href="/admin-panel/school-upload-history" class="flex gap-4 p-4  edify-primary-border-hover rounded-surface hover:shadow-md transition-all group edify-surface">
 <div class="h-10 w-10 rounded-surface bg-emerald-50 group-hover:bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -161,7 +161,7 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </a>
 
 <!-- Region & District Setup Link -->
-<a href="/admin-panel/region-district-setup" class="flex gap-4 p-4  hover:border-blue-500 rounded-surface hover:shadow-md transition-all group edify-surface">
+<a href="/admin-panel/region-district-setup" class="flex gap-4 p-4  edify-primary-border-hover rounded-surface hover:shadow-md transition-all group edify-surface">
 <div class="h-10 w-10 rounded-surface bg-rose-50 group-hover:bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

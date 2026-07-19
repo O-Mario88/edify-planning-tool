@@ -8,7 +8,7 @@
       <div class="flex items-center justify-between">
         <span class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ k.label }}</span>
         <div class="h-7 w-7 rounded-surface flex items-center justify-center shrink-0
-          {% if k.variant == 'primary' %}bg-blue-50 text-blue-500
+          {% if k.variant == 'primary' %}edify-primary-soft edify-primary-text
           {% elif k.variant == 'success' %}bg-emerald-50 text-emerald-500
           {% elif k.variant == 'warning' %}bg-amber-50 text-amber-500
           {% elif k.variant == 'danger' %}bg-rose-50 text-rose-500
@@ -30,7 +30,7 @@
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">My Current Course</h2>
         {% if current_course %}
         <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
-          {% if current_course.status_key == 'in_progress' %}bg-blue-50 text-blue-700
+          {% if current_course.status_key == 'in_progress' %}edify-primary-soft edify-primary-text
           {% elif current_course.status_key == 'ended' or current_course.status_key == 'marked_complete' %}bg-amber-50 text-amber-700
           {% else %}bg-slate-100 text-slate-500{% endif %}">{{ current_course.status }}</span>
         {% endif %}
@@ -52,22 +52,22 @@
           <span>Progress</span><span class="tabular-nums">{{ current_course.pct }}%</span>
         </div>
         <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden">
-          <div class="h-full rounded-pill bg-blue-500" style="width: {{ current_course.pct }}%"></div>
+          <div class="h-full rounded-pill edify-primary-solid" style="width: {{ current_course.pct }}%"></div>
         </div>
       </div>
 
       {% if current_course.next_action_label %}
-      <div class="rounded-surface bg-blue-50/60 border border-blue-100 p-3 flex items-start gap-2">
-        <svg class="h-4 w-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div class="rounded-surface edify-primary-soft-alpha-60 border edify-primary-border p-3 flex items-start gap-2">
+        <svg class="h-4 w-4 edify-primary-text shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <div class="min-w-0 flex-1">
-          <p class="edify-text-caption text-blue-800 font-semibold leading-snug">Next: {{ current_course.next_action_label }}</p>
+          <p class="edify-text-caption edify-primary-text font-semibold leading-snug">Next: {{ current_course.next_action_label }}</p>
           <button type="button" hx-get="/my-professional-development/request?id={{ current_course.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                  class="edify-text-caption font-bold text-blue-600 hover:text-blue-700 mt-1">Open course →</button>
+                  class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover mt-1">Open course →</button>
         </div>
       </div>
       {% else %}
       <button type="button" hx-get="/my-professional-development/request?id={{ current_course.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-              class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">View details →</button>
+              class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View details →</button>
       {% endif %}
       {% else %}
       <div class="flex flex-col items-center justify-center text-center py-8 px-4">
@@ -87,7 +87,7 @@
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Course Progress Tracker</h2>
         {% if current_course %}
         <button type="button" hx-get="/my-professional-development/request?id={{ current_course.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="edify-text-caption font-bold text-blue-600 hover:text-blue-700 shrink-0">View Full Timeline →</button>
+                class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">View Full Timeline →</button>
         {% endif %}
       </div>
       {% if timeline %}
@@ -97,7 +97,7 @@
           <div class="flex flex-col items-center shrink-0">
             <span class="h-5 w-5 rounded-pill flex items-center justify-center shrink-0
               {% if step.state == 'done' %}bg-emerald-500 text-white
-              {% elif step.state == 'active' %}bg-blue-500 text-white ring-4 ring-blue-100
+              {% elif step.state == 'active' %}edify-primary-solid text-white ring-4 edify-primary-ring
               {% elif step.state == 'blocked' %}bg-rose-100 text-rose-500
               {% else %}bg-slate-100 text-slate-400{% endif %}">
               {% if step.state == 'done' %}
@@ -109,7 +109,7 @@
           <div class="pb-4 min-w-0 flex-1">
             <p class="text-[12px] font-semibold {% if step.state == 'pending' %}text-slate-400{% elif step.state == 'blocked' %}text-rose-500{% else %}text-slate-700{% endif %}">{{ step.label }}</p>
             {% if step.date %}<p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ step.date|date:"d M Y" }}</p>
-            {% elif step.state == 'active' %}<p class="edify-text-caption text-blue-500 font-bold mt-0.5">In progress</p>
+            {% elif step.state == 'active' %}<p class="edify-text-caption edify-primary-text font-bold mt-0.5">In progress</p>
             {% endif %}
           </div>
         </div>
@@ -155,7 +155,7 @@
         <button type="button" hx-get="/my-professional-development/request?id={{ r.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
                 class="w-full text-left py-2.5 flex items-start gap-2.5">
           <span class="h-2 w-2 rounded-pill mt-1.5 shrink-0
-            {% if r.tone == 'danger' %}bg-rose-500{% elif r.tone == 'warning' %}bg-amber-500{% elif r.tone == 'info' %}bg-blue-500{% else %}bg-slate-300{% endif %}"></span>
+            {% if r.tone == 'danger' %}bg-rose-500{% elif r.tone == 'warning' %}bg-amber-500{% elif r.tone == 'info' %}edify-primary-solid{% else %}bg-slate-300{% endif %}"></span>
           <div class="min-w-0 flex-1">
             <p class="edify-text-caption font-semibold text-slate-700 leading-snug">{{ r.label }}</p>
             <p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ r.date|date:"d M Y" }}</p>
@@ -171,7 +171,7 @@
     <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-1">
       <div class="flex items-center justify-between mb-2">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Messages from HR</h2>
-        <a href="/messages" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">View all →</a>
+        <a href="/messages" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View all →</a>
       </div>
       {% if hr_messages %}
       <div class="divide-y divide-slate-50">
@@ -181,7 +181,7 @@
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
               <span class="edify-text-caption font-bold text-slate-600 truncate">{{ m.sender_name }}</span>
-              {% if m.unread %}<span class="h-2 w-2 rounded-pill bg-blue-600 shrink-0"></span>{% endif %}
+              {% if m.unread %}<span class="h-2 w-2 rounded-pill edify-primary-solid shrink-0"></span>{% endif %}
             </div>
             <p class="edify-text-caption text-slate-500 font-medium truncate mt-0.5">{{ m.body }}</p>
           </div>
@@ -258,11 +258,11 @@
                 {% if c.bucket == 'completed' %}bg-emerald-50 text-emerald-700
                 {% elif c.bucket == 'cancelled' %}bg-slate-100 text-slate-500
                 {% elif 'returned' in c.status_key or c.status_key == 'rejected' %}bg-rose-50 text-rose-700
-                {% else %}bg-blue-50 text-blue-700{% endif %}">{{ c.status }}</span>
+                {% else %}edify-primary-soft edify-primary-text{% endif %}">{{ c.status }}</span>
             </td>
             <td class="py-2.5 px-3 text-slate-500 font-medium tabular-nums">{{ c.funding_used }}</td>
             <td class="py-2.5 px-3 text-right">
-              {% if c.next_action_label %}<span class="edify-text-caption font-bold text-blue-600">{{ c.next_action_label }} →</span>
+              {% if c.next_action_label %}<span class="edify-text-caption font-bold edify-primary-text">{{ c.next_action_label }} →</span>
               {% else %}<span class="edify-text-caption text-slate-300">—</span>{% endif %}
             </td>
           </tr>

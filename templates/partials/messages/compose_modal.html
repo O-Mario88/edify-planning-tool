@@ -24,7 +24,7 @@
     <!-- Header -->
     <div class="shrink-0 px-5 py-4 border-b border-slate-100 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
-        <div class="h-9 w-9 rounded-surface bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+        <div class="h-9 w-9 rounded-surface edify-primary-soft edify-primary-text flex items-center justify-center shrink-0">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         </div>
         <div>
@@ -57,7 +57,7 @@
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Context Type <span class="text-rose-500">*</span></label>
           <select x-model="ctxTab"
                   @change="ctxId=''; ctxLabel=''; loadRecords()"
-                  class="w-full h-10 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+                  class="w-full h-10 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold text-slate-700 edify-primary-focus focus:outline-none cursor-pointer">
             <option value="" disabled selected>Select…</option>
             {% for key, label in context_tabs %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
           </select>
@@ -65,7 +65,7 @@
         <div class="space-y-1">
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Category <span class="text-rose-500">*</span></label>
           <select name="category" x-model="category" required
-                  class="w-full h-10 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+                  class="w-full h-10 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold text-slate-700 edify-primary-focus focus:outline-none cursor-pointer">
             <option value="" disabled selected>Select…</option>
             {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
           </select>
@@ -88,7 +88,7 @@
               <svg class="h-4 w-4 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <input type="search" placeholder="Search records…" :disabled="!ctxTab"
                      @keyup.debounce.300ms="loadRecords($event.target.value)"
-                     class="w-full h-10 pl-9 pr-3 edify-surface border border-slate-200 rounded-control text-[12px] font-semibold focus:border-blue-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-300">
+                     class="w-full h-10 pl-9 pr-3 edify-surface border border-slate-200 rounded-control text-[12px] font-semibold edify-primary-focus focus:outline-none disabled:bg-slate-50 disabled:text-slate-300">
             </div>
             <div id="modal-records" class="mt-1.5 space-y-1 max-h-36 overflow-y-auto"></div>
           </div>
@@ -100,10 +100,10 @@
         <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Recipients <span class="text-rose-500">*</span></label>
         <div class="min-h-10 px-2 py-1.5 flex items-center flex-wrap gap-1.5 edify-surface border border-slate-200 rounded-surface">
           <template x-for="r in to" :key="r.id">
-            <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-pill bg-blue-50 border border-blue-100 edify-text-caption font-bold text-blue-700">
-              <span class="h-5 w-5 rounded-pill bg-blue-100 text-blue-700 flex items-center justify-center edify-text-caption font-black" x-text="r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()"></span>
+            <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-pill edify-primary-soft border edify-primary-border edify-text-caption font-bold edify-primary-text">
+              <span class="h-5 w-5 rounded-pill edify-primary-soft edify-primary-text flex items-center justify-center edify-text-caption font-black" x-text="r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()"></span>
               <span x-text="r.name"></span>
-              <button type="button" @click="to = to.filter(x=>x.id!==r.id)" class="text-blue-400 hover:text-blue-600">&times;</button>
+              <button type="button" @click="to = to.filter(x=>x.id!==r.id)" class="edify-primary-text edify-primary-text-hover">&times;</button>
             </span>
           </template>
           <select @change="pick($event)"
@@ -119,13 +119,13 @@
       <div class="space-y-1">
         <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Subject <span class="text-rose-500">*</span></label>
         <input type="text" name="subject" x-model="subject" required placeholder="What is this about?"
-               class="w-full h-10 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold placeholder-slate-400 focus:border-blue-500 focus:outline-none">
+               class="w-full h-10 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold placeholder-slate-400 edify-primary-focus focus:outline-none">
       </div>
 
       <!-- Message -->
       <div class="space-y-1">
         <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Message <span class="text-rose-500">*</span></label>
-        <div class="rounded-surface border border-slate-200 overflow-hidden focus-within:border-blue-500 transition-colors">
+        <div class="rounded-surface border border-slate-200 overflow-hidden edify-primary-focus transition-colors">
           <div class="flex items-center gap-0.5 px-2 py-1.5 bg-slate-50/70 border-b border-slate-100">
             <button type="button" @click="wrap('**')" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-500 text-[12px] font-black" title="Bold">B</button>
             <button type="button" @click="wrap('_')" class="h-7 w-7 rounded-control hover:bg-slate-200/60 text-slate-500 text-[12px] italic font-bold" title="Italic">I</button>
@@ -146,9 +146,9 @@
       <!-- Attachments -->
       <div class="space-y-1.5" x-data="{ files: [] }">
         <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Attachments <span class="normal-case text-slate-300">(Optional)</span></label>
-        <label class="block border-2 border-dashed border-slate-200 rounded-surface p-3.5 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors">
+        <label class="block border-2 border-dashed border-slate-200 rounded-surface p-3.5 text-center cursor-pointer edify-primary-border-hover edify-primary-soft-hover transition-colors">
           <input type="file" name="attachments" multiple class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" @change="files = Array.from($event.target.files)">
-          <p class="edify-text-caption font-bold text-slate-500">Drag &amp; drop or <span class="text-blue-600">browse</span></p>
+          <p class="edify-text-caption font-bold text-slate-500">Drag &amp; drop or <span class="edify-primary-text">browse</span></p>
           <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">PDF, DOCX, XLSX, JPG, PNG · Max 10MB</p>
         </label>
         <div class="space-y-1.5">
@@ -174,7 +174,7 @@
                 @click="submitForm('draft')"
                 class="h-9 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 transition-colors">Save Draft</button>
         <button type="button" @click="submitForm('send')" :disabled="!canSend"
-                :class="canSend ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-300 cursor-not-allowed'"
+                :class="canSend ? 'edify-primary-solid edify-primary-hover' : 'bg-slate-300 cursor-not-allowed'"
                 class="h-9 px-5 rounded-control text-white text-[12px] font-semibold shadow-sm transition-colors inline-flex items-center gap-1.5">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
           Send Message

@@ -10,12 +10,12 @@
 <a href="/fund-requests/weekly" class="edify-text-caption font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to Weekly Requests</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Request Details</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Request Details</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">
 Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-semibold">{{ req.responsibleUser }}</span>
 </p>
 </div>
-<span class="inline-flex items-center rounded-pill px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if req.status == 'disbursed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif req.status == 'confirmed_for_advance' %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}bg-slate-100 text-slate-600{% endif %}">
+<span class="inline-flex items-center rounded-pill px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if req.status == 'disbursed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif req.status == 'confirmed_for_advance' %}edify-primary-soft edify-primary-text border edify-primary-border{% else %}bg-slate-100 text-slate-600{% endif %}">
 {{ req.status|replace_underscore }}
 </span>
 </div>

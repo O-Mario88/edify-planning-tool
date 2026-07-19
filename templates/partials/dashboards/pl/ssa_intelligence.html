@@ -3,20 +3,20 @@
   {% if ssa_matrix.rows %}
   <table class="pl-ssa-matrix" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
     <thead>
-      <tr style="font-size: 12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+      <tr class="edify-text-subtle border-b edify-border-bottom edify-surface-muted" style="font-size: 12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-align:left">
         <th style="padding:8px 10px;">Cluster</th>
         {% for code in ssa_matrix.codes %}
-        <th style="padding:8px 6px;text-align:center;">{{ code }}</th>
+        <th class="text-center" style="padding:8px 6px">{{ code }}</th>
         {% endfor %}
-        <th style="padding:8px 6px;text-align:center;">Overall</th>
+        <th class="text-center" style="padding:8px 6px">Overall</th>
       </tr>
     </thead>
     <tbody>
       {% for r in ssa_matrix.rows %}
-      <tr class="edify-data-row" style="border-bottom:1px solid var(--edify-border);">
-        <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ r.name }}</td>
+      <tr class="edify-data-row border-b edify-border-bottom">
+        <td class="edify-text" style="padding:7px 10px; font-weight:600">{{ r.name }}</td>
         {% for cell in r.cells %}
-        <td style="padding:7px 6px;text-align:center;">
+        <td class="text-center" style="padding:7px 6px">
           <span class="pl-ssa-score inline-block rounded-pill text-center font-bold"
                 style="min-width:30px;padding:2px 6px;font-size: 12px;
                        background:{% if cell.tone == 'success' %}var(--edify-success-light)
@@ -33,7 +33,7 @@
           </span>
         </td>
         {% endfor %}
-        <td style="padding:7px 6px;text-align:center;">
+        <td class="text-center" style="padding:7px 6px">
           <span class="pl-ssa-score inline-block rounded-pill text-center font-bold"
                 style="min-width:30px;padding:2px 6px;font-size: 12px;
                        background:{% if r.overall_tone == 'success' %}var(--edify-success-light)
@@ -55,7 +55,7 @@
   </table>
   {% else %}
   <div class="flex items-center justify-center py-8">
-    <p style="font-size:12px;color:var(--edify-text-subtle);font-weight:600;">No verified SSA in your clusters yet.</p>
+    <p class="edify-text-subtle" style="font-size:12px; font-weight:600">No verified SSA in your clusters yet.</p>
   </div>
   {% endif %}
 </div>

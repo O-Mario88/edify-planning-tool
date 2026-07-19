@@ -8,12 +8,12 @@
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 edify-primary-text edify-text-caption font-semibold uppercase tracking-widest">
 Funds Disbursement
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Ready for Advance Disbursement</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Ready for Advance Disbursement</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Process approved fund requests ready for disbursement. These advances are released before execution.
 </p>
@@ -71,7 +71,7 @@ Process approved fund requests ready for disbursement. These advances are releas
 <button
 @click="disburseOpen = true; selectedAct = '{{ act.id }}'; budgetSum = {{ act.est_cost_cents|default:0 }}"
 type="button"
-class="h-8 px-3.5 rounded-control bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
+class="h-8 px-3.5 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >
 Process Advance
 </button>
@@ -134,7 +134,7 @@ type="number"
 name="amount_disbursed"
 required
 :value="budgetSum"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all"
 >
 </div>
 
@@ -145,13 +145,13 @@ type="date"
 name="disbursed_at"
 required
 value="{% now "Y-m-d" %}"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all"
 >
 </div>
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Method</label>
-<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all">
+<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
 {% for m in methods %}
 <option value="{{ m }}">{{ m }}</option>
 {% endfor %}
@@ -165,7 +165,7 @@ type="text"
 name="payment_reference"
 required
 placeholder="e.g. TXN-9988112"
-class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3.5 edify-focus-surface focus:border-blue-500 focus:outline-none transition-all"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3.5 edify-focus-surface edify-primary-focus focus:outline-none transition-all"
 >
 </div>
 
@@ -174,7 +174,7 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12p
 <textarea
 name="notes"
 placeholder="Internal comments..."
-class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface focus:border-blue-500 focus:outline-none h-20 resize-none font-semibold"
+class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface edify-primary-focus focus:outline-none h-20 resize-none font-semibold"
 ></textarea>
 </div>
 </form>
@@ -184,7 +184,7 @@ class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px
 <button
 form="disburse-form"
 type="submit"
-class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 shadow-sm transition-all"
+class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center edify-primary-solid edify-primary-hover shadow-sm transition-all"
 >
 Confirm Disbursement
 </button>

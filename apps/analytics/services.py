@@ -852,9 +852,21 @@ def contribution_summary(principal, query: dict) -> dict:
     )
     regions_covered = reached_schools.values("region_id").distinct().count()
 
-    VISIT_TYPES = {"school_visit", "follow_up_visit", "coaching_visit", "core_visit"}
+    VISIT_TYPES = {
+        "school_visit",
+        "follow_up_visit",
+        "coaching_visit",
+        "core_visit",
+        "donor_visit",
+        "story_gathering_visit",
+        "school_invitation",
+        "social_visit",
+        "training_follow_up_visit",
+        "in_school_coaching_visit",
+    }
     TRAINING_TYPES = {
         "training",
+        "in_school_training",
         "school_improvement_training",
         "cluster_training",
         "core_training",

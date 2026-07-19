@@ -4,12 +4,11 @@
 <!-- KPI Strip -->
 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
   {% for k in kpi_strip_items %}
-  <div class="rounded-surface border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
+  <div class="rounded-surface border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md edify-surface edify-border">
     <div class="flex items-center justify-between">
       <span class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ k.label }}</span>
       <div class="h-7 w-7 rounded-surface flex items-center justify-center shrink-0
-        {% if k.variant == 'primary' %}bg-blue-50/10 text-blue-400 border border-blue-500/20
+        {% if k.variant == 'primary' %}edify-primary-soft-alpha-10 edify-primary-text border edify-primary-border-alpha-20
         {% elif k.variant == 'success' %}bg-emerald-50/10 text-emerald-400 border border-emerald-500/20
         {% elif k.variant == 'warning' %}bg-amber-50/10 text-amber-400 border border-amber-500/20
         {% elif k.variant == 'danger' %}bg-rose-50/10 text-rose-400 border border-rose-500/20
@@ -18,7 +17,7 @@
       </div>
     </div>
     <div class="flex items-baseline gap-1 mt-2.5">
-      <span class="text-[20px] font-black tracking-tight tabular-nums leading-none" style="color:var(--edify-text);">{{ k.value }}</span>
+      <span class="text-[20px] font-black tracking-tight tabular-nums leading-none edify-text">{{ k.value }}</span>
     </div>
     <span class="edify-text-caption font-semibold text-slate-400 mt-1 block leading-tight">{{ k.helper }}</span>
   </div>
@@ -26,67 +25,61 @@
 </div>
 
 <!-- Leadership Attention Alert Banner -->
-<div class="rounded-surface border p-4 space-y-3"
-     style="background:var(--edify-surface); border-color:var(--edify-border);">
-  <div class="flex items-center gap-1.5 pb-2 border-b" style="border-color:var(--edify-border);">
+<div class="rounded-surface border p-4 space-y-3 edify-surface edify-border">
+  <div class="flex items-center gap-1.5 pb-2 border-b edify-border">
     <span class="text-rose-500 flex shrink-0">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
     </span>
-    <h2 class="text-[13px] font-extrabold uppercase tracking-wide" style="color:var(--edify-text);">Leadership Attention Required</h2>
+    <h2 class="text-[13px] font-extrabold uppercase tracking-wide edify-text">Leadership Attention Required</h2>
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
     <!-- Item 1 -->
-    <a href="/recruitment" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5"
-         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+    <a href="/recruitment" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
       <div class="h-8 w-8 rounded-pill bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       </div>
       <div>
-        <span class="edify-text-caption font-bold block" style="color:var(--edify-text);">{{ open_positions }} Open Position{{ open_positions|pluralize }}</span>
+        <span class="edify-text-caption font-bold block edify-text">{{ open_positions }} Open Position{{ open_positions|pluralize }}</span>
         <span class="edify-text-caption text-rose-500 font-extrabold">View recruitment pipeline &rarr;</span>
       </div>
     </a>
     <!-- Item 2 -->
-    <a href="/analytics/country-director" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5"
-         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+    <a href="/analytics/country-director" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
       <div class="h-8 w-8 rounded-pill bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h2.945M11 20.935V19a2 2 0 00-2-2h-1a2 2 0 01-2-2v-1a2 2 0 00-2-2H3m8.01 0a9.01 9.01 0 0110.87-3.213M12 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       </div>
       <div>
-        <span class="edify-text-caption font-bold block" style="color:var(--edify-text);">{{ high_risk_countries|length }} High-Risk Countr{{ high_risk_countries|length|pluralize:"y,ies" }}</span>
+        <span class="edify-text-caption font-bold block edify-text">{{ high_risk_countries|length }} High-Risk Countr{{ high_risk_countries|length|pluralize:"y,ies" }}</span>
         <span class="edify-text-caption text-slate-400 font-bold">{{ high_risk_countries_label }}</span>
       </div>
     </a>
     <!-- Item 3 -->
-    <a href="/performance-reviews" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5"
-         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+    <a href="/performance-reviews" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
       <div class="h-8 w-8 rounded-pill bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
       </div>
       <div>
-        <span class="edify-text-caption font-bold block" style="color:var(--edify-text);">{{ reviews_due }} Review{{ reviews_due|pluralize }} Overdue</span>
+        <span class="edify-text-caption font-bold block edify-text">{{ reviews_due }} Review{{ reviews_due|pluralize }} Overdue</span>
         <span class="edify-text-caption text-rose-500 font-extrabold">Calibration pending &rarr;</span>
       </div>
     </a>
     <!-- Item 4 -->
-    <a href="/compliance-register" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5"
-         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+    <a href="/compliance-register" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
       <div class="h-8 w-8 rounded-pill bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
       </div>
       <div>
-        <span class="edify-text-caption font-bold block" style="color:var(--edify-text);">{{ documents_expiring }} Document{{ documents_expiring|pluralize }} Expiring</span>
+        <span class="edify-text-caption font-bold block edify-text">{{ documents_expiring }} Document{{ documents_expiring|pluralize }} Expiring</span>
         <span class="edify-text-caption text-slate-400 font-bold">Action required next 30d</span>
       </div>
     </a>
     <!-- Item 5 -->
-    <a href="/leave/coverage" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5"
-         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-      <div class="h-8 w-8 rounded-pill bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+    <a href="/leave/coverage" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
+      <div class="h-8 w-8 rounded-pill edify-primary-tint-10 edify-primary-text flex items-center justify-center shrink-0">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
       </div>
       <div>
-        <span class="edify-text-caption font-bold block" style="color:var(--edify-text);">{{ employees_on_leave }} Staff on Leave</span>
+        <span class="edify-text-caption font-bold block edify-text">{{ employees_on_leave }} Staff on Leave</span>
         <span class="edify-text-caption text-amber-500 font-bold">{{ coverage_conflicts }} missing coverage conflict{{ coverage_conflicts|pluralize }}</span>
       </div>
     </a>
@@ -96,26 +89,24 @@
 <!-- Row 1: Workforce Overview Charts -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
   <!-- Chart Card -->
-  <div class="lg:col-span-2 rounded-surface border p-5 space-y-4"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">1. Workforce Overview</h2>
+  <div class="lg:col-span-2 rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <div class="flex items-center justify-between pb-3 border-b edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">1. Workforce Overview</h2>
       <span class="edify-text-caption px-2 py-0.5 rounded-pill bg-slate-100/10 text-slate-400 font-bold">Last 6 Months</span>
     </div>
     <div id="chart-workforce-overview" class="min-h-[250px]"></div>
   </div>
 
   <!-- Country Summary Table Card -->
-  <div class="rounded-surface border p-5 space-y-4"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">2. Workforce by Country</h2>
-      <a href="/staff" class="edify-text-caption font-bold text-blue-400 hover:underline">View details &rarr;</a>
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <div class="flex items-center justify-between pb-3 border-b edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">2. Workforce by Country</h2>
+      <a href="/staff" class="edify-text-caption font-bold edify-primary-text hover:underline">View details &rarr;</a>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left edify-text-caption font-semibold">
         <thead>
-          <tr class="border-b" style="border-color:var(--edify-border);">
+          <tr class="border-b edify-border">
             <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase">Country</th>
             <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Headcount</th>
             <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">On Track</th>
@@ -124,17 +115,17 @@
             <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Vacancies</th>
           </tr>
         </thead>
-        <tbody class="divide-y" style="border-color:var(--edify-border);">
+        <tbody class="divide-y edify-border">
           {% for item in workforce_by_country %}
           <tr class="hover:bg-slate-50/5">
             <td class="py-2.5 flex items-center gap-1.5">
               <span>{{ item.flag }}</span>
-              <span style="color:var(--edify-text);">{{ item.country }}</span>
+              <span class="edify-text">{{ item.country }}</span>
             </td>
             <td class="py-2.5 text-center tabular-nums text-slate-400">{{ item.headcount }}</td>
             <td class="py-2.5 text-center text-emerald-400">{{ item.on_track }}%</td>
             <td class="py-2.5 text-center text-rose-400">{{ item.at_risk }}</td>
-            <td class="py-2.5 text-center text-blue-400">{{ item.on_leave }}</td>
+            <td class="py-2.5 text-center edify-primary-text">{{ item.on_leave }}</td>
             <td class="py-2.5 text-center text-amber-400">{{ item.vacancies }}</td>
           </tr>
           {% endfor %}
@@ -147,39 +138,35 @@
 <!-- Row 2: Distribution Metrics (Donuts & Bars) -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
   <!-- Dept Headcount Donut -->
-  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
+  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
     <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">3. Headcount by Department</h2>
     <div id="chart-department-headcount" class="min-h-[180px]"></div>
   </div>
 
   <!-- Job Level distribution progress bar/pyramid list -->
-  <div class="rounded-surface border p-4 space-y-3"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
+  <div class="rounded-surface border p-4 space-y-3 edify-surface edify-border">
     <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">4. Job Level Distribution</h2>
     <div class="space-y-2 mt-2">
       {% for jl in job_levels %}
       <div class="flex items-center justify-between edify-text-caption font-semibold">
         <span class="text-slate-400">{{ jl.label }}</span>
         <div class="flex-1 mx-2 h-2.5 bg-slate-100/10 rounded-pill overflow-hidden">
-          <div class="h-full bg-blue-500" style="width: {{ jl.pct }}%"></div>
+          <div class="h-full edify-primary-solid" style="width: {{ jl.pct }}%"></div>
         </div>
-        <span style="color:var(--edify-text);" class="tabular-nums w-8 text-right">{{ jl.count }} <span class="edify-text-caption text-slate-400">({{ jl.pct }}%)</span></span>
+        <span class="edify-text" class="tabular-nums w-8 text-right">{{ jl.count }} <span class="edify-text-caption text-slate-400">({{ jl.pct }}%)</span></span>
       </div>
       {% endfor %}
     </div>
   </div>
 
   <!-- Leave Overview Donut -->
-  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
+  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
     <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">5. Leave Overview</h2>
     <div id="chart-leave-overview" class="min-h-[180px]"></div>
   </div>
 
   <!-- Performance Overview stacked bars -->
-  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
+  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
     <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">6. Performance Overview</h2>
     <div id="chart-performance-overview" class="min-h-[180px]"></div>
   </div>
@@ -188,27 +175,26 @@
 <!-- Row 3: Reviews, Compliance, Funnel -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
   <!-- Upcoming Reviews table -->
-  <div class="rounded-surface border p-5 space-y-4"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">7. Upcoming Reviews &amp; Probations</h2>
-      <a href="/performance-reviews" class="edify-text-caption font-bold text-blue-400 hover:underline">View all &rarr;</a>
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <div class="flex items-center justify-between pb-3 border-b edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">7. Upcoming Reviews &amp; Probations</h2>
+      <a href="/performance-reviews" class="edify-text-caption font-bold edify-primary-text hover:underline">View all &rarr;</a>
     </div>
     <div class="overflow-y-auto max-h-[220px]">
       <table class="w-full text-left edify-text-caption font-semibold">
         <thead>
-          <tr class="border-b" style="border-color:var(--edify-border);">
+          <tr class="border-b edify-border">
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Employee</th>
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Type</th>
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Due Date</th>
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Status</th>
           </tr>
         </thead>
-        <tbody class="divide-y" style="border-color:var(--edify-border);">
+        <tbody class="divide-y edify-border">
           {% for r in upcoming_reviews %}
           <tr class="hover:bg-slate-50/5">
             <td class="py-2.5">
-              <span class="block" style="color:var(--edify-text);">{{ r.name }}</span>
+              <span class="block edify-text">{{ r.name }}</span>
               <span class="edify-text-caption text-slate-400">{{ r.role }} · {{ r.country }}</span>
             </td>
             <td class="py-2.5 text-slate-400">{{ r.type }}</td>
@@ -224,16 +210,15 @@
   </div>
 
   <!-- Compliance Status table -->
-  <div class="rounded-surface border p-5 space-y-4"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">8. Compliance Status</h2>
-      <a href="/compliance-register" class="edify-text-caption font-bold text-blue-400 hover:underline">Register &rarr;</a>
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <div class="flex items-center justify-between pb-3 border-b edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">8. Compliance Status</h2>
+      <a href="/compliance-register" class="edify-text-caption font-bold edify-primary-text hover:underline">Register &rarr;</a>
     </div>
     <div class="overflow-y-auto max-h-[220px]">
       <table class="w-full text-left edify-text-caption font-semibold">
         <thead>
-          <tr class="border-b" style="border-color:var(--edify-border);">
+          <tr class="border-b edify-border">
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Requirement</th>
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-center text-emerald-400">Compliant</th>
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-center text-amber-400">Due Soon</th>
@@ -241,7 +226,7 @@
             <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Total</th>
           </tr>
         </thead>
-        <tbody class="divide-y" style="border-color:var(--edify-border);">
+        <tbody class="divide-y edify-border">
           {% for c in compliance_status %}
           <tr class="hover:bg-slate-50/5">
             <td class="py-2.5 text-slate-300">{{ c.requirement }}</td>
@@ -257,11 +242,10 @@
   </div>
 
   <!-- Recruitment Funnel ApexChart -->
-  <div class="rounded-surface border p-5 space-y-4 flex flex-col justify-between"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">9. Recruitment Funnel</h2>
-      <a href="/recruitment" class="edify-text-caption font-bold text-blue-400 hover:underline">Pipeline &rarr;</a>
+  <div class="rounded-surface border p-5 space-y-4 flex flex-col justify-between edify-surface edify-border">
+    <div class="flex items-center justify-between pb-3 border-b edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">9. Recruitment Funnel</h2>
+      <a href="/recruitment" class="edify-text-caption font-bold edify-primary-text hover:underline">Pipeline &rarr;</a>
     </div>
     <div id="chart-recruitment-funnel" class="min-h-[200px]"></div>
   </div>
@@ -270,14 +254,12 @@
 <!-- Row 4: Action Panels -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
   <!-- Pending Actions List -->
-  <div class="rounded-surface border p-5 space-y-4"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Pending HR Actions</h2>
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Pending HR Actions</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {% for pa in pending_actions %}
-      <a href="{{ pa.url }}" class="flex items-center justify-between p-3 rounded-surface border transition hover:-translate-y-0.5 hover:shadow-sm"
-         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-        <span class="edify-text-caption font-extrabold" style="color:var(--edify-text);">{{ pa.label }}</span>
+      <a href="{{ pa.url }}" class="flex items-center justify-between p-3 rounded-surface border transition hover:-translate-y-0.5 hover:shadow-sm edify-surface-muted edify-border">
+        <span class="edify-text-caption font-extrabold edify-text">{{ pa.label }}</span>
         <span class="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-pill edify-text-caption font-black tabular-nums">{{ pa.count }}</span>
       </a>
       {% endfor %}
@@ -285,17 +267,15 @@
   </div>
 
   <!-- Quick Actions Grid -->
-  <div class="rounded-surface border p-5 space-y-4"
-       style="background:var(--edify-surface); border-color:var(--edify-border);">
-    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b" style="color:var(--edify-text); border-color:var(--edify-border);">Quick Actions</h2>
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Quick Actions</h2>
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
       {% for qa in quick_actions %}
-      <a href="{{ qa.url }}" class="rounded-surface border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5"
-         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
-        <span class="h-8 w-8 rounded-pill bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
+      <a href="{{ qa.url }}" class="rounded-surface border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5 edify-surface-muted edify-border">
+        <span class="h-8 w-8 rounded-pill edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20 flex items-center justify-center">
           {% include "partials/analytics/pl/_icon.html" with name=qa.icon %}
         </span>
-        <span class="edify-text-caption font-extrabold leading-tight" style="color:var(--edify-text);">{{ qa.label }}</span>
+        <span class="edify-text-caption font-extrabold leading-tight edify-text">{{ qa.label }}</span>
       </a>
       {% endfor %}
     </div>
@@ -303,34 +283,33 @@
 </div>
 
 <!-- Row 5: Field Debrief People & Capacity Signals -->
-<a href="/debriefs" class="block rounded-surface border p-5 space-y-3 transition hover:-translate-y-0.5 hover:shadow-sm"
-   style="background:var(--edify-surface); border-color:var(--edify-border);">
-  <div class="flex items-center justify-between pb-3 border-b" style="border-color:var(--edify-border);">
-    <h2 class="text-[13px] font-bold uppercase tracking-wide" style="color:var(--edify-text);">People &amp; Capacity Signals from Field Debriefs <span class="normal-case font-medium edify-text-caption" style="color:var(--edify-text-muted);">(last {{ field_debrief_intel.days }} days)</span></h2>
-    <span class="edify-text-caption font-bold text-blue-400">Open Field Debriefs &rarr;</span>
+<a href="/debriefs" class="block rounded-surface border p-5 space-y-3 transition hover:-translate-y-0.5 hover:shadow-sm edify-surface edify-border">
+  <div class="flex items-center justify-between pb-3 border-b edify-border">
+    <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">People &amp; Capacity Signals from Field Debriefs <span class="normal-case font-medium edify-text-caption edify-text-muted">(last {{ field_debrief_intel.days }} days)</span></h2>
+    <span class="edify-text-caption font-bold edify-primary-text">Open Field Debriefs &rarr;</span>
   </div>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-    <div class="rounded-surface p-3 text-center" style="background:var(--edify-surface-muted);">
-      <p class="text-[16px] font-bold tabular-nums" style="color:var(--edify-text);">{{ field_debrief_intel.total }}</p>
-      <p class="edify-text-caption font-semibold" style="color:var(--edify-text-muted);">Debriefs Filed</p>
+    <div class="rounded-surface p-3 text-center edify-surface-muted">
+      <p class="text-[16px] font-bold tabular-nums edify-text">{{ field_debrief_intel.total }}</p>
+      <p class="edify-text-caption font-semibold edify-text-muted">Debriefs Filed</p>
     </div>
     <div class="rounded-surface p-3 text-center {% if field_debrief_intel.critical %}bg-rose-500/10{% else %}{% endif %}" style="{% if not field_debrief_intel.critical %}background:var(--edify-surface-muted);{% endif %}">
       <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.critical %}text-rose-400{% else %}{% endif %}" {% if not field_debrief_intel.critical %}style="color:var(--edify-text);"{% endif %}>{{ field_debrief_intel.critical }}</p>
-      <p class="edify-text-caption font-semibold" style="color:var(--edify-text-muted);">Critical Risk</p>
+      <p class="edify-text-caption font-semibold edify-text-muted">Critical Risk</p>
     </div>
     <div class="rounded-surface p-3 text-center {% if field_debrief_intel.action_required %}bg-amber-500/10{% endif %}" style="{% if not field_debrief_intel.action_required %}background:var(--edify-surface-muted);{% endif %}">
       <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.action_required %}text-amber-400{% endif %}" {% if not field_debrief_intel.action_required %}style="color:var(--edify-text);"{% endif %}>{{ field_debrief_intel.action_required }}</p>
-      <p class="edify-text-caption font-semibold" style="color:var(--edify-text-muted);">Action Required</p>
+      <p class="edify-text-caption font-semibold edify-text-muted">Action Required</p>
     </div>
     <div class="rounded-surface p-3 text-center {% if field_debrief_intel.escalated %}bg-rose-500/10{% endif %}" style="{% if not field_debrief_intel.escalated %}background:var(--edify-surface-muted);{% endif %}">
       <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.escalated %}text-rose-400{% endif %}" {% if not field_debrief_intel.escalated %}style="color:var(--edify-text);"{% endif %}>{{ field_debrief_intel.escalated }}</p>
-      <p class="edify-text-caption font-semibold" style="color:var(--edify-text-muted);">Escalated</p>
+      <p class="edify-text-caption font-semibold edify-text-muted">Escalated</p>
     </div>
   </div>
   {% if field_debrief_intel.top_challenge %}
-  <p class="edify-text-caption font-medium" style="color:var(--edify-text-muted);">Most reported field challenge: <span class="font-bold" style="color:var(--edify-text);">{{ field_debrief_intel.top_challenge }}</span> ({{ field_debrief_intel.top_challenge_count }} debriefs)</p>
+  <p class="edify-text-caption font-medium edify-text-muted">Most reported field challenge: <span class="font-bold edify-text">{{ field_debrief_intel.top_challenge }}</span> ({{ field_debrief_intel.top_challenge_count }} debriefs)</p>
   {% else %}
-  <p class="edify-text-caption font-medium" style="color:var(--edify-text-muted);">No field debriefs filed in this window.</p>
+  <p class="edify-text-caption font-medium edify-text-muted">No field debriefs filed in this window.</p>
   {% endif %}
 </a>
 

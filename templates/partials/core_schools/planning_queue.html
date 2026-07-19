@@ -36,7 +36,7 @@
 <td class="px-4 py-2.5 font-semibold text-slate-600">
 <div class="flex items-center gap-1.5">
 {% if q.assigned_partner != "Unassigned" %}
-<span class="h-5 w-5 rounded-pill bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center edify-text-caption font-semibold uppercase">
+<span class="h-5 w-5 rounded-pill edify-primary-soft border edify-primary-border edify-primary-text flex items-center justify-center edify-text-caption font-semibold uppercase">
 P
 </span>
 <span class="truncate max-w-[120px]">{{ q.assigned_partner }}</span>
@@ -106,7 +106,7 @@ hx-get="/core-schools/schedule-visit?school_id={{ q.school_id }}"
 hx-get="/core-schools/schedule-training?school_id={{ q.school_id }}"
 {% endif %}
 hx-target="#drawer-container"
-class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center justify-center shrink-0 uppercase tracking-wider transition-all"
+class="px-3 h-7 edify-text-caption font-semibold rounded-control edify-primary-solid edify-primary-hover text-white shadow-sm flex items-center justify-center shrink-0 uppercase tracking-wider transition-all"
 >
 Plan Now
 </button>

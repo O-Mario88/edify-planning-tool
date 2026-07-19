@@ -198,18 +198,23 @@ class CoreSchoolsPlanningTest(TestCase):
         c.force_login(user)
         return c
 
-    def _schedule_visit(self, client=None, school=None, seq="1", when="2026-07-21"):
+    def _schedule_visit(
+        self, client=None, school=None, seq="1", when="2026-07-21", partner_id=None
+    ):
+        payload = {
+            "school_id": (school or self.school).school_id,
+            "visit_number": seq,
+            "scheduled_date": when,
+            "focus_intervention": "teaching_environment",
+            "visit_purpose": "Core package recovery visit",
+            "expected_outcome": "Slot fulfilled",
+            "responsible_staff_id": self.cceo_sp.id,
+        }
+        if partner_id:
+            payload["assigned_partner_id"] = partner_id
         return (client or self._client(self.cceo)).post(
             "/core-schools/schedule-visit/action",
-            {
-                "school_id": (school or self.school).school_id,
-                "visit_number": seq,
-                "scheduled_date": when,
-                "focus_intervention": "teaching_environment",
-                "visit_purpose": "Core package recovery visit",
-                "expected_outcome": "Slot fulfilled",
-                "responsible_staff_id": self.cceo_sp.id,
-            },
+            payload,
         )
 
     # ── 1–6: sidebar + scope ─────────────────────────────────────────────────
@@ -277,8 +282,11 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertEqual(self.plan.trainings_target, 4)
         self.assertIsNone(self.plan.baseline_average)  # assessment still required
         html = self._client(self.cceo).get("/core-schools").content.decode()
-        for head in ("V1", "V2", "V3", "V4", "T1", "T2", "T3", "T4"):
-            self.assertIn(head, html)
+        self.assertIn("Visits:", html)
+        self.assertIn("Trainings:", html)
+        self.assertIn("0/4", html)
+        self.assertNotIn("Core service package", html)
+        self.assertNotIn("Create Core Plan", html)
 
     def test_core_school_expansion_shows_real_grouped_ssa_recommendations(self):
         """The core matrix must use its confirmed saved scores, not a summary."""
@@ -305,7 +313,7 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertContains(
             response, 'class="school-record-action school-record-action--assign"'
         )
-        self.assertContains(response, "Schedule Now")
+        self.assertContains(response, ">Schedule<")
         self.assertContains(response, ">Assign<")
 
         row = next(
@@ -329,6 +337,160 @@ class CoreSchoolsPlanningTest(TestCase):
         slot = CoreActivitySlot.objects.get(id=cslot_id(self.school.school_id, "v", 1))
         self.assertEqual(slot.status, "Scheduled")
         self.assertEqual(slot.activity_id, act.id)
+
+    def test_core_school_list_uses_live_support_counts(self):
+        from apps.core_schools.core_planning_services import CorePackageProgressService
+
+        response = self._schedule_visit()
+        self.assertIn(response.status_code, (200, 302), response.content[:200])
+
+        row = CorePackageProgressService.get_matrix_data(
+            School.objects.filter(id=self.school.id), FY
+        )[0]
+        self.assertEqual(row["scheduled_visit_count"], 1)
+        self.assertEqual(row["scheduled_training_count"], 0)
+        self.assertFalse(row["package_complete"])
+
+        html = self._client(self.cceo).get("/core-schools").content.decode()
+        self.assertIn("1/4", html)
+        self.assertNotIn("Core service package", html)
+
+    def test_core_slot_dropdowns_use_plain_language_and_hide_used_slots(self):
+        visit_drawer = self._client(self.cceo).get(
+            f"/core-schools/schedule-visit?school_id={self.school.school_id}"
+        )
+        self.assertContains(visit_drawer, "First Visit")
+        self.assertContains(visit_drawer, "Second Visit")
+        self.assertNotContains(visit_drawer, "V1 Visit")
+
+        scheduled = self._schedule_visit(seq="1")
+        self.assertIn(scheduled.status_code, (200, 302), scheduled.content[:200])
+        remaining_visit_drawer = self._client(self.cceo).get(
+            f"/core-schools/schedule-visit?school_id={self.school.school_id}"
+        )
+        self.assertNotContains(remaining_visit_drawer, "First Visit")
+        self.assertContains(remaining_visit_drawer, "Second Visit")
+
+        CoreActivitySlot.objects.filter(
+            core_plan=self.plan, activity_type="training", sequence_number=1
+        ).update(status="Scheduled")
+        training_drawer = self._client(self.cceo).get(
+            f"/core-schools/schedule-training?school_id={self.school.school_id}"
+        )
+        self.assertNotContains(training_drawer, "First Training")
+        self.assertContains(training_drawer, "Second Training")
+
+    def test_core_chooser_keeps_general_activities_available_after_package_completion(self):
+        CoreActivitySlot.objects.filter(
+            core_plan=self.plan, activity_type__in=["visit", "training"]
+        ).update(status="Scheduled")
+
+        response = self._client(self.cceo).get(
+            f"/core-schools/schedule-activity?school_id={self.school.school_id}"
+        )
+        self.assertContains(response, "Package complete")
+        self.assertContains(response, "No package visit slots available")
+        self.assertContains(response, "No package training slots available")
+        self.assertContains(response, "Schedule other activity")
+        self.assertContains(
+            response,
+            f"/planning/schedule-modal?school_id={self.school.school_id}",
+        )
+
+    def test_general_school_schedule_lists_everyday_visit_and_training_types(self):
+        response = self._client(self.cceo).get(
+            f"/planning/schedule-modal?school_id={self.school.school_id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        for label in (
+            "Donor Visit",
+            "Gathering Story",
+            "School Invitation",
+            "Social Visit",
+            "Training Follow-up Visit",
+            "In-school Coaching Visit",
+            "In-school Training",
+        ):
+            self.assertContains(response, label)
+
+    def test_general_visit_type_saves_with_a_cost_snapshot(self):
+        response = self._client(self.cceo).post(
+            "/planning/schedule-action",
+            {
+                "school_id": self.school.school_id,
+                "activity_type": "donor_visit",
+                "scheduled_date": "2026-07-24",
+                "delivery_type": "staff",
+                "activity_purpose_text": "Introduce a donor to the school.",
+            },
+        )
+        self.assertIn(response.status_code, (200, 302), response.content[:200])
+        activity = Activity.objects.get(
+            school=self.school, activity_type="donor_visit"
+        )
+        self.assertEqual(activity.status, "scheduled")
+        self.assertGreater(activity.est_cost_cents, 0)
+        self.assertGreater(activity.schedule_cost_lines.count(), 0)
+
+    def test_staff_core_support_is_limited_per_current_quarter_but_partner_is_not(self):
+        first = self._schedule_visit(seq="1")
+        self.assertIn(first.status_code, (200, 302), first.content[:200])
+
+        blocked = self._schedule_visit(seq="2")
+        self.assertEqual(blocked.status_code, 400)
+        self.assertIn("One staff-led core visit is already scheduled", blocked.content.decode())
+
+        # Partner delivery may use the next slot in another quarter of the
+        # same fiscal package; the staff quarter release does not apply.
+        partner_delivery = self._schedule_visit(
+            seq="2", when="2026-04-21", partner_id=self.partner.id
+        )
+        self.assertIn(
+            partner_delivery.status_code, (200, 302), partner_delivery.content[:200]
+        )
+        second_slot = CoreActivitySlot.objects.get(
+            id=cslot_id(self.school.school_id, "v", 2)
+        )
+        self.assertEqual(second_slot.status, "Scheduled")
+        self.assertEqual(second_slot.owner, "partner")
+
+    def test_full_live_package_disables_actions_and_rejects_new_support(self):
+        CoreActivitySlot.objects.filter(
+            core_plan=self.plan, activity_type__in=["visit", "training"]
+        ).update(status="Scheduled")
+
+        response = self._client(self.cceo).get("/core-schools")
+        row = next(
+            item
+            for item in response.context["matrix_rows"]
+            if item["school_id"] == self.school.school_id
+        )
+        self.assertTrue(row["package_complete"])
+        self.assertEqual(row["package_status"], "Package complete")
+        self.assertContains(response, 'disabled title="Package complete"')
+        self.assertContains(
+            response,
+            f"/core-schools/schedule-activity?school_id={self.school.school_id}",
+        )
+        self.assertContains(response, "Package:")
+        self.assertContains(response, "Complete")
+
+        blocked_schedule = self._schedule_visit(seq="1")
+        self.assertEqual(blocked_schedule.status_code, 400)
+        self.assertIn("core package is complete", blocked_schedule.content.decode())
+
+        blocked_assignment = self._client(self.cceo).post(
+            "/core-schools/assign-partner/action",
+            {
+                "school_id": self.school.school_id,
+                "support_type": "Visit",
+                "visit_training_number": "1",
+                "partner_id": self.partner.id,
+                "focus_intervention": "teaching_environment",
+            },
+        )
+        self.assertEqual(blocked_assignment.status_code, 400)
+        self.assertIn("core package is complete", blocked_assignment.content.decode())
 
     def test_scheduling_core_slot_creates_budget_line(self):
         self._schedule_visit()

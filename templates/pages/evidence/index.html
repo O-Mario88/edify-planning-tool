@@ -3,14 +3,14 @@
 {% block title %}Evidence Center — Edify{% endblock %}
 
 {% block shell_content %}
-<main class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" id="main-content" tabindex="-1">
+<section class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" aria-labelledby="evidence-center-title">
   <header class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 border-b border-slate-100 pb-4">
     <div>
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Execution assurance</span>
-      <h1 class="text-[21px] font-extrabold tracking-tight leading-tight mt-1">Evidence Center</h1>
+      <h1 id="evidence-center-title" class="text-[21px] font-extrabold tracking-tight leading-tight mt-1 edify-page-title">Evidence Center</h1>
       <p class="text-[12px] text-slate-500 font-semibold mt-1">Review, audit, and track proof packets across the activities in your authorized scope.</p>
     </div>
   </header>
   {% include "partials/evidence/workspace.html" %}
-</main>
+</section>
 {% endblock %}

@@ -7,14 +7,14 @@
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-surface bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
 <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-pill bg-emerald-500/15 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-blue-500/10 border border-blue-500/20 text-blue-400 edify-text-caption font-semibold uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 edify-primary-text edify-text-caption font-semibold uppercase tracking-widest">
 Compare &amp; Contrast
 </div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Evidence Comparison Workspace</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Evidence Comparison Workspace</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-2xl">
 Side-by-side verification pane. Review deviations between planned schedule objectives and field execution evidence inputs.
 </p>
@@ -27,10 +27,10 @@ Side-by-side verification pane. Review deviations between planned schedule objec
 <h3 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Awaiting Verification</h3>
 <div class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
 {% for w in waiting_list %}
-<a href="/ia/compare/?activity_id={{ w.id }}" class="block p-3 rounded-surface transition-all border {% if selected_activity_id|stringformat:'s' == w.id|stringformat:'s' %}border-blue-500 bg-blue-50/50 text-blue-700 shadow-sm{% else %}border-slate-100 hover:bg-slate-50{% endif %}">
+<a href="/ia/compare/?activity_id={{ w.id }}" class="block p-3 rounded-surface transition-all border {% if selected_activity_id|stringformat:'s' == w.id|stringformat:'s' %}edify-primary-border edify-primary-soft-alpha-50 edify-primary-text shadow-sm{% else %}border-slate-100 hover:bg-slate-50{% endif %}">
 <div class="font-semibold text-[12px] truncate">#{{ w.id|slice:":8" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ w.school.name|default:"Cluster-wide" }}</div>
-<div class="edify-text-caption text-blue-600 font-semibold uppercase mt-1 tracking-wider">{{ w.get_activity_type_display }}</div>
+<div class="edify-text-caption edify-primary-text font-semibold uppercase mt-1 tracking-wider">{{ w.get_activity_type_display }}</div>
 </a>
 {% empty %}
 <p class="text-[12px] text-slate-500 font-semibold py-4 text-center">No pending activities</p>
@@ -45,7 +45,7 @@ Side-by-side verification pane. Review deviations between planned schedule objec
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-6">
 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
 <h3 class="text-[15px] font-semibold text-slate-800">Plan Parameters vs Field Submission</h3>
-<span class="px-2.5 py-1 rounded-pill edify-text-caption font-semibold uppercase tracking-wide bg-blue-50 text-[var(--edify-chart-blue)] border border-blue-200">
+<span class="px-2.5 py-1 rounded-pill edify-text-caption font-semibold uppercase tracking-wide edify-primary-soft text-[var(--edify-chart-blue)] border edify-primary-border">
 Activity: #{{ act.id }}
 </span>
 </div>
@@ -152,12 +152,12 @@ MATCHED
 </div>
 
 <!-- Verification Workspace redirect block -->
-<div class="flex items-center justify-between bg-blue-50/40 border border-blue-100 p-5 rounded-surface">
+<div class="flex items-center justify-between edify-primary-soft-alpha-40 border edify-primary-border p-5 rounded-surface">
 <div class="space-y-1">
 <h4 class="text-[14px] font-semibold text-slate-800">Ready to certify this activity?</h4>
 <p class="text-[12px] text-slate-500 font-semibold">Enter the workspace checklist to approve this outcome or return it for correction.</p>
 </div>
-<a href="/ia/verification/{{ act.id }}/" class="h-10 px-5 rounded-control bg-[var(--edify-chart-blue)] text-white hover:bg-blue-700 text-[12px] font-semibold flex items-center justify-center shadow-sm transition-all">
+<a href="/ia/verification/{{ act.id }}/" class="h-10 px-5 rounded-control bg-[var(--edify-chart-blue)] text-white edify-primary-hover text-[12px] font-semibold flex items-center justify-center shadow-sm transition-all">
 Review Workspace
 </a>
 </div>

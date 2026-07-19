@@ -7,7 +7,7 @@
     </div>
     <button type="button" hx-get="/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
        hx-target="#drawer-container" hx-swap="innerHTML"
-       class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">View full risk list &rarr;</button>
+       class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View full risk list &rarr;</button>
   </div>
   <div class="overflow-x-auto -mx-1">
     <table class="w-full text-left border-collapse min-w-[640px]">
@@ -31,7 +31,7 @@
           </td>
           <td class="py-2.5 px-2 edify-text-caption font-medium text-slate-500 tabular-nums">{{ r.last_visit }}</td>
           <td class="py-2.5 px-2 edify-text-caption font-medium text-slate-500 tabular-nums">{{ r.last_training }}</td>
-          <td class="py-2.5 px-2 edify-text-caption font-bold text-blue-600">{{ r.next_action }}</td>
+          <td class="py-2.5 px-2 edify-text-caption font-bold edify-primary-text">{{ r.next_action }}</td>
         </tr>
         {% empty %}
         <tr><td colspan="6" class="py-8 text-center text-[12px] text-slate-400 font-semibold">No at-risk schools — your portfolio is healthy this period.</td></tr>

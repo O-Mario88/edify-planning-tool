@@ -30,7 +30,18 @@ PL_APPROVED_STATUSES = (
     "closed",
 )
 
-VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
+VISIT_TYPES = [
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "core_visit",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
+]
 SSA_VISIT_TYPES = [
     "baseline_ssa_visit",
     "school_visit_ssa_collection",
@@ -40,6 +51,7 @@ SSA_VISIT_TYPES = [
 ]
 TRAINING_TYPES = [
     "training",
+    "in_school_training",
     "school_improvement_training",
     "in_school_support",
     "core_training",
@@ -60,7 +72,7 @@ CATEGORY_ORDER = [
 MIX_COLORS = {
     "Staff School Visits": "bg-emerald-500",
     "Partner School Visits": "bg-violet-500",
-    "Cluster Meetings": "bg-blue-500",
+    "Cluster Meetings": "edify-primary-solid",
     "Cluster Trainings": "bg-amber-500",
     "In-School Trainings": "bg-orange-500",
     "SSA Support Visits": "bg-teal-500",

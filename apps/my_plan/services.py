@@ -71,10 +71,10 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
         if not sf_id:
             return "Activity ID Missing", "bg-amber-50 text-amber-700 border-amber-200"
         if ia == "pending":
-            return "IA Pending", "bg-indigo-50 text-indigo-700 border-indigo-200"
+            return "IA Pending", "edify-primary-soft edify-primary-text edify-primary-border"
         if ia == "confirmed":
             return "IA Verified", "bg-emerald-50 text-emerald-700 border-emerald-200"
-        return "Accounts Pending", "bg-blue-50 text-blue-700 border-blue-200"
+        return "Accounts Pending", "edify-primary-soft edify-primary-text edify-primary-border"
 
     if status in (
         "returned",
@@ -92,7 +92,7 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     if planned_date and today < planned_date <= today + timedelta(days=7):
         return "This Week", "bg-emerald-50 text-emerald-700 border-emerald-200"
 
-    return "Scheduled", "bg-blue-50 text-blue-700 border-blue-200"
+    return "Scheduled", "edify-primary-soft edify-primary-text edify-primary-border"
 
 
 def get(principal, query: dict) -> dict:
@@ -535,6 +535,12 @@ def get_frontend_context(principal, query: dict) -> dict:
             "follow_up_visit",
             "coaching_visit",
             "in_school_support",
+            "donor_visit",
+            "story_gathering_visit",
+            "school_invitation",
+            "social_visit",
+            "training_follow_up_visit",
+            "in_school_coaching_visit",
             "core_visit",
             "baseline_ssa_visit",
             "school_visit_ssa_collection",
@@ -547,6 +553,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             "cluster_training",
             "core_training",
             "training",
+            "in_school_training",
             "school_improvement_training",
             "cluster_training_ssa_collection",
         ]
@@ -898,6 +905,12 @@ def get_frontend_context(principal, query: dict) -> dict:
             "follow_up_visit",
             "coaching_visit",
             "in_school_support",
+            "donor_visit",
+            "story_gathering_visit",
+            "school_invitation",
+            "social_visit",
+            "training_follow_up_visit",
+            "in_school_coaching_visit",
             "core_visit",
             "baseline_ssa_visit",
             "school_visit_ssa_collection",
@@ -909,6 +922,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             "cluster_training",
             "core_training",
             "training",
+            "in_school_training",
             "school_improvement_training",
             "cluster_training_ssa_collection",
         ]:

@@ -8,11 +8,11 @@
   <!-- Header -->
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
     <div>
-      <h1 class="text-[21px] font-extrabold tracking-tight" style="color:var(--edify-text);">Field Debrief Dashboard</h1>
+      <h1 class="text-[21px] font-extrabold tracking-tight edify-text edify-page-title">Field Debrief Dashboard</h1>
       <p class="text-[12.5px] text-slate-400 font-normal mt-1.5">Real-time field intelligence from your team and partners to drive action and improve impact.</p>
     </div>
     <div class="flex items-center gap-2">
-      <a href="/debriefs/submit" class="h-9 px-3.5 inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold rounded-control transition-colors">
+      <a href="/debriefs/submit" class="h-9 px-3.5 inline-flex items-center gap-1.5 edify-primary-solid edify-primary-hover text-white text-[12px] font-bold rounded-control transition-colors">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         New Field Debrief
       </a>
@@ -34,19 +34,16 @@
   <!-- Filters -->
   <form id="debrief-filters" hx-get="/debriefs" hx-target="#debrief-dashboard-body" hx-swap="innerHTML"
         hx-trigger="change, search" hx-push-url="true"
-        class="rounded-surface border p-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5"
-        style="background:var(--edify-surface); border-color:var(--edify-border);">
+        class="rounded-surface border p-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 edify-surface edify-border">
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
-      <select name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none"
-              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+      <select name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Range</span>
-      <select name="range_days" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none"
-              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+      <select name="range_days" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="7" {% if range_days == 7 %}selected{% endif %}>Last 7 Days</option>
         <option value="30" {% if range_days == 30 %}selected{% endif %}>Last 30 Days</option>
         <option value="90" {% if range_days == 90 %}selected{% endif %}>Last 90 Days</option>
@@ -54,16 +51,14 @@
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</span>
-      <select name="district_id" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none"
-              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+      <select name="district_id" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">All Districts</option>
         {% for did, dname in district_options %}<option value="{{ did }}" {% if did == district_id %}selected{% endif %}>{{ dname }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Risk Level</span>
-      <select name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none"
-              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+      <select name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">Any</option>
         {% for key, label in risk_level_options %}<option value="{{ key }}" {% if key == risk_level %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
@@ -71,8 +66,7 @@
     <label class="block lg:col-span-2">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Search</span>
       <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Search debrief titles or summaries…"
-             class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] font-semibold focus:outline-none"
-             style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+             class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
     </label>
   </form>
 

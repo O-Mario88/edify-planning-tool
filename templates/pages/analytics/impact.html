@@ -3,11 +3,11 @@
 {% block title %}Impact Analytics · Edify{% endblock %}
 
 {% block shell_content %}
-<main class="sp-page" id="main-content" tabindex="-1">
+<section class="sp-page" aria-labelledby="impact-analytics-title">
   <header class="sp-page-header">
     <div>
       <span class="sp-eyebrow">Statistical intelligence</span>
-      <h1>Impact Analytics</h1>
+      <h1 id="impact-analytics-title" class="edify-page-title">Impact Analytics</h1>
       <p>Did visits, trainings, and money move the SSA scores — and where they didn't, what does the field say is in the way?</p>
     </div>
     <div class="sp-engine-state" aria-label="Impact engine status">
@@ -17,5 +17,5 @@
   </header>
 
   {% include "partials/analytics/impact_workspace.html" %}
-</main>
+</section>
 {% endblock %}

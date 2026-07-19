@@ -3,25 +3,25 @@ x-data="{
 open: true
 }"
 x-show="open"
-class="fixed inset-0 z-50 flex items-center justify-end"
+class="edify-popup-dialog fixed inset-0 z-50"
 id="strategy-playbook-drawer-root"
 >
 <!-- Backdrop Blur -->
 <div
-class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+class="edify-popup-dialog__backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
 @click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
 ></div>
 
 <!-- Drawer Body -->
 <div
-class="relative w-full max-w-lg edify-surface h-full shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between z-10 transition-transform transform translate-x-0"
+class="edify-popup-dialog__surface relative w-full max-w-lg edify-surface h-auto shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between z-10 transition-transform transform"
 x-show="open"
 x-transition:enter="transition ease-out duration-300"
-x-transition:enter-start="translate-x-full"
-x-transition:enter-end="translate-x-0"
+x-transition:enter-start="opacity-0 scale-95"
+x-transition:enter-end="opacity-100 scale-100"
 x-transition:leave="transition ease-in duration-300"
-x-transition:leave-start="translate-x-0"
-x-transition:leave-end="translate-x-full"
+x-transition:leave-start="opacity-100 scale-100"
+x-transition:leave-end="opacity-0 scale-95"
 >
 <div class="space-y-5 flex-1">
 <!-- Drawer Header -->
@@ -40,8 +40,8 @@ class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
 
 <!-- Core Strategy details -->
 <div class="space-y-4 text-[12px] text-slate-600 font-medium leading-relaxed">
-<div class="p-4 rounded-surface bg-blue-50/50 border  space-y-2">
-<h3 class="text-[12px] font-semibold text-blue-800 uppercase tracking-wider">The Core Program Rule</h3>
+<div class="p-4 rounded-surface edify-primary-soft-alpha-50 border  space-y-2">
+<h3 class="text-[12px] font-semibold edify-primary-text uppercase tracking-wider">The Core Program Rule</h3>
 <p class="text-slate-700">Every core school is assigned an annual support plan consisting of 4 on-site support visits (V1–V4) and 4 interactive training workshops (T1–T4).</p>
 </div>
 
@@ -50,7 +50,7 @@ class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
 
 <div class="space-y-2.5">
 <!-- Phase 1 -->
-<div class="border-l-2 border-blue-500 pl-3">
+<div class="border-l-2 edify-primary-border pl-3">
 <h4 class="font-semibold text-slate-800 text-[12px]">Phase 1: Baseline Assessment &amp; V1</h4>
 <p class="edify-text-caption text-slate-500 mt-0.5">Complete baseline SSA assessment to isolate the two weakest focus areas. Schedule Visit 1 focusing on primary bottlenecks.</p>
 </div>
@@ -62,7 +62,7 @@ class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
 </div>
 
 <!-- Phase 3 -->
-<div class="border-l-2 border-indigo-500 pl-3">
+<div class="border-l-2 edify-primary-border pl-3">
 <h4 class="font-semibold text-slate-800 text-[12px]">Phase 3: Partner Collaboration (V2 &amp; V3)</h4>
 <p class="edify-text-caption text-slate-500 mt-0.5">Assign specialized interventions to verified partners to leverage specific expertise in Reading Fluency or EdTech setup.</p>
 </div>

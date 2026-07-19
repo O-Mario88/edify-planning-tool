@@ -7,12 +7,11 @@
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">Districts</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Districts</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Edify Operations · Districts</p>
 </div>
 </div>
 
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm"><form method="get" action="/districts" class="flex gap-3"><input type="text" name="q" value="{{ search }}" placeholder="Search districts..." class="flex-1 h-9 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-200"><button type="submit" class="h-9 px-4 bg-[var(--edify-accent)] text-white rounded-control text-[12px] font-bold">Search</button></form></div>
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if districts %}{# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">

@@ -81,7 +81,7 @@
         name="name"
         x-model="clusterName"
         placeholder="e.g. Mukono Central Cluster"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 edify-primary-focus"
         required
       >
     </div>
@@ -91,7 +91,7 @@
       <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Type</label>
       <select
         name="cluster_type"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 edify-primary-focus cursor-pointer"
       >
         <option value="mixed" {% if cluster.cluster_type == 'mixed' %}selected{% endif %}>Mixed (Default)</option>
         <option value="primary" {% if cluster.cluster_type == 'primary' %}selected{% endif %}>Primary Only</option>
@@ -110,7 +110,7 @@
         hx-get="{% url 'frontend:eligible_staff_options' %}"
         hx-trigger="change"
         hx-target="#responsible-staff-select"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 edify-primary-focus cursor-pointer"
         required
       >
         <option value="">-- Select District --</option>
@@ -126,7 +126,7 @@
       <select
         name="responsible_staff_id"
         id="responsible-staff-select"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 edify-primary-focus cursor-pointer"
       >
         <option value="">-- No Assigned Staff --</option>
         {% for sp in staff %}
@@ -152,7 +152,7 @@
               name="sub_county_ids"
               :value="sc.id"
               x-model="selectedSubCounties"
-              class="h-4 w-4 text-blue-600 rounded-control border-slate-300 focus:ring-blue-500"
+              class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
             >
             <span x-text="sc.name"></span>
           </label>
@@ -180,7 +180,7 @@
             name="cluster_leader_name"
             value="{{ cluster.cluster_leader_name|default:"" }}"
             placeholder="e.g. Esther Naluwu"
-            class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 edify-primary-focus"
           >
         </div>
         <div class="space-y-1">
@@ -190,7 +190,7 @@
             name="cluster_leader_phone"
             value="{{ cluster.cluster_leader_phone|default:"" }}"
             placeholder="e.g. +256 772 000 000"
-            class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-full h-9 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-1 edify-primary-focus"
           >
         </div>
       </div>

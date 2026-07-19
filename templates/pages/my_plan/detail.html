@@ -11,7 +11,7 @@
 <a href="/my-plan" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to My Plan</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight capitalize">{{ act.activity_type|title|replace_underscore }}</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight capitalize edify-page-title">{{ act.activity_type|title|replace_underscore }}</h1>
 <p class="text-[12px] text-slate-500 mt-0.5 font-semibold">
 {% if act.school %}
 School: <a href="/schools/{{ act.school.school_id }}" class="font-bold hover:underline text-[var(--edify-primary)]">{{ act.school.name }}</a>
@@ -107,7 +107,10 @@ class="w-full btn btn-primary h-10 shadow-sm"
 Complete Activity
 </button>
 <button
+type="button"
+data-reschedule-trigger
 hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
+hx-trigger="click consume"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="w-full btn btn-ghost h-10 shadow-sm"

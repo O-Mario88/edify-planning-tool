@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight">IA SSA Verification Queue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">IA SSA Verification Queue</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Approve or return collected SSA records to ensure they meet quality and audit requirements.</p>
 </div>
 <a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
@@ -47,7 +47,7 @@
 <td class="px-4 py-4 text-slate-600 font-semibold capitalize">{{ r.collector_type }}</td>
 <td class="px-4 py-4 text-slate-500 font-semibold">{{ r.date_of_ssa|date:"N j, Y" }}</td>
 <td class="px-4 py-4 font-bold text-slate-800">
-<span class="text-indigo-600 font-semibold">{{ r.average_score }}</span> / 10
+<span class="edify-primary-text font-semibold">{{ r.average_score }}</span> / 10
 </td>
 <td class="px-5 py-4 text-right">
 <div class="flex items-center justify-end gap-2">

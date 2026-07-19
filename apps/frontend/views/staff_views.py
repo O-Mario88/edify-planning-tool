@@ -201,6 +201,12 @@ def staff_directory_view(request):
         "total": total_active,
         "search": search,
         "active_tab": active_tab,
+        "topbar_search": {
+            "placeholder": "Search by name or email…",
+            "value": search,
+            "action": "/staff",
+            "hidden": [{"name": "tab", "value": active_tab}],
+        },
         "kpis": kpis,
         "page_obj": page_obj,
         "pages_list": pages_list,
@@ -947,7 +953,7 @@ def notification_drawer_view(request):
     context = {
         "notifications": notifs,
         "unread_count": unread_count,
-        "drawer_type": "right_top",
+        "drawer_type": "center",
         "drawer_size": "sm",
     }
     return render(request, "partials/notifications/notification_drawer.html", context)

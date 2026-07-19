@@ -10,7 +10,7 @@
     {% for k in kpi_strip_items %}
     {% if k.link %}<a href="{{ k.link }}" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all">{% else %}<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">{% endif %}
       <div class="h-8 w-8 rounded-surface flex items-center justify-center shrink-0
-        {% if k.variant == 'primary' %}bg-blue-50 text-blue-600
+        {% if k.variant == 'primary' %}edify-primary-soft edify-primary-text
         {% elif k.variant == 'success' %}bg-emerald-50 text-emerald-600
         {% elif k.variant == 'info' %}bg-teal-50 text-teal-600
         {% elif k.variant == 'warning' %}bg-amber-50 text-amber-600
@@ -135,7 +135,7 @@
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
           <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="users" %}</span>Country Program Leads Performance
         </h2>
-        <a href="/analytics/country-director" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">Full analytics →</a>
+        <a href="/analytics/country-director" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Full analytics →</a>
       </div>
       <div class="overflow-x-auto -mx-1">
         <table class="w-full edify-text-caption">
@@ -232,7 +232,7 @@
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
         <div class="flex items-center justify-between">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Funded Not Completed</h2>
-          <a href="/disbursements" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">Aged analysis →</a>
+          <a href="/disbursements" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Aged analysis →</a>
         </div>
         <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-none">{{ finance_snapshot.funded_not_completed.amount }}</p>
         <p class="edify-text-caption font-semibold text-slate-400">across {{ finance_snapshot.funded_not_completed.activities|intcomma }} funded activities</p>
@@ -330,7 +330,7 @@
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Priority Schools Needing Urgent Attention</p>
-          <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">View all priority schools →</a>
+          <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View all priority schools →</a>
         </div>
         <div class="overflow-x-auto -mx-1">
           <table class="w-full edify-text-caption">
@@ -355,7 +355,7 @@
                   <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if p.risk_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ p.risk }}</span>
                 </td>
                 <td class="text-right py-2 pr-1">
-                  <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold text-blue-600 hover:text-blue-700">Inspect</a>
+                  <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Inspect</a>
                 </td>
               </tr>
               {% empty %}
@@ -372,7 +372,7 @@
   <a href="/debriefs" class="block edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 hover:border-slate-200 transition-colors">
     <div class="flex items-center justify-between">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Country Field Intelligence <span class="text-slate-400 font-medium edify-text-caption">(last {{ field_debrief_intel.days }} days)</span></h2>
-      <span class="edify-text-caption font-bold text-blue-600">Open Field Debriefs →</span>
+      <span class="edify-text-caption font-bold edify-primary-text">Open Field Debriefs →</span>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <div class="rounded-surface bg-slate-50 py-2.5 text-center">

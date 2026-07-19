@@ -4,15 +4,17 @@
     <span class="core-school-matrix__title text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">Core Schools Matrix ({{ matrix_rows|length }} Schools)</span>
   </div>
   <div class="core-school-matrix__helper edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
-    Click a school to view package status and SSA scores
+    Click a school to view SSA scores and live support counts
   </div>
 </div>
 
-<div class="p-4 bg-slate-50/30 space-y-4 rounded-b-xl border border-slate-100" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
+<div class="rounded-b-xl border border-slate-100" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
   {% if matrix_rows %}
-    {% for r in matrix_rows %}
-      {% include "components/school_list_card.html" with school=r context_page="core_schools" %}
-    {% endfor %}
+    <ul class="core-school-list school-record-list" role="list">
+      {% for r in matrix_rows %}
+        {% include "partials/core_schools/school_row.html" with school=r %}
+      {% endfor %}
+    </ul>
 
     <!-- Pagination controls -->
     {% if page_obj.has_other_pages %}
@@ -46,7 +48,7 @@
               {% if num == "..." %}
                 <span class="w-8 text-center text-slate-400 font-bold">...</span>
               {% elif num == page_obj.number %}
-                <span class="h-8 w-8 rounded-pill text-white font-semibold flex items-center justify-center shadow-sm select-none" style="background-color:var(--edify-primary);">{{ num }}</span>
+                <span class="h-8 w-8 rounded-pill text-white font-semibold flex items-center justify-center shadow-sm select-none edify-primary-solid">{{ num }}</span>
               {% else %}
                 <button
                   type="button"

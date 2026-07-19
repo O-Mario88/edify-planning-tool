@@ -10,7 +10,7 @@
 <div class="space-y-3">
 <div class="flex items-center justify-between edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <span>Upcoming Today</span>
-<span class="px-2 py-0.5 rounded-pill bg-blue-50 text-blue-700 edify-text-caption font-semibold">{{ upcoming_today|length }}</span>
+<span class="px-2 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-semibold">{{ upcoming_today|length }}</span>
 </div>
 
 {% if upcoming_today %}
@@ -65,7 +65,7 @@ No activities scheduled for today.
 hx-get="/my-plan/{{ alert.id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="edify-text-caption font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center gap-0.5"
+class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover inline-flex items-center gap-0.5"
 >
 View Details &rarr;
 </button>

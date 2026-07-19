@@ -3,11 +3,11 @@
 {% block title %}Budget Amendments · Edify{% endblock %}
 
 {% block shell_content %}
-<main class="sp-page" id="main-content" tabindex="-1">
+<section class="sp-page" aria-labelledby="budget-amendments-title">
   <header class="sp-page-header">
     <div>
       <span class="sp-eyebrow">Finance control</span>
-      <h1>Budget Amendments</h1>
+      <h1 id="budget-amendments-title" class="edify-page-title">Budget Amendments</h1>
       <p>Sanctioned changes for finance-locked activities. Approving applies the move without touching the confirmed cost snapshot or its advances.</p>
     </div>
   </header>
@@ -63,5 +63,5 @@
     </div>
   </section>
   {% endif %}
-</main>
+</section>
 {% endblock %}

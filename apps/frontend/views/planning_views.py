@@ -16,6 +16,12 @@ from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
+from apps.partners.purposes import (
+    PARTNER_VISIT_PURPOSES,
+    STAFF_VISIT_PURPOSES,
+    normalise_visit_purpose,
+    purpose_activity_type,
+)
 from apps.core.enums import (
     ActivityType,
     SsaIntervention,
@@ -164,6 +170,7 @@ def special_projects_bulk_partner_view(request):
                 "assignment_ids": ",".join(item.id for item in assignments),
                 "partners": partners,
                 "interventions": SsaIntervention.choices,
+                "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
                 "drawer_size": "md",
             },
         )
@@ -175,7 +182,20 @@ def special_projects_bulk_partner_view(request):
     partner = get_object_or_404(partners, id=request.POST.get("partner_id"))
     scheduled_date = request.POST.get("scheduled_date", "").strip()
     activity_type = request.POST.get("activity_type", "school_visit").strip()
+    purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     focus = request.POST.get("focus_intervention", "").strip() or None
+    try:
+        purpose_of_visit = normalise_visit_purpose(
+            purpose_of_visit,
+            for_partner=True,
+            fallback_activity_type=activity_type,
+        )
+    except Exception as exc:
+        return HttpResponse(
+            f'<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">{exc}</div>',
+            status=400,
+        )
+    activity_type = purpose_activity_type(purpose_of_visit, activity_type)
     if not scheduled_date:
         return HttpResponse(
             '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a partner delivery date.</div>',
@@ -212,6 +232,7 @@ def special_projects_bulk_partner_view(request):
                         or request.user.id
                     ),
                     purpose=f"Special project support: {assignment.project.name}",
+                    purpose_of_visit=purpose_of_visit,
                     focus_intervention=focus,
                     expected_activity_type=activity_type,
                     scheduled_date=parsed_date,
@@ -228,6 +249,7 @@ def special_projects_bulk_partner_view(request):
                     "ssaCollectionExpected": activity_type
                     in {"baseline_ssa_visit", "school_visit_ssa_collection"},
                     "activityPurposeText": pa.purpose,
+                    "purposeType": purpose_of_visit,
                     "expectedOutcome": "Partner completes delivery and submits project evidence.",
                 }
                 if focus:
@@ -492,6 +514,13 @@ def schedule_modal_view(request):
         ActivityType.FOLLOW_UP_VISIT,
         ActivityType.COACHING_VISIT,
         ActivityType.IN_SCHOOL_SUPPORT,
+        ActivityType.DONOR_VISIT,
+        ActivityType.STORY_GATHERING_VISIT,
+        ActivityType.SCHOOL_INVITATION,
+        ActivityType.SOCIAL_VISIT,
+        ActivityType.TRAINING_FOLLOW_UP_VISIT,
+        ActivityType.IN_SCHOOL_COACHING_VISIT,
+        ActivityType.IN_SCHOOL_TRAINING,
         ActivityType.SCHOOL_IMPROVEMENT_TRAINING,
         ActivityType.BASELINE_SSA_VISIT,
         ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
@@ -518,8 +547,11 @@ def schedule_modal_view(request):
     # The chooser is derived from the same enum accepted by the scheduling
     # service.  Do not let a recommendation title drift from the form value:
     # every option rendered here is a valid direct-school ActivityType.
+    # A missing SSA is a useful prompt, not a reason to block other school
+    # support. Field teams may still need to host a donor visit, collect a
+    # story, or provide time-sensitive coaching before SSA is complete.
     selectable_activity_types = (
-        ssa_collection_activity_types
+        school_activity_types
         if school.current_fy_ssa_status != "done"
         else school_activity_types - ssa_collection_activity_types
     )
@@ -529,6 +561,11 @@ def schedule_modal_view(request):
         if value in selectable_activity_types
     ]
     recommended_focus_intervention = request.GET.get("focus_intervention", "")
+    recommended_visit_purpose = normalise_visit_purpose(
+        None,
+        for_partner=False,
+        fallback_activity_type=recommended_activity_type,
+    )
 
     context = {
         "school": school,
@@ -540,6 +577,8 @@ def schedule_modal_view(request):
         "recommended_activity_label": recommended_activity_label,
         "activity_type_options": activity_type_options,
         "recommended_focus_intervention": recommended_focus_intervention,
+        "staff_visit_purposes": STAFF_VISIT_PURPOSES,
+        "recommended_visit_purpose": recommended_visit_purpose,
         # Optional project context — stamps the scheduled activity so it flows
         # into the Special Projects dashboard / analytics / My Plan.
         "project_id": request.GET.get("project_id", ""),
@@ -558,6 +597,7 @@ def schedule_action_view(request):
         return HttpResponse("Method not allowed", status=405)
 
     activity_type = request.POST.get("activity_type", "school_visit")
+    purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     school_id = request.POST.get("school_id")
     cluster_id = request.POST.get("cluster_id")
     scheduled_date = request.POST.get("scheduled_date")
@@ -576,6 +616,24 @@ def schedule_action_view(request):
 
     from datetime import date
 
+    # Purpose of Visit is the plain-language reason staff select. Activity
+    # Type stays an internal/costing classification, derived from that reason
+    # whenever the refreshed form supplies one. Legacy clients can continue
+    # posting a raw activity_type while their forms are rolled forward.
+    if purpose_of_visit:
+        try:
+            purpose_of_visit = normalise_visit_purpose(
+                purpose_of_visit,
+                for_partner=delivery_type == "partner" or bool(partner_id),
+                fallback_activity_type=activity_type,
+            )
+        except Exception as exc:
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">{exc}</div>',
+                status=400,
+            )
+        activity_type = purpose_activity_type(purpose_of_visit, activity_type)
+
     # Build payload
     is_ssa_expected = request.POST.get(
         "ssa_collection_expected"
@@ -591,6 +649,7 @@ def schedule_action_view(request):
         "activityType": activity_type,
         "scheduledDate": scheduled_date,
         "activityPurposeText": purpose_text,
+        "purposeType": purpose_of_visit or purpose_type,
         "expectedOutcome": expected_outcome,
         "deliveryType": delivery_type,
         "ssaCollectionExpected": is_ssa_expected,
@@ -611,7 +670,7 @@ def schedule_action_view(request):
     if focus_intervention:
         payload["focusIntervention"] = focus_intervention
         payload["purposeIntervention"] = focus_intervention
-    if purpose_type:
+    if purpose_type and not purpose_of_visit:
         payload["purposeType"] = purpose_type
     if expected_participants:
         payload["expectedParticipants"] = int(expected_participants)
@@ -685,6 +744,7 @@ def assign_partner_modal_view(request):
         # Optional project context — stamps the partner activity for the loop.
         "project_id": request.GET.get("project_id", ""),
         "recommended_focus_intervention": request.GET.get("focus_intervention", ""),
+        "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
 
@@ -703,6 +763,7 @@ def assign_partner_action_view(request):
     cluster_id = request.POST.get("cluster_id")
     partner_id = request.POST.get("partner_id")
     activity_type = request.POST.get("activity_type", "school_visit")
+    purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     focus_intervention = request.POST.get("focus_intervention") or None
     purpose = request.POST.get("purpose", "").strip()
     notes = request.POST.get("notes", "").strip() or None
@@ -801,13 +862,13 @@ def assign_partner_action_view(request):
             school = get_scoped_object_or_404(
                 School, request.user, Q(id=school_id) | Q(school_id=school_id)
             )
-            assignment_purpose = purpose or f"Assigned for {activity_type}"
-            normalized_type = (
-                activity_type
-                if activity_type
-                in ["school_visit", "follow_up_visit", "coaching_visit"]
-                else "school_visit"
+            purpose_of_visit = normalise_visit_purpose(
+                purpose_of_visit,
+                for_partner=True,
+                fallback_activity_type=activity_type,
             )
+            assignment_purpose = purpose or f"Assigned for {activity_type}"
+            normalized_type = purpose_activity_type(purpose_of_visit, activity_type)
             dup = _recent_duplicate(school=school, act_type=normalized_type)
             if dup:
                 target = "/projects/my-plan" if project_id else None
@@ -824,6 +885,7 @@ def assign_partner_action_view(request):
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
                     purpose=assignment_purpose,
+                    purpose_of_visit=purpose_of_visit,
                     focus_intervention=focus_intervention,
                     expected_activity_type=normalized_type,
                     scheduled_date=expected_date,
@@ -834,7 +896,10 @@ def assign_partner_action_view(request):
                     pa,
                     school=school,
                     act_type=normalized_type,
-                    extra_fields={"projectId": project_id} if project_id else None,
+                    extra_fields={
+                        **({"projectId": project_id} if project_id else {}),
+                        "purposeType": purpose_of_visit,
+                    },
                 )
                 # Update status
                 school.current_fy_ssa_status = "partner_assigned"
@@ -881,6 +946,7 @@ def assign_partner_action_view(request):
                         partner=partner,
                         assigning_staff_id=monitored_by_staff_id,
                         purpose=assignment_purpose,
+                        purpose_of_visit=purpose_of_visit,
                         focus_intervention=focus_intervention,
                         expected_activity_type=activity_type,
                         scheduled_date=expected_date,
@@ -1040,6 +1106,27 @@ def bulk_action_view(request):
                 status=400,
             )
         partner = get_object_or_404(Partner, id=partner_id)
+        raw_bulk_purpose = request.POST.get("purpose_of_visit", "").strip()
+        try:
+            bulk_purpose_of_visit = normalise_visit_purpose(
+                raw_bulk_purpose,
+                for_partner=True,
+                fallback_activity_type="school_visit",
+            )
+        except Exception as exc:
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">{exc}</div>',
+                status=400,
+            )
+        # Preserve the legacy bulk submission contract until this compact
+        # toolbar receives its own purpose picker. New callers that do send a
+        # purpose receive its exact operational type; older callers stay on
+        # School Visit while still gaining a partner-safe purpose record.
+        bulk_activity_type = (
+            purpose_activity_type(bulk_purpose_of_visit, "school_visit")
+            if raw_bulk_purpose
+            else "school_visit"
+        )
 
         from datetime import date as _date
 
@@ -1063,7 +1150,7 @@ def bulk_action_view(request):
                 school=s,
                 partner=partner,
                 assigning_staff_id=monitored_by_staff_id,
-                expected_activity_type="school_visit",
+                expected_activity_type=bulk_activity_type,
                 created_at__gte=timezone.now() - dedup_window,
             ).exists():
                 continue
@@ -1073,7 +1160,8 @@ def bulk_action_view(request):
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
                     purpose="Bulk Partner Assignment",
-                    expected_activity_type="school_visit",
+                    purpose_of_visit=bulk_purpose_of_visit,
+                    expected_activity_type=bulk_activity_type,
                     scheduled_date=bulk_date,
                     notes="Bulk Partner Assignment",
                     status="pending_scheduling",
@@ -1094,11 +1182,12 @@ def bulk_action_view(request):
                 if bulk_date:
                     create_activity(
                         {
-                            "activityType": "school_visit",
+                            "activityType": bulk_activity_type,
                             "schoolId": s.school_id,
                             "deliveryType": "partner",
                             "assignedPartnerId": partner.id,
                             "activityPurposeText": pa.purpose,
+                            "purposeType": bulk_purpose_of_visit,
                             "scheduledDate": bulk_date_raw,
                         },
                         principal=request.user,
@@ -1136,7 +1225,7 @@ def bulk_action_view(request):
                 status=400,
             )
         try:
-            scheduled_date = _date.fromisoformat(scheduled_date_raw)
+            _date.fromisoformat(scheduled_date_raw)
         except ValueError:
             return HttpResponse(
                 '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Invalid date.</div>',
@@ -1157,9 +1246,7 @@ def bulk_action_view(request):
                             "activityPurposeText": request.POST.get(
                                 "activity_goal", "Bulk-scheduled visit"
                             ),
-                            "focusIntervention": request.POST.get(
-                                "focus_intervention"
-                            )
+                            "focusIntervention": request.POST.get("focus_intervention")
                             or None,
                             "deliveryType": "staff",
                         },

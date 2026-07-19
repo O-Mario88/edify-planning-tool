@@ -2,9 +2,12 @@
 GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
 
+import calendar
 import re
+from collections import defaultdict
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from apps.core.permissions import (
     require_page_permission,
     get_scoped_object_or_404,
@@ -19,7 +22,13 @@ from apps.ssa.models import SsaRecord
 from apps.schools.models import School
 from apps.activities.models import Activity
 from apps.geography.models import District, Region
-from apps.accounts.models import User
+from apps.accounts.models import (
+    CalendarBlock,
+    Leave,
+    PublicHoliday,
+    StaffProfile,
+    User,
+)
 from apps.projects.models import Project, ProjectSchoolAssignment
 from apps.core_schools.models import CorePlan, CoreActivitySlot
 from apps.audit.models import AuditLog
@@ -27,9 +36,121 @@ from apps.flags.models import CdFlag
 from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.targets.models import TargetSetting, TargetType
+from apps.core.rbac import EdifyRole
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Calendar reference dates supplied for the Edify operations calendar. These
+# are deliberate organisation-calendar observances, not an attempt to maintain
+# the Government of Uganda's legal public-holiday register. Government-declared
+# one-off holidays (including a Presidential Inauguration) stay data-driven in
+# PublicHoliday/CalendarBlock and are shown only when an authorised user adds
+# them for the applicable year.
+_CALENDAR_REFERENCE_HOLIDAYS = (
+    (1, 2, "New Year"),
+    (1, 17, "Election Day Holiday"),
+    (1, 27, "Liberation Day"),
+    (2, 17, "Remembrance of Archbishop Janani Luwum"),
+    (2, 19, "Ramadan Start"),
+    (3, 9, "International Women's Day"),
+    (3, 21, "Eid al-Fitr"),
+    (4, 4, "Good Friday"),
+    (4, 6, "Easter Sunday"),
+    (4, 7, "Easter Monday"),
+    (5, 2, "Labour Day"),
+    (5, 11, "Mother's Day"),
+    (5, 28, "Eid al-Adha"),
+    (6, 4, "Martyrs' Day"),
+    (6, 10, "National Heroes Day"),
+    (6, 22, "Father's Day"),
+    (9, 23, "September Equinox"),
+    (10, 10, "Independence Day"),
+    (12, 22, "December Solstice"),
+    (12, 26, "Christmas Day"),
+    (12, 27, "Boxing Day"),
+)
+
+
+def _reference_holidays_for_year(year: int) -> list[dict]:
+    """Return the recurring organisation observances shown in Calendar.
+
+    A Presidential Inauguration intentionally is not in this list: it is a
+    government-declared, once-every-five-years event and must be entered in
+    PublicHoliday or CalendarBlock for the year in which it applies.
+    """
+
+    return [
+        {"date": date(year, month, day), "title": title}
+        for month, day, title in _CALENDAR_REFERENCE_HOLIDAYS
+    ]
+
+
+# Calendar visibility is intentionally narrower than country-level reporting.
+# A leadership calendar reveals future staff movements and absences, so it
+# follows the operational reporting line rather than the broader analytics
+# scope used elsewhere in the platform.
+_CALENDAR_ROLE_AUDIENCES = {
+    EdifyRole.COUNTRY_DIRECTOR.value: (
+        EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        EdifyRole.PROGRAM_ACCOUNTANT.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+    ),
+    EdifyRole.REGIONAL_VICE_PRESIDENT.value: (
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.HUMAN_RESOURCES.value,
+    ),
+}
+
+
+def _calendar_staff_audience(user) -> tuple[list[str] | None, list[str] | None]:
+    """Return activity-owner and leave staff ids visible in Calendar.
+
+    Activity ownership is a legacy dual-id field, so each visible staff member
+    contributes both their StaffProfile id and User id. Leave always uses the
+    canonical StaffProfile id. ``None`` means unrestricted (Admin only).
+    """
+
+    if user.active_role == EdifyRole.ADMIN.value:
+        return None, None
+
+    own_staff_id = user.staff_profile_id
+    activity_owner_ids = {value for value in (user.id, own_staff_id) if value}
+    leave_staff_ids = {own_staff_id} if own_staff_id else set()
+
+    visible_staff = StaffProfile.objects.none()
+    if user.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value and own_staff_id:
+        # A PL sees only the CCEOs explicitly assigned to them, never another
+        # PL's field team.
+        visible_staff = StaffProfile.objects.filter(
+            deleted_at__isnull=True,
+            user__is_active=True,
+            user__active_role=EdifyRole.CCEO.value,
+            supervisor_links__supervisor_id=own_staff_id,
+        )
+    elif target_roles := _CALENDAR_ROLE_AUDIENCES.get(user.active_role):
+        # CD and RVP schedule views are role-specific and country-bounded.
+        # Do not borrow the broader country analytics scope here.
+        visible_staff = StaffProfile.objects.filter(
+            deleted_at__isnull=True,
+            user__is_active=True,
+            user__active_role__in=target_roles,
+        )
+        if own_staff_id:
+            viewer_country = (
+                StaffProfile.objects.filter(id=own_staff_id)
+                .values_list("country", flat=True)
+                .first()
+            )
+            if viewer_country:
+                visible_staff = visible_staff.filter(country=viewer_country)
+
+    for staff_id, staff_user_id in visible_staff.values_list("id", "user_id"):
+        leave_staff_ids.add(staff_id)
+        activity_owner_ids.update(value for value in (staff_id, staff_user_id) if value)
+
+    return sorted(activity_owner_ids), sorted(leave_staff_ids)
+
+
 # GROUP 4 — SSA, FY & Planning
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -62,6 +183,11 @@ def ssa_master_view(request):
         "schools_with_ssa": schools_with_ssa,
         "fy": fy,
         "search": search,
+        "topbar_search": {
+            "placeholder": "Search school…",
+            "value": search,
+            "action": "/ssa",
+        },
     }
     return render(request, "pages/ssa/index.html", context)
 
@@ -95,28 +221,45 @@ def fy_overview_view(request):
     return render(request, "pages/fy/index.html", context)
 
 
-@require_page_permission("planning")
+@require_page_permission("calendar")
 def calendar_view(request):
-    """Activity calendar — role scoped, with an optional Special Projects lens."""
+    """Role-scoped operations calendar for activities, leave, and holidays."""
     from apps.core.clock import ClockService
 
     user = request.user
     today = ClockService.today()
-    month = int(request.GET.get("month", today.month))
-    year = int(request.GET.get("year", today.year))
+    try:
+        month = int(request.GET.get("month", today.month))
+        year = int(request.GET.get("year", today.year))
+    except (TypeError, ValueError):
+        month, year = today.month, today.year
+    if not 1 <= month <= 12 or not 2000 <= year <= 2100:
+        month, year = today.month, today.year
+
+    month_start = date(year, month, 1)
+    month_end = date(
+        year + (1 if month == 12 else 0), 1 if month == 12 else month + 1, 1
+    ) - timedelta(days=1)
 
     activities = (
-        Activity.objects.filter(
-            planned_date__year=year,
-            planned_date__month=month,
-            deleted_at__isnull=True,
+        Activity.objects.filter(deleted_at__isnull=True)
+        .filter(
+            Q(scheduled_date__date__range=(month_start, month_end))
+            | Q(
+                scheduled_date__isnull=True,
+                planned_date__range=(month_start, month_end),
+            )
         )
+        .exclude(status__in=["cancelled", "rejected"])
         .select_related("school", "cluster")
-        .order_by("planned_date")
+        .order_by("planned_date", "scheduled_date", "created_at")
     )
 
     scope = resolve_user_scope(user)
-    if request.GET.get("project_scope") == "special":
+    activity_owner_ids, leave_staff_ids = _calendar_staff_audience(user)
+    project_scope = request.GET.get("project_scope", "")
+    selected_project = request.GET.get("project", "")
+    if project_scope == "special":
         projects_qs = Project.objects.filter(deleted_at__isnull=True)
         if not scope.country_scope:
             if user.active_role == "ProjectCoordinator" and user.staff_profile_id:
@@ -128,49 +271,158 @@ def calendar_view(request):
             else:
                 projects_qs = projects_qs.none()
         project_ids = list(projects_qs.values_list("id", flat=True))
-        selected_project = request.GET.get("project")
         if selected_project in project_ids:
             project_ids = [selected_project]
         activities = activities.filter(project_id__in=project_ids)
-    elif not scope.country_scope:
-        staff_ids = [user.staff_profile_id, user.id]
-        staff_ids = [staff_id for staff_id in staff_ids if staff_id]
+    if activity_owner_ids is not None:
         activities = activities.filter(
-            Q(responsible_staff_id__in=staff_ids)
-            | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
+            Q(responsible_staff_id__in=activity_owner_ids)
+            | Q(
+                monitored_by_staff_id__in=activity_owner_ids,
+                delivery_type="partner",
+            )
         )
 
-    import calendar
+    events_by_date: dict[date, list[dict]] = defaultdict(list)
+    event_counts = {"activity": 0, "leave": 0, "holiday": 0}
 
-    cal = calendar.monthcalendar(year, month)
-    month_name = calendar.month_name[month]
+    for activity in activities:
+        activity_date = (
+            activity.scheduled_date.date()
+            if activity.scheduled_date
+            else activity.planned_date
+        )
+        if not activity_date or not month_start <= activity_date <= month_end:
+            continue
+        place = (
+            activity.school.name
+            if activity.school_id
+            else (activity.cluster.name if activity.cluster_id else "Edify activity")
+        )
+        events_by_date[activity_date].append(
+            {
+                "kind": "activity",
+                "title": activity.get_activity_type_display(),
+                "meta": place,
+                "href": f"/my-plan/{activity.id}",
+                "status": activity.status.replace("_", " ").title(),
+            }
+        )
+        event_counts["activity"] += 1
 
-    # REG-02 — surface the same Sunday/holiday/blackout dates the scheduling
-    # gate enforces so users don't attempt (and get rejected on) a blocked
-    # date. Leave is intentionally per-staff and not shown here.
-    from apps.hr.leave_services import BlackoutDateService, PublicHolidayService
+    # Approved leave is visible to the viewer's operational scope. A pending
+    # request is private to its requester, so it appears only on their own
+    # calendar and never exposes a colleague's pending absence.
+    leave_qs = Leave.objects.filter(
+        status__in=["approved", "pending"],
+        start_date__lte=month_end.isoformat(),
+        end_date__gte=month_start.isoformat(),
+    ).select_related("staff__user")
+    if leave_staff_ids is not None:
+        if leave_staff_ids:
+            leave_qs = leave_qs.filter(staff_id__in=leave_staff_ids)
+        else:
+            leave_qs = leave_qs.none()
 
-    month_start = date(year, month, 1)
-    month_end = date(
-        year + (1 if month == 12 else 0), 1 if month == 12 else month + 1, 1
-    )
-    month_last_day = month_end - timedelta(days=1)
-    blocked_dates = {
-        d.isoformat(): "Public holiday"
-        for d in PublicHolidayService.get_holidays_in_range(month_start, month_last_day)
-    }
-    for d in BlackoutDateService.get_blackout_dates_in_range(
-        month_start, month_last_day
+    for leave in leave_qs:
+        is_own_pending = (
+            leave.status == "pending" and leave.staff_id == user.staff_profile_id
+        )
+        if leave.status == "pending" and not is_own_pending:
+            continue
+        try:
+            leave_start = date.fromisoformat(leave.start_date)
+            leave_end = date.fromisoformat(leave.end_date)
+        except (TypeError, ValueError):
+            continue
+        current_date = max(leave_start, month_start)
+        final_date = min(leave_end, month_end)
+        label = leave.type.replace("_", " ").title()
+        staff_name = (
+            "Your" if leave.staff_id == user.staff_profile_id else leave.staff.user.name
+        )
+        while current_date <= final_date:
+            events_by_date[current_date].append(
+                {
+                    "kind": "leave",
+                    "title": f"{staff_name} leave",
+                    "meta": f"{label}{' · Awaiting approval' if is_own_pending else ''}",
+                    "href": "/personal-time-off",
+                    "status": leave.status.title(),
+                }
+            )
+            event_counts["leave"] += 1
+            current_date += timedelta(days=1)
+
+    # PublicHoliday/CalendarBlock are the authoritative place for a
+    # government-declared, non-recurring date. The recurring organisation
+    # observances above fill out the planning calendar without changing the
+    # scheduling policy or manufacturing database records.
+    holiday_keys: set[tuple[date, str]] = set()
+
+    def add_holiday(holiday_date: date, title: str, detail: str = "Holiday"):
+        key = (holiday_date, title.strip().casefold())
+        if key in holiday_keys or not month_start <= holiday_date <= month_end:
+            return
+        holiday_keys.add(key)
+        events_by_date[holiday_date].append(
+            {
+                "kind": "holiday",
+                "title": title,
+                "meta": detail,
+                "href": "",
+                "status": "Holiday",
+            }
+        )
+        event_counts["holiday"] += 1
+
+    for holiday in PublicHoliday.objects.filter(date__range=(month_start, month_end)):
+        add_holiday(holiday.date, holiday.name, "Public holiday")
+    for block in CalendarBlock.objects.filter(
+        is_active=True,
+        block_type="PUBLIC_HOLIDAY",
+        start_date__lte=month_end,
+        end_date__gte=month_start,
     ):
-        blocked_dates.setdefault(d.isoformat(), "Blackout date")
+        current_date = max(block.start_date, month_start)
+        final_date = min(block.end_date, month_end)
+        while current_date <= final_date:
+            add_holiday(current_date, block.title, "Public holiday")
+            current_date += timedelta(days=1)
+    for holiday in _reference_holidays_for_year(year):
+        add_holiday(holiday["date"], holiday["title"], "Edify calendar holiday")
+
+    event_order = {"holiday": 0, "leave": 1, "activity": 2}
+    for day_events in events_by_date.values():
+        day_events.sort(key=lambda event: (event_order[event["kind"]], event["title"]))
+
+    calendar_weeks = []
+    for week in calendar.Calendar(firstweekday=0).monthdatescalendar(year, month):
+        calendar_weeks.append(
+            [
+                {
+                    "date": day,
+                    "events": events_by_date.get(day, []),
+                    "is_current_month": day.month == month,
+                    "is_today": day == today,
+                }
+                for day in week
+            ]
+        )
 
     context = {
         "activities": activities,
-        "calendar_weeks": cal,
+        "calendar_weeks": calendar_weeks,
         "month": month,
         "year": year,
-        "month_name": month_name,
-        "blocked_dates": blocked_dates,
+        "today": today,
+        "month_name": calendar.month_name[month],
+        "month_last_day": month_end,
+        "weekday_labels": ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"),
+        "event_counts": event_counts,
+        "event_total": sum(event_counts.values()),
+        "project_scope": project_scope,
+        "selected_project": selected_project,
         "prev_month": month - 1 if month > 1 else 12,
         "prev_year": year if month > 1 else year - 1,
         "next_month": month + 1 if month < 12 else 1,
@@ -245,6 +497,11 @@ def districts_list_view(request):
         "districts": district_data,
         "total": len(district_data),
         "search": search,
+        "topbar_search": {
+            "placeholder": "Search districts…",
+            "value": search,
+            "action": "/districts",
+        },
     }
     return render(request, "pages/districts/index.html", context)
 
@@ -277,7 +534,7 @@ def _reports_pct_class(pct):
     if pct >= 70:
         return "text-emerald-600"
     if pct >= 50:
-        return "text-blue-600"
+        return "edify-primary-text"
     return "text-rose-600"
 
 
@@ -471,10 +728,10 @@ def reports_view(request):
 
     # ── Core target cards (FY-to-date per area) ─────────────────────────────
     card_colors = [
-        "text-blue-600",
+        "edify-primary-text",
         "text-emerald-600",
         "text-teal-600",
-        "text-indigo-600",
+        "edify-primary-text",
         "text-violet-600",
     ]
     core_cards = []
@@ -744,6 +1001,11 @@ def admin_users_view(request):
         "search": search,
         "districts": districts,
         "available_roles": roles,
+        "topbar_search": {
+            "placeholder": "Search users by name, email, or role…",
+            "value": search,
+            "action": reverse("frontend:admin_users"),
+        },
     }
     return render(request, "pages/admin/users.html", context)
 

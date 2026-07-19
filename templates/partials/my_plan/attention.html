@@ -109,20 +109,20 @@ Waiting on Approval
 
 <!-- 3. Partner Planned — Monitoring (indigo, read-only; staff monitors only) -->
 {% if partner_monitoring and not viewer_is_partner %}
-<div class="card overflow-hidden border-indigo-200" data-card="partner-planned-monitoring">
+<div class="card overflow-hidden edify-primary-border" data-card="partner-planned-monitoring">
 
 <!-- Card Header -->
-<div class="px-5 py-4 border-b border-indigo-200 bg-indigo-50/60 flex items-center justify-between">
+<div class="px-5 py-4 border-b edify-primary-border edify-primary-soft-alpha-60 flex items-center justify-between">
 <div class="flex items-center gap-2">
 <span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
-<h2 class="text-[15px] font-semibold text-indigo-800 tracking-tight">
+<h2 class="text-[15px] font-semibold edify-primary-text tracking-tight">
 Partner Planned — Monitoring
 </h2>
-<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">
 {{ partner_monitoring|length }}
 </span>
 </div>
-<span class="edify-text-caption font-bold uppercase tracking-wider text-indigo-500">Read-only</span>
+<span class="edify-text-caption font-bold uppercase tracking-wider edify-primary-text">Read-only</span>
 </div>
 
 <!-- Table Section -->
@@ -145,7 +145,7 @@ Partner Planned — Monitoring
 <tbody>
 {% for row in partner_monitoring %}
 <tr>
-<td class="font-bold text-indigo-700">{{ row.partner_name }}</td>
+<td class="font-bold edify-primary-text">{{ row.partner_name }}</td>
 <td class="font-semibold text-slate-800 text-[13px]">
 {% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
 </td>
