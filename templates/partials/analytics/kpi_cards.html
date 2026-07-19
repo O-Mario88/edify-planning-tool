@@ -5,6 +5,14 @@
 <!-- KPI Strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items variant=analytics_layout %}
 
+{% comment %}
+  Performance by Sub-Region sits outside the 12-column split, so it spans the
+  whole row with nothing beside it. The map needs the width, and the roll-up
+  table it used to share a row with now lives inside its own card, pinned to
+  the right of the map.
+{% endcomment %}
+{% include "partials/analytics/regional_performance.html" %}
+
 <!-- Main grid section (Layout Alignment Fixed using compiled lg:col-span-9 and lg:col-span-3) -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -17,25 +25,19 @@
 {% include "partials/analytics/ssa_performance.html" %}
 </div>
 
-<!-- Row 2: Regional performance on its own full-width row.
-     It carries the district map, which needs the whole content width to be
-     legible -- at a third of the row the districts were too small to read or
-     aim at. -->
-{% include "partials/analytics/regional_performance.html" %}
-
-<!-- Row 3: the two cards that shared row 2 with it, now side by side -->
+<!-- Row 2: Target achievement and cluster performance, side by side -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 {% include "partials/analytics/target_by_district.html" %}
 {% include "partials/analytics/cluster_performance.html" %}
 </div>
 
-<!-- Row 4: Impact Summary & Activity tracking -->
+<!-- Row 3: Impact Summary & Activity tracking -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 {% include "partials/analytics/impact_summary.html" %}
 {% include "partials/analytics/activity_tracking.html" %}
 </div>
 
-<!-- Row 5: Staff/Partner performance, Core/Champion metrics, Donor Reporting Snapshot -->
+<!-- Row 4: Staff/Partner performance, Core/Champion metrics, Donor Reporting Snapshot -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 {% include "partials/analytics/staff_partner_performance.html" %}
 {% include "partials/analytics/core_champion_performance.html" %}
@@ -45,10 +47,8 @@
 </div>
 
 <!-- Right 3 columns: Recommended Insights Rail (lg:col-span-3) -->
-<div class="lg:col-span-3 space-y-6">
+<div class="lg:col-span-3">
 {% include "partials/analytics/recommended_insights.html" %}
-{# Moved out of the map card so the map can take the full content width. #}
-{% include "partials/analytics/subregion_table.html" %}
 </div>
 
 </div>
