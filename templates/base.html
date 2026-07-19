@@ -218,6 +218,32 @@ button, a, select, input, textarea {
 
 <!-- ApexCharts & FullCalendar JS -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+  /* ApexCharts merges window.Apex into every chart it creates, which makes this
+     the only place that can give all of them the same empty state. Charts are
+     built inline in a dozen templates, so without it each one would need its
+     own copy and they would drift.
+
+     A chart with no rows otherwise paints a blank rectangle, and a blank
+     rectangle reads as "still loading" or "broken" rather than "nothing
+     happened in this period". The platform rule is that an empty result states
+     itself honestly instead of being dressed up or left ambiguous. */
+  window.Apex = {
+    noData: {
+      text: 'No data for this period',
+      align: 'center',
+      verticalAlign: 'middle',
+      style: {
+        fontFamily: 'Inter, sans-serif',
+        fontSize: '13px',
+        /* Read from the token rather than hardcoded so the message sits at the
+           same contrast as other muted copy. */
+        color: getComputedStyle(document.documentElement)
+          .getPropertyValue('--edify-text-muted').trim() || '#5f707a',
+      },
+    },
+  };
+</script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 </head>
 <body

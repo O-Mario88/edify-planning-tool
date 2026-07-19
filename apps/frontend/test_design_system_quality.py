@@ -619,3 +619,47 @@ class FocusTreatmentConsistencyGuardTest(SimpleTestCase):
             "Focus tokens must derive from var(--edify-accent) so every theme "
             f"gets a ring that matches its brand colour (spec §32): {offenders}",
         )
+
+
+class ChartEmptyStateGuardTest(SimpleTestCase):
+    """Every chart states an empty result rather than painting a blank box.
+
+    Spec §24, and the platform rule that an empty result is shown honestly
+    instead of being dressed up or left ambiguous. A chart with no rows paints
+    an empty rectangle by default, which a reader interprets as "still
+    loading" or "broken" rather than "nothing happened in this period".
+
+    ApexCharts merges ``window.Apex`` into every instance it creates, so the
+    global default is the only thing that reaches all of them. Charts are
+    constructed inline in a dozen templates; a per-template message would be
+    twelve copies to keep in sync, which is how the status colours drifted.
+    """
+
+    def test_charts_declare_a_global_empty_state(self):
+        base = _read("templates/base.html")
+        self.assertIn(
+            "window.Apex",
+            base,
+            "base.html must define the global ApexCharts defaults -- it is the "
+            "only hook that reaches charts built inline in other templates.",
+        )
+        self.assertIn(
+            "noData",
+            base,
+            "The global ApexCharts defaults must set noData so a chart with no "
+            "rows says so instead of rendering as a blank rectangle (spec §24).",
+        )
+        # The message must be readable copy, not a placeholder or a bare dash.
+        self.assertRegex(
+            base,
+            r"noData:\s*\{[^}]*text:\s*['\"][A-Z][^'\"]{8,}['\"]",
+            "The empty-chart message must be a real sentence a reader can act "
+            "on, not a placeholder.",
+        )
+        # It must inherit the muted text token rather than a hardcoded grey.
+        self.assertIn(
+            "--edify-text-muted",
+            base,
+            "The empty-chart message must take its colour from the muted text "
+            "token so it matches other secondary copy.",
+        )
