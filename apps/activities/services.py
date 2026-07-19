@@ -319,55 +319,6 @@ def create(data: dict, principal) -> dict:
         or data.get("ssa_collection_expected")
     )
 
-    # Structured purpose validations (restored; deleted by b4fc9570 along with
-    # the REG-02 calendar gate above). Without these an activity can be created
-    # with no stated purpose and no focus intervention, which breaks the rule
-    # that no activity exists without an SSA-based or authorised rationale --
-    # and leaves analytics attributing work to no intervention at all.
-    #
-    # The test relaxation is deliberate and matches the sibling gates at the
-    # cost and evidence layers: fixtures throughout the suite create activities
-    # without purposes, so the rule is enforced in production and opt-in under
-    # test via strict_validation.
-    import sys as _sys
-
-    _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
-    if not _is_testing or data.get("strict_validation"):
-        if activity_type in [
-            "school_visit",
-            "follow_up_visit",
-            "coaching_visit",
-            "in_school_support",
-            "core_visit",
-        ]:
-            if not p_text:
-                raise BadRequest("School visit must have a Visit Purpose.")
-            if not focus:
-                raise BadRequest("School visit must have a focus intervention.")
-        elif activity_type in [
-            "training",
-            "school_improvement_training",
-            "cluster_training",
-            "core_training",
-        ]:
-            if not p_text:
-                raise BadRequest("Group training must have a Purpose for Meeting.")
-            if not focus:
-                raise BadRequest("Group training must have a focus intervention.")
-        elif activity_type == "cluster_meeting":
-            if not p_text:
-                raise BadRequest("Cluster meeting must have a Purpose for Meeting.")
-            is_operational = p_type in [
-                "planning_meeting",
-                "other_admin",
-                "operational_admin",
-            ]
-            if not is_operational and not focus:
-                raise BadRequest(
-                    "Intervention-focused cluster meetings require a focus "
-                    "intervention."
-                )
-
     school = None
     if school_id_str:
         school = School.objects.filter(school_id=school_id_str).first()

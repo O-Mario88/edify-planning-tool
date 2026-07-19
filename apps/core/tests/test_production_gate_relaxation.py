@@ -102,39 +102,50 @@ class ProductionGateRelaxationTest(TestCase):
         finally:
             os.environ.pop("ENFORCE_SSA_SEQUENCE", None)
 
-    # ── Gate 2: apps/activities/services.py create() purpose validation ────
-    def test_structured_purpose_validation_fires_when_strict(self):
-        """A school visit must carry a Visit Purpose and a focus
-        intervention. Relaxed under test unless strict_validation is set."""
+    # ── Gate 2: purpose/focus on create() — DELIBERATELY NOT ENFORCED ──────
+    #
+    # This assertion and its training sibling were leftovers. Commit b4fc9570
+    # removed the purpose gate from create() on purpose: in the same change it
+    # rewrote test_visit_creation_validation into
+    # test_visit_creation_allows_optional_purpose_and_focus, stripped its
+    # assertRaises, and left the comment "Purpose and focus help reporting, but
+    # they no longer block a visit". It then added this file, asserting the
+    # opposite, so the repository shipped two tests contradicting each other.
+    #
+    # The permissive behaviour is the decision; this now records it. If purpose
+    # ever needs to become a hard gate again, restore the block in
+    # apps/activities/services.py::create() AND update the other test —
+    # changing one without the other is exactly how the contradiction arose.
+    def test_purpose_and_focus_are_reporting_metadata_not_a_gate(self):
         from apps.activities.services import create
 
-        with self.assertRaises(BadRequest) as ctx:
-            create(
-                {
-                    "activityType": "school_visit",
-                    "schoolId": self.school.school_id,
-                    "scheduledDate": "2026-08-11",  # a Tuesday
-                    "strict_validation": True,
-                },
-                self.user,
-            )
-        self.assertIn("Purpose", str(ctx.exception.detail))
+        result = create(
+            {
+                "activityType": "school_visit",
+                "schoolId": self.school.school_id,
+                "scheduledDate": "2026-08-11",  # a Tuesday: REG-02 still applies
+                "strict_validation": True,
+            },
+            self.user,
+        )
+        self.assertIsNotNone(result["id"])
+        self.assertIsNone(result["activityPurposeText"])
 
-    def test_training_requires_purpose_when_strict(self):
+    def test_training_purpose_is_also_metadata_not_a_gate(self):
+        """Same decision as above, for the training branch."""
         from apps.activities.services import create
 
-        with self.assertRaises(BadRequest) as ctx:
-            create(
-                {
-                    "activityType": "school_improvement_training",
-                    "schoolId": self.school.school_id,
-                    "scheduledDate": "2026-08-11",
-                    "expectedParticipants": 10,
-                    "strict_validation": True,
-                },
-                self.user,
-            )
-        self.assertIn("Purpose", str(ctx.exception.detail))
+        result = create(
+            {
+                "activityType": "school_improvement_training",
+                "schoolId": self.school.school_id,
+                "scheduledDate": "2026-08-11",
+                "expectedParticipants": 10,
+                "strict_validation": True,
+            },
+            self.user,
+        )
+        self.assertIsNotNone(result["id"])
 
     # ── Gates 3 & 4: per-activity-type evidence requirements ───────────────
     def _activity_with_generic_evidence(self):

@@ -1434,6 +1434,13 @@ def projects_list_view(request):
     from apps.projects.dashboard_service import get_dashboard
 
     context = get_dashboard(request.user, request.GET.get("project"))
+    # Project creation stays on the existing governance workflow. Only roles
+    # that already have create authority see a "New Project" action; everyone
+    # else gets the role-appropriate "Add Eligible Schools" action.
+    context["can_create_projects"] = request.user.active_role in (
+        "Admin",
+        "CountryDirector",
+    )
     return render(request, "pages/projects/index.html", context)
 
 
