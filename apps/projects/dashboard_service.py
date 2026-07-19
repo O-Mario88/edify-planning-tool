@@ -292,7 +292,9 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
     _now = _tz.now()
     upcoming_by_project: dict[str, object] = {}
     for row in (
-        acts.filter(scheduled_date__gte=_now, status__in=NOT_IN_PLAN_STATUSES + ("in_progress",))
+        acts.filter(
+            scheduled_date__gte=_now, status__in=[*NOT_IN_PLAN_STATUSES, "in_progress"]
+        )
         .exclude(status__in=["closed", "cancelled", "rejected"])
         .order_by("scheduled_date")
         .values("project_id", "scheduled_date")[:200]
@@ -545,8 +547,6 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
     }
 
     # ── Impact & Intervention Performance (real delivered counts by focus) ────
-    from apps.core.enums import SsaIntervention
-
     focus_labels = dict(SsaIntervention.choices)
     by_focus: dict[str, dict[str, int]] = {}
     for row in delivered.values("focus_intervention", "delivery_type"):

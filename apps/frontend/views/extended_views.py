@@ -954,13 +954,12 @@ def admin_users_view(request):
 
             try:
                 assert_may_administer(
-                    None, request.user,
+                    None,
+                    request.user,
                     requested_roles=list(dict.fromkeys([role, *additional])),
                 )
             except BadRequest as exc:
-                messages.error(
-                    request, str(getattr(exc, "detail", exc))
-                )
+                messages.error(request, str(getattr(exc, "detail", exc)))
                 return redirect("frontend:admin_users")
 
             with transaction.atomic():
@@ -1160,7 +1159,9 @@ def admin_user_detail_view(request, user_id):
             try:
                 assert_may_administer(member, request.user)
             except BadRequest as exc:
-                messages.error(request, str(exc.detail if hasattr(exc, "detail") else exc))
+                messages.error(
+                    request, str(exc.detail if hasattr(exc, "detail") else exc)
+                )
                 return redirect("frontend:admin_user_detail", user_id=user_id)
 
             new_password = request.POST.get("new_password", "").strip()

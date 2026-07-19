@@ -20,16 +20,25 @@ from apps.core.exceptions import BadRequest
 class PrivilegeEscalationGuardTest(TestCase):
     def setUp(self):
         self.admin = User.objects.create_user(
-            email="admin@edify.org", password="x", name="Admin",
-            roles=["Admin"], active_role="Admin",
+            email="admin@edify.org",
+            password="x",
+            name="Admin",
+            roles=["Admin"],
+            active_role="Admin",
         )
         self.hr = User.objects.create_user(
-            email="hr@edify.org", password="x", name="HR",
-            roles=["HumanResources"], active_role="HumanResources",
+            email="hr@edify.org",
+            password="x",
+            name="HR",
+            roles=["HumanResources"],
+            active_role="HumanResources",
         )
         self.cceo = User.objects.create_user(
-            email="cceo@edify.org", password="x", name="CCEO",
-            roles=["CCEO"], active_role="CCEO",
+            email="cceo@edify.org",
+            password="x",
+            name="CCEO",
+            roles=["CCEO"],
+            active_role="CCEO",
         )
 
     def test_non_admin_cannot_touch_an_admin_account(self):

@@ -404,9 +404,7 @@ def create(data: dict, principal) -> dict:
     # skips the leave check entirely.
     if scheduled_date:
         check_staff_id = responsible_staff_id or monitored_by_staff_id
-        resp_user = (
-            _user_for_staff_identity(check_staff_id) if check_staff_id else None
-        )
+        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
         avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
         if avail["status"] == "blocked":
             raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
