@@ -17,20 +17,25 @@
 {% include "partials/analytics/ssa_performance.html" %}
 </div>
 
-<!-- Row 2: Regional performance, targets by district, cluster table -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-{% include "partials/analytics/target_by_district.html" %}
+<!-- Row 2: Regional performance on its own full-width row.
+     It carries the district map, which needs the whole content width to be
+     legible -- at a third of the row the districts were too small to read or
+     aim at. -->
 {% include "partials/analytics/regional_performance.html" %}
+
+<!-- Row 3: the two cards that shared row 2 with it, now side by side -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+{% include "partials/analytics/target_by_district.html" %}
 {% include "partials/analytics/cluster_performance.html" %}
 </div>
 
-<!-- Row 3: Impact Summary & Activity tracking -->
+<!-- Row 4: Impact Summary & Activity tracking -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 {% include "partials/analytics/impact_summary.html" %}
 {% include "partials/analytics/activity_tracking.html" %}
 </div>
 
-<!-- Row 4: Staff/Partner performance, Core/Champion metrics, Donor Reporting Snapshot -->
+<!-- Row 5: Staff/Partner performance, Core/Champion metrics, Donor Reporting Snapshot -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 {% include "partials/analytics/staff_partner_performance.html" %}
 {% include "partials/analytics/core_champion_performance.html" %}
