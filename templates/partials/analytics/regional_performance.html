@@ -46,7 +46,14 @@
 </div>
 <div class="flex items-center gap-2">
 <span class="text-slate-400 font-semibold">({{ reg.completed }} acts)</span>
-<span class="font-semibold text-slate-800">{{ reg.ssa_avg }} Avg</span>
+{% comment %}
+  ssa_avg is None when no confirmed SSA covers the region, which is a real
+  state rather than a zero. Rendering the variable bare printed the literal
+  string "None" onto the page ("(0 acts) None Avg"). Show the same muted dash
+  the cluster panels use, so an absent score reads as absent instead of as a
+  broken number.
+{% endcomment %}
+<span class="font-semibold {% if reg.ssa_avg == None %}text-slate-300{% else %}text-slate-800{% endif %}">{% if reg.ssa_avg == None %}&mdash;{% else %}{{ reg.ssa_avg }} Avg{% endif %}</span>
 </div>
 </div>
 {% endfor %}
