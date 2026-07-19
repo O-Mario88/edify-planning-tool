@@ -57,6 +57,37 @@ def list_users() -> list[dict]:
     return out
 
 
+def assert_may_administer(target, principal, *, requested_roles=None):
+    """The Admin-only guard rails, in one place.
+
+    USER_MANAGE is held by CountryDirector and HumanResources as well as
+    Admin, because they must do routine staff-role changes (CCEO -> Program
+    Lead). They must never be able to grant the unrestricted Admin role, nor
+    touch an existing Admin's account and take it over.
+
+    This started life inline in update_user(). reset_password and create()
+    never got a copy, which left two live escalation paths: an HR user could
+    set an arbitrary password on a sitting Admin, and could create a new
+    active account carrying role='Admin'. Both were reproduced against the
+    development database before this guard existed. Hence one function that
+    every privileged path calls, rather than three copies that drift.
+
+    `target` may be None when creating a user who does not exist yet.
+    """
+    from apps.core.navigation import get_user_role_slug
+    from apps.core.rbac import EdifyRole
+
+    acting_role = get_user_role_slug(principal)
+    admin_role = EdifyRole.ADMIN.value
+    is_admin = acting_role == "ADMIN"
+
+    if target is not None and not is_admin and admin_role in (target.roles or []):
+        raise BadRequest("Only an Admin can modify another Admin's account.")
+
+    if requested_roles and admin_role in requested_roles and not is_admin:
+        raise BadRequest("Only an Admin can grant the Admin role.")
+
+
 def create(data: dict, principal) -> dict:
     email = (data.get("email") or "").lower()
     if User.objects.filter(email=email, deleted_at__isnull=True).exists():
@@ -66,6 +97,8 @@ def create(data: dict, principal) -> dict:
         raise BadRequest("role is required.")
     additional = data.get("additionalRoles") or []
     roles = list(dict.fromkeys([role, *additional]))
+    # No target yet, but the requested roles still need the Admin-grant guard.
+    assert_may_administer(None, principal, requested_roles=roles)
 
     password = data.get("password")
     if password:
@@ -271,15 +304,8 @@ def update_user(user_id: str, data: dict, principal) -> dict:
         would let a non-Admin silently self-promote); role switching among
         already-granted roles goes through auth_views.switch_role_view.
     """
-    from apps.core.navigation import get_user_role_slug
-    from apps.core.rbac import EdifyRole
-
     user = _get_user(user_id)
-    acting_role = get_user_role_slug(principal)
-    admin_role = EdifyRole.ADMIN.value
-
-    if acting_role != "ADMIN" and admin_role in (user.roles or []):
-        raise BadRequest("Only an Admin can modify another Admin's account.")
+    assert_may_administer(user, principal)
 
     role = data.get("role")
     additional = data.get("additionalRoles") or []
@@ -290,8 +316,7 @@ def update_user(user_id: str, data: dict, principal) -> dict:
                 "You cannot change your own role. Switch among your already-"
                 "granted roles from the role switcher, or ask another Admin."
             )
-        if admin_role in requested_roles and acting_role != "ADMIN":
-            raise BadRequest("Only an Admin can grant the Admin role.")
+        assert_may_administer(user, principal, requested_roles=requested_roles)
 
     email = (data.get("email") or "").lower().strip()
     if email and email != user.email:

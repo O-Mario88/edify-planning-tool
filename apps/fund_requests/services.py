@@ -64,10 +64,17 @@ def submit(data: dict, principal) -> dict:
         existing = (
             FundRequest.objects.select_for_update()
             .filter(
+                # Deliberately scope-blind. `lens` is recomputed from the
+                # caller's CURRENT active_role, so including it here made the
+                # guard miss an existing row whenever the submitter had since
+                # switched roles -- the approved request went unseen and a
+                # SECOND one was inserted beside it. The question this guard
+                # asks is "does this person already have a request in flight
+                # for this period", which does not depend on the lens they
+                # happen to be wearing right now.
                 submitted_by_user_id=principal.user_id,
                 period=period,
                 period_key=period_key,
-                scope=lens,
             )
             .first()
         )
@@ -88,11 +95,14 @@ def submit(data: dict, principal) -> dict:
                 "the approver to return it first if changes are needed."
             )
         fr, created = FundRequest.objects.update_or_create(
+            # Same reasoning: keying on scope turned a role switch into a new
+            # row rather than an update, which is how one period ended up with
+            # two live fund requests.
             submitted_by_user_id=principal.user_id,
             period=period,
             period_key=period_key,
-            scope=lens,
             defaults={
+                "scope": lens,
                 "fy": fy,
                 "submitted_by_role": principal.active_role,
                 "total_amount": total,

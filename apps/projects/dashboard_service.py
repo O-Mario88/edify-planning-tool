@@ -17,6 +17,7 @@ from django.db.models import Q, Sum
 
 from apps.core.scoping import resolve_user_scope
 
+from apps.core.enums import SsaIntervention
 from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 from .models import (
@@ -282,6 +283,23 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
         if row["status"] == "closed":
             d["closed"] += 1
 
+    # Next upcoming scheduled activity per project (for the "Next Follow-Up"
+    # column). Computed in one query over the already-scoped `acts` set so the
+    # project table does not issue a per-row query (spec §31: no per-project
+    # activity query loop).
+    from django.utils import timezone as _tz
+
+    _now = _tz.now()
+    upcoming_by_project: dict[str, object] = {}
+    for row in (
+        acts.filter(scheduled_date__gte=_now, status__in=NOT_IN_PLAN_STATUSES + ("in_progress",))
+        .exclude(status__in=["closed", "cancelled", "rejected"])
+        .order_by("scheduled_date")
+        .values("project_id", "scheduled_date")[:200]
+    ):
+        upcoming_by_project.setdefault(row["project_id"], row["scheduled_date"])
+
+    focus_label_map = dict(SsaIntervention.choices)
     cat_labels = dict(ProjectCategory.choices)
     portfolio = []
     for p in projects:
@@ -293,6 +311,11 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
         districts = sorted(districts_by_project.get(p.id, set()))
         regions = sorted(regions_by_project.get(p.id, set()))
         prs = partners_by_project.get(p.id, [])
+        interventions = [
+            focus_label_map.get(i, i.replace("_", " ").title())
+            for i in p.target_intervention_list()
+        ]
+        next_date = upcoming_by_project.get(p.id)
         portfolio.append(
             {
                 "id": p.id,
@@ -312,6 +335,8 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
                 "completion": completion,
                 "status": status_label,
                 "status_tone": status_tone,
+                "interventions": interventions,
+                "next_follow_up": next_date,
             }
         )
 

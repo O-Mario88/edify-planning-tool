@@ -11,6 +11,7 @@ from apps.activities.models import (
     AnalyticsPublishRecord,
     ActivityTimelineEvent,
 )
+from apps.core.exceptions import BadRequest
 from apps.evidence.models import EvidenceRecord
 from apps.fund_requests.models import NetSuiteExpenseRecord, PartnerPayment
 from apps.notifications.services import WorkflowNotificationService
@@ -364,10 +365,28 @@ class ActivityClosureService:
 class ActivityReopenService:
     """Manages reopening locked/closed activities with audited trails."""
 
+    # Only work that actually reached the end of the pipeline can be reopened.
+    # Everything here has already passed IA, so restoring "ia_verified" below
+    # restores a state the activity genuinely held.
+    REOPENABLE_STATUSES = ("closed", "accountant_confirmed", "ia_verified")
+
     @staticmethod
     def reopen(
         activity: Activity, reason: str, category: str, user_id: str
     ) -> ActivityReopenRequest:
+        # Without this the non-invalidating branch below sets status to
+        # "ia_verified" whatever the activity was before -- so reopening a
+        # merely *scheduled* activity promoted it to a verified, target-credited
+        # state with no evidence, no Salesforce ID and no IA decision. That
+        # forges closure precondition #4 and grants immediate target credit.
+        # Reopen means "undo a completed pipeline", so it needs something
+        # completed to undo.
+        if activity.status not in ActivityReopenService.REOPENABLE_STATUSES:
+            raise BadRequest(
+                f"Only closed or verified activities can be reopened; this one "
+                f"is '{activity.status}'. Nothing has been closed to reopen."
+            )
+
         with transaction.atomic():
             # Create reopen record
             req = ActivityReopenRequest.objects.create(

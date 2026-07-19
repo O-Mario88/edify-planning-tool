@@ -945,6 +945,24 @@ def admin_users_view(request):
                 messages.error(request, " ".join(violations))
                 return redirect("frontend:admin_users")
 
+            # Same Admin-grant guard the canonical service applies. This is a
+            # hand-rolled copy of create(), and it inherited none of the
+            # service's protections -- an HR user could create an active
+            # account carrying role='Admin' from this page.
+            from apps.admin_users.services import assert_may_administer
+            from apps.core.exceptions import BadRequest
+
+            try:
+                assert_may_administer(
+                    None, request.user,
+                    requested_roles=list(dict.fromkeys([role, *additional])),
+                )
+            except BadRequest as exc:
+                messages.error(
+                    request, str(getattr(exc, "detail", exc))
+                )
+                return redirect("frontend:admin_users")
+
             with transaction.atomic():
                 user = User.objects.create_user(
                     email=email,
@@ -1131,6 +1149,20 @@ def admin_user_detail_view(request, user_id):
             )
 
         elif action == "reset_password":
+            # Setting a password IS taking the account over, so it needs the
+            # same Admin-only guard the sibling "edit" action delegates to.
+            # Without it any USER_MANAGE holder (CountryDirector, HR) could
+            # set a password on a sitting Admin -- reproduced against the dev
+            # database as hr@edify.org before this guard existed.
+            from apps.admin_users.services import assert_may_administer
+            from apps.core.exceptions import BadRequest
+
+            try:
+                assert_may_administer(member, request.user)
+            except BadRequest as exc:
+                messages.error(request, str(exc.detail if hasattr(exc, "detail") else exc))
+                return redirect("frontend:admin_user_detail", user_id=user_id)
+
             new_password = request.POST.get("new_password", "").strip()
             if not new_password:
                 messages.error(request, "Password cannot be empty.")

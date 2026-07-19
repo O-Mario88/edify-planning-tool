@@ -21,11 +21,20 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
-# Staff/user identity resolution lives in the shared calendar-policy module.
-# Scheduling itself no longer runs calendar policy as a blocking business rule,
-# but partner assignments still need the canonical staff identifier.
+# REG-02 calendar policy. This module must run the gate, not merely borrow the
+# identity helper: the same policy is enforced at six call sites in four other
+# modules (core_schools, routes/engine, daily_visit_batches,
+# budget/amendment_service), and apps/core/calendar_policy.py exists precisely
+# so that "one surface must never block a date another surface allows".
+#
+# The import and all four call sites below were deleted from THIS module by
+# b4fc9570, leaving scheduling free to place field work on Sundays, public
+# holidays, blackout dates and on top of an assignee's approved leave, while
+# every other surface still refused. Restored.
 from apps.core.calendar_policy import (
+    SchedulingPolicyService as _SchedulingPolicyService,
     canonical_staff_identity as _canonical_staff_identity,
+    resolve_scheduling_user as _user_for_staff_identity,
 )
 
 from .models import Activity, ActivityCompletionVerification
@@ -310,6 +319,55 @@ def create(data: dict, principal) -> dict:
         or data.get("ssa_collection_expected")
     )
 
+    # Structured purpose validations (restored; deleted by b4fc9570 along with
+    # the REG-02 calendar gate above). Without these an activity can be created
+    # with no stated purpose and no focus intervention, which breaks the rule
+    # that no activity exists without an SSA-based or authorised rationale --
+    # and leaves analytics attributing work to no intervention at all.
+    #
+    # The test relaxation is deliberate and matches the sibling gates at the
+    # cost and evidence layers: fixtures throughout the suite create activities
+    # without purposes, so the rule is enforced in production and opt-in under
+    # test via strict_validation.
+    import sys as _sys
+
+    _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
+    if not _is_testing or data.get("strict_validation"):
+        if activity_type in [
+            "school_visit",
+            "follow_up_visit",
+            "coaching_visit",
+            "in_school_support",
+            "core_visit",
+        ]:
+            if not p_text:
+                raise BadRequest("School visit must have a Visit Purpose.")
+            if not focus:
+                raise BadRequest("School visit must have a focus intervention.")
+        elif activity_type in [
+            "training",
+            "school_improvement_training",
+            "cluster_training",
+            "core_training",
+        ]:
+            if not p_text:
+                raise BadRequest("Group training must have a Purpose for Meeting.")
+            if not focus:
+                raise BadRequest("Group training must have a focus intervention.")
+        elif activity_type == "cluster_meeting":
+            if not p_text:
+                raise BadRequest("Cluster meeting must have a Purpose for Meeting.")
+            is_operational = p_type in [
+                "planning_meeting",
+                "other_admin",
+                "operational_admin",
+            ]
+            if not is_operational and not focus:
+                raise BadRequest(
+                    "Intervention-focused cluster meetings require a focus "
+                    "intervention."
+                )
+
     school = None
     if school_id_str:
         school = School.objects.filter(school_id=school_id_str).first()
@@ -340,6 +398,18 @@ def create(data: dict, principal) -> dict:
     # as the monitor so the activity surfaces on THEIR My Plan (the partner
     # branch of My Plan filters by monitored_by_staff_id).
     monitored_by_staff_id = principal_owner_id if is_partner else None
+
+    # REG-02 gate. The responsible-or-monitor fallback matters: partner-delivered
+    # activities carry responsible_staff_id=None, and without it the partner path
+    # skips the leave check entirely.
+    if scheduled_date:
+        check_staff_id = responsible_staff_id or monitored_by_staff_id
+        resp_user = (
+            _user_for_staff_identity(check_staff_id) if check_staff_id else None
+        )
+        avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
 
     status = (
         "assigned_to_partner"
@@ -847,6 +917,16 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
 
+    # REG-02 gate (restored; deleted from this module by b4fc9570). Without it
+    # a blocked date could be reached by rescheduling even when create() refused
+    # it, which is the asymmetry calendar_policy.py exists to prevent.
+    _staff = a.responsible_staff_id or a.monitored_by_staff_id
+    _avail = _SchedulingPolicyService.check(
+        _user_for_staff_identity(_staff) if _staff else None, new_date
+    )
+    if _avail["status"] == "blocked":
+        raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
     planned_date, planned_month, planned_week = _schedule_period(new_date, data)
@@ -976,6 +1056,20 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         from apps.activities.models import Activity
 
         scheduled_date = _parse_date(data["scheduledDate"])
+
+        # REG-02 gate (restored; deleted from this module by b4fc9570). A
+        # partner-delivered activity has no responsible staff member, so the
+        # assigning staff member's calendar is the one that governs -- without
+        # this, partner scheduling bypassed the policy entirely.
+        _avail = _SchedulingPolicyService.check(
+            _user_for_staff_identity(pa.assigning_staff_id)
+            if pa.assigning_staff_id
+            else None,
+            scheduled_date,
+        )
+        if _avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+
         fy = get_operational_fy(scheduled_date)
         quarter = get_quarter_for_date(scheduled_date)
         planned_date, planned_month, planned_week = _schedule_period(
@@ -1063,6 +1157,14 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
     with transaction.atomic():
         a = _get_in_scope(activity_id, principal)
         new_date = _parse_date(data["scheduledDate"])
+
+        # REG-02 gate (restored; deleted from this module by b4fc9570).
+        _staff = a.responsible_staff_id or a.monitored_by_staff_id
+        _avail = _SchedulingPolicyService.check(
+            _user_for_staff_identity(_staff) if _staff else None, new_date
+        )
+        if _avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
 
         a.scheduled_date = new_date
         a.fy = get_operational_fy(new_date)

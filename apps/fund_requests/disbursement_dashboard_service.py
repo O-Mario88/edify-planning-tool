@@ -1214,6 +1214,39 @@ def disburse(principal, fund_request_id, data=None):
             )
         fraction = amount / fr.total_amount if fr.total_amount else 0
 
+        # Cross-channel guard. AdvanceRequest is the one shared ledger every
+        # disbursement channel converges on (see MONEY_MOVED_ADVANCE_STATUSES
+        # in models.py), and services.py:307 already refuses on this basis.
+        # This path did not, so the same ActivityScheduleCostLine could be paid
+        # once here and once via the Weekly Advance button on the very same
+        # screen -- reproduced end to end as 250,000 UGX released as 500,000.
+        from .models import (
+            MONEY_MOVED_ADVANCE_STATUSES,
+            AdvanceRequest,
+            AdvanceRequestStatus,
+        )
+
+        line_ids = [
+            i.activity_schedule_cost_line_id
+            for i in fr.items.all()
+            if i.activity_schedule_cost_line_id
+        ]
+        if line_ids:
+            clash = (
+                AdvanceRequest.objects.select_for_update()
+                .filter(
+                    budget_line_id__in=line_ids,
+                    status__in=MONEY_MOVED_ADVANCE_STATUSES,
+                )
+                .count()
+            )
+            if clash:
+                raise BadRequest(
+                    f"Cannot disburse — {clash} of this plan's budget lines "
+                    "already had money released through the weekly/advance "
+                    "queue. Releasing again would pay the same work twice."
+                )
+
         fr.status = "disbursed"
         fr.disbursed_amount = amount
         fr.disbursed_at = now
@@ -1252,6 +1285,18 @@ def disburse(principal, fund_request_id, data=None):
                 for item in fr.items.all()
             ]
         )
+
+        # Post the release to the shared ledger too. Without this the guard is
+        # one-directional: the weekly/advance queue would still see these lines
+        # as unpaid and release them a second time.
+        if line_ids:
+            AdvanceRequest.objects.filter(
+                budget_line_id__in=line_ids,
+            ).exclude(status__in=MONEY_MOVED_ADVANCE_STATUSES).update(
+                status=AdvanceRequestStatus.DISBURSED,
+                disbursed_at=now,
+                updated_at=now,
+            )
 
     _audit(
         principal,

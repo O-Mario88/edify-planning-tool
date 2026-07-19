@@ -165,11 +165,18 @@ class FundAllocationTest(TestCase):
         # Schedule activity for Paul Staff
         self._schedule_visit(month=4, user_id=self.staff_user.id)
 
-        # Create approved admin plan
+        # Build the admin plan the way the workflow actually does: lines are
+        # added while the budget is still editable, and approval comes after.
+        #
+        # This test used to create the budget already at APPROVED_BY_RVP and
+        # then add a line to it. add_admin_line correctly refuses that -- an
+        # RVP-approved country budget is locked, and accepting new spend into
+        # it after approval is exactly what the lock exists to prevent. The
+        # product is right; the fixture was modelling an impossible state.
         mwp = MonthlyWorkPlanBudget.objects.create(
             fy=self.fy,
             month_key="2026-04",
-            status=MonthlyWorkPlanBudgetStatus.APPROVED_BY_RVP.value,
+            status=MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED.value,
             program_total=0,
             admin_total=0,
             total_amount=0,
@@ -185,6 +192,11 @@ class FundAllocationTest(TestCase):
             },
             principal_stub,
         )
+        # add_admin_line advances the status to ADMIN_PLAN_ADDED, so refresh
+        # before approving or the stale instance would write the old status back.
+        mwp.refresh_from_db()
+        mwp.status = MonthlyWorkPlanBudgetStatus.APPROVED_BY_RVP.value
+        mwp.save(update_fields=["status"])
 
         # Call service
         res = MonthlyFundAllocationService.get_monthly_allocation(
