@@ -1,62 +1,214 @@
-<div class="edify-surface rounded-surface  p-4 shadow-sm space-y-4">
-<div class="flex items-center justify-between border-b border-slate-50 pb-2">
-<div>
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
-<span>Regional Performance</span>
-<span class="edify-text-caption text-slate-400 cursor-help" title="Average scores and activity totals across regional zones">ℹ️</span>
-</h3>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Regional activity and SSA coverage</p>
-</div>
-
-<select class="bg-slate-50  rounded-control edify-text-caption font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
-<option>This Quarter</option>
-</select>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-<!-- Left side: Uganda simplified regional SVG map -->
-<div class="flex items-center justify-center">
-<svg class="h-36 w-36 overflow-visible" viewBox="0 0 100 100">
-<!-- Northern Region (Light Blue) -->
-<path d="M 10 30 Q 30 10 50 20 Q 70 10 90 25 Q 85 45 65 50 Q 40 50 10 30 Z" fill="var(--edify-chart-blue-soft)" stroke="var(--edify-surface-raised)" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
-<title>Northern Region</title>
-</path>
-<!-- Western Region (Purple-blue) -->
-<path d="M 10 30 Q 40 50 35 65 Q 25 80 15 90 Q 5 60 10 30 Z" fill="var(--edify-chart-purple)" stroke="var(--edify-surface-raised)" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
-<title>Western Region</title>
-</path>
-<!-- Eastern Region (Teal-green) -->
-<path d="M 90 25 Q 85 45 65 50 Q 75 70 85 85 Q 95 55 90 25 Z" fill="var(--edify-chart-teal)" stroke="var(--edify-surface-raised)" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
-<title>Eastern Region</title>
-</path>
-<!-- Central Region (Blue-gray) -->
-<path d="M 35 65 Q 65 50 75 70 Q 55 90 35 90 Q 25 80 35 65 Z" fill="var(--edify-chart-blue)" stroke="var(--edify-surface-raised)" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
-<title>Central Region</title>
-</path>
-</svg>
-</div>
-
-<!-- Right side: Region statistics details list -->
-<div class="space-y-3">
-{% for reg in regional_performance %}
-<div class="flex items-center justify-between edify-text-caption font-bold text-slate-600 border-b border-slate-50 pb-1">
-<div class="flex items-center gap-1.5">
-<span class="h-2 w-2 rounded-pill {% if reg.name == 'Northern' %}bg-blue-300{% elif reg.name == 'Western' %}bg-purple-400{% elif reg.name == 'Eastern' %}bg-teal-400{% else %}bg-indigo-400{% endif %}"></span>
-<span>{{ reg.name }}</span>
-</div>
-<div class="flex items-center gap-2">
-<span class="text-slate-400 font-semibold">({{ reg.completed }} acts)</span>
+{% load static %}
 {% comment %}
-  ssa_avg is None when no confirmed SSA covers the region, which is a real
-  state rather than a zero. Rendering the variable bare printed the literal
-  string "None" onto the page ("(0 acts) None Avg"). Show the same muted dash
-  the cluster panels use, so an absent score reads as absent instead of as a
-  broken number.
+  Performance by Sub-Region.
+
+  The map is real UBOS district geometry fetched as a static asset rather than
+  inlined, so the 178KB of boundaries is cached once instead of being re-sent
+  inside every dashboard render.
+
+  Districts are coloured by sub-region (identity), not by a metric. A metric
+  choropleth would be the obvious move, but confirmed SSA currently covers a
+  small share of districts, so most of the map would be painted "no data" in a
+  ramp that implies low rather than absent. The numbers live in the tooltip and
+  the table beside it, where an absent value can show as a dash and say so.
 {% endcomment %}
-<span class="font-semibold {% if reg.ssa_avg == None %}text-slate-300{% else %}text-slate-800{% endif %}">{% if reg.ssa_avg == None %}&mdash;{% else %}{{ reg.ssa_avg }} Avg{% endif %}</span>
+<div class="edify-surface rounded-surface p-4 shadow-sm space-y-4"
+     x-data="subregionMap()" x-init="load()">
+
+  <div class="flex items-center justify-between border-b border-slate-50 pb-2">
+    <div>
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
+        <span>Performance by Sub-Region</span>
+        <span class="edify-text-caption text-slate-400 cursor-help"
+              title="Schools, clusters and confirmed SSA averages rolled up from district to sub-region">ⓘ</span>
+      </h3>
+      <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">
+        {{ subregion_performance.totals.districts }} districts ·
+        {{ subregion_performance.totals.subregions }} sub-regions ·
+        {{ subregion_performance.totals.schools }} schools
+      </p>
+    </div>
+    <div class="edify-text-caption font-semibold text-slate-400" x-show="focused"
+         x-transition.opacity>
+      <button type="button" @click="reset()"
+              class="rounded-control border border-slate-200 px-2.5 py-1 font-bold
+                     text-slate-600 hover:bg-slate-50">
+        Back to all districts · Esc
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+
+    {# ---- map ------------------------------------------------------------ #}
+    <div class="lg:col-span-3 relative" @keydown.escape.window="reset()">
+      <div x-show="!ready" class="flex items-center justify-center h-[320px]
+                                  edify-text-caption font-semibold text-slate-400">
+        Loading district boundaries…
+      </div>
+      <svg x-ref="svg" x-show="ready" viewBox="0 0 600 620"
+           class="w-full h-auto select-none" role="group"
+           aria-label="Districts of Uganda coloured by sub-region"></svg>
+
+      <div x-ref="tip" x-show="tip.show" x-transition.opacity
+           class="absolute pointer-events-none z-10 rounded-control bg-slate-900/95
+                  px-2.5 py-1.5 text-white shadow-lg"
+           :style="`left:${tip.x}px; top:${tip.y}px`">
+        <p class="text-[12px] font-bold" x-text="tip.district"></p>
+        <p class="edify-text-caption font-semibold text-slate-300" x-text="tip.line"></p>
+      </div>
+    </div>
+
+    {# ---- sub-region table ------------------------------------------------ #}
+    <div class="lg:col-span-2 overflow-x-auto">
+      <table class="w-full text-left">
+        <thead>
+          <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+            <th class="pb-1.5 pr-2">Sub-region</th>
+            <th class="pb-1.5 px-1 text-right">Schools</th>
+            <th class="pb-1.5 px-1 text-right">Clusters</th>
+            <th class="pb-1.5 pl-1 text-right">SSA</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for s in subregion_performance.subregions %}
+          <tr class="text-[12px] hover:bg-slate-50/70 cursor-pointer"
+              @mouseenter="highlight('{{ s.name|escapejs }}')" @mouseleave="highlight(null)">
+            <td class="py-1.5 pr-2 font-semibold text-slate-700">
+              <span class="inline-flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-pill shrink-0"
+                      :style="`background:${colourOf('{{ s.name|escapejs }}')}`"></span>
+                {{ s.name }}
+              </span>
+            </td>
+            <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600">{{ s.schools }}</td>
+            <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600">{{ s.clusters }}</td>
+            <td class="py-1.5 pl-1 text-right font-bold tabular-nums
+                       {% if s.ssa_avg == None %}text-slate-300{% else %}text-slate-800{% endif %}">
+              {% if s.ssa_avg == None %}&mdash;{% else %}{{ s.ssa_avg }}{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="py-6 text-center edify-text-caption font-semibold text-slate-400">
+            No districts are mapped to a sub-region yet.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="edify-text-caption text-slate-400 font-semibold mt-2 leading-relaxed">
+        SSA is the confirmed average, weighted by assessments behind each district.
+        A dash means no confirmed assessment &mdash; not a score of zero.
+        Coverage: {{ subregion_performance.totals.districts_with_ssa }}
+        of {{ subregion_performance.totals.districts }} districts.
+      </p>
+    </div>
+  </div>
 </div>
-</div>
-{% endfor %}
-</div>
-</div>
-</div>
+
+{{ subregion_performance.districts|json_script:"subregion-district-metrics" }}
+
+<script>
+function subregionMap(){
+  return {
+    ready:false, focused:null, tip:{show:false,x:0,y:0,district:'',line:''},
+    metrics:{}, geo:null, W:600, H:620,
+    COLOURS:{
+      'Acholi':'#aab4e8','Central':'#b5e6a8','East Central':'#f4a582',
+      'Elgon':'#b8ecf5','Karamoja':'#f5a3dd','Lango':'#f2f2b8',
+      'South Western':'#f7c5e0','Teso':'#a8e6cf','West Nile':'#f5a3b8',
+      'Western':'#a8cbe8'},
+    colourOf(s){ return this.COLOURS[s] || '#e2e8f0'; },
+
+    async load(){
+      const raw = document.getElementById('subregion-district-metrics');
+      (JSON.parse(raw.textContent) || []).forEach(d => { this.metrics[d.district] = d; });
+      const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
+      this.geo = await res.json();
+      this.draw();
+      this.ready = true;
+    },
+
+    draw(){
+      const f = this.geo.features, svg = this.$refs.svg;
+      let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+      const rings = g => (g.type === 'MultiPolygon' ? g.coordinates.flat() : g.coordinates);
+      f.forEach(ft => rings(ft.geometry).forEach(r => r.forEach(([x,y]) => {
+        if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y; })));
+      const P=8, W=this.W, H=this.H;
+      const sx = x => P + (x-minx)/(maxx-minx)*(W-2*P);
+      const sy = y => P + (H-2*P) - (y-miny)/(maxy-miny)*(H-2*P);
+
+      const cam = document.createElementNS('http://www.w3.org/2000/svg','g');
+      cam.setAttribute('id','sr-cam');
+      cam.style.transition = 'transform 700ms cubic-bezier(.22,.61,.36,1)';
+      f.forEach(ft => {
+        const p = ft.properties;
+        const d = rings(ft.geometry)
+          .map(r => 'M' + r.map(([x,y]) => sx(x).toFixed(1)+','+sy(y).toFixed(1)).join(' L') + 'Z')
+          .join('');
+        const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+        el.setAttribute('d', d);
+        el.setAttribute('fill', this.colourOf(p.s));
+        el.setAttribute('stroke', '#fff');
+        el.setAttribute('stroke-width', '0.6');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'button');
+        el.dataset.district = p.d; el.dataset.sub = p.s;
+        el.style.cssText = 'cursor:pointer;transition:opacity .35s,filter .2s';
+        el.addEventListener('pointermove', e => this.hover(el, e));
+        el.addEventListener('pointerleave', () => this.tip.show = false);
+        el.addEventListener('click', () => this.zoom(el));
+        el.addEventListener('keydown', e => {
+          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); this.zoom(el); }
+        });
+        cam.appendChild(el);
+      });
+      svg.replaceChildren(cam);
+      this.cam = cam;
+    },
+
+    hover(el, e){
+      const name = el.dataset.district, m = this.metrics[name];
+      const box = this.$refs.svg.getBoundingClientRect();
+      this.tip.district = name;
+      // absent SSA reads as a dash here too, never as 0
+      this.tip.line = m
+        ? `${el.dataset.sub} · ${m.schools} schools · SSA ${m.ssa_avg ?? '—'}`
+        : el.dataset.sub;
+      this.tip.x = Math.min(e.clientX - box.left + 12, box.width - 150);
+      this.tip.y = Math.max(e.clientY - box.top - 46, 4);
+      this.tip.show = true;
+    },
+
+    zoom(el){
+      const b = el.getBBox();
+      let s = Math.min(this.W/b.width, this.H/b.height) * 0.6;
+      s = Math.max(1.4, Math.min(s, 14));
+      const tx = this.W/2 - (b.x + b.width/2)*s, ty = this.H/2 - (b.y + b.height/2)*s;
+      this.cam.style.transform = `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${s.toFixed(3)})`;
+      this.cam.querySelectorAll('path').forEach(p => {
+        const on = p === el;
+        p.style.opacity = on ? 1 : 0.15;
+        p.style.filter = on ? 'none' : 'grayscale(.6)';
+      });
+      this.focused = el.dataset.district;
+      this.tip.show = false;
+    },
+
+    reset(){
+      if(!this.focused) return;
+      // name the identity rather than clearing: gives the transition a target
+      this.cam.style.transform = 'translate(0px,0px) scale(1)';
+      this.cam.querySelectorAll('path').forEach(p => { p.style.opacity=''; p.style.filter=''; });
+      this.focused = null;
+    },
+
+    highlight(sub){
+      if(!this.cam || this.focused) return;
+      this.cam.querySelectorAll('path').forEach(p => {
+        p.style.opacity = sub ? (p.dataset.sub === sub ? 1 : 0.2) : '';
+      });
+    },
+  };
+}
+</script>

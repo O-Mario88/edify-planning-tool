@@ -16,6 +16,7 @@ from apps.targets.models import TargetSetting
 from apps.accounts.models import StaffProfile, StaffTargetProfile
 from apps.geography.models import District, Region
 from apps.clusters.models import Cluster
+from apps.analytics.subregion_analytics import subregion_performance
 
 ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 VISIT_TYPES = (
@@ -23,10 +24,17 @@ VISIT_TYPES = (
     "follow_up_visit",
     "coaching_visit",
     "in_school_support",
+    "donor_visit",
+    "story_gathering_visit",
+    "school_invitation",
+    "social_visit",
+    "training_follow_up_visit",
+    "in_school_coaching_visit",
     "core_visit",
 )
 TRAINING_TYPES = (
     "training",
+    "in_school_training",
     "school_improvement_training",
     "cluster_training",
     "core_training",
@@ -600,8 +608,8 @@ class AnalyticsDashboardService:
                 status_color = "text-emerald-600 bg-emerald-50"
                 bar_color = "bg-emerald-500"
             elif pct_d >= 60:
-                status_color = "text-blue-600 bg-blue-50"
-                bar_color = "bg-blue-500"
+                status_color = "edify-primary-text edify-primary-soft"
+                bar_color = "edify-primary-solid"
             elif pct_d >= 40:
                 status_color = "text-amber-600 bg-amber-50"
                 bar_color = "bg-amber-500"
@@ -924,7 +932,7 @@ class AnalyticsDashboardService:
                 "count": not_trained_count,
                 "description": "No training this quarter.",
                 "icon": "🎓",
-                "color": "bg-blue-50 border-blue-200 text-blue-700",
+                "color": "edify-primary-soft edify-primary-border edify-primary-text",
             },
             {
                 "key": "high_risk_districts",
@@ -963,6 +971,10 @@ class AnalyticsDashboardService:
             "ssa_performance": ssa_scores_list,
             "target_by_district": districts_perf,
             "regional_performance": regional_perf,
+            # Sub-region roll-up (schools / clusters / confirmed SSA), computed
+            # in pandas so district, sub-region and region all come off one
+            # frame instead of three sets of aggregates that could drift.
+            "subregion_performance": subregion_performance(fy),
             "cluster_performance": cluster_perf,
             "impact_summary": impact_summary,
             "activity_tracking": activity_tracking,
