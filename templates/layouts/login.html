@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="var(--edify-primary-active)">
   <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
+  {% include "partials/pwa_head.html" %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -19,7 +20,7 @@
     surface, instead of being a design-system island.
   {% endcomment %}
   <link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260724consistency1">
-  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260724consistency1">
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260719referenceblue1">
   <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260724consistency1">
   <script defer src="{% static 'js/login.js' %}?v=20260714a"></script>
 </head>

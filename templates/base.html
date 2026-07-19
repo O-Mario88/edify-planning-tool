@@ -7,6 +7,7 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="var(--edify-bg)">
 <title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
+{% include "partials/pwa_head.html" %}
 
 <!-- Apply the saved theme before CSS renders to prevent an unthemed flash. -->
 <script>
@@ -53,21 +54,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260724a">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260719partnerworkspace1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260718contrast1">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260718lightref1">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260717d10">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260719buttoncontract1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260719canonical2">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260719canonical2">
   <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260718recovery1">
 <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260715a">
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260715c">
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260719clustercreate1">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260719modalcontract1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260719schoolrecords4">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260719buttoncontract1">
     <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260718supporthub3">
+{% block feature_css %}{% endblock %}
+<!-- Feature styles load before this final bridge, so individual workspaces
+     retain their layout while shared tokens, controls and accessibility states
+     always win across the platform. -->
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260719platformwide1">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -104,18 +110,18 @@ body {
 .group:focus-within .opacity-0.group-hover\:opacity-100 { opacity: 1 !important; }
 
 /* Primary buttons map to the accent blue. */
-button.bg-indigo-600, a.bg-indigo-600,
-button.bg-blue-600, a.bg-blue-600,
-button.bg-indigo-700, a.bg-indigo-700 {
+button.edify-primary-solid, a.edify-primary-solid,
+button.edify-primary-solid, a.edify-primary-solid,
+button.edify-primary-solid, a.edify-primary-solid {
   background-color: var(--edify-accent);
   color: var(--edify-on-accent);
   font-weight: var(--edify-text-title-weight);
   border-radius: var(--edify-radius-md);
   transition: background-color var(--edify-transition-fast), transform var(--edify-transition-fast);
 }
-button.bg-indigo-600:hover, a.bg-indigo-600:hover,
-button.bg-blue-600:hover, a.bg-blue-600:hover,
-button.bg-indigo-700:hover, a.bg-indigo-700:hover {
+button.edify-primary-solid:hover, a.edify-primary-solid:hover,
+button.edify-primary-solid:hover, a.edify-primary-solid:hover,
+button.edify-primary-solid:hover, a.edify-primary-solid:hover {
   background-color: var(--edify-accent-hover);
   transform: translateY(-1px);
 }

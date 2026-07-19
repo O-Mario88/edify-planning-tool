@@ -1,6 +1,7 @@
 from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
+    pwa_views,
     rvp_views,
     auth_views,
     dashboard_views,
@@ -30,6 +31,11 @@ from .views import (
 app_name = "frontend"
 
 urlpatterns = [
+    # PWA. Both are served by Django, not as static files: the manifest needs
+    # {% static %} to resolve hashed filenames in production, and the worker
+    # must live at the root or its scope covers only /static/.
+    path("manifest.webmanifest", pwa_views.manifest, name="webmanifest"),
+    path("sw.js", pwa_views.service_worker, name="service_worker"),
     # Auth
     path("login", auth_views.login_view, name="login"),
     path("logout", auth_views.logout_view, name="logout"),
@@ -1272,6 +1278,11 @@ urlpatterns = [
     path("map", extended_views.map_view, name="map"),
     # ── GROUP 7: Core Schools, Projects, Debriefs, Completed, Quality, Help ───
     path("core-schools", core_schools_views.core_schools_view, name="core_schools"),
+    path(
+        "core-schools/schedule-activity",
+        core_schools_views.core_schedule_activity_drawer,
+        name="core_schedule_activity_drawer",
+    ),
     path(
         "core-schools/schedule-visit",
         core_schools_views.core_schedule_visit_drawer,
