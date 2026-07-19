@@ -61,12 +61,58 @@
            class="w-full h-full select-none" role="group"
            aria-label="Districts of Uganda coloured by sub-region"></svg>
 
-      <div x-show="tip.show" x-transition.opacity
-           class="absolute pointer-events-none z-10 rounded-control bg-slate-900/95
-                  px-2.5 py-1.5 text-white shadow-lg"
+      {% comment %}
+        Snapshot card. Blue in light mode, near-black in dark -- see the
+        sr-tip rules in the style block. Values come from the backend
+        district_insight aggregate; a measure with no data shows a dash rather
+        than a zero, because "not assessed" and "scored zero" are different
+        facts about a school.
+      {% endcomment %}
+      <div x-show="tip.show" x-transition.opacity x-cloak
+           class="sr-tip absolute pointer-events-none z-20 rounded-surface
+                  px-3.5 py-3 shadow-2xl"
            :style="`left:${tip.x}px; top:${tip.y}px`">
-        <p class="text-[12px] font-bold" x-text="tip.district"></p>
-        <p class="edify-text-caption font-semibold text-slate-300" x-text="tip.line"></p>
+        <div class="flex items-baseline justify-between gap-3 pb-2 sr-tip__head">
+          <p class="text-[15px] font-extrabold leading-tight" x-text="tip.d.district"></p>
+          <p class="edify-text-caption font-bold uppercase tracking-wider sr-tip__muted"
+             x-text="tip.d.subregion"></p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-x-3 gap-y-1.5 pt-2">
+          <template x-for="m in tip.top" :key="m.k">
+            <div>
+              <p class="edify-text-caption font-bold uppercase tracking-wider sr-tip__muted"
+                 x-text="m.k"></p>
+              <p class="text-[15px] font-bold tabular-nums leading-tight" x-text="m.v"></p>
+            </div>
+          </template>
+        </div>
+
+        <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-2.5 mt-2.5 sr-tip__rule">
+          <template x-for="m in tip.rows" :key="m.k">
+            <div class="flex items-baseline justify-between gap-2">
+              <span class="edify-text-caption font-semibold sr-tip__muted" x-text="m.k"></span>
+              <span class="text-[12px] font-bold tabular-nums" x-text="m.v"></span>
+            </div>
+          </template>
+        </div>
+
+        <div class="pt-2.5 mt-2.5 sr-tip__rule space-y-1" x-show="tip.d.best">
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="edify-text-caption font-semibold sr-tip__good">▲ Strongest</span>
+            <span class="text-[11px] font-bold text-right"
+                  x-text="tip.d.best ? `${tip.d.best.name} · ${tip.d.best.score}` : ''"></span>
+          </div>
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="edify-text-caption font-semibold sr-tip__bad">▼ Weakest</span>
+            <span class="text-[11px] font-bold text-right"
+                  x-text="tip.d.worst ? `${tip.d.worst.name} · ${tip.d.worst.score}` : ''"></span>
+          </div>
+        </div>
+        <p class="edify-text-caption font-semibold sr-tip__muted pt-2 mt-2 sr-tip__rule"
+           x-show="!tip.d.best">
+          Too few confirmed assessments to rank interventions.
+        </p>
       </div>
     </div>
 
@@ -124,21 +170,24 @@
   </div>
 </div>
 
-{{ subregion_performance.districts|json_script:"subregion-district-metrics" }}
+{{ district_insight|json_script:"subregion-district-metrics" }}
 {{ subregion_performance.colours|json_script:"subregion-colours" }}
 
 <script>
 function subregionMap(){
   return {
     ready:false, focused:null, cam:null, labels:null, subLabels:null,
-    tip:{show:false,x:0,y:0,district:'',line:''},
+    tip:{show:false,x:0,y:0,d:{},top:[],rows:[]},
     metrics:{}, colours:{}, geo:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
 
     colourOf(s){ return this.colours[s] || '#e2e8f0'; },
 
     async load(){
-      (JSON.parse(document.getElementById('subregion-district-metrics').textContent) || [])
-        .forEach(d => { this.metrics[d.district] = d; });
+      // district_insight ships an object keyed by district name, already in
+      // the shape the card needs -- no re-indexing. (It replaced an array;
+      // calling .forEach on the object threw here and left the map blank.)
+      this.metrics = JSON.parse(
+        document.getElementById('subregion-district-metrics').textContent) || {};
       this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
       const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
       this.geo = await res.json();
@@ -275,25 +324,44 @@ function subregionMap(){
       });
     },
 
-    _line(el){
-      const m = this.metrics[el.dataset.district];
-      return m ? `${el.dataset.sub} · ${m.schools} schools · SSA ${m.ssa_avg ?? '—'}`
-               : el.dataset.sub;
+    /* A dash, not a zero: "no confirmed assessment" and "scored zero" are
+       different facts, and only one of them is bad news. */
+    _n(v){ return (v === null || v === undefined) ? '—' : v; },
+    _fill(el){
+      const d = this.metrics[el.dataset.district]
+        || { district: el.dataset.district, subregion: el.dataset.sub };
+      this.tip.d = d;
+      this.tip.top = [
+        { k:'Schools',  v: this._n(d.schools) },
+        { k:'Clusters', v: this._n(d.clusters) },
+        { k:'Core',     v: this._n(d.core_schools) },
+      ];
+      const ratio = (a, b) => (b ? `${a}/${b}` : '—');
+      this.tip.rows = [
+        { k:'SSA done',      v: ratio(d.ssa_done, d.ssa_total) },
+        { k:'SSA avg',       v: this._n(d.ssa_avg) },
+        { k:'Cluster SSA',   v: this._n(d.ssa_avg_cluster) },
+        { k:'Core SSA',      v: this._n(d.ssa_avg_core) },
+        { k:'Visited',       v: ratio(d.visited, d.schools) },
+        { k:'Trained',       v: ratio(d.trained, d.schools) },
+        { k:'Teachers',      v: this._n(d.teachers_trained) },
+        { k:'Leaders',       v: this._n(d.leaders_trained) },
+      ];
     },
     hover(el, e){
       const box = this.$refs.svg.getBoundingClientRect();
-      this.tip.district = el.dataset.district;
-      this.tip.line = this._line(el);
-      this.tip.x = Math.min(e.clientX - box.left + 12, box.width - 170);
-      this.tip.y = Math.max(e.clientY - box.top - 48, 4);
+      this._fill(el);
+      // The card is ~300x230, so keep it inside the frame on both axes
+      // instead of letting it run off the right edge or the top.
+      this.tip.x = Math.max(4, Math.min(e.clientX - box.left + 14, box.width - 308));
+      this.tip.y = Math.max(4, Math.min(e.clientY - box.top - 40, box.height - 240));
       this.tip.show = true;
     },
     hoverAt(el){
       const b = el.getBoundingClientRect(), box = this.$refs.svg.getBoundingClientRect();
-      this.tip.district = el.dataset.district;
-      this.tip.line = this._line(el);
-      this.tip.x = Math.min(b.left - box.left + b.width/2, box.width - 170);
-      this.tip.y = Math.max(b.top - box.top - 48, 4);
+      this._fill(el);
+      this.tip.x = Math.max(4, Math.min(b.left - box.left + b.width/2, box.width - 308));
+      this.tip.y = Math.max(4, Math.min(b.top - box.top - 40, box.height - 240));
       this.tip.show = true;
     },
 
@@ -364,4 +432,28 @@ function subregionMap(){
   @media (prefers-reduced-motion:reduce){
     #sr-cam,#sr-cam path,#sr-cam text{animation:none !important;transition:none !important}
   }
+
+  /* Snapshot card. Blue by default (light mode), near-black under .dark --
+     the theme script puts `light` or `dark` on <html>, so keying off those
+     classes follows the user's real choice rather than the OS preference,
+     which the in-app theme toggle can override. */
+  .sr-tip{
+    width:300px;
+    background:linear-gradient(160deg,#1d4d74 0%,#153b5c 100%);
+    color:#f2f7fb;
+    border:1px solid rgba(255,255,255,.16);
+  }
+  .sr-tip__head{border-bottom:1px solid rgba(255,255,255,.16)}
+  .sr-tip__rule{border-top:1px solid rgba(255,255,255,.16)}
+  .sr-tip__muted{color:#a9c6dc}
+  .sr-tip__good{color:#7ee0b0}
+  .sr-tip__bad{color:#ffab9c}
+
+  html.dark .sr-tip{
+    background:linear-gradient(160deg,#141a20 0%,#0b0f13 100%);
+    color:#eef2f6;
+    border-color:rgba(255,255,255,.12);
+  }
+  html.dark .sr-tip__head,html.dark .sr-tip__rule{border-color:rgba(255,255,255,.10)}
+  html.dark .sr-tip__muted{color:#93a2ad}
 </style>

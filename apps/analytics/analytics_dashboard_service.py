@@ -17,6 +17,7 @@ from apps.accounts.models import StaffProfile, StaffTargetProfile
 from apps.geography.models import District, Region
 from apps.clusters.models import Cluster
 from apps.analytics.subregion_analytics import subregion_performance
+from apps.analytics.district_insight import district_insight
 
 ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 VISIT_TYPES = (
@@ -975,6 +976,9 @@ class AnalyticsDashboardService:
             # in pandas so district, sub-region and region all come off one
             # frame instead of three sets of aggregates that could drift.
             "subregion_performance": subregion_performance(fy),
+            # Per-district snapshot behind the map's hover card. Aggregated for
+            # all 135 districts in ~13 grouped queries rather than per hover.
+            "district_insight": district_insight(fy),
             "cluster_performance": cluster_perf,
             "impact_summary": impact_summary,
             "activity_tracking": activity_tracking,
