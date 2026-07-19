@@ -113,7 +113,7 @@
 }
 
 .help-search-panel input::placeholder { color: #6c8295; }
-.help-search-panel input:focus-visible { outline: 3px solid rgba(39, 126, 202, .3); outline-offset: -2px; }
+.help-search-panel input:focus-visible { outline: var(--edify-focus-outline); outline-offset: -2px; }
 
 .help-search-button {
   display: inline-flex;

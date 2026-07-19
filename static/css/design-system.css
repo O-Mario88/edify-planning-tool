@@ -283,7 +283,7 @@
   --edify-topbar-border: var(--edify-border);
   --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.92), 0 12px 30px -24px rgba(18,74,112,.24);
   --edify-scrim: rgba(7, 30, 53, 0.58);
-  --edify-focus-ring: 0 0 0 3px rgba(24, 114, 189, 0.20);
+  --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 20%, transparent);
   --edify-sidebar-bg:
     radial-gradient(circle at 10% 5%, rgba(123,189,232,.12), transparent 22rem),
     linear-gradient(180deg, var(--edify-navy-950) 0%, #032a50 56%, #00162c 100%);
@@ -384,7 +384,7 @@
   --edify-topbar-border: rgba(123, 189, 232, 0.22);
   --edify-topbar-shadow: 0 1px 0 rgba(123,189,232,.08), 0 20px 42px -32px rgba(0,0,0,.8);
   --edify-scrim: rgba(0, 12, 28, 0.76);
-  --edify-focus-ring: 0 0 0 3px rgba(123, 189, 232, 0.26);
+  --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 26%, transparent);
   --edify-sidebar-bg:
     radial-gradient(circle at 10% 5%, rgba(123,189,232,.14), transparent 24rem),
     linear-gradient(180deg, #00152a 0%, #001d39 48%, #062f58 100%);
@@ -501,7 +501,7 @@ html.theme-blue body {
   --edify-topbar-border: var(--edify-border);
   --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.025), 0 20px 46px -32px rgba(0,0,0,.96);
   --edify-scrim: rgba(0, 2, 6, 0.82);
-  --edify-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.32);
+  --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 32%, transparent);
   --edify-sidebar-bg:
     radial-gradient(circle at 16% 0%, rgba(143, 177, 232, 0.05), transparent 22rem),
     linear-gradient(180deg, #030303 0%, #000000 100%);
