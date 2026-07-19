@@ -248,6 +248,28 @@ class ActivityClosureService:
             )
 
         with transaction.atomic():
+            # Take the row lock BEFORE re-reading status. The eligibility check
+            # above runs outside this block against an unlocked in-memory
+            # instance, so two concurrent callers (a double-click, or a retry
+            # racing the original) can both pass it and both arrive here.
+            #
+            # The Activity write, ActivityClosure and CompletedActivitySnapshot
+            # are all idempotent, which is what made this easy to miss -- but
+            # the timeline event, the hash-chained AuditLog entry and the owner
+            # notification below are append-only. Without this guard a double
+            # close records the closure twice in the tamper-evident audit chain,
+            # which is precisely the record used to reconstruct who closed what.
+            locked = (
+                Activity.objects.select_for_update().filter(pk=activity.pk).first()
+            )
+            if locked is not None and locked.status == "closed":
+                existing = ActivityClosure.objects.filter(activity=activity).first()
+                if existing is not None:
+                    # Refresh the caller's instance so it reflects the winner's
+                    # write rather than its own stale pre-close state.
+                    activity.refresh_from_db()
+                    return existing
+
             # Update Activity Status
             activity.status = "closed"
             activity.save(update_fields=["status", "updated_at"])
@@ -381,13 +403,48 @@ class ActivityReopenService:
         # forges closure precondition #4 and grants immediate target credit.
         # Reopen means "undo a completed pipeline", so it needs something
         # completed to undo.
-        if activity.status not in ActivityReopenService.REOPENABLE_STATUSES:
-            raise BadRequest(
-                f"Only closed or verified activities can be reopened; this one "
-                f"is '{activity.status}'. Nothing has been closed to reopen."
-            )
-
         with transaction.atomic():
+            # Re-read the status under a row lock rather than trusting the
+            # caller's in-memory instance. Checking it outside the transaction
+            # let two concurrent callers both observe "closed" and both pass,
+            # producing two reopen requests against a single close -- so an
+            # activity accumulated more reopens than it had ever had closures,
+            # and the second one reversed target credit that was never granted
+            # twice. ActivityReopenRequest.activity is a plain ForeignKey, so
+            # nothing at the database level catches the duplicate.
+            locked = (
+                Activity.objects.select_for_update().filter(pk=activity.pk).first()
+            )
+            current_status = locked.status if locked is not None else activity.status
+            if current_status not in ActivityReopenService.REOPENABLE_STATUSES:
+                raise BadRequest(
+                    f"Only closed or verified activities can be reopened; this one "
+                    f"is '{current_status}'. Nothing has been closed to reopen."
+                )
+
+            # The status gate alone cannot stop a double reopen, because a
+            # successful reopen leaves the activity in "ia_verified" -- which is
+            # itself reopenable. So the loser of the race re-reads a status that
+            # still passes and files a second request against the same close.
+            #
+            # The real invariant is one reopen PER CLOSURE: reopening means
+            # undoing a completed pipeline, and there is only ever one pipeline
+            # to undo per close. Comparing against the last closure's timestamp
+            # keeps a legitimate close -> reopen -> close -> reopen cycle
+            # working, since each re-close stamps a fresh closed_at.
+            last_closure = (
+                ActivityClosure.objects.filter(activity=activity)
+                .order_by("-closed_at")
+                .first()
+            )
+            if last_closure is not None and last_closure.closed_at is not None:
+                if ActivityReopenRequest.objects.filter(
+                    activity=activity, created_at__gte=last_closure.closed_at
+                ).exists():
+                    raise BadRequest(
+                        "This activity has already been reopened since it was "
+                        "last closed."
+                    )
             # Create reopen record
             req = ActivityReopenRequest.objects.create(
                 activity=activity,

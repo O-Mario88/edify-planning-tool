@@ -270,7 +270,7 @@ class DashboardMetricsService:
                         "weakest": "\u2014",
                         "readiness": "Ready",
                         "readiness_class": "s-green",
-                        "action": "Schedule Visit",
+                        "action": "Schedule",
                     }
                 )
 

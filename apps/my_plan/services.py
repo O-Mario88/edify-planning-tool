@@ -361,11 +361,12 @@ def compute_next_action(a, today) -> dict:
     # submits accountability (receipts, actual spend, variance, NetSuite Code
     # as proof the expense entered NetSuite). The Accountant then reviews and
     # clears — see advance_service.submit_accountability/approve_accountability.
-    wfr_line = (
-        a.schedule_cost_lines.first() if hasattr(a, "schedule_cost_lines") else None
-    )
+    # .all() rather than .first(): this runs once per activity in the my-plan
+    # row loop, and only .all() reads the prefetch cache set up by the caller.
+    # .first() re-queried on every row.
+    wfr_line = next(iter(a.schedule_cost_lines.all()), None)
     if wfr_line:
-        adv = wfr_line.advance_requests.first()
+        adv = next(iter(wfr_line.advance_requests.all()), None)
         if adv and adv.status == "disbursed" and not adv.accountability_netsuite_id:
             return {
                 "text": "Submit Accountability",
@@ -701,9 +702,73 @@ def get_frontend_context(principal, query: dict) -> dict:
             "cluster",
             "cluster__district",
         )
-        .prefetch_related("schedule_cost_lines")
+        .prefetch_related(
+            "schedule_cost_lines",
+            # The badge block walks cost line -> weekly request line -> weekly
+            # fund request for every row, so prefetch the whole chain rather
+            # than paying two queries per activity to rediscover it.
+            "schedule_cost_lines__weekly_request_lines__weekly_fund_request",
+            # advance_requests hangs off the cost line, not the activity --
+            # compute_next_action walks it for every row.
+            "schedule_cost_lines__advance_requests",
+        )
         .order_by("planned_date", "created_at")
     )
+
+    # Core-school sequence numbers (V1..V8 / T1..T8) and the "n/8 Completed"
+    # progress used to be three per-row COUNT queries inside the loop below.
+    # That made /my-plan O(number of core activities): the scaling gate
+    # measured it growing 131 -> 231 queries when the school count merely
+    # doubled, which at production scale is tens of thousands of queries for
+    # one page load.
+    #
+    # All three are counts over the same (school, fy) partition, so they
+    # collapse into two grouped queries here and pure dict lookups in the loop.
+    core_activities = [
+        a
+        for a in activities
+        if a.school_id and a.school and a.school.school_type == "core"
+    ]
+    prior_counts: dict[tuple, int] = {}
+    completed_counts: dict[tuple, int] = {}
+    if core_activities:
+        core_keys = {(a.school_id, a.fy) for a in core_activities}
+        core_school_ids = {sid for sid, _ in core_keys}
+        core_fys = {fy for _, fy in core_keys}
+
+        # Every core visit/training in the relevant partitions, ordered so the
+        # "how many came before me" question is answered by position rather
+        # than by a query per row.
+        sequence_rows = (
+            Activity.objects.filter(
+                school_id__in=core_school_ids,
+                fy__in=core_fys,
+                activity_type__in=["core_visit", "core_training"],
+            )
+            .values_list("school_id", "fy", "activity_type", "planned_date", "status")
+            .order_by("school_id", "fy", "activity_type", "planned_date")
+        )
+        by_partition: dict[tuple, list] = {}
+        for school_id, fy, activity_type, planned_date, status in sequence_rows:
+            by_partition.setdefault((school_id, fy, activity_type), []).append(
+                planned_date
+            )
+            if status == "completed":
+                key = (school_id, fy)
+                completed_counts[key] = completed_counts.get(key, 0) + 1
+
+        # Mirror the original predicate exactly: strictly-earlier planned_date,
+        # falling back to today when the row has none. Rows with a null
+        # planned_date sort first out of Postgres, so compare explicitly rather
+        # than relying on list position.
+        for a in core_activities:
+            if a.activity_type not in ("core_visit", "core_training"):
+                continue
+            cutoff = a.planned_date if a.planned_date else date.today()
+            dates = by_partition.get((a.school_id, a.fy, a.activity_type), [])
+            prior_counts[(a.school_id, a.fy, a.activity_type, a.id)] = sum(
+                1 for d in dates if d is not None and d < cutoff
+            )
 
     for a in activities:
         status_label, status_class = get_activity_status_label_and_class(a, today)
@@ -711,12 +776,14 @@ def get_frontend_context(principal, query: dict) -> dict:
 
         # Budget status and badges
         badges = []
-        first_line = (
-            a.schedule_cost_lines.first() if hasattr(a, "schedule_cost_lines") else None
-        )
+        # .first() issues a fresh LIMIT 1 query even when the relation is
+        # prefetched -- only .all() reads the prefetch cache. Using .first()
+        # here (and on the nested relations below) meant three extra queries
+        # per row, which is most of the O(n) growth the scaling gate caught.
+        first_line = next(iter(a.schedule_cost_lines.all()), None)
 
         if first_line:
-            wfr_line = first_line.weekly_request_lines.first()
+            wfr_line = next(iter(first_line.weekly_request_lines.all()), None)
             if wfr_line:
                 wfr = wfr_line.weekly_fund_request
                 if wfr.status == "pending_responsible_confirmation":
@@ -787,28 +854,17 @@ def get_frontend_context(principal, query: dict) -> dict:
         core_progress = ""
         if is_core:
             if a.activity_type == "core_visit":
-                prev_visits = Activity.objects.filter(
-                    school=a.school,
-                    activity_type="core_visit",
-                    fy=a.fy,
-                    planned_date__lt=a.planned_date if a.planned_date else date.today(),
-                ).count()
+                prev_visits = prior_counts.get(
+                    (a.school_id, a.fy, "core_visit", a.id), 0
+                )
                 visit_number = f"V{prev_visits + 1}"
             elif a.activity_type == "core_training":
-                prev_trainings = Activity.objects.filter(
-                    school=a.school,
-                    activity_type="core_training",
-                    fy=a.fy,
-                    planned_date__lt=a.planned_date if a.planned_date else date.today(),
-                ).count()
+                prev_trainings = prior_counts.get(
+                    (a.school_id, a.fy, "core_training", a.id), 0
+                )
                 training_number = f"T{prev_trainings + 1}"
 
-            completed_core = Activity.objects.filter(
-                school=a.school,
-                activity_type__in=["core_visit", "core_training"],
-                status="completed",
-                fy=a.fy,
-            ).count()
+            completed_core = completed_counts.get((a.school_id, a.fy), 0)
             core_progress = f"{completed_core}/8 Completed"
 
         # Partner details

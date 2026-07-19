@@ -418,6 +418,92 @@ class ConcurrentMutationTest(TransactionTestCase):
         )
 
 
+    def test_concurrent_closure_closes_once(self):
+        """Two threads closing the same activity must produce one closure.
+
+        ActivityClosureService.close() checks eligibility *before* opening its
+        atomic block and never locks the activity row, so both threads can
+        pass the check and both proceed. The Activity status write and the
+        ActivityClosure/CompletedActivitySnapshot rows are idempotent
+        (update_or_create), which is what makes this easy to miss -- but the
+        closure also appends a timeline event, a hash-chained AuditLog entry
+        and a notification. Those are append-only, so a double close silently
+        writes the tamper-evident record twice and notifies the owner twice.
+
+        Closure is the event that credits a target and locks a budget line, so
+        a duplicated audit entry is exactly the record an auditor would later
+        rely on to reconstruct what happened.
+        """
+        from apps.audit.models import AuditLog
+        from apps.activities.closure_services import ActivityClosureService
+
+        # closed_activity_must_have_sf_id is a DB check constraint, so an
+        # activity without a Salesforce id cannot reach "closed" at all.
+        activity = self._activity(
+            status="ia_verified", salesforce_activity_id="SF-DRILL-CLOSE"
+        )
+
+        def _close():
+            return ActivityClosureService.close(
+                activity, closed_by="drill-user", bypass_checks=True
+            )
+
+        results = self._race(_close)
+        # Both threads may legitimately return a closure object -- the second
+        # one just must not have *written* a second set of effects.
+        self.assertTrue(any(ok for ok, _ in results if ok is not None))
+
+        # ActivityClosure.activity is a OneToOneField, so the database already
+        # guarantees a single closure row -- asserting it would prove nothing.
+        # The append-only audit entry is the unprotected effect.
+        audit_entries = AuditLog.objects.filter(
+            action="activity.closed", subject_id=activity.id
+        ).count()
+        self.assertEqual(
+            audit_entries,
+            1,
+            f"double close wrote {audit_entries} 'activity.closed' audit entries; "
+            f"the hash-chained audit log must record a closure exactly once.",
+        )
+
+    def test_concurrent_reopen_reopens_once(self):
+        """Reopen is gated on status, and that gate must survive a race.
+
+        reopen() rejects anything outside REOPENABLE_STATUSES, but it reads the
+        status off an unlocked in-memory instance. Two threads therefore both
+        observe 'closed' and both pass the gate, producing two reopen requests
+        against a single close -- which is how an activity ends up with more
+        reopen records than it has closures.
+        """
+        from apps.activities.closure_services import (
+            ActivityClosureService,
+            ActivityReopenService,
+        )
+        from apps.activities.closure_models import ActivityReopenRequest
+
+        activity = self._activity(
+            status="ia_verified", salesforce_activity_id="SF-DRILL-REOPEN"
+        )
+        ActivityClosureService.close(
+            activity, closed_by="drill-user", bypass_checks=True
+        )
+        activity.refresh_from_db()
+
+        def _reopen():
+            return ActivityReopenService.reopen(
+                activity, "drill reason", "other", "drill-user"
+            )
+
+        self._race(_reopen)
+
+        requests = ActivityReopenRequest.objects.filter(activity=activity).count()
+        self.assertEqual(
+            requests,
+            1,
+            f"double reopen created {requests} reopen requests from one closure.",
+        )
+
+
 class BoundaryTest(TestCase):
     """Fiscal-year and period boundaries (H03)."""
 

@@ -95,7 +95,7 @@ def get_options(query: dict, principal) -> dict:
                 options.append(
                     {
                         "type": "staff",
-                        "label": f"Assign to {c['name']}",
+                        "label": f"Assign · {c['name']}",
                         "enabled": True,
                         "staffId": c["staffId"],
                     }
@@ -111,7 +111,7 @@ def get_options(query: dict, principal) -> dict:
         options.append(
             {
                 "type": "partner",
-                "label": "Assign to Partner",
+                "label": "Assign · Partner",
                 "enabled": partner_enabled,
                 "reason": partner_reason,
             }

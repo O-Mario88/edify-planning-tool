@@ -441,7 +441,7 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
             state, tone, action, href = (
                 "Partner Pending Schedule",
                 "purple",
-                "Assign to Partner",
+                "Assign",
                 "/planning",
             )
         elif readiness == "scheduled":
@@ -462,7 +462,7 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
             state, tone, action, href = (
                 "Ready for Support",
                 "success",
-                "Schedule Activity",
+                "Schedule",
                 "/planning",
             )
         queue.append(
