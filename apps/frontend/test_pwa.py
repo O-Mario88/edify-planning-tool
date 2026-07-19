@@ -108,25 +108,67 @@ class IconAssetTest(SimpleTestCase):
             missing, [], f"run `manage.py build_app_icons`; missing: {missing}"
         )
 
-    def test_icons_are_square_and_full_bleed(self):
-        """Both platforms mask corners themselves.
+    def test_all_icons_are_square(self):
+        from PIL import Image
 
-        A pre-rounded source gives rounding inside rounding with the source's
-        white surround showing through the corners, so the generator floods the
-        surround away. If a corner pixel is light again, that regressed.
+        for name in self.REQUIRED:
+            if name.endswith(".ico"):
+                continue
+            w, h = Image.open(ICON_DIR / name).size
+            self.assertEqual(w, h, f"{name} is not square")
+
+    def test_standard_icons_have_a_transparent_surround(self):
+        """The rounded silhouette sits on whatever is behind it."""
+        from PIL import Image
+
+        for name in ("icon-192.png", "icon-512.png", "favicon-32.png"):
+            img = Image.open(ICON_DIR / name)
+            self.assertEqual(img.mode, "RGBA", f"{name} has no alpha channel")
+            px = img.convert("RGBA").load()
+            w, h = img.size
+            for x, y in ((1, 1), (w - 2, 1), (1, h - 2), (w - 2, h - 2)):
+                # Generous threshold on purpose. Downscaling a rounded edge to
+                # 32px averages the anti-aliased boundary into the corner
+                # pixel -- favicon-32 lands around alpha 15 with nothing wrong.
+                # The regression this guards against is a corner going opaque,
+                # so anything far below 255 is the pass condition.
+                self.assertLess(
+                    px[x, y][3], 64, f"{name} corner ({x},{y}) is not transparent"
+                )
+            self.assertEqual(
+                px[w // 2, h // 2][3], 255, f"{name} centre must stay opaque"
+            )
+
+    def test_ios_and_maskable_icons_stay_opaque(self):
+        """These two must NOT be transparent, for different reasons.
+
+        iOS does not honour alpha in a home-screen icon -- it composites
+        transparent pixels against black, so a transparent apple-touch-icon
+        renders with black corners. A maskable icon is specified to fill its
+        frame because the launcher crops a circle out of it, so alpha there
+        shows the launcher background through the crop.
         """
         from PIL import Image
 
-        for name in ("icon-512.png", "apple-touch-icon.png"):
-            img = Image.open(ICON_DIR / name).convert("RGB")
+        for name in (
+            "apple-touch-icon.png",
+            "icon-maskable-192.png",
+            "icon-maskable-512.png",
+        ):
+            img = Image.open(ICON_DIR / name)
             w, h = img.size
-            self.assertEqual(w, h, f"{name} is not square")
-            px = img.load()
+            if img.mode == "RGBA":
+                px = img.load()
+                for x, y in ((1, 1), (w - 2, h - 2)):
+                    self.assertEqual(
+                        px[x, y][3], 255, f"{name} must be fully opaque"
+                    )
+            px = img.convert("RGB").load()
             for x, y in ((1, 1), (w - 2, 1), (1, h - 2), (w - 2, h - 2)):
                 r, g, b = px[x, y]
                 self.assertLess(
                     (r + g + b) / 3,
                     200,
-                    f"{name} has a light corner at ({x},{y}) -- the white "
-                    f"surround is showing through again",
+                    f"{name} corner ({x},{y}) is light -- the white surround "
+                    f"is showing through again",
                 )

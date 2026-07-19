@@ -5,15 +5,21 @@ Re-run after replacing ``static/images/app-icon-source.png``:
     python manage.py build_app_icons
 
 Why the source is not used as-is: the artwork arrives as a rounded tile with a
-white surround and a drop shadow. Both iOS and Android apply their *own* corner
-mask to an app icon, so shipping a pre-rounded image gives you rounding inside
-rounding with the white surround showing through the corners. The platforms
-want a full-bleed square, so this fills the corners with the tile's own
-background colour and drops the surround.
+white surround and a drop shadow. Left alone, that surround shows as a white
+box behind the rounded corners. The generator floods it away from the four
+corners and emits two versions of the tile.
 
-Android adaptive icons crop to a circle inscribed in the square, which would
-bite into the logo, so the `maskable` variants scale the artwork into the
-safe zone and pad with the same background.
+Transparent (icon-*, favicon-*): the rounded silhouette sits on whatever is
+behind it, so the icon reads on a light or dark launcher alike.
+
+Opaque (apple-touch-icon, icon-maskable-*): these two must NOT be transparent,
+for different reasons. iOS does not honour alpha in a home-screen icon -- it
+composites transparent pixels against black, so a transparent version renders
+with black corners. And a maskable icon is specified to fill its frame because
+the launcher crops a circle out of it, so alpha there shows the launcher
+background through the crop. The maskable variants additionally scale the
+artwork into the adaptive safe zone, so that crop takes background rather than
+logo.
 """
 
 from pathlib import Path
@@ -59,32 +65,39 @@ class Command(BaseCommand):
             )
 
         img = Image.open(src_path).convert("RGB")
-        tile, bg = self._extract_tile(img)
+        clear, opaque, bg = self._extract_tile(img)
         out = static_dir / OUT_DIR
         out.mkdir(parents=True, exist_ok=True)
         written = []
 
+        # Transparent: the rounded silhouette sits on whatever is behind it.
         for size in ANY_SIZES:
             p = out / f"icon-{size}.png"
-            tile.resize((size, size), Image.LANCZOS).save(p, optimize=True)
+            clear.resize((size, size), Image.LANCZOS).save(p, optimize=True)
             written.append(p)
 
+        # Opaque, deliberately. A maskable icon is specified to fill its frame
+        # -- the platform crops a circle out of it -- so transparency here
+        # shows the launcher background through the corners of the crop.
         for size in MASKABLE_SIZES:
             p = out / f"icon-maskable-{size}.png"
-            self._maskable(tile, bg, size, Image).save(p, optimize=True)
+            self._maskable(opaque, bg, size, Image).save(p, optimize=True)
             written.append(p)
 
-        p = out / f"apple-touch-icon.png"
-        tile.resize((APPLE_SIZE, APPLE_SIZE), Image.LANCZOS).save(p, optimize=True)
+        # Opaque, deliberately. iOS does not honour alpha in a home-screen
+        # icon: it composites transparent pixels against black, so a
+        # transparent version renders with black corners on the home screen.
+        p = out / "apple-touch-icon.png"
+        opaque.resize((APPLE_SIZE, APPLE_SIZE), Image.LANCZOS).save(p, optimize=True)
         written.append(p)
 
         for size in FAVICONS:
             p = out / f"favicon-{size}.png"
-            tile.resize((size, size), Image.LANCZOS).save(p, optimize=True)
+            clear.resize((size, size), Image.LANCZOS).save(p, optimize=True)
             written.append(p)
 
         ico = out / "favicon.ico"
-        tile.resize((64, 64), Image.LANCZOS).save(
+        clear.resize((64, 64), Image.LANCZOS).save(
             ico, sizes=[(16, 16), (32, 32), (48, 48)]
         )
         written.append(ico)
@@ -130,8 +143,18 @@ class Command(BaseCommand):
             return img.crop((0, 0, side, side)), px[side // 2, side // 2]
 
         x0, x1, y0, y1 = cols[0], cols[-1], rows[0], rows[-1]
-        # Largest square inside the dark bounds, centred on them.
-        side = min(x1 - x0 + 1, y1 - y0 + 1)
+        # Smallest square that CONTAINS the dark bounds, plus a small margin.
+        #
+        # Taking the largest square that fits *inside* them looks equivalent
+        # and is not: the dark bounds are asymmetric (the drop shadow is
+        # excluded, so they end sooner at the bottom), so an inside-fit square
+        # slices through the lower rounded corners. That survives at 512px --
+        # 41px of transparent corner instead of 73 -- but at favicon size the
+        # 16x downscale averages the remaining opaque pixels into the corner
+        # and it renders as a square. Growing outward instead only takes in
+        # surround, which becomes transparent anyway.
+        side = int(max(x1 - x0 + 1, y1 - y0 + 1) * 1.04)
+        side = min(side, w, h)
         cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
         left = max(0, min(cx - side // 2, w - side))
         top = max(0, min(cy - side // 2, h - side))
@@ -154,10 +177,30 @@ class Command(BaseCommand):
         # pixels, so the fill cannot reach it.
         from PIL import ImageDraw
 
-        flat = tile.copy()
+        SENTINEL = (255, 0, 255)  # verified absent from the artwork
+        # 90 clears the white surround but stalls in the drop shadow, which is
+        # grey rather than white, leaving an opaque band along the bottom
+        # edge -- invisible at 512px, but at favicon size the downscale
+        # averages it into the corners and the icon renders as a square.
+        # Measured: 90 clears 29% of the bottom edge, 140 clears 43%, 160
+        # clears all of it while leaving the tile centre and edge intact.
+        FLOOD_THRESH = 160
+        marked = tile.copy()
         for corner in ((0, 0), (side - 1, 0), (0, side - 1), (side - 1, side - 1)):
-            ImageDraw.floodfill(flat, corner, bg, thresh=90)
-        return flat, bg
+            ImageDraw.floodfill(marked, corner, SENTINEL, thresh=FLOOD_THRESH)
+
+        # Two outputs from one flood: the surround becomes transparent for the
+        # icons that want the rounded silhouette, and the same region becomes
+        # the tile colour for the ones that must stay opaque (see handle()).
+        opaque = tile.copy()
+        clear = tile.convert("RGBA")
+        mpx, opx, cpx = marked.load(), opaque.load(), clear.load()
+        for x in range(side):
+            for y in range(side):
+                if mpx[x, y] == SENTINEL:
+                    opx[x, y] = bg
+                    cpx[x, y] = (bg[0], bg[1], bg[2], 0)
+        return clear, opaque, bg
 
     def _background(self, tile, side):
         """Dominant non-light colour of the tile interior.
