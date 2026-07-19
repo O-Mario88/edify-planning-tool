@@ -6,10 +6,11 @@ Budget from the CD Monthly Admin Plan (MonthlyWorkPlanBudget + AdminBudgetLine)
 — never manual entry, never unscheduled/uncosted/cancelled activities.
 """
 
-from datetime import date
+from datetime import date, datetime
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.audit.models import AuditLog
@@ -20,6 +21,7 @@ from apps.geography.models import District, Region
 from apps.monthly_work_plan import country_budget_service as svc
 from apps.projects.models import Project
 from apps.monthly_work_plan.models import AdminBudgetLine, MonthlyWorkPlanBudget
+from apps.monthly_work_plan.services import add_admin_line
 from apps.schools.models import School
 
 FY = "2026"
@@ -325,6 +327,55 @@ class CountryMonthlyBudgetTest(TestCase):
     def test_valid_budget_can_be_submitted(self):
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
         self.assertTrue(ctx["can_send_to_rvp"])
+
+    def test_pl_monthly_request_is_the_country_budget_approval_source(self):
+        """A Team Budget stays a PL draft until submitted, then CD approval is
+        required before its money can enter the country request."""
+        from apps.fund_requests import monthly_request_service
+        from apps.fund_requests.models import FundRequestStatus
+
+        pl_activity = self._activity(self.pl.id, ActivityType.SCHOOL_VISIT, "staff")
+        pl_activity.scheduled_date = timezone.make_aware(datetime(2026, 4, 13, 9))
+        pl_activity.save(update_fields=["scheduled_date"])
+        self._cost_line(pl_activity, 150_000)
+
+        draft = monthly_request_service.refresh_draft(self.pl_p, FY, MONTH)
+        self.assertEqual(draft.status, FundRequestStatus.DRAFT)
+        self.assertEqual(draft.total_amount, 150_000)
+
+        submitted = monthly_request_service.submit_to_cd(self.pl_p, FY, MONTH)
+        self.assertEqual(submitted.status, FundRequestStatus.SUBMITTED_TO_CD)
+        before_cd = svc.get_country_monthly_budget(
+            self.cd_p, {"fy": FY, "month": MONTH}
+        )
+        self.assertTrue(before_cd["uses_pl_request_workflow"])
+        self.assertEqual(before_cd["total_monthly"], 0)
+        self.assertFalse(before_cd["can_send_to_rvp"])
+
+        svc.approve_pl_monthly_request(self.cd_p, submitted.id)
+        approved = svc.get_country_monthly_budget(
+            self.cd_p, {"fy": FY, "month": MONTH}
+        )
+        self.assertEqual(approved["total_monthly"], 150_000)
+        self.assertEqual(approved["approved_pl_request_count"], 1)
+
+        # CD adds country-level administration only after the PL budget has
+        # been reviewed. It joins the same RVP-ready monthly envelope.
+        add_admin_line(
+            approved["budget_id"],
+            {
+                "costCategory": "operations",
+                "description": "Office internet",
+                "unitCost": 50_000,
+                "quantity": 1,
+            },
+            self.cd_p,
+        )
+        ready = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        self.assertEqual(ready["total_monthly"], 200_000)
+        country_budget = svc.send_to_rvp(self.cd_p, ready["budget_id"])
+        self.assertEqual(country_budget.status, "submitted_to_rvp")
+        self.assertEqual(svc.approve(self.rvp_p, country_budget.id).status, "approved_by_rvp")
 
     # ── CD Admin Budget — the only non-activity exception ────────────────
     def test_no_admin_plan_means_zero_admin_budget(self):

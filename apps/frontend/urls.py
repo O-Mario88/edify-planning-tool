@@ -1030,6 +1030,11 @@ urlpatterns = [
     ),
     path("accounts/monthly-request/", finance_operating_views.monthly_request_view),
     path(
+        "accounts/monthly-request/action",
+        finance_operating_views.monthly_request_action_view,
+        name="finance_monthly_request_action",
+    ),
+    path(
         "accounts/weekly-requests",
         finance_operating_views.weekly_requests_view,
         name="finance_weekly_requests",
@@ -1476,6 +1481,6 @@ urlpatterns = [
     path("offboarding", hr_views.offboarding_view, name="offboarding"),
     path("hr-analytics", hr_views.hr_analytics_view, name="hr_analytics"),
     path("hr-audit-log", hr_views.hr_audit_log_view, name="hr_audit_log"),
-    # Root redirects to dashboard (which handles auth redirect)
-    path("", dashboard_views.dashboard_view, name="index"),
+    # A brief branded hand-off before the regular login flow.
+    path("", auth_views.splash_view, name="index"),
 ]

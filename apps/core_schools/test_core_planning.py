@@ -131,10 +131,9 @@ class CoreSchoolsPlanningTest(TestCase):
             ("primary_lunch_per_day", 30000),
             ("partner_visit_lump_sum", 40000),
             ("partner_training_lump_sum", 60000),
-            ("training_session_fee", 50000),
-            ("venue", 80000),
-            ("meals_per_participant", 15000),
-            ("mobilisation_per_participant", 10000),
+            ("group_training_facilitation_fee", 50000),
+            ("group_training_venue_cost", 80000),
+            ("group_training_participant_meal_cost_per_head", 15000),
         ):
             CostSetting.objects.update_or_create(
                 key=key,

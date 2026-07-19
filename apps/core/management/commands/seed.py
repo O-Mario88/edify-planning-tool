@@ -517,18 +517,28 @@ class Command(BaseCommand):
             "dinner": 12000,
             "accommodation": 40000,
             "staff_visit_transport_secondary": 25000,
-            "training_session_fee": 50000,
-            "venue": 30000,
-            "meals_per_participant": 5000,
-            "mobilisation_per_participant": 2000,
-            "cluster_meeting_cost": 10000,
+            "group_training_facilitation_fee": 50000,
+            "group_training_venue_cost": 30000,
+            "group_training_participant_meal_cost_per_head": 5000,
+            "cluster_meeting_participant_meal_cost_per_head": 10000,
             "partner_visit_lump_sum": 40000,
             "partner_training_lump_sum": 16000,
+        }
+        friendly_labels = {
+            "cluster_meeting_participant_meal_cost_per_head": "Participant snacks",
+            "group_training_participant_meal_cost_per_head": "Participant meals",
+            "group_training_facilitation_fee": "Facilitation fee",
+            "group_training_venue_cost": "Venue fee",
         }
         for key, cost in rate_card.items():
             CostSetting.objects.update_or_create(
                 key=key,
-                defaults={"label": key.replace("_", " ").title(), "unit_cost": cost},
+                defaults={
+                    "label": friendly_labels.get(
+                        key, key.replace("_", " ").title()
+                    ),
+                    "unit_cost": cost,
+                },
             )
         self.stdout.write(
             f"  sample cost settings: {CostSetting.objects.count()} (local only)"

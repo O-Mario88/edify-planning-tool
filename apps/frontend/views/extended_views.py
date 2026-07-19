@@ -1417,7 +1417,7 @@ def pl_fund_approvals_view(request):
 
 @require_page_permission("fund_approvals")
 def pl_fund_detail_view(request):
-    """Just the center detail panel for a selected CCEO — a light HTMX swap so
+    """Just the selected detail panel for a selected CCEO — a light HTMX swap so
     clicking a CCEO in the queue instantly switches the funding breakdown without
     re-rendering the whole page."""
     from apps.fund_requests.pl_approval_service import get_pl_fund_approvals

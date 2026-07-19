@@ -263,19 +263,18 @@ def _workflow_issues() -> dict:
         if line_total and line_total != act.est_cost_cents:
             line_sum_mismatch += 1
 
-    # Cluster meeting must NEVER carry venue or facilitation cost lines.
-    cluster_meeting_with_venue = ActivityScheduleCostLine.objects.filter(
-        activity__activity_type="cluster_meeting", cost_setting_key="venue"
-    ).count()
-    cluster_meeting_with_facilitation = ActivityScheduleCostLine.objects.filter(
-        activity__activity_type="cluster_meeting",
-        cost_setting_key="training_session_fee",
-    ).count()
-    # Cluster meeting must NEVER use the group-training meal rate.
-    cluster_meeting_with_group_meal = ActivityScheduleCostLine.objects.filter(
-        activity__activity_type="cluster_meeting",
-        cost_setting_key="meals_per_participant",
-    ).count()
+    # Cluster meetings carry only the participant-snacks line.  The check is
+    # deliberately key-based so a legacy venue/facilitation/mobilisation row
+    # is caught too, not only the three historic keys listed here previously.
+    cluster_meeting_with_wrong_cost = (
+        ActivityScheduleCostLine.objects.filter(
+            activity__activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"]
+        )
+        .exclude(
+            cost_setting_key="cluster_meeting_participant_meal_cost_per_head"
+        )
+        .count()
+    )
 
     # Trainings (group training) without a participant count.
     training_no_participants = (
@@ -291,6 +290,7 @@ def _workflow_issues() -> dict:
             teachers_attended__isnull=True,
             leaders_attended__isnull=True,
             other_participants__isnull=True,
+            expected_participants__isnull=True,
         )
         .count()
     )
@@ -822,17 +822,9 @@ def _workflow_issues() -> dict:
         blockers.append(
             f"{line_sum_mismatch} activities have a total that doesn't match its budget-line sum."
         )
-    if cluster_meeting_with_venue:
+    if cluster_meeting_with_wrong_cost:
         blockers.append(
-            f"{cluster_meeting_with_venue} cluster meeting(s) incorrectly carry a venue cost."
-        )
-    if cluster_meeting_with_facilitation:
-        blockers.append(
-            f"{cluster_meeting_with_facilitation} cluster meeting(s) incorrectly carry a facilitation fee."
-        )
-    if cluster_meeting_with_group_meal:
-        blockers.append(
-            f"{cluster_meeting_with_group_meal} cluster meeting(s) use the group-training meal rate."
+            f"{cluster_meeting_with_wrong_cost} cluster meeting cost line(s) do not use Participant snacks."
         )
     if training_no_participants:
         blockers.append(

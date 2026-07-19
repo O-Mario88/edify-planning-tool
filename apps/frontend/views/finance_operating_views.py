@@ -745,51 +745,60 @@ def audit_log_view(request):
 
 @require_page_permission("monthly_request")
 def monthly_request_view(request):
-    """Monthly Country Finance Request Page."""
-    from datetime import date
-    from apps.core.fy import get_operational_fy
+    """Program Lead monthly request: fetch Team Budget, then submit to CD."""
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.fund_requests.monthly_request_service import get_monthly_request
 
-    fy = get_operational_fy()
-    today = date.today()
-    month_qs = WeeklyFundRequest.objects.filter(
-        fy=fy, week_start_date__year=today.year, week_start_date__month=today.month
-    )
-
-    def _sum(qs, field="total_amount"):
-        return qs.aggregate(s=Sum(field))["s"] or 0
-
-    breakdown = [
-        {
-            "label": "Waiting for Approval",
-            "amount": _sum(month_qs.filter(status__startswith="submitted")),
-        },
-        {
-            "label": "Returned",
-            "amount": _sum(month_qs.filter(status__startswith="returned")),
-        },
-        {
-            "label": "Approved (not yet disbursed)",
-            "amount": _sum(
-                month_qs.filter(
-                    status__in=[
-                        "approved_by_cd",
-                        "sent_to_accountant",
-                        "confirmed_for_advance",
-                    ]
-                )
-            ),
-        },
-        {"label": "Disbursed", "amount": _sum(month_qs, "disbursed_amount")},
-        {"label": "Reconciled", "amount": _sum(month_qs, "accounted_amount")},
-    ]
-
-    context = {
-        "breakdown": breakdown,
-        "total_requested": _sum(month_qs),
-        "month_label": today.strftime("%B %Y"),
-        "fy": fy,
-    }
+    if getattr(request.user, "active_role", None) != "Program Lead":
+        context = {"not_program_lead": True}
+        return render(request, "pages/accounts/monthly_request.html", context)
+    try:
+        context = get_monthly_request(
+            request.user,
+            {key: request.GET.get(key) for key in ("fy", "month") if request.GET.get(key)},
+        )
+    except (BadRequest, Forbidden) as exc:
+        context = {"action_error": str(exc)}
+    if request.headers.get("HX-Target") == "monthly-request-root":
+        return render(request, "partials/finance/monthly_request/root.html", context)
     return render(request, "pages/accounts/monthly_request.html", context)
+
+
+@require_page_permission("monthly_request")
+def monthly_request_action_view(request):
+    """Explicit monthly-budget fetch and PL → CD submission actions."""
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.fund_requests import monthly_request_service as service
+
+    if request.method != "POST":
+        return render(
+            request,
+            "partials/finance/monthly_request/root.html",
+            {"action_error": "Method not allowed."},
+            status=405,
+        )
+    error = ok = None
+    fy = request.POST.get("fy")
+    month = request.POST.get("month")
+    try:
+        if request.POST.get("action") == "fetch_budget":
+            service.refresh_draft(request.user, fy, int(month))
+            ok = "Your latest Team Budget has been fetched into an editable monthly request."
+        elif request.POST.get("action") == "submit_to_cd":
+            service.submit_to_cd(request.user, fy, int(month))
+            ok = "Monthly request submitted to the Country Director for review."
+        else:
+            error = "Unknown monthly request action."
+    except (BadRequest, Forbidden, TypeError, ValueError) as exc:
+        error = str(exc)
+
+    try:
+        context = service.get_monthly_request(request.user, {"fy": fy, "month": month})
+    except (BadRequest, Forbidden, TypeError, ValueError) as exc:
+        context = {"action_error": str(exc)}
+    context["action_error"] = error or context.get("action_error")
+    context["action_ok"] = ok
+    return render(request, "partials/finance/monthly_request/root.html", context)
 
 
 @require_page_permission("disbursements")

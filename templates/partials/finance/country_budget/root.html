@@ -1,7 +1,7 @@
 {% comment %}Country Monthly Budget root — re-rendered by HTMX on filter/action.
-Consolidates only plan-backed, scheduled, costed activity budgets for the
-month plus the CD Admin Budget from the CD Monthly Admin Plan. No manual
-entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% endcomment %}
+New monthly workflows consolidate only CD-approved Program Lead request
+snapshots. Historic months keep their read-only plan-backed source. CD admin
+items are the only manual country-level costs.{% endcomment %}
 {% load frontend_filters %}
 <div class="space-y-5">
 
@@ -22,7 +22,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
         Country Monthly Budget
         <svg class="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.246.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.77-.564-.37-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
       </h1>
-      <p class="text-[12px] text-slate-500 font-semibold mt-1">Monthly country budget generated from planned activities across all teams and approved for RVP submission.</p>
+      <p class="text-[12px] text-slate-500 font-semibold mt-1">{{ program_source_label }} plus the Country Director's admin budget, ready for the RVP approval workflow.</p>
     </div>
   </div>
 
@@ -104,6 +104,39 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
     </button>
     {% endif %}
   </div>
+
+  {% if is_cd and uses_pl_request_workflow %}
+  <section class="card overflow-hidden">
+    <div class="flex flex-col gap-1 border-b border-slate-100 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <div><h2 class="text-[14px] font-semibold text-slate-800">Program Lead monthly requests</h2><p class="mt-0.5 text-[12px] font-medium text-slate-500">Approve each submitted team budget before it becomes part of the country request.</p></div>
+      <span class="text-[12px] font-bold text-slate-500">{{ approved_pl_request_count }} approved</span>
+    </div>
+    <div class="divide-y divide-slate-50">
+      {% for request in pl_request_rows %}
+      <form hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML" class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center">
+        <input type="hidden" name="request_id" value="{{ request.id }}"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
+        <div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><p class="text-[12px] font-bold text-slate-800">{{ request.lead_name }}</p><span class="rounded-pill px-2 py-0.5 text-[10px] font-bold {% if request.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif request.tone == 'warning' %}bg-amber-50 text-amber-700{% elif request.tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ request.status }}</span></div><p class="mt-0.5 text-[11px] font-medium text-slate-500">{{ request.activity_count }} activities · {{ request.total_fmt }}{% if request.note %} · {{ request.note }}{% endif %}</p></div>
+        {% if request.can_approve %}<div class="flex flex-wrap items-center gap-2"><input name="note" class="h-8 w-44 rounded-control border border-slate-200 px-2 text-[11px]" placeholder="Reason if returning"><button type="submit" name="action" value="approve_pl_request" class="h-8 rounded-control bg-emerald-600 px-3 text-[11px] font-bold text-white hover:bg-emerald-700">Approve</button><button type="submit" name="action" value="return_pl_request" class="h-8 rounded-control border border-rose-200 px-3 text-[11px] font-bold text-rose-600 hover:bg-rose-50">Return</button></div>{% endif %}
+      </form>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if is_cd and can_edit_admin %}
+  <details class="card group" {% if status == 'returned_by_rvp' %}open{% endif %}>
+    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3.5"><span><span class="block text-[14px] font-semibold text-slate-800">Add Country Director admin budget</span><span class="mt-0.5 block text-[12px] font-medium text-slate-500">Add office and operational costs that are not tied to a Program Lead activity.</span></span><span class="text-[12px] font-bold text-blue-600 group-open:hidden">Add item</span></summary>
+    <form hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML" class="grid grid-cols-1 gap-3 border-t border-slate-100 px-4 py-4 md:grid-cols-6">
+      <input type="hidden" name="action" value="add_admin_line"><input type="hidden" name="budget_id" value="{{ budget_id }}"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
+      <label class="md:col-span-2"><span class="edify-text-caption font-bold uppercase text-slate-400">Item</span><input required name="description" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="e.g. Office internet"></label>
+      <label><span class="edify-text-caption font-bold uppercase text-slate-400">Category</span><input name="cost_category" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="operations"></label>
+      <label><span class="edify-text-caption font-bold uppercase text-slate-400">Quantity</span><input required min="0.01" step="0.01" name="quantity" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="1"></label>
+      <label><span class="edify-text-caption font-bold uppercase text-slate-400">Unit cost (UGX)</span><input required min="1" name="unit_cost" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="0"></label>
+      <div class="flex items-end"><button type="submit" class="h-9 w-full rounded-control bg-blue-600 px-3 text-[12px] font-bold text-white hover:bg-blue-700">Add admin item</button></div>
+      <label class="md:col-span-6"><span class="edify-text-caption font-bold uppercase text-slate-400">Why is this needed? <span class="normal-case text-slate-300">(optional)</span></span><input name="justification" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="Short explanation for the RVP"></label>
+    </form>
+  </details>
+  {% endif %}
 
   <!-- KPI strip -->
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -261,7 +294,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
       <div class="rounded-surface bg-blue-50 border border-blue-100 p-3.5">
         <p class="edify-text-caption font-bold text-blue-800 flex items-start gap-1.5">
           <svg class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span><span class="block mb-0.5">Budgeting Rules</span><span class="font-semibold text-blue-700">Only plan-backed items are included in the monthly budget. CD Admin Budget is the only non-activity exception and must come from your CD Monthly Admin Plan.</span></span>
+          <span><span class="block mb-0.5">Budget source</span><span class="font-semibold text-blue-700">{{ program_source_label }}. CD Admin Budget is the only non-activity exception and must be added by the Country Director.</span></span>
         </p>
       </div>
 
@@ -311,7 +344,7 @@ entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% e
 
   <!-- Footer -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-slate-100 edify-text-caption font-semibold text-slate-400">
-    <p class="flex items-center gap-1"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>All amounts are in UGX. All budgeted items must originate from planned activities, except CD Admin Budget which is sourced from the CD Monthly Admin Plan.</p>
+    <p class="flex items-center gap-1"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>All amounts are in UGX. Program costs are sourced from {{ program_source_label|lower }}. CD Admin Budget is the only non-activity exception.</p>
     <p>Last updated: {{ last_updated|date:"M j, Y g:i A" }}</p>
   </div>
 

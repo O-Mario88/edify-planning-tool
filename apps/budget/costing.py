@@ -58,6 +58,37 @@ TRAINING_TYPES = {
     "cluster_meeting_ssa_review",
 }
 
+# A cluster session has a deliberately small, predictable cost recipe.  These
+# stable keys are shared by the catalogue, planning preview, saved schedule
+# lines, fund requests and budget reports.  Do not add ad-hoc cluster costs in
+# a caller: ``cost_for_activity`` is the one place that defines the recipe.
+CLUSTER_TRAINING_TYPES = {
+    "cluster_training",
+    "cluster_training_ssa_collection",
+}
+CLUSTER_MEETING_TYPES = {
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+}
+GROUP_TRAINING_RATE_KEYS = (
+    "group_training_participant_meal_cost_per_head",
+    "group_training_facilitation_fee",
+    "group_training_venue_cost",
+)
+CLUSTER_MEETING_SNACK_RATE_KEY = "cluster_meeting_participant_meal_cost_per_head"
+
+# Retained only so historical schedule snapshots can still be read.  New
+# schedules must never fall back to these broad, old cost rows.
+LEGACY_CLUSTER_ACTIVITY_COST_KEYS = frozenset(
+    {
+        "cluster_meeting_cost",
+        "meals_per_participant",
+        "mobilisation_per_participant",
+        "training_session_fee",
+        "venue",
+    }
+)
+
 
 def _participants_of(a: dict, default_n: int) -> int:
     counted = (
@@ -98,7 +129,20 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     activity_type = a.get("activityType")
     is_secondary = a.get("districtType") == "secondary"
 
-    if is_partner:
+    # Cluster meetings and cluster trainings use their fixed recipe even when
+    # a partner delivers the session.  The programme budget needs the same
+    # transparent snack/meal/facilitation/venue breakdown in every workflow.
+    if activity_type in CLUSTER_MEETING_TYPES:
+        n = _participants_of(a, DEFAULT_CLUSTER_MEETING_PARTICIPANTS)
+        add("Participant snacks", CLUSTER_MEETING_SNACK_RATE_KEY, n)
+
+    elif activity_type in CLUSTER_TRAINING_TYPES:
+        n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
+        add("Participant meals", "group_training_participant_meal_cost_per_head", n)
+        add("Facilitation fee", "group_training_facilitation_fee")
+        add("Venue fee", "group_training_venue_cost")
+
+    elif is_partner:
         # Determine the key, basis, and label
         if "partner_visit_rate" in rates:
             key = "partner_visit_rate"
@@ -179,29 +223,9 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                 add("Lunch", "lunch")
     elif activity_type in TRAINING_TYPES:
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
-        if (
-            "group_training_facilitation_fee" in rates
-            or "group_training_venue_cost" in rates
-            or "group_training_participant_meal_cost_per_head" in rates
-        ):
-            add("Facilitation", "group_training_facilitation_fee")
-            add("Venue", "group_training_venue_cost")
-            add("Meals", "group_training_participant_meal_cost_per_head", n)
-        else:
-            add("Training session", "training_session_fee")
-            add("Venue", "venue")
-            add("Meals", "meals_per_participant", n)
-            add("Mobilisation", "mobilisation_per_participant", n)
-    elif activity_type == "cluster_meeting":
-        n = _participants_of(a, DEFAULT_CLUSTER_MEETING_PARTICIPANTS)
-        if "cluster_meeting_participant_meal_cost_per_head" in rates:
-            add(
-                "Cluster meeting participant meals",
-                "cluster_meeting_participant_meal_cost_per_head",
-                n,
-            )
-        else:
-            add("Cluster meeting (per participant)", "cluster_meeting_cost", n)
+        add("Participant meals", "group_training_participant_meal_cost_per_head", n)
+        add("Facilitation fee", "group_training_facilitation_fee")
+        add("Venue fee", "group_training_venue_cost")
     elif activity_type in ("partner_activity", "project_activity"):
         project_key = "project_partner_lump_sum" if a.get("projectId") else None
         key = (
@@ -278,6 +302,11 @@ __all__ = [
     "RateCard",
     "CostLine",
     "ActivityCost",
+    "CLUSTER_MEETING_SNACK_RATE_KEY",
+    "CLUSTER_MEETING_TYPES",
+    "CLUSTER_TRAINING_TYPES",
+    "GROUP_TRAINING_RATE_KEYS",
+    "LEGACY_CLUSTER_ACTIVITY_COST_KEYS",
     "cost_for_activity",
     "resolve_activity_cost",
 ]

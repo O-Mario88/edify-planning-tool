@@ -214,9 +214,10 @@ class CentralizedCostingTest(APITestCase):
     # ── C. Group training ────────────────────────────────────────────────────
     def test_group_training_includes_venue_facilitation_and_group_meals(self):
         _seed_rates(
-            training_session_fee=60000,
-            venue=30000,
-            meals_per_participant=6000,
+            group_training_facilitation_fee=60000,
+            group_training_venue_cost=30000,
+            group_training_participant_meal_cost_per_head=6000,
+            # Historic keys must not sneak an extra line into a new training.
             mobilisation_per_participant=2000,
         )
         prev = self._preview(
@@ -227,9 +228,21 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # facilitation(60000) + venue(30000) + meals(6000×20) + mobilisation(2000×20)
-        expected = 60000 + 30000 + (6000 * 20) + (2000 * 20)
+        # Exactly three items: meals + facilitation + venue.
+        expected = 60000 + 30000 + (6000 * 20)
         self.assertEqual(prev["amount"], expected)
+        self.assertEqual(
+            {line["key"] for line in prev["lines"]},
+            {
+                "group_training_participant_meal_cost_per_head",
+                "group_training_facilitation_fee",
+                "group_training_venue_cost",
+            },
+        )
+        self.assertEqual(
+            {line["label"] for line in prev["lines"]},
+            {"Participant meals", "Facilitation fee", "Venue fee"},
+        )
         labels = {l["lineItemType"] for l in prev["lines"]}
         self.assertIn("venue", labels)
         self.assertIn("facilitation", labels)
@@ -239,10 +252,9 @@ class CentralizedCostingTest(APITestCase):
     def test_cluster_meeting_excludes_venue_facilitation_and_uses_cluster_meal_rate(
         self,
     ):
-        """The critical separation: cluster meetings use cluster_meeting_cost ONLY —
-        no venue, no facilitation, and NEVER the group-training meal rate."""
+        """Meetings use Participant snacks only — never training costs."""
         _seed_rates(
-            cluster_meeting_cost=5000,
+            cluster_meeting_participant_meal_cost_per_head=5000,
             meals_per_participant=6000,
             venue=30000,
             training_session_fee=60000,
@@ -255,8 +267,13 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # 12 × cluster_meeting_cost(5000) = 60000 — NOTHING else.
+        # 12 × Participant snacks(5000) = 60000 — NOTHING else.
         self.assertEqual(prev["amount"], 12 * 5000)
+        self.assertEqual(
+            {line["key"] for line in prev["lines"]},
+            {"cluster_meeting_participant_meal_cost_per_head"},
+        )
+        self.assertEqual(prev["lines"][0]["label"], "Participant snacks")
         labels = {l["lineItemType"] for l in prev["lines"]}
         self.assertEqual(labels, {"cluster_meeting_participant_meals"})
         self.assertNotIn("venue", labels)
@@ -266,10 +283,10 @@ class CentralizedCostingTest(APITestCase):
         )  # group-training rate must NOT appear
 
     def test_cluster_meeting_requires_participants(self):
-        _seed_rates(cluster_meeting_cost=5000)
-        # No participants → scheduling must be blocked. Assign the school to the
-        # cluster first so the CCEO derives cluster scope, then assert the cost
-        # gate (participant requirement) rejects the schedule.
+        _seed_rates(cluster_meeting_participant_meal_cost_per_head=5000)
+        # Scheduling stays permissive. When no headcount was entered, the safe
+        # cluster-meeting planning default (10) is priced instead of blocking
+        # the field team with an unrelated scheduling rule.
         self.school.cluster_id = self.cluster.id
         self.school.cluster_status = "clustered"
         self.school.save(update_fields=["cluster_id", "cluster_status"])
@@ -283,8 +300,34 @@ class CentralizedCostingTest(APITestCase):
             },
             format="json",
         )
-        self.assertEqual(r.status_code, 400, r.content)
-        self.assertIn("participant", r.json()["message"].lower())
+        self.assertEqual(r.status_code, 201, r.content)
+        self.assertEqual(r.json()["estCostCents"], 10 * 5000)
+
+    def test_cluster_training_never_falls_back_to_retired_rate_keys(self):
+        """Legacy rates may remain for audit, but cannot price new work."""
+        CostSetting.objects.all().delete()
+        _seed_rates(
+            training_session_fee=60000,
+            venue=30000,
+            meals_per_participant=6000,
+            mobilisation_per_participant=2000,
+        )
+        prev = self._preview(
+            {
+                "activityType": "cluster_training",
+                "deliveryType": "staff",
+                "expectedParticipants": 20,
+            }
+        )
+        self.assertFalse(prev["canSchedule"])
+        self.assertEqual(
+            {line["key"] for line in prev["lines"]},
+            {
+                "group_training_participant_meal_cost_per_head",
+                "group_training_facilitation_fee",
+                "group_training_venue_cost",
+            },
+        )
 
     # ── E. Partner visit ─────────────────────────────────────────────────────
     def test_partner_visit_uses_partner_lump_sum(self):
@@ -318,7 +361,8 @@ class CentralizedCostingTest(APITestCase):
         self.assertEqual(r.status_code, 200, r.content)
         self.assertFalse(r.json()["canSchedule"])
         self.assertTrue(r.json()["blockers"])
-        # Scheduling must be rejected with 400.
+        # Scheduling stays permissive, but a missing rate is visible on the
+        # activity and prevents it becoming fundable work.
         sched = self.client.post(
             "/api/planning/schedule-school-visit",
             {
@@ -330,7 +374,8 @@ class CentralizedCostingTest(APITestCase):
             },
             format="json",
         )
-        self.assertEqual(sched.status_code, 400, sched.content)
+        self.assertEqual(sched.status_code, 201, sched.content)
+        self.assertTrue(sched.json()["costMissing"])
 
     # ── G. Advance auto-created; Accountant gated on confirmation ────────────
     def test_advance_auto_created_and_accountant_gated_on_confirmation(self):

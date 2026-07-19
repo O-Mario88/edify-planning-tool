@@ -67,6 +67,7 @@ def submit(data: dict, principal) -> dict:
                 submitted_by_user_id=principal.user_id,
                 period=period,
                 period_key=period_key,
+                scope=lens,
             )
             .first()
         )
@@ -90,9 +91,9 @@ def submit(data: dict, principal) -> dict:
             submitted_by_user_id=principal.user_id,
             period=period,
             period_key=period_key,
+            scope=lens,
             defaults={
                 "fy": fy,
-                "scope": lens,
                 "submitted_by_role": principal.active_role,
                 "total_amount": total,
                 "activity_count": len(activities),

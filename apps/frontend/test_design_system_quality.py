@@ -73,12 +73,17 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("fontFamily: 'Inter", charts)
 
     def test_shared_cards_stretch_without_an_arbitrary_fixed_height(self):
+        # Asserted against platform.css only: it is the stylesheet base.html
+        # actually loads. This previously also asserted against
+        # edify-components.css, which no template ever referenced — a contract
+        # pinned to dead code. That file has since been removed along with
+        # edify-pages.css and edify-tokens.css (the latter advertised itself as
+        # "THE SINGLE SOURCE OF TRUTH" while shipping values that contradicted
+        # the live tokens).
         platform = _read("static/css/platform.css")
-        components = _read("static/css/edify-components.css")
         self.assertIn("align-self: stretch", platform)
         self.assertIn("block-size: 100%", platform)
-        self.assertNotIn("height: 108px", components)
-        self.assertIn("height: 100%", components)
+        self.assertNotIn("height: 108px", platform)
 
     def test_shared_responsive_contract_covers_mobile_and_tablet(self):
         platform = _read("static/css/platform.css")
@@ -96,9 +101,67 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn('data-density="compact"', shell)
         self.assertIn('data-analytics-engine="edify-python-1.0"', shell)
         self.assertIn("main.edify-workspace", platform)
-        self.assertIn("--radius-surface: 13px", tokens)
         self.assertIn("platform-deferred", platform)
         self.assertIn("contain-intrinsic-size", platform)
+
+    def test_radius_scale_has_one_source_of_truth_at_spec_values(self):
+        """The five radius tokens are defined exactly once, at the approved
+        geometry (spec §11): surface 12px · control 8px · overlay 16px.
+
+        design-system.css used to re-declare them as 13/9/16/7 and, because it
+        loads after main.css, silently won — two competing sources of truth for
+        the same geometry, at values matching nothing in the spec. Every card
+        and control on the platform rendered a step rounder than approved.
+        """
+        source = _read("assets/css/tailwind.source.css")
+        compiled = _read("static/css/main.css")
+        tokens = _read("static/css/design-system.css")
+
+        for declaration in (
+            "--radius-surface: 12px",
+            "--radius-control: 8px",
+            "--radius-overlay: 16px",
+        ):
+            self.assertIn(declaration, source, f"{declaration} missing from Tailwind source")
+            self.assertIn(declaration, compiled, f"{declaration} missing from compiled main.css")
+
+        # No second definition anywhere else in the loaded cascade.
+        for token in ("--radius-surface", "--radius-control", "--radius-overlay"):
+            self.assertNotIn(
+                f"{token}:",
+                tokens,
+                f"{token} must not be redefined in design-system.css — it is "
+                "defined once in assets/css/tailwind.source.css.",
+            )
+
+
+    def test_sign_in_layout_is_not_a_design_system_island(self):
+        """The sign-in screen must consume the same token layer as the app.
+
+        It previously loaded login.css alone — no tokens, no shared utilities —
+        and had drifted to nine bespoke radii (.95rem, .72rem, 1.5rem, .7rem,
+        .78rem, .92rem, .75rem, 999px, 50%) on the first screen every user
+        sees. That is the "page-specific design language" §1 forbids.
+        """
+        layout = _read("templates/layouts/login.html")
+        login_css = _read("static/css/login.css")
+
+        self.assertIn("css/main.css", layout)
+        self.assertIn("css/design-system.css", layout)
+
+        # Radii come from the token scale. The only literals allowed are the
+        # circular spinner and the mobile full-bleed card (both documented).
+        literals = re.findall(r"border-radius:\s*([^;]+);", login_css)
+        off_system = [
+            value.strip()
+            for value in literals
+            if "var(--radius" not in value and value.strip() not in ("50%", "0")
+        ]
+        self.assertEqual(
+            off_system,
+            [],
+            f"login.css must use the radius token scale, found: {off_system}",
+        )
 
     def test_dark_workspace_has_accessible_depth_and_primary_actions(self):
         tokens = _read("static/css/design-system.css")
@@ -131,40 +194,54 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         platform = _read("static/css/platform.css")
         base = _read("templates/base.html")
 
+        # Spec §5 brand + §6 four-step light surface ladder.
         for declaration in (
-            "--edify-brand-primary: #105fa6",
-            "--edify-brand-primary-hover: #064984",
-            "--edify-brand-primary-soft: #e7f4fc",
-            "--edify-surface: #ffffff",
-            "--edify-surface-muted: #f6fbff",
-            "--edify-border: #c7d8e8",
-            "--edify-text: #071e35",
-            "--edify-text-muted: #405a73",
-            "--edify-bg: #e7f4fc",
-            "--edify-button-primary-treatment: linear-gradient(105deg, #075397 0%, #105fa6 100%)",
+            "--edify-brand-primary: #4d7187",
+            "--edify-brand-primary-hover: #405e71",
+            "--edify-brand-secondary: #ef564b",
+            "--edify-bg: #edf1f3",
+            "--edify-section-bg: #f2f5f6",
+            "--edify-surface: #f8fafb",
+            "--edify-surface-raised: #ffffff",
+            "--edify-border: #c7d1d7",
+            "--edify-text: #17232b",
+            "--edify-text-muted: #3f515c",
         ):
             self.assertIn(declaration, tokens)
+
+        # Pure white is the ELEVATED step only — never the canvas or the
+        # standard card, or cards dissolve into the page (spec §6).
+        self.assertNotIn("--edify-bg: #ffffff", tokens)
+        self.assertNotIn("--edify-surface: #ffffff", tokens)
 
         self.assertIn(
             "Light workspace: the approved Edify sign-in visual language", platform
         )
         self.assertIn(":root:not(.theme-blue):not(.theme-dark)", platform)
-        self.assertIn("#e7f4fc", base)
+        self.assertIn("#edf1f3", base)
 
     def test_light_workspace_text_hierarchy_meets_high_contrast_standard(self):
         tokens = _read("static/css/design-system.css")
         platform = _read("static/css/platform.css")
 
         for declaration in (
-            "--edify-text: #071e35",
-            "--edify-text-muted: #405a73",
-            "--edify-text-subtle: #526b84",
-            "--edify-text-disabled: #5f748b",
+            "--edify-text: #17232b",
+            "--edify-text-muted: #3f515c",
+            "--edify-text-subtle: #5f707a",
+            "--edify-text-disabled: #6b7b84",
         ):
             self.assertIn(declaration, tokens)
 
-        for colour in ("#071e35", "#405a73", "#526b84", "#5f748b"):
-            self.assertGreaterEqual(_contrast_ratio(colour, "#ffffff"), 4.5)
+        # Body-text steps clear AA on the card plane they actually sit on.
+        # (#6b7b84 is the disabled step, which WCAG exempts from the minimum.)
+        for colour in ("#17232b", "#3f515c", "#5f707a"):
+            self.assertGreaterEqual(_contrast_ratio(colour, "#f8fafb"), 4.5)
+            self.assertGreaterEqual(_contrast_ratio(colour, "#edf1f3"), 4.5)
+
+        # Primary brand must stay legible under white button labels in every
+        # interaction state.
+        for colour in ("#4d7187", "#405e71", "#385363"):
+            self.assertGreaterEqual(_contrast_ratio("#ffffff", colour), 4.5)
 
         self.assertIn(".text-gray-400, .text-gray-500", platform)
         self.assertIn(".text-slate-300, .text-gray-300", platform)
@@ -347,3 +424,85 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotIn("Disburse Funds\n</button>", active_template)
         self.assertIn("Open Canonical Disbursement Queue", active_template)
         self.assertIn("filteredFunds()", active_template)
+
+
+class GeometryConsistencyGuardTest(SimpleTestCase):
+    """Static guards that keep the approved geometry from drifting back.
+
+    Templates must express radius and elevation through the shared utilities
+    (rounded-surface / rounded-control / rounded-overlay / rounded-pill and the
+    shadow scale), never as arbitrary Tailwind values or inline styles. Those
+    bypass the token layer, so a later change to the canonical scale silently
+    skips them — which is exactly how budgets/monthly.html ended up rendering
+    five bespoke radii (7/9/10/14/16px) next to the rest of the platform.
+    """
+
+    def _templates(self):
+        return sorted((ROOT / "templates").rglob("*.html"))
+
+    def test_no_arbitrary_radius_in_templates(self):
+        import re
+
+        pattern = re.compile(r"rounded-\[[^\]]*\]")
+        offenders = []
+        for path in self._templates():
+            with open(path, encoding="utf-8", errors="ignore") as handle:
+                for lineno, line in enumerate(handle, 1):
+                    if pattern.search(line):
+                        offenders.append(f"{path}:{lineno}")
+        self.assertEqual(
+            offenders,
+            [],
+            "Arbitrary radius values bypass the token scale. Use "
+            "rounded-surface (12px) / rounded-control (8px) / rounded-overlay "
+            f"(16px) / rounded-pill instead: {offenders}",
+        )
+
+    def test_no_arbitrary_shadow_in_templates(self):
+        import re
+
+        pattern = re.compile(r"shadow-\[[^\]]*\]")
+        offenders = []
+        for path in self._templates():
+            with open(path, encoding="utf-8", errors="ignore") as handle:
+                for lineno, line in enumerate(handle, 1):
+                    if pattern.search(line):
+                        offenders.append(f"{path}:{lineno}")
+        self.assertEqual(
+            offenders, [], f"Use the shared shadow scale, not arbitrary values: {offenders}"
+        )
+
+    def test_no_inline_border_radius_in_templates(self):
+        import re
+
+        pattern = re.compile(r'style="[^"]*border-radius', re.IGNORECASE)
+        offenders = []
+        for path in self._templates():
+            with open(path, encoding="utf-8", errors="ignore") as handle:
+                for lineno, line in enumerate(handle, 1):
+                    if pattern.search(line):
+                        offenders.append(f"{path}:{lineno}")
+        self.assertEqual(
+            offenders, [], f"Inline border-radius bypasses the token scale: {offenders}"
+        )
+
+    def test_no_serif_or_hardcoded_font_family_in_templates(self):
+        """Inter is the single UI font; a page must not smuggle in another
+        family (budgets/monthly.html previously rendered a group label in
+        italic Times New Roman inside an operational table)."""
+        import re
+
+        pattern = re.compile(r"font-family\s*:\s*([^;\"'}]+)", re.IGNORECASE)
+        offenders = []
+        for path in self._templates():
+            with open(path, encoding="utf-8", errors="ignore") as handle:
+                for lineno, line in enumerate(handle, 1):
+                    for value in pattern.findall(line):
+                        normalized = value.strip().lower()
+                        if "--edify-font" not in normalized and "inter" not in normalized:
+                            offenders.append(f"{path}:{lineno} -> {value.strip()[:50]}")
+        self.assertEqual(
+            offenders,
+            [],
+            f"Use var(--edify-font-sans); Inter is the only approved UI font: {offenders}",
+        )

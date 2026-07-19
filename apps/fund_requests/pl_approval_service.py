@@ -159,6 +159,7 @@ def _fund_request_for(cceo_user_id, fy, month):
         submitted_by_user_id=cceo_user_id,
         period="monthly",
         period_key=_period_key(fy, month),
+        scope="own",
     ).first()
 
 
@@ -717,6 +718,7 @@ def approve(principal, cceo_user_id, fy, month):
         submitted_by_user_id=cceo["user_id"],
         period="monthly",
         period_key=_period_key(fy, month),
+        scope="own",
     ).first()
     if existing and existing.status in _LOCKED_AFTER_ACCOUNTANT_ACTION:
         raise BadRequest(

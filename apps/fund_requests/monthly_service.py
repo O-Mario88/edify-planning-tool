@@ -68,6 +68,7 @@ def sync_monthly_drafts_for_activity(activity: Activity, *, prior_buckets=()) ->
                     submitted_by_user_id=owner_id,
                     period=FundRequestPeriod.MONTHLY,
                     period_key=_period_key(fy, month),
+                    scope="own",
                 )
                 .first()
             )

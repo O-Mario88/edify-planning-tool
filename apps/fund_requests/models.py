@@ -77,7 +77,7 @@ class FundRequest(TimeStampedModel):
         db_table = "fund_request"
         constraints = [
             models.UniqueConstraint(
-                fields=["submitted_by_user_id", "period", "period_key"],
+                fields=["submitted_by_user_id", "period", "period_key", "scope"],
                 name="uniq_request_period_owner",
             ),
         ]
@@ -108,10 +108,6 @@ class FundRequestItem(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["fund_request", "activity_schedule_cost_line_id"],
                 name="uniq_request_costline",
-            ),
-            models.UniqueConstraint(
-                fields=["activity_schedule_cost_line_id", "period", "period_key"],
-                name="uniq_costline_period",
             ),
         ]
         indexes = [models.Index(fields=["activity_id"])]

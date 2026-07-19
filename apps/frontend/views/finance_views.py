@@ -631,6 +631,8 @@ def budget_overview_view(request):
 @require_page_permission("cost_settings")
 def cost_settings_view(request):
     """CD Cost Catalogue management."""
+    from apps.budget.costing import LEGACY_CLUSTER_ACTIVITY_COST_KEYS
+
     fy = get_operational_fy()
 
     catalogues = CostCatalogue.objects.filter(fy=fy).order_by("-version")
@@ -639,7 +641,9 @@ def cost_settings_view(request):
     cost_items = []
     if active_catalogue:
         cost_items = list(
-            CostSetting.objects.filter(catalogue=active_catalogue).order_by("label")
+            CostSetting.objects.filter(catalogue=active_catalogue)
+            .exclude(key__in=LEGACY_CLUSTER_ACTIVITY_COST_KEYS)
+            .order_by("label")
         )
 
     context = {
@@ -1144,25 +1148,21 @@ def initialize_default_catalogue_view(request):
         ("accommodation", "Accommodation per night", 40000, "per night"),
         ("breakfast", "Breakfast", 8000, "per head"),
         (
-            "cluster_meeting_cost",
-            "Cluster meeting participant meal cost",
+            "cluster_meeting_participant_meal_cost_per_head",
+            "Participant snacks",
             10000,
-            "per head",
+            "per participant",
         ),
         ("dinner", "Dinner", 12000, "per head"),
         ("lunch", "Lunch", 12000, "per head"),
         (
-            "meals_per_participant",
-            "Group training participant meal cost",
+            "group_training_participant_meal_cost_per_head",
+            "Participant meals",
             5000,
-            "per head",
+            "per participant",
         ),
-        (
-            "mobilisation_per_participant",
-            "Mobilisation cost per participant",
-            2000,
-            "per head",
-        ),
+        ("group_training_facilitation_fee", "Facilitation fee", 50000, "per session"),
+        ("group_training_venue_cost", "Venue fee", 30000, "per session"),
         (
             "partner_training_lump_sum",
             "Partner training/facilitation rate",
@@ -1182,8 +1182,6 @@ def initialize_default_catalogue_view(request):
             25000,
             "per item",
         ),
-        ("training_session_fee", "Facilitation fee", 50000, "per session"),
-        ("venue", "Venue cost", 30000, "per day"),
         # Core / SSA / Special Project categories — each key is consumed by
         # apps.budget.costing.cost_for_activity's dedicated branch; without it
         # the engine falls through to the generic visit/training/partner rate.
@@ -1345,6 +1343,33 @@ def country_budget_action_view(request):
                 },
             )
             ok = f"{b.month_key} Country Monthly Budget returned for correction."
+        elif action == "approve_pl_request":
+            svc.approve_pl_monthly_request(
+                request.user, request.POST.get("request_id")
+            )
+            ok = "Program Lead request approved and added to the country budget."
+        elif action == "return_pl_request":
+            svc.return_pl_monthly_request(
+                request.user,
+                request.POST.get("request_id"),
+                request.POST.get("note"),
+            )
+            ok = "Program Lead request returned for changes."
+        elif action == "add_admin_line":
+            from apps.monthly_work_plan import services as monthly_plan_service
+
+            monthly_plan_service.add_admin_line(
+                budget_id,
+                {
+                    "description": request.POST.get("description"),
+                    "costCategory": request.POST.get("cost_category"),
+                    "quantity": request.POST.get("quantity"),
+                    "unitCost": request.POST.get("unit_cost"),
+                    "justification": request.POST.get("justification"),
+                },
+                request.user,
+            )
+            ok = "Admin budget item added to the country budget."
         else:
             error = "Unknown action."
     except (BadRequest, Forbidden) as e:

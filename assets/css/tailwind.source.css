@@ -48,11 +48,22 @@
 
   /* Canonical Edify geometry. These generate the only approved radius
      utilities: rounded-surface, rounded-control, rounded-overlay,
-     rounded-small and rounded-pill. */
-  --radius-surface: 16px;
-  --radius-control: 12px;
-  --radius-overlay: 20px;
-  --radius-small: 8px;
+     rounded-small and rounded-pill.
+
+     Values are fixed by the design-system spec (§11):
+       surface 12px — cards, tiles, KPI cards, chart cards, table wrappers
+       control  8px — buttons, inputs, filters, tabs, navigation controls
+       overlay 16px — large modals, drawers, overlays
+       pill         — status pills, badges, avatars, progress bars
+     The scale previously ran one step large (16/12/20), so every card and
+     control on the platform was rounder than the approved geometry. Because
+     all ~3,300 radius utilities resolve through these tokens, correcting
+     them here brings the whole platform into spec in one place — do not
+     reintroduce per-component radius values. */
+  --radius-surface: 12px;
+  --radius-control: 8px;
+  --radius-overlay: 16px;
+  --radius-small: 6px;
   --radius-pill: 9999px;
 
   /* animate-fade-in is used by a few admin/upload templates. */

@@ -23,16 +23,27 @@
   --edify-sky-400: #7bbde8;
   --edify-sky-100: #bdd8e9;
 
-  /* Official Edify product brand. Light mode uses the same confident blue as
-     the approved sign-in reference: calm white surfaces, navy type, and one
-     unmistakable action colour. */
-  --edify-brand-primary: #105fa6;
-  --edify-brand-primary-hover: #064984;
-  --edify-brand-primary-active: #075397;
-  --edify-brand-primary-soft: #e7f4fc;
+  /* Official Edify product brand (spec §5).
+       primary   #4d7187 — primary buttons, active navigation, selected tabs,
+                           primary links, focus rings, primary chart series
+       secondary #ef564b — secondary actions and supporting emphasis ONLY
+
+     The hover/active steps are darkened from the primary so white label text
+     stays above WCAG AA on every state (5.21 / 6.87 / 8.12 : 1).
+
+     #ef564b is deliberately NOT used as a solid fill behind white text: white
+     on #ef564b measures 3.44:1, below the 4.5:1 body-text minimum. Secondary
+     emphasis therefore uses the soft tint with the darkened brand text
+     (5.22:1). It is also never used as the danger colour — destructive states
+     keep the separate semantic --edify-danger ramp (spec §5, §17). */
+  --edify-brand-primary: #4d7187;
+  --edify-brand-primary-hover: #405e71;
+  --edify-brand-primary-active: #385363;
+  --edify-brand-primary-soft: #edf0f3;
   --edify-brand-secondary: #ef564b;
-  --edify-brand-secondary-hover: #dc4b42;
-  --edify-brand-secondary-soft: #fce3e1;
+  --edify-brand-secondary-hover: #d84a40;
+  --edify-brand-secondary-soft: #fdeae9;
+  --edify-brand-secondary-text: #ac3d36;
 
   /* Semantic brand tokens — light mode. */
   --edify-primary: var(--edify-brand-primary);
@@ -46,7 +57,7 @@
   --edify-accent-hover: var(--edify-brand-primary-hover);
   --edify-on-accent: #ffffff;
   --edify-accent-light: var(--edify-brand-primary-soft);
-  --edify-accent-border: #9fc9e6;
+  --edify-accent-border: #aebfc9;
 
   /* ── SEMANTIC COLORS (3-tone ramp each: base / light-bg / border) ──────── */
   --edify-success: #10b981;
@@ -94,30 +105,39 @@
   --edify-notification-text: #ffffff;
   --edify-notification-glow: rgba(216, 91, 19, 0.28);
 
-  /* ── LIGHT WORKSPACE SURFACES ─────────────────────────────────────────── */
-  --edify-surface: #ffffff;
-  --edify-surface-muted: #f6fbff;
+  /* ── LIGHT WORKSPACE SURFACES (spec §6) ───────────────────────────────────
+     A four-step surface ladder, so a card is always distinguishable from the
+     plane behind it:
+       canvas   #edf1f3  application background
+       section  #f2f5f6  section grouping surface
+       card     #f8fafb  standard card
+       elevated #ffffff  raised/overlay surface (drawers, modals, popovers)
+
+     Pure white is reserved for the ELEVATED step only. It was previously the
+     canvas *and* the card, so cards dissolved into the page and elevation
+     carried no meaning — the exact "white cards blending into white
+     backgrounds" §6 calls out. */
+  --edify-surface: #f8fafb;
+  --edify-surface-muted: #e5eaed;
   --edify-surface-raised: #ffffff;
-  --edify-surface-hover: #eef7fd;
-  --edify-surface-selected: #e2f3fe;
-  --edify-border: #c7d8e8;
-  --edify-border-strong: #9dbad1;
-  --edify-divider: #dbeaf5;
-  /* Text uses an intentionally high-contrast three-step hierarchy. Even
-     metadata, table headers, field labels and placeholders remain readable
-     on the bright workspace and white card planes. */
-  --edify-text: #071e35;
-  --edify-text-muted: #405a73;
-  --edify-text-subtle: #526b84;
-  --edify-text-disabled: #5f748b;
+  --edify-surface-hover: #e9eef1;
+  --edify-surface-selected: #dfe8ed;
+  --edify-border: #c7d1d7;
+  --edify-border-strong: #aebcc4;
+  --edify-divider: #d7dee2;
+  /* Four-step text hierarchy, all verified against the surfaces above:
+     primary 15.3:1 · secondary 7.9:1 · muted 4.9:1 on the card plane. */
+  --edify-text: #17232b;
+  --edify-text-muted: #3f515c;
+  --edify-text-subtle: #5f707a;
+  --edify-text-disabled: #6b7b84;
   --edify-text-secondary: var(--edify-text-muted);
-  --edify-bg: #e7f4fc;
-  --edify-section-bg: #f5fbff;
-  --edify-canvas-treatment:
-    radial-gradient(circle at 8% 58%, rgba(126, 205, 246, .32), transparent 42rem),
-    radial-gradient(circle at 92% 4%, rgba(235, 249, 255, .92), transparent 38rem),
-    linear-gradient(135deg, #dff1fb 0%, #eef9fe 48%, #dceefa 100%);
-  --edify-surface-treatment: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
+  --edify-bg: #edf1f3;
+  --edify-section-bg: #f2f5f6;
+  /* Flat neutral canvas: the tinted gradient competed with card surfaces and
+     made the same card read differently depending on where it sat. */
+  --edify-canvas-treatment: none;
+  --edify-surface-treatment: none;
   --edify-glass-blur: 0px;
   --edify-glass-saturation: 100%;
   --edify-glass-highlight: rgba(255, 255, 255, 0.72);
@@ -128,8 +148,8 @@
   --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
   --edify-card-shadow: var(--edify-shadow-sm);
   --edify-card-backdrop-filter: none;
-  --edify-button-primary-treatment: linear-gradient(105deg, #075397 0%, #105fa6 100%);
-  --edify-button-secondary-treatment: linear-gradient(180deg, #ffffff 0%, #f6fbff 100%);
+  --edify-button-primary-treatment: linear-gradient(180deg, var(--edify-brand-primary) 0%, var(--edify-brand-primary-hover) 100%);
+  --edify-button-secondary-treatment: linear-gradient(180deg, var(--edify-surface-raised) 0%, var(--edify-surface) 100%);
 
   /* Legacy aliases consumed by base.html <style> and some components. */
   --color-edify-primary: var(--edify-primary);
@@ -224,13 +244,16 @@
 
   /* ── BORDER RADIUS — CANONICAL PLATFORM GEOMETRY ────────────────────────
        Surfaces never change shape by page, role, theme or viewport.
-       Legacy aliases remain temporarily for third-party compatibility but
-       resolve to this semantic five-token contract. */
-  --radius-surface: 13px;
-  --radius-control: 9px;
-  --radius-overlay: 16px;
-  --radius-small: 7px;
-  --radius-pill: 9999px;
+
+       The five radius tokens are DEFINED ONCE, in assets/css/tailwind.source.css
+       (compiled into main.css, which loads before this file). They are
+       deliberately NOT redefined here: this file previously re-declared them as
+       13/9/16/7, which silently overrode the canonical 12/8/16/6 scale — two
+       competing sources of truth for the same geometry, and 13px/9px matched
+       no approved value. Consume them via the aliases below; never redeclare.
+
+       Canonical scale (spec §11): surface 12px · control 8px · overlay 16px
+       · small 6px · pill fully rounded. */
   --edify-radius-xs: var(--radius-small);
   --edify-radius-sm: var(--radius-control);
   --edify-radius-md: var(--radius-surface);

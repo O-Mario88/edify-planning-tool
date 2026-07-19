@@ -44,7 +44,7 @@
 /* ── Theme Toggle (segmented control in topbar) ─────────────────────────── */
 .theme-toggle {
   display: inline-flex; align-items: center; gap: 3px;
-  padding: 3px; border-radius: 10px;
+  padding: 3px; border-radius: var(--radius-control);
   background: var(--edify-surface-muted);
   background: color-mix(in oklab, var(--edify-surface-muted) 90%, transparent);
   border: 1px solid var(--edify-border);
@@ -52,7 +52,7 @@
 }
 .theme-toggle button {
   display: flex; align-items: center; justify-content: center;
-  min-width: 30px; height: 28px; border-radius: 7px;
+  min-width: 30px; height: 28px; border-radius: var(--radius-small);
   color: var(--edify-text-subtle); cursor: pointer;
   transition: background-color var(--edify-transition-fast), color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
   background: transparent; border: none;
@@ -800,7 +800,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   justify-content: center;
   gap: 0.375rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: 12px;
   padding: 0.5rem 1.15rem;
   transition: var(--edify-transition-all);
@@ -943,9 +943,9 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #cbd5e1;
+  background-color: var(--edify-border-strong);
   transition: .3s;
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
 }
 .toggle-slider:before {
   position: absolute;
@@ -1112,7 +1112,7 @@ input:focus, select:focus, textarea:focus {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 11px;
+  border-radius: var(--radius-control);
   flex-shrink: 0;
 }
 
@@ -1276,6 +1276,33 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+/* Wide canvases keep the SAME row discipline (spec §15). Without this the
+   count-aware rules above stopped at 74.99rem and `auto-fit` took over, so a
+   7- or 8-metric strip collapsed into a single unreadable row on a normal
+   laptop — labels wrapping to three lines — and a 10-metric strip rendered
+   4+4+2, orphaning two cards in a half-empty final row. Both are explicitly
+   called out in §15 ("Do not compress eight KPIs into one unreadable row",
+   "Do not leave isolated KPI cards in partially empty rows").
+
+     5 -> one row      6 -> 3x2      7-8 -> 4x2      9-10 -> 5x2      11-12 -> 4x3 */
+@container kpi-strip (min-width: 75rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(11))) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(13))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* Settings owns appearance selection. These previews communicate the real
    character of each workspace instead of showing generic color swatches. */
 .appearance-theme-grid {
@@ -1313,13 +1340,13 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 0.625rem;
   overflow: hidden;
   border: 1px solid var(--edify-border-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background-position: center 30%;
   background-size: cover;
 }
 
 .appearance-theme-preview--light {
-  background: linear-gradient(135deg, #ffffff, #e7f4fc);
+  background: linear-gradient(135deg, var(--edify-surface-raised), var(--edify-bg));
 }
 
 .appearance-theme-preview--system {
@@ -1344,6 +1371,8 @@ input:focus, select:focus, textarea:focus {
   content: "";
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.14);
+  /* Documented radius exception (spec §11): a scaled-down illustration of
+     the app shell inside a ~56px preview thumbnail, not a real UI control. */
   border-radius: 5px;
   background: #0d0d0f;
 }

@@ -18,19 +18,19 @@
     <form id="pl-dashboard-filters"
           hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
           hx-trigger="change delay:80ms" hx-push-url="false"
-          class="flex flex-wrap items-center gap-2">
-      <div class="flex items-center gap-1.5 rounded-surface px-2.5 py-1.5"
+          class="flex flex-wrap items-stretch sm:items-center gap-2">
+      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5"
            style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase" style="color:var(--edify-text-subtle);">FY</span>
-        <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
+        <select name="fy" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
                 style="color:var(--edify-text);">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </div>
-      <div class="flex items-center gap-1.5 rounded-surface px-2.5 py-1.5"
+      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5"
            style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase" style="color:var(--edify-text-subtle);">Activity</span>
-        <select name="activity_type" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
+        <select name="activity_type" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]"
                 style="color:var(--edify-text);">
           <option value="">All</option>
           <option value="school_visit" {% if filters.activity_type == 'school_visit' %}selected{% endif %}>School Visits</option>

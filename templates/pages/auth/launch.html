@@ -1,0 +1,45 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#03172b">
+  <meta http-equiv="refresh" content="2;url={{ login_url }}">
+  <title>Opening Edify Planning &amp; Monitoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="{% static 'images/logo.png' %}" fetchpriority="high">
+  <link rel="stylesheet" href="{% static 'css/launch.css' %}?v=20260719a">
+  <script defer src="{% static 'js/launch.js' %}?v=20260719a"></script>
+</head>
+<body class="launch-page">
+  <main class="launch-shell" data-launch-screen data-login-url="{{ login_url }}" aria-labelledby="launch-title">
+    <div class="launch-glow launch-glow--left" aria-hidden="true"></div>
+    <div class="launch-glow launch-glow--right" aria-hidden="true"></div>
+    <div class="launch-grid" aria-hidden="true"></div>
+    <div class="launch-wave launch-wave--back" aria-hidden="true"></div>
+    <div class="launch-wave launch-wave--front" aria-hidden="true"></div>
+
+    <section class="launch-content">
+      <div class="launch-identity">
+        <img class="launch-logo" src="{% static 'images/logo.png' %}" alt="Edify">
+        <span class="launch-divider" aria-hidden="true"></span>
+        <span class="launch-product">Planning &amp;<br>Monitoring</span>
+      </div>
+
+      <div class="launch-status" role="status" aria-live="polite">
+        <h1 id="launch-title" class="launch-visually-hidden">Opening Edify Planning and Monitoring</h1>
+        <div class="launch-progress" aria-hidden="true"><span class="launch-progress__bar"></span></div>
+        <div class="launch-message">
+          <span class="launch-spinner" aria-hidden="true"></span>
+          <p>Preparing your workspace<span class="launch-ellipsis" aria-hidden="true">...</span></p>
+        </div>
+      </div>
+    </section>
+
+    <a class="launch-skip" href="{{ login_url }}">Continue to sign in</a>
+  </main>
+</body>
+</html>

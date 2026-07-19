@@ -2,7 +2,11 @@
 <div class="pl-dashboard-stack space-y-4">
 
   {# ── KPI strip (8 cards) ────────────────────────────────────────────── #}
-  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+  <!-- 7-8 KPIs render four columns across two rows (spec §15). At
+     lg:grid-cols-8 the eight cards were ~110px wide and every label
+     wrapped to three lines - the "eight KPIs compressed into one
+     unreadable row" §15 forbids. -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
     {% for k in kpi_strip_items %}
     {% if k.link %}
     <a href="/dashboard/pl-drilldown{{ k.link }}&fy={{ fy }}" class="rounded-surface p-3 edify-hover-lift no-underline"

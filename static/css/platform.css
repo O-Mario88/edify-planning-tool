@@ -295,8 +295,8 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   button.bg-indigo-600, a.bg-indigo-600, button.bg-indigo-700, a.bg-indigo-700,
   button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
   background-color: var(--edify-accent-hover) !important;
-  background-image: linear-gradient(105deg, #064984 0%, #0a5597 100%) !important;
-  box-shadow: 0 12px 24px -12px rgba(8, 76, 137, .34), inset 0 1px 0 rgba(255,255,255,.15) !important;
+  background-image: linear-gradient(180deg, var(--edify-brand-primary-hover) 0%, var(--edify-brand-primary-active) 100%) !important;
+  box-shadow: var(--edify-shadow-md), inset 0 1px 0 rgba(255,255,255,.15) !important;
 }
 
 :root:not(.theme-blue):not(.theme-dark) :where(.btn-ghost, .edify-action-button.secondary,

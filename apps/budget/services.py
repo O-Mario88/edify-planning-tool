@@ -8,20 +8,28 @@ and the monthly budget board.
 
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 from django.db import transaction
 from django.db.models import Q, Sum
+from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
-from .costing import cost_for_activity
+from .costing import LEGACY_CLUSTER_ACTIVITY_COST_KEYS, cost_for_activity
 from .models import CostSetting, CostSettingHistory
 
 
 # ── Rate card ────────────────────────────────────────────────────────────────
 def list_cost_settings(principal, query: dict) -> dict:
-    qs = CostSetting.objects.all().order_by("label")
+    # Old broad training/meeting rates stay in the database so historical
+    # snapshots remain auditable, but they are no longer configurable for new
+    # cluster work.  The four canonical rates are the catalogue surface.
+    qs = CostSetting.objects.exclude(
+        key__in=LEGACY_CLUSTER_ACTIVITY_COST_KEYS
+    ).order_by("label")
     if query.get("fy"):
         qs = qs.filter(Q(fy=query["fy"]) | Q(fy__isnull=True))
     settings_list = [
@@ -46,6 +54,11 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     key = data.get("key")
     if not key:
         raise BadRequest("key is required.")
+    if key in LEGACY_CLUSTER_ACTIVITY_COST_KEYS:
+        raise BadRequest(
+            "This is a historic cluster cost item. Use Participant snacks, "
+            "Participant meals, Facilitation fee, or Venue fee instead."
+        )
     label = data.get("label") or key.replace("_", " ").title()
     new_cost = data.get("unitCost")
     if new_cost is None:
@@ -703,6 +716,448 @@ def board(principal, query: dict) -> dict:
     }
 
 
+# ── My Budget workspace ─────────────────────────────────────────────────────
+def _workspace_owner_ids(principal, scope, *, include_team: bool) -> list[str] | None:
+    """Return ledger owners for a personal or Program Lead team budget."""
+    if scope.country_scope:
+        return None
+
+    owner_ids = {
+        getattr(principal, "user_id", None) or getattr(principal, "id", None)
+    }
+    if include_team and scope.active_role == "Program Lead" and scope.supervised_staff_ids:
+        from apps.accounts.models import StaffProfile
+
+        owner_ids.update(
+            StaffProfile.objects.filter(id__in=scope.supervised_staff_ids).values_list(
+                "user_id", flat=True
+            )
+        )
+    return [owner_id for owner_id in owner_ids if owner_id]
+
+
+def _month_start_for_key(month_key: str | None) -> date | None:
+    try:
+        year, month = (int(part) for part in (month_key or "").split("-", 1))
+        return date(year, month, 1)
+    except (TypeError, ValueError):
+        return None
+
+
+def _calendar_periods(fy: str, anchor: date) -> dict[str, dict]:
+    """Build the four budget periods around one selected planning date."""
+    from apps.core.fy import (
+        get_fy_date_range,
+        get_quarter_date_range,
+        get_quarter_for_date,
+    )
+
+    week_start = anchor - timedelta(days=anchor.weekday())
+    week_end = week_start + timedelta(days=6)
+    month_start = anchor.replace(day=1)
+    next_month = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
+    month_end = next_month - timedelta(days=1)
+    quarter = get_quarter_for_date(anchor)
+    quarter_start_dt, quarter_end_dt = get_quarter_date_range(fy, quarter)
+    fy_start_dt, fy_end_dt = get_fy_date_range(fy)
+    quarter_start = quarter_start_dt.date()
+    quarter_end = (quarter_end_dt - timedelta(days=1)).date()
+    fy_start = fy_start_dt.date()
+    fy_end = (fy_end_dt - timedelta(days=1)).date()
+    return {
+        "week": {
+            "key": "week",
+            "label": "Week",
+            "title": f"Week of {week_start:%d %b} – {week_end:%d %b %Y}",
+            "start": week_start,
+            "end": week_end,
+        },
+        "month": {
+            "key": "month",
+            "label": "Month",
+            "title": anchor.strftime("%B %Y"),
+            "start": month_start,
+            "end": month_end,
+        },
+        "quarter": {
+            "key": "quarter",
+            "label": "Quarter",
+            "title": f"{quarter} FY {fy} · {quarter_start:%d %b} – {quarter_end:%d %b %Y}",
+            "start": quarter_start,
+            "end": quarter_end,
+        },
+        "fy": {
+            "key": "fy",
+            "label": "Fiscal Year",
+            "title": f"FY {fy} · {fy_start:%d %b %Y} – {fy_end:%d %b %Y}",
+            "start": fy_start,
+            "end": fy_end,
+        },
+    }
+
+
+def budget_workspace(principal, query: dict) -> dict:
+    """Return the role-scoped, request-backed My Budget ledger.
+
+    Canonical schedule cost lines supply every amount.  Weekly and monthly
+    fund requests are snapshots of those lines, so their counts are surfaced
+    for traceability but their totals are never added again. This keeps the
+    page mathematically correct while still showing that scheduled work has
+    reached the funding workflow.
+    """
+    from apps.accounts.models import User
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.fund_requests.models import (
+        FundRequest,
+        FundRequestPeriod,
+        WeeklyFundRequest,
+    )
+    from apps.monthly_work_plan.models import AdminBudgetLine
+
+    scope = resolve_user_scope(principal)
+    try:
+        anchor = date.fromisoformat(str(query.get("date"))[:10]) if query.get("date") else None
+    except ValueError:
+        anchor = None
+    anchor = anchor or timezone.localdate()
+    fy = query.get("fy") or get_operational_fy(anchor)
+    periods = _calendar_periods(fy, anchor)
+    selected_period = query.get("period") if query.get("period") in periods else "week"
+    selected = periods[selected_period]
+    is_program_lead = scope.active_role == "Program Lead"
+    budget_scope = (
+        "team"
+        if is_program_lead and query.get("budget_scope") == "team"
+        else "my"
+    )
+    owner_ids = _workspace_owner_ids(
+        principal, scope, include_team=budget_scope == "team"
+    )
+    include_admin = getattr(principal, "active_role", "") in (
+        "CountryDirector",
+        "Admin",
+    )
+
+    base_lines = (
+        ActivityScheduleCostLine.objects.filter(
+            fiscal_year=fy,
+            activity__deleted_at__isnull=True,
+            activity__scheduled_date__isnull=False,
+        )
+        .exclude(activity__status__in=["cancelled", "rejected"])
+        .select_related("activity", "partner")
+    )
+    if owner_ids is not None:
+        base_lines = base_lines.filter(responsible_user__in=owner_ids)
+
+    admin_lines = []
+    if include_admin:
+        admin_lines = list(
+            AdminBudgetLine.objects.filter(
+                monthly_budget__fy=fy, status="active"
+            ).select_related("monthly_budget")
+        )
+
+    def admin_total(period):
+        # Admin plans are monthly costs. A weekly split would be invented, so
+        # show them exactly in the Month, Quarter, and FY where they are planned.
+        if not include_admin or period["key"] == "week":
+            return 0
+        return sum(
+            int(line.total_cost or 0)
+            for line in admin_lines
+            if (planned := _month_start_for_key(line.monthly_budget.month_key))
+            and period["start"] <= planned <= period["end"]
+        )
+
+    def operational_total(period):
+        return int(
+            base_lines.filter(
+                planned_date__range=(period["start"], period["end"])
+            ).aggregate(total=Sum("amount"))["total"]
+            or 0
+        )
+
+    comparison = []
+    for key in ("week", "month", "quarter", "fy"):
+        period = periods[key]
+        program_total = operational_total(period)
+        admin_amount = admin_total(period)
+        comparison.append(
+            {
+                **period,
+                "program_total": program_total,
+                "admin_total": admin_amount,
+                "total": program_total + admin_amount,
+                "selected": key == selected_period,
+            }
+        )
+
+    selected_lines = list(
+        base_lines.filter(planned_date__range=(selected["start"], selected["end"]))
+    )
+    user_names = dict(
+        User.objects.filter(
+            id__in={line.responsible_user for line in selected_lines if line.responsible_user}
+        ).values_list("id", "name")
+    )
+    # A supervisor needs a quick view of each person's total without having to
+    # scan staff names repeated beneath every cost item.  Keep this separate
+    # from the activity/item ledger so the detail table stays easy to read.
+    team_summary_by_owner: dict[str, dict] = {}
+    if budget_scope == "team":
+        for line in selected_lines:
+            owner_id = line.responsible_user or "unassigned"
+            summary = team_summary_by_owner.setdefault(
+                owner_id,
+                {
+                    "name": user_names.get(owner_id, "Unassigned work"),
+                    "activity_ids": set(),
+                    "total": 0,
+                },
+            )
+            summary["activity_ids"].add(line.activity_id)
+            summary["total"] += int(line.amount or 0)
+    # A training or meeting is funded by the headcount confirmed at scheduling
+    # time.  Actual attendance takes precedence after completion; historical
+    # cost lines remain a fallback for pre-headcount records created before the
+    # dedicated Activity.expected_participants field was introduced.
+    training_types = {
+        "training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training",
+        "cluster_training_ssa_collection",
+    }
+    meeting_types = {"cluster_meeting", "cluster_meeting_ssa_review"}
+    participant_line_types = {
+        "participant_meals",
+        "cluster_meeting_participant_meals",
+        "mobilisation",
+    }
+    participant_setting_keys = {
+        "group_training_participant_meal_cost_per_head",
+        "cluster_meeting_participant_meal_cost_per_head",
+        "meals_per_participant",
+        "mobilisation_per_participant",
+        "cluster_meeting_cost",
+    }
+
+    def table_kind(activity_type: str) -> str:
+        if activity_type in meeting_types:
+            return "meeting"
+        if activity_type in training_types:
+            return "training"
+        return "standard"
+
+    scheduled_participants: dict[str, int] = {}
+    for line in selected_lines:
+        activity = line.activity
+        activity_type = activity.activity_type
+        actual_attendance = sum(
+            int(value or 0)
+            for value in (
+                activity.teachers_attended,
+                activity.leaders_attended,
+                activity.other_participants,
+            )
+        )
+        if actual_attendance:
+            scheduled_participants[activity.id] = actual_attendance
+            continue
+        if activity.expected_participants:
+            scheduled_participants[activity.id] = int(activity.expected_participants)
+            continue
+        if table_kind(activity_type) in {"training", "meeting"} and (
+            line.line_item_type in participant_line_types
+            or line.cost_setting_key in participant_setting_keys
+        ):
+            scheduled_participants[activity.id] = max(
+                scheduled_participants.get(activity.id, 0), int(line.quantity or 0)
+            )
+
+    groups: dict[str, dict] = {}
+    for line in selected_lines:
+        activity = line.activity
+        activity_label = activity.get_activity_type_display()
+        group = groups.setdefault(
+            activity_label,
+            {
+                "label": activity_label,
+                "table_kind": table_kind(activity.activity_type),
+                "rows": {},
+                "total": 0,
+                "staff_total": 0,
+                "vendor_total": 0,
+                "activity_ids": set(),
+            },
+        )
+        item_label = line.label or line.cost_setting_key.replace("_", " ").title()
+        row = group["rows"].setdefault(
+            item_label,
+            {
+                "item": item_label,
+                "dates": set(),
+                "activity_ids": set(),
+                "activity_people": {},
+                "rates": set(),
+                "owners": set(),
+                "staff_total": 0,
+                "vendor_total": 0,
+                "total": 0,
+            },
+        )
+        row["dates"].add(line.planned_date)
+        participant_count = scheduled_participants.get(activity.id, 1)
+        row["activity_people"].setdefault(activity.id, participant_count)
+        row["activity_ids"].add(activity.id)
+        row["rates"].add(int(line.unit_cost or 0))
+        if line.responsible_user:
+            row["owners"].add(user_names.get(line.responsible_user, "Staff"))
+        is_vendor = activity.delivery_type == "partner" or line.partner_id is not None
+        amount = int(line.amount or 0)
+        if is_vendor:
+            row["vendor_total"] += amount
+            group["vendor_total"] += amount
+        else:
+            row["staff_total"] += amount
+            group["staff_total"] += amount
+        row["total"] += amount
+        group["total"] += amount
+        group["activity_ids"].add(activity.id)
+
+    if include_admin and selected_period != "week":
+        admin_group = None
+        for line in admin_lines:
+            planned = _month_start_for_key(line.monthly_budget.month_key)
+            if not planned or not (selected["start"] <= planned <= selected["end"]):
+                continue
+            if admin_group is None:
+                admin_group = {
+                    "label": "Country Admin Plan",
+                    "table_kind": "admin",
+                    "rows": {},
+                    "total": 0,
+                    "staff_total": 0,
+                    "vendor_total": 0,
+                    "activity_ids": set(),
+                    "is_admin": True,
+                }
+                groups[admin_group["label"]] = admin_group
+            item_label = line.description or line.cost_category.replace("_", " ").title()
+            row = admin_group["rows"].setdefault(
+                item_label,
+                {
+                    "item": item_label,
+                    "dates": set(),
+                    "activity_ids": set(),
+                    "activity_people": {},
+                    "rates": set(),
+                    "owners": {"Country admin"},
+                    "staff_total": 0,
+                    "vendor_total": 0,
+                    "total": 0,
+                    "admin_quantity": 0,
+                },
+            )
+            amount = int(line.total_cost or 0)
+            row["dates"].add(planned)
+            row["rates"].add(int(line.unit_cost or 0))
+            row["admin_quantity"] += line.quantity
+            row["staff_total"] += amount
+            row["total"] += amount
+            admin_group["staff_total"] += amount
+            admin_group["total"] += amount
+
+    formatted_groups = []
+    for group in groups.values():
+        rows = []
+        for row in group["rows"].values():
+            rates = sorted(row["rates"])
+            rows.append(
+                {
+                    "item": row["item"],
+                    "days": row.get("admin_quantity") or len(row["dates"]),
+                    "activity_count": len(row["activity_ids"]),
+                    "people": sum(row["activity_people"].values()) or "—",
+                    "rate": rates[0] if len(rates) == 1 else None,
+                    "mixed_rate": len(rates) > 1,
+                    "owners": ", ".join(sorted(row["owners"])) or "—",
+                    "staff_total": row["staff_total"],
+                    "vendor_total": row["vendor_total"],
+                    "total": row["total"],
+                }
+            )
+        formatted_groups.append(
+            {
+                "label": group["label"],
+                "table_kind": group["table_kind"],
+                "rows": sorted(rows, key=lambda item: (-item["total"], item["item"])),
+                "total": group["total"],
+                "staff_total": group["staff_total"],
+                "vendor_total": group["vendor_total"],
+                "activity_count": len(group["activity_ids"]),
+                "is_admin": group.get("is_admin", False),
+            }
+        )
+    formatted_groups.sort(key=lambda item: (-item["total"], item["label"]))
+
+    weekly_requests = WeeklyFundRequest.objects.filter(
+        fy=fy,
+        week_start_date__lte=selected["end"],
+        week_end_date__gte=selected["start"],
+    )
+    monthly_requests = FundRequest.objects.filter(
+        fy=fy, period=FundRequestPeriod.MONTHLY
+    )
+    if owner_ids is not None:
+        weekly_requests = weekly_requests.filter(responsible_user__in=owner_ids)
+        monthly_requests = monthly_requests.filter(submitted_by_user_id__in=owner_ids)
+    if selected_period in ("week", "month"):
+        monthly_requests = monthly_requests.filter(period_key=f"{fy}-M{anchor.month}")
+
+    selected_program_total = sum(
+        group["total"] for group in formatted_groups if not group["is_admin"]
+    )
+    selected_admin_total = sum(
+        group["total"] for group in formatted_groups if group["is_admin"]
+    )
+    selected_staff_total = sum(group["staff_total"] for group in formatted_groups)
+    selected_vendor_total = sum(group["vendor_total"] for group in formatted_groups)
+    team_summary = [
+        {
+            "name": summary["name"],
+            "activity_count": len(summary["activity_ids"]),
+            "total": summary["total"],
+        }
+        for summary in team_summary_by_owner.values()
+    ]
+    team_summary.sort(key=lambda item: (-item["total"], item["name"]))
+    return {
+        "fy": fy,
+        "anchor": anchor,
+        "selected_period": selected_period,
+        "selected": selected,
+        "comparison": comparison,
+        "groups": formatted_groups,
+        "program_total": selected_program_total,
+        "admin_total": selected_admin_total,
+        "staff_total": selected_staff_total,
+        "vendor_total": selected_vendor_total,
+        "total": selected_program_total + selected_admin_total,
+        "weekly_request_count": weekly_requests.count(),
+        "monthly_request_count": monthly_requests.count(),
+        "role": getattr(principal, "active_role", ""),
+        "scope_label": "Country" if scope.country_scope else (
+            "Team" if budget_scope == "team" else "My"
+        ),
+        "budget_scope": budget_scope,
+        "is_program_lead": is_program_lead,
+        "team_summary": team_summary,
+        "admin_weekly_note": include_admin and selected_period == "week",
+    }
+
+
 # ── Program + admin budget aggregation (monthly / quarterly / FY) ────────────
 def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
     """Sum CD admin budget lines for a period (FY or a month_key 'YYYY-MM')."""
@@ -970,4 +1425,5 @@ __all__ = [
     "from_schedule",
     "weekly",
     "board",
+    "budget_workspace",
 ]

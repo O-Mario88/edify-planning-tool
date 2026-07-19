@@ -2904,8 +2904,8 @@
 }
 .tt-button--recovery:hover {
   background-color: var(--edify-accent-hover);
-  background-image: linear-gradient(105deg, #064984 0%, #0a5597 100%);
-  box-shadow: 0 12px 24px -12px rgba(8, 76, 137, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background-image: linear-gradient(180deg, var(--edify-brand-primary-hover) 0%, var(--edify-brand-primary-active) 100%);
+  box-shadow: var(--edify-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
 }
 .tt-button--quiet { border-color: var(--edify-border); background: var(--edify-surface-muted); color: var(--edify-text-muted); }

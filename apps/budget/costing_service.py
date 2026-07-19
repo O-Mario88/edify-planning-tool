@@ -85,10 +85,10 @@ _KEY_LABEL = {
     "school_visit_cost_per_school": "School visit cost per school",
     "school_visit_cost_per_school_primary": "School visit cost per school (primary)",
     "school_visit_cost_per_school_secondary": "School visit cost per school (secondary)",
-    "group_training_participant_meal_cost_per_head": "Group training participant meal cost per head",
-    "group_training_venue_cost": "Group training venue cost",
-    "group_training_facilitation_fee": "Group training facilitation fee",
-    "cluster_meeting_participant_meal_cost_per_head": "Cluster meeting participant meal cost per head",
+    "group_training_participant_meal_cost_per_head": "Participant meals",
+    "group_training_venue_cost": "Venue fee",
+    "group_training_facilitation_fee": "Facilitation fee",
+    "cluster_meeting_participant_meal_cost_per_head": "Participant snacks",
     "partner_visit_rate": "Partner visit rate",
     "primary_transport_per_day": "Primary district daily transport pool",
     "primary_lunch_per_day": "Primary district daily lunch pool",
@@ -168,8 +168,12 @@ def assert_schedulable(input: dict) -> None:
         "school_improvement_training",
         "cluster_training",
         "core_training",
+        "cluster_training_ssa_collection",
     }
-    is_cluster_meeting = activity_type == "cluster_meeting"
+    is_cluster_meeting = activity_type in {
+        "cluster_meeting",
+        "cluster_meeting_ssa_review",
+    }
     is_training_like = is_training or is_cluster_meeting
 
     if is_training_like:
@@ -365,6 +369,24 @@ def apply_to_activity(
             "This activity's advance is already confirmed and sitting in the "
             "accountant's queue. Ask the accountant to return the advance "
             "first, then reschedule."
+        )
+
+    # A submitted or approved weekly request is its own finance snapshot.
+    # Its child advances can still be pending at this point, so advance-status
+    # checks alone would not prevent a delete-and-rebuild from silently
+    # removing an approved request line.
+    from apps.fund_requests.models import WeeklyFundRequest
+
+    if (
+        WeeklyFundRequest.objects.filter(
+            lines__activity_budget_line__activity=activity
+        )
+        .exclude(status="pending_responsible_confirmation")
+        .exists()
+    ):
+        raise BadRequest(
+            "This activity is already included in a submitted or approved "
+            "weekly fund request. Return that request before changing its cost."
         )
 
     # The clear-and-rebuild of ActivityScheduleCostLine plus the activity's own

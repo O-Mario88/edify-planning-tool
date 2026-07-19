@@ -9,11 +9,17 @@ from __future__ import annotations
 
 from django.test import TestCase
 
-from apps.accounts.models import StaffProfile, User
+from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.budget.models import CostSetting
 from apps.budget.costing_service import apply_to_activity
-from apps.budget.services import board, fy_budget, monthly_budget, quarterly_budget
+from apps.budget.services import (
+    board,
+    budget_workspace,
+    fy_budget,
+    monthly_budget,
+    quarterly_budget,
+)
 from apps.core.enums import ActivityType
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
@@ -238,3 +244,216 @@ class BudgetAggregationTest(TestCase):
         )
         result = board(cd, {"fy": self.fy})
         self.assertEqual(result["summary"]["fiscalYear"], good_amount)
+
+    def test_budget_workspace_groups_costs_by_period_and_includes_cd_admin_plan(self):
+        """My Budget uses actual cost lines, with CD admin costs only at their
+        honest monthly-or-larger planning level (never an invented weekly split)."""
+        from apps.core.fy import get_month_date_range
+
+        visit = self._schedule_visit(month=10)  # July in FY 2026.
+        program_amount = sum(line.amount for line in visit.schedule_cost_lines.all())
+        month_start, _ = get_month_date_range(self.fy, 10)
+        cd = User.objects.create_user(
+            email="cd-workspace@agg.test",
+            name="CD Workspace",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="x",
+            is_active=True,
+        )
+        month_budget = MonthlyWorkPlanBudget.objects.create(
+            country_id="Uganda",
+            fy=self.fy,
+            month_key=f"{month_start.year}-{month_start.month:02d}",
+        )
+        AdminBudgetLine.objects.create(
+            monthly_budget=month_budget,
+            cost_category="coordination",
+            description="District coordination meeting",
+            quantity=1,
+            unit_cost=80_000,
+            total_cost=80_000,
+            created_by_user_id=cd.id,
+        )
+
+        month_workspace = budget_workspace(
+            cd,
+            {
+                "fy": self.fy,
+                "date": month_start.date().isoformat(),
+                "period": "month",
+            },
+        )
+        self.assertEqual(len(month_workspace["comparison"]), 4)
+        self.assertEqual(month_workspace["program_total"], program_amount)
+        self.assertEqual(month_workspace["admin_total"], 80_000)
+        self.assertEqual(month_workspace["total"], program_amount + 80_000)
+        self.assertIn(
+            "Country Admin Plan", [group["label"] for group in month_workspace["groups"]]
+        )
+
+        week_workspace = budget_workspace(
+            cd,
+            {
+                "fy": self.fy,
+                "date": month_start.date().isoformat(),
+                "period": "week",
+            },
+        )
+        self.assertEqual(week_workspace["admin_total"], 0)
+        self.assertTrue(week_workspace["admin_weekly_note"])
+
+    def test_budget_workspace_uses_activity_specific_training_and_meeting_columns(self):
+        """Training and meeting budgets use their costed headcount rather than
+        showing the generic one-person school-visit fallback."""
+        from apps.core.fy import get_month_date_range
+
+        month_start, _ = get_month_date_range(self.fy, 10)  # July in FY 2026.
+        cd = User.objects.create_user(
+            email="cd-activity-tables@agg.test",
+            name="CD Activity Tables",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="x",
+            is_active=True,
+        )
+        training = Activity.objects.create(
+            activity_type=ActivityType.CLUSTER_TRAINING.value,
+            fy=self.fy,
+            quarter="Q4",
+            scheduled_date=month_start,
+            status="scheduled",
+        )
+        meeting = Activity.objects.create(
+            activity_type=ActivityType.CLUSTER_MEETING.value,
+            fy=self.fy,
+            quarter="Q4",
+            scheduled_date=month_start,
+            status="scheduled",
+        )
+        ActivityScheduleCostLine.objects.bulk_create(
+            [
+                ActivityScheduleCostLine(
+                    activity=training,
+                    cost_setting_key="group_training_participant_meal_cost_per_head",
+                    label="Meals",
+                    unit_cost=10_000,
+                    quantity=18,
+                    amount=180_000,
+                    line_item_type="participant_meals",
+                    planned_date=month_start.date(),
+                    fiscal_year=self.fy,
+                ),
+                ActivityScheduleCostLine(
+                    activity=meeting,
+                    cost_setting_key="cluster_meeting_participant_meal_cost_per_head",
+                    label="Cluster meeting participant meals",
+                    unit_cost=8_000,
+                    quantity=12,
+                    amount=96_000,
+                    line_item_type="cluster_meeting_participant_meals",
+                    planned_date=month_start.date(),
+                    fiscal_year=self.fy,
+                ),
+            ]
+        )
+
+        workspace = budget_workspace(
+            cd,
+            {
+                "fy": self.fy,
+                "date": month_start.date().isoformat(),
+                "period": "month",
+            },
+        )
+        groups = {group["label"]: group for group in workspace["groups"]}
+        self.assertEqual(groups["Cluster Training"]["table_kind"], "training")
+        self.assertEqual(groups["Cluster Training"]["rows"][0]["activity_count"], 1)
+        self.assertEqual(groups["Cluster Training"]["rows"][0]["people"], 18)
+        self.assertEqual(groups["Cluster Meeting"]["table_kind"], "meeting")
+        self.assertEqual(groups["Cluster Meeting"]["rows"][0]["people"], 12)
+
+    def test_program_lead_budget_tabs_separate_personal_and_team_costs(self):
+        """A PL's personal ledger is private while Team Budget is a true
+        consolidation of the PL and every supervised staff member."""
+        from apps.core.fy import get_month_date_range
+
+        staff_user = User.objects.create_user(
+            email="team-cceo@agg.test",
+            name="Team CCEO",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x",
+            is_active=True,
+        )
+        staff_profile = StaffProfile.objects.create(user=staff_user, title="CCEO")
+        pl_user = User.objects.create_user(
+            email="team-pl@agg.test",
+            name="Team PL",
+            roles=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+            active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            password="x",
+            is_active=True,
+        )
+        pl_profile = StaffProfile.objects.create(user=pl_user, title="Program Lead")
+        StaffSupervisorAssignment.objects.create(
+            supervisor=pl_profile,
+            supervisee=staff_profile,
+        )
+        staff_visit = self._schedule_visit(month=10)
+        staff_lines = list(staff_visit.schedule_cost_lines.all())
+        ActivityScheduleCostLine.objects.filter(activity=staff_visit).update(
+            responsible_user=staff_user.id
+        )
+        pl_visit = self._schedule_visit(month=10)
+        pl_lines = list(pl_visit.schedule_cost_lines.all())
+        ActivityScheduleCostLine.objects.filter(activity=pl_visit).update(
+            responsible_user=pl_user.id
+        )
+        month_start, _ = get_month_date_range(self.fy, 10)
+
+        personal_workspace = budget_workspace(
+            pl_user,
+            {
+                "fy": self.fy,
+                "date": month_start.date().isoformat(),
+                "period": "month",
+            },
+        )
+        self.assertEqual(personal_workspace["budget_scope"], "my")
+        self.assertEqual(personal_workspace["total"], sum(line.amount for line in pl_lines))
+        self.assertEqual(personal_workspace["team_summary"], [])
+
+        team_workspace = budget_workspace(
+            pl_user,
+            {
+                "fy": self.fy,
+                "date": month_start.date().isoformat(),
+                "period": "month",
+                "budget_scope": "team",
+            },
+        )
+        self.assertEqual(team_workspace["budget_scope"], "team")
+        self.assertEqual(
+            team_workspace["total"],
+            sum(line.amount for line in staff_lines) + sum(line.amount for line in pl_lines),
+        )
+        self.assertEqual(
+            team_workspace["team_summary"],
+            [
+                {
+                    "name": "Team CCEO",
+                    "activity_count": 1,
+                    "total": sum(line.amount for line in staff_lines),
+                },
+                {
+                    "name": "Team PL",
+                    "activity_count": 1,
+                    "total": sum(line.amount for line in pl_lines),
+                },
+            ],
+        )
+        team_rows = team_workspace["groups"][0]["rows"]
+        self.assertTrue(
+            all(row["owners"] == "Team CCEO, Team PL" for row in team_rows)
+        )

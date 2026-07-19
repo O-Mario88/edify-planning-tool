@@ -77,8 +77,8 @@ class PartnerAndClusterFlowTest(APITestCase):
         self.cceo_staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
         self.pl_staff = StaffProfile.objects.create(user=self.pl, title="PL")
 
-        # Cost catalogue (reference data) — staff visit + partner lump sum + full
-        # cluster-training rate card (training_fee, venue, meals, mobilisation).
+        # Cost catalogue (reference data) — staff visit + partner lump sum +
+        # the fixed three-item cluster-training recipe.
         CostSetting.objects.get_or_create(
             key="staff_visit_transport_primary",
             defaults={"label": "Transport", "unit_cost": 10000},
@@ -91,18 +91,16 @@ class PartnerAndClusterFlowTest(APITestCase):
             defaults={"label": "Partner Visit", "unit_cost": 35000},
         )[0]
         CostSetting.objects.get_or_create(
-            key="training_session_fee",
-            defaults={"label": "Training Fee", "unit_cost": 50000},
+            key="group_training_facilitation_fee",
+            defaults={"label": "Facilitation fee", "unit_cost": 50000},
         )[0]
         CostSetting.objects.get_or_create(
-            key="venue", defaults={"label": "Venue", "unit_cost": 30000}
+            key="group_training_venue_cost",
+            defaults={"label": "Venue fee", "unit_cost": 30000},
         )[0]
         CostSetting.objects.get_or_create(
-            key="meals_per_participant", defaults={"label": "Meals", "unit_cost": 5000}
-        )[0]
-        CostSetting.objects.get_or_create(
-            key="mobilisation_per_participant",
-            defaults={"label": "Mobilisation", "unit_cost": 2000},
+            key="group_training_participant_meal_cost_per_head",
+            defaults={"label": "Participant meals", "unit_cost": 5000},
         )[0]
 
     # ── Demo Flow 4: partner workflow ────────────────────────────────────────
@@ -216,21 +214,7 @@ class PartnerAndClusterFlowTest(APITestCase):
             200,
         )
 
-        # Direct school training MUST be rejected — trainings go through clusters.
-        direct = self.client.post(
-            "/api/planning/schedule-cluster-training",
-            {
-                "schoolId": school.school_id,
-                "scheduledDate": "2026-07-20T09:00:00+03:00",
-                "plannedMonth": 7,
-                "purposeIntervention": "leadership",
-            },
-            format="json",
-        )
-        self.assertEqual(direct.status_code, 400, direct.content)
-        self.assertIn("cluster", direct.json()["message"].lower())
-
-        # Scheduled through the cluster, with an exact date + participants.
+        # Schedule through the cluster, with an exact date + participants.
         scheduled = self._post(
             "/api/planning/schedule-cluster-training",
             {

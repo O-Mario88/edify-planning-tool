@@ -5,7 +5,7 @@ from django.db.models import Q, Sum, Count
 from datetime import datetime, date, timedelta
 import calendar
 
-from apps.budget.services import board as get_budget_board
+from apps.budget.services import budget_workspace
 from apps.fund_requests.weekly_service import (
     get_weekly_request,
     request_advance,
@@ -54,67 +54,15 @@ def get_weeks_of_month(year, month):
 
 @require_page_permission("monthly_budget")
 def monthly_budget_view(request):
-    fy = get_operational_fy()
-    board_data = get_budget_board(request.user, {"fy": fy})
-
-    # Format UGX compact helper
-    def format_ugx_compact(val):
-        if not val:
-            return "UGX 0"
-        if val >= 1_000_000_000:
-            return f"UGX {val / 1_000_000_000:.1f}B"
-        if val >= 1_000_000:
-            return f"UGX {val / 1_000_000:.1f}M"
-        if val >= 1_000:
-            return f"UGX {val / 1_000:.0f}K"
-        return f"UGX {val}"
-
-    summary = board_data.get("summary", {})
-    total_fy = summary.get("fiscalYear", 0)
-    this_week_total = summary.get("thisWeek", 0)
-    this_month_total = summary.get("thisMonth", 0)
-    this_quarter_total = summary.get("thisQuarter", 0)
-
-    kpi_strip_items = [
+    context = budget_workspace(
+        request.user,
         {
-            "label": "This Week's Budget",
-            "value": format_ugx_compact(this_week_total),
-            "raw_value": int(this_week_total),
-            "helper": "Planned",
-            "icon": "calendar",
-            "variant": "info",
+            "fy": request.GET.get("fy"),
+            "date": request.GET.get("date"),
+            "period": request.GET.get("period"),
+            "budget_scope": request.GET.get("budget_scope"),
         },
-        {
-            "label": "This Month's Budget",
-            "value": format_ugx_compact(this_month_total),
-            "raw_value": int(this_month_total),
-            "helper": "Planned",
-            "icon": "chart",
-            "variant": "blue",
-        },
-        {
-            "label": "This Quarter's Budget",
-            "value": format_ugx_compact(this_quarter_total),
-            "raw_value": int(this_quarter_total),
-            "helper": "Planned",
-            "icon": "finance",
-            "variant": "warning",
-        },
-        {
-            "label": "Annual FY Total",
-            "value": format_ugx_compact(total_fy),
-            "raw_value": int(total_fy),
-            "helper": f"FY {fy} Total",
-            "icon": "currency",
-            "variant": "finance",
-        },
-    ]
-
-    context = {
-        "board": board_data,
-        "fy": fy,
-        "kpi_strip_items": kpi_strip_items,
-    }
+    )
     return render(request, "pages/budgets/monthly.html", context)
 
 

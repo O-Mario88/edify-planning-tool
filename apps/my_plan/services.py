@@ -858,6 +858,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             "expected_participants": (a.teachers_attended or 0)
             + (a.leaders_attended or 0)
             + (a.other_participants or 0)
+            or a.expected_participants
             or 20,
             # Core details
             "is_core": is_core,

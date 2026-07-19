@@ -29,18 +29,42 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
     b = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
     if not b:
         raise NotFoundError("Monthly work-plan budget not found.")
+    # Service-level callers used by scheduled/admin jobs may provide a narrow
+    # principal stub with no role. Browser/API principals always have one and
+    # must be a CD or Admin.
+    role = getattr(principal, "active_role", None)
+    if role is not None and role not in ("CountryDirector", "Admin"):
+        raise Forbidden("Only the Country Director can add a country admin budget.")
+    if b.status not in (
+        MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED,
+        MonthlyWorkPlanBudgetStatus.CD_REVIEW,
+        MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED,
+        MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP,
+    ):
+        raise BadRequest("This country budget is locked and can no longer be changed.")
+    description = (data.get("description") or "").strip()
+    if not description:
+        raise BadRequest("Enter a clear description for the admin budget item.")
     # Integer-cents money: unit_cost is whole UGX; quantity may be fractional
     # (e.g. 1.5 days). total_cost = round(unit_cost × quantity) in UGX.
-    unit = int(data.get("unitCost", 0))
+    try:
+        unit = int(data.get("unitCost", 0))
+    except (TypeError, ValueError) as exc:
+        raise BadRequest("Unit cost must be a whole UGX amount.") from exc
     qty = data.get("quantity", 1)
     from decimal import Decimal
 
-    qty_dec = Decimal(str(qty))
+    try:
+        qty_dec = Decimal(str(qty))
+    except Exception as exc:  # noqa: BLE001 - normalize a form validation error
+        raise BadRequest("Quantity must be a number.") from exc
+    if unit < 0 or qty_dec <= 0:
+        raise BadRequest("Unit cost and quantity must be greater than zero.")
     total = int((qty_dec * unit).to_integral_value())
     line = AdminBudgetLine.objects.create(
         monthly_budget=b,
-        cost_category=data.get("costCategory", "other"),
-        description=data.get("description", ""),
+        cost_category=(data.get("costCategory") or "other").strip() or "other",
+        description=description,
         quantity=qty_dec,
         unit_cost=unit,
         total_cost=total,
@@ -48,6 +72,9 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
         created_by_user_id=principal.user_id,
     )
     recompute_totals(b)
+    if b.status != MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED:
+        b.status = MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED
+        b.save(update_fields=["status", "updated_at"])
     return _serialize_line(line)
 
 

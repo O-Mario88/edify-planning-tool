@@ -173,7 +173,7 @@ button {
   width: 5rem;
   height: 3px;
   margin: 1.75rem 0 1.15rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #70cffc;
 }
 
@@ -197,7 +197,7 @@ button {
 .impact-card {
   margin-top: 1.4rem;
   padding: 1.15rem 1.35rem;
-  border-radius: .95rem;
+  border-radius: var(--radius-surface);
 }
 
 .impact-card__title {
@@ -236,7 +236,7 @@ button {
   margin-bottom: .52rem;
   color: #70cbf8;
   border: 1px solid rgba(101, 196, 242, .48);
-  border-radius: .72rem;
+  border-radius: var(--radius-control);
   background: rgba(2, 47, 82, .45);
 }
 
@@ -280,7 +280,7 @@ button {
   min-height: 7.45rem;
   margin-top: 1.15rem;
   padding: 1.15rem 1.35rem;
-  border-radius: .95rem;
+  border-radius: var(--radius-surface);
 }
 
 .login-stat {
@@ -360,7 +360,7 @@ button {
   width: min(100%, 32.5rem);
   min-height: min(49rem, calc(100svh - 8rem));
   border: 1px solid rgba(255, 255, 255, .92);
-  border-radius: 1.5rem;
+  border-radius: var(--radius-overlay);
   background: rgba(255, 255, 255, .92);
   box-shadow: 0 22px 58px rgba(27, 87, 126, .14), inset 0 1px 0 #fff;
 }
@@ -444,7 +444,7 @@ button {
   padding: .75rem 3rem .75rem 3.25rem;
   color: var(--login-ink);
   border: 1px solid var(--login-border);
-  border-radius: .95rem;
+  border-radius: var(--radius-control);
   outline: none;
   background: rgba(255, 255, 255, .76);
   box-shadow: inset 0 1px 2px rgba(7, 38, 65, .025);
@@ -482,7 +482,7 @@ button {
   height: 2.45rem;
   padding: 0;
   color: #657d95;
-  border-radius: .7rem;
+  border-radius: var(--radius-control);
   background: transparent;
   cursor: pointer;
   transform: translateY(-50%);
@@ -559,7 +559,7 @@ button {
   padding: .75rem 1rem;
   color: var(--login-danger);
   border: 1px solid #ffacba;
-  border-radius: .78rem;
+  border-radius: var(--radius-surface);
   background: #fff7f8;
   font-size: .78rem;
   font-weight: 500;
@@ -602,7 +602,7 @@ button {
   margin-top: 1.05rem;
   padding: .8rem 1.25rem;
   color: #fff;
-  border-radius: .92rem;
+  border-radius: var(--radius-control);
   background: linear-gradient(105deg, #075397 0%, #105fa6 100%);
   box-shadow: 0 10px 20px rgba(8, 76, 137, .18), inset 0 1px 0 rgba(255, 255, 255, .15);
   cursor: pointer;
@@ -667,7 +667,7 @@ button {
   margin-top: 1.3rem;
   padding: .95rem 1.05rem;
   border: 1px solid #c8ddeb;
-  border-radius: .92rem;
+  border-radius: var(--radius-surface);
   background: linear-gradient(105deg, rgba(245, 251, 255, .92), rgba(231, 244, 252, .82));
 }
 
@@ -679,7 +679,7 @@ button {
   width: 3.05rem;
   height: 3.05rem;
   color: #0865ad;
-  border-radius: .75rem;
+  border-radius: var(--radius-control);
   background: #fff;
   box-shadow: 0 7px 16px rgba(20, 71, 109, .12);
 }
@@ -785,7 +785,7 @@ button {
     min-height: min(45rem, calc(100svh - 3rem));
     overflow: hidden;
     border-color: rgba(255, 255, 255, .98);
-    border-radius: 1.75rem;
+    border-radius: var(--radius-overlay);
     background: rgba(255, 255, 255, .94);
     box-shadow: 0 28px 70px rgba(18, 74, 112, .16), inset 0 1px 0 #fff;
   }
@@ -841,6 +841,8 @@ button {
     width: 100%;
     min-height: 100svh;
     border: 0;
+    /* Documented radius exception (spec §11/§34): on mobile the sign-in card
+       becomes a full-bleed viewport surface, not a card sitting on a canvas. */
     border-radius: 0;
     background: linear-gradient(180deg, #fff 0%, #fff 72%, #f7fbfe 100%);
     box-shadow: none;
@@ -913,7 +915,7 @@ button {
   .login-submit {
     min-height: 3.55rem;
     margin-top: .85rem;
-    border-radius: 1rem;
+    border-radius: var(--radius-control);
   }
 
   .secure-card {
@@ -921,7 +923,7 @@ button {
     min-height: 5.55rem;
     margin-top: 1.05rem;
     padding: .9rem 1rem;
-    border-radius: 1rem;
+    border-radius: var(--radius-surface);
     box-shadow: 0 10px 28px rgba(32, 92, 129, .07);
   }
 

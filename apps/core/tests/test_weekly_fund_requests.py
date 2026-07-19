@@ -4,7 +4,7 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, User
-from apps.activities.models import ActivityScheduleCostLine
+from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
@@ -36,8 +36,13 @@ class WeeklyFundRequestsTest(APITestCase):
             ("cluster_meeting_participant_meal_cost_per_head", 8000),
             ("partner_visit_rate", 80000),
         ]:
-            CostSetting.objects.create(
-                key=key, label=key.replace("_", " ").title(), unit_cost=cost, version=1
+            CostSetting.objects.update_or_create(
+                key=key,
+                defaults={
+                    "label": key.replace("_", " ").title(),
+                    "unit_cost": cost,
+                    "version": 1,
+                },
             )
 
         self.cceo = User.objects.create_user(
@@ -169,6 +174,18 @@ class WeeklyFundRequestsTest(APITestCase):
 
         gt_lines = ActivityScheduleCostLine.objects.filter(activity_id=gt["id"])
         self.assertEqual(sum(l.amount for l in gt_lines), 530000)
+        self.assertEqual(
+            Activity.objects.get(id=gt["id"]).expected_participants,
+            15,
+        )
+        self.assertEqual(
+            {line.cost_setting_key for line in gt_lines},
+            {
+                "group_training_participant_meal_cost_per_head",
+                "group_training_facilitation_fee",
+                "group_training_venue_cost",
+            },
+        )
 
         # 4. Generate Weekly Fund Request (aggregates all 3 activities)
         # Total: 50,000 + 80,000 + 530,000 = 660,000 UGX
@@ -192,6 +209,11 @@ class WeeklyFundRequestsTest(APITestCase):
         self.assertEqual(
             len(detail_res["lines"]), 5
         )  # 1 school visit, 1 cluster meeting, 3 group training lines
+        descriptions = {line["description"] for line in detail_res["lines"]}
+        self.assertTrue(
+            {"Participant snacks", "Participant meals", "Facilitation fee", "Venue fee"}
+            .issubset(descriptions)
+        )
 
         # 6. CCEO submits — the request routes to their PL for approval;
         # submission alone must NOT put it in the accountant's queue.

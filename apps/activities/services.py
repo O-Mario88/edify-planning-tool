@@ -162,6 +162,7 @@ def _serialize(a: Activity) -> dict:
         "teachersAttended": a.teachers_attended,
         "leadersAttended": a.leaders_attended,
         "otherParticipants": a.other_participants,
+        "expectedParticipants": a.expected_participants,
         "activityPurposeText": a.activity_purpose_text,
         "purposeType": a.purpose_type,
         "focusIntervention": a.focus_intervention,
@@ -187,7 +188,9 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "teachersAttended": value("teachersAttended", activity.teachers_attended),
         "leadersAttended": value("leadersAttended", activity.leaders_attended),
         "otherParticipants": value("otherParticipants", activity.other_participants),
-        "expectedParticipants": data.get("expectedParticipants"),
+        "expectedParticipants": value(
+            "expectedParticipants", activity.expected_participants
+        ),
         "districtType": data.get("districtType"),
         "nights": data.get("nights"),
         "projectId": activity.project_id,
@@ -358,6 +361,7 @@ def create(data: dict, principal) -> dict:
             focus_intervention=focus,
             secondary_focus_interventions=data.get("secondaryFocusInterventions", []),
             expected_outcome=data.get("expectedOutcome"),
+            expected_participants=data.get("expectedParticipants"),
             teachers_attended=data.get("teachersAttended"),
             leaders_attended=data.get("leadersAttended"),
             other_participants=data.get("otherParticipants"),
@@ -839,6 +843,8 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     a.planned_date = planned_date
     a.planned_month = planned_month
     a.planned_week = planned_week
+    if "expectedParticipants" in data:
+        a.expected_participants = data.get("expectedParticipants")
     a.reschedule_count += 1
     a.last_reason = data.get("reason")
     if a.status == "assigned_to_partner" or a.delivery_type == "partner":
@@ -858,6 +864,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 "planned_date",
                 "planned_month",
                 "planned_week",
+                "expected_participants",
                 "reschedule_count",
                 "last_reason",
                 "status",
@@ -907,6 +914,8 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
     a.delivery_type = delivery
     a.assigned_partner_id = data.get("assignedPartnerId")
     a.responsible_staff_id = data.get("responsibleStaffId") or a.responsible_staff_id
+    if "expectedParticipants" in data:
+        a.expected_participants = data.get("expectedParticipants")
     if delivery == "partner":
         a.status = "assigned_to_partner"
     a.save(
@@ -914,6 +923,7 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
             "delivery_type",
             "assigned_partner_id",
             "responsible_staff_id",
+            "expected_participants",
             "status",
             "updated_at",
         ]
@@ -981,6 +991,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
                 focus_intervention=pa.focus_intervention,
                 purpose_intervention=pa.focus_intervention,
                 activity_purpose_text=pa.notes or "Scheduled partner core support",
+                expected_participants=data.get("expectedParticipants"),
                 scheduled_date=scheduled_date,
                 planned_date=planned_date,
                 planned_month=planned_month,
@@ -1046,6 +1057,8 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         a.planned_date = planned_date
         a.planned_month = planned_month
         a.planned_week = planned_week
+        if "expectedParticipants" in data:
+            a.expected_participants = data.get("expectedParticipants")
         a.status = "partner_scheduled"
         a.save(
             update_fields=[
@@ -1055,6 +1068,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
                 "planned_date",
                 "planned_month",
                 "planned_week",
+                "expected_participants",
                 "status",
                 "updated_at",
             ]
@@ -1223,6 +1237,9 @@ def patch_activity(activity_id: str, data: dict, principal) -> dict:
     if "otherParticipants" in data:
         a.other_participants = data["otherParticipants"]
         update_fields.append("other_participants")
+    if "expectedParticipants" in data:
+        a.expected_participants = data["expectedParticipants"]
+        update_fields.append("expected_participants")
 
     if update_fields:
         a.save(update_fields=update_fields + ["updated_at"])

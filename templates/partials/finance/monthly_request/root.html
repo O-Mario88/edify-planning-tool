@@ -1,0 +1,167 @@
+{% if action_error %}
+<div class="mb-4 flex items-start gap-2 rounded-surface border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] font-semibold text-rose-800" role="alert">
+  <span class="mt-0.5 text-rose-600">!</span><span>{{ action_error }}</span>
+</div>
+{% endif %}
+{% if action_ok %}
+<div class="mb-4 flex items-start gap-2 rounded-surface border border-emerald-200 bg-emerald-50 px-4 py-3 text-[12px] font-semibold text-emerald-800" role="status">
+  <svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10.5l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>{{ action_ok }}</span>
+</div>
+{% endif %}
+
+{% if fy %}
+<div class="space-y-4">
+  <section class="rounded-surface border border-slate-800 bg-slate-900 px-5 py-5 text-white shadow-sm sm:px-6">
+    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] text-blue-200">Team funding workspace</p>
+        <h1 class="mt-1 text-[24px] font-bold tracking-tight">Monthly Team Budget Request</h1>
+        <p class="mt-1 text-[13px] font-medium text-slate-300">{{ month_label }} · FY {{ fy }} · Program Lead team</p>
+      </div>
+      <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="grid grid-cols-2 gap-2 rounded-surface border border-white/10 bg-white/5 p-2.5 sm:flex sm:items-end">
+        <label class="block min-w-0">
+          <span class="block px-1 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
+          <select name="month" aria-label="Month" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white focus:border-blue-300 focus:outline-none">
+            <option value="1" {% if month == 1 %}selected{% endif %}>January</option><option value="2" {% if month == 2 %}selected{% endif %}>February</option><option value="3" {% if month == 3 %}selected{% endif %}>March</option><option value="4" {% if month == 4 %}selected{% endif %}>April</option><option value="5" {% if month == 5 %}selected{% endif %}>May</option><option value="6" {% if month == 6 %}selected{% endif %}>June</option><option value="7" {% if month == 7 %}selected{% endif %}>July</option><option value="8" {% if month == 8 %}selected{% endif %}>August</option><option value="9" {% if month == 9 %}selected{% endif %}>September</option><option value="10" {% if month == 10 %}selected{% endif %}>October</option><option value="11" {% if month == 11 %}selected{% endif %}>November</option><option value="12" {% if month == 12 %}selected{% endif %}>December</option>
+          </select>
+        </label>
+        <label class="block min-w-0">
+          <span class="block px-1 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial year</span>
+          <select name="fy" aria-label="Financial year" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white focus:border-blue-300 focus:outline-none">
+            {% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
+          </select>
+        </label>
+      </form>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Monthly request progress">
+    <div class="rounded-surface border p-4 {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}border-blue-500 bg-blue-600 text-white shadow-sm{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
+      <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}text-blue-100{% else %}text-slate-400{% endif %}">Team budget</p>
+      <p class="mt-1 text-[20px] font-bold tabular-nums">{{ shown_total_fmt }}</p>
+      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}text-blue-100{% else %}text-slate-500{% endif %}">{% if request_state == 'not_fetched' %}Ready to review{% elif request_state == 'returned_by_cd' %}Update needed{% else %}Review and submit{% endif %}</p>
+    </div>
+    <div class="rounded-surface border p-4 {% if request_state == 'submitted_to_cd' %}border-blue-500 bg-blue-600 text-white shadow-sm{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
+      <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'submitted_to_cd' %}text-blue-100{% else %}text-slate-400{% endif %}">CD review</p>
+      <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Approved{% elif request_state == 'submitted_to_cd' %}In review{% else %}Next{% endif %}</p>
+      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'submitted_to_cd' %}text-blue-100{% else %}text-slate-500{% endif %}">{% if request_state == 'approved_by_cd' %}Included in country budget{% elif request_state == 'submitted_to_cd' %}Waiting for decision{% else %}Country Director checks it{% endif %}</p>
+    </div>
+    <div class="rounded-surface border border-slate-200 edify-surface p-4 text-slate-800">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country budget</p>
+      <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Building{% else %}Later{% endif %}</p>
+      <p class="mt-1 text-[11px] font-semibold text-slate-500">CD adds admin costs</p>
+    </div>
+    <div class="rounded-surface border border-slate-200 edify-surface p-4 text-slate-800">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">RVP approval</p>
+      <p class="mt-1 text-[20px] font-bold">Later</p>
+      <p class="mt-1 text-[11px] font-semibold text-slate-500">Funds become approved</p>
+    </div>
+  </section>
+
+  {% if staff_rows %}
+  <section class="rounded-surface border border-slate-200 edify-surface p-4 shadow-sm">
+    <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h2 class="text-[15px] font-bold text-slate-800">Team cost summary</h2>
+        <p class="mt-0.5 text-[12px] font-medium text-slate-500">Each person’s planned activity cost for {{ month_label }}.</p>
+      </div>
+      <p class="text-[12px] font-semibold text-slate-500">{{ staff_rows|length }} staff member{{ staff_rows|length|pluralize }}</p>
+    </div>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {% for member in staff_rows %}
+      <div class="rounded-control border border-slate-200 bg-slate-50 px-3 py-3">
+        <p class="truncate text-[13px] font-bold text-slate-800">{{ member.name }}</p>
+        <p class="mt-1 text-[11px] font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
+        <p class="mt-2 text-[17px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total_fmt }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section id="activity-cost-plan" class="rounded-surface border border-slate-200 edify-surface p-3 shadow-sm sm:p-4">
+    <div class="flex flex-col gap-3 rounded-control border border-slate-100 bg-slate-50/70 px-4 py-4 xl:flex-row xl:items-center xl:justify-between">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="text-[15px] font-bold text-slate-800">Activity cost plan</h2>
+          <span class="inline-flex items-center rounded-pill px-2.5 py-1 text-[11px] font-bold {% if status_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif status_tone == 'warning' %}bg-amber-50 text-amber-700{% elif status_tone == 'danger' %}bg-rose-50 text-rose-700{% elif status_tone == 'info' %}bg-blue-50 text-blue-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ status_label }}</span>
+        </div>
+        <p class="mt-1 text-[12px] font-medium leading-relaxed text-slate-500">{{ source_label }} for {{ month_label }}. Check each activity and cost before you submit.</p>
+        <p class="mt-1 text-[12px] font-semibold leading-relaxed text-slate-600">{{ action_hint }}</p>
+        {% if needs_refresh %}<p class="mt-2 text-[12px] font-bold text-amber-700">The live budget is {{ live_total_fmt }}. Refresh your draft to keep the request accurate.</p>{% endif %}
+        {% if request_state == 'returned_by_cd' and request.review_note %}<p class="mt-2 text-[12px] font-bold text-rose-700">Country Director’s note: {{ request.review_note }}</p>{% endif %}
+      </div>
+      <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+        <div class="rounded-control border border-blue-100 edify-surface px-3 py-2 text-left shadow-sm sm:text-right">
+          <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
+          <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ shown_total_fmt }}</p>
+        </div>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          {% if can_submit %}
+          <button hx-post="/accounts/monthly-request/action" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-vals='{"action":"submit_to_cd","fy":"{{ fy }}","month":"{{ month }}"}' class="edify-action-button primary h-10 justify-center gap-2 px-4 text-[12px] shadow-sm">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 12h14"/></svg>{{ submit_label }}
+          </button>
+          {% endif %}
+          {% if can_fetch %}
+          <button hx-post="/accounts/monthly-request/action" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-vals='{"action":"fetch_budget","fy":"{{ fy }}","month":"{{ month }}"}' class="edify-action-button {% if can_submit %}secondary{% else %}primary{% endif %} h-10 justify-center gap-2 px-4 text-[12px] shadow-sm">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>{{ fetch_label }}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if request and request.updated_at %}
+    <p class="mt-3 px-1 edify-text-caption font-semibold text-slate-400">Last saved {{ request.updated_at|date:"j M Y, g:i A" }}</p>
+    {% endif %}
+
+    {% if cost_groups %}
+    <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
+      <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
+        <tbody class="divide-y divide-slate-200">
+          {% for group in cost_groups %}
+          <tr>
+            <td colspan="5" class="px-4 py-2.5" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">
+              <div class="flex items-center gap-2"><span class="font-semibold">{{ group.label }}</span><span class="text-[11px] font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
+            </td>
+          </tr>
+          <tr class="font-bold">
+            <th class="px-4 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Item</th>
+            <th class="px-3 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Activity</th>
+            <th class="px-3 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Responsible staff</th>
+            <th class="px-3 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Planned date</th>
+            <th class="px-4 py-3 text-right" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Activity cost</th>
+          </tr>
+          {% for item in group.rows %}
+          <tr class="hover:bg-blue-50/40">
+            <td class="px-4 py-3 font-semibold text-slate-800">{{ item.item }}</td>
+            <td class="px-3 py-3 text-slate-600">{{ item.activity }}</td>
+            <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
+            <td class="px-3 py-3 text-slate-500">{{ item.date|date:"j M Y" }}</td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.amount_fmt }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="text-[13px] font-extrabold">
+            <td colspan="4" class="px-4 py-2.5" style="background-color: var(--edify-accent-light) !important; color: var(--edify-text) !important;">{{ group.label }} subtotal</td>
+            <td class="px-4 py-2.5 text-right tabular-nums" style="background-color: var(--edify-accent-light) !important; color: var(--edify-text) !important;">{{ group.total_fmt }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="text-[15px] font-extrabold">
+            <td colspan="4" class="px-4 py-3" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">Grand total</td>
+            <td class="px-4 py-3 text-right tabular-nums" style="background-color: var(--edify-accent) !important; color: var(--edify-on-accent) !important;">{{ shown_total_fmt }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="mt-3 rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
+      <svg class="mx-auto mb-3 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      <p class="text-[15px] font-bold text-slate-800">No costed activities in this month</p>
+      <p class="mt-1 text-[12px] font-semibold text-slate-500">Schedule a team activity first, then return here to prepare the monthly request.</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endif %}

@@ -39,7 +39,7 @@
     var schemeMeta = document.querySelector('meta[name="color-scheme"]');
     var themeMeta = document.querySelector('meta[name="theme-color"]');
     if (schemeMeta) schemeMeta.content = pref === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
-    if (themeMeta) themeMeta.content = actual === 'light' ? '#e7f4fc' : (actual === 'blue' ? '#001d39' : '#000000');
+    if (themeMeta) themeMeta.content = actual === 'light' ? '#edf1f3' : (actual === 'blue' ? '#001d39' : '#000000');
 
     requestAnimationFrame(function() {
       requestAnimationFrame(function() { html.classList.add('theme-fade'); });

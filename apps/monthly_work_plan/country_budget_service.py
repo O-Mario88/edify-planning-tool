@@ -187,6 +187,76 @@ def _valid_lines_qs(fy, month_num):
     )
 
 
+def _team_monthly_requests(fy, month_num):
+    """Program Lead team-budget snapshots for the selected month.
+
+    The presence of even one of these requests turns on the deliberate monthly
+    submission workflow.  That means the country budget can never quietly fall
+    back to every raw scheduled cost line after Program Leads have started
+    submitting their own monthly requests.
+    """
+    from apps.fund_requests.models import FundRequest, FundRequestPeriod
+
+    return FundRequest.objects.filter(
+        fy=fy,
+        period=FundRequestPeriod.MONTHLY,
+        period_key=f"{fy}-M{int(month_num)}",
+        scope="team",
+        submitted_by_role="Program Lead",
+    ).order_by("created_at")
+
+
+def _program_source(fy, month_num):
+    """Return the approved Program Lead request source or the historic fallback.
+
+    Historic data predates the PL monthly-request workflow, so raw plan-backed
+    lines remain a read-only fallback only until the first team request exists
+    for a month.  New months always use CD-approved PL snapshots.
+    """
+    from apps.fund_requests.models import FundRequestItem, FundRequestStatus
+
+    requests = list(_team_monthly_requests(fy, month_num))
+    if not requests:
+        lines = list(_valid_lines_qs(fy, month_num))
+        return {
+            "uses_pl_request_workflow": False,
+            "requests": [],
+            "approved_requests": [],
+            "lines": lines,
+            "program_total": sum(int(line.amount or 0) for line in lines),
+            "activity_count": len({line.activity_id for line in lines}),
+            "label": "Plan-backed activities (historic workflow)",
+        }
+
+    approved = [
+        request
+        for request in requests
+        if request.status == FundRequestStatus.APPROVED_BY_CD
+    ]
+    line_ids = FundRequestItem.objects.filter(
+        fund_request_id__in=[request.id for request in approved]
+    ).values_list("activity_schedule_cost_line_id", flat=True)
+    lines = list(_valid_lines_qs(fy, month_num).filter(id__in=line_ids))
+    return {
+        "uses_pl_request_workflow": True,
+        "requests": requests,
+        "approved_requests": approved,
+        "lines": lines,
+        # The request total is the deliberate finance snapshot.  It is not
+        # recalculated from today's activity rows after CD approval.
+        "program_total": sum(int(request.total_amount or 0) for request in approved),
+        "activity_count": len(
+            {
+                activity_id
+                for activity_id in FundRequestItem.objects.filter(
+                    fund_request_id__in=[request.id for request in approved]
+                ).values_list("activity_id", flat=True)
+            }
+        ),
+        "label": "CD-approved Program Lead monthly requests",
+    }
+
+
 def _validate_line(li):
     """Per-line validation → status label. A line missing its Cost Catalogue
     version is flagged, never silently included as if it were priced."""
@@ -202,9 +272,20 @@ def _validate_line(li):
     return "Plan-backed"
 
 
-def _recompute_if_live(budget):
+def _recompute_if_live(budget, source=None):
     if budget.status not in LOCKED_STATUSES:
-        mwp.recompute_program_total(budget)
+        source = source or _program_source(
+            budget.fy, int(budget.month_key.split("-")[1])
+        )
+        if source["uses_pl_request_workflow"]:
+            budget.program_total = int(source["program_total"])
+            budget.activity_count = int(source["activity_count"])
+            budget.total_amount = budget.program_total + int(budget.admin_total or 0)
+            budget.save(
+                update_fields=["program_total", "activity_count", "total_amount", "updated_at"]
+            )
+        else:
+            mwp.recompute_program_total(budget)
     return budget
 
 
@@ -312,9 +393,10 @@ def get_country_monthly_budget(principal, filters=None):
     search = (filters.get("q") or "").strip().lower()
 
     budget = _get_or_create_budget(fy, month_num)
-    _recompute_if_live(budget)
+    source = _program_source(fy, month_num)
+    _recompute_if_live(budget, source)
 
-    lines = list(_valid_lines_qs(fy, month_num))
+    lines = source["lines"]
     names = _user_names([li.responsible_user for li in lines])
 
     # ── Per-staff rows ─────────────────────────────────────────────────────
@@ -407,12 +489,10 @@ def get_country_monthly_budget(principal, filters=None):
             li.activity.activity_type, li.activity.delivery_type, _is_project_line(li)
         )
         cat_totals[cat] += li.amount
-    program_total = sum(cat_totals.values())
+    program_total = int(source["program_total"])
     total_monthly = program_total + admin_total
     staff_included = len(staff_rows) + (1 if admin_lines else 0)
-    total_activities = len(
-        {li.activity_id for li in lines if _validate_line(li) != "Excluded"}
-    )
+    total_activities = int(source["activity_count"])
 
     series = _trailing_month_series(fy, month_num, n=6)
     # The current month's point should reflect this exact view's authoritative
@@ -442,7 +522,7 @@ def get_country_monthly_budget(principal, filters=None):
             total_monthly,
             "total_all",
             "primary",
-            "From planned activities",
+            source["label"],
         ),
         {
             "label": "Staff Included",
@@ -467,37 +547,37 @@ def get_country_monthly_budget(principal, filters=None):
             cat_totals["staff_visits"],
             "staff_visits",
             "info",
-            "From planned activities",
+            source["label"],
         ),
         _kpi(
             "Partner Visits Cost",
             cat_totals["partner_visits"],
             "partner_visits",
             "success",
-            "From planned activities",
+            source["label"],
         ),
         _kpi(
-            "SSA Cost", cat_totals["ssa"], "ssa", "warning", "From planned activities"
+            "SSA Cost", cat_totals["ssa"], "ssa", "warning", source["label"]
         ),
         _kpi(
             "Cluster Training Cost",
             cat_totals["cluster_training"],
             "cluster_training",
             "finance",
-            "From planned activities",
+            source["label"],
         ),
         _kpi(
             "Special Project Cost",
             cat_totals["special_project"],
             "special_project",
             "project",
-            "From planned activities",
+            source["label"],
         ),
         _kpi("Admin Budget", admin_total, "admin", "danger", "From CD admin plan"),
     ]
 
     # ── Budget integrity checks ──────────────────────────────────────────
-    checks = _integrity_checks(lines, admin_lines, budget)
+    checks = _integrity_checks(lines, admin_lines, budget, source)
     critical_failed = any(c["status"] == "failed" for c in checks)
     passed = sum(1 for c in checks if c["status"] == "passed")
     progress_pct = round(passed / len(checks) * 100) if checks else 0
@@ -511,8 +591,8 @@ def get_country_monthly_budget(principal, filters=None):
     )
     month_summary = {
         "awaiting_approval": _ugx(awaiting),
-        "plan_backed_cost": _ugx(plan_backed_cost),
-        "plan_backed_pct": round(plan_backed_cost / total_monthly * 100)
+        "plan_backed_cost": _ugx(program_total if source["uses_pl_request_workflow"] else plan_backed_cost),
+        "plan_backed_pct": round(program_total / total_monthly * 100)
         if total_monthly
         else 0,
         "admin_budget": _ugx(admin_total),
@@ -584,6 +664,37 @@ def get_country_monthly_budget(principal, filters=None):
         staff_rows, cat_totals, admin_total, total_monthly, staff_included
     )
 
+    status_meta = {
+        "submitted_to_cd": ("Waiting for CD review", "warning"),
+        "approved_by_cd": ("Approved by CD", "success"),
+        "returned_by_cd": ("Returned to PL", "danger"),
+        "draft": ("Draft — not submitted", "slate"),
+    }
+    pl_request_rows = []
+    for request in source["requests"]:
+        label, tone = status_meta.get(
+            request.status, (request.get_status_display(), "slate")
+        )
+        pl_request_rows.append(
+            {
+                "id": request.id,
+                "lead_name": _user_names([request.submitted_by_user_id]).get(
+                    request.submitted_by_user_id, "Program Lead"
+                ),
+                "activity_count": request.activity_count,
+                "total": request.total_amount,
+                "total_fmt": _ugx(request.total_amount),
+                "status": label,
+                "tone": tone,
+                "note": request.review_note or "",
+                "can_approve": (
+                    getattr(principal, "active_role", None) in CD_ROLES
+                    and request.status == "submitted_to_cd"
+                    and budget.status not in LOCKED_STATUSES
+                ),
+            }
+        )
+
     return {
         "fy": fy,
         "month": month_num,
@@ -609,6 +720,10 @@ def get_country_monthly_budget(principal, filters=None):
         },
         "total_monthly": total_monthly,
         "total_monthly_fmt": _ugx(total_monthly),
+        "program_source_label": source["label"],
+        "uses_pl_request_workflow": source["uses_pl_request_workflow"],
+        "pl_request_rows": pl_request_rows,
+        "approved_pl_request_count": len(source["approved_requests"]),
         "checks": checks,
         "critical_failed": critical_failed,
         "month_summary": month_summary,
@@ -626,6 +741,11 @@ def get_country_monthly_budget(principal, filters=None):
         ),
         "is_cd": getattr(principal, "active_role", None) in CD_ROLES,
         "is_rvp": getattr(principal, "active_role", None) in RVP_ROLES,
+        "can_edit_admin": (
+            getattr(principal, "active_role", None) in CD_ROLES
+            and budget.status
+            in ("draft_generated", "cd_review", "admin_plan_added", "returned_by_rvp")
+        ),
         "return_reasons": RETURN_REASONS,
         "category_order": CATEGORY_ORDER,
         "last_updated": timezone.now(),
@@ -661,7 +781,7 @@ def _approval_status_label(status):
     }.get(status, "Draft")
 
 
-def _integrity_checks(lines, admin_lines, budget):
+def _integrity_checks(lines, admin_lines, budget, source=None):
     valid_lines = [li for li in lines if _validate_line(li) != "Excluded"]
     missing_cost = [li for li in valid_lines if not li.catalogue_id]
     needs_review = [
@@ -700,7 +820,29 @@ def _integrity_checks(lines, admin_lines, budget):
             return "passed"
         return "warning" if warn_only else "failed"
 
-    return [
+    checks = []
+    if source and source["uses_pl_request_workflow"]:
+        pending = [r for r in source["requests"] if r.status == "submitted_to_cd"]
+        approved = source["approved_requests"]
+        checks.extend(
+            [
+                {
+                    "label": "All submitted Program Lead requests reviewed by CD",
+                    "status": "failed" if pending else "passed",
+                    "detail": f"{len(pending)} request(s) still need CD review."
+                    if pending
+                    else "",
+                },
+                {
+                    "label": "Program budget comes from CD-approved Program Lead requests",
+                    "status": "passed" if approved else "failed",
+                    "detail": "Approve at least one Program Lead request before sending the country budget to the RVP."
+                    if not approved
+                    else "",
+                },
+            ]
+        )
+    checks.extend([
         {
             "label": "All activity costs linked to planned activities",
             "status": _status(missing_cost),
@@ -760,7 +902,8 @@ def _integrity_checks(lines, admin_lines, budget):
             if cluster_missing_counts
             else "",
         },
-    ]
+    ])
+    return checks
 
 
 def _bottom_stats(staff_rows, cat_totals, admin_total, total_monthly, staff_included):
@@ -829,7 +972,8 @@ def get_plan_sources(principal, filters=None):
     filters = filters or {}
     fy = filters.get("fy") or get_operational_fy()
     month_num = int(filters.get("month") or timezone.now().month)
-    lines = list(_valid_lines_qs(fy, month_num).order_by("-amount")[:200])
+    source = _program_source(fy, month_num)
+    lines = sorted(source["lines"], key=lambda line: -int(line.amount or 0))[:200]
     names = _user_names([li.responsible_user for li in lines])
     rows = []
     for li in lines:
@@ -854,10 +998,107 @@ def get_plan_sources(principal, filters=None):
         "month_label": MONTHS[month_num] if 1 <= month_num <= 12 else str(month_num),
         "rows": rows,
         "count": len(rows),
+        "source_label": source["label"],
     }
 
 
 # ── Actions ───────────────────────────────────────────────────────────────
+def approve_pl_monthly_request(principal, request_id):
+    """CD approves one submitted PL team-budget snapshot for consolidation."""
+    from django.db import transaction
+
+    from apps.fund_requests.models import FundRequest, FundRequestStatus
+
+    _require_cd(principal)
+    with transaction.atomic():
+        request = FundRequest.objects.select_for_update().filter(
+            id=request_id, scope="team", submitted_by_role="Program Lead"
+        ).first()
+        if not request:
+            raise BadRequest("Program Lead monthly request not found.")
+        if request.status != FundRequestStatus.SUBMITTED_TO_CD:
+            raise BadRequest("Only a request waiting for CD review can be approved.")
+        request.status = FundRequestStatus.APPROVED_BY_CD
+        request.reviewed_by_user_id = principal.user_id
+        request.reviewed_at = timezone.now()
+        request.review_note = None
+        request.save(
+            update_fields=[
+                "status",
+                "reviewed_by_user_id",
+                "reviewed_at",
+                "review_note",
+                "updated_at",
+            ]
+        )
+
+        month_num = int(request.period_key.rsplit("M", 1)[-1])
+        budget = _get_or_create_budget(request.fy, month_num)
+        if budget.status in LOCKED_STATUSES:
+            raise BadRequest("The country budget is already locked for RVP review.")
+        if budget.status == "draft_generated":
+            budget.status = "cd_review"
+            budget.save(update_fields=["status", "updated_at"])
+        _recompute_if_live(budget, _program_source(request.fy, month_num))
+
+    _audit(
+        principal,
+        "country_budget.approve_pl_monthly_request",
+        budget,
+        {"fund_request_id": request.id, "total": request.total_amount},
+    )
+    _notify_user(
+        request.submitted_by_user_id,
+        "Monthly request approved by Country Director",
+        (
+            f"Your {MONTHS[month_num]} {request.fy} Team Budget request "
+            f"({_ugx(request.total_amount)}) is included in the country budget."
+        ),
+        request.id,
+    )
+    return request
+
+
+def return_pl_monthly_request(principal, request_id, note):
+    """Return a PL snapshot for a clear, recorded correction."""
+    from django.db import transaction
+
+    from apps.fund_requests.models import FundRequest, FundRequestStatus
+
+    _require_cd(principal)
+    note = (note or "").strip()
+    if not note:
+        raise BadRequest("Tell the Program Lead what needs to be corrected.")
+    with transaction.atomic():
+        request = FundRequest.objects.select_for_update().filter(
+            id=request_id, scope="team", submitted_by_role="Program Lead"
+        ).first()
+        if not request:
+            raise BadRequest("Program Lead monthly request not found.")
+        if request.status != FundRequestStatus.SUBMITTED_TO_CD:
+            raise BadRequest("Only a request waiting for CD review can be returned.")
+        request.status = FundRequestStatus.RETURNED_BY_CD
+        request.reviewed_by_user_id = principal.user_id
+        request.reviewed_at = timezone.now()
+        request.review_note = note[:512]
+        request.save(
+            update_fields=[
+                "status",
+                "reviewed_by_user_id",
+                "reviewed_at",
+                "review_note",
+                "updated_at",
+            ]
+        )
+    _notify_user(
+        request.submitted_by_user_id,
+        "Monthly request returned by Country Director",
+        note,
+        request.id,
+    )
+    return request
+
+
 def send_to_rvp(principal, budget_id):
     _require_cd(principal)
     budget = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
@@ -871,9 +1112,12 @@ def send_to_rvp(principal, budget_id):
     ):
         raise BadRequest("This budget has already been submitted.")
 
-    mwp.recompute_program_total(budget)
-    lines = list(_valid_lines_qs(budget.fy, int(budget.month_key.split("-")[1])))
-    checks = _integrity_checks(lines, list(budget.admin_lines.all()), budget)
+    month_num = int(budget.month_key.split("-")[1])
+    source = _program_source(budget.fy, month_num)
+    _recompute_if_live(budget, source)
+    checks = _integrity_checks(
+        source["lines"], list(budget.admin_lines.all()), budget, source
+    )
     failed = [c for c in checks if c["status"] == "failed"]
     if failed:
         raise BadRequest("Cannot submit — validation failed: " + failed[0]["label"])
@@ -1045,4 +1289,23 @@ def _notify_role(role, event, title, body, budget):
             recipients=ids,
         )
     except Exception:  # noqa: BLE001
+        pass
+
+
+def _notify_user(recipient_id, title, body, request_id):
+    """A direct workflow notification for the Program Lead who owns a request."""
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type="monthly_team_request_reviewed",
+            category="finance",
+            priority="high",
+            title=title,
+            body=body,
+            context_type="FundRequest",
+            context_id=request_id,
+            recipients=[recipient_id],
+        )
+    except Exception:  # noqa: BLE001 - notification delivery is non-blocking
         pass

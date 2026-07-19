@@ -154,6 +154,10 @@ class Activity(SoftDeleteModel):
     pl_reviewed_by = models.CharField(max_length=30, null=True, blank=True)
 
     # Training/cluster-meeting completion detail.
+    # The confirmed headcount at scheduling time.  This remains available for
+    # planning, fund requests and budget reporting before actual attendance is
+    # recorded after the activity.
+    expected_participants = models.IntegerField(null=True, blank=True)
     teachers_attended = models.IntegerField(null=True, blank=True)
     leaders_attended = models.IntegerField(null=True, blank=True)
     other_participants = models.IntegerField(null=True, blank=True)
