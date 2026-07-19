@@ -109,3 +109,54 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
                     200,
                     f"Filtered surface {url} returned {response.status_code}",
                 )
+
+    def test_no_sidebar_page_renders_template_artifacts(self):
+        """No page may show template plumbing or a raw Python value as copy.
+
+        These defects render fine, return 200 and pass every other test --
+        the template is valid, it just prints the wrong thing. Only reading
+        the page catches them, which is how a four-line ``{# #}`` comment
+        ended up displayed as a paragraph above the My Team table and how
+        ``(0 acts) None Avg`` reached the analytics regional panel.
+
+        Only patterns that are always a defect are checked. A bare "None" is
+        left out on purpose: it is legitimate copy in a filter option, so
+        asserting on it would make this test fail for a correct page.
+        """
+        import re
+
+        # Template syntax that survived to the response is never intentional.
+        artifacts = {
+            "unrendered {% %} tag": re.compile(r"\{%"),
+            "unrendered {{ }} variable": re.compile(r"\{\{"),
+            "leaked {# #} comment": re.compile(r"\{#"),
+            "JavaScript NaN": re.compile(r"\bNaN\b"),
+            "JavaScript undefined": re.compile(r"\bundefined\b"),
+        }
+        strip = re.compile(
+            r"<(script|style|noscript)\b.*?</\1>", re.DOTALL | re.IGNORECASE
+        )
+        tags = re.compile(r"<[^>]+>")
+
+        urls = {
+            item["url"]
+            for section in build_sidebar_for_user(self.user, "/")
+            for item in section["items"]
+        }
+
+        offenders = []
+        for url in sorted(urls):
+            response = self.client.get(url)
+            if response.status_code != 200:
+                continue
+            body = response.content.decode("utf-8", errors="ignore")
+            visible = tags.sub(" ", strip.sub(" ", body))
+            for label, pattern in artifacts.items():
+                if pattern.search(visible):
+                    offenders.append(f"{url}: {label}")
+
+        self.assertEqual(
+            offenders,
+            [],
+            f"Pages rendering template plumbing as visible copy: {offenders}",
+        )
