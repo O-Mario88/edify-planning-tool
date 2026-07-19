@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import Http404, HttpResponse, HttpResponseForbidden
 from apps.core.permissions import require_page_permission
+from apps.core.scoping import resolve_user_scope
 from apps.schools.models import SSAImportBatch
 from apps.ssa.models import SsaRecord
 from apps.ssa.upload_service import upload_ssa_file, import_ssa_batch
@@ -193,6 +194,12 @@ def ssa_upload_result_view(request, batch_id):
 
 @require_page_permission("ssa")
 def ssa_verification_queue_view(request):
+    # The "ssa" page permission is role-only. Without a scope filter this
+    # listed every pending SSA record country-wide, and the POST branch below
+    # accepted verify/return on any id -- so a CCEO could confirm or reject
+    # another region's assessments, which then feed that region's
+    # recommendations and impact numbers.
+    scope = resolve_user_scope(request.user)
     records = (
         SsaRecord.objects.filter(
             deleted_at__isnull=True,
@@ -201,11 +208,21 @@ def ssa_verification_queue_view(request):
         .select_related("school")
         .order_by("-date_of_ssa")
     )
+    if not scope.country_scope:
+        records = (
+            records.filter(school_id__in=list(scope.school_ids or []))
+            if scope.school_ids
+            else records.none()
+        )
 
     if request.method == "POST":
         record_id = request.POST.get("record_id")
         action = request.POST.get("action")
-        rec = get_object_or_404(SsaRecord, id=record_id)
+        # Re-derive from the scoped queryset: taking the id straight from
+        # POST would let a caller act on a record the list never showed them.
+        rec = records.filter(id=record_id).first()
+        if rec is None:
+            raise Http404("SSA record not found.")
 
         if action == "verify":
             rec.verification_status = VerificationStatus.CONFIRMED.value

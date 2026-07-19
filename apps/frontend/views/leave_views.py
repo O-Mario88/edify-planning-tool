@@ -1086,13 +1086,36 @@ def revoke_coverage_action(request, assignment_id):
 
 @require_page_permission("leave_calendar")
 def leave_calendar_view(request):
-    """Visual view of team leave periods using FullCalendar.js."""
+    """Visual view of team leave periods using FullCalendar.js.
+
+    The leave_calendar page permission is granted to ALL_ROLES, which includes
+    external Partner users, so this previously rendered every employee's name
+    and leave type to anyone who could log in. Who is off sick, and when, is
+    not information a delivery partner needs.
+
+    The roles that approve leave must be able to see it, so entitlement keys
+    off the same permission the approval queue uses (leave_approvals: PL, CD,
+    RVP, HR, Admin). Everyone else sees their own leave and the leave of
+    whoever they are covering for -- enough to plan around, without publishing
+    the whole organisation's absence record.
+    """
+    from apps.core.navigation import PAGE_PERMISSIONS, get_user_role_slug
+
+    approves_leave = get_user_role_slug(request.user) in PAGE_PERMISSIONS.get(
+        "leave_approvals", set()
+    )
+
     approved = Leave.objects.filter(status="approved").select_related(
         "staff__user", "covering_staff__user"
     )
     pending = Leave.objects.filter(status="pending").select_related(
         "staff__user", "covering_staff__user"
     )
+    if not approves_leave:
+        own = request.user.staff_profile_id
+        mine = Q(staff_id=own) | Q(covering_staff_id=own) if own else Q(pk__in=[])
+        approved = approved.filter(mine)
+        pending = pending.filter(mine)
     coverages = TemporaryCoverageAssignment.objects.filter(
         status="active"
     ).select_related("original_staff__user", "covering_staff__user")

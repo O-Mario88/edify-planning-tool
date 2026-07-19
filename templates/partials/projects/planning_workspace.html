@@ -106,13 +106,13 @@
     {% if selected_row %}<section class="spp-card spp-next-step spp-tone--{{ selected_row.readiness_tone }}">
       <header><span aria-hidden="true">{% include "partials/projects/planning_icon.html" with name="document" %}</span><div><p class="spp-eyebrow">Recommended next step</p><h2>{{ selected_row.action }}</h2></div></header>
       <p>{{ selected_row.next_step }}</p>
-      {% if selected_row.action_kind == 'schedule' and can_schedule %}<button type="button" class="spp-button spp-button--primary" hx-get="{{ selected_row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML">{% include "partials/projects/planning_icon.html" with name="calendar" %} Schedule now</button>{% else %}<a class="spp-button spp-button--primary" href="{{ selected_row.my_plan_url }}">Open in My Plan</a>{% endif %}
+      {% if selected_row.action_kind == 'schedule' and can_schedule %}<button type="button" class="spp-button spp-button--primary" hx-get="{{ selected_row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML">{% include "partials/projects/planning_icon.html" with name="calendar" %} Schedule</button>{% else %}<a class="spp-button spp-button--primary" href="{{ selected_row.my_plan_url }}">Open in My Plan</a>{% endif %}
     </section>{% endif %}
 
     <section class="spp-card spp-bulk">
       <header><p class="spp-eyebrow">Bulk Actions</p><h2><span x-text="selected.length">0</span> selected</h2></header>
-      <button type="button" @click="openBulk('partner')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign to Partner</button>
-      <button type="button" @click="openBulk('schedule')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="calendar" %} Schedule Visits</button>
+      <button type="button" @click="openBulk('partner')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign</button>
+      <button type="button" @click="openBulk('schedule')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="calendar" %} Schedule</button>
       <a href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export Filtered</a>
       {% if selected_row %}<a href="{{ selected_row.project_url }}">{% include "partials/projects/planning_icon.html" with name="folder" %} Open Project Plan</a>{% endif %}
     </section>

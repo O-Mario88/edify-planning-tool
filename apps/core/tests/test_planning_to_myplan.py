@@ -51,6 +51,28 @@ def _activity_ids(context):
     return ids
 
 
+
+def _schedulable_date():
+    """The next date REG-02 will actually accept.
+
+    These tests used timezone.localdate(), which fails outright whenever the
+    suite runs on a Sunday -- scheduling is blocked on Sundays, public
+    holidays and blackout dates (apps/core/calendar_policy.py). None of these
+    tests is about the calendar, so they should not depend on which day the
+    suite happens to run.
+    """
+    import datetime
+
+    from django.utils import timezone as _tz
+
+    day = _tz.localdate()
+    for _ in range(10):
+        if day.weekday() != 6:
+            return day
+        day += datetime.timedelta(days=1)
+    return day
+
+
 class PlanningToMyPlanFlowTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="East")
@@ -221,7 +243,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             {
                 "activityType": "school_visit",
                 "schoolId": self.school.school_id,
-                "scheduledDate": timezone.localdate().isoformat(),
+                "scheduledDate": _schedulable_date().isoformat(),
                 # This would previously fail strict-purpose and SSA gates.
                 "strict_validation": True,
             },
@@ -290,7 +312,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             {
                 "activityType": "school_visit",
                 "schoolId": self.school.school_id,
-                "scheduledDate": timezone.localdate().isoformat(),
+                "scheduledDate": _schedulable_date().isoformat(),
                 "responsibleStaffId": profile.id,
             },
             admin,

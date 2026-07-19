@@ -26,13 +26,13 @@
           hx-swap="innerHTML"
           class="rounded-control border edify-primary-border bg-white p-3 text-left transition-colors hover:edify-primary-soft"
         >
-          <span class="block text-[13px] font-bold edify-primary-text">Schedule Core Visit</span>
-          <span class="mt-0.5 block edify-text-caption text-slate-500">{{ visits_remaining }} remaining</span>
+          <span class="block text-[13px] font-bold edify-primary-text">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption text-slate-500">Core visit · {{ visits_remaining }} remaining</span>
         </button>
       {% else %}
         <button type="button" disabled class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
-          <span class="block text-[13px] font-bold">Schedule Core Visit</span>
-          <span class="mt-0.5 block edify-text-caption">No package visit slots available</span>
+          <span class="block text-[13px] font-bold">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption">Core visit · no package slots available</span>
         </button>
       {% endif %}
 
@@ -44,13 +44,13 @@
           hx-swap="innerHTML"
           class="rounded-control border edify-primary-border bg-white p-3 text-left transition-colors hover:edify-primary-soft"
         >
-          <span class="block text-[13px] font-bold edify-primary-text">Schedule Core Training</span>
-          <span class="mt-0.5 block edify-text-caption text-slate-500">{{ trainings_remaining }} remaining</span>
+          <span class="block text-[13px] font-bold edify-primary-text">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption text-slate-500">Core training · {{ trainings_remaining }} remaining</span>
         </button>
       {% else %}
         <button type="button" disabled class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
-          <span class="block text-[13px] font-bold">Schedule Core Training</span>
-          <span class="mt-0.5 block edify-text-caption">No package training slots available</span>
+          <span class="block text-[13px] font-bold">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption">Core training · no package slots available</span>
         </button>
       {% endif %}
     </div>

@@ -404,15 +404,15 @@ class CoreSchoolsPlanningTest(TestCase):
             f"/planning/schedule-modal?school_id={self.school.school_id}"
         )
         self.assertEqual(response.status_code, 200)
-        for label in (
-            "Donor Visit",
-            "Gathering Story",
-            "School Invitation",
-            "Social Visit",
-            "Training Follow-up Visit",
-            "In-school Coaching Visit",
-            "In-school Training",
-        ):
+        # The drawer used to expose the raw ActivityType list. The
+        # purpose-of-visit feature replaced that with a purpose select whose
+        # choice derives the activity type (apps/partners/purposes.py), so the
+        # question this test asks -- can a CCEO schedule everyday support work
+        # from the general schedule modal -- is now answered by the purposes on
+        # offer rather than by the activity-type labels.
+        from apps.partners.purposes import STAFF_VISIT_PURPOSES
+
+        for _value, label in STAFF_VISIT_PURPOSES:
             self.assertContains(response, label)
 
     def test_general_visit_type_saves_with_a_cost_snapshot(self):

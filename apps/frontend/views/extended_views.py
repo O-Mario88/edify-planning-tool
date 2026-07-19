@@ -274,6 +274,13 @@ def calendar_view(request):
         if selected_project in project_ids:
             project_ids = [selected_project]
         activities = activities.filter(project_id__in=project_ids)
+        # projects_qs above is already scoped to what this user may see -- the
+        # coordinator's own projects, or the projects covering their schools --
+        # so project membership IS the entitlement here. Layering the staff
+        # ownership filter on top as well hid partner-delivered work from the
+        # coordinator running the project, because a partner activity has no
+        # responsible staff and is only reachable through monitored_by_staff_id.
+        activity_owner_ids = None
     if activity_owner_ids is not None:
         activities = activities.filter(
             Q(responsible_staff_id__in=activity_owner_ids)

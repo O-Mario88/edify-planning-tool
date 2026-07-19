@@ -28,6 +28,7 @@ inside every web worker.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from datetime import timedelta
 
@@ -118,7 +119,21 @@ def _do_daily_digest() -> int:
         if n == 0:
             continue
         # Dedupe per calendar day via source_event_id.
-        digest_id = f"digest-{recipient_id}-{today.isoformat()}"[:30]
+        #
+        # source_event_id is 30 chars. The old key was
+        # f"digest-{recipient_id}-{today}"[:30], and recipient_id is a 21-char
+        # cuid, so the string was 39 chars and the slice cut at
+        # "digest-<cuid>-2" -- discarding the date entirely. Every day of every
+        # year produced an identical key, so each user received exactly ONE
+        # digest ever and the job silently no-opped for them from then on.
+        #
+        # Put the date first so it can never be the part that gets truncated,
+        # and hash the recipient to a fixed width that fits alongside it.
+        recipient_hash = hashlib.blake2s(
+            recipient_id.encode(), digest_size=8
+        ).hexdigest()
+        digest_id = f"dg-{today.isoformat()}-{recipient_hash}"
+        assert len(digest_id) <= 30, digest_id
         if Notification.objects.filter(
             recipient_id=recipient_id, source_event_id=digest_id
         ).exists():

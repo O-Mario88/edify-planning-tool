@@ -36,7 +36,7 @@
       </search>
       <div class="spp-actions">
         <a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
-        <button class="spp-button spp-button--secondary" type="button" @click="openBulk('partner')" :disabled="selected.length === 0" :title="selected.length ? 'Assign selected schools to a partner' : 'Select schools first'">{% include "partials/projects/planning_icon.html" with name="partner" %} Bulk Assign <span x-show="selected.length" x-text="selected.length"></span></button>
+        <button class="spp-button spp-button--secondary" type="button" @click="openBulk('partner')" :disabled="selected.length === 0" :title="selected.length ? 'Assign selected schools to a partner' : 'Select schools first'">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign <span x-show="selected.length" x-text="selected.length"></span></button>
         <a class="spp-button spp-button--primary" href="/projects/my-plan">{% include "partials/projects/planning_icon.html" with name="calendar" %} Open My Plan</a>
       </div>
     </div>

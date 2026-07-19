@@ -223,9 +223,11 @@ def analytics_drilldown_view(request):
     # The dashboard service already scopes aggregates; drill-down records must
     # obey the same boundary so a URL cannot reveal another portfolio.
     activities = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    schools = School.objects.filter(deleted_at__isnull=True).select_related(
-        "district", "account_owner__user"
-    )
+    # account_owner_id is a plain CharField holding a user id, not a
+    # ForeignKey, so select_related("account_owner__user") raises FieldError
+    # and this endpoint returned HTTP 500 for every metric. Only `district` is
+    # a real relation here.
+    schools = School.objects.filter(deleted_at__isnull=True).select_related("district")
     scope = resolve_user_scope(request.user)
     if scope.can_view_summary_only:
         activities = activities.none()

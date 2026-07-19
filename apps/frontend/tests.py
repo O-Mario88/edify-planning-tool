@@ -127,9 +127,21 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Schedule Coaching Visit")
+        # The drawer no longer carries an activity-type <select>. The
+        # purpose-of-visit feature replaced it with a purpose select that
+        # derives the activity type, so the recommended type is now seeded into
+        # Alpine state and submitted through a hidden input rather than being
+        # marked `selected` on an <option>. The behaviour under test -- the
+        # drawer arrives pre-filled with the recommended type -- is unchanged;
+        # only where it lives has moved.
         self.assertContains(
             response,
-            'option value="coaching_visit" selected',
+            "activityType: 'coaching_visit'",
+            html=False,
+        )
+        self.assertContains(
+            response,
+            'name="activity_type" :value="activityType"',
             html=False,
         )
         self.assertContains(
