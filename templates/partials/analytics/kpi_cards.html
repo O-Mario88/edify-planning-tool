@@ -45,8 +45,10 @@
 </div>
 
 <!-- Right 3 columns: Recommended Insights Rail (lg:col-span-3) -->
-<div class="lg:col-span-3">
+<div class="lg:col-span-3 space-y-6">
 {% include "partials/analytics/recommended_insights.html" %}
+{# Moved out of the map card so the map can take the full content width. #}
+{% include "partials/analytics/subregion_table.html" %}
 </div>
 
 </div>

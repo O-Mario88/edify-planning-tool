@@ -1,127 +1,95 @@
 {% load static %}
 {% comment %}
-  Performance by Sub-Region.
+  Performance by Sub-Region — the map.
 
-  The map is real UBOS district geometry fetched as a static asset rather than
-  inlined, so the 178KB of boundaries is cached once instead of being re-sent
-  inside every dashboard render.
+  The roll-up table used to sit beside this in a 3/2 split; it now lives in its
+  own card in the rail, which lets the map take the full content width.
 
-  Districts are coloured by sub-region (identity), not by a metric. A metric
-  choropleth would be the obvious move, but confirmed SSA currently covers a
-  small share of districts, so most of the map would be painted "no data" in a
-  ramp that implies low rather than absent. The numbers live in the tooltip and
-  the table beside it, where an absent value can show as a dash and say so.
+  The frame is square. Uganda's bounding box is 5.43° of longitude by 5.71° of
+  latitude, so the country is very nearly square already -- a square viewport
+  fits it with almost no wasted margin, where the old wide box left large empty
+  bands to the left and right of the outline.
+
+  Boundaries are fetched as a static asset rather than inlined, so the 178KB is
+  cached once instead of being re-sent inside every dashboard render.
+
+  Districts are coloured by sub-region identity, not by a metric. A metric ramp
+  would be the obvious move, but confirmed SSA covers a small share of
+  districts, so most of the map would be painted "no data" in a scale that
+  implies low rather than absent. The numbers live in the tooltip and in the
+  Distribution by Sub-Region card, where an absent value can show as a dash.
 {% endcomment %}
-<div class="edify-surface rounded-surface p-4 shadow-sm space-y-4"
-     x-data="subregionMap()" x-init="load()">
+<div class="edify-surface rounded-surface p-4 shadow-sm space-y-3"
+     x-data="subregionMap()" x-init="load()"
+     @subregion-brush.window="highlight($event.detail)">
 
-  <div class="flex items-center justify-between border-b border-slate-50 pb-2">
+  <div class="flex items-start justify-between gap-3 border-b border-slate-50 pb-2">
     <div>
       <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
         <span>Performance by Sub-Region</span>
         <span class="edify-text-caption text-slate-400 cursor-help"
-              title="Schools, clusters and confirmed SSA averages rolled up from district to sub-region">ⓘ</span>
+              title="Click a district to zoom; Esc or click outside to return">ⓘ</span>
       </h3>
       <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">
         {{ subregion_performance.totals.districts }} districts ·
         {{ subregion_performance.totals.subregions }} sub-regions ·
-        {{ subregion_performance.totals.schools }} schools
+        UBOS boundaries
       </p>
     </div>
-    <div class="edify-text-caption font-semibold text-slate-400" x-show="focused"
-         x-transition.opacity>
-      <button type="button" @click="reset()"
-              class="rounded-control border border-slate-200 px-2.5 py-1 font-bold
-                     text-slate-600 hover:bg-slate-50">
-        Back to all districts · Esc
+    <div class="flex items-center gap-2 shrink-0">
+      <p class="edify-text-caption font-semibold text-slate-400"
+         x-show="!focused" x-transition.opacity>Click a district to zoom</p>
+      <button type="button" x-show="focused" x-transition.opacity @click="reset()"
+              class="rounded-control border border-slate-200 px-2.5 py-1
+                     edify-text-caption font-bold text-slate-600 hover:bg-slate-50">
+        <span x-text="focused"></span> · Back &middot; Esc
       </button>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
-
-    {# ---- map ------------------------------------------------------------ #}
-    <div class="lg:col-span-3 relative" @keydown.escape.window="reset()">
-      <div x-show="!ready" class="flex items-center justify-center h-[320px]
-                                  edify-text-caption font-semibold text-slate-400">
-        Loading district boundaries…
-      </div>
-      <svg x-ref="svg" x-show="ready" viewBox="0 0 600 620"
-           class="w-full h-auto select-none" role="group"
-           aria-label="Districts of Uganda coloured by sub-region"></svg>
-
-      <div x-ref="tip" x-show="tip.show" x-transition.opacity
-           class="absolute pointer-events-none z-10 rounded-control bg-slate-900/95
-                  px-2.5 py-1.5 text-white shadow-lg"
-           :style="`left:${tip.x}px; top:${tip.y}px`">
-        <p class="text-[12px] font-bold" x-text="tip.district"></p>
-        <p class="edify-text-caption font-semibold text-slate-300" x-text="tip.line"></p>
-      </div>
+  {% comment %}
+    Square frame: the map is the whole card now, so give it real height.
+    No max-width -- the point of moving the table out was to let this grow.
+  {% endcomment %}
+  <div class="relative w-full aspect-square"
+       @keydown.escape.window="reset()"
+       @click.outside="reset()">
+    <div x-show="!ready"
+         class="absolute inset-0 flex items-center justify-center
+                edify-text-caption font-semibold text-slate-400">
+      Loading district boundaries…
     </div>
+    <svg x-ref="svg" x-show="ready" viewBox="0 0 620 620"
+         preserveAspectRatio="xMidYMid meet"
+         class="w-full h-full select-none" role="group"
+         aria-label="Districts of Uganda coloured by sub-region"></svg>
 
-    {# ---- sub-region table ------------------------------------------------ #}
-    <div class="lg:col-span-2 overflow-x-auto">
-      <table class="w-full text-left">
-        <thead>
-          <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-            <th class="pb-1.5 pr-2">Sub-region</th>
-            <th class="pb-1.5 px-1 text-right">Schools</th>
-            <th class="pb-1.5 px-1 text-right">Clusters</th>
-            <th class="pb-1.5 pl-1 text-right">SSA</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-50">
-          {% for s in subregion_performance.subregions %}
-          <tr class="text-[12px] hover:bg-slate-50/70 cursor-pointer"
-              @mouseenter="highlight('{{ s.name|escapejs }}')" @mouseleave="highlight(null)">
-            <td class="py-1.5 pr-2 font-semibold text-slate-700">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="h-2 w-2 rounded-pill shrink-0"
-                      :style="`background:${colourOf('{{ s.name|escapejs }}')}`"></span>
-                {{ s.name }}
-              </span>
-            </td>
-            <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600">{{ s.schools }}</td>
-            <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600">{{ s.clusters }}</td>
-            <td class="py-1.5 pl-1 text-right font-bold tabular-nums
-                       {% if s.ssa_avg == None %}text-slate-300{% else %}text-slate-800{% endif %}">
-              {% if s.ssa_avg == None %}&mdash;{% else %}{{ s.ssa_avg }}{% endif %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="4" class="py-6 text-center edify-text-caption font-semibold text-slate-400">
-            No districts are mapped to a sub-region yet.
-          </td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <p class="edify-text-caption text-slate-400 font-semibold mt-2 leading-relaxed">
-        SSA is the confirmed average, weighted by assessments behind each district.
-        A dash means no confirmed assessment &mdash; not a score of zero.
-        Coverage: {{ subregion_performance.totals.districts_with_ssa }}
-        of {{ subregion_performance.totals.districts }} districts.
-      </p>
+    <div x-show="tip.show" x-transition.opacity
+         class="absolute pointer-events-none z-10 rounded-control bg-slate-900/95
+                px-2.5 py-1.5 text-white shadow-lg"
+         :style="`left:${tip.x}px; top:${tip.y}px`">
+      <p class="text-[12px] font-bold" x-text="tip.district"></p>
+      <p class="edify-text-caption font-semibold text-slate-300" x-text="tip.line"></p>
     </div>
   </div>
 </div>
 
 {{ subregion_performance.districts|json_script:"subregion-district-metrics" }}
+{{ subregion_performance.colours|json_script:"subregion-colours" }}
 
 <script>
 function subregionMap(){
   return {
-    ready:false, focused:null, tip:{show:false,x:0,y:0,district:'',line:''},
-    metrics:{}, geo:null, W:600, H:620,
-    COLOURS:{
-      'Acholi':'#aab4e8','Central':'#b5e6a8','East Central':'#f4a582',
-      'Elgon':'#b8ecf5','Karamoja':'#f5a3dd','Lango':'#f2f2b8',
-      'South Western':'#f7c5e0','Teso':'#a8e6cf','West Nile':'#f5a3b8',
-      'Western':'#a8cbe8'},
-    colourOf(s){ return this.COLOURS[s] || '#e2e8f0'; },
+    ready:false, focused:null, cam:null,
+    tip:{show:false,x:0,y:0,district:'',line:''},
+    metrics:{}, colours:{}, geo:null, W:620, H:620,
+
+    colourOf(s){ return this.colours[s] || '#e2e8f0'; },
 
     async load(){
-      const raw = document.getElementById('subregion-district-metrics');
-      (JSON.parse(raw.textContent) || []).forEach(d => { this.metrics[d.district] = d; });
+      (JSON.parse(document.getElementById('subregion-district-metrics').textContent) || [])
+        .forEach(d => { this.metrics[d.district] = d; });
+      this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
       const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
       this.geo = await res.json();
       this.draw();
@@ -130,34 +98,46 @@ function subregionMap(){
 
     draw(){
       const f = this.geo.features, svg = this.$refs.svg;
-      let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
       const rings = g => (g.type === 'MultiPolygon' ? g.coordinates.flat() : g.coordinates);
+      let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
       f.forEach(ft => rings(ft.geometry).forEach(r => r.forEach(([x,y]) => {
         if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y; })));
-      const P=8, W=this.W, H=this.H;
-      const sx = x => P + (x-minx)/(maxx-minx)*(W-2*P);
-      const sy = y => P + (H-2*P) - (y-miny)/(maxy-miny)*(H-2*P);
 
-      const cam = document.createElementNS('http://www.w3.org/2000/svg','g');
-      cam.setAttribute('id','sr-cam');
+      // Fit the outline inside the square on its own aspect, then centre it,
+      // so the country is never stretched to fill the frame.
+      const P = 10, W = this.W, H = this.H;
+      const k = Math.min((W - 2*P) / (maxx - minx), (H - 2*P) / (maxy - miny));
+      const ox = (W - (maxx - minx) * k) / 2, oy = (H - (maxy - miny) * k) / 2;
+      const sx = x => ox + (x - minx) * k;
+      const sy = y => H - oy - (y - miny) * k;
+
+      const NS = 'http://www.w3.org/2000/svg';
+      const cam = document.createElementNS(NS, 'g');
+      cam.setAttribute('id', 'sr-cam');
       cam.style.transition = 'transform 700ms cubic-bezier(.22,.61,.36,1)';
-      f.forEach(ft => {
+      f.forEach((ft, i) => {
         const p = ft.properties;
         const d = rings(ft.geometry)
           .map(r => 'M' + r.map(([x,y]) => sx(x).toFixed(1)+','+sy(y).toFixed(1)).join(' L') + 'Z')
           .join('');
-        const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+        const el = document.createElementNS(NS, 'path');
         el.setAttribute('d', d);
         el.setAttribute('fill', this.colourOf(p.s));
         el.setAttribute('stroke', '#fff');
-        el.setAttribute('stroke-width', '0.6');
+        el.setAttribute('stroke-width', '0.7');
         el.setAttribute('tabindex', '0');
         el.setAttribute('role', 'button');
+        el.setAttribute('aria-label', `${p.d} district, ${p.s} sub-region`);
         el.dataset.district = p.d; el.dataset.sub = p.s;
-        el.style.cssText = 'cursor:pointer;transition:opacity .35s,filter .2s';
+        el.style.cssText =
+          'cursor:pointer;transform-box:fill-box;transform-origin:center;' +
+          'transition:opacity .35s,filter .2s,transform .2s;' +
+          `animation:sr-rise 520ms cubic-bezier(.22,.61,.36,1) both ${i*4}ms`;
         el.addEventListener('pointermove', e => this.hover(el, e));
         el.addEventListener('pointerleave', () => this.tip.show = false);
-        el.addEventListener('click', () => this.zoom(el));
+        el.addEventListener('click', e => { e.stopPropagation(); this.zoom(el); });
+        el.addEventListener('focus', () => this.hoverAt(el));
+        el.addEventListener('blur', () => this.tip.show = false);
         el.addEventListener('keydown', e => {
           if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); this.zoom(el); }
         });
@@ -167,16 +147,26 @@ function subregionMap(){
       this.cam = cam;
     },
 
+    _line(el){
+      const m = this.metrics[el.dataset.district];
+      // an absent SSA reads as a dash here too, never as 0
+      return m ? `${el.dataset.sub} · ${m.schools} schools · SSA ${m.ssa_avg ?? '—'}`
+               : el.dataset.sub;
+    },
     hover(el, e){
-      const name = el.dataset.district, m = this.metrics[name];
       const box = this.$refs.svg.getBoundingClientRect();
-      this.tip.district = name;
-      // absent SSA reads as a dash here too, never as 0
-      this.tip.line = m
-        ? `${el.dataset.sub} · ${m.schools} schools · SSA ${m.ssa_avg ?? '—'}`
-        : el.dataset.sub;
-      this.tip.x = Math.min(e.clientX - box.left + 12, box.width - 150);
-      this.tip.y = Math.max(e.clientY - box.top - 46, 4);
+      this.tip.district = el.dataset.district;
+      this.tip.line = this._line(el);
+      this.tip.x = Math.min(e.clientX - box.left + 12, box.width - 170);
+      this.tip.y = Math.max(e.clientY - box.top - 48, 4);
+      this.tip.show = true;
+    },
+    hoverAt(el){            // keyboard focus gets the same readout as hover
+      const b = el.getBoundingClientRect(), box = this.$refs.svg.getBoundingClientRect();
+      this.tip.district = el.dataset.district;
+      this.tip.line = this._line(el);
+      this.tip.x = Math.min(b.left - box.left + b.width/2, box.width - 170);
+      this.tip.y = Math.max(b.top - box.top - 48, 4);
       this.tip.show = true;
     },
 
@@ -185,11 +175,12 @@ function subregionMap(){
       let s = Math.min(this.W/b.width, this.H/b.height) * 0.6;
       s = Math.max(1.4, Math.min(s, 14));
       const tx = this.W/2 - (b.x + b.width/2)*s, ty = this.H/2 - (b.y + b.height/2)*s;
-      this.cam.style.transform = `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${s.toFixed(3)})`;
+      this.cam.style.transform =
+        `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${s.toFixed(3)})`;
       this.cam.querySelectorAll('path').forEach(p => {
         const on = p === el;
-        p.style.opacity = on ? 1 : 0.15;
-        p.style.filter = on ? 'none' : 'grayscale(.6)';
+        p.style.opacity = on ? 1 : 0.14;
+        p.style.filter  = on ? 'none' : 'grayscale(.6)';
       });
       this.focused = el.dataset.district;
       this.tip.show = false;
@@ -203,12 +194,23 @@ function subregionMap(){
       this.focused = null;
     },
 
+    /* Driven by the Distribution card over a window event, since the two cards
+       are separate Alpine components. */
     highlight(sub){
       if(!this.cam || this.focused) return;
       this.cam.querySelectorAll('path').forEach(p => {
-        p.style.opacity = sub ? (p.dataset.sub === sub ? 1 : 0.2) : '';
+        p.style.opacity = sub ? (p.dataset.sub === sub ? 1 : 0.18) : '';
       });
     },
   };
 }
 </script>
+<style>
+  @keyframes sr-rise{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+  #sr-cam path:hover{filter:brightness(1.06) saturate(1.2)
+                     drop-shadow(0 2px 5px rgba(17,35,43,.25));transform:scale(1.012)}
+  #sr-cam path:focus-visible{outline:none;stroke:var(--edify-accent);stroke-width:2}
+  @media (prefers-reduced-motion:reduce){
+    #sr-cam,#sr-cam path{animation:none !important;transition:none !important}
+  }
+</style>

@@ -27,6 +27,22 @@ from apps.analytics.platform_engine import engine_metadata
 # SSA rows only count once a reviewer has confirmed them.
 SSA_CONFIRMED = "confirmed"
 
+# One source for the sub-region colours. The table swatch and the map fill both
+# read this, so they cannot drift apart the way two hand-kept copies would.
+# Identity colours, not a metric ramp -- see the card template for why.
+SUBREGION_COLOURS = {
+    "Acholi": "#aab4e8",
+    "Central": "#b5e6a8",
+    "East Central": "#f4a582",
+    "Elgon": "#b8ecf5",
+    "Karamoja": "#f5a3dd",
+    "Lango": "#f2f2b8",
+    "South Western": "#f7c5e0",
+    "Teso": "#a8e6cf",
+    "West Nile": "#f5a3b8",
+    "Western": "#a8cbe8",
+}
+
 
 def _frame() -> pd.DataFrame:
     """One row per district, with its sub-region and region attached.
@@ -170,6 +186,9 @@ def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
                     if total_schools
                     else None
                 ),
+                # Only meaningful when grouping by sub-region; regions fall
+                # back to a neutral swatch rather than borrowing a hue.
+                "colour": SUBREGION_COLOURS.get(name, "#e2e8f0"),
             }
         )
     return out
@@ -201,6 +220,9 @@ def subregion_performance(fy: str | None = None) -> dict[str, Any]:
 
     return {
         "fy": fy,
+        # Shipped to the map so the fills come from the same dict as the table
+        # swatches instead of a second copy living in JavaScript.
+        "colours": SUBREGION_COLOURS,
         "subregions": subregions,
         "regions": regions,
         "districts": districts,
