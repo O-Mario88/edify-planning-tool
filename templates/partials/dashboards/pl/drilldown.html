@@ -31,6 +31,8 @@
 
   {% elif kind == 'activities' %}
   <div class="rounded-surface border border-slate-100 overflow-hidden">
+    {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
+    <div class="overflow-x-auto">
     <table class="w-full text-left border-collapse">
       <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
         <th class="py-2 px-3">Activity</th><th class="py-2 px-3">School</th><th class="py-2 px-3">Owner</th><th class="py-2 px-3">Status</th></tr></thead>
@@ -43,6 +45,7 @@
         {% empty %}<tr><td colspan="4" class="py-6 text-center text-[12px] text-slate-400 font-semibold">Nothing here.</td></tr>{% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 
   {% elif kind == 'approvals' %}

@@ -1,5 +1,7 @@
 {% load frontend_filters %}
 <div class="rounded-surface border border-slate-100 overflow-hidden">
+  {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
+  <div class="overflow-x-auto">
   <table class="w-full text-left border-collapse">
     <thead>
       <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
@@ -19,4 +21,5 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>

@@ -150,6 +150,8 @@ Evidence & SF ID ({{ evidence_list|length }})
 <div>
 <h4 class="edify-text-caption uppercase font-bold text-slate-400 mb-2">Budget Line Verification</h4>
 <div class=" rounded-surface overflow-hidden">
+{# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
+<div class="overflow-x-auto">
 <table class="w-full text-left text-[12px] font-semibold">
 <thead>
 <tr class="bg-slate-50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
@@ -191,6 +193,7 @@ No budget lines created.
 {% endif %}
 </tbody>
 </table>
+</div>
 </div>
 </div>
 </div>
