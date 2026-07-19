@@ -506,3 +506,70 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
             [],
             f"Use var(--edify-font-sans); Inter is the only approved UI font: {offenders}",
         )
+
+
+class StatusColourConsistencyGuardTest(SimpleTestCase):
+    """A status label must carry one colour meaning across the whole platform.
+
+    Spec §23: the same status must not appear green on one page and blue on
+    another. Colour is how a user reads state at a glance, so a status that
+    changes family between screens teaches them that colour means nothing.
+
+    Four labels had drifted when this guard was written -- "Ready" rendered
+    emerald on the school list card and indigo in the planning table,
+    "Verified" green in the IA workspace and emerald on reimbursements, while
+    "Draft" and "Pending" each appeared as both slate and amber. The canonical
+    reading is: emerald = done/good, amber = awaiting action, slate = inert or
+    not yet started.
+    """
+
+    # Families that carry the same meaning to a user; treated as one tone so
+    # the guard flags real semantic drift, not a palette nickname.
+    SYNONYMS = {
+        "green": "emerald",
+        "yellow": "amber",
+        "red": "rose",
+        "gray": "slate",
+        "sky": "blue",
+    }
+    FAMILY = re.compile(
+        r"(?:bg|text)-(emerald|green|amber|yellow|rose|red|blue|sky|indigo|"
+        r"violet|purple|slate|gray|orange|teal)-\d{2,3}"
+    )
+    # A short capitalised word inside a pill is a status label, not prose.
+    PILL = re.compile(
+        r"<span[^>]*rounded-pill[^>]*>\s*([A-Z][A-Za-z /-]{2,26}?)\s*</span>"
+    )
+
+    def test_each_status_label_uses_one_colour_family(self):
+        seen = {}
+        for path in sorted((ROOT / "templates").rglob("*.html")):
+            markup = path.read_text(encoding="utf-8", errors="ignore")
+            for match in self.PILL.finditer(markup):
+                families = {
+                    self.SYNONYMS.get(family, family)
+                    for family in self.FAMILY.findall(match.group(0))
+                }
+                if families:
+                    label = match.group(1).strip()
+                    seen.setdefault(label, {}).setdefault(
+                        frozenset(families), []
+                    ).append(path.relative_to(ROOT).as_posix())
+
+        conflicts = {
+            label: tones for label, tones in seen.items() if len(tones) > 1
+        }
+        detail = "; ".join(
+            f"{label} renders as "
+            + " and ".join(
+                f"{'+'.join(sorted(tone))} ({', '.join(sorted(files))})"
+                for tone, files in tones.items()
+            )
+            for label, tones in sorted(conflicts.items())
+        )
+        self.assertEqual(
+            conflicts,
+            {},
+            "The same status must read the same colour everywhere "
+            f"(spec §23): {detail}",
+        )
