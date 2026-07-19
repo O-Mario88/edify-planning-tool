@@ -98,7 +98,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true", help="report remaining utilities")
-    mode.add_argument("--write", action="store_true", help="migrate matching source files")
+    mode.add_argument(
+        "--write", action="store_true", help="migrate matching source files"
+    )
     args = parser.parse_args()
 
     offenders: list[str] = []

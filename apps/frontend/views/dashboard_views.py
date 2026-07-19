@@ -13,6 +13,7 @@ from apps.command_center import services as cc_services
 from apps.core.permissions import require_page_permission
 from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
+from apps.core.activity_types import VISIT_TYPES
 
 
 def _format_ugx_compact(val):
@@ -472,14 +473,6 @@ def dashboard_view(request):
 
         # ── "This Week's Plan" — three real, actionable operating lists ────────
         _interv = dict(SsaIntervention.choices)
-        VISIT_TYPES = [
-            "school_visit",
-            "follow_up_visit",
-            "coaching_visit",
-            "baseline_ssa_visit",
-            "school_visit_ssa_collection",
-            "core_visit",
-        ]
         CLUSTER_TYPES = [
             "cluster_meeting",
             "cluster_training",

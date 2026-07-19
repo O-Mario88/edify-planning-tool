@@ -268,11 +268,12 @@ def _workflow_issues() -> dict:
     # is caught too, not only the three historic keys listed here previously.
     cluster_meeting_with_wrong_cost = (
         ActivityScheduleCostLine.objects.filter(
-            activity__activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"]
+            activity__activity_type__in=[
+                "cluster_meeting",
+                "cluster_meeting_ssa_review",
+            ]
         )
-        .exclude(
-            cost_setting_key="cluster_meeting_participant_meal_cost_per_head"
-        )
+        .exclude(cost_setting_key="cluster_meeting_participant_meal_cost_per_head")
         .count()
     )
 

@@ -13,6 +13,7 @@ from apps.core.exceptions import NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
+from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 
 def _scoped_schools(principal):
@@ -851,26 +852,6 @@ def contribution_summary(principal, query: dict) -> dict:
         .count()
     )
     regions_covered = reached_schools.values("region_id").distinct().count()
-
-    VISIT_TYPES = {
-        "school_visit",
-        "follow_up_visit",
-        "coaching_visit",
-        "core_visit",
-        "donor_visit",
-        "story_gathering_visit",
-        "school_invitation",
-        "social_visit",
-        "training_follow_up_visit",
-        "in_school_coaching_visit",
-    }
-    TRAINING_TYPES = {
-        "training",
-        "in_school_training",
-        "school_improvement_training",
-        "cluster_training",
-        "core_training",
-    }
 
     visits_completed = verified_completed_qs.filter(
         activity_type__in=VISIT_TYPES

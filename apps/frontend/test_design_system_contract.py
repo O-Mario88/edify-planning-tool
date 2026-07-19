@@ -266,9 +266,7 @@ class DesignSystemContractTest(SimpleTestCase):
 
         partner_css = (ROOT / "static/css/custom.css").read_text()
         partner_template = (ROOT / "templates/pages/partners/index.html").read_text()
-        alignment = partner_css.split(
-            "Partner workspace design-system alignment", 1
-        )[1]
+        alignment = partner_css.split("Partner workspace design-system alignment", 1)[1]
 
         for token in (
             "var(--edify-card-surface)",
@@ -283,8 +281,12 @@ class DesignSystemContractTest(SimpleTestCase):
         ):
             self.assertIn(token, alignment)
 
-        self.assertIn("btn-premium-primary partner-workspace__export-button", partner_template)
-        self.assertIn("btn-premium-secondary partner-workspace__filter-button", partner_template)
+        self.assertIn(
+            "btn-premium-primary partner-workspace__export-button", partner_template
+        )
+        self.assertIn(
+            "btn-premium-secondary partner-workspace__filter-button", partner_template
+        )
 
     def test_filter_wrappers_are_canvas_level_in_every_theme(self):
         """Filters stay out of cards; individual fields provide the affordance."""
@@ -321,7 +323,9 @@ class DesignSystemContractTest(SimpleTestCase):
         """Feature CSS can arrange data, but cannot introduce a new UI kit."""
 
         bridge = (ROOT / "static/css/consistency.css").read_text()
-        contract = bridge.split("Special Projects uses the shared cockpit anatomy", 1)[1]
+        contract = bridge.split("Special Projects uses the shared cockpit anatomy", 1)[
+            1
+        ]
 
         for selector in (
             ".sp-plan, .spp, .spa",
@@ -349,7 +353,11 @@ class DesignSystemContractTest(SimpleTestCase):
         ):
             page = (ROOT / source).read_text()
             self.assertIn("{% block feature_css %}", page, source)
-            self.assertNotIn('<link rel="stylesheet"', page.split("{% block shell_content %}", 1)[1], source)
+            self.assertNotIn(
+                '<link rel="stylesheet"',
+                page.split("{% block shell_content %}", 1)[1],
+                source,
+            )
 
     def test_authenticated_pages_use_the_shells_single_main_region(self):
         """Nested page mains cause competing landmarks and inconsistent spacing."""

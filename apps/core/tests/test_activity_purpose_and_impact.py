@@ -9,7 +9,6 @@ from apps.activities.services import create, calculate_activity_impact
 from apps.clusters.models import Cluster
 from apps.clusters.services import cluster_weakest_interventions
 from apps.core.enums import SsaIntervention
-from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School

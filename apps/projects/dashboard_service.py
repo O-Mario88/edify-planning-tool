@@ -17,6 +17,8 @@ from django.db.models import Q, Sum
 
 from apps.core.scoping import resolve_user_scope
 
+from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+
 from .models import (
     Project,
     ProjectCategory,
@@ -28,27 +30,6 @@ from .models import (
 # ── Activity lifecycle groupings (values from apps.core.enums.ActivityStatus) ──
 DELIVERED_STATUSES = ["ia_verified", "accountant_confirmed", "completed", "closed"]
 NOT_IN_PLAN_STATUSES = ["not_planned", "closed", "cancelled", "rejected", "deferred"]
-TRAINING_TYPES = [
-    "training",
-    "in_school_training",
-    "school_improvement_training",
-    "cluster_training",
-    "core_training",
-]
-VISIT_TYPES = [
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "in_school_support",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-    "core_visit",
-    "school_visit_ssa_collection",
-]
 SSA_TYPES = [
     "ssa_activity",
     "baseline_ssa_visit",

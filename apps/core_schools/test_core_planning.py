@@ -380,7 +380,9 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertNotContains(training_drawer, "First Training")
         self.assertContains(training_drawer, "Second Training")
 
-    def test_core_chooser_keeps_general_activities_available_after_package_completion(self):
+    def test_core_chooser_keeps_general_activities_available_after_package_completion(
+        self,
+    ):
         CoreActivitySlot.objects.filter(
             core_plan=self.plan, activity_type__in=["visit", "training"]
         ).update(status="Scheduled")
@@ -425,9 +427,7 @@ class CoreSchoolsPlanningTest(TestCase):
             },
         )
         self.assertIn(response.status_code, (200, 302), response.content[:200])
-        activity = Activity.objects.get(
-            school=self.school, activity_type="donor_visit"
-        )
+        activity = Activity.objects.get(school=self.school, activity_type="donor_visit")
         self.assertEqual(activity.status, "scheduled")
         self.assertGreater(activity.est_cost_cents, 0)
         self.assertGreater(activity.schedule_cost_lines.count(), 0)
@@ -438,7 +438,9 @@ class CoreSchoolsPlanningTest(TestCase):
 
         blocked = self._schedule_visit(seq="2")
         self.assertEqual(blocked.status_code, 400)
-        self.assertIn("One staff-led core visit is already scheduled", blocked.content.decode())
+        self.assertIn(
+            "One staff-led core visit is already scheduled", blocked.content.decode()
+        )
 
         # Partner delivery may use the next slot in another quarter of the
         # same fiscal package; the staff quarter release does not apply.

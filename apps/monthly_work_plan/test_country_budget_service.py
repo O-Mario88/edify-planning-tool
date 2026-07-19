@@ -353,9 +353,7 @@ class CountryMonthlyBudgetTest(TestCase):
         self.assertFalse(before_cd["can_send_to_rvp"])
 
         svc.approve_pl_monthly_request(self.cd_p, submitted.id)
-        approved = svc.get_country_monthly_budget(
-            self.cd_p, {"fy": FY, "month": MONTH}
-        )
+        approved = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
         self.assertEqual(approved["total_monthly"], 150_000)
         self.assertEqual(approved["approved_pl_request_count"], 1)
 
@@ -375,7 +373,9 @@ class CountryMonthlyBudgetTest(TestCase):
         self.assertEqual(ready["total_monthly"], 200_000)
         country_budget = svc.send_to_rvp(self.cd_p, ready["budget_id"])
         self.assertEqual(country_budget.status, "submitted_to_rvp")
-        self.assertEqual(svc.approve(self.rvp_p, country_budget.id).status, "approved_by_rvp")
+        self.assertEqual(
+            svc.approve(self.rvp_p, country_budget.id).status, "approved_by_rvp"
+        )
 
     # ── CD Admin Budget — the only non-activity exception ────────────────
     def test_no_admin_plan_means_zero_admin_budget(self):

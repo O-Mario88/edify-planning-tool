@@ -226,7 +226,7 @@
       stroke: { width: [0,0,0,2.5], curve: 'smooth' },
       colors: ['var(--edify-chart-green)', 'var(--edify-steel-600)', 'var(--edify-chart-orange)', 'var(--edify-chart-amber)'],
       fill: { opacity: [0.55, .95, .9, 1] },
-      plotOptions: { bar: { columnWidth: '50%', borderRadius: 3 } },
+      plotOptions: { bar: { columnWidth: '50%', borderRadius: 8, borderRadiusApplication: 'end' } },
       dataLabels: { enabled: false },
       labels: {{ team_performance.labels|safe }},
       xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: t.text, fontSize: '12px', fontWeight: 600 } } },

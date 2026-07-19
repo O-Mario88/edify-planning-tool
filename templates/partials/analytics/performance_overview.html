@@ -10,21 +10,54 @@ const options = {
     { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|escape }} }
   ],
   chart: {
-    height: 200,
+    height: 240,
     type: 'line',
     toolbar: { show: false },
-    fontFamily: 'Inter, sans-serif'
+    fontFamily: 'Inter, sans-serif',
+    foreColor: 'var(--edify-text-muted)'
   },
   stroke: {
-    width: [0, 0, 2],
-    curve: 'smooth'
+    width: [0, 0, 2.5],
+    curve: 'smooth',
+    lineCap: 'round',
+    colors: ['transparent', 'transparent', 'var(--edify-chart-green)']
   },
-  colors: ['var(--edify-border)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)'],
+  fill: {
+    type: ['solid', 'gradient', 'solid'],
+    gradient: {
+      shade: 'light',
+      type: 'vertical',
+      shadeIntensity: 0.25,
+      gradientToColors: ['var(--edify-chart-blue-soft)'],
+      inverseColors: false,
+      opacityFrom: 0.95,
+      opacityTo: 0.7,
+      stops: [0, 100]
+    }
+  },
+  colors: ['var(--edify-chart-blue-soft)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)'],
   plotOptions: {
     bar: {
-      columnWidth: '45%',
-      borderRadius: 3
+      columnWidth: '42%',
+      borderRadius: 8,
+      borderRadiusApplication: 'end',
+      colors: { backgroundBarRadius: 8 }
     }
+  },
+  markers: {
+    size: [0, 0, 6],
+    colors: ['var(--edify-surface)'],
+    strokeColors: 'var(--edify-chart-green)',
+    strokeWidth: 2.5,
+    radius: 6,
+    hover: { size: 8 }
+  },
+  dataLabels: {
+    enabled: true,
+    enabledOnSeries: [2],
+    formatter: function (val) { return Math.round(val) + '%'; },
+    style: { colors: ['var(--edify-chart-green)'], fontSize: '11px', fontWeight: 700 },
+    background: { enabled: true, foreColor: 'var(--edify-chart-green)', borderRadius: 8, padding: 3, opacity: 1, borderWidth: 0, borderColor: 'var(--edify-surface)' }
   },
   labels: {{ performance_overview.labels|escape }},
   xaxis: {
@@ -42,22 +75,21 @@ const options = {
   yaxis: [
     {
       title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Inter' } },
-      labels: {
-        style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }
-      }
+      labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } }
     },
     {
       opposite: true,
-      title: { text: 'Achievement %', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Inter' } },
+      title: { text: 'Achievement %', style: { color: 'var(--edify-chart-green)', fontSize: '12px', fontWeight: '600', fontFamily: 'Inter' } },
       max: 100,
-      labels: {
-        formatter: function (val) { return val + '%'; },
-        style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }
-      }
+      labels: { formatter: function (val) { return Math.round(val) + '%'; }, style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } }
     }
   ],
   grid: {
-    borderColor: 'var(--edify-chart-grid)'
+    borderColor: 'transparent',
+    strokeDashArray: 4,
+    xaxis: { lines: { show: false } },
+    yaxis: { lines: { show: true } },
+    padding: { left: 2, right: 6 }
   },
   legend: {
     position: 'top',
@@ -65,10 +97,13 @@ const options = {
     fontSize: '12px',
     fontWeight: '500',
     labels: { colors: 'var(--edify-text-muted)' },
-    markers: { radius: 12 }
+    markers: { size: 7, strokeWidth: 0, radius: 12 },
+    itemMargin: { horizontal: 10, vertical: 0 }
   },
   tooltip: {
-    theme: 'dark'
+    theme: 'dark',
+    shared: true,
+    style: { fontSize: '12px', fontFamily: 'Inter' }
   }
 };
 this.chart = new ApexCharts(document.querySelector('#performanceChart'), options);
@@ -89,5 +124,5 @@ class="edify-surface rounded-surface p-5 shadow-sm space-y-3"
   </select>
 </div>
 
-<div class="h-[200px] w-full" id="performanceChart"></div>
+<div class="h-[240px] w-full" id="performanceChart"></div>
 </div>

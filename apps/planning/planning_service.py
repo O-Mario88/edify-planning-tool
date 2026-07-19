@@ -488,7 +488,11 @@ class PlanningDashboardService:
             completed_visits_by_school = dict(
                 Activity.objects.filter(
                     school_id__in=school_ids,
-                    activity_type__in=["school_visit", "core_visit", "baseline_ssa_visit"],
+                    activity_type__in=[
+                        "school_visit",
+                        "core_visit",
+                        "baseline_ssa_visit",
+                    ],
                     status="completed",
                     deleted_at__isnull=True,
                 )
@@ -522,8 +526,7 @@ class PlanningDashboardService:
                 for attended_school_id in attended_school_ids or []:
                     if attended_school_id in wanted_school_ids:
                         completed_trainings_by_school[attended_school_id] = (
-                            completed_trainings_by_school.get(attended_school_id, 0)
-                            + 1
+                            completed_trainings_by_school.get(attended_school_id, 0) + 1
                         )
 
             # Serialize Schools

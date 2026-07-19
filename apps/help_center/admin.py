@@ -1,8 +1,15 @@
 from django.contrib import admin
 
 from .models import (
-    HelpArticle, HelpArticleFeedback, HelpArticleRoleAccess, HelpArticleRouteContext,
-    HelpArticleVersion, HelpCategory, HelpGlossaryTerm, HelpReleaseNote, HelpSearchKeyword,
+    HelpArticle,
+    HelpArticleFeedback,
+    HelpArticleRoleAccess,
+    HelpArticleRouteContext,
+    HelpArticleVersion,
+    HelpCategory,
+    HelpGlossaryTerm,
+    HelpReleaseNote,
+    HelpSearchKeyword,
     HelpWalkthrough,
 )
 
@@ -26,7 +33,14 @@ class VersionInline(admin.TabularInline):
 
 @admin.register(HelpArticle)
 class HelpArticleAdmin(admin.ModelAdmin):
-    list_display = ("title", "category", "state", "version", "last_reviewed_at", "review_due_at")
+    list_display = (
+        "title",
+        "category",
+        "state",
+        "version",
+        "last_reviewed_at",
+        "review_due_at",
+    )
     list_filter = ("state", "category")
     search_fields = ("title", "summary", "search_document", "keywords")
     prepopulated_fields = {"slug": ("title",)}

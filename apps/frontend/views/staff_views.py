@@ -14,6 +14,7 @@ from apps.accounts.models import User, StaffProfile
 from apps.activities.models import Activity
 from apps.notifications.models import Notification
 from apps.core.fy import get_operational_fy
+from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
@@ -129,7 +130,6 @@ def staff_directory_view(request):
     # every id maps back to the same canonical user, so summing counts
     # across a user's id-space entries can't double count a given activity
     # (each row has exactly one responsible_staff_id value).
-    VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit"]
     id_to_user = {}
     for u in page_staff:
         for i in _user_ids(u):
@@ -368,8 +368,6 @@ def visits_log_view(request):
     status_filter = request.GET.get("status", "")
     search = request.GET.get("q", "").strip()
 
-    VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
-
     visits_qs = (
         Activity.objects.filter(
             responsible_staff_id=user.id,
@@ -420,13 +418,6 @@ def trainings_log_view(request):
     # enum members (see apps.core.enums.ActivityType) so they never matched
     # anything -- only cluster_training activities ever showed up here. Use
     # the real training-type enum members instead.
-    TRAINING_TYPES = [
-        "training",
-        "school_improvement_training",
-        "cluster_training",
-        "core_training",
-        "cluster_training_ssa_collection",
-    ]
 
     trainings_qs = (
         Activity.objects.filter(
@@ -478,16 +469,8 @@ def evidence_gallery_view(request):
 
 # ─── MY TARGETS ───────────────────────────────────────────────────────────────
 
-VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
 # See trainings_log_view for why "group_training"/"teachers_training" are
 # wrong -- kept in sync with the real ActivityType enum members.
-TRAINING_TYPES = [
-    "training",
-    "school_improvement_training",
-    "cluster_training",
-    "core_training",
-    "cluster_training_ssa_collection",
-]
 _QUARTERS = ["Q1", "Q2", "Q3", "Q4"]
 
 

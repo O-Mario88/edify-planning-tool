@@ -122,8 +122,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--radius-control: 8px",
             "--radius-overlay: 16px",
         ):
-            self.assertIn(declaration, source, f"{declaration} missing from Tailwind source")
-            self.assertIn(declaration, compiled, f"{declaration} missing from compiled main.css")
+            self.assertIn(
+                declaration, source, f"{declaration} missing from Tailwind source"
+            )
+            self.assertIn(
+                declaration, compiled, f"{declaration} missing from compiled main.css"
+            )
 
         # No second definition anywhere else in the loaded cascade.
         for token in ("--radius-surface", "--radius-control", "--radius-overlay"):
@@ -133,7 +137,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
                 f"{token} must not be redefined in design-system.css — it is "
                 "defined once in assets/css/tailwind.source.css.",
             )
-
 
     def test_sign_in_layout_is_not_a_design_system_island(self):
         """The sign-in screen must consume the same token layer as the app.
@@ -471,7 +474,9 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
                     if pattern.search(line):
                         offenders.append(f"{path}:{lineno}")
         self.assertEqual(
-            offenders, [], f"Use the shared shadow scale, not arbitrary values: {offenders}"
+            offenders,
+            [],
+            f"Use the shared shadow scale, not arbitrary values: {offenders}",
         )
 
     def test_no_inline_border_radius_in_templates(self):
@@ -501,7 +506,10 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
                 for lineno, line in enumerate(handle, 1):
                     for value in pattern.findall(line):
                         normalized = value.strip().lower()
-                        if "--edify-font" not in normalized and "inter" not in normalized:
+                        if (
+                            "--edify-font" not in normalized
+                            and "inter" not in normalized
+                        ):
                             offenders.append(f"{path}:{lineno} -> {value.strip()[:50]}")
         self.assertEqual(
             offenders,
@@ -558,9 +566,7 @@ class StatusColourConsistencyGuardTest(SimpleTestCase):
                         frozenset(families), []
                     ).append(path.relative_to(ROOT).as_posix())
 
-        conflicts = {
-            label: tones for label, tones in seen.items() if len(tones) > 1
-        }
+        conflicts = {label: tones for label, tones in seen.items() if len(tones) > 1}
         detail = "; ".join(
             f"{label} renders as "
             + " and ".join(
@@ -613,7 +619,9 @@ class FocusTreatmentConsistencyGuardTest(SimpleTestCase):
                     offenders.append(f"{path.name}: {value[:70]}")
 
         self.assertGreater(
-            definitions, 0, "focus token scan matched nothing -- the guard has gone blind"
+            definitions,
+            0,
+            "focus token scan matched nothing -- the guard has gone blind",
         )
         self.assertEqual(
             offenders,
@@ -687,15 +695,13 @@ class TemplateCommentLeakGuardTest(SimpleTestCase):
         for path in sorted((ROOT / "templates").rglob("*.html")):
             markup = path.read_text(encoding="utf-8", errors="ignore")
             for match in re.finditer(r"\{#", markup):
-                rest = markup[match.start():]
+                rest = markup[match.start() :]
                 close = rest.find("#}")
                 if close == -1:
                     continue
                 if "\n" in rest[:close]:
                     line = markup[: match.start()].count("\n") + 1
-                    offenders.append(
-                        f"{path.relative_to(ROOT).as_posix()}:{line}"
-                    )
+                    offenders.append(f"{path.relative_to(ROOT).as_posix()}:{line}")
         self.assertEqual(
             offenders,
             [],

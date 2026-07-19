@@ -20,7 +20,9 @@ def expand_guides_for_learning(apps, schema_editor):
     HelpArticleVersion = apps.get_model("help_center", "HelpArticleVersion")
     now = timezone.now()
 
-    for article in HelpArticle.objects.filter(state__in=["published", "review_due"]).select_related("category"):
+    for article in HelpArticle.objects.filter(
+        state__in=["published", "review_due"]
+    ).select_related("category"):
         old_content = article.content or []
         steps = []
         for section in old_content:
@@ -46,11 +48,21 @@ def expand_guides_for_learning(apps, schema_editor):
         article.version += 1
         article.reviewer_name = "Edify learning-guide review"
         article.last_reviewed_at = now
-        article.estimated_reading_minutes = max(4, min(14, (len(str(content)) + len(article.summary)) // 420 + 2))
+        article.estimated_reading_minutes = max(
+            4, min(14, (len(str(content)) + len(article.summary)) // 420 + 2)
+        )
         article.search_document = rebuild_search_document(article)
-        article.save(update_fields=[
-            "content", "version", "reviewer_name", "last_reviewed_at", "estimated_reading_minutes", "search_document", "updated_at",
-        ])
+        article.save(
+            update_fields=[
+                "content",
+                "version",
+                "reviewer_name",
+                "last_reviewed_at",
+                "estimated_reading_minutes",
+                "search_document",
+                "updated_at",
+            ]
+        )
         HelpArticleVersion.objects.create(
             article=article,
             version=article.version,
@@ -75,4 +87,6 @@ def expand_guides_for_learning(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [("help_center", "0006_polish_everyday_language")]
-    operations = [migrations.RunPython(expand_guides_for_learning, migrations.RunPython.noop)]
+    operations = [
+        migrations.RunPython(expand_guides_for_learning, migrations.RunPython.noop)
+    ]

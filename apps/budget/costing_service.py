@@ -379,9 +379,7 @@ def apply_to_activity(
     from apps.fund_requests.models import WeeklyFundRequest
 
     if (
-        WeeklyFundRequest.objects.filter(
-            lines__activity_budget_line__activity=activity
-        )
+        WeeklyFundRequest.objects.filter(lines__activity_budget_line__activity=activity)
         .exclude(status="pending_responsible_confirmation")
         .exists()
     ):

@@ -50,6 +50,7 @@ from apps.core.fy import (
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
+from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
 # Target achievement is completed-vs-StaffTargetProfile (the spec's definition),
 # computed inline; the stricter apps.targets.performance engine is intentionally
 # not used here (it measures IA-verified achievement, not field execution).
@@ -81,28 +82,6 @@ PLANNED_STATUSES = (
 )
 VERIFIED_STATUSES = ("ia_verified", "closed")
 
-VISIT_TYPES = (
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "in_school_support",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-    "core_visit",
-    "core_assessment_visit",
-)
-TRAINING_TYPES = (
-    "training",
-    "in_school_training",
-    "school_improvement_training",
-    "cluster_training",
-    "core_training",
-)
-CLUSTER_MEETING_TYPES = ("cluster_meeting", "cluster_meeting_ssa_review")
 SSA_COLLECTION_TYPES = (
     "ssa_activity",
     "baseline_ssa_visit",

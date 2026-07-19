@@ -128,7 +128,9 @@ class HelpArticle(TimeStampedModel):
             fragments.extend(section.get("items", []) or [])
         self.search_document = "\n".join(str(part) for part in fragments if part)
         if save and self.pk:
-            type(self).objects.filter(pk=self.pk).update(search_document=self.search_document)
+            type(self).objects.filter(pk=self.pk).update(
+                search_document=self.search_document
+            )
         return self.search_document
 
 
@@ -287,7 +289,9 @@ class HelpWalkthrough(TimeStampedModel):
     id = CuidField()
     title = models.CharField(max_length=160)
     slug = models.SlugField(max_length=160, unique=True)
-    article = models.ForeignKey(HelpArticle, on_delete=models.CASCADE, related_name="walkthroughs")
+    article = models.ForeignKey(
+        HelpArticle, on_delete=models.CASCADE, related_name="walkthroughs"
+    )
     route_pattern = models.CharField(max_length=255)
     steps = models.JSONField(default=list)
     roles = models.JSONField(default=list)
@@ -307,5 +311,7 @@ def article_snapshot(article: HelpArticle) -> dict:
         "workflow": article.workflow,
         "state": article.state,
         "version": article.version,
-        "reviewed_at": article.last_reviewed_at.isoformat() if article.last_reviewed_at else None,
+        "reviewed_at": article.last_reviewed_at.isoformat()
+        if article.last_reviewed_at
+        else None,
     }

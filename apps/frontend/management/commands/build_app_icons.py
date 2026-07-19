@@ -120,7 +120,6 @@ class Command(BaseCommand):
         makes it taller than it is wide, so the square is taken from the width
         and anchored at the top of the tile rather than centred on the box.
         """
-        from PIL import Image
 
         w, h = img.size
         px = img.load()
@@ -135,8 +134,16 @@ class Command(BaseCommand):
             return (p[0] + p[1] + p[2]) / 3 < t
 
         step = max(1, min(w, h) // 400)
-        cols = [x for x in range(0, w, step) if any(dark(px[x, y]) for y in range(0, h, step))]
-        rows = [y for y in range(0, h, step) if any(dark(px[x, y]) for x in range(0, w, step))]
+        cols = [
+            x
+            for x in range(0, w, step)
+            if any(dark(px[x, y]) for y in range(0, h, step))
+        ]
+        rows = [
+            y
+            for y in range(0, h, step)
+            if any(dark(px[x, y]) for x in range(0, w, step))
+        ]
         if not cols or not rows:
             # Nothing dark to find -- treat the image as already full-bleed.
             side = min(w, h)

@@ -276,7 +276,9 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/schools")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/schools/index.html")
-        self.assertContains(response, 'class="school-directory-list school-record-list"')
+        self.assertContains(
+            response, 'class="school-directory-list school-record-list"'
+        )
         self.assertContains(response, 'class="school-directory-row school-record-row"')
         self.assertContains(response, 'x-data="{ openSchoolId: null }"')
         self.assertContains(response, '@click.outside="openSchoolId = null"')
@@ -340,13 +342,13 @@ class FrontendViewsTestCase(TestCase):
                 self.assertContains(response, "(8.5/10)")
 
         planning_school = next(
-            item
-            for item in response.context["schools"]
-            if item["id"] == self.school.id
+            item for item in response.context["schools"] if item["id"] == self.school.id
         )
         self.assertEqual(planning_school["ssaAverage"], 5.4)
 
-    def test_planning_keeps_partner_assignment_available_when_scheduling_is_blocked(self):
+    def test_planning_keeps_partner_assignment_available_when_scheduling_is_blocked(
+        self,
+    ):
         """A partner handoff does not create a costed activity until dated.
 
         The Planning list must therefore keep Assign available to authorised
@@ -414,9 +416,7 @@ class FrontendViewsTestCase(TestCase):
     def test_clusters_directory_view_renders(self):
         self.cluster.cluster_leader_name = "Jane Leader"
         self.cluster.cluster_leader_phone = "+256 700 123456"
-        self.cluster.save(
-            update_fields=["cluster_leader_name", "cluster_leader_phone"]
-        )
+        self.cluster.save(update_fields=["cluster_leader_name", "cluster_leader_phone"])
         self.client.force_login(self.cceo_user)
         response = self.client.get("/clusters")
         self.assertEqual(response.status_code, 200)
@@ -471,7 +471,9 @@ class FrontendViewsTestCase(TestCase):
         self.assertNotContains(response, "Cluster Intervention Scores")
 
         cluster_card = next(
-            item for item in response.context["clusters"] if item["id"] == self.cluster.id
+            item
+            for item in response.context["clusters"]
+            if item["id"] == self.cluster.id
         )
         self.assertTrue(cluster_card["has_ssa_scores"])
         self.assertEqual(
@@ -548,7 +550,9 @@ class FrontendViewsTestCase(TestCase):
         self.school.cluster_id = self.cluster.id
         self.school.cluster_status = "clustered"
         self.school.shipping_address = "Plot 12, Kampala Road"
-        self.school.save(update_fields=["cluster_id", "cluster_status", "shipping_address"])
+        self.school.save(
+            update_fields=["cluster_id", "cluster_status", "shipping_address"]
+        )
         self.client.force_login(self.cceo_user)
 
         response = self.client.get(f"/partials/clusters/{self.cluster.id}/schools")
@@ -1297,8 +1301,14 @@ class FrontendViewsTestCase(TestCase):
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(PartnerAssignment.objects.filter(school=self.school, partner=partner).exists())
-        activity = Activity.objects.get(school=self.school, assigned_partner_id=partner.id)
+        self.assertTrue(
+            PartnerAssignment.objects.filter(
+                school=self.school, partner=partner
+            ).exists()
+        )
+        activity = Activity.objects.get(
+            school=self.school, assigned_partner_id=partner.id
+        )
         self.assertTrue(activity.cost_missing)
         self.assertGreater(activity.schedule_cost_lines.count(), 0)
 
@@ -1349,8 +1359,16 @@ class FrontendViewsTestCase(TestCase):
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(PartnerAssignment.objects.filter(school=self.school, partner=partner).exists())
-        self.assertTrue(Activity.objects.filter(school=self.school, assigned_partner_id=partner.id).exists())
+        self.assertTrue(
+            PartnerAssignment.objects.filter(
+                school=self.school, partner=partner
+            ).exists()
+        )
+        self.assertTrue(
+            Activity.objects.filter(
+                school=self.school, assigned_partner_id=partner.id
+            ).exists()
+        )
 
     def test_bulk_assign_partner_with_date_creates_activities(self):
         """Bulk partner assignment with a shared date must create BOTH the
@@ -1508,8 +1526,14 @@ class FrontendViewsTestCase(TestCase):
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(PartnerAssignment.objects.filter(school=self.school, partner=partner).exists())
-        activity = Activity.objects.get(school=self.school, assigned_partner_id=partner.id)
+        self.assertTrue(
+            PartnerAssignment.objects.filter(
+                school=self.school, partner=partner
+            ).exists()
+        )
+        activity = Activity.objects.get(
+            school=self.school, assigned_partner_id=partner.id
+        )
         self.assertTrue(activity.cost_missing)
 
     def test_assign_partner_action_cluster_uses_default_participant_costing(self):
@@ -1539,8 +1563,16 @@ class FrontendViewsTestCase(TestCase):
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(PartnerAssignment.objects.filter(cluster=self.cluster, partner=partner).exists())
-        self.assertTrue(Activity.objects.filter(cluster=self.cluster, assigned_partner_id=partner.id).exists())
+        self.assertTrue(
+            PartnerAssignment.objects.filter(
+                cluster=self.cluster, partner=partner
+            ).exists()
+        )
+        self.assertTrue(
+            Activity.objects.filter(
+                cluster=self.cluster, assigned_partner_id=partner.id
+            ).exists()
+        )
 
     def test_notification_drawer_and_mark_read(self):
         from apps.notifications.models import Notification

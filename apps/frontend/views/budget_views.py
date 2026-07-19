@@ -19,7 +19,7 @@ from apps.fund_requests.models import WeeklyFundRequest, AdvanceRequest, FundReq
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.geography.models import District
 from apps.accounts.models import StaffProfile
-from apps.core.fy import get_operational_fy, get_quarter_date_range, get_fy_date_range
+from apps.core.fy import get_quarter_date_range, get_fy_date_range
 from apps.core.scoping import resolve_user_scope
 
 

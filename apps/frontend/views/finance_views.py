@@ -1344,9 +1344,7 @@ def country_budget_action_view(request):
             )
             ok = f"{b.month_key} Country Monthly Budget returned for correction."
         elif action == "approve_pl_request":
-            svc.approve_pl_monthly_request(
-                request.user, request.POST.get("request_id")
-            )
+            svc.approve_pl_monthly_request(request.user, request.POST.get("request_id"))
             ok = "Program Lead request approved and added to the country budget."
         elif action == "return_pl_request":
             svc.return_pl_monthly_request(

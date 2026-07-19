@@ -13,44 +13,35 @@
 {% endcomment %}
 {% include "partials/analytics/regional_performance.html" %}
 
-<!-- Main grid section (Layout Alignment Fixed using compiled lg:col-span-9 and lg:col-span-3) -->
+<!-- Row 1: Performance Overview (wide, chart needs room) + Core & Champion Schools (narrower) -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-<!-- Left 9 columns: Core dashboard content (lg:col-span-9) -->
-<div class="lg:col-span-9 space-y-6">
-
-<!-- Row 1: Charts (Performance Overview & SSA by Intervention) -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-{% include "partials/analytics/performance_overview.html" %}
-{% include "partials/analytics/ssa_performance.html" %}
+  <div class="lg:col-span-8">{% include "partials/analytics/performance_overview.html" %}</div>
+  <div class="lg:col-span-4">{% include "partials/analytics/core_champion_performance.html" %}</div>
 </div>
 
-<!-- Row 2: Target achievement and cluster performance, side by side -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-{% include "partials/analytics/target_by_district.html" %}
-{% include "partials/analytics/cluster_performance.html" %}
+<!-- Row 2: Cluster Performance (Top 10) takes the majority of the column;
+     the right rail (Recommended Actions tiles incl. Clusters Needing Attention,
+     + Recommended Strategy) sits beside it, with Target Achievement by District
+     stacked directly below that rail. -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  <div class="lg:col-span-8">{% include "partials/analytics/cluster_performance.html" %}</div>
+  <div class="lg:col-span-4 space-y-6">
+    {% include "partials/analytics/recommended_insights.html" %}
+    {% include "partials/analytics/target_by_district.html" %}
+  </div>
 </div>
 
-<!-- Row 3: Impact Summary & Activity tracking -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Row 3: Impact Summary, Activity Tracking & Donor Reporting Snapshot -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 {% include "partials/analytics/impact_summary.html" %}
 {% include "partials/analytics/activity_tracking.html" %}
-</div>
-
-<!-- Row 4: Staff/Partner performance, Core/Champion metrics, Donor Reporting Snapshot -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-{% include "partials/analytics/staff_partner_performance.html" %}
-{% include "partials/analytics/core_champion_performance.html" %}
 {% include "partials/analytics/donor_reporting_snapshot.html" %}
 </div>
 
-</div>
-
-<!-- Right 3 columns: Recommended Insights Rail (lg:col-span-3) -->
-<div class="lg:col-span-3">
-{% include "partials/analytics/recommended_insights.html" %}
-</div>
-
+<!-- Row 4: Staff & Partner Performance + SSA Performance by Intervention -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+{% include "partials/analytics/staff_partner_performance.html" %}
+{% include "partials/analytics/ssa_performance.html" %}
 </div>
 
 </div>

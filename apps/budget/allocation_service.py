@@ -3,20 +3,7 @@ from apps.accounts.models import StaffProfile
 from apps.activities.models import ActivityScheduleCostLine
 from apps.geography.models import District
 from apps.budget.admin_budget_service import AdminBudgetAllocationService
-
-VISIT_TYPES = {
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "in_school_support",
-    "core_visit",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-}
+from apps.core.activity_types import VISIT_TYPES
 
 
 class MonthlyFundAllocationService:

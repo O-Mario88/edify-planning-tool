@@ -20,6 +20,7 @@ from apps.core.scoping import resolve_user_scope
 
 from .costing import LEGACY_CLUSTER_ACTIVITY_COST_KEYS, cost_for_activity
 from .models import CostSetting, CostSettingHistory
+from apps.core.activity_types import TRAINING_TYPES
 
 
 # ── Rate card ────────────────────────────────────────────────────────────────
@@ -224,15 +225,6 @@ def from_schedule(principal, query: dict) -> dict:
     by_month_trainings: dict[int, int] = {}
     staff_amount = staff_count = 0
     partner_amount = partner_count = 0
-
-    TRAINING_TYPES = {
-        "training",
-        "in_school_training",
-        "school_improvement_training",
-        "cluster_training",
-        "core_training",
-        "cluster_meeting",
-    }
 
     for a in activities:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
@@ -723,10 +715,12 @@ def _workspace_owner_ids(principal, scope, *, include_team: bool) -> list[str] |
     if scope.country_scope:
         return None
 
-    owner_ids = {
-        getattr(principal, "user_id", None) or getattr(principal, "id", None)
-    }
-    if include_team and scope.active_role == "Program Lead" and scope.supervised_staff_ids:
+    owner_ids = {getattr(principal, "user_id", None) or getattr(principal, "id", None)}
+    if (
+        include_team
+        and scope.active_role == "Program Lead"
+        and scope.supervised_staff_ids
+    ):
         from apps.accounts.models import StaffProfile
 
         owner_ids.update(
@@ -817,7 +811,11 @@ def budget_workspace(principal, query: dict) -> dict:
 
     scope = resolve_user_scope(principal)
     try:
-        anchor = date.fromisoformat(str(query.get("date"))[:10]) if query.get("date") else None
+        anchor = (
+            date.fromisoformat(str(query.get("date"))[:10])
+            if query.get("date")
+            else None
+        )
     except ValueError:
         anchor = None
     anchor = anchor or timezone.localdate()
@@ -827,9 +825,7 @@ def budget_workspace(principal, query: dict) -> dict:
     selected = periods[selected_period]
     is_program_lead = scope.active_role == "Program Lead"
     budget_scope = (
-        "team"
-        if is_program_lead and query.get("budget_scope") == "team"
-        else "my"
+        "team" if is_program_lead and query.get("budget_scope") == "team" else "my"
     )
     owner_ids = _workspace_owner_ids(
         principal, scope, include_team=budget_scope == "team"
@@ -899,7 +895,11 @@ def budget_workspace(principal, query: dict) -> dict:
     )
     user_names = dict(
         User.objects.filter(
-            id__in={line.responsible_user for line in selected_lines if line.responsible_user}
+            id__in={
+                line.responsible_user
+                for line in selected_lines
+                if line.responsible_user
+            }
         ).values_list("id", "name")
     )
     # A supervisor needs a quick view of each person's total without having to
@@ -1046,7 +1046,9 @@ def budget_workspace(principal, query: dict) -> dict:
                     "is_admin": True,
                 }
                 groups[admin_group["label"]] = admin_group
-            item_label = line.description or line.cost_category.replace("_", " ").title()
+            item_label = (
+                line.description or line.cost_category.replace("_", " ").title()
+            )
             row = admin_group["rows"].setdefault(
                 item_label,
                 {
@@ -1150,9 +1152,9 @@ def budget_workspace(principal, query: dict) -> dict:
         "weekly_request_count": weekly_requests.count(),
         "monthly_request_count": monthly_requests.count(),
         "role": getattr(principal, "active_role", ""),
-        "scope_label": "Country" if scope.country_scope else (
-            "Team" if budget_scope == "team" else "My"
-        ),
+        "scope_label": "Country"
+        if scope.country_scope
+        else ("Team" if budget_scope == "team" else "My"),
         "budget_scope": budget_scope,
         "is_program_lead": is_program_lead,
         "team_summary": team_summary,

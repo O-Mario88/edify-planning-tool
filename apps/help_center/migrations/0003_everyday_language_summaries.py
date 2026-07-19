@@ -47,16 +47,26 @@ def make_summaries_everyday_language(apps, schema_editor):
 
     for article in HelpArticle.objects.filter(state__in=["published", "review_due"]):
         summary = friendly_summary(article.summary)
-        if summary == article.summary and article.reviewer_name != "Edify plain-language review":
+        if (
+            summary == article.summary
+            and article.reviewer_name != "Edify plain-language review"
+        ):
             continue
         article.summary = summary
         article.version += 1
         article.reviewer_name = "Edify plain-language review"
         article.last_reviewed_at = now
         article.search_document = rebuild_search_document(article)
-        article.save(update_fields=[
-            "summary", "version", "reviewer_name", "last_reviewed_at", "search_document", "updated_at",
-        ])
+        article.save(
+            update_fields=[
+                "summary",
+                "version",
+                "reviewer_name",
+                "last_reviewed_at",
+                "search_document",
+                "updated_at",
+            ]
+        )
         HelpArticleVersion.objects.create(
             article=article,
             version=article.version,
@@ -81,4 +91,8 @@ def make_summaries_everyday_language(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [("help_center", "0002_plain_language_article_copy")]
-    operations = [migrations.RunPython(make_summaries_everyday_language, migrations.RunPython.noop)]
+    operations = [
+        migrations.RunPython(
+            make_summaries_everyday_language, migrations.RunPython.noop
+        )
+    ]

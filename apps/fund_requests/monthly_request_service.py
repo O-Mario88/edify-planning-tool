@@ -160,9 +160,13 @@ def submit_to_cd(principal, fy: str, month: int):
     with transaction.atomic():
         request = _team_request(principal, fy, month, lock=True)
         if request and request.status == FundRequestStatus.SUBMITTED_TO_CD:
-            raise BadRequest("This monthly request is already waiting for the Country Director.")
+            raise BadRequest(
+                "This monthly request is already waiting for the Country Director."
+            )
         if request and request.status == FundRequestStatus.APPROVED_BY_CD:
-            raise BadRequest("This monthly request has already been approved by the Country Director.")
+            raise BadRequest(
+                "This monthly request has already been approved by the Country Director."
+            )
         request = _refresh_locked(principal, fy, month)
         request.status = FundRequestStatus.SUBMITTED_TO_CD
         request.reviewed_by_user_id = None
@@ -254,7 +258,8 @@ def _status_meta(request):
         FundRequestStatus.RETURNED_BY_CD: (
             "Returned for changes",
             "danger",
-            request.review_note or "Refresh the Team Budget, make any plan changes, then submit again.",
+            request.review_note
+            or "Refresh the Team Budget, make any plan changes, then submit again.",
         ),
     }
     return meta.get(
@@ -272,7 +277,9 @@ def _display_rows(lines):
         ).values_list("id", "name")
     )
     rows = []
-    staff_totals = defaultdict(lambda: {"name": "Unassigned", "total": 0, "activities": set()})
+    staff_totals = defaultdict(
+        lambda: {"name": "Unassigned", "total": 0, "activities": set()}
+    )
     category_totals = defaultdict(int)
     cost_groups = {}
     for line in lines:
@@ -321,7 +328,9 @@ def _display_rows(lines):
                 "total": value["total"],
                 "total_fmt": _ugx(value["total"]),
             }
-            for value in sorted(staff_totals.values(), key=lambda value: -value["total"])
+            for value in sorted(
+                staff_totals.values(), key=lambda value: -value["total"]
+            )
         ],
         "category_rows": [
             {"label": key, "total": total, "total_fmt": _ugx(total)}
@@ -348,8 +357,15 @@ def get_monthly_request(principal, filters=None) -> dict:
     live_lines = _live_month_lines(principal, fy, month)
     request_lines = []
     if request:
-        source_ids = list(request.items.values_list("activity_schedule_cost_line_id", flat=True))
-        by_id = {line.id: line for line in ActivityScheduleCostLine.objects.filter(id__in=source_ids).select_related("activity", "activity__school")}
+        source_ids = list(
+            request.items.values_list("activity_schedule_cost_line_id", flat=True)
+        )
+        by_id = {
+            line.id: line
+            for line in ActivityScheduleCostLine.objects.filter(
+                id__in=source_ids
+            ).select_related("activity", "activity__school")
+        }
         request_lines = [by_id[line_id] for line_id in source_ids if line_id in by_id]
     source_lines = request_lines if request else live_lines
     display = _display_rows(source_lines)
@@ -394,7 +410,9 @@ def get_monthly_request(principal, filters=None) -> dict:
         action_hint = "This saved budget matches the latest planned costs. You can now send it to the Country Director."
     else:
         action_title = "Start your monthly review"
-        action_hint = "Fetch the latest Team Budget to create the review copy you will submit."
+        action_hint = (
+            "Fetch the latest Team Budget to create the review copy you will submit."
+        )
     return {
         "fy": fy,
         "month": month,

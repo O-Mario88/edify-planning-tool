@@ -534,9 +534,7 @@ class Command(BaseCommand):
             CostSetting.objects.update_or_create(
                 key=key,
                 defaults={
-                    "label": friendly_labels.get(
-                        key, key.replace("_", " ").title()
-                    ),
+                    "label": friendly_labels.get(key, key.replace("_", " ").title()),
                     "unit_cost": cost,
                 },
             )

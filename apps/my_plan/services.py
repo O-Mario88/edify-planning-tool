@@ -71,10 +71,16 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
         if not sf_id:
             return "Activity ID Missing", "bg-amber-50 text-amber-700 border-amber-200"
         if ia == "pending":
-            return "IA Pending", "edify-primary-soft edify-primary-text edify-primary-border"
+            return (
+                "IA Pending",
+                "edify-primary-soft edify-primary-text edify-primary-border",
+            )
         if ia == "confirmed":
             return "IA Verified", "bg-emerald-50 text-emerald-700 border-emerald-200"
-        return "Accounts Pending", "edify-primary-soft edify-primary-text edify-primary-border"
+        return (
+            "Accounts Pending",
+            "edify-primary-soft edify-primary-text edify-primary-border",
+        )
 
     if status in (
         "returned",
@@ -504,8 +510,12 @@ def get_frontend_context(principal, query: dict) -> dict:
     elif period == "month":
         month_name = date(year_int, month_int, 1).strftime("%B")
         period_label = f"{month_name} {year_int}"
-        month_end = date(year_int, month_int, calendar.monthrange(year_int, month_int)[1])
-        qs_period = qs.filter(_scheduled_in_range(date(year_int, month_int, 1), month_end))
+        month_end = date(
+            year_int, month_int, calendar.monthrange(year_int, month_int)[1]
+        )
+        qs_period = qs.filter(
+            _scheduled_in_range(date(year_int, month_int, 1), month_end)
+        )
     elif period == "quarter":
         period_label = f"{quarter} FY{fy}"
         qs_period = qs.filter(quarter=quarter)
@@ -523,7 +533,9 @@ def get_frontend_context(principal, query: dict) -> dict:
     planned_this_month = qs.filter(
         _scheduled_in_range(
             date(today.year, today.month, 1),
-            date(today.year, today.month, calendar.monthrange(today.year, today.month)[1]),
+            date(
+                today.year, today.month, calendar.monthrange(today.year, today.month)[1]
+            ),
         )
     ).count()
     planned_this_quarter = qs.filter(quarter=get_quarter_for_date(today)).count()

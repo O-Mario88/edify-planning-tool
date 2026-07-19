@@ -41,7 +41,9 @@ class ManifestTest(TestCase):
             name = icon["src"].rsplit("/", 1)[-1]
             if not (ICON_DIR / name).exists():
                 missing.append(icon["src"])
-        self.assertEqual(missing, [], f"manifest names icons that do not exist: {missing}")
+        self.assertEqual(
+            missing, [], f"manifest names icons that do not exist: {missing}"
+        )
 
 
 class ServiceWorkerTest(TestCase):
@@ -160,9 +162,7 @@ class IconAssetTest(SimpleTestCase):
             if img.mode == "RGBA":
                 px = img.load()
                 for x, y in ((1, 1), (w - 2, h - 2)):
-                    self.assertEqual(
-                        px[x, y][3], 255, f"{name} must be fully opaque"
-                    )
+                    self.assertEqual(px[x, y][3], 255, f"{name} must be fully opaque")
             px = img.convert("RGB").load()
             for x, y in ((1, 1), (w - 2, 1), (1, h - 2), (w - 2, h - 2)):
                 r, g, b = px[x, y]

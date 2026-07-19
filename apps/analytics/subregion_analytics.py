@@ -20,7 +20,6 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
-from django.db.models import Q
 
 from apps.analytics.platform_engine import engine_metadata
 
@@ -61,9 +60,7 @@ def _frame() -> pd.DataFrame:
     )
     frame = pd.DataFrame.from_records(rows)
     if frame.empty:
-        return pd.DataFrame(
-            columns=["district_id", "district", "subregion", "region"]
-        )
+        return pd.DataFrame(columns=["district_id", "district", "subregion", "region"])
     return frame.rename(
         columns={
             "id": "district_id",

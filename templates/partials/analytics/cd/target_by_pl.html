@@ -21,7 +21,7 @@
                         { target: '#drawer-container', swap: 'innerHTML' });
                     } } },
            colors: ['var(--edify-chart-blue)', 'var(--edify-chart-blue-soft)'],
-           plotOptions: { bar: { columnWidth: '62%', borderRadius: 3, dataLabels: { position: 'top' } } },
+           plotOptions: { bar: { columnWidth: '62%', borderRadius: 8, borderRadiusApplication: 'end', dataLabels: { position: 'top' } } },
            dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '12px', colors: ['var(--edify-text-muted)'] }, formatter: v => v + '%' },
            labels: [{% for r in target_by_pl.rows %}'{{ r.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
            xaxis: { axisBorder: { show: false }, axisTicks: { show: false },

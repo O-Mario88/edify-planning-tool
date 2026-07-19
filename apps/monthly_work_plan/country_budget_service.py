@@ -282,7 +282,12 @@ def _recompute_if_live(budget, source=None):
             budget.activity_count = int(source["activity_count"])
             budget.total_amount = budget.program_total + int(budget.admin_total or 0)
             budget.save(
-                update_fields=["program_total", "activity_count", "total_amount", "updated_at"]
+                update_fields=[
+                    "program_total",
+                    "activity_count",
+                    "total_amount",
+                    "updated_at",
+                ]
             )
         else:
             mwp.recompute_program_total(budget)
@@ -556,9 +561,7 @@ def get_country_monthly_budget(principal, filters=None):
             "success",
             source["label"],
         ),
-        _kpi(
-            "SSA Cost", cat_totals["ssa"], "ssa", "warning", source["label"]
-        ),
+        _kpi("SSA Cost", cat_totals["ssa"], "ssa", "warning", source["label"]),
         _kpi(
             "Cluster Training Cost",
             cat_totals["cluster_training"],
@@ -591,7 +594,9 @@ def get_country_monthly_budget(principal, filters=None):
     )
     month_summary = {
         "awaiting_approval": _ugx(awaiting),
-        "plan_backed_cost": _ugx(program_total if source["uses_pl_request_workflow"] else plan_backed_cost),
+        "plan_backed_cost": _ugx(
+            program_total if source["uses_pl_request_workflow"] else plan_backed_cost
+        ),
         "plan_backed_pct": round(program_total / total_monthly * 100)
         if total_monthly
         else 0,
@@ -627,11 +632,7 @@ def get_country_monthly_budget(principal, filters=None):
         }
     )
     trainings_planned = len(
-        {
-            li.activity_id
-            for li in lines
-            if li.activity.activity_type in TRAINING_TYPES + CLUSTER_TRAINING
-        }
+        {li.activity_id for li in lines if li.activity.activity_type in TRAINING_TYPES}
     )
     ssa_visits = len(
         {li.activity_id for li in lines if li.activity.activity_type in SSA_VISIT_TYPES}
@@ -842,67 +843,71 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 },
             ]
         )
-    checks.extend([
-        {
-            "label": "All activity costs linked to planned activities",
-            "status": _status(missing_cost),
-            "detail": f"{len(missing_cost)} line(s) missing a Cost Catalogue source."
-            if missing_cost
-            else "",
-        },
-        {
-            "label": "No uncosted planned activities",
-            "status": _status(needs_review, warn_only=True),
-            "detail": f"{len(needs_review)} activity(ies) need review."
-            if needs_review
-            else "",
-        },
-        {
-            "label": "No orphan budget lines",
-            "status": "passed",
-            "detail": "",
-        },
-        {
-            "label": "Admin budget sourced from CD Monthly Admin Plan",
-            "status": "passed" if admin_lines or budget.admin_total == 0 else "failed",
-            "detail": ""
-            if admin_lines or budget.admin_total == 0
-            else "Admin total set without admin lines.",
-        },
-        {
-            "label": "No cancelled activities included",
-            "status": _status(cancelled_included),
-            "detail": f"{len(cancelled_included)} cancelled activity(ies) excluded."
-            if cancelled_included
-            else "",
-        },
-        {
-            "label": "No duplicate ActivityBudgetLines",
-            "status": _status(dupes > 0),
-            "detail": f"{dupes} duplicate line(s) found." if dupes else "",
-        },
-        {
-            "label": "All Cost Catalogue versions present",
-            "status": _status(missing_catalogue_version, warn_only=True),
-            "detail": f"{len(missing_catalogue_version)} line(s) missing a version."
-            if missing_catalogue_version
-            else "",
-        },
-        {
-            "label": "Partner activities are scheduled before included",
-            "status": _status(partner_unscheduled),
-            "detail": f"{len(partner_unscheduled)} unscheduled partner activity(ies) excluded."
-            if partner_unscheduled
-            else "",
-        },
-        {
-            "label": "Cluster training participant/session counts exist",
-            "status": _status(cluster_missing_counts, warn_only=True),
-            "detail": f"{len(cluster_missing_counts)} training(s) missing counts."
-            if cluster_missing_counts
-            else "",
-        },
-    ])
+    checks.extend(
+        [
+            {
+                "label": "All activity costs linked to planned activities",
+                "status": _status(missing_cost),
+                "detail": f"{len(missing_cost)} line(s) missing a Cost Catalogue source."
+                if missing_cost
+                else "",
+            },
+            {
+                "label": "No uncosted planned activities",
+                "status": _status(needs_review, warn_only=True),
+                "detail": f"{len(needs_review)} activity(ies) need review."
+                if needs_review
+                else "",
+            },
+            {
+                "label": "No orphan budget lines",
+                "status": "passed",
+                "detail": "",
+            },
+            {
+                "label": "Admin budget sourced from CD Monthly Admin Plan",
+                "status": "passed"
+                if admin_lines or budget.admin_total == 0
+                else "failed",
+                "detail": ""
+                if admin_lines or budget.admin_total == 0
+                else "Admin total set without admin lines.",
+            },
+            {
+                "label": "No cancelled activities included",
+                "status": _status(cancelled_included),
+                "detail": f"{len(cancelled_included)} cancelled activity(ies) excluded."
+                if cancelled_included
+                else "",
+            },
+            {
+                "label": "No duplicate ActivityBudgetLines",
+                "status": _status(dupes > 0),
+                "detail": f"{dupes} duplicate line(s) found." if dupes else "",
+            },
+            {
+                "label": "All Cost Catalogue versions present",
+                "status": _status(missing_catalogue_version, warn_only=True),
+                "detail": f"{len(missing_catalogue_version)} line(s) missing a version."
+                if missing_catalogue_version
+                else "",
+            },
+            {
+                "label": "Partner activities are scheduled before included",
+                "status": _status(partner_unscheduled),
+                "detail": f"{len(partner_unscheduled)} unscheduled partner activity(ies) excluded."
+                if partner_unscheduled
+                else "",
+            },
+            {
+                "label": "Cluster training participant/session counts exist",
+                "status": _status(cluster_missing_counts, warn_only=True),
+                "detail": f"{len(cluster_missing_counts)} training(s) missing counts."
+                if cluster_missing_counts
+                else "",
+            },
+        ]
+    )
     return checks
 
 
@@ -1011,9 +1016,11 @@ def approve_pl_monthly_request(principal, request_id):
 
     _require_cd(principal)
     with transaction.atomic():
-        request = FundRequest.objects.select_for_update().filter(
-            id=request_id, scope="team", submitted_by_role="Program Lead"
-        ).first()
+        request = (
+            FundRequest.objects.select_for_update()
+            .filter(id=request_id, scope="team", submitted_by_role="Program Lead")
+            .first()
+        )
         if not request:
             raise BadRequest("Program Lead monthly request not found.")
         if request.status != FundRequestStatus.SUBMITTED_TO_CD:
@@ -1070,9 +1077,11 @@ def return_pl_monthly_request(principal, request_id, note):
     if not note:
         raise BadRequest("Tell the Program Lead what needs to be corrected.")
     with transaction.atomic():
-        request = FundRequest.objects.select_for_update().filter(
-            id=request_id, scope="team", submitted_by_role="Program Lead"
-        ).first()
+        request = (
+            FundRequest.objects.select_for_update()
+            .filter(id=request_id, scope="team", submitted_by_role="Program Lead")
+            .first()
+        )
         if not request:
             raise BadRequest("Program Lead monthly request not found.")
         if request.status != FundRequestStatus.SUBMITTED_TO_CD:

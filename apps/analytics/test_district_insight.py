@@ -27,21 +27,28 @@ class DistrictInsightTest(TestCase):
         )
         self.schools = [
             School.objects.create(
-                school_id=f"G-{i}", name=f"Gulu School {i}",
-                region=self.region, district=self.gulu,
+                school_id=f"G-{i}",
+                name=f"Gulu School {i}",
+                region=self.region,
+                district=self.gulu,
             )
             for i in range(4)
         ]
         # one school in the neighbouring district, to prove counts do not leak
         School.objects.create(
-            school_id="K-1", name="Kitgum School",
-            region=self.region, district=self.kitgum,
+            school_id="K-1",
+            name="Kitgum School",
+            region=self.region,
+            district=self.kitgum,
         )
 
     def _ssa(self, school, score, fy="FY2026", status="confirmed"):
         return SsaRecord.objects.create(
-            school=school, fy=fy, average_score=score,
-            verification_status=status, date_of_ssa=datetime.date(2026, 3, 1),
+            school=school,
+            fy=fy,
+            average_score=score,
+            verification_status=status,
+            date_of_ssa=datetime.date(2026, 3, 1),
         )
 
     def _gulu(self, fy=None):
@@ -72,7 +79,9 @@ class DistrictInsightTest(TestCase):
         )
         orphan = CorePlan.objects.create(id="plan-x", school_id="GHOST", fy="FY2026")
         CoreSchoolProfile.objects.create(
-            id="cprof-GHOST", school_id="GHOST", core_plan=orphan,
+            id="cprof-GHOST",
+            school_id="GHOST",
+            core_plan=orphan,
             core_start_fy="FY2026",
         )
         self.assertEqual(self._gulu()["core_schools"], 1)
@@ -100,9 +109,9 @@ class DistrictInsightTest(TestCase):
         clustered.cluster_id = self.cluster.id
         clustered.save(update_fields=["cluster_id"])
         self._ssa(clustered, 8.0)
-        self._ssa(self.schools[1], 2.0)   # not in a cluster
+        self._ssa(self.schools[1], 2.0)  # not in a cluster
         d = self._gulu()
-        self.assertEqual(d["ssa_avg"], 5.0)          # both schools
+        self.assertEqual(d["ssa_avg"], 5.0)  # both schools
         self.assertEqual(d["ssa_avg_cluster"], 8.0)  # clustered only
 
     def test_core_average_covers_only_core_schools(self):
@@ -112,7 +121,7 @@ class DistrictInsightTest(TestCase):
         CoreSchoolProfile.objects.create(
             id="cprof-G-2", school_id="G-2", core_plan=plan, core_start_fy="FY2026"
         )
-        self._ssa(self.schools[2], 9.0)   # the core school
+        self._ssa(self.schools[2], 9.0)  # the core school
         self._ssa(self.schools[3], 3.0)
         d = self._gulu()
         self.assertEqual(d["ssa_avg"], 6.0)
@@ -171,10 +180,19 @@ class DistrictInsightTest(TestCase):
         self.assertEqual(self._gulu()["visited"], 0)
 
     def test_teachers_and_leaders_are_summed_over_delivered_work(self):
-        self._activity(self.schools[0], "training", teachers_attended=12, leaders_attended=3)
-        self._activity(self.schools[1], "training", teachers_attended=8, leaders_attended=2)
-        self._activity(self.schools[2], "training", status="scheduled",
-                       teachers_attended=99, leaders_attended=99)
+        self._activity(
+            self.schools[0], "training", teachers_attended=12, leaders_attended=3
+        )
+        self._activity(
+            self.schools[1], "training", teachers_attended=8, leaders_attended=2
+        )
+        self._activity(
+            self.schools[2],
+            "training",
+            status="scheduled",
+            teachers_attended=99,
+            leaders_attended=99,
+        )
         d = self._gulu()
         self.assertEqual(d["teachers_trained"], 20)
         self.assertEqual(d["leaders_trained"], 5)

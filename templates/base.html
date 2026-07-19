@@ -248,6 +248,46 @@ button, a, select, input, textarea {
           .getPropertyValue('--edify-text-muted').trim() || '#5f707a',
       },
     },
+    /* Platform-wide chart styling. These merge into every chart config, so the
+       reference look (rounded bars, smooth accent line, dotted gridlines, no
+       axis chrome, soft legend) is consistent without editing each template. */
+    chart: {
+      fontFamily: 'Inter, sans-serif',
+      foreColor: 'var(--edify-text-muted)',
+      toolbar: { show: false },
+      animations: { enabled: true, speed: 350 },
+    },
+    grid: {
+      borderColor: 'transparent',
+      strokeDashArray: 4,
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } },
+      padding: { left: 2, right: 6 },
+    },
+    plotOptions: {
+      bar: {
+        columnWidth: '46%',
+        borderRadius: 8,
+        borderRadiusApplication: 'end',
+        borderRadiusWhenStacked: 'last',
+      },
+    },
+    stroke: { curve: 'smooth', width: 2, lineCap: 'round' },
+    states: {
+      hover: { filter: { type: 'darken', value: 0.92 } },
+      active: { filter: { type: 'darken', value: 0.95 } },
+    },
+    legend: {
+      position: 'top',
+      horizontalAlign: 'right',
+      fontSize: '12px',
+      fontWeight: 500,
+      markers: { size: 7, strokeWidth: 0, radius: 12 },
+      labels: { colors: 'var(--edify-text-muted)' },
+      itemMargin: { horizontal: 10, vertical: 0 },
+    },
+    tooltip: { theme: 'dark', style: { fontSize: '12px', fontFamily: 'Inter' } },
+    dataLabels: { style: { fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 600 } },
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>

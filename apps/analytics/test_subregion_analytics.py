@@ -28,9 +28,7 @@ class SubRegionMappingTest(TestCase):
     def test_every_sub_region_sits_wholly_inside_one_region(self):
         for name, (parent, districts) in SUBREGIONS.items():
             self.assertTrue(districts, f"{name} has no districts")
-            self.assertIn(
-                parent, {"Central", "Eastern", "Northern", "Western"}, name
-            )
+            self.assertIn(parent, {"Central", "Eastern", "Northern", "Western"}, name)
 
 
 class SubRegionSyncTest(TestCase):
@@ -42,9 +40,7 @@ class SubRegionSyncTest(TestCase):
     def test_sync_attaches_districts_and_is_idempotent(self):
         first = sync()
         self.assertEqual(first["districts"], 3)
-        self.assertEqual(
-            District.objects.get(name="Gulu").sub_region.name, "Acholi"
-        )
+        self.assertEqual(District.objects.get(name="Gulu").sub_region.name, "Acholi")
         self.assertEqual(
             District.objects.get(name="Moroto").sub_region.name, "Karamoja"
         )
@@ -58,9 +54,7 @@ class SubRegionSyncTest(TestCase):
         District.objects.create(name="SMOKETEST District", region=self.northern)
         stats = sync()
         self.assertEqual(stats["unmatched"], 1)
-        self.assertIsNone(
-            District.objects.get(name="SMOKETEST District").sub_region
-        )
+        self.assertIsNone(District.objects.get(name="SMOKETEST District").sub_region)
 
     def test_sync_is_safe_before_geography_is_bootstrapped(self):
         """Migrations run before any geography exists; sync must not explode."""
@@ -68,9 +62,9 @@ class SubRegionSyncTest(TestCase):
         Region.objects.all().delete()
         SubRegion.objects.all().delete()
         stats = sync()
-        self.assertEqual(stats, {
-            "subregions": 0, "districts": 0, "unmatched": 0, "no_region": 0
-        })
+        self.assertEqual(
+            stats, {"subregions": 0, "districts": 0, "unmatched": 0, "no_region": 0}
+        )
 
 
 class SubRegionAnalyticsTest(TestCase):
@@ -115,7 +109,7 @@ class SubRegionAnalyticsTest(TestCase):
     def test_school_counts_roll_up_from_district_to_sub_region(self):
         result = subregion_performance()
         acholi = next(s for s in result["subregions"] if s["name"] == "Acholi")
-        self.assertEqual(acholi["schools"], 4)      # 3 Gulu + 1 Kitgum
+        self.assertEqual(acholi["schools"], 4)  # 3 Gulu + 1 Kitgum
         self.assertEqual(acholi["districts"], 2)
 
     def test_sub_region_without_confirmed_ssa_reports_none_not_zero(self):

@@ -72,7 +72,7 @@
                    chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                    stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
                    colors: ['var(--edify-border)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)'],
-                   plotOptions: { bar: { columnWidth: '55%', borderRadius: 2 } },
+                   plotOptions: { bar: { columnWidth: '55%', borderRadius: 8, borderRadiusApplication: 'end' } },
                    labels: [{% for l in overview.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                    yaxis: [
                      { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },

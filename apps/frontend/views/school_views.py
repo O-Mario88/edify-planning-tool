@@ -373,9 +373,7 @@ def school_directory_view(request):
     page_school_ids = [s.id for s in page_obj]
     progress_by_school = SchoolDirectoryViewModel.bulk_progress(page_school_ids, fy=fy)
     owner_ids = {
-        school.account_owner_id
-        for school in page_obj
-        if school.account_owner_id
+        school.account_owner_id for school in page_obj if school.account_owner_id
     }
     staff_names_by_owner_id = {}
     if owner_ids:

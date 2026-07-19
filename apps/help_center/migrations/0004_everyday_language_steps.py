@@ -66,9 +66,16 @@ def make_steps_everyday_language(apps, schema_editor):
         article.reviewer_name = "Edify plain-language review"
         article.last_reviewed_at = now
         article.search_document = rebuild_search_document(article)
-        article.save(update_fields=[
-            "content", "version", "reviewer_name", "last_reviewed_at", "search_document", "updated_at",
-        ])
+        article.save(
+            update_fields=[
+                "content",
+                "version",
+                "reviewer_name",
+                "last_reviewed_at",
+                "search_document",
+                "updated_at",
+            ]
+        )
         HelpArticleVersion.objects.create(
             article=article,
             version=article.version,
@@ -93,4 +100,6 @@ def make_steps_everyday_language(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [("help_center", "0003_everyday_language_summaries")]
-    operations = [migrations.RunPython(make_steps_everyday_language, migrations.RunPython.noop)]
+    operations = [
+        migrations.RunPython(make_steps_everyday_language, migrations.RunPython.noop)
+    ]

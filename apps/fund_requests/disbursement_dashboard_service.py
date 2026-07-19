@@ -452,7 +452,7 @@ def _monthly_detail(item, fy, month):
         if c in cats
     ]
     act_list = list(acts.values())
-    from .pl_approval_service import CLUSTER_MEETING, CLUSTER_TRAINING, TRAINING_TYPES
+    from .pl_approval_service import CLUSTER_MEETING, TRAINING_TYPES
 
     snapshot = [
         (
@@ -475,11 +475,7 @@ def _monthly_detail(item, fy, month):
         ),
         (
             "Trainings planned",
-            sum(
-                1
-                for a in act_list
-                if a.activity_type in TRAINING_TYPES + CLUSTER_TRAINING
-            ),
+            sum(1 for a in act_list if a.activity_type in TRAINING_TYPES),
         ),
         ("Total schools covered", len(schools)),
     ]

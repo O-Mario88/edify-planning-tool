@@ -20,6 +20,7 @@ from django.utils import timezone
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
+from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 # Statuses that count as "PL-approved" — past the PL gate and routed to / through
 # the Accountant for disbursement. Approve sends a plan straight to the accountant.
@@ -30,31 +31,12 @@ PL_APPROVED_STATUSES = (
     "closed",
 )
 
-VISIT_TYPES = [
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "core_visit",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-]
 SSA_VISIT_TYPES = [
     "baseline_ssa_visit",
     "school_visit_ssa_collection",
     "partner_ssa_collection",
     "ssa_activity",
     "core_assessment_visit",
-]
-TRAINING_TYPES = [
-    "training",
-    "in_school_training",
-    "school_improvement_training",
-    "in_school_support",
-    "core_training",
 ]
 CLUSTER_MEETING = ["cluster_meeting", "cluster_meeting_ssa_review"]
 CLUSTER_TRAINING = ["cluster_training", "cluster_training_ssa_collection"]
@@ -139,9 +121,7 @@ def _scoped_cceos(scope):
         ).values_list("id", flat=True)
 
     cceos = []
-    for sp in StaffProfile.objects.filter(
-        id__in=profile_ids
-    ).select_related("user"):
+    for sp in StaffProfile.objects.filter(id__in=profile_ids).select_related("user"):
         cceos.append(
             {
                 "staff_id": sp.id,
@@ -264,9 +244,7 @@ def _build_cceo_plan(cceo, lines, fy, month):
     n_clusters = sum(
         1 for a in act_list if a.activity_type in CLUSTER_MEETING + CLUSTER_TRAINING
     )
-    n_trainings = sum(
-        1 for a in act_list if a.activity_type in TRAINING_TYPES + CLUSTER_TRAINING
-    )
+    n_trainings = sum(1 for a in act_list if a.activity_type in TRAINING_TYPES)
 
     # geography from the CCEO's schools (most common)
     districts = [
@@ -603,9 +581,7 @@ def _selected_detail(p, fy, month):
         "staff_schools": len(staff_school_ids),
         "partner_visits": partner_visits,
         "cluster_meetings": sum(1 for a in acts if a.activity_type in CLUSTER_MEETING),
-        "trainings": sum(
-            1 for a in acts if a.activity_type in TRAINING_TYPES + CLUSTER_TRAINING
-        ),
+        "trainings": sum(1 for a in acts if a.activity_type in TRAINING_TYPES),
         "total_schools": len(p["schools"]),
     }
     return {

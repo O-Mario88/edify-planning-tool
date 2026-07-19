@@ -12,6 +12,7 @@ This is the SINGLE source of truth for activity cost on the backend.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
 
 
 RateCard = dict  # CostSetting.key -> unitCost
@@ -38,32 +39,6 @@ class ActivityCost:
 DEFAULT_TRAINING_PARTICIPANTS = 25
 DEFAULT_CLUSTER_MEETING_PARTICIPANTS = 10
 
-VISIT_TYPES = {
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "in_school_support",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-    "core_visit",
-    "baseline_ssa_visit",
-    "school_visit_ssa_collection",
-    "partner_ssa_collection",
-    "core_assessment_visit",
-}
-TRAINING_TYPES = {
-    "training",
-    "in_school_training",
-    "school_improvement_training",
-    "cluster_training",
-    "core_training",
-    "cluster_training_ssa_collection",
-    "cluster_meeting_ssa_review",
-}
 
 # A cluster session has a deliberately small, predictable cost recipe.  These
 # stable keys are shared by the catalogue, planning preview, saved schedule
@@ -72,10 +47,6 @@ TRAINING_TYPES = {
 CLUSTER_TRAINING_TYPES = {
     "cluster_training",
     "cluster_training_ssa_collection",
-}
-CLUSTER_MEETING_TYPES = {
-    "cluster_meeting",
-    "cluster_meeting_ssa_review",
 }
 GROUP_TRAINING_RATE_KEYS = (
     "group_training_participant_meal_cost_per_head",

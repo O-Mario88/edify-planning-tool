@@ -682,13 +682,19 @@ class HRDashboardService:
             due = r.due_date
             days_left = (due - today).days if due else None
             if days_left is None:
-                status, status_class = "Scheduled", "edify-primary-soft edify-primary-text"
+                status, status_class = (
+                    "Scheduled",
+                    "edify-primary-soft edify-primary-text",
+                )
             elif days_left < 0:
                 status, status_class = "Overdue", "bg-rose-100 text-rose-700"
             elif days_left <= 5:
                 status, status_class = "Due Soon", "bg-amber-100 text-amber-700"
             else:
-                status, status_class = "Upcoming", "edify-primary-soft edify-primary-text"
+                status, status_class = (
+                    "Upcoming",
+                    "edify-primary-soft edify-primary-text",
+                )
             out.append(
                 {
                     "name": user.name if user else "—",

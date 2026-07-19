@@ -30,7 +30,9 @@ _HISTORIC_PARTICIPANT_KEYS = {
 }
 
 
-def _participant_count(activity: Activity, lines: list[ActivityScheduleCostLine]) -> int:
+def _participant_count(
+    activity: Activity, lines: list[ActivityScheduleCostLine]
+) -> int:
     actual = sum(
         int(value or 0)
         for value in (
@@ -124,9 +126,7 @@ class Command(BaseCommand):
                 )
             except BadRequest as exc:
                 skipped_locked += 1
-                self.stdout.write(
-                    self.style.WARNING(f"Skipped {activity.id}: {exc}")
-                )
+                self.stdout.write(self.style.WARNING(f"Skipped {activity.id}: {exc}"))
                 continue
             activity.expected_participants = people
             activity.save(update_fields=["expected_participants", "updated_at"])

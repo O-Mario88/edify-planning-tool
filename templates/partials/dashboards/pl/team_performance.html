@@ -16,7 +16,7 @@
            chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
            stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
            colors: ['var(--edify-chart-teal)', 'var(--edify-chart-teal)', 'var(--edify-chart-teal)', 'var(--edify-chart-amber)'],
-           plotOptions: { bar: { columnWidth: '62%', borderRadius: 2 } },
+           plotOptions: { bar: { columnWidth: '62%', borderRadius: 8, borderRadiusApplication: 'end' } },
            dataLabels: { enabled: false },
            labels: {{ team_performance.labels|escape }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },

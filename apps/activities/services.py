@@ -36,7 +36,14 @@ from .salesforce import (
 )
 
 
-TRAINING_TYPES = {
+# Salesforce's own two-way split, not the platform's grouping. Salesforce
+# classifies every activity as either "training" or "visit", and it puts
+# cluster meetings and SSA activities on the training side. That is a mapping
+# to an external system's vocabulary, so it must not be reconciled with
+# apps.core.activity_types.TRAINING_TYPES -- doing so would change what is
+# sent to Salesforce. Renamed from TRAINING_TYPES so it stops shadowing the
+# shared name: a grouping that means two things needs two names.
+SALESFORCE_TRAINING_KINDS = {
     "training",
     "in_school_training",
     "school_improvement_training",
@@ -48,7 +55,7 @@ TRAINING_TYPES = {
 
 
 def sf_kind(activity_type: str) -> str:
-    return "training" if activity_type in TRAINING_TYPES else "visit"
+    return "training" if activity_type in SALESFORCE_TRAINING_KINDS else "visit"
 
 
 # ── List ─────────────────────────────────────────────────────────────────────

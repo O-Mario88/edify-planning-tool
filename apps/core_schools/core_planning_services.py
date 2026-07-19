@@ -105,7 +105,9 @@ class CorePackageSchedulingService:
 
     @classmethod
     def available_sequences(cls, plan: CorePlan, activity_type: str) -> list[int]:
-        slots = plan.slots.filter(activity_type=activity_type).order_by("sequence_number")
+        slots = plan.slots.filter(activity_type=activity_type).order_by(
+            "sequence_number"
+        )
         return [
             slot.sequence_number
             for slot in slots
@@ -170,7 +172,9 @@ class CorePackageSchedulingService:
         if not slot:
             raise BadRequest("That core support slot is unavailable.")
         if cls.is_allocated(slot):
-            raise BadRequest("That core support slot is already scheduled or completed.")
+            raise BadRequest(
+                "That core support slot is already scheduled or completed."
+            )
         if cls._normalise_status(slot.status) == "assigned":
             raise BadRequest(
                 "That slot is assigned to a partner and must be scheduled from the partner queue."
@@ -233,7 +237,11 @@ class CorePackageSchedulingService:
             )
             .first()
         )
-        if not slot or cls.is_allocated(slot) or cls._normalise_status(slot.status) == "assigned":
+        if (
+            not slot
+            or cls.is_allocated(slot)
+            or cls._normalise_status(slot.status) == "assigned"
+        ):
             raise BadRequest("That core support slot is no longer available to assign.")
         return slot
 

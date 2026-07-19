@@ -25,6 +25,7 @@ from datetime import datetime
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
+from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 from apps.core.fy import (
     get_fy_date_range,
     get_mid_year_range,
@@ -38,26 +39,6 @@ from apps.core.fy import (
 ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 
 # Activity-type sets.
-VISIT_TYPES = (
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "in_school_support",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-    "core_visit",
-)
-TRAINING_TYPES = (
-    "training",
-    "in_school_training",
-    "school_improvement_training",
-    "cluster_training",
-    "core_training",
-)
 CLUSTER_MEETING_TYPE = "cluster_meeting"
 PARTNER_ACTIVITIES = ("partner_activity", "project_activity")
 

@@ -289,7 +289,8 @@ class BudgetAggregationTest(TestCase):
         self.assertEqual(month_workspace["admin_total"], 80_000)
         self.assertEqual(month_workspace["total"], program_amount + 80_000)
         self.assertIn(
-            "Country Admin Plan", [group["label"] for group in month_workspace["groups"]]
+            "Country Admin Plan",
+            [group["label"] for group in month_workspace["groups"]],
         )
 
         week_workspace = budget_workspace(
@@ -421,7 +422,9 @@ class BudgetAggregationTest(TestCase):
             },
         )
         self.assertEqual(personal_workspace["budget_scope"], "my")
-        self.assertEqual(personal_workspace["total"], sum(line.amount for line in pl_lines))
+        self.assertEqual(
+            personal_workspace["total"], sum(line.amount for line in pl_lines)
+        )
         self.assertEqual(personal_workspace["team_summary"], [])
 
         team_workspace = budget_workspace(
@@ -436,7 +439,8 @@ class BudgetAggregationTest(TestCase):
         self.assertEqual(team_workspace["budget_scope"], "team")
         self.assertEqual(
             team_workspace["total"],
-            sum(line.amount for line in staff_lines) + sum(line.amount for line in pl_lines),
+            sum(line.amount for line in staff_lines)
+            + sum(line.amount for line in pl_lines),
         )
         self.assertEqual(
             team_workspace["team_summary"],
@@ -454,6 +458,4 @@ class BudgetAggregationTest(TestCase):
             ],
         )
         team_rows = team_workspace["groups"][0]["rows"]
-        self.assertTrue(
-            all(row["owners"] == "Team CCEO, Team PL" for row in team_rows)
-        )
+        self.assertTrue(all(row["owners"] == "Team CCEO, Team PL" for row in team_rows))

@@ -8,7 +8,10 @@ def friendly_text(value):
         ("ActivityScheduleCostLine", "saved activity cost"),
         ("returned_by_ia", "a returned flag"),
         ("RBAC matrix", "roles and permissions list"),
-        ("manual price invention is not supported", "you cannot type in a made-up price"),
+        (
+            "manual price invention is not supported",
+            "you cannot type in a made-up price",
+        ),
         ("participant requirements", "required number of participants"),
         ("validates", "checks"),
     )
@@ -56,9 +59,17 @@ def remove_implementation_labels(apps, schema_editor):
         article.reviewer_name = "Edify plain-language review"
         article.last_reviewed_at = now
         article.search_document = rebuild_search_document(article)
-        article.save(update_fields=[
-            "summary", "content", "version", "reviewer_name", "last_reviewed_at", "search_document", "updated_at",
-        ])
+        article.save(
+            update_fields=[
+                "summary",
+                "content",
+                "version",
+                "reviewer_name",
+                "last_reviewed_at",
+                "search_document",
+                "updated_at",
+            ]
+        )
         HelpArticleVersion.objects.create(
             article=article,
             version=article.version,
@@ -83,4 +94,6 @@ def remove_implementation_labels(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [("help_center", "0004_everyday_language_steps")]
-    operations = [migrations.RunPython(remove_implementation_labels, migrations.RunPython.noop)]
+    operations = [
+        migrations.RunPython(remove_implementation_labels, migrations.RunPython.noop)
+    ]

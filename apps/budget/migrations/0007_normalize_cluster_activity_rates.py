@@ -41,7 +41,9 @@ def normalize_cluster_activity_rates(apps, schema_editor):
     CostCatalogue = apps.get_model("budget", "CostCatalogue")
     CostSetting = apps.get_model("budget", "CostSetting")
 
-    active = CostCatalogue.objects.filter(is_active=True).order_by("-fy", "-version").first()
+    active = (
+        CostCatalogue.objects.filter(is_active=True).order_by("-fy", "-version").first()
+    )
     for key, label, legacy_keys, default_cost in CANONICAL_RATES:
         existing = CostSetting.objects.filter(key=key).first()
         if existing:
@@ -51,7 +53,11 @@ def normalize_cluster_activity_rates(apps, schema_editor):
                 existing.save(update_fields=["label"])
             continue
 
-        source = CostSetting.objects.filter(key__in=legacy_keys).order_by("-updated_at").first()
+        source = (
+            CostSetting.objects.filter(key__in=legacy_keys)
+            .order_by("-updated_at")
+            .first()
+        )
         CostSetting.objects.create(
             key=key,
             label=label,

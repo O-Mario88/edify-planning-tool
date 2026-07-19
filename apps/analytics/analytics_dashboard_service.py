@@ -18,28 +18,9 @@ from apps.geography.models import District, Region
 from apps.clusters.models import Cluster
 from apps.analytics.subregion_analytics import subregion_performance
 from apps.analytics.district_insight import district_insight
+from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
-VISIT_TYPES = (
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "in_school_support",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-    "core_visit",
-)
-TRAINING_TYPES = (
-    "training",
-    "in_school_training",
-    "school_improvement_training",
-    "cluster_training",
-    "core_training",
-)
 CLUSTER_MEETING_TYPE = "cluster_meeting"
 
 

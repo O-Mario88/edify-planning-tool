@@ -12,10 +12,22 @@ def friendly_text(value):
             "When a user schedules work, the official costing service checks the date, fiscal period, required number of participants and active rate card. It saves a saved copy of the cost in whole UGX; you cannot type in a made-up price.",
             "When you schedule work, Edify checks the date, financial period, required number of participants and current rate card. It saves the cost in whole UGX. You cannot type in a made-up price.",
         ),
-        ("Open the main Edify page and confirm the current status.", "Open the main Edify page and check the current status."),
-        ("Complete only the enabled action and its required data.", "Complete the action available to you and fill in the information it asks for."),
-        ("Use the recorded transition, notification and linked queue to follow the next step.", "Check the notification or To-Do to see who needs to act next."),
-        ("If returned, correct the named condition on the same record and resubmit.", "If it is returned, fix the named problem on the same record and submit it again."),
+        (
+            "Open the main Edify page and confirm the current status.",
+            "Open the main Edify page and check the current status.",
+        ),
+        (
+            "Complete only the enabled action and its required data.",
+            "Complete the action available to you and fill in the information it asks for.",
+        ),
+        (
+            "Use the recorded transition, notification and linked queue to follow the next step.",
+            "Check the notification or To-Do to see who needs to act next.",
+        ),
+        (
+            "If returned, correct the named condition on the same record and resubmit.",
+            "If it is returned, fix the named problem on the same record and submit it again.",
+        ),
     )
     for technical, everyday in replacements:
         value = value.replace(technical, everyday)
@@ -61,9 +73,17 @@ def polish_everyday_language(apps, schema_editor):
         article.reviewer_name = "Edify plain-language review"
         article.last_reviewed_at = now
         article.search_document = rebuild_search_document(article)
-        article.save(update_fields=[
-            "summary", "content", "version", "reviewer_name", "last_reviewed_at", "search_document", "updated_at",
-        ])
+        article.save(
+            update_fields=[
+                "summary",
+                "content",
+                "version",
+                "reviewer_name",
+                "last_reviewed_at",
+                "search_document",
+                "updated_at",
+            ]
+        )
         HelpArticleVersion.objects.create(
             article=article,
             version=article.version,
@@ -88,4 +108,6 @@ def polish_everyday_language(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [("help_center", "0005_remove_implementation_labels")]
-    operations = [migrations.RunPython(polish_everyday_language, migrations.RunPython.noop)]
+    operations = [
+        migrations.RunPython(polish_everyday_language, migrations.RunPython.noop)
+    ]

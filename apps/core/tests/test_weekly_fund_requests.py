@@ -211,8 +211,12 @@ class WeeklyFundRequestsTest(APITestCase):
         )  # 1 school visit, 1 cluster meeting, 3 group training lines
         descriptions = {line["description"] for line in detail_res["lines"]}
         self.assertTrue(
-            {"Participant snacks", "Participant meals", "Facilitation fee", "Venue fee"}
-            .issubset(descriptions)
+            {
+                "Participant snacks",
+                "Participant meals",
+                "Facilitation fee",
+                "Venue fee",
+            }.issubset(descriptions)
         )
 
         # 6. CCEO submits — the request routes to their PL for approval;

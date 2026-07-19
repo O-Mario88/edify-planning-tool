@@ -22,7 +22,18 @@ class HelpArticleForm(forms.ModelForm):
 
     class Meta:
         model = HelpArticle
-        fields = ["title", "slug", "summary", "content", "category", "feature", "workflow", "keywords", "source_paths", "estimated_reading_minutes"]
+        fields = [
+            "title",
+            "slug",
+            "summary",
+            "content",
+            "category",
+            "feature",
+            "workflow",
+            "keywords",
+            "source_paths",
+            "estimated_reading_minutes",
+        ]
         widgets = {
             "summary": forms.Textarea(attrs={"rows": 3}),
             "content": forms.Textarea(attrs={"rows": 14}),
@@ -33,13 +44,19 @@ class HelpArticleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
-            self.fields["roles"].initial = list(self.instance.role_accesses.values_list("role", flat=True))
-            self.fields["route_patterns"].initial = "\n".join(self.instance.route_contexts.values_list("route_pattern", flat=True))
+            self.fields["roles"].initial = list(
+                self.instance.role_accesses.values_list("role", flat=True)
+            )
+            self.fields["route_patterns"].initial = "\n".join(
+                self.instance.route_contexts.values_list("route_pattern", flat=True)
+            )
 
     def clean_content(self):
         content = self.cleaned_data["content"]
         if not isinstance(content, list) or not content:
-            raise forms.ValidationError("Content must be a non-empty JSON list of article sections.")
+            raise forms.ValidationError(
+                "Content must be a non-empty JSON list of article sections."
+            )
         for section in content:
             if not isinstance(section, dict) or not section.get("heading"):
                 raise forms.ValidationError("Each content section needs a heading.")

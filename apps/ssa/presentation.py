@@ -84,7 +84,9 @@ def build_ssa_score_summary(scores: Iterable[Mapping[str, object]]) -> dict:
         groups[score["group"]]["items"].append(score)
 
     average_score = (
-        round(sum(item["score"] for item in normalized_scores) / len(normalized_scores), 1)
+        round(
+            sum(item["score"] for item in normalized_scores) / len(normalized_scores), 1
+        )
         if normalized_scores
         else None
     )

@@ -7,15 +7,42 @@ def make_plain_language(apps, schema_editor):
     HelpArticleVersion = apps.get_model("help_center", "HelpArticleVersion")
     now = timezone.now()
     replacements = {
-        "Where to find it": ("Open the relevant Edify page. The Help for this page button opens this same guide.", []),
-        "Before you begin": ("Make sure you are using the right role and looking at the right record. Edify only shows actions that are available to you.", []),
-        "What Edify does automatically": ("Edify checks the information you enter, keeps a history of the record and sends the next person a task or notification when they need to act.", []),
-        "What happens after submission": ("If somebody else needs to check, approve, verify or pay the record, Edify sends it to the next person.", []),
-        "Statuses and their meaning": ("The status tells you where the record is and what needs to happen next. Read the words beside the status; do not rely on colour alone.", []),
-        "Notifications and To-Dos": ("When a record moves to another person, Edify gives that person a notification or To-Do. You will see one when it is your turn.", []),
-        "Permissions and restrictions": ("Reading this guide does not give you extra access. If a button is missing or unavailable, another person or condition may need to act first.", []),
-        "How to correct a returned or blocked record": ("Open the same record. Read the reason shown on screen, fix only that problem, then use the available submit or resubmit button. Do not make a second record to work around the problem.", []),
-        "Canonical sources": ("Before this guide is published or changed, the Edify team checks it against the live way the system works.", []),
+        "Where to find it": (
+            "Open the relevant Edify page. The Help for this page button opens this same guide.",
+            [],
+        ),
+        "Before you begin": (
+            "Make sure you are using the right role and looking at the right record. Edify only shows actions that are available to you.",
+            [],
+        ),
+        "What Edify does automatically": (
+            "Edify checks the information you enter, keeps a history of the record and sends the next person a task or notification when they need to act.",
+            [],
+        ),
+        "What happens after submission": (
+            "If somebody else needs to check, approve, verify or pay the record, Edify sends it to the next person.",
+            [],
+        ),
+        "Statuses and their meaning": (
+            "The status tells you where the record is and what needs to happen next. Read the words beside the status; do not rely on colour alone.",
+            [],
+        ),
+        "Notifications and To-Dos": (
+            "When a record moves to another person, Edify gives that person a notification or To-Do. You will see one when it is your turn.",
+            [],
+        ),
+        "Permissions and restrictions": (
+            "Reading this guide does not give you extra access. If a button is missing or unavailable, another person or condition may need to act first.",
+            [],
+        ),
+        "How to correct a returned or blocked record": (
+            "Open the same record. Read the reason shown on screen, fix only that problem, then use the available submit or resubmit button. Do not make a second record to work around the problem.",
+            [],
+        ),
+        "Canonical sources": (
+            "Before this guide is published or changed, the Edify team checks it against the live way the system works.",
+            [],
+        ),
     }
     for article in HelpArticle.objects.filter(state__in=["published", "review_due"]):
         content = article.content or []
@@ -35,7 +62,15 @@ def make_plain_language(apps, schema_editor):
         article.version += 1
         article.reviewer_name = "Edify plain-language review"
         article.last_reviewed_at = now
-        article.save(update_fields=["content", "version", "reviewer_name", "last_reviewed_at", "updated_at"])
+        article.save(
+            update_fields=[
+                "content",
+                "version",
+                "reviewer_name",
+                "last_reviewed_at",
+                "updated_at",
+            ]
+        )
         HelpArticleVersion.objects.create(
             article=article,
             version=article.version,

@@ -102,7 +102,9 @@ class SchoolDirectoryViewModel:
                 "trainings_count": trainings_by_school.get(sid, 0),
                 "has_ssa_scores": ssa_by_school.get(sid, {}).get("has_scores", False),
                 "ssa_average": ssa_by_school.get(sid, {}).get("average_score"),
-                "ssa_average_tone": ssa_by_school.get(sid, {}).get("average_tone", "neutral"),
+                "ssa_average_tone": ssa_by_school.get(sid, {}).get(
+                    "average_tone", "neutral"
+                ),
                 "ssa_groups": ssa_by_school.get(sid, {}).get("groups", []),
             }
             for sid in school_ids

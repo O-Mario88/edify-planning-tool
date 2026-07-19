@@ -13,7 +13,7 @@
            ],
            chart: { height: 240, type: 'bar', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
            colors: ['var(--edify-chart-blue)', 'var(--edify-chart-blue-soft)'],
-           plotOptions: { bar: { columnWidth: '58%', borderRadius: 3, dataLabels: { position: 'top' } } },
+           plotOptions: { bar: { columnWidth: '58%', borderRadius: 8, borderRadiusApplication: 'end', dataLabels: { position: 'top' } } },
            dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '12px', colors: ['var(--edify-text-muted)'], fontWeight: 700 } },
            labels: {{ staff_partner.labels|escape }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },

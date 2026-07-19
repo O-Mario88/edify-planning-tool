@@ -3,7 +3,13 @@ from django.test import TestCase
 from apps.accounts.models import User
 from apps.core.rbac import EdifyRole
 
-from .models import HelpArticle, HelpArticleFeedback, HelpArticleRoleAccess, HelpArticleState, HelpCategory
+from .models import (
+    HelpArticle,
+    HelpArticleFeedback,
+    HelpArticleRoleAccess,
+    HelpArticleState,
+    HelpCategory,
+)
 from .services import (
     documentation_drift_report,
     ensure_canonical_content,
@@ -18,16 +24,26 @@ class KnowledgeCenterTest(TestCase):
         ensure_canonical_content()
         sync_route_contexts()
         cls.cceo = User.objects.create_user(
-            email="help-cceo@edify.test", name="Help CCEO", password="Password123!",
-            roles=[EdifyRole.CCEO.value], active_role=EdifyRole.CCEO.value,
+            email="help-cceo@edify.test",
+            name="Help CCEO",
+            password="Password123!",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
         )
         cls.accountant = User.objects.create_user(
-            email="help-accountant@edify.test", name="Help Accountant", password="Password123!",
-            roles=[EdifyRole.PROGRAM_ACCOUNTANT.value], active_role=EdifyRole.PROGRAM_ACCOUNTANT.value,
+            email="help-accountant@edify.test",
+            name="Help Accountant",
+            password="Password123!",
+            roles=[EdifyRole.PROGRAM_ACCOUNTANT.value],
+            active_role=EdifyRole.PROGRAM_ACCOUNTANT.value,
         )
         cls.admin = User.objects.create_user(
-            email="help-admin@edify.test", name="Help Admin", password="Password123!",
-            roles=[EdifyRole.ADMIN.value], active_role=EdifyRole.ADMIN.value, is_staff=True,
+            email="help-admin@edify.test",
+            name="Help Admin",
+            password="Password123!",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            is_staff=True,
         )
 
     def test_home_search_and_contextual_help_load_for_role(self):
@@ -59,7 +75,10 @@ class KnowledgeCenterTest(TestCase):
             {"feedback_type": "helpful", "page_context": "/my-plan"},
         )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(HelpArticleFeedback.objects.filter(article__slug="feature-my-plan").count(), 1)
+        self.assertEqual(
+            HelpArticleFeedback.objects.filter(article__slug="feature-my-plan").count(),
+            1,
+        )
         response = self.client.get("/help/articles/feature-my-plan/print")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Version")
@@ -82,10 +101,21 @@ class KnowledgeCenterTest(TestCase):
     def test_publishing_requires_review_transitions_and_versions_are_auditable(self):
         category = HelpCategory.objects.get(slug="features")
         draft = HelpArticle.objects.create(
-            title="Draft help", slug="draft-help", summary="A reviewed draft.",
-            content=[{"heading": "What you do", "body": "Use the supported action.", "items": []}],
-            category=category, keywords=["draft"], source_paths=["apps/core/rbac.py"],
-            state=HelpArticleState.DRAFT, author=self.admin,
+            title="Draft help",
+            slug="draft-help",
+            summary="A reviewed draft.",
+            content=[
+                {
+                    "heading": "What you do",
+                    "body": "Use the supported action.",
+                    "items": [],
+                }
+            ],
+            category=category,
+            keywords=["draft"],
+            source_paths=["apps/core/rbac.py"],
+            state=HelpArticleState.DRAFT,
+            author=self.admin,
         )
         HelpArticleRoleAccess.objects.create(article=draft, role=EdifyRole.CCEO.value)
         transition_article(draft, "submit", self.admin)
@@ -94,7 +124,9 @@ class KnowledgeCenterTest(TestCase):
         transition_article(draft, "publish", self.admin)
         draft.refresh_from_db()
         self.assertEqual(draft.state, HelpArticleState.PUBLISHED)
-        self.assertTrue(draft.versions.filter(state=HelpArticleState.PUBLISHED).exists())
+        self.assertTrue(
+            draft.versions.filter(state=HelpArticleState.PUBLISHED).exists()
+        )
         self.assertTrue(draft.last_reviewed_at)
 
     def test_drift_audit_has_full_route_and_status_coverage(self):

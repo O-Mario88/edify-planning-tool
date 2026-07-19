@@ -44,7 +44,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count, Sum
 
 from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
@@ -95,7 +95,11 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
     if not districts:
         return {}
     base = pd.DataFrame.from_records(districts).rename(
-        columns={"id": "district_id", "name": "district", "sub_region__name": "subregion"}
+        columns={
+            "id": "district_id",
+            "name": "district",
+            "sub_region__name": "subregion",
+        }
     )
 
     core_ids = _active_core_school_ids()
@@ -103,17 +107,20 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
     # ── counts ───────────────────────────────────────────────────────────────
     schools = _frame(
         School.objects.values("district_id").annotate(n=Count("id")),
-        "district_id", n="schools",
+        "district_id",
+        n="schools",
     )
     clusters = _frame(
         Cluster.objects.values("district_id").annotate(n=Count("id")),
-        "district_id", n="clusters",
+        "district_id",
+        n="clusters",
     )
     core = _frame(
         School.objects.filter(school_id__in=core_ids)
         .values("district_id")
         .annotate(n=Count("id")),
-        "district_id", n="core_schools",
+        "district_id",
+        n="core_schools",
     )
 
     # ── SSA, confirmed only ──────────────────────────────────────────────────
@@ -131,20 +138,25 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
             n=Count("id"),
             assessed=Count("school", distinct=True),
         ),
-        "school__district_id", avg="ssa_avg", n="ssa_n", assessed="ssa_schools",
+        "school__district_id",
+        avg="ssa_avg",
+        n="ssa_n",
+        assessed="ssa_schools",
     )
     ssa_cluster = _frame(
         ssa_qs.exclude(school__cluster_id__isnull=True)
         .exclude(school__cluster_id="")
         .values("school__district_id")
         .annotate(avg=Avg("average_score")),
-        "school__district_id", avg="ssa_avg_cluster",
+        "school__district_id",
+        avg="ssa_avg_cluster",
     )
     ssa_core = _frame(
         ssa_qs.filter(school__school_id__in=core_ids)
         .values("school__district_id")
         .annotate(avg=Avg("average_score")),
-        "school__district_id", avg="ssa_avg_core",
+        "school__district_id",
+        avg="ssa_avg_core",
     )
 
     # ── activity coverage ────────────────────────────────────────────────────
@@ -158,29 +170,50 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
         acts.filter(activity_type__in=TRAINING_TYPES)
         .values("school__district_id")
         .annotate(n=Count("school", distinct=True)),
-        "school__district_id", n="schools_trained",
+        "school__district_id",
+        n="schools_trained",
     )
     visited = _frame(
         acts.filter(activity_type__in=VISIT_TYPES)
         .values("school__district_id")
         .annotate(n=Count("school", distinct=True)),
-        "school__district_id", n="schools_visited",
+        "school__district_id",
+        n="schools_visited",
     )
     people = _frame(
         acts.values("school__district_id").annotate(
             t=Sum("teachers_attended"), l=Sum("leaders_attended")
         ),
-        "school__district_id", t="teachers_trained", l="leaders_trained",
+        "school__district_id",
+        t="teachers_trained",
+        l="leaders_trained",
     )
 
-    for part in (schools, clusters, core, ssa, ssa_cluster, ssa_core,
-                 trained, visited, people):
+    for part in (
+        schools,
+        clusters,
+        core,
+        ssa,
+        ssa_cluster,
+        ssa_core,
+        trained,
+        visited,
+        people,
+    ):
         if not part.empty:
             base = base.merge(part, on="district_id", how="left")
 
-    counts = ["schools", "clusters", "core_schools", "ssa_n", "ssa_schools",
-              "schools_trained", "schools_visited", "teachers_trained",
-              "leaders_trained"]
+    counts = [
+        "schools",
+        "clusters",
+        "core_schools",
+        "ssa_n",
+        "ssa_schools",
+        "schools_trained",
+        "schools_visited",
+        "teachers_trained",
+        "leaders_trained",
+    ]
     for col in counts:
         if col not in base:
             base[col] = 0
@@ -198,9 +231,9 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
         scores = scores.filter(ssa_record__fy=fy)
     iv = pd.DataFrame.from_records(
         list(
-            scores.values(
-                "ssa_record__school__district_id", "intervention"
-            ).annotate(avg=Avg("score"), n=Count("id"))
+            scores.values("ssa_record__school__district_id", "intervention").annotate(
+                avg=Avg("score"), n=Count("id")
+            )
         )
     )
     best_worst: dict[str, tuple] = {}
@@ -217,10 +250,16 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
             if top["intervention"] == bottom["intervention"]:
                 continue  # only one intervention scored; nothing to contrast
             best_worst[did] = (
-                (INTERVENTION_LABELS.get(top["intervention"], top["intervention"]),
-                 round(float(top["avg"]), 2)),
-                (INTERVENTION_LABELS.get(bottom["intervention"], bottom["intervention"]),
-                 round(float(bottom["avg"]), 2)),
+                (
+                    INTERVENTION_LABELS.get(top["intervention"], top["intervention"]),
+                    round(float(top["avg"]), 2),
+                ),
+                (
+                    INTERVENTION_LABELS.get(
+                        bottom["intervention"], bottom["intervention"]
+                    ),
+                    round(float(bottom["avg"]), 2),
+                ),
             )
 
     # ── assemble ─────────────────────────────────────────────────────────────

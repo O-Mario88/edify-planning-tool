@@ -573,7 +573,14 @@ def ia_dashboard_view(request):
     fy = get_operational_fy()
 
     PENDING_STATUSES = ["awaiting_ia_verification"]
-    ACHIEVED_STATUSES = ["completed", "ia_verified", "closed"]
+    # Local to the IA dashboard on purpose, and NOT the platform's
+    # ACHIEVED_STATUSES (ia_verified / closed / accountant_confirmed).
+    # This queue asks "what work has been done and is therefore
+    # verifiable", which includes `completed` work that has not yet
+    # reached IA -- the whole point of the queue -- and excludes
+    # accountant_confirmed, a finance state IA does not act on.
+    # Renamed so it stops shadowing the shared name.
+    IA_REVIEWABLE_STATUSES = ["completed", "ia_verified", "closed"]
 
     activities = Activity.objects.filter(deleted_at__isnull=True)
     waiting_qs = activities.filter(status__in=PENDING_STATUSES)
@@ -682,7 +689,7 @@ def ia_dashboard_view(request):
 
     # ── Header KPI strip counts ─────────────────────────────────────────────
     missing_sf_id = (
-        activities.filter(status__in=ACHIEVED_STATUSES)
+        activities.filter(status__in=IA_REVIEWABLE_STATUSES)
         .filter(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
         .count()
     )

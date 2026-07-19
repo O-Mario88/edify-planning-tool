@@ -17,79 +17,177 @@ SUBREGIONS: dict[str, tuple[str, list[str]]] = {
     "West Nile": (
         "Northern",
         [
-        "Adjumani", "Arua", "Koboko", "Madi Okollo", "Maracha", "Moyo",
-        "Nebbi", "Obongi", "Pakwach", "Yumbe", "Zombo"
+            "Adjumani",
+            "Arua",
+            "Koboko",
+            "Madi Okollo",
+            "Maracha",
+            "Moyo",
+            "Nebbi",
+            "Obongi",
+            "Pakwach",
+            "Yumbe",
+            "Zombo",
         ],
     ),
     "Acholi": (
         "Northern",
-        [
-        "Agago", "Amuru", "Gulu", "Kitgum", "Lamwo", "Nwoya", "Omoro",
-        "Pader"
-        ],
+        ["Agago", "Amuru", "Gulu", "Kitgum", "Lamwo", "Nwoya", "Omoro", "Pader"],
     ),
     "Lango": (
         "Northern",
         [
-        "Alebtong", "Amolatar", "Apac", "Dokolo", "Kole", "Kwania",
-        "Lira", "Otuke", "Oyam"
+            "Alebtong",
+            "Amolatar",
+            "Apac",
+            "Dokolo",
+            "Kole",
+            "Kwania",
+            "Lira",
+            "Otuke",
+            "Oyam",
         ],
     ),
     "Karamoja": (
         "Northern",
         [
-        "Abim", "Amudat", "Kaabong", "Karenga", "Kotido", "Moroto",
-        "Nabilatuk", "Nakapiripirit", "Napak"
+            "Abim",
+            "Amudat",
+            "Kaabong",
+            "Karenga",
+            "Kotido",
+            "Moroto",
+            "Nabilatuk",
+            "Nakapiripirit",
+            "Napak",
         ],
     ),
     "Teso": (
         "Eastern",
         [
-        "Amuria", "Budaka", "Bukedea", "Butebo", "Kaberamaido", "Kalaki",
-        "Kapelebyong", "Katakwi", "Kibuku", "Kumi", "Ngora", "Pallisa",
-        "Serere", "Soroti"
+            "Amuria",
+            "Budaka",
+            "Bukedea",
+            "Butebo",
+            "Kaberamaido",
+            "Kalaki",
+            "Kapelebyong",
+            "Katakwi",
+            "Kibuku",
+            "Kumi",
+            "Ngora",
+            "Pallisa",
+            "Serere",
+            "Soroti",
         ],
     ),
     "Elgon": (
         "Eastern",
         [
-        "Bududa", "Bukwo", "Bulambuli", "Kapchorwa", "Kween", "Manafwa",
-        "Mbale", "Namisindwa", "Sironko"
+            "Bududa",
+            "Bukwo",
+            "Bulambuli",
+            "Kapchorwa",
+            "Kween",
+            "Manafwa",
+            "Mbale",
+            "Namisindwa",
+            "Sironko",
         ],
     ),
     "East Central": (
         "Eastern",
         [
-        "Bugiri", "Bugweri", "Busia", "Butaleja", "Buyende", "Iganga",
-        "Jinja", "Kaliro", "Kamuli", "Luuka", "Mayuge", "Namayingo",
-        "Namutumba", "Tororo"
+            "Bugiri",
+            "Bugweri",
+            "Busia",
+            "Butaleja",
+            "Buyende",
+            "Iganga",
+            "Jinja",
+            "Kaliro",
+            "Kamuli",
+            "Luuka",
+            "Mayuge",
+            "Namayingo",
+            "Namutumba",
+            "Tororo",
         ],
     ),
     "Central": (
         "Central",
         [
-        "Buikwe", "Bukomansimbi", "Butambala", "Buvuma", "Gomba",
-        "Kalangala", "Kalungu", "Kampala", "Kassanda", "Kayunga",
-        "Kiboga", "Kyankwanzi", "Kyotera", "Luwero", "Lwengo",
-        "Lyantonde", "Masaka", "Mityana", "Mpigi", "Mubende", "Mukono",
-        "Nakaseke", "Nakasongola", "Rakai", "Ssembabule", "Wakiso"
+            "Buikwe",
+            "Bukomansimbi",
+            "Butambala",
+            "Buvuma",
+            "Gomba",
+            "Kalangala",
+            "Kalungu",
+            "Kampala",
+            "Kassanda",
+            "Kayunga",
+            "Kiboga",
+            "Kyankwanzi",
+            "Kyotera",
+            "Luwero",
+            "Lwengo",
+            "Lyantonde",
+            "Masaka",
+            "Mityana",
+            "Mpigi",
+            "Mubende",
+            "Mukono",
+            "Nakaseke",
+            "Nakasongola",
+            "Rakai",
+            "Ssembabule",
+            "Wakiso",
         ],
     ),
     "Western": (
         "Western",
         [
-        "Buliisa", "Bundibugyo", "Bunyangabu", "Hoima", "Kabarole",
-        "Kagadi", "Kakumiro", "Kamwenge", "Kasese", "Kibaale", "Kikuube",
-        "Kiryandongo", "Kitagwenda", "Kyegegwa", "Kyenjojo", "Masindi",
-        "Ntoroko"
+            "Buliisa",
+            "Bundibugyo",
+            "Bunyangabu",
+            "Hoima",
+            "Kabarole",
+            "Kagadi",
+            "Kakumiro",
+            "Kamwenge",
+            "Kasese",
+            "Kibaale",
+            "Kikuube",
+            "Kiryandongo",
+            "Kitagwenda",
+            "Kyegegwa",
+            "Kyenjojo",
+            "Masindi",
+            "Ntoroko",
         ],
     ),
     "South Western": (
         "Western",
         [
-        "Buhweju", "Bushenyi", "Ibanda", "Isingiro", "Kabale", "Kanungu",
-        "Kazo", "Kiruhura", "Kisoro", "Mbarara", "Mitooma", "Ntungamo",
-        "Rubanda", "Rubirizi", "Rukiga", "Rukungiri", "Rwampara", "Sheema"
+            "Buhweju",
+            "Bushenyi",
+            "Ibanda",
+            "Isingiro",
+            "Kabale",
+            "Kanungu",
+            "Kazo",
+            "Kiruhura",
+            "Kisoro",
+            "Mbarara",
+            "Mitooma",
+            "Ntungamo",
+            "Rubanda",
+            "Rubirizi",
+            "Rukiga",
+            "Rukungiri",
+            "Rwampara",
+            "Sheema",
         ],
     ),
 }
@@ -110,9 +208,7 @@ def check() -> None:
     for name, (_region, districts) in SUBREGIONS.items():
         for d in districts:
             if d in seen:
-                raise ValueError(
-                    f"district {d!r} is in both {seen[d]!r} and {name!r}"
-                )
+                raise ValueError(f"district {d!r} is in both {seen[d]!r} and {name!r}")
             seen[d] = name
     if len(seen) != 135:
         raise ValueError(f"expected 135 districts, mapping has {len(seen)}")

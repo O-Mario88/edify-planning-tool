@@ -28,6 +28,15 @@ from __future__ import annotations
 from apps.core.enums import ActivityType
 
 # Field contact with a school. Everything here puts a person on a school site.
+#
+# These 15 are not a judgement call: budget/costing and projects/my_plan_service
+# had independently arrived at exactly this set, and they are the two modules
+# with the strongest reason to be complete -- costing must cover everything
+# that spends money, and My Plan must show a person everything they are due to
+# do. Two independent definitions agreeing member-for-member is better evidence
+# than any reasoning about what "feels like" a visit, so the canonical set is
+# theirs. The narrower definitions elsewhere (down to 4 members in
+# frontend/views/staff_views) were undercounting.
 VISIT_TYPES: tuple[str, ...] = (
     ActivityType.SCHOOL_VISIT,
     ActivityType.FOLLOW_UP_VISIT,
@@ -40,11 +49,19 @@ VISIT_TYPES: tuple[str, ...] = (
     ActivityType.TRAINING_FOLLOW_UP_VISIT,
     ActivityType.IN_SCHOOL_COACHING_VISIT,
     ActivityType.CORE_VISIT,
+    ActivityType.CORE_ASSESSMENT_VISIT,
     ActivityType.BASELINE_SSA_VISIT,
     ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
+    ActivityType.PARTNER_SSA_COLLECTION,
 )
 
 # Structured delivery to teachers or school leaders.
+#
+# Deliberately excludes cluster_meeting, cluster_meeting_ssa_review and
+# ssa_activity, which two of the wider definitions swept in. A meeting is not a
+# training and an assessment is not a training; those modules were grouping by
+# what costs alike, not by what the activity is. Cluster meetings have their
+# own group below.
 TRAINING_TYPES: tuple[str, ...] = (
     ActivityType.TRAINING,
     ActivityType.IN_SCHOOL_TRAINING,
@@ -65,7 +82,12 @@ SSA_TYPES: tuple[str, ...] = (ActivityType.SSA_ACTIVITY,)
 
 
 def _remaining() -> tuple[str, ...]:
-    grouped = set(VISIT_TYPES) | set(TRAINING_TYPES) | set(CLUSTER_MEETING_TYPES) | set(SSA_TYPES)
+    grouped = (
+        set(VISIT_TYPES)
+        | set(TRAINING_TYPES)
+        | set(CLUSTER_MEETING_TYPES)
+        | set(SSA_TYPES)
+    )
     return tuple(v for v in ActivityType.values if v not in grouped)
 
 

@@ -755,7 +755,11 @@ def monthly_request_view(request):
     try:
         context = get_monthly_request(
             request.user,
-            {key: request.GET.get(key) for key in ("fy", "month") if request.GET.get(key)},
+            {
+                key: request.GET.get(key)
+                for key in ("fy", "month")
+                if request.GET.get(key)
+            },
         )
     except (BadRequest, Forbidden) as exc:
         context = {"action_error": str(exc)}

@@ -161,8 +161,12 @@ def _migrate_markup(markup: str) -> tuple[str, int]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument("--check", action="store_true", help="report remaining transformable styles")
-    mode.add_argument("--write", action="store_true", help="migrate transformable styles")
+    mode.add_argument(
+        "--check", action="store_true", help="report remaining transformable styles"
+    )
+    mode.add_argument(
+        "--write", action="store_true", help="migrate transformable styles"
+    )
     args = parser.parse_args()
 
     remaining: list[str] = []

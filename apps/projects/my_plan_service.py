@@ -32,34 +32,10 @@ from apps.my_plan.services import (
 
 from .dashboard_service import DELIVERED_STATUSES
 from .models import Project
+from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 
 INTERVENTION_LABELS = dict(SsaIntervention.choices)
-VISIT_TYPES = {
-    "school_visit",
-    "follow_up_visit",
-    "coaching_visit",
-    "in_school_support",
-    "donor_visit",
-    "story_gathering_visit",
-    "school_invitation",
-    "social_visit",
-    "training_follow_up_visit",
-    "in_school_coaching_visit",
-    "core_visit",
-    "baseline_ssa_visit",
-    "school_visit_ssa_collection",
-    "partner_ssa_collection",
-    "core_assessment_visit",
-}
-TRAINING_TYPES = {
-    "training",
-    "in_school_training",
-    "school_improvement_training",
-    "cluster_training",
-    "core_training",
-    "cluster_training_ssa_collection",
-}
 ACTIVE_EXCLUSIONS = {"not_planned", "cancelled", "rejected", "closed"}
 RETURNED_STATES = {"returned", "returned_by_pl", "returned_by_ia"}
 REVIEW_STATES = {
