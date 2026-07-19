@@ -663,3 +663,41 @@ class ChartEmptyStateGuardTest(SimpleTestCase):
             "The empty-chart message must take its colour from the muted text "
             "token so it matches other secondary copy.",
         )
+
+
+class TemplateCommentLeakGuardTest(SimpleTestCase):
+    """Developer notes must not render as page copy.
+
+    Django's ``{# ... #}`` is a single-line construct. Its tokenizer does not
+    match across a newline, so a comment wrapped onto a second line stops
+    being a comment: the text leaks into the page and the reader sees the
+    note. It fails silently -- the template still renders, the tests still
+    pass, and only a screenshot shows the paragraph of developer prose sitting
+    above the content.
+
+    Five had accumulated when this guard was written, two of them inside
+    ``{% for %}`` loops on the cluster detail page, so the note repeated once
+    per intervention. Multi-line notes belong in ``{% comment %}``.
+    """
+
+    def test_no_multiline_hash_comment_leaks_into_rendered_output(self):
+        offenders = []
+        for path in sorted((ROOT / "templates").rglob("*.html")):
+            markup = path.read_text(encoding="utf-8", errors="ignore")
+            for match in re.finditer(r"\{#", markup):
+                rest = markup[match.start():]
+                close = rest.find("#}")
+                if close == -1:
+                    continue
+                if "\n" in rest[:close]:
+                    line = markup[: match.start()].count("\n") + 1
+                    offenders.append(
+                        f"{path.relative_to(ROOT).as_posix()}:{line}"
+                    )
+        self.assertEqual(
+            offenders,
+            [],
+            "Django's {# #} comment does not span newlines, so these render as "
+            "visible page text. Use {% comment %}...{% endcomment %} for "
+            f"multi-line notes: {offenders}",
+        )

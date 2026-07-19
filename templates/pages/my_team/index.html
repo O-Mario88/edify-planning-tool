@@ -19,10 +19,10 @@
 <!-- Team Table -->
 <div class="card overflow-hidden">
 {% if team %}
-{# The card clips to keep its rounded corners, so this six-column table was
+{% comment %} The card clips to keep its rounded corners, so this six-column table was
    cut off at the viewport edge on phones -- the last columns were unreachable
    rather than merely off-screen. The inner scroller restores access without
-   giving the page body a horizontal scrollbar. #}
+   giving the page body a horizontal scrollbar. {% endcomment %}
 <div class="overflow-x-auto">
 <table class="edify-data-table">
 <thead>

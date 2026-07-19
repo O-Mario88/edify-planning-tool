@@ -96,8 +96,8 @@ Field Execution Actuals
 <span class="text-[12px] font-semibold text-slate-800 truncate block max-w-[200px]" title="{{ ev.original_name }}">{{ ev.original_name }}</span>
 <span class="edify-text-caption text-slate-400 block mt-0.5 uppercase font-bold">{{ ev.kind }} &bull; {{ ev.file_size|filesizeformat }}</span>
 </div>
-{# Served through the authorized endpoint (scope + quarantine + hardened
-   headers) — never link the raw /uploads/ storage path. #}
+{% comment %} Served through the authorized endpoint (scope + quarantine + hardened
+   headers) — never link the raw /uploads/ storage path. {% endcomment %}
 <a href="/api/evidence/{{ ev.id }}/file?download=1" class="h-8 px-3 rounded-control edify-surface border border-slate-200 hover:bg-slate-50 edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
 Download File
 </a>

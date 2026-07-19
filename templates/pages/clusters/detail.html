@@ -143,9 +143,9 @@ Schedule Cluster Meeting
 <div class="space-y-3">
 {% if weakest_interventions %}
 {% for item in weakest_interventions|slice:":4" %}
-{# cluster_weakest_interventions() returns `avg`, not `score` — this panel
+{% comment %} cluster_weakest_interventions() returns `avg`, not `score` — this panel
    read `item.score` and so rendered a blank value and a neutral dot for
-   every intervention, on every cluster, since it was written. #}
+   every intervention, on every cluster, since it was written. {% endcomment %}
 <div class="flex items-center justify-between text-[12px] font-semibold">
 <div class="flex items-center gap-2">
 <span class="h-2 w-2 rounded-pill {% if item.avg < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
@@ -166,10 +166,10 @@ Schedule Cluster Meeting
 <div class="space-y-3.5">
 {% if intervention_summary %}
 {% for item in intervention_summary %}
-{# cluster_intervention_summary() returns `avg`, not `score` — this panel
+{% comment %} cluster_intervention_summary() returns `avg`, not `score` — this panel
    read `item.score`, so every intervention showed a blank score and a
    0%-width bar. `avg` is None when no confirmed SSA covers the
-   intervention; show an explicit dash rather than a misleading 0. #}
+   intervention; show an explicit dash rather than a misleading 0. {% endcomment %}
 <div>
 <div class="flex items-center justify-between text-[12px] font-semibold">
 <span class="truncate">{{ item.label }}</span>
