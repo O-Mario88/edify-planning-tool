@@ -490,6 +490,17 @@ main :where(.btn, .edify-action-button)[aria-disabled="true"] {
   box-shadow: none;
 }
 
+/* FullCalendar injects its own stylesheet at runtime, and its focus glow
+   (.fc .fc-button:focus) outranks the box-shadow reset above on specificity.
+   The platform outline still won, so calendar controls were the only place on
+   the platform painting two focus rings at once -- the accent outline plus a
+   grey halo. Suppressing the third-party glow leaves the shared ring standing
+   alone, the same as every other control. */
+.fc .fc-button:focus,
+.fc .fc-button:focus-visible {
+  box-shadow: none !important;
+}
+
 /* ── Forms and filters. ────────────────────────────────────────────────── */
 main :where(input[type="text"], input[type="email"], input[type="password"],
   input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
