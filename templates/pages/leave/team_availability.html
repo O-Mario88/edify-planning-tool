@@ -6,16 +6,46 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
   <!-- Header -->
-  <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+  <div class="flex items-center justify-between border-b border-slate-200 pb-4 gap-4 flex-wrap">
     <div>
       <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Team Availability Heatmap</h1>
-      <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Track workload, approved leaves, and calendar blockages for your team over the next 4 weeks</p>
+      <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Workload, approved leave and calendar blocks for your team over the next {{ week_count }} weeks</p>
     </div>
 
-    <div class="flex items-center gap-2 edify-text-caption font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-surface">
-      <span>Scoping: {{ role }}</span>
+    <div class="flex items-center gap-2">
+      <form method="GET" class="flex items-center gap-2">
+        <label class="sr-only" for="weeks-select">Window</label>
+        <select id="weeks-select" name="weeks" onchange="this.form.submit()" class="border border-[var(--edify-border)] rounded-control px-3 py-1.5 text-[12px] font-semibold">
+          {% for w in week_options %}<option value="{{ w }}" {% if w == week_count %}selected{% endif %}>Next {{ w }} weeks</option>{% endfor %}
+        </select>
+      </form>
+      <div class="flex items-center gap-2 edify-text-caption font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-surface">
+        <span>Scoping: {{ role }}</span>
+      </div>
     </div>
   </div>
+
+  {% if collisions.visits_at_risk %}
+  <div class="edify-surface rounded-surface border border-rose-200 bg-rose-50/40 shadow-sm">
+    <div class="px-5 py-3.5 border-b border-rose-200/70">
+      <h2 class="text-[13px] font-extrabold text-rose-800">{{ collisions.visits_at_risk }} school visit{{ collisions.visits_at_risk|pluralize }} scheduled against absent staff</h2>
+      <p class="edify-text-caption text-rose-700/80 font-semibold mt-0.5">{{ collisions.people_affected }} staff member{{ collisions.people_affected|pluralize }} have field work booked in a week they are away. Reassign the visit or arrange cover.</p>
+    </div>
+    <ul class="divide-y divide-rose-200/50">
+      {% for r in collisions.rows %}
+      <li class="px-5 py-3 flex items-start justify-between gap-4 flex-wrap">
+        <div class="min-w-0">
+          <p class="text-[13px] font-bold text-slate-800">{{ r.staff_name }} <span class="edify-text-caption font-semibold text-slate-500">· {{ r.role }}</span></p>
+          <p class="edify-text-caption text-slate-600 font-semibold mt-0.5">
+            {% for w in r.weeks %}{{ w.start }} → {{ w.end }}: {{ w.stranded_visits }} visit{{ w.stranded_visits|pluralize }} ({{ w.status }}){% if not forloop.last %} · {% endif %}{% endfor %}
+          </p>
+        </div>
+        <span class="shrink-0 edify-text-caption font-extrabold px-2.5 py-1 rounded-pill bg-rose-600 text-white tabular-nums">{{ r.stranded_total }} at risk</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
 
   <!-- Legend & Overview -->
   <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">

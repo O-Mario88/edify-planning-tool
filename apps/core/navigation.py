@@ -219,7 +219,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "recruitment": {HR, CD, ADMIN},
     "candidate_pipeline": {HR, ADMIN},
     "onboarding": {HR, ADMIN},
-    "cpd_learning": {HR, PL, CD, ADMIN},
+    # RVP added: it approves the CD's own development and owns the region's
+    # people investment, but had no PD oversight surface at all.
+    "cpd_learning": {HR, PL, CD, RVP, ADMIN},
     "succession_planning": {HR, ADMIN},
     "performance_reviews": {HR, PL, CD, ADMIN},
     "recovery_plans": {HR, PL, ADMIN},

@@ -131,6 +131,25 @@ def _scoped_staff_ids(principal):
 
         scope = resolve_user_scope(principal)
         return list(scope.supervised_staff_ids), None
+    if role == "RegionalVicePresident":
+        # The RVP had no PD oversight of any kind — excluded from the page and
+        # scoped to nothing inside it — despite approving the CD's own PD and
+        # owning the region's people investment. Scoped to its assigned
+        # region(s) where geography is configured, deployment-wide otherwise,
+        # matching how every other RVP surface now resolves.
+        from apps.core.scoping import resolve_user_scope
+
+        scope = resolve_user_scope(principal)
+        if not scope.rvp_region_scoped:
+            return None, None
+        region_school_ids = list(
+            StaffProfile.objects.filter(
+                school_links__school__region_id__in=scope.region_ids
+            )
+            .values_list("id", flat=True)
+            .distinct()
+        )
+        return region_school_ids, None
     # Any other role reaching this view (shouldn't happen — permission-gated) sees nothing.
     return [], None
 

@@ -1282,8 +1282,13 @@ class TeamAvailabilityService:
         supervisor_profile: StaffProfile | None = None,
         country_scope: bool = False,
         limit: int | None = None,
+        week_count: int = 4,
     ) -> list[dict]:
-        """Build the 4-week availability matrix.
+        """Build the availability matrix (four weeks by default).
+
+        `week_count` widens the window without changing any existing caller:
+        four weeks cannot answer "who is away next month", which is the
+        question a leader actually asks when planning field coverage.
 
         Was a severe nested N+1: 4 queries (leaves/conferences/blackouts/
         activity count) per staff member PER WEEK — up to 16 queries per
@@ -1300,7 +1305,7 @@ class TeamAvailabilityService:
 
         today = date.today()
         weeks = []
-        for i in range(4):
+        for i in range(max(1, week_count)):
             start = today + timedelta(weeks=i) - timedelta(days=today.weekday())
             end = start + timedelta(days=6)
             weeks.append((start, end))
@@ -1421,17 +1426,68 @@ class TeamAvailabilityService:
                 elif act_count >= 5:
                     status = "High Workload"
 
+                # The collision the status label hides: someone is away in a
+                # week that still has field work scheduled against them. The
+                # count was always computed here, but "On Leave" overwrote the
+                # workload label, so the stranded visits were invisible at team
+                # level and only ever surfaced one request at a time during
+                # approval.
+                stranded = act_count if (on_leave or in_conf) and act_count else 0
+
                 row["weeks"].append(
                     {
                         "start": start_iso,
                         "end": end_iso,
                         "status": status,
                         "act_count": act_count,
+                        "stranded_visits": stranded,
                     }
                 )
+            row["stranded_total"] = sum(w["stranded_visits"] for w in row["weeks"])
             matrix.append(row)
 
         return matrix
+
+    @staticmethod
+    def collision_report(
+        supervisor_profile: StaffProfile | None = None,
+        country_scope: bool = False,
+        weeks: int = 8,
+    ) -> dict:
+        """Approved absence set against scheduled field work.
+
+        `get_4week_heatmap` answers "who is away" over a rolling four weeks —
+        too short to answer "who is away next month", and it suppresses the
+        visit collision entirely. This walks a configurable window and returns
+        the weeks where someone is absent while school visits are still booked
+        in their name, worst first.
+        """
+        matrix = TeamAvailabilityService.get_4week_heatmap(
+            supervisor_profile=supervisor_profile,
+            country_scope=country_scope,
+            week_count=weeks,
+        )
+        rows = []
+        for person in matrix:
+            hits = [w for w in person["weeks"] if w["stranded_visits"]]
+            if not hits:
+                continue
+            rows.append(
+                {
+                    "staff_name": person["staff_name"],
+                    "staff_id": person["staff_id"],
+                    "role": person["role"],
+                    "stranded_total": person.get("stranded_total", 0),
+                    "weeks": hits,
+                }
+            )
+        rows.sort(key=lambda r: -r["stranded_total"])
+        return {
+            "rows": rows,
+            "people_affected": len(rows),
+            "visits_at_risk": sum(r["stranded_total"] for r in rows),
+            "window_weeks": len(matrix[0]["weeks"]) if matrix else 0,
+        }
 
 
 class LeaveNotificationService:

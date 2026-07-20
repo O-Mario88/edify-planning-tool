@@ -1379,15 +1379,30 @@ def team_availability_view(request):
 
     sp = getattr(user, "staff_profile", None)
 
-    # Calculate Heatmap matrix
+    country_scope = role in ["CD", "HR", "ADMIN"]
+    # Widened from a fixed four weeks so "who is away next month" is actually
+    # answerable — the previous window stopped short of it.
+    try:
+        week_count = max(4, min(12, int(request.GET.get("weeks", 8))))
+    except (TypeError, ValueError):
+        week_count = 8
+
     matrix = TeamAvailabilityService.get_4week_heatmap(
-        supervisor_profile=sp, country_scope=(role in ["CD", "HR", "ADMIN"])
+        supervisor_profile=sp,
+        country_scope=country_scope,
+        week_count=week_count,
+    )
+    # Absence set against field work still booked in the same week. The
+    # heatmap's own status label hides this: "On Leave" overwrites the
+    # workload cell, so stranded school visits were invisible at team level.
+    collisions = TeamAvailabilityService.collision_report(
+        supervisor_profile=sp, country_scope=country_scope, weeks=week_count
     )
 
     # Generate list of header weeks labels
     today = date.today()
     weeks_headers = []
-    for i in range(4):
+    for i in range(week_count):
         start = (
             today
             + timezone.timedelta(weeks=i)
@@ -1398,7 +1413,14 @@ def team_availability_view(request):
             f"Wk {i+1} ({start.strftime('%d %b')} - {end.strftime('%d %b')})"
         )
 
-    context = {"matrix": matrix, "weeks_headers": weeks_headers, "role": role}
+    context = {
+        "matrix": matrix,
+        "weeks_headers": weeks_headers,
+        "role": role,
+        "collisions": collisions,
+        "week_count": week_count,
+        "week_options": [4, 8, 12],
+    }
     return render(request, "pages/leave/team_availability.html", context)
 
 
