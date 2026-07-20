@@ -148,6 +148,13 @@ class ActivityClosureSystemTest(TestCase):
             is_active=True,
         )
         self.client.force_login(cceo)
+        # The closure workspace is data-scoped, not just role-gated: a CCEO
+        # with no portfolio 404s rather than reaching another region's work.
+        # This test is about the analytics side effect of a FAILED close, so
+        # give the actor legitimate ownership -- otherwise it would pass for
+        # the wrong reason (blocked at the door, never exercising publish).
+        self.activity.responsible_staff_id = cceo.id
+        self.activity.save(update_fields=["responsible_staff_id"])
 
         resp = self.client.post(f"/activities/{self.activity.id}/closure/close")
         self.assertIn(resp.status_code, (200, 302))

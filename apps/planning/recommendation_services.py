@@ -98,10 +98,10 @@ class PlanningRecommendationService:
                 "recommendedAction": "Schedule Baseline SSA Visit",
                 "reason": "Complete SSA first so intervention impact can be measured.",
                 "availableActions": [
-                    "Schedule SSA Visit",
-                    "Schedule School Visit + SSA",
-                    "Assign Partner SSA Collection",
-                    "Schedule Activity Anyway",
+                    "Schedule",
+                    "Schedule",
+                    "Assign",
+                    "Schedule",
                 ],
                 "blockedActions": [],
             }
@@ -132,7 +132,7 @@ class PlanningRecommendationService:
                 "planningReadiness": "Ready for Support",
                 "recommendedAction": "Recommend Partner (In-school coaching)",
                 "reason": f"Critical score ({score_val:.1f}/10.0) requires intensive in-school coaching. Weakest: {weakest_area}.",
-                "availableActions": ["Assign to Partner", "Schedule visit"],
+                "availableActions": ["Assign", "Schedule"],
                 "blockedActions": [],
             }
         elif severity == "Warning":

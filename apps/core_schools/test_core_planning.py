@@ -391,8 +391,12 @@ class CoreSchoolsPlanningTest(TestCase):
             f"/core-schools/schedule-activity?school_id={self.school.school_id}"
         )
         self.assertContains(response, "Package complete")
-        self.assertContains(response, "No package visit slots available")
-        self.assertContains(response, "No package training slots available")
+        # The chooser labels each exhausted option in place ("Core visit ·
+        # no package slots available") rather than as a standalone
+        # sentence. The behaviour under test is unchanged -- package slots
+        # are gone, general activities remain -- only the wording moved.
+        self.assertContains(response, "Core visit · no package slots available")
+        self.assertContains(response, "Core training · no package slots available")
         self.assertContains(response, "Schedule other activity")
         self.assertContains(
             response,

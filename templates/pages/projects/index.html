@@ -76,10 +76,10 @@
 {% include "components/kpi_strip.html" with items=kpis %}
 
 <!-- ============================ MAIN GRID ============================ -->
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
   <!-- ───────────── LEFT (2/3): Project table ───────────── -->
-  <div class="xl:col-span-2 space-y-6">
+  <div class="lg:col-span-2 space-y-6">
 
   <!-- =========== PROJECT TABLE (desktop / tablet) =========== -->
   <div class="card overflow-hidden">
@@ -99,8 +99,8 @@
             <th class="px-4 py-3 hidden md:table-cell">Type</th>
             <th class="px-4 py-3 hidden lg:table-cell">Scope</th>
             <th class="px-4 py-3 text-center">Schools</th>
-            <th class="px-4 py-3 hidden xl:table-cell">Target Interventions</th>
-            <th class="px-4 py-3 hidden xl:table-cell">Lead / Delivery</th>
+            <th class="px-4 py-3 hidden lg:table-cell">Target Interventions</th>
+            <th class="px-4 py-3 hidden lg:table-cell">Lead / Delivery</th>
             <th class="px-4 py-3 min-w-[120px]">Progress</th>
             <th class="px-4 py-3 hidden lg:table-cell">Budget</th>
             <th class="px-4 py-3">Status</th>
@@ -130,7 +130,7 @@
               <span class="text-[14px] font-bold text-slate-700">{{ row.schools }}</span>
             </td>
             <!-- Target Interventions -->
-            <td class="px-4 py-4 align-top hidden xl:table-cell">
+            <td class="px-4 py-4 align-top hidden lg:table-cell">
               <div class="flex flex-wrap gap-1 max-w-[180px]">
                 {% if row.interventions %}
                   {% for iv in row.interventions|slice:":3" %}
@@ -145,7 +145,7 @@
               </div>
             </td>
             <!-- Lead / Delivery -->
-            <td class="px-4 py-4 align-top hidden xl:table-cell">
+            <td class="px-4 py-4 align-top hidden lg:table-cell">
               <p class="text-slate-600 font-semibold leading-tight truncate max-w-[140px]">{{ row.partner }}</p>
               {% if row.partner_extra %}<p class="edify-text-caption text-slate-400 mt-0.5">+{{ row.partner_extra }} more</p>{% endif %}
             </td>
@@ -196,7 +196,7 @@
   </div>
 
   <!-- =========== MOBILE PROJECT CARDS (mobile only) =========== -->
-  <div class="xl:hidden space-y-3">
+  <div class="lg:hidden space-y-3">
     {% for row in portfolio %}
     <div class="card p-4 space-y-3">
       <div class="flex items-start justify-between gap-3">
@@ -228,7 +228,7 @@
         <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Budget & Execution</h2>
         <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Auto from scheduled activities · all financial stages shown separately</p>
       </div>
-      <a href="/weekly-fund-request" class="text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline">Fund Requests →</a>
+      <a href="/fund-requests/weekly" class="text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline">Fund Requests →</a>
     </div>
     <div class="text-[22px] font-extrabold text-slate-800 tracking-tight">{{ budget_summary.total }}</div>
     <div class="grid grid-cols-2 gap-3">
@@ -285,7 +285,7 @@
   </div>
 
   <!-- ───────────── RIGHT RAIL (1/3) ───────────── -->
-  <div class="xl:col-span-1 space-y-6">
+  <div class="lg:col-span-1 space-y-6">
 
   <!-- Selected project summary (if a project is picked) -->
   {% if selected %}

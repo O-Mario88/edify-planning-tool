@@ -1005,21 +1005,21 @@ def cluster_planning(principal) -> list[dict]:
         if gap_cat == "no_meetings_this_fy":
             recommendation_headline = "No cluster meetings held this FY"
             recommendation_reason = "Organize the first cluster meeting to align plans."
-            recommendation_activity_label = "Schedule Cluster Meeting"
+            recommendation_activity_label = "Schedule"
         elif gap_cat == "not_met_this_quarter":
             recommendation_headline = "No cluster meeting this quarter"
             recommendation_reason = "Keep up the quarterly cadence."
-            recommendation_activity_label = "Schedule Cluster Meeting"
+            recommendation_activity_label = "Schedule"
         elif gap_cat == "schools_not_visited":
             recommendation_headline = "Schools need visits"
             recommendation_reason = (
                 f"{schools_not_visited} schools haven't been visited."
             )
-            recommendation_activity_label = "Schedule Visit"
+            recommendation_activity_label = "Schedule"
         elif gap_cat == "schools_not_trained":
             recommendation_headline = "Schools need training"
             recommendation_reason = f"{schools_not_trained} schools need training."
-            recommendation_activity_label = "Schedule Training"
+            recommendation_activity_label = "Schedule"
 
         out.append(
             {
@@ -1454,7 +1454,7 @@ class ClusterRecommendationService:
                 "Cluster has solid SSA scores and frequent meetings.",
             ),
             "activity_label": planning.get(
-                "recommendationActivityLabel", "Schedule Visit"
+                "recommendationActivityLabel", "Schedule"
             ),
             "focus_intervention": planning.get(
                 "recommendationFocusIntervention", "leadership"
