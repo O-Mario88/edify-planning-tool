@@ -1853,53 +1853,56 @@ class CDAnalyticsService:
     # oversight workflows only (view / recommend / assign-follow-up-to-PL /
     # message / escalate / review-budget). No drawer ever exposes schedule-visit,
     # start-activity, upload-evidence or enter-SF-ID actions.
+    # Every oversight action carries the surface that performs it. These were
+    # previously bare label strings with nothing behind them — a cockpit full
+    # of buttons that did nothing, including "Escalate to RVP", for which no
+    # mechanism existed anywhere in the platform until the escalation channel
+    # was built. An action with no destination does not belong in this list.
     _OVERSIGHT_ACTIONS = {
         "pl": [
-            "View PL",
-            "Request Recovery Plan",
-            "Message PL",
-            "Review Team Targets",
-            "Review Budget",
+            {"label": "Review Team Targets", "href": "/team-targets/"},
+            {"label": "Request Recovery Plan", "href": "/team-targets/"},
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Message PL", "href": "/messages"},
+            {"label": "Review Country Budget", "href": "/country-budget/"},
         ],
         "cceo": [
-            "View Performance",
-            "Message Owner PL",
-            "Request PL Follow-up",
-            "Create To-Do for PL",
+            {"label": "View Performance", "href": "/team-targets/"},
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Message Owner PL", "href": "/messages"},
         ],
         "district": [
-            "Assign Follow-up to PL",
-            "Create Recommendation",
-            "Review SSA Risk",
-            "Send Message",
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Review SSA Risk", "href": "/ssa"},
+            {"label": "Send Message", "href": "/messages"},
         ],
         "region": [
-            "Review Regional Report",
-            "Assign Follow-up to PL",
-            "Escalate to RVP",
+            {"label": "Review Regional SSA", "href": "/ssa"},
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Escalate to RVP", "href": "/escalations"},
         ],
         "partner": [
-            "Review Partner Recommendation",
-            "Put Under Review",
-            "Message Partner Owner",
+            {"label": "Review Partner", "href": "/partners"},
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Escalate to RVP", "href": "/escalations"},
         ],
-        "cluster": ["Assign PL Follow-up", "Create Recommendation", "Review SSA Risk"],
+        "cluster": [
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Review SSA Risk", "href": "/ssa"},
+        ],
         "risk": [
-            "Assign Follow-up to PL",
-            "Create Leadership To-Do",
-            "Request Recovery Plan",
-            "Send Message",
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Request Recovery Plan", "href": "/team-targets/"},
+            {"label": "Send Message", "href": "/messages"},
         ],
         "budget": [
-            "Review Country Monthly Budget",
-            "Review Budget Risk",
-            "Send Budget to RVP",
-            "Update Cost Catalogue",
+            {"label": "Review Country Monthly Budget", "href": "/country-budget/"},
+            {"label": "Update Cost Catalogue", "href": "/cost-settings"},
+            {"label": "Escalate to RVP", "href": "/escalations"},
         ],
         "ssa": [
-            "Assign Follow-up to PL",
-            "Create Recommendation",
-            "Review SSA Risk District",
+            {"label": "Flag to Program Lead", "href": "/quality-checks"},
+            {"label": "Review SSA Performance", "href": "/ssa"},
         ],
     }
 
@@ -1909,7 +1912,11 @@ class CDAnalyticsService:
         cd = resolve_cd_scope(fy, quarter, month, filters or {})
         acts = _country_activities(cd)
         actions = CDAnalyticsService._OVERSIGHT_ACTIONS.get(
-            drill, ["View Details", "Send Message"]
+            drill,
+            [
+                {"label": "Flag to Program Lead", "href": "/quality-checks"},
+                {"label": "Send Message", "href": "/messages"},
+            ],
         )
         # Echo the full filter context so drawers never lose FY/quarter/month/
         # PL/district/partner selections when opened or closed.

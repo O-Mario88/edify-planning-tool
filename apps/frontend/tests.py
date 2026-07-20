@@ -85,7 +85,7 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/cceo.html")
         self.assertContains(response, "Schools Needing Urgent Attention")
-        self.assertContains(response, "Schedule Baseline SSA Visit")
+        self.assertContains(response, "Complete SSA")
         self.assertContains(response, "Assign")
 
     def test_program_lead_dashboard_renders_successfully(self):

@@ -168,7 +168,7 @@ class PLDashboardTest(TestCase):
         self.assertEqual(rows["School A2"]["owner_name"], "CCEO A1")
         self.assertEqual(
             rows["School A2"]["recommended_activity_label"],
-            "Schedule Baseline SSA Visit",
+            "Complete SSA",
         )
         self.assertIn(
             "recommended_activity_type=baseline_ssa_visit",

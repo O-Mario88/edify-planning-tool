@@ -5,7 +5,13 @@ from __future__ import annotations
 
 from apps.core.exceptions import BadRequest, NotFoundError
 
-from .models import Project, ProjectPartnerAssignment, ProjectSchoolAssignment
+from .models import (
+    Project,
+    ProjectCategory,
+    ProjectPartnerAssignment,
+    ProjectSchoolAssignment,
+    ProjectStatus,
+)
 
 
 def list_projects() -> list[dict]:
@@ -70,6 +76,7 @@ def assign_school(project_id: str, data: dict) -> dict:
     p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Project not found.")
+    assert_accepts_new_work(p)
     from apps.schools.models import School
 
     school = School.objects.filter(school_id=data.get("schoolId")).first()
@@ -144,12 +151,149 @@ def set_manager(project_id: str, data: dict) -> dict:
     return _serialize(p)
 
 
+# ── Lifecycle ────────────────────────────────────────────────────────────────
+
+
+def assert_accepts_new_work(project: Project) -> None:
+    """Refuse to attach new work to a paused or closed project.
+
+    This is what makes an RVP pause/close mean something: without it the
+    decision was an audit row that every assignment path ignored.
+    """
+    if not project.accepts_new_work:
+        raise BadRequest(
+            f"'{project.name}' is {project.status_label.lower()} — no new schools "
+            "or activities can be assigned to it. Ask the RVP to reactivate it "
+            "first."
+        )
+
+# What each RVP strategic decision does to project state. Decisions absent from
+# this map (continue / measure / budget changes) are deliberately status-neutral
+# — they are guidance, not lifecycle moves.
+DECISION_STATUS = {
+    "scale": ProjectStatus.SCALING.value,
+    "pause": ProjectStatus.PAUSED.value,
+    "close": ProjectStatus.CLOSED.value,
+    "redesign": ProjectStatus.UNDER_REVIEW.value,
+    "continue": ProjectStatus.ACTIVE.value,
+}
+
+
+def apply_decision(project: Project, action: str, principal, reason: str = "") -> bool:
+    """Move a project's lifecycle to match a strategic decision.
+
+    Returns whether the status actually changed. The audit row and CD
+    notification are the caller's job (they predate this); what was missing was
+    any effect on the project itself.
+    """
+    from django.utils import timezone
+
+    new_status = DECISION_STATUS.get(action)
+    if not new_status or new_status == project.status:
+        return False
+    project.status = new_status
+    project.status_changed_at = timezone.now()
+    project.status_changed_by = getattr(principal, "user_id", None)
+    project.status_reason = reason or ""
+    project.save(
+        update_fields=[
+            "status",
+            "status_changed_at",
+            "status_changed_by",
+            "status_reason",
+            "updated_at",
+        ]
+    )
+    return True
+
+
+def create_project(data: dict, principal) -> dict:
+    """Create a Special Project.
+
+    No creation path existed at all — the "New Project" affordance on the
+    projects command centre pointed at nothing, so every project had to be
+    seeded or inserted by hand. Projects start `proposed`: the CD frames it,
+    the RVP ratifies it into `active` via the strategic-decision flow.
+    """
+    from apps.audit.services import log as audit_log
+    from apps.core.enums import SsaIntervention
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        raise BadRequest("A project name is required.")
+    category = (data.get("category") or "").strip()
+    valid_categories = {c.value for c in ProjectCategory}
+    if category not in valid_categories:
+        raise BadRequest(
+            f"Category must be one of: {', '.join(sorted(valid_categories))}."
+        )
+
+    targets = data.get("targetInterventions") or []
+    if isinstance(targets, str):
+        targets = [t.strip() for t in targets.split(",") if t.strip()]
+    valid_interventions = {i.value for i in SsaIntervention}
+    unknown = [t for t in targets if t not in valid_interventions]
+    if unknown:
+        raise BadRequest(f"Unknown target intervention(s): {', '.join(unknown)}.")
+    if not targets:
+        # The model already documents this: a project with no declared target
+        # cannot be measured for impact, and the assignment gate has nothing to
+        # evaluate school need against.
+        raise BadRequest(
+            "Declare at least one target SSA intervention — impact measurement "
+            "and the school-assignment need check both depend on it."
+        )
+
+    code = (data.get("code") or "").strip() or None
+    if code and Project.objects.filter(code=code).exists():
+        raise BadRequest(f"Project code '{code}' is already in use.")
+
+    ceiling = data.get("budgetCeilingUgx")
+    try:
+        ceiling = int(ceiling) if ceiling not in (None, "") else None
+    except (TypeError, ValueError):
+        raise BadRequest("Budget ceiling must be a whole number of UGX.")
+    if ceiling is not None and ceiling < 0:
+        raise BadRequest("Budget ceiling cannot be negative.")
+
+    project = Project.objects.create(
+        name=name,
+        code=code,
+        category=category,
+        target_interventions=targets,
+        measurement_start_fy=(data.get("measurementStartFy") or "").strip() or None,
+        measurement_end_fy=(data.get("measurementEndFy") or "").strip() or None,
+        manager_staff_id=(data.get("managerStaffId") or "").strip() or None,
+        budget_ceiling_ugx=ceiling,
+        status=ProjectStatus.PROPOSED.value,
+        status_changed_at=None,
+    )
+    audit_log(
+        action="project_create",
+        subject_kind="Project",
+        subject_id=project.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            "name": project.name,
+            "category": project.category,
+            "targetInterventions": targets,
+            "budgetCeilingUgx": ceiling,
+        },
+    )
+    return _serialize(project)
+
+
 def _serialize(p: Project) -> dict:
     return {
         "id": p.id,
         "code": p.code,
         "name": p.name,
         "category": p.category,
+        "status": p.status,
+        "statusLabel": p.status_label,
+        "acceptsNewWork": p.accepts_new_work,
+        "budgetCeilingUgx": p.budget_ceiling_ugx,
         "intervention": p.intervention,
         "managerStaffId": p.manager_staff_id,
         "schoolCount": p.school_assignments.count(),

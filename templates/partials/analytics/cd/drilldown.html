@@ -145,10 +145,10 @@
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-2">CD oversight actions</p>
     <div class="flex flex-wrap gap-1.5">
       {% for a in actions %}
-      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-600">
+      <a href="{{ a.href }}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-600 hover:bg-white hover:border-[var(--edify-primary)] hover:text-[var(--edify-primary)] transition-colors">
         <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-        {{ a }}
-      </span>
+        {{ a.label }}
+      </a>
       {% endfor %}
     </div>
     <p class="edify-text-caption text-slate-400 font-medium mt-2">Oversight only — the CD reviews, recommends, and routes follow-up to the responsible PL. No field scheduling or execution from this drawer.</p>

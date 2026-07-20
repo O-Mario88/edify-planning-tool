@@ -45,8 +45,14 @@ def rvp_annual_action_view(request, budget_id):
 
 @require_page_permission("rvp_project_decision")
 def rvp_project_decision_view(request, project_id):
-    """§18 — strategic project decision with confirmation + audit. Updates no
-    field plans; records the decision and notifies the CD."""
+    """§18 — strategic project decision with confirmation + audit.
+
+    Scale/pause/close/redesign move the project's lifecycle, so the decision
+    reaches every queue and dashboard that reads it; continue/measure and the
+    budget-direction decisions stay advisory. Field plans are still never
+    rewritten — pausing stops new work being attached, it does not delete work
+    already scheduled.
+    """
     if not _require_rvp(request):
         return HttpResponseForbidden("RVP only.")
     if request.method != "POST":
@@ -71,21 +77,39 @@ def rvp_project_decision_view(request, project_id):
     if project is None:
         return HttpResponseBadRequest("Project not found.")
     reason = (request.POST.get("reason") or "").strip()
+    # Decisions that change what the project *is* must say why.
+    from apps.projects.services import DECISION_STATUS, apply_decision
+
+    if action in DECISION_STATUS and not reason:
+        messages.error(
+            request,
+            f"{ALLOWED[action]} changes the project's status — a reason is required.",
+        )
+        return redirect("/dashboard")
+
+    previous_status = project.status
+    status_changed = apply_decision(project, action, request.user, reason)
+
     _rvp_audit(
         "special_project", project.id, project.name, action, request.user, reason=reason
     )
     from apps.accounts.models import User
 
+    status_note = (
+        f" Status: {previous_status} → {project.status}." if status_changed else ""
+    )
     for cd_user in User.objects.filter(
         roles__contains=["CountryDirector"], status="active"
     ):
         _rvp_notify(
             cd_user.id,
             f"RVP decision: {ALLOWED[action]}",
-            f"{project.name} — {reason or 'strategic decision recorded.'}",
+            f"{project.name} — {reason or 'strategic decision recorded.'}{status_note}",
             "/projects",
         )
-    messages.success(request, f"{ALLOWED[action]} recorded for {project.name}.")
+    messages.success(
+        request, f"{ALLOWED[action]} recorded for {project.name}.{status_note}"
+    )
     return redirect("/dashboard")
 
 

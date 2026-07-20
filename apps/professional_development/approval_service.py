@@ -26,7 +26,12 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
-from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
+from apps.accounts.models import (
+    StaffProfile,
+    StaffSupervisorAssignment,
+    TemporaryCoverageAssignment,
+    User,
+)
 from apps.core.exceptions import BadRequest, Forbidden
 
 from apps.professional_development.models import (
@@ -148,6 +153,33 @@ class PDApprovalRoutingService:
         return link.supervisor if link else None
 
     @staticmethod
+    def acting_supervisor_ids(staff: StaffProfile) -> list[str]:
+        """User ids entitled to act as this staffer's supervisor right now —
+        the configured supervisor plus anyone actively covering for them.
+
+        Without the coverage arm a supervisor's own leave froze every PD
+        request routed to them, even though the platform already tracks who is
+        standing in.
+        """
+        supervisor = PDApprovalRoutingService.supervisor_for(staff)
+        if not supervisor:
+            return []
+        ids = [supervisor.user_id] if supervisor.user_id else []
+        now = timezone.now()
+        covering = (
+            TemporaryCoverageAssignment.objects.filter(
+                original_staff=supervisor,
+                start_datetime__lte=now,
+                end_datetime__gte=now,
+                status="active",
+            )
+            .select_related("covering_staff")
+            .values_list("covering_staff__user_id", flat=True)
+        )
+        ids.extend([c for c in covering if c])
+        return ids
+
+    @staticmethod
     def can_review(req: ProfessionalDevelopmentRequest, principal) -> bool:
         """Non-raising authorization check for the view layer — is this
         principal the reviewer entitled to act on this request RIGHT NOW."""
@@ -155,10 +187,10 @@ class PDApprovalRoutingService:
             return False
         if req.status == PDStatus.SUBMITTED_TO_SUPERVISOR:
             staff = StaffProfile.objects.filter(id=req.staff_id).first()
-            supervisor = (
-                PDApprovalRoutingService.supervisor_for(staff) if staff else None
+            acting = (
+                PDApprovalRoutingService.acting_supervisor_ids(staff) if staff else []
             )
-            return bool(supervisor and supervisor.user_id == principal.user_id)
+            return principal.user_id in acting
         if req.status in (PDStatus.SUBMITTED_TO_HR, PDStatus.PENDING_EXCEPTION):
             return _may_review_hr_stage(req, principal)
         return False
@@ -251,9 +283,12 @@ class PDApprovalRoutingService:
         if req.status != PDStatus.SUBMITTED_TO_SUPERVISOR:
             raise BadRequest("This request is not awaiting supervisor review.")
         staff = StaffProfile.objects.filter(id=req.staff_id).first()
-        supervisor = PDApprovalRoutingService.supervisor_for(staff) if staff else None
-        if not supervisor or supervisor.user_id != principal.user_id:
-            raise Forbidden("You are not the configured supervisor for this request.")
+        acting = PDApprovalRoutingService.acting_supervisor_ids(staff) if staff else []
+        if principal.user_id not in acting:
+            raise Forbidden(
+                "You are not the configured supervisor (or active cover) for "
+                "this request."
+            )
         if req.staff_id == (principal.staff_profile_id or ""):
             raise Forbidden("You cannot approve your own request.")
 

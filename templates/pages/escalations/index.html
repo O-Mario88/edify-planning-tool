@@ -1,0 +1,156 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Escalations — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<div class="flex items-start justify-between gap-4 flex-wrap">
+<div>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Escalations</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">
+{% if is_rvp %}Decisions the Country Director has put in front of you{% else %}Decisions above your authority, routed to the Regional Vice President{% endif %}
+</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] px-4 py-2.5 text-center">
+<p class="text-[19px] font-extrabold text-slate-800 leading-none tabular-nums">{{ board.open_count }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1">Open</p>
+</div>
+<div class="edify-surface rounded-surface border {% if board.overdue_count %}border-rose-200 bg-rose-50/40{% else %}border-[var(--edify-border)]{% endif %} px-4 py-2.5 text-center">
+<p class="text-[19px] font-extrabold {% if board.overdue_count %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ board.overdue_count }}</p>
+<p class="edify-text-caption {% if board.overdue_count %}text-rose-600{% else %}text-slate-500{% endif %} font-bold mt-1">Overdue</p>
+</div>
+</div>
+</div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="rounded-surface border px-4 py-3 text-[12.5px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+
+{% if can_raise %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5">
+<h2 class="text-[13px] font-extrabold text-slate-800 mb-1">Escalate to the Regional Vice President</h2>
+<p class="edify-text-caption text-slate-500 font-semibold mb-3">Use this when a decision sits above country authority — a structural funding gap, a partner failing across regions, or a policy exception.</p>
+<form method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-semibold text-[12px] text-slate-600">
+{% csrf_token %}
+<input type="hidden" name="action" value="raise">
+<div>
+<label class="block mb-1 font-bold text-slate-700" for="esc-category">Category</label>
+<select id="esc-category" name="category" required class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+{% for value, label in board.categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+</select>
+</div>
+<div>
+<label class="block mb-1 font-bold text-slate-700" for="esc-severity">Severity</label>
+<select id="esc-severity" name="severity" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+{% for value, label in board.severities %}<option value="{{ value }}" {% if value == 'normal' %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+</div>
+<div class="sm:col-span-2">
+<label class="block mb-1 font-bold text-slate-700" for="esc-subject">Subject</label>
+<input id="esc-subject" type="text" name="subject" required maxlength="255" placeholder="One line: what needs deciding" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+</div>
+<div class="sm:col-span-2">
+<label class="block mb-1 font-bold text-slate-700" for="esc-detail">What is happening</label>
+<textarea id="esc-detail" name="detail" required rows="3" placeholder="The situation, what you have already tried, and why it needs regional authority." class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]"></textarea>
+</div>
+<div class="sm:col-span-2">
+<label class="block mb-1 font-bold text-slate-700" for="esc-requested">Decision you are asking for</label>
+<input id="esc-requested" type="text" name="requested_decision" maxlength="512" placeholder="e.g. Approve a 12M reallocation from Q3 to Q2" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+</div>
+<div>
+<label class="block mb-1 font-bold text-slate-700" for="esc-due">Needed by</label>
+<input id="esc-due" type="date" name="due_date" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+</div>
+<div class="flex items-end justify-end">
+<button type="submit" class="px-4 py-2 rounded-control bg-[var(--edify-primary)] text-white text-[12px] font-bold">Send to RVP</button>
+</div>
+</form>
+</div>
+{% endif %}
+
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">Open</h2>
+</div>
+{% if board.open %}
+<ul class="divide-y divide-slate-100">
+{% for e in board.open %}
+<li class="px-5 py-4">
+<div class="flex items-start justify-between gap-4 flex-wrap">
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill {% if e.severity == 'critical' %}bg-rose-50 text-rose-700{% elif e.severity == 'high' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ e.severity|upper }}</span>
+<span class="edify-text-caption font-bold text-slate-500">{{ e.categoryLabel }}</span>
+{% if e.isOverdue %}<span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill bg-rose-600 text-white">OVERDUE · {{ e.ageDays }}d</span>{% endif %}
+{% if e.status == 'acknowledged' %}<span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill edify-primary-soft edify-primary-text">Acknowledged</span>{% endif %}
+</div>
+<p class="text-[14px] font-bold text-slate-800 mt-1.5">{{ e.subject }}</p>
+<p class="text-[12px] text-slate-600 font-medium mt-1 whitespace-pre-line">{{ e.detail }}</p>
+{% if e.requestedDecision %}<p class="text-[12px] text-slate-700 font-semibold mt-1.5"><span class="text-slate-400">Asking for:</span> {{ e.requestedDecision }}</p>{% endif %}
+<p class="edify-text-caption text-slate-400 font-semibold mt-1.5">{{ e.raisedBy|default:"Country Director" }} · raised {{ e.ageDays }}d ago{% if e.dueDate %} · needed by {{ e.dueDate }}{% endif %}</p>
+</div>
+{% if is_rvp %}
+<div class="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+{% if e.status == 'open' %}
+<form method="POST" class="m-0">
+{% csrf_token %}
+<input type="hidden" name="action" value="acknowledge">
+<input type="hidden" name="escalation_id" value="{{ e.id }}">
+<button type="submit" class="w-full sm:w-auto px-3 py-1.5 rounded-control border border-[var(--edify-border)] text-[12px] font-bold hover:bg-slate-50">Acknowledge</button>
+</form>
+{% endif %}
+<form method="POST" class="m-0 flex flex-col gap-2 sm:w-[280px]">
+{% csrf_token %}
+<input type="hidden" name="action" value="resolve">
+<input type="hidden" name="escalation_id" value="{{ e.id }}">
+<label class="sr-only" for="dec-{{ e.id }}">Decision</label>
+<select id="dec-{{ e.id }}" name="decision" required class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+<option value="">Decide…</option>
+{% for value, label in board.decisions %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+</select>
+<label class="sr-only" for="note-{{ e.id }}">Reasoning</label>
+<textarea id="note-{{ e.id }}" name="decision_note" required rows="2" placeholder="Why — the CD needs the reasoning." class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-medium"></textarea>
+<button type="submit" class="px-3 py-1.5 rounded-control bg-[var(--edify-primary)] text-white text-[12px] font-bold">Record decision</button>
+</form>
+</div>
+{% endif %}
+</div>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<div class="p-12 text-center">
+<p class="text-[14px] font-bold text-slate-600">No open escalations</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">{% if is_rvp %}Nothing is waiting on your decision.{% else %}Nothing is currently escalated to the RVP.{% endif %}</p>
+</div>
+{% endif %}
+</div>
+
+{% if board.resolved %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">Recently decided</h2>
+</div>
+<ul class="divide-y divide-slate-100">
+{% for e in board.resolved %}
+<li class="px-5 py-3.5">
+<div class="flex items-start justify-between gap-3 flex-wrap">
+<div class="min-w-0">
+<p class="text-[13px] font-bold text-slate-800">{{ e.subject }}</p>
+<p class="text-[12px] text-slate-600 font-medium mt-0.5">{{ e.decisionNote }}</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">{{ e.raisedBy|default:"Country Director" }} · decided {{ e.resolvedAt|date:"j M Y" }}</p>
+</div>
+<span class="edify-text-caption font-extrabold px-2.5 py-1 rounded-pill shrink-0 {% if e.decision == 'approved' %}bg-emerald-50 text-emerald-700{% elif e.decision == 'declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ e.decisionLabel }}</span>
+</div>
+</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

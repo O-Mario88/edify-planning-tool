@@ -760,7 +760,46 @@ def get_country_monthly_budget(principal, filters=None):
         ),
         "return_reasons": RETURN_REASONS,
         "category_order": CATEGORY_ORDER,
+        # Plan vs actual, and the forecast against the annual ceiling. Both
+        # were absent: this page showed plan and commitment only, so the two
+        # people approving the country's money could not see how the last
+        # approval executed or whether the quarter is heading for overspend.
+        **_execution_context(budget, fy, principal),
         "last_updated": timezone.now(),
+    }
+
+
+def _execution_context(budget, fy, principal) -> dict:
+    """Reconciliation + forecast for the envelope's own page."""
+    from . import reconciliation_service as recon
+
+    try:
+        state = recon.settlement_state(budget)
+    except Exception:  # noqa: BLE001 - the page must render even if recon fails
+        return {"reconciliation": None, "forecast": None}
+
+    rec = state["reconciliation"]
+    role = getattr(principal, "active_role", None)
+    return {
+        "reconciliation": {
+            **rec,
+            "approved_fmt": _ugx(rec["approvedTotal"]),
+            "committed_fmt": _ugx(rec["committedTotal"]),
+            "disbursed_fmt": _ugx(rec["disbursedTotal"]),
+            "accounted_fmt": _ugx(rec["accountedTotal"]),
+            "returned_fmt": _ugx(rec["returnedTotal"]),
+            "netsuite_fmt": _ugx(rec["netsuiteTotal"]),
+            "variance_fmt": _ugx(abs(rec["variance"])),
+            "system_delta_fmt": _ugx(abs(rec["systemDelta"])),
+            "variance_label": "over budget" if rec["isOverspend"] else "under budget",
+        },
+        "forecast": recon.quarter_forecast(fy, budget.country_id),
+        "can_mark_disbursed": state["canMarkDisbursed"] and role in CD_ROLES,
+        "can_close_month": state["canClose"] and role in CD_ROLES,
+        "settlement_blocker": state["blockingReason"],
+        "can_send_to_accountant": (
+            role in CD_ROLES and budget.status == "approved_by_rvp"
+        ),
     }
 
 

@@ -1567,7 +1567,7 @@ class PLAnalyticsService:
                 issues.append("No SSA")
                 actions.append(
                     {
-                        "label": "Schedule Baseline SSA Visit",
+                        "label": "Complete SSA",
                         "activity_type": "baseline_ssa_visit",
                     }
                 )

@@ -20,6 +20,7 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.fy import get_operational_fy
 from apps.fund_requests.weekly_service import disburse as disburse_weekly
 from apps.fund_requests.advance_service import reimburse as process_reimburse
+from apps.fund_requests.pl_approval_service import _ugx
 
 
 @require_page_permission("fund_requests")
@@ -1368,6 +1369,34 @@ def country_budget_action_view(request):
                 request.user,
             )
             ok = "Admin budget item added to the country budget."
+        elif action == "send_to_accountant":
+            from apps.monthly_work_plan import services as monthly_plan_service
+
+            monthly_plan_service.mark_sent_to_accountant(budget_id, request.user)
+            ok = "Country budget handed to the Accountant for disbursement."
+        elif action == "mark_disbursed":
+            # The envelope previously stopped at approved_by_rvp forever — the
+            # disbursed/closed statuses existed but nothing ever wrote them.
+            from apps.monthly_work_plan import reconciliation_service as recon
+
+            result = recon.mark_disbursed(budget_id, request.user)
+            ok = (
+                "Country budget marked disbursed — "
+                f"{_ugx(result['reconciliation']['disbursedTotal'])} "
+                "recorded against the approved envelope."
+            )
+        elif action == "close_month":
+            from apps.monthly_work_plan import reconciliation_service as recon
+
+            result = recon.close_month(budget_id, request.user)
+            rec = result["reconciliation"]
+            verb = "under" if rec["variance"] >= 0 else "over"
+            ok = (
+                f"{rec['monthKey']} closed — accounted "
+                f"{_ugx(rec['accountedTotal'])} against an approved "
+                f"{_ugx(rec['approvedTotal'])} "
+                f"({_ugx(abs(rec['variance']))} {verb})."
+            )
         else:
             error = "Unknown action."
     except (BadRequest, Forbidden) as e:

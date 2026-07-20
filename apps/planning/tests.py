@@ -109,7 +109,7 @@ class PlanningReadinessTestCase(TestCase):
             weakest_area="—",
         )
         self.assertEqual(res["planningReadiness"], "SSA Required")
-        self.assertEqual(res["recommendedAction"], "Schedule Baseline SSA Visit")
+        self.assertEqual(res["recommendedAction"], "Complete SSA")
 
     def test_readiness_ready_for_support(self):
         school = School.objects.create(

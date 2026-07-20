@@ -259,13 +259,23 @@ class CDAnalyticsTest(TestCase):
         for kind, acts in S._OVERSIGHT_ACTIONS.items():
             for a in acts:
                 self.assertFalse(
-                    any(b in a.lower() for b in BANNED),
-                    f"{kind}:{a} is field execution",
+                    any(b in a["label"].lower() for b in BANNED),
+                    f"{kind}:{a['label']} is field execution",
                 )
         # Recommended actions route to CD/PL owners (oversight), not the CD's own field work.
         d = self._dash()
         for a in d["recommended_actions"]["items"]:
             self.assertIn(a["owner"], {"CD", "PL"})
+
+    def test_every_oversight_action_has_a_destination(self):
+        """These were bare labels with nothing behind them — a cockpit of
+        buttons that did nothing, "Escalate to RVP" included."""
+        for kind, acts in S._OVERSIGHT_ACTIONS.items():
+            for a in acts:
+                self.assertTrue(
+                    a.get("href", "").startswith("/"),
+                    f"{kind}:{a.get('label')} has no destination",
+                )
 
     # ── 4. SSA uses latest verified ANNUAL cycle ─────────────────────────────
     def test_cd_ssa_uses_latest_verified_annual_cycle(self):
@@ -397,8 +407,12 @@ class CDAnalyticsTest(TestCase):
             self.assertTrue(payload.get("oversight_only"), f"{kind} not oversight-only")
             for a in payload.get("actions", []):
                 self.assertFalse(
-                    any(b in a.lower() for b in BANNED),
-                    f"{kind}:{a} is field execution",
+                    any(b in a["label"].lower() for b in BANNED),
+                    f"{kind}:{a['label']} is field execution",
+                )
+                self.assertTrue(
+                    a.get("href", "").startswith("/"),
+                    f"{kind}:{a.get('label')} has no destination",
                 )
 
 
@@ -415,7 +429,10 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         d = self._dash()
         for kind, acts in S._OVERSIGHT_ACTIONS.items():
             for a in acts:
-                self.assertFalse(any(b in a.lower() for b in BANNED), f"{kind}:{a}")
+                self.assertFalse(
+                    any(b in a["label"].lower() for b in BANNED),
+                    f"{kind}:{a['label']}",
+                )
         for item in d["recommended_actions"]["items"]:
             self.assertIn(item["owner"], {"CD", "PL"})
             self.assertFalse(

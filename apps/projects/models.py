@@ -14,6 +14,36 @@ class ProjectCategory(models.TextChoices):
     SELECTIVE_LIMITED = "selective_limited", "Selective Limited"
 
 
+class ProjectStatus(models.TextChoices):
+    """The lifecycle an RVP strategic decision actually moves.
+
+    Before this existed, an RVP could choose scale/pause/close and the platform
+    recorded an audit row while every queue and dashboard kept rendering the
+    project as active — the highest-authority decision in the system enforced
+    nothing.
+    """
+
+    PROPOSED = "proposed", "Proposed"
+    ACTIVE = "active", "Active"
+    UNDER_REVIEW = "under_review", "Under Review"
+    PAUSED = "paused", "Paused"
+    SCALING = "scaling", "Scaling"
+    CLOSED = "closed", "Closed"
+
+
+# Statuses that still accept new school assignments and new planned work.
+OPEN_PROJECT_STATUSES = {
+    ProjectStatus.PROPOSED,
+    ProjectStatus.ACTIVE,
+    ProjectStatus.UNDER_REVIEW,
+    ProjectStatus.SCALING,
+}
+
+# Statuses that appear in operational queues at all (a closed project stays
+# readable for reporting but leaves the working surfaces).
+LIVE_PROJECT_STATUSES = OPEN_PROJECT_STATUSES | {ProjectStatus.PAUSED}
+
+
 class Project(SoftDeleteModel):
     """A special project (e.g. SP-EDTECH, SP-CCSEL)."""
 
@@ -21,6 +51,19 @@ class Project(SoftDeleteModel):
     code = models.CharField(max_length=64, null=True, blank=True, unique=True)
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=32, choices=ProjectCategory.choices)
+    status = models.CharField(
+        max_length=32,
+        choices=ProjectStatus.choices,
+        default=ProjectStatus.ACTIVE,
+    )
+    # Provenance of the last strategic decision, so a coordinator opening a
+    # paused project can see who paused it and why without hunting the log.
+    status_changed_at = models.DateTimeField(null=True, blank=True)
+    status_changed_by = models.CharField(max_length=30, null=True, blank=True)
+    status_reason = models.TextField(null=True, blank=True)
+    # Ceiling for plan-vs-actual. Plain integer UGX, like the rest of the
+    # platform's money (the PD app is the sole cents island).
+    budget_ceiling_ugx = models.BigIntegerField(null=True, blank=True)
     intervention = models.CharField(
         max_length=64, choices=SsaIntervention.choices, null=True, blank=True
     )
@@ -44,6 +87,22 @@ class Project(SoftDeleteModel):
         if self.intervention and self.intervention not in merged:
             merged.append(self.intervention)
         return merged
+
+    @property
+    def accepts_new_work(self) -> bool:
+        """Whether new schools/activities may be attached. A paused or closed
+        project must stop absorbing new commitments — that is what pausing
+        means."""
+        return self.status in {s.value for s in OPEN_PROJECT_STATUSES}
+
+    @property
+    def is_live(self) -> bool:
+        """Whether the project belongs in operational queues at all."""
+        return self.status in {s.value for s in LIVE_PROJECT_STATUSES}
+
+    @property
+    def status_label(self) -> str:
+        return ProjectStatus(self.status).label if self.status else "Active"
 
 
 class ProjectSchoolAssignment(TimeStampedModel):
@@ -107,6 +166,9 @@ class ProjectImpactSnapshot(TimeStampedModel):
 
 __all__ = [
     "ProjectCategory",
+    "ProjectStatus",
+    "OPEN_PROJECT_STATUSES",
+    "LIVE_PROJECT_STATUSES",
     "Project",
     "ProjectSchoolAssignment",
     "ProjectPartnerAssignment",

@@ -51,8 +51,9 @@
             <button type="button"
                     class="edify-action-button primary"
                     hx-get="{{ row.schedule_url }}"
-                    hx-target="#drawer-container">
-              {{ row.recommended_activity_label }}
+                    hx-target="#drawer-container"
+                    aria-label="Schedule activity for {{ row.school }}">
+              Schedule
             </button>
             {% if urgent_action_mode == "cceo" %}
             <button type="button"

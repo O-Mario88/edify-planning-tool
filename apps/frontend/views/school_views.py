@@ -25,7 +25,11 @@ from apps.clusters.services import (
     set_school_cluster_membership,
 )
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.projects.models import Project, ProjectSchoolAssignment
+from apps.projects.models import (
+    OPEN_PROJECT_STATUSES,
+    Project,
+    ProjectSchoolAssignment,
+)
 from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.frontend.view_models import SchoolDirectoryViewModel
 
@@ -846,9 +850,12 @@ def assign_to_project_drawer_view(request, school_id):
         ctx = {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
-            "projects": Project.objects.filter(deleted_at__isnull=True).order_by(
-                "name"
-            ),
+            # Only projects still accepting work are offerable — a paused or
+            # closed project should not be selectable in the first place.
+            "projects": Project.objects.filter(
+                deleted_at__isnull=True,
+                status__in=[s.value for s in OPEN_PROJECT_STATUSES],
+            ).order_by("name"),
             "interventions": SsaIntervention.choices,
             "coordinators": coordinators,
         }
@@ -883,6 +890,20 @@ def assign_to_project_drawer_view(request, school_id):
                 "partials/schools/assign_to_project_drawer.html",
                 _drawer_context(
                     {"validation_error": "School is already assigned to this project."}
+                ),
+            )
+
+        if not project.accepts_new_work:
+            return render(
+                request,
+                "partials/schools/assign_to_project_drawer.html",
+                _drawer_context(
+                    {
+                        "validation_error": (
+                            f"'{project.name}' is {project.status_label.lower()} — "
+                            "no new schools can be assigned to it."
+                        )
+                    }
                 ),
             )
 
@@ -1218,6 +1239,13 @@ def bulk_assign_project_view(request):
         override_reason = (request.POST.get("override_reason") or "").strip()
         if school_ids and project_id:
             project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
+            if not project.accepts_new_work:
+                messages.error(
+                    request,
+                    f"'{project.name}' is {project.status_label.lower()} — no new "
+                    "schools can be assigned to it.",
+                )
+                return redirect("/schools")
             schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
 
             from apps.projects.services import evaluate_school_need

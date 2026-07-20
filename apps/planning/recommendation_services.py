@@ -95,7 +95,7 @@ class PlanningRecommendationService:
         if not latest_ssa:
             return {
                 "planningReadiness": "SSA Required",
-                "recommendedAction": "Schedule Baseline SSA Visit",
+                "recommendedAction": "Complete SSA",
                 "reason": "Complete SSA first so intervention impact can be measured.",
                 "availableActions": [
                     "Schedule",

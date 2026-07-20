@@ -468,6 +468,25 @@ class LeaveRequestService:
         return leave
 
 
+def _covered_staff_ids(covering_profile) -> list[str]:
+    """StaffProfile ids this person is currently standing in for.
+
+    Approval authority has to travel with active coverage, otherwise the
+    approver's own leave silently freezes every request routed to them.
+    """
+    if not covering_profile:
+        return []
+    now = timezone.now()
+    return list(
+        TemporaryCoverageAssignment.objects.filter(
+            covering_staff=covering_profile,
+            start_datetime__lte=now,
+            end_datetime__gte=now,
+            status="active",
+        ).values_list("original_staff_id", flat=True)
+    )
+
+
 class LeaveApprovalService:
     """Manages reviewing, approving, or rejecting leave requests."""
 
@@ -515,9 +534,14 @@ class LeaveApprovalService:
 
         from apps.accounts.models import StaffSupervisorAssignment
 
-        # Check direct supervisor relationship in database
+        # Check direct supervisor relationship in database — including anyone
+        # currently covering for that supervisor. Without the coverage arm, an
+        # approver going on leave froze their own approval queue: the platform
+        # has a coverage mechanism precisely so authority moves with the
+        # person, and this resolver was ignoring it.
+        supervisor_profiles = [reviewer_profile.id, *_covered_staff_ids(reviewer_profile)]
         direct_supervisor = StaffSupervisorAssignment.objects.filter(
-            supervisee=leave.staff, supervisor=reviewer_profile
+            supervisee=leave.staff, supervisor_id__in=supervisor_profiles
         ).exists()
 
         staff_role = normalize_role(leave.staff.user.active_role)
