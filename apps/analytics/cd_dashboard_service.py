@@ -168,7 +168,7 @@ class CDDashboardService:
                 f"{core['pct']}%",
                 "info",
                 f"{core['on_track']} of {core['total']} core plans",
-                "/core-schools",
+                "/core-school-health",
             ),
             card(
                 "users",
@@ -625,7 +625,7 @@ class CDDashboardService:
                 core["behind"],
                 "violet",
                 "assessment + 4 visits + 4 trainings",
-                "/core-schools",
+                "/core-school-health",
             ),
             c(
                 "calendar",
@@ -836,7 +836,7 @@ class CDDashboardService:
             {
                 "label": "See Core School Delays",
                 "icon": "shield",
-                "url": "/core-schools",
+                "url": "/core-school-health",
                 "helper": "assessment + 4 visits + 4 trainings",
             },
             {

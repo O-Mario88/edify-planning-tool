@@ -1,0 +1,164 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Declining Schools — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<div class="flex items-start justify-between gap-4 flex-wrap">
+<div>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Declining Schools</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">
+Confirmed SSA movement, FY {{ d.prevFy }} → FY {{ d.fy }} · ranked by drop, not by absolute score
+</p>
+</div>
+<form method="GET" class="flex items-center gap-2">
+<label class="sr-only" for="fy-select">Financial year</label>
+<select id="fy-select" name="fy" onchange="this.form.submit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+{% for option in fy_options %}<option value="{{ option }}" {% if option == d.fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
+</select>
+</form>
+</div>
+
+{% if d.empty %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-12 text-center">
+{% if d.noPairedCycles %}
+<p class="text-[14px] font-bold text-slate-600">Not enough consecutive assessments to compare</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">A decline needs two confirmed SSA cycles for the same school. No school in scope has both FY {{ d.prevFy }} and FY {{ d.fy }} confirmed.</p>
+{% else %}
+<p class="text-[14px] font-bold text-slate-600">No school declined materially in FY {{ d.fy }}</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Across {{ d.assessedPairs }} school(s) with two confirmed cycles.</p>
+{% endif %}
+</div>
+{% else %}
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ d.totalDeclining }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Declining schools</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">of {{ d.assessedPairs }} with two cycles</p>
+</div>
+<div class="edify-surface rounded-surface border {% if d.severeCount %}border-rose-200 bg-rose-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
+<p class="text-[24px] font-extrabold {% if d.severeCount %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ d.severeCount }}</p>
+<p class="edify-text-caption {% if d.severeCount %}text-rose-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">In freefall</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">dropped 1.5+ points</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ d.bandDropCount }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Fell a band</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">e.g. Strong → Improving</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[15px] font-extrabold text-slate-800 leading-tight">{{ d.weakestIntervention|default:"—"|title }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Weakest intervention</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">lowest average movement</p>
+</div>
+</div>
+
+{# ── Which interventions are failing ───────────────────────────────── #}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">Which interventions are failing</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-[12.5px]">
+<thead>
+<tr class="border-b border-[var(--edify-border)]">
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Intervention</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Avg movement</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Schools declining</th>
+<th class="text-right px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Share</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for i in d.interventions %}
+<tr class="hover:bg-slate-50/40">
+<td class="px-5 py-3 text-slate-800 font-bold">{{ i.intervention|title }}</td>
+<td class="px-4 py-3 text-right tabular-nums {% if i.avgDelta < 0 %}text-rose-700 font-extrabold{% else %}text-slate-600{% endif %}">{{ i.avgDelta }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-slate-600">{{ i.decliningCount }} / {{ i.assessedCount }}</td>
+<td class="px-5 py-3 text-right tabular-nums {% if i.decliningPct >= 50 %}text-rose-700 font-extrabold{% else %}text-slate-600{% endif %}">{{ i.decliningPct }}%</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+{# ── The schools themselves (identity-gated) ───────────────────────── #}
+{% if d.canViewSchoolDetail %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">Schools losing ground</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-[12.5px]">
+<thead>
+<tr class="border-b border-[var(--edify-border)]">
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">District</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">FY {{ d.prevFy }}</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">FY {{ d.fy }}</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Change</th>
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Worst area</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for s in d.schools %}
+<tr class="hover:bg-slate-50/40">
+<td class="px-5 py-3">
+<span class="font-bold text-slate-900 block leading-tight">{{ s.name }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold">{{ s.code|default:"—" }}</span>
+</td>
+<td class="px-4 py-3 text-slate-600">{{ s.district }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ s.prevScore }}</td>
+<td class="px-4 py-3 text-right tabular-nums font-bold text-slate-800">{{ s.currScore }}</td>
+<td class="px-4 py-3 text-right">
+<span class="inline-flex items-center gap-1 tabular-nums font-extrabold {% if s.severe %}text-rose-700{% else %}text-amber-700{% endif %}">{{ s.delta }}</span>
+{% if s.bandDropped %}<span class="block edify-text-caption font-bold text-slate-400 mt-0.5">{{ s.prevBand }} → {{ s.currBand }}</span>{% endif %}
+</td>
+<td class="px-5 py-3 text-slate-600">{{ s.worstIntervention|default:"—"|title }} <span class="text-slate-400 tabular-nums">({{ s.worstDelta }})</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% else %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">Where the decline is concentrated</h2>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Aggregated to district — your role sees regional patterns, not individual school records.</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-[12.5px]">
+<thead>
+<tr class="border-b border-[var(--edify-border)]">
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">District</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Declining</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">In freefall</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Fell a band</th>
+<th class="text-right px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Worst drop</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for r in d.districts %}
+<tr class="hover:bg-slate-50/40">
+<td class="px-5 py-3 font-bold text-slate-800">{{ r.district }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-slate-700">{{ r.decliningCount }}</td>
+<td class="px-4 py-3 text-right tabular-nums {% if r.severeCount %}text-rose-700 font-extrabold{% else %}text-slate-500{% endif %}">{{ r.severeCount }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-slate-600">{{ r.bandDropCount }}</td>
+<td class="px-5 py-3 text-right tabular-nums font-extrabold text-rose-700">{{ r.worstDelta }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+<p class="edify-text-caption text-slate-400 font-medium">Built from confirmed SSA records only — pending and partner-submitted assessments are excluded until Impact Assessment verifies them. A school appears here when its average fell by {{ material_drop }} points or more.</p>
+
+{% endif %}
+
+</div>
+{% endblock %}

@@ -190,7 +190,10 @@ class RVPDashboardService:
                 "Budget Utilization",
                 f"{budget_util}%",
                 "finance",
-                "disbursed vs approved",
+                # _budget_utilization divides disbursed by *requested*, not by
+                # an approved total. The old "disbursed vs approved" caption
+                # described a different number than the one being shown.
+                "disbursed vs requested",
             ),
             card(
                 "school",

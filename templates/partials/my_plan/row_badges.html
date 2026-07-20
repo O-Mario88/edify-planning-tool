@@ -2,7 +2,7 @@
 {% if row.badges %}
 <div class="flex items-center gap-1 flex-wrap mt-1 max-w-[220px]">
 {% for label, variant in row.badges %}
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase border
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold border
 {% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
 {% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
 {% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150

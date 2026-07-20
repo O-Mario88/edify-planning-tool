@@ -25,12 +25,18 @@ class NotificationLinkResolver:
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/planning"
                 label = "Open Planning"
-            elif role == "projectleader":
+            elif role in ("program lead", "projectleader"):
                 route = "/my-team"
                 label = "View Team Portfolio"
-            elif role in ("countrydirector", "regionalvicepresident"):
-                route = "/analytics"
+            elif role == "countrydirector":
+                # The CD's Analytics nav points at the national cockpit, not
+                # the generic page; sending the notification elsewhere landed
+                # them on a different surface than the sidebar.
+                route = "/analytics/country-director"
                 label = "Country Insights"
+            elif role == "regionalvicepresident":
+                route = "/declining-schools"
+                label = "Schools Losing Ground"
             elif role == "impactassessment":
                 route = "/ia/dashboard/"
                 label = "SSA Verification"
@@ -45,7 +51,7 @@ class NotificationLinkResolver:
             elif role == "cceo":
                 route = "/my-plan"
                 label = "Staff My Plan"
-            elif role == "projectleader":
+            elif role in ("program lead", "projectleader"):
                 route = "/my-team"
                 label = "Monitoring Dashboard"
 
@@ -53,7 +59,7 @@ class NotificationLinkResolver:
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/my-plan"
                 label = "Fix Evidence"
-            elif role == "projectleader":
+            elif role in ("program lead", "projectleader"):
                 route = "/my-team"
                 label = "Review Evidence"
             elif role == "impactassessment":

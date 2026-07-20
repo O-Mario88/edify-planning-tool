@@ -33,7 +33,11 @@ def snapshot(principal, query: dict) -> dict:
     from django.db.models import Sum
 
     fy = query.get("fy") or get_operational_fy()
-    qs = BudgetIntelligenceInsight.objects.filter(fy=fy, deleted_at__isnull=True)
+    # BudgetIntelligenceInsight is not soft-deletable — filtering on deleted_at
+    # raised FieldError on every call. Nothing caught it because the engine had
+    # no page: snapshot() was only ever reachable through an API endpoint no
+    # frontend called.
+    qs = BudgetIntelligenceInsight.objects.filter(fy=fy)
     total = qs.count()
     low_yield = qs.filter(impact_yield__in=["low", "weak"]).count()
     high_yield = qs.filter(impact_yield__in=["high", "healthy"]).count()

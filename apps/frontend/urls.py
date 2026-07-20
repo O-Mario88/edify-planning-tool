@@ -27,6 +27,7 @@ from .views import (
     pd_views,
     debrief_views,
     escalation_views,
+    decision_views,
 )
 
 app_name = "frontend"
@@ -1415,6 +1416,21 @@ urlpatterns = [
     ),
     path("quality-checks", extended_views.quality_checks_view, name="quality_checks"),
     path("escalations", escalation_views.escalations_view, name="escalations"),
+    path(
+        "decisions",
+        decision_views.decision_intelligence_view,
+        name="decision_intelligence",
+    ),
+    path(
+        "declining-schools",
+        decision_views.declining_schools_view,
+        name="declining_schools",
+    ),
+    path(
+        "core-school-health",
+        decision_views.core_school_health_view,
+        name="core_school_health",
+    ),
     # Knowledge Center home is retained at /help; all rich Help routes are
     # included immediately below using the no-trailing-slash web convention.
     path("help", help_views.home, name="help"),

@@ -266,6 +266,11 @@ class CDAnalyticsService:
             ),
             "pl_oversight": pl_oversight,
             "cceo_snapshot": CDAnalyticsService.cceo_snapshot(cd, acts),
+            # Country-wide weighted ranking. cceo_snapshot ranks by overdue
+            # count and caps at 12, so the CD's strongest and weakest field
+            # officers by actual validated achievement were not visible on any
+            # single surface.
+            "cceo_leaderboard": CDAnalyticsService.cceo_leaderboard(cd),
             "impact_summary": CDAnalyticsService.impact_summary(cd, acts),
             "regional_summary": CDAnalyticsService.regional_summary(cd),
             "budget_finance": CDAnalyticsService.budget_finance_health(cd),
@@ -530,6 +535,93 @@ class CDAnalyticsService:
             areas=cd.areas or None,
             per_user_series=cd.per_user_series or None,
         )
+
+    @staticmethod
+    def cceo_leaderboard(cd, limit=None):
+        """Every CCEO ranked by the *weighted validated* achievement — the same
+        number the country KPI is built from.
+
+        This did not exist anywhere. `cceo_snapshot` ranks by raw overdue count
+        and truncates to 12, and the weighted per-CCEO figure was only ever
+        assembled inside a single PL's drilldown — so "who are my strongest and
+        weakest field officers this quarter" could not be answered on one
+        screen, which is the question a Country Director actually asks.
+        """
+        supervisors = CDAnalyticsService._cceo_supervisor_map(cd)
+        rows = []
+        for staff_id, user_id, name in CDAnalyticsService._cceo_identities(cd):
+            pct, achieved, target = CDAnalyticsService._weighted_achievement(
+                cd.fy,
+                cd.quarter,
+                [user_id] if user_id else [],
+                [staff_id],
+                areas=cd.areas or None,
+                per_user_series=cd.per_user_series or None,
+            )
+            rows.append(
+                {
+                    "staff_id": staff_id,
+                    "user_id": user_id,
+                    "name": name,
+                    "initials": _initials(name),
+                    "pct": pct,
+                    "achieved": achieved,
+                    "target": target,
+                    "supervisor": supervisors.get(staff_id, "—"),
+                    "band": CDAnalyticsService._achievement_band(pct),
+                    # A CCEO with no target set is not a poor performer — it is
+                    # a setup gap, and conflating the two would put the wrong
+                    # person in a performance conversation.
+                    "unset": target <= 0,
+                }
+            )
+
+        ranked = sorted(
+            rows, key=lambda r: (r["unset"], -(r["pct"] or 0), r["name"] or "")
+        )
+        measured = [r for r in ranked if not r["unset"]]
+        return {
+            "rows": ranked[:limit] if limit else ranked,
+            "top": measured[:5],
+            "bottom": list(reversed(measured[-5:])) if len(measured) > 5 else [],
+            "measured_count": len(measured),
+            "unset_count": sum(1 for r in ranked if r["unset"]),
+            "country_median": (
+                measured[len(measured) // 2]["pct"] if measured else 0
+            ),
+        }
+
+    @staticmethod
+    def _achievement_band(pct):
+        if pct >= 90:
+            return "Strong"
+        if pct >= 75:
+            return "On Track"
+        if pct >= 50:
+            return "Watch"
+        return "Critical"
+
+    @staticmethod
+    def _cceo_identities(cd):
+        """(staff_id, user_id, name) for every in-scope CCEO."""
+        out = []
+        for sp in StaffProfile.objects.filter(
+            id__in=list(cd.cceo_staff_ids or [])
+        ).select_related("user"):
+            out.append((sp.id, sp.user_id, getattr(sp.user, "name", None) or "—"))
+        return out
+
+    @staticmethod
+    def _cceo_supervisor_map(cd):
+        """staff_id → supervising PL name, so a weak row names who owns it."""
+        links = StaffSupervisorAssignment.objects.filter(
+            supervisee_id__in=list(cd.cceo_staff_ids or [])
+        ).select_related("supervisor__user")
+        return {
+            link.supervisee_id: getattr(link.supervisor.user, "name", "—")
+            for link in links
+            if link.supervisor and link.supervisor.user_id
+        }
 
     @staticmethod
     def _weighted_achievement(
@@ -1702,13 +1794,22 @@ class CDAnalyticsService:
                 "?drill=risk&issue=sf_id",
             ),
             card("IA Pending", ia_pending, "info", "30+ days", "?drill=risk&issue=ia"),
-            card("Finance Pending", finance_pending, "info", "", "?drill=budget"),
+            # These two previously pointed at the generic budget drill, which
+            # showed finance totals rather than the stalled work the card
+            # counted. They now open their own rows.
+            card(
+                "Finance Pending",
+                finance_pending,
+                "info",
+                "",
+                "?drill=risk&issue=finance",
+            ),
             card(
                 "Accountability Pending",
                 accountability_pending,
                 "info",
                 "14+ days",
-                "?drill=budget",
+                "?drill=risk&issue=accountability",
             ),
         ]
 
@@ -2273,6 +2374,9 @@ class CDAnalyticsService:
             "low_ssa": "Low-SSA Schools (<50%)",
             "evidence": "Evidence Pending",
             "ia": "IA Pending",
+            "finance": "Finance Pending",
+            "accountability": "Accountability Pending",
+            "sf_id": "Salesforce ID Missing",
         }.get(issue, "Operational Risk")
         rows = []
         if issue == "no_ssa":
@@ -2324,9 +2428,71 @@ class CDAnalyticsService:
                         ),
                     }
                 )
+        elif issue in ("evidence", "ia", "finance", "accountability", "sf_id"):
+            # These four cards existed on the risk strip and linked to a drill
+            # that had no branch, so every one of them opened an empty drawer.
+            # Each is a workflow backlog: work that is done in the field but
+            # stuck before it can count.
+            rows = CDAnalyticsService._workflow_backlog_rows(acts, issue)
         return {
             "title": title,
             "subtitle": f"{len(rows)} shown — assign follow-up to responsible PL",
             "kind": "risk",
             "rows": rows,
         }
+
+    @staticmethod
+    def _workflow_backlog_rows(acts, issue):
+        """Activities stalled at one workflow gate — work done in the field
+        that cannot yet count.
+
+        Each branch mirrors the *same* filter the matching risk-strip card
+        counts with (see operational_risk), so the drawer never disagrees with
+        the number the CD clicked on.
+        """
+        if issue == "evidence":
+            qs = acts.filter(
+                status__in=COMPLETED_STATUSES,
+                activity_type__in=VISIT_TYPES + TRAINING_TYPES,
+            ).exclude(evidence_status="accepted")
+            detail = "Completed but evidence not accepted"
+        elif issue == "ia":
+            qs = acts.filter(status="awaiting_ia_verification")
+            detail = "Awaiting Impact Assessment verification"
+        elif issue == "sf_id":
+            qs = acts.filter(
+                status__in=COMPLETED_STATUSES,
+                activity_type__in=VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES,
+            ).filter(
+                Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")
+            )
+            detail = "Completed but no Salesforce ID — cannot be credited"
+        elif issue in ("finance", "accountability"):
+            qs = (
+                acts.filter(
+                    advance_requests__status__in=["disbursed", "accountability_pending"]
+                )
+                .exclude(status__in=COMPLETED_STATUSES)
+                .distinct()
+            )
+            detail = "Funded but not yet completed or accounted for"
+        else:
+            return []
+
+        rows = []
+        for a in qs.select_related("school", "school__district").order_by(
+            "-planned_date"
+        )[:200]:
+            school = getattr(a, "school", None)
+            rows.append(
+                {
+                    "school": getattr(school, "name", None) or "—",
+                    "district": (
+                        school.district.name
+                        if school and school.district_id and school.district
+                        else "—"
+                    ),
+                    "detail": detail,
+                }
+            )
+        return rows

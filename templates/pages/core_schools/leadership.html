@@ -1,0 +1,170 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Core School Health — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<div class="flex items-start justify-between gap-4 flex-wrap">
+<div>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Core School Health</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Package delivery, baseline movement and completion-gate stalls · FY {{ d.fy }}</p>
+</div>
+<form method="GET" class="flex items-center gap-2">
+<label class="sr-only" for="fy-select">Financial year</label>
+<select id="fy-select" name="fy" onchange="this.form.submit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+{% for option in fy_options %}<option value="{{ option }}" {% if option == d.fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
+</select>
+</form>
+</div>
+
+{% if d.empty %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-12 text-center">
+<p class="text-[14px] font-bold text-slate-600">No core-school packages in FY {{ d.fy }}</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Packages appear here once Impact Assessment verifies a candidate and onboards it.</p>
+</div>
+{% else %}
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ d.totalPlans }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Core packages</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[24px] font-extrabold text-emerald-700 leading-none tabular-nums">{{ d.onTrackCount }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">On track</p>
+</div>
+<div class="edify-surface rounded-surface border {% if d.behindCount %}border-amber-200 bg-amber-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
+<p class="text-[24px] font-extrabold {% if d.behindCount %}text-amber-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ d.behindCount }}</p>
+<p class="edify-text-caption {% if d.behindCount %}text-amber-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">Behind schedule</p>
+</div>
+<div class="edify-surface rounded-surface border {% if d.blockedSlotCount %}border-rose-200 bg-rose-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
+<p class="text-[24px] font-extrabold {% if d.blockedSlotCount %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ d.blockedSlotCount }}</p>
+<p class="edify-text-caption {% if d.blockedSlotCount %}text-rose-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">Slots stuck at the gate</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">need SF ID or evidence</p>
+</div>
+</div>
+
+{% if d.measuredCount %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm px-5 py-4">
+<p class="text-[13px] font-extrabold text-slate-800">Baseline → follow-up movement</p>
+<p class="text-[12px] text-slate-600 font-semibold mt-1">
+{{ d.improvedCount }} improved, {{ d.declinedCount }} declined across {{ d.measuredCount }} package(s) with both assessments recorded.
+{% if d.avgMovement is not None %}Average movement <span class="tabular-nums font-extrabold {% if d.avgMovement < 0 %}text-rose-700{% else %}text-emerald-700{% endif %}">{{ d.avgMovement }}</span> points.{% endif %}
+</p>
+</div>
+{% endif %}
+
+{% if d.stalledSlots %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">Stuck at the completion gate</h2>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Work done in the field that cannot complete until its Salesforce ID and evidence are on record.</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-[12.5px]">
+<thead>
+<tr class="border-b border-[var(--edify-border)]">
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Slot</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Owner</th>
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Blocked on</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for s in d.stalledSlots %}
+<tr class="hover:bg-slate-50/40">
+<td class="px-5 py-3 font-bold text-slate-800">{{ s.school }}<span class="block edify-text-caption text-slate-400 font-semibold">{{ s.district }}</span></td>
+<td class="px-4 py-3 text-slate-600">{{ s.slot }}<span class="block edify-text-caption text-slate-400">{{ s.intervention|title }}</span></td>
+<td class="px-4 py-3 text-slate-600">{{ s.assignedTo }}</td>
+<td class="px-5 py-3"><span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700">{{ s.blocker }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+{% if d.canViewSchoolDetail %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">Package progress</h2>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Least-complete first.</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-[12.5px]">
+<thead>
+<tr class="border-b border-[var(--edify-border)]">
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">District</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Visits</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Trainings</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Package</th>
+<th class="text-right px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">SSA movement</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for p in d.plans %}
+<tr class="hover:bg-slate-50/40">
+<td class="px-5 py-3"><span class="font-bold text-slate-900 block leading-tight">{{ p.name }}</span><span class="edify-text-caption text-slate-400 font-semibold">{{ p.code }}</span></td>
+<td class="px-4 py-3 text-slate-600">{{ p.district }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-slate-600">{{ p.visits }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-slate-600">{{ p.trainings }}</td>
+<td class="px-4 py-3 text-right">
+<span class="tabular-nums font-extrabold {% if p.onTrack %}text-emerald-700{% elif p.progressPct < 40 %}text-rose-700{% else %}text-amber-700{% endif %}">{{ p.progressPct }}%</span>
+<span class="block edify-text-caption text-slate-400 font-semibold">{{ p.slotsDone }}/{{ p.slotsTotal }} slots</span>
+</td>
+<td class="px-5 py-3 text-right">
+{% if p.movement is not None %}
+<span class="tabular-nums font-extrabold {% if p.movement < 0 %}text-rose-700{% else %}text-emerald-700{% endif %}">{{ p.movement }}</span>
+<span class="block edify-text-caption text-slate-400 font-semibold">{{ p.baseline }} → {{ p.followUp }}</span>
+{% else %}
+<span class="edify-text-caption text-slate-400 font-semibold">follow-up pending</span>
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% else %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)]">
+<h2 class="text-[13px] font-extrabold text-slate-800">By district</h2>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Your role sees regional patterns, not individual school records.</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-[12.5px]">
+<thead>
+<tr class="border-b border-[var(--edify-border)]">
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">District</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Packages</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">On track</th>
+<th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Behind</th>
+<th class="text-right px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Stuck slots</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for r in d.districts %}
+<tr class="hover:bg-slate-50/40">
+<td class="px-5 py-3 font-bold text-slate-800">{{ r.district }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-slate-600">{{ r.planCount }}</td>
+<td class="px-4 py-3 text-right tabular-nums text-emerald-700">{{ r.onTrack }}</td>
+<td class="px-4 py-3 text-right tabular-nums {% if r.behind %}text-amber-700 font-extrabold{% else %}text-slate-500{% endif %}">{{ r.behind }}</td>
+<td class="px-5 py-3 text-right tabular-nums {% if r.blockedSlots %}text-rose-700 font-extrabold{% else %}text-slate-500{% endif %}">{{ r.blockedSlots }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+<p class="edify-text-caption text-slate-400 font-medium">Read-only. Editing a core plan, scheduling a slot or clearing the completion gate stays with the field chain — this page exists so leadership can see where packages stall, not to bypass the people who work them.</p>
+
+{% endif %}
+
+</div>
+{% endblock %}

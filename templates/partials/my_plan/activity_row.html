@@ -1,12 +1,14 @@
 <!-- Row Dropdown Menu Partial for My Plan Tables -->
-<td class="px-4 py-3 text-right relative" x-data="{ open: false }">
+<td class="px-4 py-3 text-right" x-data="{ open: false, top: 0, right: 0, toggle(e) { if (this.open) { this.open = false; return; } const r = e.currentTarget.getBoundingClientRect(); this.top = r.bottom + 4; this.right = window.innerWidth - r.right; this.open = true; } }">
 <button
-@click="open = !open"
+@click="toggle($event)"
 @click.outside="open = false"
+aria-label="More actions"
+:aria-expanded="open"
 class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-control hover:bg-slate-100 transition-colors"
 >
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>
 </svg>
 </button>
 
@@ -18,7 +20,8 @@ x-transition:enter-end="transform opacity-100 scale-100"
 x-transition:leave="transition ease-in duration-75"
 x-transition:leave-start="transform opacity-100 scale-100"
 x-transition:leave-end="transform opacity-0 scale-95"
-class="absolute right-4 mt-1 w-52 rounded-surface edify-surface border border-slate-200 shadow-lg z-30 py-1.5 text-left font-semibold text-[12px] text-slate-700"
+class="fixed w-52 rounded-surface edify-surface border border-slate-200 shadow-lg z-[60] py-1.5 text-left font-semibold text-[12px] text-slate-700"
+:style="`top: ${top}px; right: ${right}px;`"
 style="display: none;"
 >
 <!-- View Details -->

@@ -1,0 +1,58 @@
+{% load frontend_filters %}
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">10. CCEO Leaderboard</h3>
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Weighted validated achievement across all five target areas · every CCEO in country</p>
+    </div>
+    {% if cceo_leaderboard.unset_count %}
+    <span class="shrink-0 edify-text-caption font-bold px-2 py-0.5 rounded-pill bg-slate-100 text-slate-500">{{ cceo_leaderboard.unset_count }} no target set</span>
+    {% endif %}
+  </div>
+  <div class="overflow-x-auto -mx-1">
+    <table class="w-full edify-text-caption">
+      <thead>
+        <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <th class="text-left font-bold py-1.5 pl-1">#</th>
+          <th class="text-left font-bold py-1.5">CCEO</th>
+          <th class="text-left font-bold py-1.5">Program Lead</th>
+          <th class="text-right font-bold py-1.5">Achieved</th>
+          <th class="text-right font-bold py-1.5">Target</th>
+          <th class="text-right font-bold py-1.5 pr-1">Weighted</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for r in cceo_leaderboard.rows %}
+        <tr class="cursor-pointer hover:bg-slate-50/60"
+            hx-get="/analytics/country-director/drilldown?drill=cceo&id={{ r.staff_id }}&fy={{ fy }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">
+          <td class="text-left tabular-nums text-slate-400 py-1.5 pl-1">{{ forloop.counter }}</td>
+          <td class="text-left font-semibold text-slate-700 py-1.5 max-w-[130px] truncate">{{ r.name }}</td>
+          <td class="text-left text-slate-500 py-1.5 max-w-[110px] truncate">{{ r.supervisor }}</td>
+          <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.achieved|intcomma }}</td>
+          <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.target|intcomma }}</td>
+          <td class="text-right py-1.5 pr-1">
+            {% if r.unset %}
+            <span class="edify-text-caption font-semibold text-slate-400">no target</span>
+            {% else %}
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap tabular-nums
+              {% if r.band == 'Critical' %}bg-rose-50 text-rose-700
+              {% elif r.band == 'Watch' %}bg-amber-50 text-amber-700
+              {% elif r.band == 'On Track' %}bg-slate-100 text-slate-600
+              {% else %}bg-emerald-50 text-emerald-700{% endif %}">
+              <span class="h-1.5 w-1.5 rounded-pill {% if r.band == 'Critical' %}bg-rose-500{% elif r.band == 'Watch' %}bg-amber-500{% elif r.band == 'On Track' %}bg-slate-400{% else %}bg-emerald-500{% endif %}"></span>
+              {{ r.pct }}%
+            </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-[12px] text-slate-400 font-medium py-6">No CCEOs in scope.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if cceo_leaderboard.measured_count %}
+  <p class="edify-text-caption text-slate-400 font-medium pt-1">Validated credit only — work awaiting evidence, IA verification or a Salesforce ID is not counted here. Median {{ cceo_leaderboard.country_median }}% across {{ cceo_leaderboard.measured_count }} CCEO(s) with a target set.</p>
+  {% endif %}
+</div>

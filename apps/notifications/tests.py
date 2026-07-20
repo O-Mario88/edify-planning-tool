@@ -61,8 +61,24 @@ class NotificationsWorkflowTest(TestCase):
 
         self.assertEqual(cceo_route, "/planning")
         self.assertEqual(pl_route, "/my-team")
-        self.assertEqual(cd_route, "/analytics")
+        # The CD's own Analytics nav entry points at the national cockpit, so
+        # the notification must land there too — /analytics is the generic page
+        # and dropped the CD somewhere their sidebar never takes them.
+        self.assertEqual(cd_route, "/analytics/country-director")
         self.assertEqual(ia_route, "/ia/dashboard/")
+
+        # A Program Lead's real active_role is "Program Lead"; the legacy
+        # "ProjectLeader" spelling is also accepted so existing callers keep
+        # resolving. Both must reach the same place.
+        pl_real_route, _ = NotificationLinkResolver.resolve(
+            "critical_school_ssa", "School", "S1", "Program Lead"
+        )
+        self.assertEqual(pl_real_route, "/my-team")
+
+        rvp_route, _ = NotificationLinkResolver.resolve(
+            "critical_school_ssa", "School", "S1", "RegionalVicePresident"
+        )
+        self.assertEqual(rvp_route, "/declining-schools")
 
         # Partner Scheduled Activity
         partner_route, _ = NotificationLinkResolver.resolve(
@@ -148,7 +164,7 @@ class NotificationsWorkflowTest(TestCase):
 
         # Assert CD's notification has country insights link
         cd_notif = Notification.objects.get(recipient_id=self.cd.id)
-        self.assertEqual(cd_notif.target_route, "/analytics")
+        self.assertEqual(cd_notif.target_route, "/analytics/country-director")
         self.assertEqual(cd_notif.action_label, "Country Insights")
         self.assertEqual(cd_notif.category, "planning")
         self.assertTrue(cd_notif.action_required)
