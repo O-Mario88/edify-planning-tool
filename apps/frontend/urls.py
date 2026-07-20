@@ -1431,6 +1431,7 @@ urlpatterns = [
         decision_views.core_school_health_view,
         name="core_school_health",
     ),
+    path("decision-log", decision_views.decision_log_view, name="decision_log"),
     # Knowledge Center home is retained at /help; all rich Help routes are
     # included immediately below using the no-trailing-slash web convention.
     path("help", help_views.home, name="help"),

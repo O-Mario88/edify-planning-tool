@@ -710,7 +710,6 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   padding: 0.25rem 0.6rem;
   font-size: 10px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.03em;
   border: 1px solid transparent;
   line-height: 1;

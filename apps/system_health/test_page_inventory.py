@@ -2,6 +2,8 @@
 
 from django.test import SimpleTestCase
 
+from apps.core.rbac import EdifyRole
+from apps.realtime.registry import JOB_REGISTRY
 from apps.system_health.page_inventory import build_page_inventory
 
 
@@ -10,8 +12,12 @@ class PageInventoryTest(SimpleTestCase):
         inventory = build_page_inventory()
         self.assertGreaterEqual(inventory["summary"]["routed_surfaces"], 90)
         self.assertGreaterEqual(inventory["summary"]["all_routes"], 200)
-        self.assertEqual(inventory["summary"]["roles"], 11)
-        self.assertEqual(inventory["summary"]["scheduled_jobs"], 8)
+        # Derived from the registries rather than hardcoded, so adding a role
+        # or a scheduled job doesn't fail an unrelated inventory assertion.
+        self.assertEqual(inventory["summary"]["roles"], len(EdifyRole.values()))
+        self.assertEqual(
+            inventory["summary"]["scheduled_jobs"], len(JOB_REGISTRY)
+        )
         self.assertGreaterEqual(inventory["summary"]["permission_keys"], 38)
         self.assertGreaterEqual(inventory["summary"]["component_templates"], 100)
 

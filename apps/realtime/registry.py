@@ -112,6 +112,18 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="escalation_sla_sweep",
+        description="Re-notifies the RVP about CD escalations past their severity SLA.",
+        cron="daily 07:00 Africa/Kampala",
+        cron_kwargs={"hour": 7, "minute": 0},
+        expected_runtime_seconds=15,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note="Re-notification is intentionally repeated daily while an escalation stays overdue; resolving it stops the sweep.",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="field_debrief_recurring_issues",
         description="Scans recent Field Debriefs for recurring cross-team/cross-country issues.",
         cron="daily 05:30 Africa/Kampala",

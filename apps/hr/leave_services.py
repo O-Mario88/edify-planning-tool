@@ -468,6 +468,33 @@ class LeaveRequestService:
         return leave
 
 
+def _audit_leave(action: str, leave, reviewer_user, reason: str | None = None) -> None:
+    """Record a leave decision on the tamper-evident chain.
+
+    Only the *coverage* side-effect was ever logged — the approve/reject
+    decision itself, which is the accountable act, was not recorded anywhere.
+    """
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action=action,
+        subject_kind="Leave",
+        subject_id=leave.id,
+        actor_id=getattr(reviewer_user, "id", None),
+        actor_role=getattr(reviewer_user, "active_role", None),
+        reason=reason,
+        payload={
+            "staffId": leave.staff_id,
+            "staffName": getattr(getattr(leave.staff, "user", None), "name", None),
+            "type": leave.type,
+            "startDate": leave.start_date,
+            "endDate": leave.end_date,
+            "days": leave.days,
+            "status": leave.status,
+        },
+    )
+
+
 def _covered_staff_ids(covering_profile) -> list[str]:
     """StaffProfile ids this person is currently standing in for.
 
@@ -676,6 +703,7 @@ class LeaveApprovalService:
                 # Trigger notifications
                 LeaveApprovalService.notify_coverage(leave)
 
+        _audit_leave("leave.approved", leave, reviewer_user)
         return leave
 
     @staticmethod
@@ -714,6 +742,7 @@ class LeaveApprovalService:
             year = int(leave.start_date[:4])
             LeaveBalanceService.recalculate_balances(leave.staff, year)
 
+        _audit_leave("leave.rejected", leave, reviewer_user, reason=reason)
         return leave
 
     @staticmethod

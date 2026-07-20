@@ -17,7 +17,7 @@
 <!-- Column 1: Details & Context -->
 <td class="px-4 py-3.5 space-y-1">
 <div class="flex items-center gap-1.5 flex-wrap">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wide edify-primary-soft edify-primary-text border edify-primary-border-alpha-45">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border edify-primary-border-alpha-45">
 {{ act.activity_type_label }}
 </span>
 {% if act.is_core %}
@@ -93,7 +93,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 
 <div class="flex items-center justify-center gap-1 flex-wrap max-w-[200px]">
 {% for label, variant in act.badges %}
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase border
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold border
 {% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
 {% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
 {% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150

@@ -178,6 +178,23 @@ def core_school_health_view(request):
     )
 
 
+@require_page_permission("decision_log")
+def decision_log_view(request):
+    """Who decided what, scoped to the reader.
+
+    A tamper-evident audit chain already existed, but every surface that reads
+    it was Admin-, HR- or Accountant-only — so the roles with the most
+    consequential powers had no way to see what had been decided.
+    """
+    from apps.audit.decision_log_service import decision_log
+
+    return render(
+        request,
+        "pages/audit/decision_log.html",
+        {"log": decision_log(request.user, request.GET.dict())},
+    )
+
+
 def _open_first(insights: list[dict]) -> list[dict]:
     """Unreviewed and riskiest first — this is a work queue, not an archive.
 

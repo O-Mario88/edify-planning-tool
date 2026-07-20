@@ -1,0 +1,69 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Decision Log — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<div class="flex items-start justify-between gap-4 flex-wrap">
+<div>
+<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Decision Log</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">{{ log.scopeLabel }} · tamper-evident record, last {{ log.days }} days</p>
+</div>
+<form method="GET" class="flex items-center gap-2">
+{% if log.activeGroup %}<input type="hidden" name="group" value="{{ log.activeGroup }}">{% endif %}
+<label class="sr-only" for="days-select">Period</label>
+<select id="days-select" name="days" onchange="this.form.submit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+{% for option in log.dayOptions %}<option value="{{ option }}" {% if option == log.days %}selected{% endif %}>Last {{ option }} days</option>{% endfor %}
+</select>
+</form>
+</div>
+
+<div class="flex flex-wrap gap-1.5">
+<a href="?days={{ log.days }}" class="px-3 py-1.5 rounded-pill edify-text-caption font-bold border transition-colors {% if not log.activeGroup %}edify-primary-solid edify-primary-on-solid border-transparent{% else %}border-[var(--edify-border)] text-slate-600 hover:bg-slate-50{% endif %}">All</a>
+{% for g in log.groups %}
+<a href="?group={{ g }}&days={{ log.days }}" class="px-3 py-1.5 rounded-pill edify-text-caption font-bold border transition-colors {% if log.activeGroup == g %}edify-primary-solid edify-primary-on-solid border-transparent{% else %}border-[var(--edify-border)] text-slate-600 hover:bg-slate-50{% endif %}">{{ g }}</a>
+{% endfor %}
+</div>
+
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+{% if log.rows %}
+<div class="overflow-x-auto">
+<table class="w-full text-[12.5px]">
+<thead>
+<tr class="border-b border-[var(--edify-border)]">
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">When</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Decision</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Subject</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">By</th>
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Reason given</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for r in log.rows %}
+<tr class="hover:bg-slate-50/40 {% if not r.success %}bg-rose-50/30{% endif %}">
+<td class="px-5 py-3 text-slate-500 whitespace-nowrap tabular-nums">{{ r.at|date:"j M, H:i" }}</td>
+<td class="px-4 py-3">
+<span class="font-bold text-slate-800 block leading-tight">{{ r.label }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold">{{ r.group }}</span>
+</td>
+<td class="px-4 py-3 text-slate-600 max-w-[240px] truncate">{{ r.detail }}</td>
+<td class="px-4 py-3 text-slate-600 whitespace-nowrap">{{ r.actorRole|default:"—" }}</td>
+<td class="px-5 py-3 text-slate-600 max-w-[280px]">{{ r.reason|default:"—" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<div class="p-12 text-center">
+<p class="text-[14px] font-bold text-slate-600">No decisions recorded in this period</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Widen the window or clear the filter.</p>
+</div>
+{% endif %}
+</div>
+
+<p class="edify-text-caption text-slate-400 font-medium">Every row is part of a hash chain — an entry cannot be altered or removed without breaking the chain. Showing the {{ log.total }} most recent decisions in scope.</p>
+
+</div>
+{% endblock %}

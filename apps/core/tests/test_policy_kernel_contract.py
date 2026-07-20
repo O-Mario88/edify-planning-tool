@@ -68,6 +68,8 @@ INTENTIONALLY_UNGATED_PAGES = {
     "leave_calendar": "personal",
     "public_holidays": "reference data",
     "partner_detail": "partner rows filtered by scope",
+    "decision_log": "service scopes rows: deployment-wide for RVP/Admin, "
+    "country for the CD, own-decisions-only for everyone else",
 }
 
 

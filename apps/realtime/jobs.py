@@ -224,6 +224,23 @@ def analytics_report_delivery_job():
     run_tracked_job("analytics_report_delivery", _do_analytics_report_delivery)
 
 
+# ── 9. Escalation SLA sweep ─────────────────────────────────────────────────
+def _do_escalation_sla_sweep() -> int:
+    """Re-notify on CD→RVP escalations past their severity SLA.
+
+    An escalation channel nobody chases becomes a channel nobody uses.
+    """
+    from apps.flags.escalation_service import sweep_overdue
+
+    return sweep_overdue()
+
+
+def escalation_sla_sweep_job():
+    if not _enabled():
+        return
+    run_tracked_job("escalation_sla_sweep", _do_escalation_sla_sweep)
+
+
 def _system_principal():
     """A minimal stand-in principal for system-initiated jobs."""
     from apps.accounts.jwt import AuthPrincipal
@@ -256,4 +273,5 @@ __all__ = [
     "pd_reminders_job",
     "field_debrief_recurring_issues_job",
     "analytics_report_delivery_job",
+    "escalation_sla_sweep_job",
 ]
