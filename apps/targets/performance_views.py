@@ -155,9 +155,11 @@ class HrStaffView(APIView):
 
     def get(self, request: Request) -> Response:
         from apps.accounts.models import StaffProfile
+        from apps.core.scoping import resolve_user_scope
 
         fy = request.query_params.get("fy") or get_operational_fy()
         start, end = _period_range(_q(request), fy)
+        scope = resolve_user_scope(request.user)
         staff = list(
             StaffProfile.objects.filter(
                 deleted_at__isnull=True,
@@ -173,16 +175,18 @@ class HrStaffView(APIView):
                 if hasattr(perf, "workload_context")
                 else {}
             )
-            rows.append(
-                {
-                    "staffId": sp.id,
-                    "name": sp.user.name,
-                    "role": sp.user.active_role,
-                    "email": sp.user.email,
-                    **m,
-                    **wl,
-                }
-            )
+            row = {
+                "staffId": sp.id,
+                "name": sp.user.name,
+                "role": sp.user.active_role,
+                **m,
+                **wl,
+            }
+            # Summary-only roles (RVP) get performance without contact PII —
+            # the permission is granted for a region summary, not a directory.
+            if not scope.can_view_summary_only:
+                row["email"] = sp.user.email
+            rows.append(row)
         return Response({"fy": fy, "staff": rows, "count": len(rows)})
 
 

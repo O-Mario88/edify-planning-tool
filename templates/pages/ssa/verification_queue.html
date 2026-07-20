@@ -50,13 +50,14 @@
 <span class="edify-primary-text font-semibold">{{ r.average_score }}</span> / 10
 </td>
 <td class="px-5 py-4 text-right">
+{% if can_verify %}
 <div class="flex items-center justify-end gap-2">
 <form method="post" action="" class="inline m-0">
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="verify">
 <button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold edify-text-caption rounded-control shadow-sm transition-all">
-Verify & Confirm
+Verify &amp; Confirm
 </button>
 </form>
 
@@ -69,6 +70,9 @@ Return for Correction
 </button>
 </form>
 </div>
+{% else %}
+<span class="edify-text-caption text-slate-400 font-semibold">Awaiting Impact Assessment</span>
+{% endif %}
 </td>
 </tr>
 {% empty %}

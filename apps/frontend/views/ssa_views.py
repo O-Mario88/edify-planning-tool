@@ -1,7 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden
-from apps.core.permissions import require_page_permission
+from apps.audit.services import log as audit_log
+from apps.core.permissions import (
+    has_permission,
+    render_access_denied,
+    require_page_permission,
+)
+from apps.core.rbac import Permission
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import SSAImportBatch
 from apps.ssa.models import SsaRecord
@@ -215,7 +221,18 @@ def ssa_verification_queue_view(request):
             else records.none()
         )
 
+    # Confirming an SSA is the QA control the entire scoring, targets and
+    # impact stack rests on — it is Impact Assessment's authority, not a
+    # by-product of being able to open the page. Everyone else (CD/PL/CCEO)
+    # reads the queue; only ia.verify holders may act on it.
+    can_verify = has_permission(request.user, Permission.IA_VERIFY.value)
+
     if request.method == "POST":
+        if not can_verify:
+            return render_access_denied(
+                request,
+                "Only Impact Assessment may confirm or return an SSA record.",
+            )
         record_id = request.POST.get("record_id")
         action = request.POST.get("action")
         # Re-derive from the scoped queryset: taking the id straight from
@@ -235,6 +252,14 @@ def ssa_verification_queue_view(request):
 
             _recompute_readiness(rec.school)
 
+            audit_log(
+                action="ssa_verify",
+                subject_kind="SsaRecord",
+                subject_id=rec.id,
+                actor_id=request.user.user_id,
+                actor_role=getattr(request.user, "active_role", None),
+                payload={"schoolId": rec.school_id, "schoolName": rec.school.name},
+            )
             messages.success(
                 request, f"SSA for '{rec.school.name}' has been successfully verified."
             )
@@ -246,6 +271,14 @@ def ssa_verification_queue_view(request):
 
             _recompute_readiness(rec.school)
 
+            audit_log(
+                action="ssa_return",
+                subject_kind="SsaRecord",
+                subject_id=rec.id,
+                actor_id=request.user.user_id,
+                actor_role=getattr(request.user, "active_role", None),
+                payload={"schoolId": rec.school_id, "schoolName": rec.school.name},
+            )
             messages.warning(
                 request, f"SSA for '{rec.school.name}' returned for correction."
             )
@@ -255,5 +288,6 @@ def ssa_verification_queue_view(request):
     context = {
         "records": records,
         "total_pending": records.count(),
+        "can_verify": can_verify,
     }
     return render(request, "pages/ssa/verification_queue.html", context)

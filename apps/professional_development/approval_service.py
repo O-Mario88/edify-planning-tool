@@ -64,6 +64,79 @@ def _pick_approver(role: str, exclude_user_id: str) -> User | None:
     return None
 
 
+def _audit_decision(
+    action: str,
+    req: ProfessionalDevelopmentRequest,
+    principal,
+    *,
+    reason: str | None = None,
+    extra: dict | None = None,
+) -> None:
+    """Record a PD decision on the tamper-evident chain.
+
+    PD moves real money (an HR approval spawns the finance disbursement), so
+    every decision needs the same trail the budget chain already has.
+    """
+    from apps.audit.services import log as audit_log
+
+    payload = {
+        "requestId": req.id,
+        "staffId": req.staff_id,
+        "staffName": req.staff_name,
+        "course": req.course_name,
+        "status": req.status,
+        "amountCents": req.requested_amount_cents,
+    }
+    if extra:
+        payload.update(extra)
+    audit_log(
+        action=action,
+        subject_kind="ProfessionalDevelopmentRequest",
+        subject_id=req.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        reason=reason,
+        payload=payload,
+    )
+
+
+def _principal_country(principal) -> str | None:
+    staff_id = getattr(principal, "staff_profile_id", None)
+    if not staff_id:
+        return None
+    sp = StaffProfile.objects.filter(id=staff_id).only("country").first()
+    return getattr(sp, "country", None) if sp else None
+
+
+def _may_review_hr_stage(req: ProfessionalDevelopmentRequest, principal) -> bool:
+    """Who may act at the HR stage.
+
+    HR owns this stage. Leadership (CD/RVP) is only ever the *fallback*
+    reviewer for HR's own request (§13/§31 conflict of interest) — never a
+    general approver of everyone's PD. Leadership is additionally confined to
+    its own country, so a CD cannot fund development in a country they do not
+    run. Previously this was a bare role check, which let any CD or RVP
+    approve any request anywhere and spawn the finance disbursement.
+    """
+    role = getattr(principal, "active_role", "")
+    if role == HR_ROLE:
+        return True
+    if role not in LEADERSHIP_ROLES:
+        return False
+    requester_is_hr = (
+        StaffProfile.objects.filter(id=req.staff_id)
+        .filter(user__active_role=HR_ROLE)
+        .exists()
+    )
+    if not requester_is_hr:
+        return False
+    actor_country = _principal_country(principal)
+    # An unset country on either side is not a licence to approve globally.
+    if actor_country and req.country and actor_country != req.country:
+        return False
+    return True
+
+
 class PDApprovalRoutingService:
     @staticmethod
     def supervisor_for(staff: StaffProfile) -> StaffProfile | None:
@@ -87,9 +160,7 @@ class PDApprovalRoutingService:
             )
             return bool(supervisor and supervisor.user_id == principal.user_id)
         if req.status in (PDStatus.SUBMITTED_TO_HR, PDStatus.PENDING_EXCEPTION):
-            return (
-                getattr(principal, "active_role", "") in (HR_ROLE,) + LEADERSHIP_ROLES
-            )
+            return _may_review_hr_stage(req, principal)
         return False
 
     # ── Submission ────────────────────────────────────────────────────────────
@@ -208,6 +279,7 @@ class PDApprovalRoutingService:
                 "updated_at",
             ]
         )
+        _audit_decision("pd_supervisor_approve", req, principal)
         PDApprovalRoutingService._notify_hr_stage(req)
         return req
 
@@ -224,6 +296,7 @@ class PDApprovalRoutingService:
         req.supervisor_reviewed_at = timezone.now()
         req.supervisor_note = reason[:512]
         req.save()
+        _audit_decision("pd_supervisor_return", req, principal, reason=reason)
         PDApprovalRoutingService._notify(
             req.owner_user_id, "PD request returned by your supervisor", reason, req
         )
@@ -247,15 +320,13 @@ class PDApprovalRoutingService:
     def _assert_hr(req: ProfessionalDevelopmentRequest, principal) -> None:
         if req.status not in (PDStatus.SUBMITTED_TO_HR, PDStatus.PENDING_EXCEPTION):
             raise BadRequest("This request is not awaiting HR review.")
-        role = getattr(principal, "active_role", "")
-        is_hr_leadership = role in (HR_ROLE,) + LEADERSHIP_ROLES
-        if not is_hr_leadership:
-            raise Forbidden(
-                "Only HR (or leadership, for HR's own requests) may review this stage."
-            )
         if req.staff_id == (principal.staff_profile_id or ""):
             raise Forbidden(
                 "You cannot approve or sign off your own request — HR self-approval is not permitted."
+            )
+        if not _may_review_hr_stage(req, principal):
+            raise Forbidden(
+                "Only HR (or, for HR's own request, in-country leadership) may review this stage."
             )
 
     @staticmethod
@@ -309,6 +380,15 @@ class PDApprovalRoutingService:
             f"Good news — “{req.course_name}” has been approved. "
             "Check My Professional Development for the next step.",
         )
+        _audit_decision(
+            "pd_hr_approve",
+            req,
+            principal,
+            extra={
+                "exception": bool(exception),
+                "independentReviewer": req.hr_is_independent_reviewer,
+            },
+        )
         return req
 
     @staticmethod
@@ -333,6 +413,7 @@ class PDApprovalRoutingService:
             "Your PD request needs a fix",
             f"“{req.course_name}” was returned: {reason}",
         )
+        _audit_decision("pd_hr_return", req, principal, reason=reason)
         return req
 
     @staticmethod
@@ -356,6 +437,7 @@ class PDApprovalRoutingService:
             f"“{req.course_name}” was rejected."
             + (f" Reason: {reason}" if reason else ""),
         )
+        _audit_decision("pd_hr_reject", req, principal, reason=reason)
         return req
 
     # ── Helpers ───────────────────────────────────────────────────────────────

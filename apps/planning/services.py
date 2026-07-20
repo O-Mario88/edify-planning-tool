@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.utils import timezone
 
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 
 from .models import MonthlyPlan, MonthlyPlanActivity
@@ -442,35 +442,93 @@ def create_plan(data: dict, principal) -> dict:
     return _serialize_plan(plan, include_activities=True)
 
 
-def submit_plan(plan_id: str, principal) -> dict:
+def _plan_owner_in_scope(plan: MonthlyPlan, principal) -> bool:
+    """Whether `principal` supervises the plan's owner (or is Admin).
+
+    A monthly plan is the owning CCEO's work. Holding budget.approve is not
+    itself authority over *any* plan in the country — without this check any
+    CCEO or PL could approve a peer's plan.
+    """
+    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import resolve_user_scope
+
+    role = getattr(principal, "active_role", "")
+    if role == EdifyRole.ADMIN.value:
+        return True
+    scope = resolve_user_scope(principal)
+    owner = plan.owner_staff_id
+    if owner and owner in (scope.supervised_staff_ids or []):
+        return True
+    # A plan owner may always move their own plan (submit), never approve it.
+    return bool(owner and owner == getattr(principal, "staff_profile_id", None))
+
+
+def _get_plan_or_404(plan_id: str) -> MonthlyPlan:
     p = MonthlyPlan.objects.filter(id=plan_id).first()
     if not p:
         raise NotFoundError("Plan not found.")
+    return p
+
+
+def submit_plan(plan_id: str, data: dict, principal) -> dict:
+    p = _get_plan_or_404(plan_id)
+    if p.owner_staff_id != getattr(principal, "staff_profile_id", None):
+        from apps.core.rbac import EdifyRole
+
+        if getattr(principal, "active_role", "") != EdifyRole.ADMIN.value:
+            raise Forbidden("You may only submit your own monthly plan.")
     p.status = "submitted"
     p.submitted_at = timezone.now()
     p.save(update_fields=["status", "submitted_at"])
     return _serialize_plan(p)
 
 
-def approve_plan(plan_id: str, principal) -> dict:
-    p = MonthlyPlan.objects.filter(id=plan_id).first()
-    if not p:
-        raise NotFoundError("Plan not found.")
+def approve_plan(plan_id: str, data: dict, principal) -> dict:
+    p = _get_plan_or_404(plan_id)
+    if p.owner_staff_id == getattr(principal, "staff_profile_id", None):
+        raise Forbidden("You cannot approve your own monthly plan.")
+    if not _plan_owner_in_scope(p, principal):
+        raise Forbidden("You may only approve plans for the staff you supervise.")
     p.status = "approved"
     p.approved_at = timezone.now()
     p.approved_by_id = principal.user_id
     p.save(update_fields=["status", "approved_at", "approved_by_id"])
+    _audit_plan("plan_approve", p, principal)
     return _serialize_plan(p)
 
 
 def return_plan(plan_id: str, data: dict, principal) -> dict:
-    p = MonthlyPlan.objects.filter(id=plan_id).first()
-    if not p:
-        raise NotFoundError("Plan not found.")
+    p = _get_plan_or_404(plan_id)
+    if p.owner_staff_id == getattr(principal, "staff_profile_id", None):
+        raise Forbidden("You cannot return your own monthly plan.")
+    if not _plan_owner_in_scope(p, principal):
+        raise Forbidden("You may only return plans for the staff you supervise.")
+    reason = (data or {}).get("reason")
     p.status = "returned"
-    p.returned_reason = data.get("reason")
+    p.returned_reason = reason
     p.save(update_fields=["status", "returned_reason"])
+    _audit_plan("plan_return", p, principal, reason=reason)
     return _serialize_plan(p)
+
+
+def _audit_plan(
+    action: str, plan: MonthlyPlan, principal, reason: str | None = None
+) -> None:
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action=action,
+        subject_kind="MonthlyPlan",
+        subject_id=plan.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        reason=reason,
+        payload={
+            "monthIso": plan.month_iso,
+            "ownerStaffId": plan.owner_staff_id,
+            "status": plan.status,
+        },
+    )
 
 
 def schedule_school_visit(data: dict, principal) -> dict:

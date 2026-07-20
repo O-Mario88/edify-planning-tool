@@ -1201,15 +1201,32 @@ def bulk_assign_cluster_view(request):
 
 @require_page_permission("school_directory")
 def bulk_assign_project_view(request):
+    # Same two gates as the single-school drawer: the assignSchool permission,
+    # and the ecosystem rule that a school either shows confirmed SSA need in a
+    # target intervention or carries a written override reason. Without these
+    # the bulk path was a way to attach off-recommendation cohorts with no
+    # permission check and no recorded justification.
+    from apps.core.permissions import has_permission
+
+    if not has_permission(request.user, "project.assignSchool"):
+        messages.error(request, "You do not have permission to assign projects.")
+        return redirect("/schools")
+
     if request.method == "POST":
-        school_ids = request.POST.get("school_ids", "").split(",")
+        school_ids = [s for s in request.POST.get("school_ids", "").split(",") if s]
         project_id = request.POST.get("project_id", "").strip()
+        override_reason = (request.POST.get("override_reason") or "").strip()
         if school_ids and project_id:
             project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
             schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
 
+            from apps.projects.services import evaluate_school_need
+
+            requires_need = bool(project.target_intervention_list())
+
             count = 0
             duplicates = 0
+            skipped_no_need = []
             for s in schools:
                 already_assigned = ProjectSchoolAssignment.objects.filter(
                     project=project, school=s
@@ -1218,22 +1235,65 @@ def bulk_assign_project_view(request):
                     duplicates += 1
                     continue
 
+                matched_intervention = evaluate_school_need(project, s)
+                if requires_need and not matched_intervention and not override_reason:
+                    skipped_no_need.append(s.name)
+                    continue
+
                 ProjectSchoolAssignment.objects.create(
-                    project=project, school=s, assigned_by=request.user.user_id
+                    project=project,
+                    school=s,
+                    assigned_by=request.user.user_id,
+                    notes=override_reason,
+                    assignment_reason=(
+                        override_reason if not matched_intervention else ""
+                    ),
+                    matched_intervention=matched_intervention or "",
                 )
                 count += 1
+
+            if count:
+                from apps.audit.services import log as audit_log
+
+                audit_log(
+                    action="school.bulk_assign_project",
+                    subject_kind="Project",
+                    subject_id=project.id,
+                    actor_id=request.user.user_id,
+                    actor_role=getattr(request.user, "active_role", None),
+                    reason=override_reason or None,
+                    payload={
+                        "projectName": project.name,
+                        "assigned": count,
+                        "skippedNoNeed": len(skipped_no_need),
+                        "duplicates": duplicates,
+                    },
+                )
 
             if duplicates > 0:
                 messages.warning(
                     request,
                     f"Skipped {duplicates} school(s) already assigned to this project.",
                 )
+            if skipped_no_need:
+                shown = ", ".join(skipped_no_need[:3])
+                more = (
+                    f" and {len(skipped_no_need) - 3} more"
+                    if len(skipped_no_need) > 3
+                    else ""
+                )
+                messages.error(
+                    request,
+                    f"Skipped {len(skipped_no_need)} school(s) with no confirmed SSA "
+                    f"need in this project's target interventions ({shown}{more}). "
+                    "Add an override reason to assign them anyway.",
+                )
             if count > 0:
                 messages.success(
                     request,
                     f"Successfully assigned {count} school(s) to project '{project.name}'.",
                 )
-            else:
+            elif not skipped_no_need:
                 messages.error(request, "No new project assignments were made.")
         else:
             messages.error(request, "Failed to perform assignment: missing fields.")
