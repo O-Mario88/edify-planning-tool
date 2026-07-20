@@ -219,6 +219,38 @@ def analytics_drilldown_view(request):
 
     from apps.core.scoping import resolve_user_scope
 
+    def _owner_names(school_rows):
+        """Resolve account-owner display names for a batch of schools.
+
+        School.account_owner_id is a plain CharField holding a user id -- there
+        is no `account_owner` relation, so `s.account_owner` raises
+        AttributeError on the FIRST row rendered. A previous fix removed the
+        equally-invalid select_related("account_owner__user") but left the
+        attribute access in place, so this endpoint still 500'd for any metric
+        that actually returned rows. It only looked fixed because the fixtures
+        used to verify it returned none.
+
+        One query for the whole page rather than one per row.
+        """
+        owner_ids = {s.account_owner_id for s in school_rows if s.account_owner_id}
+        if not owner_ids:
+            return {}
+        from apps.accounts.models import User
+
+        return dict(
+            User.objects.filter(id__in=owner_ids).values_list("id", "name")
+        )
+
+    def _owner_label(school, owner_names):
+        # Fall back to the denormalised raw name before giving up: an owner may
+        # legitimately predate the user record (Salesforce import), and "-" for
+        # a school that does have a named owner is a worse answer.
+        return (
+            owner_names.get(school.account_owner_id)
+            or school.account_owner_name_raw
+            or "-"
+        )
+
     # Base filter criteria are constrained before any metric-specific query.
     # The dashboard service already scopes aggregates; drill-down records must
     # obey the same boundary so a URL cannot reveal another portfolio.
@@ -323,15 +355,17 @@ def analytics_drilldown_view(request):
             "SSA Status",
         ]
 
-        for s in schools.filter(current_fy_ssa_status__in=["not_done", "scheduled"])[
-            :100
-        ]:
+        batch = list(
+            schools.filter(current_fy_ssa_status__in=["not_done", "scheduled"])[:100]
+        )
+        owner_names = _owner_names(batch)
+        for s in batch:
             rows.append(
                 {
                     "col1": s.school_id,
                     "col2": s.name,
                     "col3": s.district.name if s.district else "-",
-                    "col4": s.account_owner.user.name if s.account_owner else "-",
+                    "col4": _owner_label(s, owner_names),
                     "col5": s.get_current_fy_ssa_status_display(),
                 }
             )
@@ -364,13 +398,15 @@ def analytics_drilldown_view(request):
             .distinct()
         )
 
-        for s in schools.exclude(id__in=visited_schools)[:100]:
+        batch = list(schools.exclude(id__in=visited_schools)[:100])
+        owner_names = _owner_names(batch)
+        for s in batch:
             rows.append(
                 {
                     "col1": s.school_id,
                     "col2": s.name,
                     "col3": s.district.name if s.district else "-",
-                    "col4": s.account_owner.user.name if s.account_owner else "-",
+                    "col4": _owner_label(s, owner_names),
                     "col5": s.get_current_fy_ssa_status_display(),
                 }
             )
@@ -402,13 +438,15 @@ def analytics_drilldown_view(request):
             .distinct()
         )
 
-        for s in schools.exclude(id__in=trained_schools)[:100]:
+        batch = list(schools.exclude(id__in=trained_schools)[:100])
+        owner_names = _owner_names(batch)
+        for s in batch:
             rows.append(
                 {
                     "col1": s.school_id,
                     "col2": s.name,
                     "col3": s.district.name if s.district else "-",
-                    "col4": s.account_owner.user.name if s.account_owner else "-",
+                    "col4": _owner_label(s, owner_names),
                     "col5": s.get_current_fy_ssa_status_display(),
                 }
             )

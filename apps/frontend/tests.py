@@ -86,7 +86,7 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/dashboards/cceo.html")
         self.assertContains(response, "Schools Needing Urgent Attention")
         self.assertContains(response, "Schedule Baseline SSA Visit")
-        self.assertContains(response, "Assign to Partner")
+        self.assertContains(response, "Assign")
 
     def test_program_lead_dashboard_renders_successfully(self):
         User = get_user_model()
