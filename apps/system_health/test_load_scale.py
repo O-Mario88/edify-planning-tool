@@ -1,30 +1,46 @@
-"""Load / scale gate: does the platform hold up at 15,000 schools?
+"""Load / scale gate: does the platform's cost stay flat as the estate grows?
 
-Production is sized for roughly 15,000 client schools. Every measurement we
-had before this file was taken against a dev database of ~700, which is small
-enough that an N+1 query -- the failure mode that actually kills Django
-dashboards -- stays invisible. 700 extra queries return in a few hundred
-milliseconds; 15,000 do not.
+Every measurement before this file was taken against a dev database of ~700
+schools, which is too small for an N+1 -- the failure mode that actually kills
+Django dashboards -- to surface at all.
 
-So this seeds a full-size estate once (setUpTestData, so the cost is paid a
-single time for the whole class) and then measures the pages that aggregate
-across the entire school population. Two things are asserted per page:
+WHY THERE IS NO FIXED SCHOOL COUNT HERE
+---------------------------------------
+An earlier version of this gate pinned the estate at 15,000 schools and
+asserted an absolute query ceiling per page. That certifies exactly one number:
+it says the product works at 15,000 and says nothing whatsoever about 16,000.
+It also rots -- every legitimate new panel pushes a page nearer its ceiling
+until someone raises the ceiling to make the suite green, which is precisely
+the moment the gate stops meaning anything.
 
-  * a QUERY CEILING -- the real N+1 detector. A page that issues a bounded
-    number of queries at 15,000 schools is bounded, full stop. A page that
-    loops will blow through any sane ceiling by orders of magnitude, and the
-    failure message prints the actual count so the regression is obvious.
+So the assertion is now SCALE-INVARIANCE rather than a ceiling. Each page is
+measured, the estate is grown, and the page is measured again. If the query
+count does not move when thousands of schools appear, the page is O(1) in the
+school population and therefore correct at ANY scale -- 15,000, 150,000, or a
+number nobody has thought of yet. If it moves, it is an N+1 no matter how small
+the starting number looked.
 
-  * a LATENCY CEILING -- generous, and deliberately secondary. Wall time on a
-    developer laptop under `manage.py test` is not production wall time, and
-    treating it as a precise SLO would make this test flaky. It is here to
-    catch the catastrophic case (a page that takes 30s at scale), not to
-    police a 200ms budget.
+That is what actually removes the limit: not a bigger constant, but an
+assertion whose truth does not depend on the constant.
 
-The ceilings are recorded per page rather than shared, because these pages do
-legitimately different amounts of work. They are set above the measured value
-with headroom, so ordinary changes do not trip them but a structural
-regression does.
+The base estate is still substantial, because scale-invariance is only
+meaningful once the planner has realistic statistics and the joins have real
+cardinality. It is configurable rather than hardcoded:
+
+    EDIFY_SCALE_SCHOOLS=50000 python manage.py test apps.system_health.test_load_scale
+    EDIFY_SCALE_GROWTH=10000  python manage.py test apps.system_health.test_load_scale
+
+The defaults keep an ordinary run to roughly fifteen seconds. Raising them
+costs fixture build time and nothing else -- no assertion needs editing,
+because no assertion mentions a specific size.
+
+A generous absolute ceiling survives alongside the growth check purely as a
+smoke test: a page issuing tens of thousands of *constant* queries would
+technically pass scale-invariance while still being indefensible.
+
+Wall time is asserted only against the catastrophic case. Laptop wall time
+under `manage.py test` is not production wall time, and treating it as an SLO
+would make this suite flaky.
 
 Run just this gate:
 
@@ -33,6 +49,7 @@ Run just this gate:
 
 from __future__ import annotations
 
+import os
 import time
 
 from django.contrib.auth import get_user_model
@@ -50,18 +67,51 @@ from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 
 
-# Production target. Named rather than inlined so the number in the failure
-# message and the number in the docstring can never drift apart.
-TARGET_SCHOOLS = 15_000
+def _env_int(name: str, default: int) -> int:
+    """Read a positive integer override, ignoring blank/garbage values.
+
+    A malformed override falls back to the default rather than crashing the
+    suite: this gate should be trivially runnable at a different size, and a
+    typo in an env var is not worth a collection error.
+    """
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+# Base estate size. Large enough that join cardinality and the query planner
+# behave realistically; NOT a certified maximum -- see the module docstring.
+BASE_SCHOOLS = _env_int("EDIFY_SCALE_SCHOOLS", 15_000)
+
+# How many schools each scale-invariance check adds mid-test. Needs to be big
+# enough that a per-school query would be unmistakable in the delta.
+GROWTH_SCHOOLS = _env_int("EDIFY_SCALE_GROWTH", 3_000)
 
 # Roughly one SSA per five schools, matching the observed ratio in the dev
 # estate (702 schools / ~140 SSA records). Enough rows that the sub-region
 # roll-up has real work to do without tripling fixture build time.
 SSA_EVERY_NTH = 5
 
+# Constant slack absorbing connection warm-up and session/permission lookups
+# that differ between two requests in the same test. Anything proportional to
+# GROWTH_SCHOOLS is the failure being hunted and dwarfs this.
+QUERY_SLACK = 4
+
+# Smoke-test ceiling only. Deliberately far above any real page so that it
+# never becomes the thing people tune; the growth check is the real gate.
+ABSURD_QUERY_COUNT = 10_000
+
+# Catastrophic-case wall time. Not an SLO.
+CATASTROPHIC_SECONDS = 30.0
+
 
 class ScaleGateTest(TestCase):
-    """Measures the whole-population pages against a 15,000-school estate."""
+    """Asserts the whole-population pages cost the same as the estate grows."""
 
     @classmethod
     def setUpTestData(cls):
@@ -99,10 +149,7 @@ class ScaleGateTest(TestCase):
         cls.regions = regions
 
         SubCounty.objects.bulk_create(
-            [
-                SubCounty(name=f"{d.name} Central", district=d)
-                for d in districts
-            ]
+            [SubCounty(name=f"{d.name} Central", district=d) for d in districts]
         )
         sub_counties = list(SubCounty.objects.order_by("name"))
 
@@ -121,14 +168,19 @@ class ScaleGateTest(TestCase):
 
         # Schools, spread evenly across districts. bulk_create deliberately
         # bypasses School.save(), which nulls cluster_id -- the assignment
-        # below is the point of the fixture, so it must survive.
-        schools = []
-        for i in range(TARGET_SCHOOLS):
+        # here is the point of the fixture, so it must survive.
+        #
+        # Built and inserted in batches rather than as one list: at a large
+        # EDIFY_SCALE_SCHOOLS the all-at-once version holds every model
+        # instance in memory at once, which is a fixture-side scale limit of
+        # exactly the kind this gate exists to disprove.
+        batch: list[School] = []
+        for i in range(BASE_SCHOOLS):
             district = districts[i % len(districts)]
-            schools.append(
+            batch.append(
                 School(
-                    school_id=f"SCALE-{i:06d}",
-                    name=f"Scale School {i:06d}",
+                    school_id=f"SCALE-{i:07d}",
+                    name=f"Scale School {i:07d}",
                     region=district.region,
                     district=district,
                     sub_county=sub_counties[i % len(sub_counties)],
@@ -140,75 +192,75 @@ class ScaleGateTest(TestCase):
                     planning_readiness="ready",
                 )
             )
-        School.objects.bulk_create(schools, batch_size=2000)
-        cls.schools = list(School.objects.order_by("school_id"))
+            if len(batch) >= 2000:
+                School.objects.bulk_create(batch)
+                batch = []
+        if batch:
+            School.objects.bulk_create(batch)
+
+        # Only ids are carried forward, never the model instances: the id list
+        # is what the SSA and assignment fixtures actually need.
+        school_ids = list(
+            School.objects.order_by("school_id").values_list("id", flat=True)
+        )
 
         # Put the CCEO over a realistic slice rather than the whole country:
         # a portfolio page that is fast only because its owner has no schools
         # would prove nothing.
         StaffSchoolAssignment.objects.bulk_create(
             [
-                StaffSchoolAssignment(staff=cls.profile, school_id=s.id)
-                for s in cls.schools[:500]
+                StaffSchoolAssignment(staff=cls.profile, school_id=sid)
+                for sid in school_ids[:500]
             ],
             batch_size=1000,
         )
 
         fy = get_operational_fy()
         cls.fy = fy
+        cls.ssa_expected = len(school_ids[::SSA_EVERY_NTH])
 
-        ssa_records = [
-            SsaRecord(
-                school=s,
-                fy=fy,
-                quarter="Q1",
-                date_of_ssa=timezone.localdate(),
-                # Vary the score so weighted sub-region averages differ per
-                # bucket; a constant would hide an aggregation bug.
-                average_score=40 + (idx % 55),
-                new_enrollment=100 + (idx % 400),
-                verification_status="confirmed",
-                collector_type="staff",
-            )
-            for idx, s in enumerate(cls.schools[::SSA_EVERY_NTH])
-        ]
-        SsaRecord.objects.bulk_create(ssa_records, batch_size=2000)
-        saved_records = list(SsaRecord.objects.order_by("id"))
-
-        # One intervention score per record keeps the SsaScore join non-empty
-        # without multiplying fixture size by eight.
-        SsaScore.objects.bulk_create(
+        SsaRecord.objects.bulk_create(
             [
-                SsaScore(
-                    ssa_record=r,
-                    intervention="Government Requirements",
-                    score=40 + (i % 55),
+                SsaRecord(
+                    school_id=sid,
+                    fy=fy,
+                    quarter="Q1",
+                    date_of_ssa=timezone.localdate(),
+                    # Vary the score so weighted sub-region averages differ per
+                    # bucket; a constant would hide an aggregation bug.
+                    average_score=40 + (idx % 55),
+                    new_enrollment=100 + (idx % 400),
+                    verification_status="confirmed",
+                    collector_type="staff",
                 )
-                for i, r in enumerate(saved_records)
+                for idx, sid in enumerate(school_ids[::SSA_EVERY_NTH])
             ],
             batch_size=2000,
         )
 
-        # ANALYZE after bulk loading, or every timing below is measuring a
-        # planner with no statistics. bulk_create does not trigger autovacuum,
-        # so Postgres would estimate every table at its default size and pick
-        # nested loops over hash joins -- turning a millisecond aggregate into
-        # a multi-second sequential scan. Production has autovacuum running, so
-        # measuring the unanalyzed state would report a bottleneck that does
-        # not exist and hide any that does.
-        with connection.cursor() as cursor:
-            cursor.execute("ANALYZE")
+        # One intervention score per record keeps the SsaScore join non-empty
+        # without multiplying fixture size by eight.
+        record_ids = list(SsaRecord.objects.order_by("id").values_list("id", flat=True))
+        SsaScore.objects.bulk_create(
+            [
+                SsaScore(
+                    ssa_record_id=rid,
+                    intervention="Government Requirements",
+                    score=40 + (i % 55),
+                )
+                for i, rid in enumerate(record_ids)
+            ],
+            batch_size=2000,
+        )
+
+        _analyze()
 
     def setUp(self):
         self.client.force_login(self.user)
 
-    # ── measurement helper ────────────────────────────────────────────────
-    def _measure(self, url, *, max_queries, max_seconds, allow_statuses=(200,)):
-        """Fetch `url`, asserting it works and stays bounded at full scale.
-
-        Query count is the load-bearing assertion; see the module docstring
-        for why wall time is the softer of the two.
-        """
+    # ── helpers ───────────────────────────────────────────────────────────
+    def _measure(self, url, *, allow_statuses=(200,)):
+        """Fetch `url` once, returning its query count and wall time."""
         reset_queries()
         with CaptureQueriesContext(connection) as ctx:
             started = time.perf_counter()
@@ -218,103 +270,122 @@ class ScaleGateTest(TestCase):
         self.assertIn(
             response.status_code,
             allow_statuses,
-            f"{url} returned {response.status_code} at {TARGET_SCHOOLS:,} schools",
+            f"{url} returned {response.status_code} at "
+            f"{School.objects.count():,} schools",
         )
         query_count = len(ctx.captured_queries)
         self.assertLessEqual(
             query_count,
-            max_queries,
-            f"{url} issued {query_count} queries at {TARGET_SCHOOLS:,} schools "
-            f"(ceiling {max_queries}). A count that scales with the school "
-            f"population is an N+1 -- batch the lookup rather than raising "
-            f"this ceiling.",
+            ABSURD_QUERY_COUNT,
+            f"{url} issued {query_count} queries -- past the point where any "
+            f"page shape is defensible, even a constant one.",
         )
         self.assertLess(
             elapsed,
-            max_seconds,
-            f"{url} took {elapsed:.2f}s at {TARGET_SCHOOLS:,} schools "
-            f"(ceiling {max_seconds}s).",
+            CATASTROPHIC_SECONDS,
+            f"{url} took {elapsed:.2f}s at {School.objects.count():,} schools.",
         )
         return {"url": url, "queries": query_count, "seconds": elapsed}
 
-    # ── the estate is actually full size ──────────────────────────────────
-    def test_fixture_reaches_production_scale(self):
-        """Guards the gate itself: every ceiling below is meaningless if the
-        fixture quietly shrank."""
-        self.assertEqual(School.objects.count(), TARGET_SCHOOLS)
-        self.assertEqual(
-            SsaRecord.objects.count(), len(range(0, TARGET_SCHOOLS, SSA_EVERY_NTH))
-        )
-        # Districts must be spread, not piled into one bucket, or the
-        # sub-region roll-up is measured against a degenerate shape.
-        self.assertGreaterEqual(District.objects.count(), 130)
+    def _grow(self, count=GROWTH_SCHOOLS):
+        """Add `count` schools mid-test, then refresh planner statistics.
 
-    # ── the whole-population pages ────────────────────────────────────────
-    @override_settings(DEBUG=False)
-    def test_analytics_page_bounded_at_scale(self):
-        """/analytics carries the sub-region roll-up and the map -- the
-        heaviest aggregation in the product."""
-        self._measure("/analytics", max_queries=220, max_seconds=25.0)
-
-    @override_settings(DEBUG=False)
-    def test_cceo_dashboard_does_not_scale_with_school_count(self):
-        """The CCEO dashboard issues a lot of queries (~670 at the time of
-        writing) but the number that matters is whether it GROWS.
-
-        An absolute ceiling here would be arbitrary: the page legitimately
-        assembles many independent panels, and no single one dominates -- the
-        most-repeated query shape accounts for well under a tenth of the total.
-        What would actually break production is a count proportional to the
-        school population, so this measures at 15,000 schools, adds 3,000 more,
-        and measures again. Anything that grows is an N+1 no matter how small
-        the starting number.
+        Rolled back with the surrounding test, so every test method starts
+        from the same base estate and the growth ids never collide.
         """
-        before = self._measure("/dashboard", max_queries=10_000, max_seconds=25.0)
-
         district = self.districts[0]
         School.objects.bulk_create(
             [
                 School(
-                    school_id=f"GROWTH-{i:06d}",
-                    name=f"Growth School {i:06d}",
+                    school_id=f"GROWTH-{i:07d}",
+                    name=f"Growth School {i:07d}",
                     region=district.region,
                     district=district,
                     school_type="client",
                     current_fy_ssa_status="not_done",
                     planning_readiness="ready",
                 )
-                for i in range(3_000)
+                for i in range(count)
             ],
             batch_size=2000,
         )
-        with connection.cursor() as cursor:
-            cursor.execute("ANALYZE")
+        _analyze()
 
-        after = self._measure("/dashboard", max_queries=10_000, max_seconds=25.0)
+    def _assert_scale_invariant(self, url, *, allow_statuses=(200,)):
+        """The gate: a page's query count must not move when the estate grows.
 
-        # A small constant slack absorbs warm-up differences; anything
-        # proportional to the 3,000 rows added is the failure being hunted.
+        This is what makes the result independent of any particular school
+        count. A page that is flat across a several-thousand-school jump is
+        flat, full stop -- there is no size at which it suddenly is not.
+        """
+        before = self._measure(url, allow_statuses=allow_statuses)
+        self._grow()
+        after = self._measure(url, allow_statuses=allow_statuses)
+
         self.assertLessEqual(
             after["queries"],
-            before["queries"] + 4,
-            f"/dashboard went from {before['queries']} to {after['queries']} "
-            f"queries when 3,000 schools were added -- the page is doing "
-            f"per-school work.",
+            before["queries"] + QUERY_SLACK,
+            f"{url} went from {before['queries']} to {after['queries']} queries "
+            f"when {GROWTH_SCHOOLS:,} schools were added -- the page does "
+            f"per-school work, so its cost grows without bound. Batch the "
+            f"lookup (annotate/aggregate in SQL, or prefetch then read the "
+            f"cache with .all()) rather than relaxing this assertion.",
+        )
+        return before, after
+
+    # ── the fixture itself ────────────────────────────────────────────────
+    def test_fixture_is_internally_consistent(self):
+        """Guards the gate: every assertion below is meaningless if the fixture
+        quietly shrank or piled every school into one district."""
+        self.assertEqual(School.objects.count(), BASE_SCHOOLS)
+        self.assertEqual(SsaRecord.objects.count(), self.ssa_expected)
+        self.assertGreaterEqual(District.objects.count(), 130)
+        # Spread matters more than size: a degenerate single-district estate
+        # would make the sub-region roll-up look artificially cheap.
+        self.assertGreaterEqual(
+            School.objects.values("district_id").distinct().count(), 130
         )
 
+    # ── the whole-population pages ────────────────────────────────────────
     @override_settings(DEBUG=False)
-    def test_schools_list_bounded_at_scale(self):
-        """The largest single table in the product."""
-        self._measure("/schools", max_queries=160, max_seconds=25.0)
+    def test_analytics_page_is_scale_invariant(self):
+        """/analytics carries the sub-region roll-up and the map -- the
+        heaviest aggregation in the product."""
+        self._assert_scale_invariant("/analytics")
 
     @override_settings(DEBUG=False)
-    def test_closure_queue_bounded_at_scale(self):
+    def test_cceo_dashboard_is_scale_invariant(self):
+        """The CCEO dashboard issues several hundred queries assembling many
+        independent panels. That is busy, not unbounded -- what would break
+        production is a count proportional to the school population."""
+        self._assert_scale_invariant("/dashboard")
+
+    @override_settings(DEBUG=False)
+    def test_schools_list_is_scale_invariant(self):
+        """The largest single table in the product, and the page most likely
+        to be tempted into loading every row."""
+        self._assert_scale_invariant("/schools")
+
+    @override_settings(DEBUG=False)
+    def test_closure_queue_is_scale_invariant(self):
         """Closure evaluates a checklist per row, so it is the most likely
         place for per-row work to hide."""
-        self._measure(
+        self._assert_scale_invariant(
             # Trailing slash is required: an earlier "activities/<activity_id>"
             # pattern shadows the slash-less form and 404s on it.
-            "/activities/closure/",
-            max_queries=260,
-            max_seconds=25.0,
+            "/activities/closure/"
         )
+
+
+def _analyze():
+    """Refresh planner statistics.
+
+    Without this every timing here is fiction. bulk_create does not trigger
+    autovacuum, so Postgres estimates each table at its default size and picks
+    nested loops over hash joins -- which turned a millisecond aggregate into a
+    multi-second sequential scan and made /analytics look like a 134s blocker
+    when it was really 0.14s. Production runs autovacuum, so the unanalyzed
+    state describes something that cannot happen there.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute("ANALYZE")
