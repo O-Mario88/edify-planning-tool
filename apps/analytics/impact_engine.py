@@ -101,17 +101,11 @@ DOSAGE_BUCKETS = ((0, 0, "0"), (1, 2, "1–2"), (3, None, "3+"))
 def _scoped_schools(principal):
     """RVP may aggregate over assigned regions but never see school identity;
     other roles follow the shared scope service exactly."""
+    from apps.core.scoping import scoped_school_queryset
+
     scope = resolve_user_scope(principal)
     schools = School.objects.filter(deleted_at__isnull=True)
-    if scope.country_scope:
-        return schools, scope
-    if scope.can_view_summary_only:
-        if scope.region_ids:
-            return schools.filter(region_id__in=scope.region_ids), scope
-        return schools.none(), scope
-    if scope.school_ids:
-        return schools.filter(id__in=scope.school_ids), scope
-    return schools.none(), scope
+    return scoped_school_queryset(scope, schools), scope
 
 
 # ── Frame builders ────────────────────────────────────────────────────────────

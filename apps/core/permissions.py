@@ -18,7 +18,7 @@ from django.contrib import messages
 from rest_framework.permissions import BasePermission
 
 from apps.accounts.jwt import AuthPrincipal
-from apps.core.rbac import permissions_for_role, EdifyRole
+from apps.core.rbac import Permission, permissions_for_role, EdifyRole
 
 
 def _user_permissions(principal: AuthPrincipal | object) -> set[str]:
@@ -340,15 +340,11 @@ class RolePermissionService:
 
     @staticmethod
     def can_export(user, page_or_dataset: str) -> bool:
-        role = getattr(user, "active_role", None)
-        return role in [
-            "CountryDirector",
-            "RegionalVicePresident",
-            "Program Lead",
-            "Accountant",
-            "ImpactAssessment",
-            "Admin",
-        ]
+        # Derived from the matrix rather than a parallel role list. The two had
+        # drifted: this listed the RVP while ROLE_PERMISSIONS withheld
+        # data.export, so scope.can_export stayed False and RVP exports 403'd
+        # with no explanation. The RVP now holds EXPORT and both agree.
+        return has_permission(user, Permission.EXPORT.value)
 
     @staticmethod
     def can_manage_cost_catalogue(user) -> bool:

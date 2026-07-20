@@ -17,18 +17,21 @@ from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 
 def _scoped_schools(principal):
+    """The school set these *aggregate* analytics run over.
+
+    Every caller in this module is a rollup or summary (dashboard_summary,
+    district_rollups, ssa_performance, …) — none returns operational school
+    rows. The CD was previously zeroed out here by the operational-directory
+    rule, which is the wrong rule for aggregates: it made the CD's own
+    role-overview report "0 schools" next to country-wide SSA figures drawn
+    from the decision engine, which is not zeroed. The directory block stays
+    where it belongs, in `school_queryset`.
+    """
+    from apps.core.scoping import scoped_school_queryset
+
     scope = resolve_user_scope(principal)
     qs = School.objects.filter(deleted_at__isnull=True)
-    if scope.active_role == "CountryDirector":
-        from django.conf import settings
-
-        if not getattr(settings, "ALLOW_CD_OPERATIONAL_PLANNING", False):
-            return qs.none(), scope
-    if scope.country_scope or scope.can_view_summary_only:
-        return qs, scope
-    if scope.school_ids:
-        return qs.filter(id__in=scope.school_ids), scope
-    return qs.none(), scope
+    return scoped_school_queryset(scope, qs), scope
 
 
 def dashboard_summary(principal, query: dict) -> dict:

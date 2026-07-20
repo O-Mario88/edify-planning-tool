@@ -71,7 +71,18 @@ class Permission(str, Enum):
     PAYMENT_ACT = "payment.act"
     BUDGET_VIEW_SUMMARY = "budget.viewSummary"
     BUDGET_VIEW_DETAIL = "budget.viewDetail"
+    # The field chain's approval right (CCEO approves their staff, PL approves
+    # the CCEOs they supervise). Deliberately NOT held by CD/RVP — the country
+    # envelope is a separate authority, below.
     BUDGET_APPROVE = "budget.approve"
+    # The country money chain, previously enforced only by role-string checks
+    # inside services and therefore invisible to this matrix:
+    #   • CD consolidates PL requests and submits the country envelope.
+    #   • RVP approves/returns it, and locks the annual baseline.
+    #   • CD approves weekly advances escalated to them (non-CCEO owners).
+    COUNTRY_BUDGET_SUBMIT = "countryBudget.submit"
+    COUNTRY_BUDGET_APPROVE = "countryBudget.approve"
+    FUND_REQUEST_APPROVE_ESCALATED = "fundRequest.approveEscalated"
     # The CD-owned rate card. Only CD (and Admin) may create/edit official cost
     # settings — no staff invents costs.
     COST_SETTINGS_MANAGE = "costSettings.manage"
@@ -118,6 +129,12 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.EVIDENCE_REVIEW,
         P.BUDGET_VIEW_SUMMARY,
         P.BUDGET_VIEW_DETAIL,
+        # CD consolidates the PL monthly requests and submits the country
+        # envelope up to the RVP; CD also clears weekly advances escalated to
+        # them. CD still does NOT hold BUDGET_APPROVE — the field chain
+        # (CCEO → PL) owns that.
+        P.COUNTRY_BUDGET_SUBMIT,
+        P.FUND_REQUEST_APPROVE_ESCALATED,
         P.COST_SETTINGS_MANAGE,
         P.STAFF_MANAGE,
         P.USER_MANAGE,
@@ -141,6 +158,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SCHOOL_VIEW,
         P.SSA_VIEW,
         P.BUDGET_VIEW_SUMMARY,
+        # The RVP is the final sign-off on the country monthly envelope and the
+        # annual baseline lock. This is the authority the old role-string
+        # checks actually enforced; naming it here makes it auditable.
+        P.COUNTRY_BUDGET_APPROVE,
         P.ANALYTICS_VIEW,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
         # Region/country summary + approval-level decision review.
@@ -148,6 +169,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.LEADERSHIP_DECISION_REVIEW,
         P.BUDGET_INTELLIGENCE_VIEW,  # summary budget view
         P.STAFF_PERFORMANCE_VIEW,  # region staff-performance summary (no PII/email)
+        # Region-level oversight reporting. can_export already listed the RVP;
+        # the matrix disagreed, so the SSA export silently 403'd.
+        P.EXPORT,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
         P.SCHOOL_VIEW,
@@ -211,6 +235,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SSA_UPLOAD,
         P.EVIDENCE_REVIEW,
         P.IA_VERIFY,
+        # IA reads the country budget as part of verification (it sits in the
+        # country_budget page set and the service's READ_ROLES); the matrix
+        # previously recorded no budget right at all.
+        P.BUDGET_VIEW_SUMMARY,
         P.ANALYTICS_VIEW,
         P.EXPORT,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
@@ -224,6 +252,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
         P.SCHOOL_VIEW,
         P.PAYMENT_ACT,
+        # Detail without summary was a modelling gap: the Accountant reads the
+        # country budget page (READ_ROLES in country_budget_service) but the
+        # matrix recorded no summary right. Summary is a subset of detail.
+        P.BUDGET_VIEW_SUMMARY,
         P.BUDGET_VIEW_DETAIL,
         P.ANALYTICS_VIEW,
         P.EXPORT,

@@ -24,6 +24,8 @@ from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
+from apps.core.permissions import has_permission
+from apps.core.rbac import Permission
 from apps.fund_requests.pl_approval_service import (
     CLUSTER_TRAINING,
     MONTHS,
@@ -93,17 +95,26 @@ def _require_read(principal):
 
 
 def _require_cd(principal):
-    if getattr(principal, "active_role", None) not in CD_ROLES:
-        raise Forbidden(
-            "Only the Country Director can submit the monthly budget to the RVP."
-        )
+    """Authority to submit the country envelope upward.
+
+    Gated on the permission rather than the role string, so the RBAC matrix
+    is the source of truth and this authority is auditable there. The role
+    tuple is kept as a belt-and-braces fallback for principals resolved
+    before the permission seed exists.
+    """
+    if not has_permission(principal, Permission.COUNTRY_BUDGET_SUBMIT.value):
+        if getattr(principal, "active_role", None) not in CD_ROLES:
+            raise Forbidden(
+                "Only the Country Director can submit the monthly budget to the RVP."
+            )
 
 
 def _require_rvp(principal):
-    if getattr(principal, "active_role", None) not in RVP_ROLES:
-        raise Forbidden(
-            "Only the Regional Vice President can approve or return this budget."
-        )
+    if not has_permission(principal, Permission.COUNTRY_BUDGET_APPROVE.value):
+        if getattr(principal, "active_role", None) not in RVP_ROLES:
+            raise Forbidden(
+                "Only the Regional Vice President can approve or return this budget."
+            )
 
 
 def _assert_rvp_country_scope(budget) -> None:

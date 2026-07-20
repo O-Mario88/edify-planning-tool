@@ -307,14 +307,23 @@ def _require_weekly_approver(wfr: WeeklyFundRequest, principal) -> str:
     if wfr.responsible_user == principal.user_id:
         raise Forbidden("You cannot approve your own fund request.")
 
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
     role = getattr(principal, "active_role", "")
+    # Escalated advances (PL/PC/IA/Accountant owners) clear at the CD.
+    # Permission-gated so this authority appears in the RBAC matrix; the role
+    # tuple remains as a fallback for principals resolved before the seed.
+    can_clear_escalated = has_permission(
+        principal, Permission.FUND_REQUEST_APPROVE_ESCALATED.value
+    ) or role in ("CountryDirector", "Admin")
     if wfr.status == "submitted_to_cd":
-        if role not in ("CountryDirector", "Admin"):
+        if not can_clear_escalated:
             raise Forbidden("Only the Country Director can act on this request.")
         return "cd"
 
     # submitted_to_pl — the PL must actually supervise the owner.
-    if role in ("CountryDirector", "Admin"):
+    if can_clear_escalated:
         return "pl"  # country authority may act in the PL's place
     if role != "Program Lead":
         raise Forbidden("Only the owner's Program Lead can act on this request.")

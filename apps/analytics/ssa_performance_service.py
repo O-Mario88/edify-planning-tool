@@ -90,17 +90,11 @@ def _scoped_schools(principal):
     school rows for the role, but this aggregate page may calculate over the
     assigned region(s).  Individual school identities are still suppressed.
     """
+    from apps.core.scoping import scoped_school_queryset
+
     scope = resolve_user_scope(principal)
     schools = School.objects.filter(deleted_at__isnull=True)
-    if scope.country_scope:
-        return schools, scope
-    if scope.can_view_summary_only:
-        if scope.region_ids:
-            return schools.filter(region_id__in=scope.region_ids), scope
-        return schools.none(), scope
-    if scope.school_ids:
-        return schools.filter(id__in=scope.school_ids), scope
-    return schools.none(), scope
+    return scoped_school_queryset(scope, schools), scope
 
 
 def _record_rows(school_ids: list[str], fy: str, quarter: str | None) -> list[dict]:

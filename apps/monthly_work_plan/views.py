@@ -13,7 +13,13 @@ from apps.core.rbac import Permission
 from . import services
 
 VIEW = [Permission.PLANNING_VIEW.value]
-APPROVE = [Permission.BUDGET_APPROVE.value]
+# The country-envelope chain. These endpoints previously all required
+# budget.approve — a permission held only by CCEO/PL, i.e. by nobody in this
+# chain — so every one of them 403'd for its only intended actor. Each is now
+# gated on the authority that actually owns the step.
+CD_SUBMIT = [Permission.COUNTRY_BUDGET_SUBMIT.value]
+RVP_DECIDE = [Permission.COUNTRY_BUDGET_APPROVE.value]
+HANDOFF = [Permission.COUNTRY_BUDGET_SUBMIT.value, Permission.PAYMENT_ACT.value]
 
 
 def _q(request: Request) -> dict:
@@ -38,7 +44,7 @@ class MwpDetail(APIView):
 
 class MwpAdminLineAdd(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = CD_SUBMIT
 
     def post(self, request: Request, budget_id: str) -> Response:
         return Response(
@@ -48,7 +54,7 @@ class MwpAdminLineAdd(APIView):
 
 class MwpAdminLineRemove(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = CD_SUBMIT
 
     def delete(self, request: Request, budget_id: str, line_id: str) -> Response:
         return Response(services.remove_admin_line(budget_id, line_id, request.user))
@@ -56,7 +62,7 @@ class MwpAdminLineRemove(APIView):
 
 class MwpSubmitToRvp(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = CD_SUBMIT
 
     def post(self, request: Request, budget_id: str) -> Response:
         return Response(services.submit_to_rvp(budget_id, request.user))
@@ -64,7 +70,7 @@ class MwpSubmitToRvp(APIView):
 
 class MwpRvpApprove(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = RVP_DECIDE
 
     def post(self, request: Request, budget_id: str) -> Response:
         return Response(services.rvp_approve(budget_id, request.data, request.user))
@@ -72,7 +78,7 @@ class MwpRvpApprove(APIView):
 
 class MwpRvpReturn(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = RVP_DECIDE
 
     def post(self, request: Request, budget_id: str) -> Response:
         return Response(services.rvp_return(budget_id, request.data, request.user))
@@ -80,7 +86,7 @@ class MwpRvpReturn(APIView):
 
 class MwpSendToAccountant(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = HANDOFF
 
     def post(self, request: Request, budget_id: str) -> Response:
         return Response(services.mark_sent_to_accountant(budget_id, request.user))

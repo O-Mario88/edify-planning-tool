@@ -49,8 +49,20 @@ class AnalyticsDashboardService:
             deleted_at__isnull=True, fy=fy, verification_status="confirmed"
         )
 
-        # Apply role-based visibility scoping
-        if not scope.country_scope:
+        # Apply role-based visibility scoping.
+        # Summary-only roles (RVP) are an aggregate audience, not a portfolio
+        # one: they get regional/deployment-wide totals rather than being
+        # filtered down to their own (empty) school and staff assignments.
+        # Filtering them like a field role emptied this page — the RVP's actual
+        # "Analytics" sidebar link — for the role it exists to serve.
+        if scope.can_view_summary_only:
+            if scope.rvp_region_scoped:
+                schools_qs = schools_qs.filter(region_id__in=scope.region_ids)
+                ssa_qs = ssa_qs.filter(school__region_id__in=scope.region_ids)
+                activities_qs = activities_qs.filter(
+                    school__region_id__in=scope.region_ids
+                )
+        elif not scope.country_scope:
             if scope.school_ids:
                 schools_qs = schools_qs.filter(id__in=scope.school_ids)
                 ssa_qs = ssa_qs.filter(school_id__in=scope.school_ids)

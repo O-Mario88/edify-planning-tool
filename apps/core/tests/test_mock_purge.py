@@ -75,7 +75,11 @@ class EmptyDatabaseContractTest(TestCase):
         self.assertEqual(o["regions"], [])
 
     def test_reference_data_present(self):
-        self.assertEqual(Permission.objects.count(), 39)
+        # Derived from the matrix rather than a hardcoded count, so adding a
+        # permission doesn't require editing an unrelated purge test.
+        from apps.core.rbac import all_permission_keys
+
+        self.assertEqual(Permission.objects.count(), len(all_permission_keys()))
         self.assertGreater(RolePermission.objects.count(), 100)
 
 
@@ -231,7 +235,9 @@ class PurgePreservesReferenceTest(TestCase):
         call_command("purge_local_test_data", "--yes", stdout=StringIO())
         # Test school gone, permissions (reference) intact.
         self.assertEqual(School.objects.count(), 0)
-        self.assertEqual(Permission.objects.count(), 39)
+        from apps.core.rbac import all_permission_keys
+
+        self.assertEqual(Permission.objects.count(), len(all_permission_keys()))
 
 
 class ImportCommandsTest(TestCase):

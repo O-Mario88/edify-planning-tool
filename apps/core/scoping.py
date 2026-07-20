@@ -55,6 +55,12 @@ class UserScope:
 
     # Capability flags.
     can_view_summary_only: bool = False
+    # True when a summary-only role (RVP) has real geography assigned and its
+    # queries should be narrowed to `region_ids`. False means "no geography
+    # configured — oversee the whole deployment". Consumers must branch on this
+    # instead of testing `region_ids` for emptiness, which conflated
+    # "unassigned" with "assigned to nothing" and emptied the RVP's pages.
+    rvp_region_scoped: bool = False
     can_view_school_level_detail: bool = True
     can_view_partner_data: bool = False
     can_view_financial_data: bool = False
@@ -115,10 +121,38 @@ def resolve_user_scope(user) -> UserScope:
     if summary_only and staff_id and StaffGeographyAssignment:
         # RVP sees summary performance — scope to assigned region(s). No
         # school-level rows (see school_queryset); analytics get country counts.
+        #
+        # An RVP with no region assignment oversees the whole deployment rather
+        # than nothing: region rows are optional (the staff-setup UI writes
+        # district assignments, and the seed writes none), and treating an
+        # empty list as "no data" silently emptied /analytics, /impact and /ssa
+        # for the very role those pages are built for. `rvp_region_scoped`
+        # records which of the two applies so callers never have to re-derive
+        # it from an empty list.
         geo = StaffGeographyAssignment.objects.filter(
             staff_id=staff_id, region_id__isnull=False
         ).values_list("region_id", flat=True)
         region_ids = _uniq(geo)
+        # Fall back to any region reachable through assigned districts before
+        # concluding this RVP has no geography at all — the staff-setup UI
+        # writes district rows, not region rows.
+        if not region_ids:
+            district_ids_assigned = _uniq(
+                StaffGeographyAssignment.objects.filter(
+                    staff_id=staff_id, district_id__isnull=False
+                ).values_list("district_id", flat=True)
+            )
+            if district_ids_assigned:
+                try:
+                    from apps.geography.models import District
+
+                    region_ids = _uniq(
+                        District.objects.filter(
+                            id__in=district_ids_assigned
+                        ).values_list("region_id", flat=True)
+                    )
+                except Exception:  # noqa: BLE001 - geography may not be ready
+                    region_ids = []
     elif country_scope:
         # Country roles are not row-constrained by geography here.
         pass
@@ -277,6 +311,7 @@ def resolve_user_scope(user) -> UserScope:
         supervised_staff_ids=supervised_staff_ids,
         partner_ids=partner_ids,
         can_view_summary_only=summary_only,
+        rvp_region_scoped=bool(summary_only and region_ids),
         can_view_school_level_detail=not summary_only,
         can_view_partner_data=has(Permission.PARTNER_VIEW.value),
         can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value)
@@ -367,6 +402,37 @@ def school_queryset(scope: UserScope):
     return qs.none()
 
 
+def scoped_school_queryset(scope: UserScope, base=None):
+    """The school rows an *analytics* surface may aggregate over.
+
+    One rule, used by every intelligence surface (SSA performance, impact
+    analytics, leadership boards) so a role means the same thing everywhere:
+
+      • country roles → the whole country;
+      • summary-only (RVP) with geography → its assigned regions;
+      • summary-only without geography → the whole deployment (it oversees
+        everything; see `rvp_region_scoped`). Row *identity* is still withheld
+        separately via `can_view_school_level_detail`.
+      • everyone else → their assigned schools, else nothing.
+
+    Note this is deliberately distinct from `school_queryset`, which governs
+    the *operational* directory and returns nothing for CD/RVP by design.
+    """
+    school_model = _get_school_model()
+    if school_model is None:
+        return None
+    qs = base if base is not None else school_model.objects.filter(deleted_at__isnull=True)
+    if scope.country_scope:
+        return qs
+    if scope.can_view_summary_only:
+        if scope.rvp_region_scoped:
+            return qs.filter(region_id__in=scope.region_ids)
+        return qs
+    if scope.school_ids:
+        return qs.filter(id__in=scope.school_ids)
+    return qs.none()
+
+
 def aggregate_school_filter(scope: UserScope) -> Q:
     """An ORM Q to apply to aggregate analytics. Summary-only roles see
     country-wide counts (their purpose) but never row-level detail."""
@@ -402,5 +468,6 @@ __all__ = [
     "cluster_in_scope",
     "resolve_partner_ids",
     "school_queryset",
+    "scoped_school_queryset",
     "aggregate_school_filter",
 ]
