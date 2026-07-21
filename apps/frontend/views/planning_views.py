@@ -500,14 +500,17 @@ def schedule_modal_view(request):
         .first()
     )
     if latest_ssa:
-        scores = sorted(
-            list(latest_ssa.scores.all().values("intervention", "score")),
-            key=lambda s: s["score"],
-        )
-        for s in scores[:2]:
-            code = s["intervention"]
+        # Canonical ranking — the inline ascending sort had no tie-break, so
+        # tied scores ordered nondeterministically and this surface disagreed
+        # with the engine on ~19% of schools.
+        from apps.ssa.recommendation_engine import prioritized_interventions
+
+        for item in prioritized_interventions(school, n=2):
+            code = item["intervention"]
             label = dict(SsaIntervention.choices).get(code, code)
-            recommendations.append({"code": code, "label": label, "score": s["score"]})
+            recommendations.append(
+                {"code": code, "label": label, "score": item.get("score")}
+            )
 
     partners = Partner.objects.filter(
         deleted_at__isnull=True, active_status=True
@@ -1017,13 +1020,12 @@ def planning_intelligence_view(request):
     # Weakest area
     weakest_area = "—"
     if latest_ssa:
-        scores = sorted(
-            list(latest_ssa.scores.all().values("intervention", "score")),
-            key=lambda s: s["score"],
-        )
-        if scores:
+        from apps.ssa.recommendation_engine import prioritized_interventions
+
+        ranked = prioritized_interventions(school, n=1)
+        if ranked:
             weakest_area = dict(SsaIntervention.choices).get(
-                scores[0]["intervention"], scores[0]["intervention"]
+                ranked[0]["intervention"], ranked[0]["intervention"]
             )
 
     # Assigned staff
@@ -1315,15 +1317,13 @@ def schedule_activity_form_view(request):
             .first()
         )
         if latest_ssa:
-            scores = sorted(
-                list(latest_ssa.scores.all().values("intervention", "score")),
-                key=lambda s: s["score"],
-            )
-            for s in scores[:2]:
-                code = s["intervention"]
+            from apps.ssa.recommendation_engine import prioritized_interventions
+
+            for item in prioritized_interventions(selected_school, n=2):
+                code = item["intervention"]
                 label = dict(SsaIntervention.choices).get(code, code)
                 recommendations.append(
-                    {"code": code, "label": label, "score": s["score"]}
+                    {"code": code, "label": label, "score": item.get("score")}
                 )
 
     if request.method == "POST":

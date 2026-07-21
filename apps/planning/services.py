@@ -29,8 +29,6 @@ def setup(query: dict, principal) -> list[dict]:
         ).values_list("school_id", flat=True)
     )
 
-    from apps.ssa.models import SsaRecord
-
     # Canonical decision rule (apps.ssa.services.latest_applicable_record):
     # confirmed records only — this function previously ranked weakest areas
     # from unconfirmed uploads while its sibling below required confirmed,
@@ -41,34 +39,21 @@ def setup(query: dict, principal) -> list[dict]:
     # SSA is prior-FY still shows its weakest areas here (with staleness
     # surfaced separately via current_fy_ssa_status), instead of a blank that
     # disagreed with the scheduling gate.
-    records = (
-        SsaRecord.objects.filter(
-            school__in=schools,
-            deleted_at__isnull=True,
-            verification_status="confirmed",
-        )
-        .order_by("school_id", "-date_of_ssa", "-created_at")
-        .prefetch_related("scores")
-    )
+    from apps.ssa.recommendation_engine import bulk_weakest
 
-    school_weakest = {}
-    seen_schools = set()
-    for r in records:
-        if r.school_id in seen_schools:
-            continue
-        seen_schools.add(r.school_id)
-        scores = sorted(
-            r.scores.all().values("intervention", "score"),
-            key=lambda s: (s["score"], s["intervention"]),
-        )
-        weakest_list = []
-        for s in scores[:2]:
-            code = s["intervention"]
-            label = dict(SsaIntervention.choices).get(code, code)
-            weakest_list.append(
-                {"intervention": code, "label": label, "score": s["score"]}
-            )
-        school_weakest[r.school_id] = weakest_list
+    school_weakest = {
+        sid: [
+            {
+                "intervention": item["intervention"],
+                "label": dict(SsaIntervention.choices).get(
+                    item["intervention"], item["intervention"]
+                ),
+                "score": item["score"],
+            }
+            for item in items
+        ]
+        for sid, items in bulk_weakest([school.id for school in schools], n=2).items()
+    }
 
     def _serialize_planning_school(school):
         weak = school_weakest.get(school.id, [])
@@ -198,8 +183,11 @@ def plan_builder(query: dict, principal) -> dict:
     school_weakest = {}
     school_ssa_score = {}
     for r in records:
+        # FY-scoped by design (differs from bulk_weakest's newest-any-FY);
+        # tie-break added so tied scores stop ordering nondeterministically.
         scores = sorted(
-            r.scores.all().values("intervention", "score"), key=lambda s: s["score"]
+            r.scores.all().values("intervention", "score"),
+            key=lambda s: (s["score"], s["intervention"]),
         )
         weakest_list = []
         for s in scores[:2]:

@@ -365,3 +365,51 @@ __all__ = [
     "school_recommendation",
     "WEAKNESS_THRESHOLD",
 ]
+
+
+def bulk_weakest(school_ids, n: int = 1) -> dict[str, list[dict[str, Any]]]:
+    """Canonical LIST-VIEW weakest interventions for many schools, two queries.
+
+    Eleven bulk surfaces re-derived "weakest" inline — some unconfirmed, most
+    without a tie-break — and disagreed with each other on 13-42% of schools.
+    This is now the one bulk form: latest CONFIRMED record per school, lowest
+    score first, ties broken on ascending intervention key, absent SSA yields
+    no entry.
+
+    HONEST LIMIT: `prioritized_interventions` ranks by analytic priority
+    (trend + peer context), which can reorder near-tied scores on a school's
+    DETAIL surfaces. List views use this raw-score form because running the
+    full engine per row is an N+1 on 250-school pages. Two documented
+    definitions — bulk raw-lowest and per-school analytic — down from
+    eighteen undocumented ones.
+    """
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    school_ids = list(school_ids)
+    if not school_ids:
+        return {}
+    latest_ids = {}
+    rows = (
+        SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        )
+        .order_by("school_id", "-date_of_ssa", "-created_at")
+        .values_list("id", "school_id")
+    )
+    for rec_id, sid in rows:
+        latest_ids.setdefault(sid, rec_id)
+    per_school: dict[str, list[dict[str, Any]]] = {}
+    rec_to_school = {v: k for k, v in latest_ids.items()}
+    for score in SsaScore.objects.filter(ssa_record_id__in=latest_ids.values()):
+        if score.score is None:
+            continue
+        sid = rec_to_school[score.ssa_record_id]
+        per_school.setdefault(sid, []).append(
+            {"intervention": score.intervention, "score": float(score.score)}
+        )
+    return {
+        sid: sorted(items, key=lambda i: (i["score"], i["intervention"]))[:n]
+        for sid, items in per_school.items()
+    }

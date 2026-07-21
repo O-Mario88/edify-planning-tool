@@ -23,7 +23,13 @@ class AuditLog(models.Model):
     # Monotonic insert order — assigned under a lock in log() (see services.py).
     # The legacy used a Postgres autoincrement BigInt; we assign manually in a
     # serialized transaction so prevHash always points at the true tail.
-    seq = models.BigIntegerField(null=True, blank=True, db_index=True)
+    # unique=True is the concurrency guard the chain was missing: two
+    # concurrent log() calls could lock the same tail, compute the same seq,
+    # and both commit — four duplicate seqs and a broken chain in the dev DB
+    # proved it. With the constraint, the second writer fails and log()'s
+    # swallow-and-continue contract turns the race into a lost audit row
+    # rather than a corrupted chain.
+    seq = models.BigIntegerField(null=True, blank=True, unique=True)
     action = models.CharField(max_length=128)
     subject_kind = models.CharField(max_length=64, null=True, blank=True)
     subject_id = models.CharField(max_length=30, null=True, blank=True)

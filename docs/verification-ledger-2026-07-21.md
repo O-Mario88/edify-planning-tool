@@ -181,3 +181,21 @@ entries for compliance/succession/compensation/payroll until writers exist
 chain, assert UGX 0; (5) mobile walkthrough of My Plan/evidence/leave/PD/
 approvals at 390px via Client + template checks; (6) backup-restore drill
 (pg_dump/restore + verify_chain).
+
+## FINAL PASS (2026-07-22)
+- Consolidation: 3 planning surfaces → full engine; setup list → bulk_weakest
+  (canonical bulk form, honest contract); plan_builder/projects/pl_analytics/
+  ssa_performance → canonical tie-break. 18 undocumented definitions → 2
+  documented ones.
+- HR: six writer-less registers descoped from navigation (direct URLs keep
+  honest empty states).
+- Volume reconciliation: 300 activities through the canonical funnel,
+  planned == requested, UGX 0 difference — pinned as a permanent test.
+- Backup-restore drill: pg_dump 2.6M → restore → 702 schools / 481 activities
+  / 4628 audit rows intact.
+- Audit chain: drill EXPOSED a real break (seq 3386, 4 duplicate seq values —
+  concurrency race during parallel verification walks). Root cause: seq had
+  no unique constraint. Fixed: unique constraint (migration audit.0003) +
+  rebuild_audit_chain command; verify_chain now {'ok': True}.
+- Mobile: five field workflows scanned — one unguarded table (leave PTO)
+  fixed; design linter clean.

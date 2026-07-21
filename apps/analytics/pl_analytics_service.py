@@ -1560,7 +1560,9 @@ class PLAnalyticsService:
             weakest_label = ""
             if record:
                 weakest_score = min(
-                    record.scores.all(), key=lambda score: score.score, default=None
+                    record.scores.all(),
+                    key=lambda sc: (sc.score, sc.intervention),
+                    default=None,
                 )
                 if weakest_score:
                     weakest_code = weakest_score.intervention

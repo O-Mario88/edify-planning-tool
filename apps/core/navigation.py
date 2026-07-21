@@ -688,11 +688,14 @@ SIDEBAR_ITEMS = [
                 "url": "/cpd-learning",
                 "page_key": "cpd_learning",
             },
-            {
-                "label": "Succession Planning",
-                "url": "/succession-planning",
-                "page_key": "succession_planning",
-            },
+            # DESCOPED until a production writer exists — the model behind this
+            # page has none, so the page is a permanently empty register. Direct
+            # URL still works (honest empty state); navigation stops advertising it.
+            # {
+            #                 "label": "Succession Planning",
+            #                 "url": "/succession-planning",
+            #                 "page_key": "succession_planning",
+            #             },
         ],
     },
     {
@@ -733,41 +736,56 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "EMPLOYEE EXPERIENCE",
         "items": [
-            {
-                "label": "Culture & Engagement",
-                "url": "/culture-engagement",
-                "page_key": "culture_engagement",
-            },
+            # DESCOPED until a production writer exists — the model behind this
+            # page has none, so the page is a permanently empty register. Direct
+            # URL still works (honest empty state); navigation stops advertising it.
+            # {
+            #                 "label": "Culture & Engagement",
+            #                 "url": "/culture-engagement",
+            #                 "page_key": "culture_engagement",
+            #             },
             {
                 "label": "Employee Relations",
                 "url": "/employee-relations",
                 "page_key": "employee_relations",
             },
-            {
-                "label": "Wellness",
-                "url": "/wellness",
-                "page_key": "wellness",
-            },
+            # DESCOPED until a production writer exists — the model behind this
+            # page has none, so the page is a permanently empty register. Direct
+            # URL still works (honest empty state); navigation stops advertising it.
+            # {
+            #                 "label": "Wellness",
+            #                 "url": "/wellness",
+            #                 "page_key": "wellness",
+            #             },
         ],
     },
     {
         "group_label": "REWARDS & COMPLIANCE",
         "items": [
-            {
-                "label": "Compensation & Benefits",
-                "url": "/compensation-benefits",
-                "page_key": "compensation_benefits",
-            },
-            {
-                "label": "Payroll Readiness",
-                "url": "/payroll-readiness",
-                "page_key": "payroll_readiness",
-            },
-            {
-                "label": "Compliance Register",
-                "url": "/compliance-register",
-                "page_key": "compliance_register",
-            },
+            # DESCOPED until a production writer exists — the model behind this
+            # page has none, so the page is a permanently empty register. Direct
+            # URL still works (honest empty state); navigation stops advertising it.
+            # {
+            #                 "label": "Compensation & Benefits",
+            #                 "url": "/compensation-benefits",
+            #                 "page_key": "compensation_benefits",
+            #             },
+            # DESCOPED until a production writer exists — the model behind this
+            # page has none, so the page is a permanently empty register. Direct
+            # URL still works (honest empty state); navigation stops advertising it.
+            # {
+            #                 "label": "Payroll Readiness",
+            #                 "url": "/payroll-readiness",
+            #                 "page_key": "payroll_readiness",
+            #             },
+            # DESCOPED until a production writer exists — the model behind this
+            # page has none, so the page is a permanently empty register. Direct
+            # URL still works (honest empty state); navigation stops advertising it.
+            # {
+            #                 "label": "Compliance Register",
+            #                 "url": "/compliance-register",
+            #                 "page_key": "compliance_register",
+            #             },
             {
                 "label": "Policies & Documents",
                 "url": "/policies",

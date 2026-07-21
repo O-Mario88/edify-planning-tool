@@ -260,7 +260,10 @@ def build_dashboard(principal, query: dict) -> dict:
             continue
         score_map = scores_by_record.get(record["id"], {})
         average = _resolved_average(record, score_map)
-        minimum_intervention = min(score_map, key=score_map.get) if score_map else None
+        # Tie-break on intervention key — dict order made ties nondeterministic.
+        minimum_intervention = (
+            min(score_map, key=lambda k: (score_map[k], k)) if score_map else None
+        )
         minimum_score = (
             score_map.get(minimum_intervention) if minimum_intervention else None
         )

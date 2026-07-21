@@ -199,7 +199,8 @@ def _row_state(latest_ssa, activities):
 def _weakest(latest_ssa):
     if latest_ssa is None:
         return ("Not assessed", None)
-    scores = sorted(latest_ssa.scores.all(), key=lambda score: score.score)
+    # Canonical tie-break (score, intervention) — was nondeterministic on ties.
+    scores = sorted(latest_ssa.scores.all(), key=lambda sc: (sc.score, sc.intervention))
     if not scores:
         return ("Not assessed", None)
     score = scores[0]

@@ -340,3 +340,53 @@ class ExportPermissionTests(Fixture):
         self.client.force_login(self.cceo)
         r = self.client.get("/partners")
         self.assertEqual(r.status_code, 200)
+
+
+class VolumeReconciliationTests(Fixture):
+    """Money reconciles to UGX 0 at volume, not just on a near-empty DB."""
+
+    def test_cost_lines_and_weekly_requests_agree_at_three_hundred(self):
+        from django.db.models import Sum
+
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.activities.services import create
+        from apps.fund_requests.models import WeeklyFundRequest
+        from apps.schools.models import School
+
+        for i in range(300):
+            school = School.objects.create(
+                name=f"Vol {i}",
+                school_id=f"VOL-{i}",
+                region_id=self.school.region_id,
+                district_id=self.district.id,
+                school_type="client",
+            )
+            StaffSchoolAssignment.objects.create(staff=self.sp, school_id=school.id)
+            create(
+                {
+                    "schoolId": school.school_id,
+                    "activityType": "school_visit",
+                    # Weekdays only — the calendar policy (rightly) blocks
+                    # Sunday scheduling.
+                    "scheduledDate": (
+                        date.today()
+                        + timedelta(days=(7 - date.today().weekday()) % 7 or 7)
+                        + timedelta(days=i % 5)
+                    ).isoformat(),
+                    "deliveryType": "staff",
+                },
+                self.cceo,
+            )
+        planned = (
+            ActivityScheduleCostLine.objects.aggregate(total=Sum("amount"))["total"]
+            or 0
+        )
+        requested = (
+            WeeklyFundRequest.objects.aggregate(total=Sum("total_amount"))["total"] or 0
+        )
+        self.assertEqual(
+            planned - requested,
+            0,
+            f"planned {planned} != requested {requested}: the seam must "
+            "reconcile to UGX 0 at volume",
+        )
