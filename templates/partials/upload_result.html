@@ -12,7 +12,7 @@
 <h3 class="text-[18px] font-semibold text-slate-800 tracking-tight">Upload Execution Report</h3>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Batch ID: <span class="font-mono text-slate-600 font-bold">{{ result.upload_batch_id }}</span></p>
 </div>
-<span class="inline-flex items-center rounded-pill px-2.5 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if result.success %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
+<span class="inline-flex items-center rounded-pill px-2.5 py-0.5 edify-text-caption font-bold tracking-wider {% if result.success %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
 {% if result.success %}Success{% else %}Errors flagged{% endif %}
 </span>
 </div>
@@ -78,7 +78,7 @@ View Upload History
 <td class="px-4 py-3 font-bold text-slate-800">{{ staff.staff_name }}</td>
 <td class="px-4 py-3 font-semibold text-slate-500">{{ staff.school_count }}</td>
 <td class="px-4 py-3">
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if staff.status == 'unmatched' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider {% if staff.status == 'unmatched' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
 {{ staff.status }}
 </span>
 </td>

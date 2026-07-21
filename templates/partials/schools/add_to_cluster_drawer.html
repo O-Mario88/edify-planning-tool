@@ -16,7 +16,7 @@
 <div class="bg-slate-50 border border-slate-200 rounded-surface p-4 space-y-3 shadow-sm">
 <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
 <h3 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">School Details</h3>
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold uppercase tracking-wide border {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif school.data_quality_status == 'Needs Review' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide border {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif school.data_quality_status == 'Needs Review' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}">
 Quality: {{ school.data_quality_status }} ({{ school.data_quality_score }}%)
 </span>
 </div>

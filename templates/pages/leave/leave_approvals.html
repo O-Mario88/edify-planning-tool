@@ -112,7 +112,7 @@
             <div class="flex-1 space-y-1">
               <div class="flex items-center justify-between">
                 <span class="font-bold text-slate-200 text-xs edify-primary-group-hover-text transition">{{ r.staff.user.name }}</span>
-                <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wider
+                <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wider
                   {% if r.status == 'pending' %}bg-amber-500/10 text-amber-500
                   {% elif r.status == 'approved' %}bg-emerald-500/10 text-emerald-500
                   {% elif r.status == 'rejected' %}bg-rose-500/10 text-rose-500
@@ -124,7 +124,7 @@
               <p class="edify-text-caption text-slate-400 font-semibold">{{ r.staff.user.active_role }} · {{ r.staff.country }}</p>
 
               <div class="flex items-center gap-1.5 pt-1">
-                <span class="px-1.5 py-0.5 edify-primary-tint-10 edify-primary-text rounded-pill edify-text-caption font-bold uppercase tracking-wider">
+                <span class="px-1.5 py-0.5 edify-primary-tint-10 edify-primary-text rounded-pill edify-text-caption font-bold tracking-wider">
                   {{ r.type|replace_underscore|title }}
                 </span>
                 <span class="edify-text-caption text-slate-400 font-semibold">
@@ -212,7 +212,7 @@
             <td class="px-4 py-3 text-slate-400">{{ act.datetime|date:"N j, Y H:i" }}</td>
             <td class="px-4 py-3 text-slate-200">{{ act.staff.name }}</td>
             <td class="px-4 py-3">
-              <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase
+              <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold
                 {% if act.action == 'Approved' %}bg-emerald-500/10 text-emerald-400
                 {% elif act.action == 'Rejected' %}bg-rose-500/10 text-rose-400
                 {% else %}bg-amber-500/10 text-amber-400{% endif %}"

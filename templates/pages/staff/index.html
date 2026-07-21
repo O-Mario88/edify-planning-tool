@@ -128,11 +128,11 @@ Admin & Support
 <td class="px-6 py-4 text-center font-semibold text-emerald-600">{{ s.completed_visits }}</td>
 <td class="px-6 py-4">
 {% if s.onboarding_state == "active" or s.onboarding_state == "complete" %}
-<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>
+<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>
 {% elif s.onboarding_state == "pending" %}
-<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
+<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
 {% else %}
-<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">{{ s.onboarding_state|default:"Unknown" }}</span>
+<span class="inline-flex items-center rounded-pill px-2 py-1 edify-text-caption font-bold tracking-wider bg-slate-100 text-slate-600 border border-slate-200">{{ s.onboarding_state|default:"Unknown" }}</span>
 {% endif %}
 </td>
 <td class="px-6 py-4 text-right font-semibold">

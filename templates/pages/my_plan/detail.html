@@ -20,7 +20,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 {% endif %}
 </p>
 </div>
-<span class="inline-flex items-center rounded-pill px-3 py-0.5 edify-text-caption font-bold uppercase tracking-wider {{ status_class }}">
+<span class="inline-flex items-center rounded-pill px-3 py-0.5 edify-text-caption font-bold tracking-wider {{ status_class }}">
 {{ status_label }}
 </span>
 </div>
@@ -78,7 +78,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 <p class="font-bold text-slate-800">{{ ev.original_name }}</p>
 <p class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_extension }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>

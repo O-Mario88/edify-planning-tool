@@ -206,12 +206,12 @@
                 </h4>
 
                 <!-- Category Pill -->
-                <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-black uppercase bg-slate-100 text-slate-600 select-none border border-slate-200">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-black bg-slate-100 text-slate-600 select-none border border-slate-200">
                   {{ n.category|title }}
                 </span>
 
                 <!-- Priority pill label -->
-                <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase select-none border
+                <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold select-none border
                   {% if n.priority == 'urgent' %}
                     bg-rose-50 text-rose-700 border-rose-200
                   {% elif n.priority == 'high' %}
@@ -225,7 +225,7 @@
 
                 <!-- Action Required badge -->
                 {% if n.action_required and n.status == 'unread' %}
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-black uppercase bg-red-600 text-white select-none animate-pulse">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-black bg-red-600 text-white select-none animate-pulse">
                     Action Required
                   </span>
                 {% endif %}

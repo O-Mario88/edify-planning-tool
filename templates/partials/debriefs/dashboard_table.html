@@ -43,7 +43,7 @@
         <td class="py-2.5 pr-3 text-slate-400">{{ r.activity_type }}</td>
         <td class="py-2.5 pr-3 text-slate-400">{{ r.target_label }}</td>
         <td class="py-2.5 pr-3">
-          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase whitespace-nowrap
+          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold whitespace-nowrap
             {% if r.status_key == 'resolved' or r.status_key == 'closed' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
             {% elif r.status_key == 'action_required' or r.status_key == 'escalated' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
             {% elif r.status_key == 'restricted_incident' %}bg-rose-500/10 text-rose-400 border border-rose-500/20
@@ -56,7 +56,7 @@
           {% if r.action_required %}<span class="text-amber-400 font-extrabold edify-text-caption">Yes</span>{% else %}<span class="text-slate-500">—</span>{% endif %}
         </td>
         <td class="py-2.5">
-          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase whitespace-nowrap
+          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold whitespace-nowrap
             {% if r.risk_level == 'critical' %}bg-rose-500/10 text-rose-400 border border-rose-500/20
             {% elif r.risk_level == 'none' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
             {% else %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% endif %}">{{ r.risk_label }}</span>

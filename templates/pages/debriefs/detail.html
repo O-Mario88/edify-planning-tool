@@ -9,7 +9,7 @@
   <div class="flex items-center justify-between">
     <a href="/debriefs" class="text-[12px] font-bold text-slate-400 hover:text-slate-200">&larr; Back to Dashboard</a>
     {% if debrief.is_restricted_incident %}
-    <span class="px-2 py-1 rounded-pill edify-text-caption font-extrabold uppercase bg-rose-500/10 text-rose-400 border border-rose-500/20">Restricted Incident</span>
+    <span class="px-2 py-1 rounded-pill edify-text-caption font-extrabold bg-rose-500/10 text-rose-400 border border-rose-500/20">Restricted Incident</span>
     {% endif %}
   </div>
 
@@ -28,7 +28,7 @@
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
     <div class="flex items-start justify-between gap-3">
       <h1 class="text-[19px] font-extrabold tracking-tight edify-text edify-page-title">{{ debrief.title }}</h1>
-      <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase whitespace-nowrap
+      <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold whitespace-nowrap
         {% if debrief.status == 'resolved' or debrief.status == 'closed' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
         {% elif debrief.status == 'action_required' or debrief.status == 'escalated' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
         {% else %}edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20{% endif %}">{{ debrief.get_status_display }}</span>
@@ -70,7 +70,7 @@
     {% for c in challenges %}
     <div class="edify-text-caption py-1.5 border-b last:border-0 edify-border">
       <span class="font-bold edify-text">{{ c.get_challenge_type_display }}</span>
-      <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase ml-1
+      <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold ml-1
         {% if c.severity == 'high' %}bg-rose-500/10 text-rose-400{% elif c.severity == 'medium' %}bg-amber-500/10 text-amber-400{% else %}bg-slate-500/10 text-slate-400{% endif %}">{{ c.severity }}</span>
       {% if c.description %}<span class="block text-slate-400">{{ c.description }}</span>{% endif %}
     </div>
@@ -86,7 +86,7 @@
     <div class="edify-text-caption py-1.5 border-b last:border-0 flex items-center justify-between gap-2 edify-border">
       <span class="edify-text"><span class="font-bold">{{ c.get_party_display }}: </span>{{ c.commitment_text }}</span>
       <div class="flex items-center gap-2 shrink-0">
-        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase {% if c.status == 'resolved' %}bg-emerald-500/10 text-emerald-400{% else %}bg-amber-500/10 text-amber-400{% endif %}">{{ c.status }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold {% if c.status == 'resolved' %}bg-emerald-500/10 text-emerald-400{% else %}bg-amber-500/10 text-amber-400{% endif %}">{{ c.status }}</span>
         {% if c.status != 'resolved' and can_manage or c.status != 'resolved' and is_own %}
         <form method="post" action="/debriefs/action">{% csrf_token %}<input type="hidden" name="action" value="resolve_commitment"><input type="hidden" name="debrief_id" value="{{ debrief.id }}"><input type="hidden" name="commitment_id" value="{{ c.id }}">
           <button type="submit" class="h-6 px-2 rounded-control border edify-text-caption font-bold edify-border edify-text">Resolve</button>
@@ -142,7 +142,7 @@
     <div class="edify-text-caption py-2 border-b last:border-0 edify-border">
       <div class="flex items-center justify-between">
         <span class="font-bold edify-text">{{ a.issue }}</span>
-        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase edify-primary-tint-10 edify-primary-text">{{ a.get_status_display }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold edify-primary-tint-10 edify-primary-text">{{ a.get_status_display }}</span>
       </div>
       <span class="text-slate-400 block">{{ a.action }}</span>
       {% if a.owner_user_id == request.user.user_id and a.status != "resolved" and a.status != "closed" %}

@@ -104,12 +104,12 @@ hx-include="#action-planner-form"
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Recommended Focus</label>
 <div class="flex flex-wrap gap-1 justify-end max-w-[260px] ml-auto">
 {% for item in weakest_interventions %}
-<span class="inline-block px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
+<span class="inline-block px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100">
 {{ item.label }} ({{ item.avg|floatformat:1 }})
 </span>
 {% empty %}
 {% if recommendation %}
-<span class="inline-block px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
+<span class="inline-block px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-600 border border-rose-100">
 {{ recommendation.focus_intervention|replace_underscore }}
 </span>
 {% else %}

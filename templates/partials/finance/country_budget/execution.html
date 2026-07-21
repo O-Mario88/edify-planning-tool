@@ -1,0 +1,154 @@
+{% comment %}
+Plan vs actual, the System A/B reconciliation, and the quarter forecast.
+
+The country budget page previously showed plan and commitment only: the two
+people who approve the country's money could not see how the last approval
+executed, and the envelope had no way to reach disbursed/closed. Everything
+here binds to real ledger data — where a figure cannot be computed honestly it
+says so rather than showing a zero that reads as a fact.
+{% endcomment %}
+
+{% if reconciliation %}
+<div class="card p-4">
+  <div class="flex items-center justify-between gap-2 mb-2.5">
+    <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight">Plan vs Actual</h3>
+    {% if reconciliation.advanceCount %}
+    <span class="edify-text-caption font-semibold text-slate-400 tabular-nums">{{ reconciliation.settledCount }}/{{ reconciliation.advanceCount }} settled</span>
+    {% endif %}
+  </div>
+
+  <div class="grid grid-cols-2 gap-2">
+    <div class="rounded-surface bg-slate-50 border border-slate-100 p-2.5">
+      <p class="edify-kpi-label edify-text-caption text-slate-500">Approved</p>
+      <p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ reconciliation.approved_fmt }}</p>
+    </div>
+    <div class="rounded-surface bg-slate-50 border border-slate-100 p-2.5">
+      <p class="edify-kpi-label edify-text-caption text-slate-500">Committed</p>
+      <p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ reconciliation.committed_fmt }}</p>
+    </div>
+    <div class="rounded-surface edify-primary-soft border edify-primary-border p-2.5">
+      <p class="edify-kpi-label edify-text-caption edify-primary-text">Disbursed</p>
+      <p class="text-[13px] font-bold edify-primary-text tabular-nums mt-0.5">{{ reconciliation.disbursed_fmt }}</p>
+      <p class="edify-text-caption font-semibold edify-primary-text">{{ reconciliation.utilisationPct }}% of approved</p>
+    </div>
+    <div class="rounded-surface bg-emerald-50 border border-emerald-100 p-2.5">
+      <p class="edify-kpi-label edify-text-caption text-emerald-600">Accounted</p>
+      <p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ reconciliation.accounted_fmt }}</p>
+      {% if reconciliation.returnedTotal %}<p class="edify-text-caption font-semibold text-emerald-600">{{ reconciliation.returned_fmt }} returned</p>{% endif %}
+    </div>
+  </div>
+
+  <div class="mt-2.5 rounded-surface p-2.5 border {% if reconciliation.isOverspend %}bg-rose-50 border-rose-100{% else %}bg-slate-50 border-slate-100{% endif %}">
+    <p class="edify-kpi-label edify-text-caption {% if reconciliation.isOverspend %}text-rose-600{% else %}text-slate-500{% endif %}">Variance vs approved</p>
+    <p class="text-[13px] font-bold tabular-nums mt-0.5 {% if reconciliation.isOverspend %}text-rose-800{% else %}text-slate-800{% endif %}">
+      {{ reconciliation.variance_fmt }} {{ reconciliation.variance_label }}
+    </p>
+  </div>
+
+  {% if reconciliation.unattributedCount %}
+  <div class="mt-2 rounded-surface bg-amber-50 border border-amber-100 p-2.5">
+    <p class="edify-text-caption font-bold text-amber-800">{{ reconciliation.unattributed_fmt }} moved this month could not be attributed to a country</p>
+    <p class="edify-text-caption font-semibold text-amber-700 mt-0.5">{{ reconciliation.unattributedCount }} advance{{ reconciliation.unattributedCount|pluralize }} whose owner has no country recorded. Excluded from the figures above — shown here so it is not silently lost.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% comment %}
+System A (NetSuite booked) against System B (the advance ledger every dashboard
+reads). Nothing previously compared them, so a booked-vs-declared discrepancy
+was invisible to the people accountable for it.
+{% endcomment %}
+<div class="card p-4">
+  <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2">Ledger Reconciliation</h3>
+  {% if reconciliation.systemDeltaStatus == 'no_data' %}
+  <p class="edify-text-caption font-semibold text-slate-400">No accountability or NetSuite entries recorded for this month yet.</p>
+  {% else %}
+  <div class="flex items-center justify-between gap-2 text-[12px] font-semibold">
+    <span class="text-slate-500">Accounted (field)</span>
+    <span class="tabular-nums font-bold text-slate-800">{{ reconciliation.accounted_fmt }}</span>
+  </div>
+  <div class="flex items-center justify-between gap-2 text-[12px] font-semibold mt-1">
+    <span class="text-slate-500">Booked (NetSuite)</span>
+    <span class="tabular-nums font-bold text-slate-800">{{ reconciliation.netsuite_fmt }}</span>
+  </div>
+  <div class="mt-2 rounded-surface p-2.5 border
+    {% if reconciliation.systemDeltaStatus == 'matched' %}bg-emerald-50 border-emerald-100
+    {% elif reconciliation.systemDeltaStatus == 'within_tolerance' %}bg-slate-50 border-slate-100
+    {% else %}bg-rose-50 border-rose-100{% endif %}">
+    <p class="edify-text-caption font-bold
+      {% if reconciliation.systemDeltaStatus == 'matched' %}text-emerald-700
+      {% elif reconciliation.systemDeltaStatus == 'within_tolerance' %}text-slate-600
+      {% else %}text-rose-700{% endif %}">
+      {% if reconciliation.systemDeltaStatus == 'matched' %}Both ledgers agree.
+      {% elif reconciliation.systemDeltaStatus == 'within_tolerance' %}{{ reconciliation.system_delta_fmt }} apart — within tolerance.
+      {% elif reconciliation.systemDeltaStatus == 'unbooked' %}{{ reconciliation.system_delta_fmt }} accounted in the field but not booked in NetSuite.
+      {% else %}{{ reconciliation.system_delta_fmt }} booked in NetSuite beyond what the field accounted for.{% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if forecast %}
+<div class="card p-4">
+  <div class="flex items-center justify-between gap-2 mb-2">
+    <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight">{{ forecast.quarter }} Outlook</h3>
+    <span class="edify-text-caption font-semibold text-slate-400 tabular-nums">{{ forecast.pctElapsed }}% elapsed</span>
+  </div>
+  <div class="flex items-center justify-between gap-2 text-[12px] font-semibold">
+    <span class="text-slate-500">Spent to date</span>
+    <span class="tabular-nums font-bold text-slate-800">{{ forecast.pctOfCeilingSpent }}% of ceiling</span>
+  </div>
+  {% if forecast.isReliable %}
+  <div class="mt-2 rounded-surface p-2.5 border {% if forecast.willOverspend %}bg-rose-50 border-rose-100{% else %}bg-emerald-50 border-emerald-100{% endif %}">
+    <p class="edify-text-caption font-bold {% if forecast.willOverspend %}text-rose-700{% else %}text-emerald-700{% endif %}">
+      {% if forecast.willOverspend %}On this run rate the quarter closes over its ceiling.
+      {% else %}On this run rate the quarter closes within its ceiling.{% endif %}
+    </p>
+    <p class="edify-text-caption font-semibold text-slate-500 mt-0.5 tabular-nums">{{ forecast.daysRemaining }} day{{ forecast.daysRemaining|pluralize }} remaining</p>
+  </div>
+  {% else %}
+  <div class="mt-2 rounded-surface bg-slate-50 border border-slate-100 p-2.5">
+    <p class="edify-text-caption font-semibold text-slate-500">Too early in the quarter to project a run rate — a projection before day {{ forecast.minForecastDays }} multiplies a single payment into a false alarm. Spend to date is shown above.</p>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% comment %}
+Closure controls: the envelope used to dead-end at approved_by_rvp forever
+because disbursed/closed were never written by any code path.
+{% endcomment %}
+{% if can_send_to_accountant or can_mark_disbursed or can_close_month or settlement_blocker %}
+<div class="card p-4">
+  <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2">Close the Month</h3>
+  {% if can_send_to_accountant %}
+  <form method="POST" action="/country-budget/action" class="m-0">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="send_to_accountant">
+    <input type="hidden" name="budget_id" value="{{ budget_id }}">
+    <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
+    <button type="submit" class="w-full px-3 py-2 rounded-control edify-primary-solid edify-primary-on-solid text-[12px] font-bold">Hand to the Accountant</button>
+  </form>
+  {% elif can_mark_disbursed %}
+  <form method="POST" action="/country-budget/action" class="m-0">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="mark_disbursed">
+    <input type="hidden" name="budget_id" value="{{ budget_id }}">
+    <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
+    <button type="submit" class="w-full px-3 py-2 rounded-control edify-primary-solid edify-primary-on-solid text-[12px] font-bold">Mark disbursed</button>
+  </form>
+  {% elif can_close_month %}
+  <form method="POST" action="/country-budget/action" class="m-0">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="close_month">
+    <input type="hidden" name="budget_id" value="{{ budget_id }}">
+    <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
+    <button type="submit" class="w-full px-3 py-2 rounded-control edify-primary-solid edify-primary-on-solid text-[12px] font-bold">Close {{ month_label }}</button>
+  </form>
+  {% endif %}
+  {% if settlement_blocker %}
+  <p class="edify-text-caption font-semibold text-slate-500 mt-2">{{ settlement_blocker }}</p>
+  {% endif %}
+</div>
+{% endif %}

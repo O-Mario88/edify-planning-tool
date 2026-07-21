@@ -14,11 +14,11 @@
 <!-- Status Badge -->
 <div class="flex items-center gap-2">
 {% if act.status == "closed" %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-semibold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Closed
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-semibold uppercase tracking-wider bg-slate-900 text-white">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-900 text-white">
 {{ act.get_status_display }}
 </span>
 {% endif %}

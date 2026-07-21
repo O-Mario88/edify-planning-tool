@@ -93,7 +93,7 @@
               <td class="px-5 py-3"><span class="inline-flex items-center gap-2"><span class="h-8 w-8 rounded-pill bg-slate-50 flex items-center justify-center text-[15px] shrink-0">{{ r.icon }}</span><span class="text-[12.5px] font-bold text-slate-800">{{ r.activity }}</span></span></td>
               <td class="px-3 py-3 text-[12px] font-semibold text-slate-600">{{ r.where }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.due }}</td>
-              <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wide {% if r.status_tone == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-amber-50 text-amber-700{% endif %}">{{ r.status }}</span></td>
+              <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wide {% if r.status_tone == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-amber-50 text-amber-700{% endif %}">{{ r.status }}</span></td>
               <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}edify-primary-solid edify-primary-hover text-white{% elif r.action_label == 'Reschedule' %}border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600{% else %}border edify-primary-border edify-primary-soft edify-primary-soft-hover edify-primary-text{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
@@ -249,7 +249,7 @@
               <p class="edify-text-caption text-slate-400 mt-0.5">{{ approval.desc|safe }}</p>
             </div>
           </div>
-          <span class="bg-amber-50 text-amber-700 inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-medium uppercase tracking-wide">{{ approval.status }}</span>
+          <span class="bg-amber-50 text-amber-700 inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-medium tracking-wide">{{ approval.status }}</span>
         </div>
         {% empty %}
         <p class="edify-text-caption text-slate-400 font-semibold py-2">No fund requests need your attention.</p>

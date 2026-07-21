@@ -63,7 +63,7 @@
 <span class="inline-flex items-center justify-center h-6 min-w-[24px] px-2 rounded-pill edify-text-caption font-semibold {% if m.evidence_gap > 0 %}bg-amber-50 text-amber-700 border border-amber-200/50{% else %}bg-slate-50 text-slate-400 border border-slate-200/50{% endif %}">{{ m.evidence_gap }}</span>
 </td>
 <td class="px-5 py-4">
-<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill edify-text-caption font-semibold uppercase tracking-wider
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill edify-text-caption font-semibold tracking-wider
 {% if m.risk == 'high' %}bg-rose-50 text-rose-700 border border-rose-200{% elif m.risk == 'medium' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
 <span class="h-1.5 w-1.5 rounded-pill {% if m.risk == 'high' %}bg-rose-500{% elif m.risk == 'medium' %}bg-amber-400{% else %}bg-emerald-500{% endif %}"></span>
 {{ m.risk|title }}

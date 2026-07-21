@@ -21,12 +21,12 @@
 <div class="flex gap-2">
 <!-- Status Badge -->
 {% if member.is_active %}
-<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
 <span class="h-2 w-2 rounded-pill bg-emerald-500"></span>
 Active
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-semibold uppercase bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
 <span class="h-2 w-2 rounded-pill bg-slate-400"></span>
 Inactive ({{ member.status|capfirst }})
 </span>

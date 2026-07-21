@@ -11,21 +11,21 @@
 <!-- Status Badge -->
 <div>
 {% if active_wfr.status == 'pending_responsible_confirmation' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">Draft</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-slate-100 text-slate-600 border border-slate-200">Draft</span>
 {% elif active_wfr.status == 'submitted_to_pl' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-sky-50 text-sky-600 border border-sky-100">Awaiting PL Approval</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-sky-50 text-sky-600 border border-sky-100">Awaiting PL Approval</span>
 {% elif active_wfr.status == 'submitted_to_cd' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-sky-50 text-sky-600 border border-sky-100">Awaiting CD Approval</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-sky-50 text-sky-600 border border-sky-100">Awaiting CD Approval</span>
 {% elif active_wfr.status == 'returned_by_pl' or active_wfr.status == 'returned_by_cd' or active_wfr.status == 'returned_by_accountant' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-100">Returned — Fix &amp; Re-submit</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-rose-50 text-rose-600 border border-rose-100">Returned — Fix &amp; Re-submit</span>
 {% elif active_wfr.status == 'confirmed_for_advance' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider edify-primary-soft edify-primary-text border edify-primary-border">Approved — At Accountant</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider edify-primary-soft edify-primary-text border edify-primary-border">Approved — At Accountant</span>
 {% elif active_wfr.status == 'self_funded' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Self-funded</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Self-funded</span>
 {% elif active_wfr.status == 'disbursed' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">Disbursed</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">Disbursed</span>
 {% else %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">{{ active_wfr.status|replace_underscore|title }}</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-slate-100 text-slate-500 border border-slate-200">{{ active_wfr.status|replace_underscore|title }}</span>
 {% endif %}
 </div>
 </div>
@@ -59,7 +59,7 @@ From My Plan
 </a>
 </td>
 <td class="px-4 py-3">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold uppercase tracking-wider
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold tracking-wider
 {% if line.status == 'Ready' %}bg-emerald-50 text-emerald-700 border border-emerald-100
 {% elif line.status == 'Awaiting Confirmation' %}bg-amber-50 text-amber-600 border border-amber-100
 {% elif line.status == 'Self-funded' %}bg-purple-50 text-purple-700 border border-purple-100

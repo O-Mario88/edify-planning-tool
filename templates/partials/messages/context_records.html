@@ -13,7 +13,7 @@
     <span class="block edify-text-caption font-semibold text-slate-400 truncate">{{ r.meta }}</span>
   </span>
   {% if r.status %}
-  <span class="shrink-0 inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wide
+  <span class="shrink-0 inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wide
     {% if 'scheduled' in r.status|lower %}bg-emerald-50 text-emerald-700 border border-emerald-100
     {% elif 'progress' in r.status|lower %}edify-primary-soft edify-primary-text border edify-primary-border
     {% else %}bg-slate-50 text-slate-500 border border-slate-150{% endif %}">{{ r.status }}</span>
@@ -36,7 +36,7 @@
     <p class="edify-text-caption font-semibold text-slate-400 truncate">{{ r.meta }}</p>
   </div>
   {% if r.status %}
-  <span class="shrink-0 inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wide bg-slate-50 text-slate-500 border border-slate-150">{{ r.status }}</span>
+  <span class="shrink-0 inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wide bg-slate-50 text-slate-500 border border-slate-150">{{ r.status }}</span>
   {% endif %}
 </button>
 {% empty %}

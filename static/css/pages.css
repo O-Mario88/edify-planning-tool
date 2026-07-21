@@ -3697,7 +3697,7 @@ html.theme-blue .tt-member-row > td {
 }
 
 html.theme-blue .tt-member-row:hover > td { background: rgba(52, 126, 177, 0.22); }
-html.theme-blue .tt-button--primary { color: #001d39; }
+html.theme-blue .tt-button--primary { color: var(--edify-on-accent); }
 
 html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-kpi) {
   background: linear-gradient(180deg, color-mix(in oklab, var(--edify-surface) 96%, #fff 4%), var(--edify-surface));

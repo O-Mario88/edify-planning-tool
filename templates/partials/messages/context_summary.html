@@ -2,9 +2,9 @@
 <div class="flex items-center justify-between mb-3">
   <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Context Summary</h3>
   {% if summary %}
-  <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Selected</span>
+  <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Selected</span>
   {% else %}
-  <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Required</span>
+  <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Required</span>
   {% endif %}
 </div>
 
@@ -58,7 +58,7 @@
         <span class="h-1.5 w-1.5 rounded-pill bg-emerald-400 shrink-0"></span>
         <span class="edify-text-caption font-semibold text-slate-600 truncate flex-1">{{ item.label }}</span>
         {% if item.status %}
-        <span class="shrink-0 inline-flex px-1.5 py-px rounded-pill edify-text-caption font-bold uppercase
+        <span class="shrink-0 inline-flex px-1.5 py-px rounded-pill edify-text-caption font-bold
           {% if 'scheduled' in item.status|lower %}bg-emerald-50 text-emerald-700
           {% elif 'progress' in item.status|lower %}edify-primary-soft edify-primary-text
           {% else %}bg-slate-50 text-slate-500{% endif %}">{{ item.status }}</span>

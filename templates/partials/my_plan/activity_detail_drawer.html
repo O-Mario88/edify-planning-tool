@@ -20,7 +20,7 @@ class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
 <!-- Drawer Header -->
 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
 <div>
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase tracking-wider edify-primary-soft edify-primary-text border edify-primary-border mb-1">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold tracking-wider edify-primary-soft edify-primary-text border edify-primary-border mb-1">
 Activity Parameters
 </span>
 <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight">
@@ -123,7 +123,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 <div class="grid grid-cols-2 gap-3 text-[12px] font-semibold">
 <div class="flex items-center gap-1.5">
 <span>Status:</span>
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold uppercase {{ status_class }}">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold {{ status_class }}">
 {{ status_label }}
 </span>
 </div>
@@ -175,7 +175,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 {{ line.quantity }} &times; {{ line.unit_cost|ugx }}
 </td>
 <td class="px-4 py-2.5 text-center">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold uppercase edify-primary-soft-alpha-50 edify-primary-text border /40">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold edify-primary-soft-alpha-50 edify-primary-text border /40">
 {{ line.finance_status }}
 </span>
 </td>
@@ -221,7 +221,7 @@ No budget lines created.
 <p class="font-semibold text-slate-800">{{ ev.original_name }}</p>
 <p class="edify-text-caption text-slate-400 font-bold capitalize mt-0.5">{{ ev.file_extension }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>

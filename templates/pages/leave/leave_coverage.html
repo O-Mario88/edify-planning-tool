@@ -59,12 +59,12 @@
             <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.start_datetime|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.end_datetime|date:"Y-m-d H:i" }}</td>
             <td class="px-4 py-4">
-              <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-pill edify-text-caption font-bold uppercase tracking-wider">
+              <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-pill edify-text-caption font-bold tracking-wider">
                 {{ cov.scope }}
               </span>
             </td>
             <td class="px-4 py-4">
-              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase border tracking-wider
+              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold border tracking-wider
                 {% if cov.status == 'active' %}edify-primary-soft edify-primary-text edify-primary-border
                 {% elif cov.status == 'expired' %}bg-slate-50 text-slate-500 border-slate-200
                 {% else %}bg-rose-50 text-rose-700 border-rose-250{% endif %}">

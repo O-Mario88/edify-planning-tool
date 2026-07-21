@@ -295,7 +295,7 @@
             <div class="space-y-1.5">
               <template x-for="(f, idx) in files" :key="f.name + idx">
                 <div class="flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-150 edify-surface shadow-2xs">
-                  <span class="h-9 w-9 rounded-pill flex items-center justify-center shrink-0 edify-text-caption font-black uppercase"
+                  <span class="h-9 w-9 rounded-pill flex items-center justify-center shrink-0 edify-text-caption font-black"
                         :class="f.name.endsWith('.pdf') ? 'bg-rose-50 text-rose-500' : (f.name.match(/\.xlsx?$/) ? 'bg-emerald-50 text-emerald-600' : (f.name.match(/\.docx?$/) ? 'edify-primary-soft edify-primary-text' : 'bg-slate-100 text-slate-500'))"
                         x-text="f.name.split('.').pop().slice(0,4)"></span>
                   <span class="min-w-0 flex-1">

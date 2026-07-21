@@ -288,12 +288,12 @@ main .bg-white {
 .theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
   button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
   button.bg-indigo-700, a.bg-indigo-700) {
-  color: var(--edify-navy-950) !important;
+  color: var(--edify-on-accent) !important;
   background-color: var(--edify-sky-400) !important;
   background-image: var(--edify-button-primary-treatment) !important;
   border: 1px solid rgba(220, 240, 252, 0.58) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.70), 0 12px 28px -16px rgba(123,189,232,.82) !important;
-  text-shadow: 0 1px 0 rgba(255,255,255,.24);
+  text-shadow: 0 1px 1px rgba(0, 29, 57, 0.18);
 }
 
 .theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,

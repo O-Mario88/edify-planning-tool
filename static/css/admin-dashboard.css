@@ -389,7 +389,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
   backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
 }
 .theme-blue .admin-command :is(.admin-mini, .admin-budget-grid article, .admin-period-switch) { background: var(--edify-glass-tile-treatment); }
-.theme-blue .admin-button--primary { color: var(--edify-navy-950); background: var(--edify-button-primary-treatment); }
+.theme-blue .admin-button--primary { color: var(--edify-on-accent); background: var(--edify-button-primary-treatment); }
 .theme-blue .admin-button--secondary { background: var(--edify-button-secondary-treatment); }
 .theme-dark .admin-command :is(.admin-panel, .admin-kpi) { background: var(--edify-surface-treatment); box-shadow: var(--edify-shadow-md); }
 

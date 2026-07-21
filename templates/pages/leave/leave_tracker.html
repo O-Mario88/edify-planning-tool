@@ -27,7 +27,7 @@
       {% for cov in coverages %}
       <div class="edify-surface border border-slate-100 rounded-surface p-5 shadow-sm space-y-4 hover:shadow-md transition">
         <div class="flex items-center justify-between">
-          <span class="px-2.5 py-0.5 edify-primary-soft border edify-primary-border rounded-pill edify-text-caption font-bold edify-primary-text uppercase tracking-wider">Active Coverage</span>
+          <span class="px-2.5 py-0.5 edify-primary-soft border edify-primary-border rounded-pill edify-text-caption font-bold edify-primary-text tracking-wider">Active Coverage</span>
           <span class="edify-text-caption text-slate-400 font-bold">Expires: {{ cov.end_datetime|date:"d M" }}</span>
         </div>
 
@@ -96,7 +96,7 @@
               <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-150 text-slate-800">{{ sp.sick_remaining }} days</span>
             </td>
             <td class="px-4 py-4">
-              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wider border
+              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wider border
                 {% if sp.status == 'On Leave' %}bg-rose-50 text-rose-700 border-rose-200
                 {% else %}bg-emerald-50 text-emerald-700 border-emerald-200{% endif %}">
                 {{ sp.status }}

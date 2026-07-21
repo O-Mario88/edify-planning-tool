@@ -16,9 +16,9 @@
       <div>
         <p class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider mb-1.5">Context Type</p>
         <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100">{{ selected.panel.fields.context_type }}</span>
+          <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100">{{ selected.panel.fields.context_type }}</span>
           {% if selected.thread.category %}
-          <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase tracking-wide edify-surface text-slate-600 border border-slate-200">{{ selected.thread.category }}</span>
+          <span class="inline-flex px-2 py-0.5 rounded-pill edify-text-caption font-bold tracking-wide edify-surface text-slate-600 border border-slate-200">{{ selected.thread.category }}</span>
           {% endif %}
         </div>
       </div>
@@ -114,7 +114,7 @@
     <div class="flex flex-wrap gap-1.5">
       {% for s in selected.context_suggestions %}
       <span class="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-pill edify-surface border border-slate-200 edify-text-caption font-semibold text-slate-600 shadow-2xs">
-        <span class="h-5 w-5 rounded-pill edify-primary-soft edify-primary-text flex items-center justify-center edify-text-caption font-black uppercase">{{ s.role|avatar_initials }}</span>
+        <span class="h-5 w-5 rounded-pill edify-primary-soft edify-primary-text flex items-center justify-center edify-text-caption font-black">{{ s.role|avatar_initials }}</span>
         {{ s.name }}
       </span>
       {% endfor %}

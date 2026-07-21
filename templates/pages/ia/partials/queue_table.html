@@ -91,12 +91,12 @@ T:{{ act.teachersAttended|default:0 }} &bull; L:{{ act.leadersAttended|default:0
 <!-- Priority -->
 <td class="px-6 py-4 text-center">
 {% if act.is_high_priority %}
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
 <span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-ping"></span>
 High
 </span>
 {% else %}
-<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold uppercase bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
 Normal
 </span>
 {% endif %}

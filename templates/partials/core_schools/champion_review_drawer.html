@@ -44,7 +44,7 @@ class="rounded-control p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 
 <div class="space-y-1">
 <span class="edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Candidate Score</span>
 <h3 class="text-[32px] font-semibold text-slate-900 leading-none">{{ metrics.score }}<span class="text-[15px] text-slate-400 font-semibold"> /100</span></h3>
-<span class="inline-flex items-center edify-text-caption font-semibold uppercase rounded-pill px-2.5 py-0.5 border {% if metrics.eligible %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-amber-50 text-amber-700 border-amber-100{% endif %}">
+<span class="inline-flex items-center edify-text-caption font-semibold rounded-pill px-2.5 py-0.5 border {% if metrics.eligible %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-amber-50 text-amber-700 border-amber-100{% endif %}">
 {% if metrics.eligible %}GRADUATION READY{% else %}INSUFFICIENT MARGINS{% endif %}
 </span>
 </div>

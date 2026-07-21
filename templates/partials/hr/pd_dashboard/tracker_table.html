@@ -34,7 +34,7 @@
           <span class="block edify-text-caption text-slate-400">Used {{ r.fund_used }} · Rem. {{ r.remaining }}</span>
         </td>
         <td class="py-2.5 pr-3">
-          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold uppercase whitespace-nowrap
+          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold whitespace-nowrap
             {% if r.bucket == 'signed_off' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
             {% elif r.bucket == 'completed' %}edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20
             {% elif r.bucket == 'in_progress' %}edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20

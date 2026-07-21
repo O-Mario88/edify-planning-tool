@@ -86,7 +86,7 @@ Schedule Cluster Meeting
 <td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_visit_date }}</td>
 <td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_training_date }}</td>
 <td class="px-4 py-3">
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold uppercase tracking-wider {% if s.planning_status == 'ready' %}bg-emerald-50 text-emerald-700{% elif s.planning_status == 'limited' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider {% if s.planning_status == 'ready' %}bg-emerald-50 text-emerald-700{% elif s.planning_status == 'limited' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
 {{ s.planning_status }}
 </span>
 </td>

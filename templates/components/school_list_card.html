@@ -92,12 +92,12 @@
         <div class="flex items-center gap-1.5 flex-wrap pt-1.5 select-none">
           <!-- Cluster status badge -->
           {% if school.is_clustered or school.cluster or school.cluster_name %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
               Clustered
             </span>
           {% else %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-pulse"></span>
               No Cluster
             </span>
@@ -105,17 +105,17 @@
 
           <!-- SSA status badge -->
           {% if school.has_ssa or school.ssaStatus == 'Verified' or school.ssaStatus == 'Already Uploaded' or school.score_pct or school.current_fy_ssa_status == 'done' %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
               SSA Complete
             </span>
           {% elif school.ssaStatus == 'Pending IA Verification' or school.ssaStatus == 'Pending Verification' %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase edify-primary-soft edify-primary-text border edify-primary-border-alpha-60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold edify-primary-soft edify-primary-text border edify-primary-border-alpha-60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill edify-primary-solid"></span>
               SSA Pending IA
             </span>
           {% else %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-pulse"></span>
               No SSA
             </span>
@@ -123,17 +123,17 @@
 
           <!-- Visit status badge -->
           {% if school.has_visit or school.visit_status_type == 'success' or school.visits_progress == '4 / 4' %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
               Visit Complete
             </span>
           {% elif school.visit_status_type == 'warning' or school.isScheduled or school.my_plan_status %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-amber-50 text-amber-700 border border-amber-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-amber-50 text-amber-700 border border-amber-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-amber-500"></span>
               Visit Scheduled
             </span>
           {% else %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-pulse"></span>
               No Visit
             </span>
@@ -141,17 +141,17 @@
 
           <!-- Training status badge -->
           {% if school.has_training or school.training_status_type == 'success' or school.trainings_progress == '4 / 4' %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
               Training Complete
             </span>
           {% elif school.training_status_type == 'warning' %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-amber-50 text-amber-700 border border-amber-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-amber-50 text-amber-700 border border-amber-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-amber-500"></span>
               Training Scheduled
             </span>
           {% else %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-pulse"></span>
               No Training
             </span>
@@ -159,7 +159,7 @@
 
           <!-- Project linked badge -->
           {% if school.project_assignment_count %}
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold uppercase edify-primary-soft edify-primary-text border edify-primary-border-alpha-60 shadow-xs">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-bold edify-primary-soft edify-primary-text border edify-primary-border-alpha-60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-pill edify-primary-solid"></span>
               Project Linked
             </span>
@@ -173,17 +173,17 @@
     <div class="school-list-card__actions flex items-center gap-2 flex-wrap justify-end self-end md:self-center shrink-0">
       <!-- Priority Badge (computed dynamically from high_priority or SSA score) -->
       {% if school.is_high_priority or school.planningReadiness == 'Cluster Required' or school.planningReadiness == 'Data Cleanup Required' or not school.is_clustered or not school.has_ssa and not school.score_pct %}
-        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-rose-50 text-rose-700 border border-rose-150 shadow-xs">
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-bold bg-rose-50 text-rose-700 border border-rose-150 shadow-xs">
           <span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-ping"></span>
           HIGH PRIORITY
         </span>
       {% elif school.ssaStatus == 'Pending IA Verification' or school.score_pct < 70 %}
-        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-amber-50 text-amber-700 border border-amber-150 shadow-xs">
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-bold bg-amber-50 text-amber-700 border border-amber-150 shadow-xs">
           <span class="w-1.5 h-1.5 rounded-pill bg-amber-500"></span>
           MEDIUM PRIORITY
         </span>
       {% else %}
-        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150 shadow-xs">
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-150 shadow-xs">
           <span class="w-1.5 h-1.5 rounded-pill bg-emerald-500"></span>
           LOW PRIORITY
         </span>
@@ -353,7 +353,7 @@
               Add to Cluster
             </button>
           {% else %}
-            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-3xs">
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-3xs">
               Clustered
             </span>
           {% endif %}
@@ -368,7 +368,7 @@
               Add to Project
             </button>
           {% else %}
-            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-bold uppercase edify-primary-soft edify-primary-text border edify-primary-border shadow-3xs">
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-bold edify-primary-soft edify-primary-text border edify-primary-border shadow-3xs">
               Added to Project
             </span>
           {% endif %}

@@ -88,9 +88,9 @@
 <span class="text-[12px] font-bold text-slate-800">{{ group.name }}</span>
 <div class="flex items-center gap-2">
 {% if group.status == 'approved' %}
-<span class="edify-text-caption font-bold uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-pill px-2 py-0.5">Approved</span>
+<span class="edify-text-caption font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-pill px-2 py-0.5">Approved</span>
 {% else %}
-<span class="edify-text-caption font-bold uppercase text-slate-500 bg-slate-100 border border-slate-200 rounded-pill px-2 py-0.5">Draft</span>
+<span class="edify-text-caption font-bold text-slate-500 bg-slate-100 border border-slate-200 rounded-pill px-2 py-0.5">Draft</span>
 <form method="post" class="inline">
 {% csrf_token %}
 <input type="hidden" name="action" value="approve_group">
