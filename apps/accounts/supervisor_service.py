@@ -22,13 +22,30 @@ _SUPERVISOR_ROLE = {
 }
 
 
-def list_staff() -> list[dict]:
-    """Staff roster with their supervisor + assigned-school count — backs the CD
-    staff-management page. Each row carries enough for assignment decisions."""
+def list_staff(principal=None) -> list[dict]:
+    """Staff roster with their supervisor + assigned-school count.
+
+    Backs the CD staff-management page. Takes a principal because the endpoint
+    is gated on `staffPerformance.view`, which the Program Lead also holds —
+    and the row set includes each person's supervisor, so an unscoped roster
+    let one PL enumerate exactly which CCEOs belong to every other PL. A PL is
+    narrowed to the staff they supervise; country roles keep the full roster.
+    """
+    qs = StaffProfile.objects.filter(deleted_at__isnull=True).select_related("user")
+    if principal is not None:
+        from apps.core.scoping import resolve_user_scope
+
+        role = getattr(principal, "active_role", "")
+        if role != "Admin":
+            scope = resolve_user_scope(principal)
+            if not scope.country_scope:
+                supervised = list(scope.supervised_staff_ids or [])
+                own = getattr(principal, "staff_profile_id", None)
+                allowed = supervised + ([own] if own else [])
+                qs = qs.filter(id__in=allowed or ["__none__"])
+
     rows = []
-    for sp in StaffProfile.objects.filter(deleted_at__isnull=True).select_related(
-        "user"
-    ):
+    for sp in qs:
         sup_link = sp.supervisor_links.first()
         supervisor = sup_link.supervisor if sup_link else None
         rows.append(

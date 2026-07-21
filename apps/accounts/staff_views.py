@@ -25,7 +25,7 @@ class StaffListView(APIView):
     required_permissions = VIEW
 
     def get(self, request: Request) -> Response:
-        return Response(supervisor_service.list_staff())
+        return Response(supervisor_service.list_staff(request.user))
 
 
 class AssignSupervisorView(APIView):

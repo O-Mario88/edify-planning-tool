@@ -1064,8 +1064,13 @@ class ClusterDashboardService:
 
         # 1. Base scoped query
         base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        if not scope.country_scope and scope.district_ids:
-            base_qs = base_qs.filter(district_id__in=scope.district_ids)
+        if not scope.country_scope:
+            # Fails CLOSED. The previous `and scope.district_ids` meant a user
+            # with no district assignment — true for most seeded CCEOs — fell
+            # through to every cluster in the country instead of none.
+            base_qs = base_qs.filter(
+                district_id__in=scope.district_ids or ["__none__"]
+            )
 
         # 2. Filters from request
         q = request.GET.get("q", "").strip()
