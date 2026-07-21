@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
-    require_export_permission,
     RolePermissionService,
     get_scoped_object_or_404,
     require_page_permission,
