@@ -40,6 +40,19 @@ def _chain_audit(action: str, activity, actor_id: str, payload: dict) -> None:
         pass
 
 
+# The one definition of "this partner activity still needs paying".
+#
+# Four surfaces each carried their own version — the Disbursement Dashboard
+# matched only `ia_confirmed`, the partner-payments page matched
+# `none|ia_confirmed`, batch payments matched a third set, and the activities
+# API a fourth. The same queue therefore showed different rows and different
+# totals depending on which page the Accountant happened to open.
+PARTNER_PAYABLE_STATUSES = ("none", "ia_confirmed")
+
+# Statuses meaning money already left for this activity — never payable again.
+PARTNER_PAID_STATUSES = ("disbursed", "paid")
+
+
 class FinanceBlockedReasonService:
     """Evaluates if an activity's finance steps are blocked and provides clean reasons."""
 

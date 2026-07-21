@@ -14,6 +14,8 @@ from apps.fund_requests.models import (
     WeeklyFundRequest,
 )
 from apps.fund_requests.finance_services import (
+    PARTNER_PAID_STATUSES,
+    PARTNER_PAYABLE_STATUSES,
     FinanceBlockedReasonService,
     PartnerPaymentService,
 )
@@ -321,7 +323,7 @@ def ready_for_advance_view(request):
             delivery_type="staff",
             advance_requests__status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
         )
-        .exclude(payment_status__in=["disbursed", "paid"])
+        .exclude(payment_status__in=PARTNER_PAID_STATUSES)
         .select_related("school", "cluster")
         .distinct()
     )
@@ -364,7 +366,7 @@ def partner_payments_view(request):
         deleted_at__isnull=True,
         delivery_type="partner",
         status="ia_verified",
-        payment_status__in=["none", "ia_confirmed"],
+        payment_status__in=PARTNER_PAYABLE_STATUSES,
     ).select_related("school", "cluster")
 
     context = {
@@ -623,7 +625,7 @@ def batch_payments_view(request):
             delivery_type="staff",
             advance_requests__status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
         )
-        .exclude(payment_status__in=["disbursed", "paid"])
+        .exclude(payment_status__in=PARTNER_PAID_STATUSES)
         .select_related("school")
         # est_cost_cents holds plain UGX despite its name -- no /100 here.
         .annotate(amount_ugx=F("est_cost_cents"))
@@ -634,7 +636,7 @@ def batch_payments_view(request):
             deleted_at__isnull=True,
             delivery_type="partner",
             status="ia_verified",
-            payment_status__in=["none", "ia_confirmed"],
+            payment_status__in=PARTNER_PAYABLE_STATUSES,
         )
         .select_related("school")
         .annotate(amount_ugx=F("est_cost_cents"))

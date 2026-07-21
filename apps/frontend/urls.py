@@ -1229,6 +1229,7 @@ urlpatterns = [
     path("search", extended_views.search_view, name="search"),
     path("messages", message_views.messages_list_view, name="messages_list"),
     path("messages/", message_views.messages_list_view),
+    path("messages/drawer", message_views.message_drawer_view, name="messages_drawer"),
     path("messages/new", message_views.message_compose_view, name="message_compose"),
     path("messages/new/", message_views.message_compose_view),
     path(

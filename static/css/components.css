@@ -987,6 +987,31 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
 }
 
+/* Filter-bar selects: reserve room for a consistent dropdown chevron so the
+   native arrow never sits flush against the right edge. Targets every form
+   following the My Plan gold-standard convention (id ends in "filters-form"
+   or lives inside a .filter-bar / partner-workspace__filters wrapper). */
+form[id$="filters-form"] select,
+form[id$="-filters"] select,
+.filter-bar select,
+.partner-workspace__filters select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  /* 12px left (matches px-3), 2.25rem right reserved for the chevron. */
+  padding-left: 12px !important;
+  padding-right: 2.25rem !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 16px 16px;
+}
+/* Keep native arrow on very old browsers without background-image support. */
+form[id$="filters-form"] select:not(:nth-child(1)),
+.no-bg-img form[id$="filters-form"] select {
+  padding-right: 12px;
+}
+
 /* Empty State component */
 .edify-empty-state {
   text-align: center;

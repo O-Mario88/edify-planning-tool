@@ -280,72 +280,43 @@ def clear_partner_payment_action(request):
         activity = get_object_or_404(Activity, id=activity_id)
 
         try:
-            from django.db import transaction
-            from apps.activities.closure_services import (
-                ActivityClosureService,
-                ClosureEligibilityService,
+            # Route through the canonical service rather than re-implementing
+            # the payout inline. The hand-rolled version enforced only the
+            # blocked-reason check and a non-empty NetSuite ID — it had no
+            # cross-channel guard (so an activity whose staff advance had
+            # already released money could ALSO be partner-paid for the same
+            # cost lines), no idempotency check (a replayed POST re-stamped the
+            # activity and re-wrote the NetSuite record), wrote no
+            # PartnerPayment ledger row, and wrote no FinanceAuditLog entry —
+            # which meant its payouts were invisible to the very guard that
+            # protects the other channel.
+            from apps.fund_requests.finance_services import PartnerPaymentService
+
+            partner_name = ""
+            if activity.assigned_partner_id:
+                from apps.partners.models import Partner
+
+                partner_name = (
+                    Partner.objects.filter(id=activity.assigned_partner_id)
+                    .values_list("name", flat=True)
+                    .first()
+                    or ""
+                )
+
+            try:
+                paid_amount = int(amount or 0)
+            except (TypeError, ValueError):
+                paid_amount = 0
+
+            PartnerPaymentService.pay_partner(
+                activity=activity,
+                partner_name=partner_name,
+                amount=paid_amount,
+                method=request.POST.get("method", "") or "bank_transfer",
+                reference=reference,
+                user_id=request.user.user_id,
+                netsuite_id=netsuite_id,
             )
-            from apps.fund_requests.finance_services import FinanceBlockedReasonService
-            from apps.fund_requests.models import NetSuiteExpenseRecord
-
-            # Same defense-in-depth check PartnerPaymentService.pay_partner
-            # (the System A equivalent of this action) already enforces — a
-            # direct POST here must not be able to close an activity that
-            # isn't actually IA-verified/evidenced/SF-ID'd.
-            reasons = FinanceBlockedReasonService.get_blocked_reasons(activity)
-            if reasons:
-                return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Cannot clear payment: {", ".join(reasons)}</div>',
-                    status=400,
-                )
-
-            if not netsuite_id:
-                return HttpResponse(
-                    '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Cannot clear payment: a NetSuite Expense ID is required.</div>',
-                    status=400,
-                )
-
-            with transaction.atomic():
-                activity.payment_status = "paid"
-                activity.save(update_fields=["payment_status", "updated_at"])
-
-                NetSuiteExpenseRecord.objects.update_or_create(
-                    activity=activity,
-                    defaults={
-                        "netsuite_expense_id": netsuite_id,
-                        "expense_date": timezone.now().date(),
-                        "amount_entered": amount or 0,
-                        "entered_by": request.user.user_id,
-                        "notes": reference,
-                    },
-                )
-
-                # Log audit trail
-                from apps.audit.services import log as audit_log
-
-                audit_log(
-                    action="finance_partner_payment_clear",
-                    subject_kind="Activity",
-                    subject_id=activity.id,
-                    actor_id=request.user.user_id,
-                    actor_role=request.user.active_role,
-                    reason=f"Cleared payment for activity {activity.id}. NetSuite ID: {netsuite_id}",
-                    payload={
-                        "netsuite_id": netsuite_id,
-                        "amount": amount,
-                        "reference": reference,
-                    },
-                )
-
-                # Close through the canonical gate instead of writing
-                # status="closed" directly — re-evaluates the full checklist
-                # now that payment_status and the NetSuite record are in
-                # place, and produces the CompletedActivitySnapshot the
-                # direct write used to skip.
-                if ClosureEligibilityService.is_eligible(activity):
-                    ActivityClosureService.close(
-                        activity, closed_by=request.user.user_id
-                    )
 
             response = HttpResponse("<script>window.location.reload();</script>")
             response["HX-Trigger"] = "close-drawer"

@@ -322,13 +322,15 @@ def _partner_items():
     """IA-verified partner activities awaiting payment — due now, month-agnostic."""
     from apps.activities.models import Activity
 
+    from .finance_services import PARTNER_PAYABLE_STATUSES
+
     acts = list(
         Activity.objects.filter(
             deleted_at__isnull=True,
             delivery_type="partner",
             status="ia_verified",
-            payment_status="ia_confirmed",
-        ).select_related("school")[:25]
+            payment_status__in=PARTNER_PAYABLE_STATUSES,
+        ).select_related("school")[:200]
     )
     if not acts:
         return []
