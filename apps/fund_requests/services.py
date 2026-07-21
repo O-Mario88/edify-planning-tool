@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.activities.models import Activity
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
@@ -227,6 +227,50 @@ _REVIEWABLE_STATUSES = (
 )
 
 
+def _assert_may_review(fr, principal) -> None:
+    """A reviewer may only act on requests from the staff they supervise.
+
+    This check was missing entirely: the endpoint blocked self-approval and
+    nothing else, so any `budget.approve` holder — a permission CCEOs carry too
+    — could approve another Program Lead's team request, and even one already
+    escalated to the CD or RVP. Mirrors weekly_service._require_weekly_approver.
+    """
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+    from apps.core.scoping import resolve_user_scope
+
+    role = getattr(principal, "active_role", "")
+    if role == "Admin":
+        return
+
+    # Country authority (the CD's escalated-approval right, or the RVP's
+    # envelope right) supersedes the field chain at any stage.
+    if has_permission(
+        principal, Permission.FUND_REQUEST_APPROVE_ESCALATED.value
+    ) or has_permission(principal, Permission.COUNTRY_BUDGET_APPROVE.value):
+        return
+
+    # Everyone else is field chain only, and an escalated request has left it.
+    if fr.status in ("submitted_to_cd", "submitted_to_rvp"):
+        raise Forbidden("This request has been escalated to country leadership.")
+
+    scope = resolve_user_scope(principal)
+    supervised = set(scope.supervised_staff_ids or [])
+    if not supervised:
+        raise Forbidden("You do not supervise anyone whose requests you can review.")
+
+    owner = getattr(fr, "submitted_by_user_id", None)
+    if owner in supervised:
+        return
+    # submitted_by_user_id is a User id; supervised_staff_ids are StaffProfile
+    # ids. Resolve across the two spaces before refusing.
+    from apps.accounts.models import StaffProfile
+
+    if StaffProfile.objects.filter(id__in=supervised, user_id=owner).exists():
+        return
+    raise Forbidden("This request belongs to another Program Lead's team.")
+
+
 def _review(request_id: str, new_status: str, data: dict, principal) -> dict:
     with transaction.atomic():
         fr = FundRequest.objects.select_for_update().filter(id=request_id).first()
@@ -237,6 +281,7 @@ def _review(request_id: str, new_status: str, data: dict, principal) -> dict:
         # the same rule via _require_weekly_approver).
         if fr.submitted_by_user_id == principal.user_id:
             raise BadRequest("You cannot review your own fund request.")
+        _assert_may_review(fr, principal)
         if fr.status not in _REVIEWABLE_STATUSES:
             raise BadRequest(
                 f"A request in status '{fr.status}' can no longer be reviewed."

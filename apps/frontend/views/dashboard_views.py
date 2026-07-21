@@ -753,10 +753,12 @@ def dashboard_view(request):
             ProjectPartnerAssignment,
         )
 
-        projects_qs = (
-            Project.objects.filter(deleted_at__isnull=True)
-            .order_by("name")
-            .prefetch_related("partner_assignments__partner", "school_assignments")
+        # The coordinator's own landing page previously listed every project in
+        # the country — the single widest scope leak for this role.
+        from apps.projects.scoping import scoped_projects
+
+        projects_qs = scoped_projects(request.user).prefetch_related(
+            "partner_assignments__partner", "school_assignments"
         )
 
         portfolio = []
@@ -774,14 +776,17 @@ def dashboard_view(request):
                 }
             )
 
+        # Every count and list below is narrowed to the coordinator's own
+        # portfolio via the same scope helper the queryset above uses.
+        scoped_ids = list(projects_qs.values_list("id", flat=True))
         schools_in_projects = (
-            ProjectSchoolAssignment.objects.filter(project__deleted_at__isnull=True)
+            ProjectSchoolAssignment.objects.filter(project_id__in=scoped_ids)
             .values("school_id")
             .distinct()
             .count()
         )
         partners_assigned = (
-            ProjectPartnerAssignment.objects.filter(project__deleted_at__isnull=True)
+            ProjectPartnerAssignment.objects.filter(project_id__in=scoped_ids)
             .values("partner_id")
             .distinct()
             .count()
@@ -795,7 +800,7 @@ def dashboard_view(request):
                 "district": a.school.district.name if a.school.district_id else "—",
             }
             for a in ProjectSchoolAssignment.objects.filter(
-                project__deleted_at__isnull=True
+                project_id__in=scoped_ids
             )
             .select_related("school", "school__district", "project")
             .order_by("-created_at")[:8]
@@ -805,7 +810,7 @@ def dashboard_view(request):
         project_partners = [
             {"partner_name": a.partner.name, "project_name": a.project.name}
             for a in ProjectPartnerAssignment.objects.filter(
-                project__deleted_at__isnull=True
+                project_id__in=scoped_ids
             )
             .select_related("partner", "project")
             .order_by("partner__name")

@@ -1,3 +1,5 @@
+from datetime import date
+
 from apps.notifications.models import Notification
 from apps.core.navigation import build_sidebar_for_user
 
@@ -8,8 +10,11 @@ def sidebar_counts(request):
             "unread_notifications_count": 0,
             "unread_messages_count": 0,
             "pd_action_required_count": 0,
+            "today": date.today(),
+            "current_week_number": date.today().isocalendar()[1],
         }
 
+    today = date.today()
     try:
         notifications_count = Notification.objects.filter(
             recipient_id=request.user.id, status="unread"
@@ -35,6 +40,8 @@ def sidebar_counts(request):
         "unread_notifications_count": notifications_count,
         "unread_messages_count": messages_count,
         "pd_action_required_count": pd_count,
+        "today": today,
+        "current_week_number": today.isocalendar()[1],
     }
 
 

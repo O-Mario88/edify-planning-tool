@@ -160,6 +160,11 @@ style="padding-left: 36px"
 
 <!-- Header Right Utilities -->
 <div class="flex items-center gap-2 shrink-0">
+<!-- Today's date + ISO week (shown on every page) -->
+<div class="hidden md:flex items-center gap-1.5 edify-surface px-3 py-1.5 rounded-control text-[12px] font-semibold text-slate-600 border edify-border" title="Today's date">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+<span>{{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}</span>
+</div>
 <button
 hx-get="/notifications/drawer"
 hx-target="#drawer-container"

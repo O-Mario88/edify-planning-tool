@@ -88,6 +88,13 @@ def decision_intelligence_view(request):
                 )
                 messages.success(request, "Decision recorded.")
             elif action == "recompute":
+                # Regenerating both engines country-wide is a leadership act.
+                # This branch had no permission check at all, so any role that
+                # could open the page could trigger it.
+                if not (can_review_leadership or can_review_budget):
+                    raise Forbidden(
+                        "You may not regenerate the decision engines."
+                    )
                 lead = leadership_engine.recompute({"fy": fy}, request.user)
                 budget = budget_engine.recompute({"fy": fy}, request.user)
                 messages.success(

@@ -13,32 +13,8 @@
     <p class="text-[13px] text-slate-500 font-normal mt-1">Here's your plan for today. Stay focused, drive impact.</p>
   </div>
 
-  <!-- Controls -->
-  <div class="flex flex-wrap items-center gap-2.5">
-    <!-- Date Dropdown -->
-    <div class="flex items-center gap-1.5 edify-surface px-3 py-1.5 rounded-surface shadow-sm cursor-pointer text-[12px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-      <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg> {{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}
-      <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-    </div>
-
-    <!-- Notifications -->
-    <div class="h-9 w-9 edify-surface rounded-surface flex items-center justify-center relative cursor-pointer hover:bg-slate-50 shadow-sm transition-colors">
-      <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-      {% if unread_notifications_count %}
-      <span class="absolute -top-1 -right-1 bg-rose-500 text-white rounded-pill edify-text-caption font-semibold h-4 w-4 flex items-center justify-center">{{ unread_notifications_count }}</span>
-      {% endif %}
-    </div>
-
-    <!-- Avatar profile -->
-    <div class="flex items-center gap-2">
-      <div class="h-9 w-9 rounded-pill bg-slate-100 font-semibold text-[12px] text-slate-600 flex items-center justify-center">{{ avatar_initials }}</div>
-      <div class="text-left hidden sm:block">
-        <span class="text-[12px] font-semibold block leading-tight">{{ user_name }}</span>
-        <span class="edify-text-caption text-slate-400 block mt-0.5">CCEO / Field Officer</span>
-      </div>
-    </div>
-  </div>
+  <!-- Controls (date, notifications, avatar) now live in the shared topbar —
+       removed the per-page duplicates that rendered alongside the shell's own. -->
 </div>
 
 

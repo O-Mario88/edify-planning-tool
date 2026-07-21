@@ -21,7 +21,7 @@ class ProjectListView(APIView):
     required_permissions = VIEW
 
     def get(self, request: Request) -> Response:
-        return Response(services.list_projects())
+        return Response(services.list_projects(request.user))
 
 
 class ProjectDetailView(APIView):
@@ -37,13 +37,13 @@ class ProjectDetailView(APIView):
         return [IsAuthenticated(), RequirePermissions()]
 
     def get(self, request: Request, project_id: str) -> Response:
-        return Response(services.get_one(project_id))
+        return Response(services.get_one(project_id, request.user))
 
     def patch(self, request: Request, project_id: str) -> Response:
         # CD/ProjectCoordinator/Admin sets the project manager (single staff id).
         if "managerStaffId" in request.data:
-            return Response(services.set_manager(project_id, request.data))
-        return Response(services.get_one(project_id))
+            return Response(services.set_manager(project_id, request.data, request.user))
+        return Response(services.get_one(project_id, request.user))
 
 
 class ProjectImpactView(APIView):
@@ -51,7 +51,7 @@ class ProjectImpactView(APIView):
     required_permissions = VIEW
 
     def get(self, request: Request, project_id: str) -> Response:
-        return Response(services.impact(project_id))
+        return Response(services.impact(project_id, request.user))
 
 
 class ProjectPartnersView(APIView):

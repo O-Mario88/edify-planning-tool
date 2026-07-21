@@ -14,19 +14,34 @@ from .models import (
 )
 
 
-def list_projects() -> list[dict]:
-    return [_serialize(p) for p in Project.objects.filter(deleted_at__isnull=True)]
+def list_projects(principal=None) -> list[dict]:
+    # Unscoped by default only for internal callers that have already scoped;
+    # every request path passes a principal.
+    if principal is None:
+        return [_serialize(p) for p in Project.objects.filter(deleted_at__isnull=True)]
+    from .scoping import scoped_projects
+
+    return [_serialize(p) for p in scoped_projects(principal)]
 
 
-def get_one(project_id: str) -> dict:
+def get_one(project_id: str, principal=None) -> dict:
+    if principal is not None:
+        from .scoping import get_scoped_project
+
+        return _serialize(get_scoped_project(project_id, principal))
     p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Project not found.")
     return _serialize(p)
 
 
-def impact(project_id: str) -> list[dict]:
-    p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+def impact(project_id: str, principal=None) -> list[dict]:
+    if principal is not None:
+        from .scoping import get_scoped_project
+
+        p = get_scoped_project(project_id, principal)
+    else:
+        p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Project not found.")
     return [
@@ -137,14 +152,29 @@ def remove_partner(project_id: str, partner_id: str) -> dict:
     return {"ok": True}
 
 
-def set_manager(project_id: str, data: dict) -> dict:
-    """Set the project's manager (a single staff user id). CD assigns a staff
-    member to own the project; clears it when managerStaffId is empty."""
-    from apps.core.exceptions import NotFoundError
+def set_manager(project_id: str, data: dict, principal=None) -> dict:
+    """Set the project's manager (a single staff id).
 
-    p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
-    if not p:
-        raise NotFoundError("Project not found.")
+    Reassigning ownership is a country-leadership act. Without a scope check a
+    Project Coordinator could PATCH any project — including seizing a peer's
+    project or orphaning it by clearing the manager.
+    """
+    from apps.core.exceptions import Forbidden, NotFoundError
+
+    if principal is not None:
+        from .scoping import get_scoped_project
+
+        p = get_scoped_project(project_id, principal)
+        role = getattr(principal, "active_role", "")
+        if role == "ProjectCoordinator":
+            raise Forbidden(
+                "Project ownership is assigned by country leadership, not by "
+                "coordinators."
+            )
+    else:
+        p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+        if not p:
+            raise NotFoundError("Project not found.")
     manager_id = (data.get("managerStaffId") or "").strip() or None
     p.manager_staff_id = manager_id
     p.save(update_fields=["manager_staff_id", "updated_at"])
