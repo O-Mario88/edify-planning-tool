@@ -447,9 +447,7 @@ def assign_school(school_id: str, data: dict, principal) -> dict:
     school = (schools or School.objects.none()).filter(school_id=school_id).first()
     if not school:
         raise NotFoundError("School not found or outside your scope.")
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
-    if not cluster:
-        raise NotFoundError("Cluster not found.")
+    cluster = _scoped_cluster(cluster_id, principal)
     scope_q, _ = _scope_filter(principal)
     if not Cluster.objects.filter(scope_q, id=cluster.id).exists():
         raise Forbidden("Cluster outside your scope.")
@@ -462,11 +460,32 @@ def assign(data: dict, principal) -> dict:
     return assign_school(data.get("schoolId", ""), data, principal)
 
 
-def cluster_schools(cluster_id: str, principal) -> list[dict]:
-    """Schools in a cluster, enriched with 14 requested properties."""
+def _scoped_cluster(cluster_id: str, principal):
+    """Resolve a cluster the caller is actually entitled to read.
+
+    Five cluster read services accepted a `principal` and never used it, so
+    holding the page permission was enough to open ANY cluster by id — school
+    names, districts, enrolment, SSA averages and attendance for a portfolio
+    you do not hold. The `cluster_detail` page is open to Partner users, which
+    made it reachable from outside the organisation entirely.
+
+    One resolver, so the guard cannot drift back out of four of the five.
+    """
+    from apps.core.scoping import cluster_in_scope, resolve_user_scope
+
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found.")
+    if principal is not None and not cluster_in_scope(
+        resolve_user_scope(principal), cluster
+    ):
+        raise NotFoundError("Cluster not found.")
+    return cluster
+
+
+def cluster_schools(cluster_id: str, principal) -> list[dict]:
+    """Schools in a cluster, enriched with 14 requested properties."""
+    cluster = _scoped_cluster(cluster_id, principal)
     schools = (
         School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
         .select_related("district", "sub_county", "parish")
@@ -636,9 +655,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
 
 
 def cluster_detail(cluster_id: str, principal) -> dict:
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
-    if not cluster:
-        raise NotFoundError("Cluster not found.")
+    cluster = _scoped_cluster(cluster_id, principal)
 
     schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
     school_count = schools.count()
@@ -706,9 +723,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
 
 
 def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
-    if not cluster:
-        raise NotFoundError("Cluster not found.")
+    cluster = _scoped_cluster(cluster_id, principal)
 
     schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
 
@@ -766,9 +781,7 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
 
 
 def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
-    if not cluster:
-        raise NotFoundError("Cluster not found.")
+    cluster = _scoped_cluster(cluster_id, principal)
     schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
     from apps.core.enums import SsaIntervention
 
@@ -799,9 +812,7 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
 
 
 def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
-    if not cluster:
-        raise NotFoundError("Cluster not found.")
+    cluster = _scoped_cluster(cluster_id, principal)
 
     activities = cluster.activities.filter(
         status="completed", deleted_at__isnull=True
@@ -828,9 +839,7 @@ def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
 
 def cluster_intelligence(cluster_id: str, principal) -> dict:
     """Per-cluster intelligence surface."""
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
-    if not cluster:
-        raise NotFoundError("Cluster not found.")
+    cluster = _scoped_cluster(cluster_id, principal)
     schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
     total = schools.count()
     ssa_done = schools.filter(current_fy_ssa_status="done").count()

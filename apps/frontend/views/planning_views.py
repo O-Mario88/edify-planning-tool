@@ -985,7 +985,16 @@ def planning_intelligence_view(request):
             '<p class="text-slate-400 text-[11.5px] font-bold py-6 text-center">Select a school to view planning intelligence.</p>'
         )
 
-    school = School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
+    # Scoped lookup — this panel returned any school's latest SSA date,
+    # weakest intervention and score for an arbitrary ?school_id=. The same
+    # file already uses the scoped helper twice; this call site did not.
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    school = (
+        school_queryset(resolve_user_scope(request.user))
+        .filter(Q(id=school_id) | Q(school_id=school_id))
+        .first()
+    )
     if not school:
         return HttpResponse(
             '<p class="text-rose-500 text-[11.5px] font-bold py-6 text-center">School not found.</p>'

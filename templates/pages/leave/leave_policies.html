@@ -138,15 +138,20 @@
             <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">Date: {{ h.date }}</span>
           </div>
 
-          <a
-            href="?delete_holiday={{ h.id }}"
+          <form method="POST" action="{% url 'frontend:leave_policies' %}" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_holiday" />
+            <input type="hidden" name="holiday_id" value="{{ h.id }}" />
+            <button
+            type="submit"
             class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-surface transition"
             @click="if (!window.confirm('Remove public holiday?')) $event.preventDefault()"
           >
             <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-          </a>
+            </button>
+          </form>
         </div>
         {% empty %}
         <div class="p-8 text-center text-slate-400 py-12">
@@ -161,7 +166,8 @@
     <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
       <h4 class="text-[14px] font-bold text-slate-800">Add Public Holiday</h4>
 
-      <form method="GET" action="{% url 'frontend:leave_policies' %}" class="space-y-4">
+      <form method="POST" action="{% url 'frontend:leave_policies' %}" class="space-y-4">
+        {% csrf_token %}
         <input type="hidden" name="action" value="add_holiday" />
 
         <div class="space-y-1">

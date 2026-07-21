@@ -199,8 +199,10 @@ class FundAllocationTest(TestCase):
         mwp.save(update_fields=["status"])
 
         # Call service
+        # The service requires a principal — it scopes the roster, and a
+        # summary-only role must not receive every staff member's allocation.
         res = MonthlyFundAllocationService.get_monthly_allocation(
-            month_num=4, fy=self.fy
+            month_num=4, fy=self.fy, principal=self.cd_user
         )
 
         # Check rows contain CCEOs + CD Admin Budget

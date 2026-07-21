@@ -4,7 +4,7 @@ Disbursements, Budget Overview, Cost Catalogue, Fund Requests list
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import render_access_denied, require_page_permission
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
@@ -678,6 +678,7 @@ def fund_allocation_view(request):
         search_q=search_q or None,
         page=page,
         per_page=per_page,
+        principal=request.user,
     )
 
     # Check if CSV export is requested
@@ -991,9 +992,17 @@ def allocation_drilldown_view(request):
     }
     month_num = MONTH_MAP.get(month_name.lower(), 4)
 
-    from apps.accounts.models import User
+    from apps.accounts.models import StaffProfile, User
 
     staff_user = get_object_or_404(User, id=staff_id)
+    # The roster above is scoped; this drilldown was not, so an out-of-scope
+    # `?staff_id=` returned a named individual's itemised monthly spend.
+    if not MonthlyFundAllocationService._scope_staff(
+        request.user, StaffProfile.objects.filter(user_id=staff_user.id)
+    ).exists():
+        return render_access_denied(
+            request, "You do not have access to this staff member's allocation."
+        )
 
     # Query cost lines for this staff in the month & FY
     cost_lines = ActivityScheduleCostLine.objects.filter(

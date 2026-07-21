@@ -1223,14 +1223,86 @@ def leave_calendar_view(request):
     return render(request, "pages/leave/leave_calendar.html", context)
 
 
+def _audit_leave_policy(request, action: str, subject, before: dict) -> None:
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action=action,
+        subject_kind="leave_policy",
+        subject_id=getattr(subject, "id", None),
+        actor_id=request.user.id,
+        actor_role=getattr(request.user, "active_role", None),
+        payload={"before": before, "label": str(subject)},
+    )
+
+
+def _add_public_holiday(request):
+    """POST-only. Adding and deleting public holidays ran on bare GET query
+    parameters — `href="?delete_holiday=<id>"` — so a link prefetcher, a
+    crawler or a mis-click could remove one with no CSRF token in play. That
+    is not cosmetic: WorkingDayCalculator subtracts holidays from the days
+    charged, so losing one silently bills every subsequent leave request an
+    extra day and unblocks field visits on a national holiday.
+    """
+    name = (request.POST.get("holiday_name") or "").strip()
+    date_val = (request.POST.get("holiday_date") or "").strip()
+    if not name or not date_val:
+        messages.error(request, "A holiday name and date are both required.")
+        return redirect("frontend:leave_policies")
+    try:
+        holiday, created = PublicHoliday.objects.get_or_create(
+            date=date_val, defaults={"name": name}
+        )
+        if created:
+            _audit_leave_policy(request, "hr.public_holiday_added", holiday, {})
+            messages.success(request, f"Public holiday '{name}' added.")
+        else:
+            messages.info(request, f"A holiday already exists on {date_val}.")
+    except Exception as e:
+        messages.error(request, f"Failed to add public holiday: {e}")
+    return redirect("frontend:leave_policies")
+
+
+def _delete_public_holiday(request):
+    holiday_id = (request.POST.get("holiday_id") or "").strip()
+    holiday = PublicHoliday.objects.filter(id=holiday_id).first()
+    if not holiday:
+        messages.error(request, "That public holiday no longer exists.")
+        return redirect("frontend:leave_policies")
+    _audit_leave_policy(
+        request,
+        "hr.public_holiday_removed",
+        holiday,
+        {"name": holiday.name, "date": str(holiday.date)},
+    )
+    holiday.delete()
+    messages.success(request, "Public holiday removed.")
+    return redirect("frontend:leave_policies")
+
+
 @require_page_permission("leave_policies")
 def leave_policies_view(request):
     """Policies dashboard - configure entitlements, required documents, and approvals."""
     if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "add_holiday":
+            return _add_public_holiday(request)
+        if action == "delete_holiday":
+            return _delete_public_holiday(request)
         policy_id = request.POST.get("policy_id")
         policy = get_object_or_404(LeaveTypePolicy, id=policy_id)
         try:
-            policy.annual_entitlement = int(request.POST.get("entitlement", 21))
+            entitlement = int(request.POST.get("entitlement", 21))
+            if entitlement < 0 or entitlement > 365:
+                raise ValueError("Entitlement must be between 0 and 365 days.")
+            before = {
+                "annual_entitlement": policy.annual_entitlement,
+                "requires_attachment": policy.requires_attachment,
+                "approver_role": policy.approver_role,
+                "weekends_count": policy.weekends_count,
+                "public_holidays_count": policy.public_holidays_count,
+            }
+            policy.annual_entitlement = entitlement
             policy.requires_attachment = (
                 request.POST.get("requires_attachment") == "yes"
             )
@@ -1240,6 +1312,10 @@ def leave_policies_view(request):
                 request.POST.get("public_holidays_count") == "yes"
             )
             policy.save()
+            # Entitlement is the input to every future balance-sufficiency
+            # check; a silent edit with no record of who made it is not
+            # acceptable on a control of that reach.
+            _audit_leave_policy(request, "hr.leave_policy_updated", policy, before)
             messages.success(
                 request, f"Leave policy for '{policy.label}' updated successfully."
             )
@@ -1253,26 +1329,6 @@ def leave_policies_view(request):
         policies = LeaveTypePolicy.objects.all()
 
     holidays = PublicHoliday.objects.all().order_by("date")
-
-    if (
-        request.GET.get("action") == "add_holiday"
-        and request.GET.get("holiday_name")
-        and request.GET.get("holiday_date")
-    ):
-        try:
-            name = request.GET.get("holiday_name")
-            date_val = request.GET.get("holiday_date")
-            PublicHoliday.objects.get_or_create(date=date_val, defaults={"name": name})
-            messages.success(request, f"Public holiday '{name}' added successfully.")
-            return redirect("frontend:leave_policies")
-        except Exception as e:
-            messages.error(request, f"Failed to add public holiday: {e}")
-
-    holiday_to_delete = request.GET.get("delete_holiday")
-    if holiday_to_delete:
-        PublicHoliday.objects.filter(id=holiday_to_delete).delete()
-        messages.success(request, "Public holiday removed.")
-        return redirect("frontend:leave_policies")
 
     context = {
         "policies": policies,

@@ -19,7 +19,11 @@ from apps.fund_requests.models import WeeklyFundRequest, AdvanceRequest, FundReq
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.geography.models import District
 from apps.accounts.models import StaffProfile
-from apps.core.fy import get_quarter_date_range, get_fy_date_range
+from apps.core.fy import (
+    get_fy_date_range,
+    get_quarter_date_range,
+    get_quarter_for_date,
+)
 from apps.core.scoping import resolve_user_scope
 
 
@@ -82,8 +86,14 @@ def _scoped_base_querysets(request, fy):
     budget_qs = ActivityScheduleCostLine.objects.filter(fiscal_year=fy)
 
     supervised_user_ids = []
-    if not scope.country_scope and scope.staff_ids:
-        q_scope = Q(responsible_user=user.user_id)
+    # `and scope.staff_ids` made this fail OPEN: a principal without a
+    # StaffProfile has an empty staff_ids, skipped the narrowing entirely and
+    # fell through to the unfiltered .all() — every weekly fund request in the
+    # country, export included. Narrow unconditionally for non-country roles,
+    # to an impossible id when the set is empty (the idiom in
+    # apps/clusters/services.py, which documents this same bug class).
+    if not scope.country_scope:
+        q_scope = Q(responsible_user=user.user_id or "__none__")
         if scope.supervised_staff_ids:
             supervised_user_ids = list(
                 StaffProfile.objects.filter(
@@ -227,11 +237,15 @@ def _build_fund_requests_context(request):
             else date.today().month
         )
         month_name = calendar.month_name[month_num]
-    if not quarter:
-        quarter = f"Q{((month_num - 1) // 3) + 1}"
     # This org's FY runs Oct→Sep: Oct-Dec belong to fy-1, Jan-Sep belong to fy
     # (mirrors apps.fund_requests.pl_approval_service._month_end).
     year_num = int(fy) - 1 if month_num >= 10 else int(fy)
+    if not quarter:
+        # Calendar quarters are not fiscal quarters. `((month-1)//3)+1` is off
+        # by one for all twelve months here — it labelled October "Q4", and the
+        # label was then fed to get_quarter_date_range(), so the page silently
+        # reported a Jul–Oct window while claiming to show Oct–Dec.
+        quarter = get_quarter_for_date(date(year_num, month_num, 1))
     weeks_in_month = get_weeks_of_month(year_num, month_num)
 
     # Default week selection: week containing the latest scheduled activity
@@ -719,7 +733,13 @@ def _build_fund_requests_context(request):
     self_funded_qs = AdvanceRequest.objects.filter(
         status="self_funded_pending_reimbursement"
     )
-    if not scope.country_scope and scope.staff_ids:
+    # `and scope.staff_ids` made this fail OPEN: a principal without a
+    # StaffProfile has an empty staff_ids, skipped the narrowing entirely and
+    # fell through to the unfiltered .all() — every weekly fund request in the
+    # country, export included. Narrow unconditionally for non-country roles,
+    # to an impossible id when the set is empty (the idiom in
+    # apps/clusters/services.py, which documents this same bug class).
+    if not scope.country_scope:
         self_funded_scope_q = Q(responsible_user_id=user.user_id)
         if supervised_user_ids:
             self_funded_scope_q |= Q(responsible_user_id__in=supervised_user_ids)
@@ -794,8 +814,10 @@ def _build_fund_requests_context(request):
             qs = qs.filter(week_start_date__gte=start_d)
         if end_d:
             qs = qs.filter(week_start_date__lte=end_d)
-        if not scope.country_scope and scope.staff_ids:
-            q_scope = Q(responsible_user=user.user_id)
+        # Narrow unconditionally for non-country roles — see the note on
+        # `_scoped_base_querysets`; gating on a truthy staff_ids failed open.
+        if not scope.country_scope:
+            q_scope = Q(responsible_user=user.user_id or "__none__")
             if scope.supervised_staff_ids:
                 q_scope |= Q(responsible_user__in=supervised_user_ids)
             qs = qs.filter(q_scope)

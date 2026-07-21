@@ -389,6 +389,17 @@ def set_password(token: str, new_password: str, confirm: str) -> dict:
     with transaction.atomic():
         user.save(update_fields=["password", "password_set_at", "status", "is_active"])
         invitation.save(update_fields=["accepted_at"])
+        # Activate the STAFF PROFILE too, not just the account. These are two
+        # halves of one event and only the account half was applied: outside
+        # the demo seeder nothing ever moved `onboarding_state` off "pending",
+        # so on a real deployment every employee stayed pending forever — and
+        # `CoverageAssignmentService.get_eligible_coverage_staff` filters on
+        # "active", which meant nobody could be nominated to cover anyone's
+        # leave, ever.
+        profile = getattr(user, "staff_profile", None)
+        if profile is not None and profile.onboarding_state == "pending":
+            profile.onboarding_state = "active"
+            profile.save(update_fields=["onboarding_state", "updated_at"])
 
     from apps.audit.services import log as audit_log
 

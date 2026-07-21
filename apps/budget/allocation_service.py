@@ -8,6 +8,34 @@ from apps.core.activity_types import VISIT_TYPES
 
 class MonthlyFundAllocationService:
     @staticmethod
+    def _scope_staff(principal, staff_qs):
+        """Confine the roster to what the caller is entitled to see.
+
+        This service took no principal at all, so the page — open to
+        {CD, Accountant, IA, RVP, Admin} — handed an RVP every staff member's
+        monthly per-category allocation, country-wide and unpaginated in the
+        CSV. The RVP is a summary-only role by policy
+        (`scope.can_view_school_level_detail` is False); country roles keep the
+        full roster.
+        """
+        if principal is None:
+            return staff_qs.none()
+        from apps.core.scoping import resolve_user_scope
+
+        scope = resolve_user_scope(principal)
+        if not getattr(scope, "can_view_summary_only", False):
+            return staff_qs
+        region_ids = list(getattr(scope, "region_ids", []) or [])
+        if not region_ids:
+            # Fail closed — an RVP with no assigned region sees no roster,
+            # rather than the whole country.
+            return staff_qs.none() if scope.rvp_region_scoped else staff_qs
+        district_ids = District.objects.filter(
+            region_id__in=region_ids
+        ).values_list("id", flat=True)
+        return staff_qs.filter(primary_district_id__in=district_ids)
+
+    @staticmethod
     def get_monthly_allocation(
         month_num: int,
         fy: str,
@@ -16,11 +44,13 @@ class MonthlyFundAllocationService:
         search_q: str = None,
         page: int = 1,
         per_page: int = 10,
+        principal=None,
     ):
         # 1. Base query for staff profiles who have user profiles
         staff_qs = StaffProfile.objects.filter(deleted_at__isnull=True).select_related(
             "user"
         )
+        staff_qs = MonthlyFundAllocationService._scope_staff(principal, staff_qs)
 
         if district_id:
             staff_qs = staff_qs.filter(primary_district_id=district_id)

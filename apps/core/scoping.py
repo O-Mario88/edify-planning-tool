@@ -203,8 +203,15 @@ def resolve_user_scope(user) -> UserScope:
             if covered_staff_ids:
                 supervisor_query |= Q(supervisor_id__in=covered_staff_ids)
 
+            # Departed staff are not supervisees. Offboarding soft-deletes the
+            # profile but leaves the supervisor link standing, and this query
+            # had no `deleted_at` filter — so `supervised_staff_ids` kept
+            # returning people who had left. That set is consumed by ~15
+            # services including `can_view_record`, which meant a live Program
+            # Lead retained access to a departed employee's records, and every
+            # team headline (span of control, team targets) counted them.
             supervisees = StaffSupervisorAssignment.objects.filter(
-                supervisor_query
+                supervisor_query, supervisee__deleted_at__isnull=True
             ).values_list("supervisee_id", flat=True)
             supervised_staff_ids = _uniq(supervisees)
             if supervised_staff_ids and StaffSchoolAssignment:
