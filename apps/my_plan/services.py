@@ -258,6 +258,23 @@ def compute_next_action(a, today) -> dict:
             "description": "Returned for correction",
         }
 
+    # 1.5 Partner uploaded evidence and is blocked until the monitoring staff
+    # member accepts it. `complete()` and `ia_confirm()` both refuse partner
+    # work whose evidence is not "accepted", so without this the partner chain
+    # simply stops — the reviewer holds evidence.review and had no button.
+    if (
+        a.delivery_type == "partner"
+        and a.evidence_status == "uploaded"
+        and a.status
+        not in ("closed", "cancelled", "rejected", "ia_verified", "returned_by_ia")
+    ):
+        return {
+            "text": "Review Partner Evidence",
+            "action": "review_partner_evidence",
+            "url": f"/activities/{a.id}/evidence",
+            "description": "Partner submitted evidence — accept or return it",
+        }
+
     # 2. Due today and not started -> Start
     if a.status == "scheduled" and a.planned_date == today:
         return {
@@ -379,17 +396,38 @@ def compute_next_action(a, today) -> dict:
     # .all() rather than .first(): this runs once per activity in the my-plan
     # row loop, and only .all() reads the prefetch cache set up by the caller.
     # .first() re-queried on every row.
-    wfr_line = next(iter(a.schedule_cost_lines.all()), None)
-    if wfr_line:
-        adv = next(iter(wfr_line.advance_requests.all()), None)
-        if adv and adv.status == "disbursed" and not adv.accountability_netsuite_id:
+    # Every cost line, not just the first: reading `next(iter(...))` alone meant
+    # a multi-line activity showed no accountability action once line 1 was
+    # settled, even with money outstanding on lines 2+.
+    advances = [
+        adv
+        for line in a.schedule_cost_lines.all()
+        for adv in line.advance_requests.all()
+    ]
+    # Money owed back to the employee outranks everything — they are out of
+    # pocket. This branch did not exist, so the drawer and route for it were
+    # unreachable and the loop stalled here.
+    for adv in advances:
+        if (
+            adv.status == "reimbursement_disbursed"
+            and not adv.reimbursement_receipt_confirmed_at
+        ):
+            return {
+                "text": "Confirm Reimbursement Receipt",
+                "action": "reimbursement_receipt",
+                "url": f"/my-plan/{a.id}/confirm-reimbursement-receipt",
+                "description": "Reimbursement sent — confirm you received it",
+            }
+    for adv in advances:
+        if adv.status == "disbursed" and not adv.accountability_netsuite_id:
             return {
                 "text": "Submit Accountability",
                 "action": "accountability",
                 "url": f"/my-plan/{a.id}/accountability",
                 "description": "Disbursed — submit spend, receipts & NetSuite Code",
             }
-        if adv and adv.status == "accountability_pending":
+    for adv in advances:
+        if adv.status == "accountability_pending":
             return {
                 "text": "Awaiting Finance Clearance",
                 "action": "view_status",
@@ -1202,6 +1240,9 @@ def get_frontend_context(principal, query: dict) -> dict:
         "waiting_on_me": waiting_on_me_list,
         "due_today": due_today_list,
         "this_week": this_week_list,
+        # Rendered as the priority-queue badge; computed here so the template
+        # does not have to add two list lengths together.
+        "priority_count": len(waiting_on_me_list) + len(due_today_list),
         "partner_monitoring": partner_monitoring_list,
         "returned_needs_correction": returned_needs_correction_list,
         "waiting_on_approval": waiting_on_approval_list,

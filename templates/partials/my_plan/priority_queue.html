@@ -1,0 +1,37 @@
+{% comment %}
+The urgency buckets My Plan has always computed and never rendered.
+
+`get_frontend_context` produces waiting_on_me / due_today / this_week /
+upcoming, and the page showed only the three type tables — so a field worker
+had to read every row to find what was actually due. Each row here carries the
+single computed next action as its primary control, instead of the eight-item
+menu (three entries of which pointed at the same URL).
+{% endcomment %}
+
+{% if waiting_on_me or due_today or this_week %}
+<div class="card overflow-hidden" data-card="priority-queue">
+  <div class="px-5 py-4 border-b border-[var(--edify-border)] flex items-center justify-between gap-3 flex-wrap">
+    <div class="flex items-center gap-2">
+      <h2 class="text-[15px] font-semibold tracking-tight edify-page-title">What needs you now</h2>
+      {% if priority_count %}
+      <span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+        {{ priority_count }}
+      </span>
+      {% endif %}
+    </div>
+    <span class="edify-text-caption text-slate-400 font-semibold">One action per row · ordered by urgency</span>
+  </div>
+
+  {% if waiting_on_me %}
+  {% include "partials/my_plan/_priority_group.html" with rows=waiting_on_me group_label="Waiting on you" group_tone="rose" %}
+  {% endif %}
+
+  {% if due_today %}
+  {% include "partials/my_plan/_priority_group.html" with rows=due_today group_label="Due today" group_tone="amber" %}
+  {% endif %}
+
+  {% if this_week %}
+  {% include "partials/my_plan/_priority_group.html" with rows=this_week group_label="Planned this week" group_tone="slate" %}
+  {% endif %}
+</div>
+{% endif %}

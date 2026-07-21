@@ -38,6 +38,11 @@ ACTIONABLE = {
     # Disbursed → the responsible user submits accountability (spend, receipts,
     # NetSuite Code). The Accountant then reviews it (_accountant_todos).
     "accountability",
+    # Money owed back to the employee, and the partner-evidence acceptance that
+    # unblocks the whole partner chain. Both were computed by
+    # compute_next_action but absent here, so neither ever became a task.
+    "reimbursement_receipt",
+    "review_partner_evidence",
 }
 WAITING = {"view_status"}  # done my part — blocked on IA/accounts/finance
 
@@ -51,6 +56,8 @@ ACTION_META = {
     "submit": ("Execution", "Submit"),
     "ssa": ("SSA", "Upload SSA"),
     "accountability": ("Finance", "Submit Accountability"),
+    "reimbursement_receipt": ("Finance", "Confirm Receipt"),
+    "review_partner_evidence": ("Partner", "Review Evidence"),
     "view_status": ("Execution", "View"),
 }
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -86,8 +93,10 @@ def _due(planned_date, today):
 
 def _act_priority(a, action, today):
     # High: due today, overdue, returned work, evidence/SF-ID/complete/fix.
-    if action == "accountability":
+    if action in ("accountability", "reimbursement_receipt"):
         return "critical"  # money is out — accountability is the top loop to close
+    if action == "review_partner_evidence":
+        return "high"  # the partner cannot proceed until this is accepted
     if action in ("fix", "evidence", "sf_id", "complete"):
         return "high"
     if action == "start":

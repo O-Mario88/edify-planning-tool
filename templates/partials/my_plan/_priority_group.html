@@ -1,0 +1,43 @@
+{% comment %}
+One urgency group. Each row's primary control is `row.next_action` — the single
+computed next step — so the worker is never asked to choose between eight menu
+entries, three of which used to open the same drawer.
+{% endcomment %}
+<div class="border-b border-[var(--edify-border)] last:border-b-0">
+  <div class="px-5 py-2 flex items-center gap-2 bg-slate-50/60">
+    <span class="h-1.5 w-1.5 rounded-pill
+      {% if group_tone == 'rose' %}bg-rose-500{% elif group_tone == 'amber' %}bg-amber-500{% else %}bg-slate-400{% endif %}"></span>
+    <span class="edify-text-caption font-extrabold uppercase tracking-wider
+      {% if group_tone == 'rose' %}text-rose-700{% elif group_tone == 'amber' %}text-amber-700{% else %}text-slate-500{% endif %}">
+      {{ group_label }}
+    </span>
+    <span class="edify-text-caption font-bold text-slate-400">{{ rows|length }}</span>
+  </div>
+
+  <ul class="divide-y divide-slate-100">
+    {% for row in rows %}
+    <li class="px-5 py-3 flex items-center justify-between gap-4 flex-wrap hover:bg-slate-50/40">
+      <div class="min-w-0 flex-1">
+        <p class="text-[13.5px] font-bold text-slate-800 truncate">
+          {{ row.school_name|default:row.cluster_name|default:"Field activity" }}
+        </p>
+        <p class="edify-text-caption text-slate-500 font-semibold mt-0.5">
+          {{ row.activity_type_label }}
+          {% if row.planned_date %}· {{ row.planned_date|date:"j M" }}{% endif %}
+          {% if row.next_action.description %}· {{ row.next_action.description }}{% endif %}
+        </p>
+      </div>
+
+      {% if row.next_action.url %}
+      <a href="{{ row.next_action.url }}"
+         class="shrink-0 px-3.5 py-1.5 rounded-control text-[12px] font-bold transition-colors
+         {% if row.next_action.action == 'view' %}border border-[var(--edify-border)] text-slate-600 hover:bg-white{% else %}bg-[var(--edify-primary)] text-white hover:opacity-90{% endif %}">
+        {{ row.next_action.text }}
+      </a>
+      {% else %}
+      <span class="shrink-0 edify-text-caption text-slate-400 font-semibold">No action</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>

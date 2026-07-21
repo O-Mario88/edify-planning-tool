@@ -165,6 +165,26 @@ def messages_list_view(request):
 
 
 @require_page_permission("messages")
+def message_drawer_view(request):
+    """Messages drawer — loaded via HTMX when clicking the topbar message icon.
+
+    Shows recent threads with a snippet; each thread links to the full
+    conversation page at /messages/thread/<id>. Mirrors the notification
+    drawer pattern in staff_views.notification_drawer_view.
+    """
+    user = request.user
+    threads = services.threads_for_user(user, tab="all")[:10]
+    unread_count = services.unread_thread_count(user)
+    context = {
+        "threads": threads,
+        "unread_count": unread_count,
+        "drawer_type": "center",
+        "drawer_size": "sm",
+    }
+    return render(request, "partials/messages/message_drawer.html", context)
+
+
+@require_page_permission("messages")
 def thread_view(request, thread_id):
     """Conversation partial (HTMX) or the full page focused on the thread."""
     if request.headers.get("HX-Request") != "true":
