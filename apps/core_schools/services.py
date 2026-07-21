@@ -75,7 +75,7 @@ def create_package_slots(
     for kind, count in CORE_PACKAGE_SPEC:
         for seq in range(1, count + 1):
             CoreActivitySlot.objects.get_or_create(
-                id=cslot_id(school_id, kind, seq),
+                id=cslot_id(school_id, kind, seq, fy=plan.fy),
                 defaults={
                     "core_plan": plan,
                     "school_id": school_id,
@@ -171,7 +171,7 @@ def onboard(school_id: str, data: dict, principal) -> dict:
     )
     baseline_avg = latest.average_score if latest else 0.0
     fy = get_operational_fy()
-    plan_id = cplan_id(school_id)
+    plan_id = cplan_id(school_id, fy=fy)
 
     with transaction.atomic():
         plan, _ = CorePlan.objects.update_or_create(

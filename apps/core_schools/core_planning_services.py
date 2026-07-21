@@ -344,7 +344,7 @@ class CoreSchoolsService:
                     )
                     continue
                 baseline_avg = latest.average_score
-                plan_id = cplan_id(s.school_id)
+                plan_id = cplan_id(s.school_id, fy=fy)
                 try:
                     with transaction.atomic():
                         plan, _ = CorePlan.objects.update_or_create(

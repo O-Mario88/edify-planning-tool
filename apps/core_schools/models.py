@@ -8,12 +8,25 @@ from apps.core.cuid import deterministic
 from apps.core.models import CuidField, TimeStampedModel
 
 
-def cplan_id(school_id: str) -> str:
-    return deterministic("cplan", school_id)
+# FY-aware keying. The original ids carried no fiscal year, and
+# CorePlan.school_id was globally unique — so on 1 Oct 2026 every Core drawer
+# would query fy="2027", find nothing, and Core scheduling died platform-wide;
+# self-healing the row in place would have handed FY2027 the FY2026 slot
+# statuses. FY2026 keeps the legacy id shape so the 325 live plans and 2925
+# slots need no data migration; every later FY gets its own namespace.
+_LEGACY_FY = "2026"
 
 
-def cslot_id(school_id: str, kind: str, seq: int) -> str:
-    return deterministic("cslot", school_id, f"{kind}{seq}")
+def cplan_id(school_id: str, fy: str = _LEGACY_FY) -> str:
+    if str(fy) == _LEGACY_FY:
+        return deterministic("cplan", school_id)
+    return deterministic("cplan", school_id, str(fy))
+
+
+def cslot_id(school_id: str, kind: str, seq: int, fy: str = _LEGACY_FY) -> str:
+    if str(fy) == _LEGACY_FY:
+        return deterministic("cslot", school_id, f"{kind}{seq}")
+    return deterministic("cslot", school_id, str(fy), f"{kind}{seq}")
 
 
 def cprof_id(school_id: str) -> str:
@@ -24,7 +37,9 @@ class CorePlan(TimeStampedModel):
     """One core plan per onboarded core school (4 visits + 4 trainings)."""
 
     id = models.CharField(max_length=64, primary_key=True)  # cplan-{schoolId}
-    school_id = models.CharField(max_length=64, unique=True)  # operational schoolId
+    # One plan per school PER FISCAL YEAR — global uniqueness was the
+    # rollover hard stop.
+    school_id = models.CharField(max_length=64, db_index=True)
     fy = models.CharField(max_length=16)
     status = models.CharField(max_length=32, default="Active")
     visits_target = models.IntegerField(default=4)
@@ -45,6 +60,11 @@ class CorePlan(TimeStampedModel):
     class Meta:
         db_table = "core_plan"
         indexes = [models.Index(fields=["status"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["school_id", "fy"], name="uniq_core_plan_per_school_fy"
+            )
+        ]
 
 
 class CoreActivitySlot(TimeStampedModel):

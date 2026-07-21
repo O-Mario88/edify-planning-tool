@@ -1308,7 +1308,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
                     )
                 except ValueError:
                     seq_num = 1
-                slot_id = cslot_id(pa.school.school_id, kind_prefix, seq_num)
+                slot_id = cslot_id(pa.school.school_id, kind_prefix, seq_num, fy=fy)
                 slot = CoreActivitySlot.objects.filter(id=slot_id).first()
                 if slot:
                     slot.status = "Scheduled"

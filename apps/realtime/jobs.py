@@ -48,7 +48,7 @@ def _enabled() -> bool:
 def _do_weekly_fund_request() -> int:
     from apps.fund_requests.services import regenerate
 
-    regenerate("weekly", _system_principal())
+    regenerate("weekly", _system_principal(), strict=False)
     return 1
 
 

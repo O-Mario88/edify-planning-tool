@@ -16,7 +16,7 @@ from apps.core.scoping import resolve_user_scope
 from .models import FundRequest, FundRequestItem, FundRequestPeriod, FundRequestStatus
 
 
-def submit(data: dict, principal) -> dict:
+def submit(data: dict, principal, strict: bool = True) -> dict:
     """Submit a fund request.
 
     The fund request is generated FROM the persisted activity budget lines
@@ -41,9 +41,14 @@ def submit(data: dict, principal) -> dict:
         a for a in activities if a.cost_missing or not list(a.schedule_cost_lines.all())
     ]
     if bad:
-        raise BadRequest(
-            f"Cannot submit — {len(bad)} activity(ies) are missing a cost rate or budget lines."
-        )
+        if strict:
+            raise BadRequest(
+                f"Cannot submit — {len(bad)} activity(ies) are missing a cost rate or budget lines."
+            )
+        # The scheduled job runs org-wide: one person's uncosted activity must
+        # not abort everyone else's weekly money. Generate for the costed set
+        # and leave the rest visible as cost-missing blockers on their pages.
+        activities = [a for a in activities if a not in bad]
 
     request_items: list[tuple[Activity, object]] = []
     total = 0
@@ -493,10 +498,10 @@ def _review_accountability_locked(
     return _serialize(fr)
 
 
-def regenerate(period: str, principal) -> dict:
+def regenerate(period: str, principal, strict: bool = True) -> dict:
     """Idempotent manual regeneration (weekly/monthly)."""
     data = {"period": period, "fy": get_operational_fy()}
-    return submit(data, principal)
+    return submit(data, principal, strict=strict)
 
 
 def _to_costable(a: Activity) -> dict:
