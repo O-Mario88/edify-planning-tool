@@ -72,6 +72,26 @@ def send_due_reminders() -> int:
     today = date.today()
     sent = 0
 
+    # Advance the course clock first. `sync_dates` is the ONLY thing that moves
+    # a record enrollment_confirmed → in_progress → ended, and its sole caller
+    # was the employee's own My PD page. An employee who never reopened that
+    # page left their record frozen at enrollment_confirmed forever: the
+    # pre-course reminders stopped firing (the day count goes negative), the
+    # in-progress and overdue escalations never began because the row never
+    # reached those statuses, and the health checks keyed on ENDED never saw
+    # it. Money disbursed, and no follow-up was possible.
+    from apps.professional_development.completion_service import (
+        PDCourseTrackingService,
+    )
+
+    for req in ProfessionalDevelopmentRequest.objects.filter(
+        status__in=[PDStatus.ENROLLMENT_CONFIRMED, PDStatus.IN_PROGRESS]
+    ):
+        try:
+            PDCourseTrackingService.sync_dates(req, today)
+        except Exception:  # noqa: BLE001 - one bad row must not stop the run
+            continue
+
     pre_course = ProfessionalDevelopmentRequest.objects.filter(
         status=PDStatus.ENROLLMENT_CONFIRMED
     )

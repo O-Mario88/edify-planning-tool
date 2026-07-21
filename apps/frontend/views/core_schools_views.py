@@ -141,7 +141,7 @@ def core_schools_view(request):
         },
         {
             "label": "Avg. Core Assessment Score",
-            "value": f"{int(avg_score * 10)}%",
+            "value": f"{round(avg_score, 1)}/10",
             "icon": "trending-up",
             "variant": "success",
         },
@@ -672,7 +672,18 @@ def core_assign_partner_action(request):
                 success=True,
             )
 
-            # Notify Partner
+            # Notify the partner's USERS. `partner_id` is a Partner
+            # organisation id — it resolves to neither a User nor a
+            # StaffProfile, so the service skipped it and this notification was
+            # silently dropped 100% of the time. The correct lookup already
+            # exists in apps/partners/signals.py.
+            partner_user_ids = [
+                uid
+                for uid in Partner.objects.filter(id=partner_id).values_list(
+                    "user_id", flat=True
+                )
+                if uid
+            ]
             WorkflowNotificationService.trigger(
                 event_type="core_school_assigned",
                 category="partner",
@@ -681,7 +692,7 @@ def core_assign_partner_action(request):
                 body=f"Your organization has been assigned to support {school.name} with {support_type} {visit_training_number} focusing on {focus_intervention}.",
                 context_type="School",
                 context_id=school.id,
-                recipients=[partner_id],
+                recipients=partner_user_ids,
             )
 
             messages.success(

@@ -913,7 +913,7 @@ class CoreAssessmentService:
             .annotate(avg=Avg("average_score"))
             .order_by("month")
         )
-        trend = [round(m["avg"] * 10, 1) for m in monthly if m["avg"] is not None]
+        trend = [round(m["avg"], 1) for m in monthly if m["avg"] is not None]
         return trend if len(trend) >= 2 else []
 
 
@@ -961,7 +961,7 @@ class CoreInterventionImpactService:
         if staff_avg is None or partner_avg is None:
             return None, None
 
-        return int(staff_avg * 10), int(partner_avg * 10)
+        return round(staff_avg, 1), round(partner_avg, 1)
 
     @staticmethod
     def _monthly_trend_for_intervention(core_schools_qs, code: str) -> list:
@@ -1040,7 +1040,7 @@ class CoreInterventionImpactService:
                 follow_up_average__isnull=False,
             )
             deltas = [
-                (p.follow_up_average - p.baseline_average) * 10
+                p.follow_up_average - p.baseline_average
                 for p in plans_for_intervention
             ]
             has_improvement_data = bool(deltas)
@@ -1123,7 +1123,7 @@ class CoreStaffPartnerPerformanceService:
         partner_deltas = []
 
         for p in plans:
-            delta = (p.follow_up_average - p.baseline_average) * 10
+            delta = p.follow_up_average - p.baseline_average
             # If the school has partner slots scheduled/completed
             is_partner = p.slots.filter(owner="partner").exists()
             if is_partner:
@@ -1149,7 +1149,7 @@ class CoreStaffPartnerPerformanceService:
                 staff_insights.append(
                     {
                         "name": staff.user.name,
-                        "score": int(avg * 10) if avg else 0,
+                        "score": round(avg, 1) if avg else 0,
                     }
                 )
         # Default fallback if empty: query real staff profiles in the database
@@ -1180,7 +1180,7 @@ class CoreStaffPartnerPerformanceService:
                 partner_insights.append(
                     {
                         "name": part.name,
-                        "score": int(avg * 10) if avg else 0,
+                        "score": round(avg, 1) if avg else 0,
                     }
                 )
         # Default fallback if empty: query real partners in the database
@@ -1202,12 +1202,12 @@ class CoreStaffPartnerPerformanceService:
             region_insights.append(
                 {
                     "name": reg.name,
-                    "score": int((avg_reg or 0) * 10),
+                    "score": round(avg_reg or 0, 1),
                 }
             )
 
         return {
-            "delta_pp": int(delta),
+            "delta_pp": round(delta, 1),
             "staff_insights": staff_insights,
             "partner_insights": partner_insights,
             "region_insights": region_insights,

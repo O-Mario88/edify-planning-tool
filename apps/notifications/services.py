@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from .models import Notification
 
@@ -29,7 +30,7 @@ class NotificationLinkResolver:
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/planning"
                 label = "Open Planning"
-            elif role in ("program lead", "projectleader"):
+            elif role in ("program lead", "projectcoordinator", "projectleader"):
                 route = "/my-team"
                 label = "View Team Portfolio"
             elif role == "countrydirector":
@@ -55,7 +56,7 @@ class NotificationLinkResolver:
             elif role == "cceo":
                 route = "/my-plan"
                 label = "Staff My Plan"
-            elif role in ("program lead", "projectleader"):
+            elif role in ("program lead", "projectcoordinator", "projectleader"):
                 route = "/my-team"
                 label = "Monitoring Dashboard"
 
@@ -63,7 +64,7 @@ class NotificationLinkResolver:
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/my-plan"
                 label = "Fix Evidence"
-            elif role in ("program lead", "projectleader"):
+            elif role in ("program lead", "projectcoordinator", "projectleader"):
                 route = "/my-team"
                 label = "Review Evidence"
             elif role == "impactassessment":
@@ -115,8 +116,17 @@ class NotificationLinkResolver:
 
         # ── The activity chain ────────────────────────────────────────────
         elif event_type == "activity_submitted_for_review":
-            route = "/pl/review-queue"
-            label = "Review Completion"
+            if role == "impactassessment":
+                # /pl/review-queue is gated on the `planning` permission, which
+                # IA does not hold — so every IA verification handoff landed on
+                # access-denied and bounced to /dashboard. The To-Do engine for
+                # the same condition already routes to /ia/dashboard/; the two
+                # surfaces disagreed.
+                route = "/ia/dashboard/"
+                label = "Verify Activity"
+            else:
+                route = "/pl/review-queue"
+                label = "Review Completion"
 
         elif event_type == "activity_returned_by_pl":
             route = f"/my-plan/{context_id}"
@@ -155,11 +165,13 @@ class NotificationLinkResolver:
             label = "Unlock Account"
 
         elif event_type == "core_school_assigned":
-            route = "/schools"
-            label = "Open School"
+            # Core package work lives on the Core Schools surface; /schools is
+            # not open to the Partner this event addresses.
+            route = "/core-schools"
+            label = "Open Core School"
 
         elif event_type == "activity_closed":
-            route = "/my-plan"
+            route = f"/my-plan/{context_id}" if context_id else "/my-plan"
             label = "Open Activity"
 
         elif event_type in (
@@ -187,34 +199,54 @@ class NotificationLinkResolver:
             route = "/debriefs"
             label = "View Recurring Field Issues"
 
-        elif context_type == "School":
-            route = "/schools"
-            label = "Open School"
-        elif context_type == "Cluster":
-            route = "/clusters"
-            label = "Open Cluster"
-        elif context_type == "Activity":
-            route = "/my-plan"
-            label = "Open Activity"
-        elif context_type == "Message":
-            route = f"/messages/{context_id}"
-            label = "Open Chat"
-        # Context fallbacks for the record types that had none. Without these a
-        # new event type silently degrades to "View Dashboard" instead of at
-        # least reaching the right surface.
-        elif context_type in ("WeeklyFundRequest", "FundRequest", "AdvanceRequest"):
-            if role == "accountant":
-                route = "/disbursements"
-                label = "Open Finance Queue"
-            else:
-                route = "/fund-requests/weekly"
-                label = "Open Fund Request"
-        elif context_type == "Leave":
-            route = "/leave/approvals" if role in _APPROVER_ROLES else "/personal-time-off/"
-            label = "Review Leave" if role in _APPROVER_ROLES else "Open Leave"
-        elif context_type == "Project":
-            route = "/projects"
-            label = "Open Project"
+        # Context fallbacks. Matched case-insensitively: emitters write both
+        # "Activity" and "activity", and an exact-match comparison sent the
+        # lowercase ones to /dashboard even though the record existed.
+        #
+        # Every branch below carries the record id when a detail route exists.
+        # Landing on a list and asking the recipient to find the row again is
+        # the difference between a notification and a nudge.
+        else:
+            ctx = (context_type or "").lower()
+            if ctx == "school":
+                route = f"/schools/{context_id}" if context_id else "/schools"
+                label = "Open School"
+            elif ctx == "cluster":
+                route = f"/clusters/{context_id}" if context_id else "/clusters"
+                label = "Open Cluster"
+            elif ctx == "activity":
+                route = f"/my-plan/{context_id}" if context_id else "/my-plan"
+                label = "Open Activity"
+            elif ctx == "message":
+                route = f"/messages/{context_id}"
+                label = "Open Chat"
+            elif ctx in ("weeklyfundrequest", "fundrequest", "advancerequest"):
+                if role == "accountant":
+                    route = "/disbursements"
+                    label = "Open Finance Queue"
+                elif ctx == "weeklyfundrequest" and context_id:
+                    route = f"/fund-requests/weekly/{context_id}"
+                    label = "Open Fund Request"
+                else:
+                    route = "/fund-requests/weekly"
+                    label = "Open Fund Request"
+            elif ctx == "leave":
+                if role in _APPROVER_ROLES:
+                    route = (
+                        f"/leave/approvals?id={context_id}"
+                        if context_id
+                        else "/leave/approvals"
+                    )
+                    label = "Review Leave"
+                else:
+                    route = "/personal-time-off/"
+                    label = "Open Leave"
+            elif ctx == "project":
+                route = f"/projects/{context_id}" if context_id else "/projects"
+                label = "Open Project"
+            elif ctx == "monthlyworkplanbudget":
+                route = "/country-budget"
+                label = "Open Country Budget"
 
         return route, label
 
@@ -289,6 +321,56 @@ class WorkflowNotificationService:
                 event_type, context_type, context_id, role
             )
 
+            # One live notification per unresolved condition. Without this,
+            # every re-fire of the same workflow event — a returned-then-
+            # resubmitted item, a retried job, a daily reminder — stacked
+            # another row in the recipient's rail for something they had
+            # already been told once.
+            existing = None
+            if context_id:
+                existing = (
+                    Notification.objects.filter(
+                        recipient_id=user_id,
+                        source_event_type=event_type,
+                        context_type=context_type,
+                        context_id=context_id,
+                        resolved_at__isnull=True,
+                    )
+                    .exclude(status="archived")
+                    .order_by("-created_at")
+                    .first()
+                )
+
+            if existing:
+                existing.title = title
+                existing.body = body
+                existing.target_route = target_route
+                existing.action_label = action_label
+                existing.priority = priority
+                existing.action_required = priority in ("high", "urgent")
+                existing.reminder_count = (existing.reminder_count or 0) + 1
+                existing.last_reminded_at = timezone.now()
+                # A re-fire is new information; surface it again.
+                existing.status = "unread"
+                existing.read_at = None
+                existing.save(
+                    update_fields=[
+                        "title",
+                        "body",
+                        "target_route",
+                        "action_label",
+                        "priority",
+                        "action_required",
+                        "reminder_count",
+                        "last_reminded_at",
+                        "status",
+                        "read_at",
+                        "updated_at",
+                    ]
+                )
+                created_notifications.append(existing)
+                continue
+
             notif = Notification.objects.create(
                 recipient_id=user_id,
                 recipient_role=role,
@@ -348,32 +430,74 @@ class WorkflowNotificationService:
         return created_notifications
 
 
+def resolve_condition(
+    event_types,
+    context_type: str | None,
+    context_id: str | None,
+    *,
+    recipient_ids=None,
+) -> int:
+    """Close every live notification for a condition that no longer holds.
+
+    THE missing half of the notification lifecycle. To-Dos are derived from
+    workflow state and vanish the moment the work is done; notifications are
+    persisted and had no resolution rule at all, so a Program Lead who
+    approved forty leave requests carried forty permanent "Action Required"
+    rows that only mass-archiving could clear.
+
+    Call this from the terminal transition, naming the event(s) it satisfies.
+    Deliberately forgiving: an unknown event key or an already-resolved row is
+    a no-op, so a workflow can never fail because of a notification.
+    """
+    if isinstance(event_types, str):
+        event_types = [event_types]
+    if not event_types or not context_id:
+        return 0
+    qs = Notification.objects.filter(
+        source_event_type__in=list(event_types),
+        context_id=context_id,
+        resolved_at__isnull=True,
+    )
+    if context_type:
+        qs = qs.filter(context_type=context_type)
+    if recipient_ids:
+        qs = qs.filter(recipient_id__in=list(recipient_ids))
+    return qs.update(
+        resolved_at=timezone.now(),
+        status="archived",
+        action_required=False,
+        updated_at=timezone.now(),
+    )
+
+
+def _live(principal):
+    """Notifications still worth showing: not archived, not resolved."""
+    return Notification.objects.filter(recipient_id=principal.user_id).exclude(
+        Q(status="archived") | Q(resolved_at__isnull=False)
+    )
+
+
 def recent(principal) -> list[dict]:
-    qs = Notification.objects.filter(recipient_id=principal.user_id).order_by(
-        "-created_at"
-    )[:50]
+    qs = _live(principal).order_by("-created_at")[:50]
     return [_serialize(n) for n in qs]
 
 
 def rail(principal) -> list[dict]:
     """The notification rail (unread + recent read, capped)."""
-    qs = Notification.objects.filter(recipient_id=principal.user_id).order_by(
-        "-created_at"
-    )[:20]
+    qs = _live(principal).order_by("-created_at")[:20]
     return [_serialize(n) for n in qs]
 
 
 def counts(principal) -> dict:
-    base = Notification.objects.filter(recipient_id=principal.user_id)
+    # One population for both numbers. `total` counted archived rows while the
+    # list beneath it excluded them, so the page could read "412 total" over a
+    # hundred visible rows.
+    base = _live(principal)
     return {"unread": base.filter(status="unread").count(), "total": base.count()}
 
 
 def unread_count(principal) -> dict:
-    return {
-        "count": Notification.objects.filter(
-            recipient_id=principal.user_id, status="unread"
-        ).count()
-    }
+    return {"count": _live(principal).filter(status="unread").count()}
 
 
 def mark_read(notification_id: str, principal) -> dict:

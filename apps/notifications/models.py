@@ -34,6 +34,18 @@ class Notification(TimeStampedModel):
     source_event_id = models.CharField(max_length=30, null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)
+    # Set when the underlying workflow condition is satisfied. Until this
+    # existed nothing ever closed a notification: To-Dos are derived live and
+    # disappear when the work is done, but notifications persisted, so
+    # approving a leave request cleared the task and left the notice unread
+    # forever — and a job then promoted it to "urgent" at 48 hours, which is
+    # why the urgent count carried no information.
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    # How many times a reminder has re-fired for this same unresolved
+    # condition. A reminder updates the live row rather than inserting a new
+    # one, so a 30-day-overdue item is one notification with a count, not 30.
+    reminder_count = models.PositiveIntegerField(default=0)
+    last_reminded_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "notification"
@@ -41,6 +53,11 @@ class Notification(TimeStampedModel):
         indexes = [
             models.Index(fields=["recipient_id", "status"]),
             models.Index(fields=["source_event_id"]),
+            models.Index(
+                fields=["recipient_id", "source_event_type", "context_id"],
+                name="notif_dedupe_idx",
+            ),
+            models.Index(fields=["resolved_at"], name="notif_resolved_idx"),
         ]
 
 

@@ -124,8 +124,15 @@ def _may_review_hr_stage(req: ProfessionalDevelopmentRequest, principal) -> bool
     approve any request anywhere and spawn the finance disbursement.
     """
     role = getattr(principal, "active_role", "")
+    actor_country = _principal_country(principal)
     if role == HR_ROLE:
-        return True
+        # HR is a country function, not a global one. This was an
+        # unconditional `return True`, so an HR officer in one country could
+        # approve, return, reject, sign off and close a funded course for an
+        # employee in another — spawning that country's disbursement.
+        if not actor_country or not req.country:
+            return False
+        return actor_country == req.country
     if role not in LEADERSHIP_ROLES:
         return False
     requester_is_hr = (
@@ -135,11 +142,14 @@ def _may_review_hr_stage(req: ProfessionalDevelopmentRequest, principal) -> bool
     )
     if not requester_is_hr:
         return False
-    actor_country = _principal_country(principal)
-    # An unset country on either side is not a licence to approve globally.
-    if actor_country and req.country and actor_country != req.country:
+    # An unset country on either side is not a licence to approve globally —
+    # and the guard below now does what that sentence says. Written as
+    # `if actor_country and req.country and ...` it SKIPPED entirely when
+    # either side was falsy and fell through to `return True`, so a leadership
+    # account with no StaffProfile approved HR's PD in every country.
+    if not actor_country or not req.country:
         return False
-    return True
+    return actor_country == req.country
 
 
 class PDApprovalRoutingService:

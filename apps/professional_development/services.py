@@ -140,6 +140,24 @@ class StaffPDService:
         return alloc
 
     @staticmethod
+    def committed_and_accounted_cents(staff_id: str, fy: str) -> int:
+        """How much of this person's FY envelope is already spoken for.
+
+        Used to refuse an allocation cut that would drop someone below what
+        they have already committed or spent.
+        """
+        rows = ProfessionalDevelopmentRequest.objects.filter(
+            staff_id=staff_id, fy=fy
+        )
+        committed = sum(
+            r.requested_amount_cents
+            for r in rows
+            if r.status in COMMITTED_STATUSES and not r.accounted_amount
+        )
+        accounted = sum(r.accounted_amount or 0 for r in rows)
+        return committed + accounted
+
+    @staticmethod
     def balances(user, fy: str) -> dict:
         """Remaining Available Fund = Annual Allocation − Active Committed
         − Accounted Used (mandate §4). Derived live from the requests."""
@@ -147,8 +165,19 @@ class StaffPDService:
         alloc = StaffPDService.get_or_create_allocation(user, fy)
         rows = ProfessionalDevelopmentRequest.objects.filter(staff_id=sp.id, fy=fy)
 
+        # Committed money that has NOT yet been accounted for. A request lands
+        # in COMMITTED_STATUSES at accountability_submitted and awaiting_hr_
+        # signoff, and `accounted_amount` is written at the very moment the
+        # status becomes accountability_submitted — so between submission and
+        # sign-off the same request was subtracted twice. A 4m course against a
+        # 10m allocation showed 2m remaining instead of 6m, and because
+        # `submit()` reads this same figure to decide `is_exception`, the
+        # employee was forced to file a funding exception for a course they
+        # could comfortably afford.
         committed = sum(
-            r.requested_amount_cents for r in rows if r.status in COMMITTED_STATUSES
+            r.requested_amount_cents
+            for r in rows
+            if r.status in COMMITTED_STATUSES and not r.accounted_amount
         )
         disbursed = sum(
             r.requested_amount_cents

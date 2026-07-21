@@ -572,6 +572,25 @@ class TemporaryCoverageAssignment(TimeStampedModel):
     revoked_at = models.DateTimeField(null=True, blank=True)
     revoked_by_user_id = models.CharField(max_length=30, null=True, blank=True)
 
+    @property
+    def is_live(self) -> bool:
+        """Is this delegation granting access RIGHT NOW?
+
+        `status` alone is not the answer and never was: nothing writes
+        "expired", so every assignment ever created reads "active" forever.
+        The five authority checks all re-test the window at runtime — which is
+        why no access actually leaked — but the two pages built to AUDIT
+        delegated access filtered on status alone and therefore showed every
+        historical grant as live.
+        """
+        from django.utils import timezone as _tz
+
+        now = _tz.now()
+        return (
+            self.status == "active"
+            and self.start_datetime <= now <= self.end_datetime
+        )
+
     class Meta:
         db_table = "temporary_coverage_assignment"
 

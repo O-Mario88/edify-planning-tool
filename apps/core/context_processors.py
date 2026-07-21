@@ -16,9 +16,16 @@ def sidebar_counts(request):
 
     today = date.today()
     try:
-        notifications_count = Notification.objects.filter(
-            recipient_id=request.user.id, status="unread"
-        ).count()
+        # The badge must count what the drawer shows. A resolved notification
+        # is history — leaving it in the badge made the number climb forever
+        # and it was the only signal most users ever saw.
+        notifications_count = (
+            Notification.objects.filter(
+                recipient_id=request.user.id, status="unread"
+            )
+            .exclude(resolved_at__isnull=False)
+            .count()
+        )
     except Exception:
         notifications_count = 0
 

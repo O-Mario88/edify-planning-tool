@@ -620,7 +620,35 @@ class HRPDDashboardService:
             )
         if role not in dict(PD_ELIGIBLE_ROLES):
             raise BadRequest("Unknown role.")
+
+        # `country` arrived straight from the request, so an HR officer could
+        # post another country's name and rewrite that country's PD budget for
+        # a whole role. Pin it to the actor's own country unless they are Admin.
+        if getattr(principal, "active_role", "") != "Admin":
+            actor_country = getattr(
+                getattr(principal, "staff_profile", None), "country", None
+            )
+            if not actor_country:
+                raise Forbidden(
+                    "Your staff profile has no country, so an allocation "
+                    "cannot be scoped to you."
+                )
+            if country and country != actor_country:
+                raise Forbidden(
+                    "You may only set Professional Development allocations for "
+                    f"{actor_country}."
+                )
+            country = actor_country
+
         amount_cents = int(round(amount_major * 100))
+        if amount_cents < 0:
+            raise BadRequest("An allocation cannot be negative.")
+
+        before = (
+            PDRoleAllocation.objects.filter(role=role, fy=fy, country=country)
+            .values_list("annual_allocation_cents", flat=True)
+            .first()
+        )
         pra, _ = PDRoleAllocation.objects.update_or_create(
             role=role,
             fy=fy,
@@ -631,12 +659,30 @@ class HRPDDashboardService:
                 "set_by": principal.user_id,
             },
         )
+        skipped: list[str] = []
+        applied = 0
         if apply_to_existing:
             from apps.accounts.models import StaffProfile
+            from apps.professional_development.services import StaffPDService
 
             for sp in StaffProfile.objects.filter(
                 user__active_role=role, country=country
             ):
+                # Never cut an allocation below what the person has already
+                # committed or spent. This overwrote unconditionally, so an
+                # employee with 2,000,000 approved and 1,500,000 disbursed
+                # could be silently reset to 500,000 — leaving a negative
+                # balance masked by `max(0, remaining)`.
+                existing = ProfessionalDevelopmentAllocation.objects.filter(
+                    staff_id=sp.id, fy=fy
+                ).first()
+                if existing:
+                    spent = StaffPDService.committed_and_accounted_cents(
+                        sp.id, fy
+                    )
+                    if spent > amount_cents:
+                        skipped.append(sp.id)
+                        continue
                 ProfessionalDevelopmentAllocation.objects.update_or_create(
                     staff_id=sp.id,
                     fy=fy,
@@ -646,6 +692,32 @@ class HRPDDashboardService:
                         "annual_allocation": amount_cents,
                     },
                 )
+                applied += 1
+
+        # PD allocation is the envelope every disbursement draws on; changing
+        # it without a record of who, when and from what was the one HR write
+        # that moves money and left no trail.
+        try:
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="pd.role_allocation_adjusted",
+                subject_kind="pd_role_allocation",
+                subject_id=pra.id,
+                actor_id=principal.user_id,
+                actor_role=getattr(principal, "active_role", None),
+                payload={
+                    "role": role,
+                    "fy": fy,
+                    "country": country,
+                    "beforeCents": before,
+                    "afterCents": amount_cents,
+                    "appliedToExisting": applied,
+                    "skippedOverspentStaff": skipped,
+                },
+            )
+        except Exception:  # noqa: BLE001
+            pass
         return pra
 
 

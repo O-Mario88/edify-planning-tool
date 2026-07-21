@@ -65,14 +65,14 @@
             </td>
             <td class="px-4 py-4">
               <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold border tracking-wider
-                {% if cov.status == 'active' %}edify-primary-soft edify-primary-text edify-primary-border
-                {% elif cov.status == 'expired' %}bg-slate-50 text-slate-500 border-slate-200
-                {% else %}bg-rose-50 text-rose-700 border-rose-250{% endif %}">
-                {{ cov.status }}
+                {% if cov.is_live %}edify-primary-soft edify-primary-text edify-primary-border
+                {% elif cov.revoked_at %}bg-rose-50 text-rose-700 border-rose-250
+                {% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
+                {% if cov.is_live %}active{% elif cov.revoked_at %}revoked{% else %}expired{% endif %}
               </span>
             </td>
             <td class="px-5 py-4 text-right">
-              {% if cov.status == 'active' %}
+              {% if cov.is_live %}
               <form action="{% url 'frontend:revoke_coverage_action' cov.id %}" method="POST" class="inline">
                 {% csrf_token %}
                 <button

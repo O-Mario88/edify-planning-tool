@@ -159,6 +159,13 @@ def resolve(escalation_id: str, data: dict, principal) -> LeadershipEscalation:
         esc.acknowledged_at = timezone.now()
         esc.acknowledged_by_user_id = _actor_id(principal)
     esc.save()
+    # The RVPs no longer need to act on it.
+    try:
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition("leadership_escalation_open", "escalation", esc.id)
+    except Exception:  # noqa: BLE001
+        pass
     _notify_raiser(
         esc,
         f"RVP decision: {dict(DECISIONS)[decision]}",
@@ -238,29 +245,40 @@ def _get_for_rvp(escalation_id: str, principal) -> LeadershipEscalation:
 
 
 def _notify_rvps(esc: LeadershipEscalation, title: str | None = None) -> None:
+    """Notify every RVP about an escalation — once per RVP, not once per run.
+
+    This wrote a bare `create()` per RVP on every invocation, and the daily
+    overdue sweep calls it for every still-open escalation. A single item open
+    for thirty days produced thirty identical rows per RVP, and because the
+    job is retryable with no transaction, one partial failure re-sent every
+    escalation it had already processed. Routing through the canonical service
+    gives it the dedupe key, the role-aware route, the audit row and the
+    realtime publish that the raw insert skipped entirely.
+    """
     try:
         from apps.accounts.models import User
-        from apps.notifications.models import Notification
+        from apps.notifications.services import WorkflowNotificationService
 
-        for user in User.objects.filter(
-            roles__contains=[EdifyRole.REGIONAL_VICE_PRESIDENT.value], status="active"
-        ):
-            Notification.objects.create(
-                recipient_id=user.id,
-                title=title or f"Escalation from the Country Director: {esc.subject}",
-                body=esc.detail[:300],
-                category="leadership",
-                context_type="escalation",
-                context_id=esc.id,
-                target_route="/escalations",
-                action_label="Review",
-                action_required=True,
-                priority=(
-                    "high"
-                    if esc.severity != EscalationSeverity.NORMAL.value
-                    else "normal"
-                ),
+        recipients = list(
+            User.objects.filter(
+                roles__contains=[EdifyRole.REGIONAL_VICE_PRESIDENT.value],
+                status="active",
             )
+        )
+        if not recipients:
+            return
+        WorkflowNotificationService.trigger(
+            event_type="leadership_escalation_open",
+            category="leadership",
+            priority=(
+                "high" if esc.severity != EscalationSeverity.NORMAL.value else "normal"
+            ),
+            title=title or f"Escalation from the Country Director: {esc.subject}",
+            body=esc.detail[:300],
+            context_type="escalation",
+            context_id=esc.id,
+            recipients=recipients,
+        )
     except Exception:  # noqa: BLE001 - notification must never block the escalation
         pass
 

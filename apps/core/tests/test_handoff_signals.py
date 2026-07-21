@@ -88,11 +88,12 @@ class ResolverCoverageTests(TestCase):
 
     def test_unknown_event_still_reaches_its_record_type(self):
         """A future event with no branch should reach the right surface, not
-        the dashboard."""
+        the dashboard — and now the exact record, since the detail route
+        `fund-requests/weekly/<request_id>` exists and the id is in hand."""
         route, _ = NotificationLinkResolver.resolve(
             "some_new_event", "WeeklyFundRequest", "W1", "CCEO"
         )
-        self.assertEqual(route, "/fund-requests/weekly")
+        self.assertEqual(route, "/fund-requests/weekly/W1")
 
 
 class RecipientResolutionTests(TestCase):

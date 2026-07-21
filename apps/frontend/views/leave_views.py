@@ -1124,8 +1124,12 @@ def leave_calendar_view(request):
         mine = Q(staff_id=own) | Q(covering_staff_id=own) if own else Q(pk__in=[])
         approved = approved.filter(mine)
         pending = pending.filter(mine)
+    # `status="active"` alone is not "live" — nothing ever writes "expired",
+    # so that filter matched every assignment ever created. The window is the
+    # real test, and it is what the five authority checks already apply.
+    _now = timezone.now()
     coverages = TemporaryCoverageAssignment.objects.filter(
-        status="active"
+        status="active", start_datetime__lte=_now, end_datetime__gte=_now
     ).select_related("original_staff__user", "covering_staff__user")
 
     # 4. Public Holidays & Blackout Calendar Blocks
@@ -1582,6 +1586,12 @@ def leave_escalate_action(request, leave_id):
     try:
         leave.status = "hr_review"
         leave.save(update_fields=["status", "updated_at"])
+        # Escalating used to make the request LESS visible, not more: nothing
+        # notified HR, the To-Do generator filtered on status="pending" so the
+        # item vanished from every queue, the approvals page defaults to
+        # pending so it left the default view, and no audit row was written.
+        # It sat until the leave dates passed.
+        LeaveApprovalService.escalate_to_hr(leave, request.user)
         messages.success(request, "Leave request escalated to HR.")
     except Exception as e:
         messages.error(request, f"Failed to escalate: {e}")

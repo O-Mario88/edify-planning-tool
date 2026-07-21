@@ -542,8 +542,11 @@ def _leave_todos(principal, role):
     # PL, CD and HR user received a To-Do for every pending leave in the
     # platform — including staff they do not supervise — and the linked page
     # then filtered the item out, so the task could never be completed.
+    # "hr_review" is an escalated request awaiting HR. It was excluded, so
+    # escalating a contested request removed it from every queue on the
+    # platform — the one status where visibility matters most.
     pending = (
-        Leave.objects.filter(status="pending")
+        Leave.objects.filter(status__in=("pending", "hr_review"))
         .select_related("staff__user")
         .order_by("start_date")[:100]
     )
@@ -556,7 +559,11 @@ def _leave_todos(principal, role):
         todos.append(
             {
                 "id": f"leave-{lv.id}",
-                "title": "Review Leave Request",
+                "title": (
+                    "Escalated Leave Request"
+                    if lv.status == "hr_review"
+                    else "Review Leave Request"
+                ),
                 "description": f"{who} requested {lv.type or 'leave'} ({lv.days or '—'} days)",
                 "category": "Leave",
                 "priority": "medium",
@@ -567,7 +574,7 @@ def _leave_todos(principal, role):
                 "due_tone": "neutral",
                 "linked": f"Leave · {who}",
                 "action_label": "Review",
-                "action_url": "/leave/approvals",
+                "action_url": f"/leave/approvals?id={lv.id}",
                 "actionable": True,
                 "source": "Leave workflow",
                 "_due_sort": date.max,

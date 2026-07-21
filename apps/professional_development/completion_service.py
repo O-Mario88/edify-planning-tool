@@ -409,6 +409,12 @@ class PDCourseTrackingService:
         req.signed_off_by = principal.user_id
         req.signed_off_at = timezone.now()
         req.save()
+        # The one decision that closes the record and releases the money was
+        # the one decision in the chain with no audit row — while the earlier,
+        # lesser approvals all had one.
+        from apps.professional_development.approval_service import _audit_decision
+
+        _audit_decision("pd_sign_off", req, principal)
         PDCourseTrackingService._update_cpd_and_skills(req)
         try:
             from apps.professional_development.approval_service import (

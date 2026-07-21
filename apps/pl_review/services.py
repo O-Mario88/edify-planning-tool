@@ -142,6 +142,22 @@ def _audit(action: str, activity: Activity, principal, reason: str | None = None
     )
 
 
+def _close_review_notice(activity) -> None:
+    """The PL's review queue no longer holds this activity.
+
+    `activity_submitted_for_review` is fired at the supervising PL when a
+    completion arrives. Nothing closed it: once the PL confirmed or returned
+    the work, the derived To-Do disappeared while the notification stayed
+    unread and was later promoted to urgent by the staleness job.
+    """
+    try:
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition("activity_submitted_for_review", "Activity", activity.id)
+    except Exception:  # noqa: BLE001 - never fail a review over bookkeeping
+        pass
+
+
 def confirm(activity_id: str, principal) -> dict:
     """PL confirms a CCEO completion -> routes to IA verification."""
     from apps.activities.services import _serialize
@@ -162,6 +178,7 @@ def confirm(activity_id: str, principal) -> dict:
         ]
     )
     _audit("pl_review_confirm", a, principal)
+    _close_review_notice(a)
     _notify_after_review(
         a,
         "activity_submitted_for_review",
@@ -192,6 +209,7 @@ def return_activity(activity_id: str, data: dict, principal) -> dict:
         ]
     )
     _audit("pl_review_return", a, principal, reason=reason)
+    _close_review_notice(a)
     # The submitter must be told, WITH the reason — returning work silently is
     # how a completion sat untouched until someone happened to reopen My Plan.
     owner = _owning_staff_id(a)

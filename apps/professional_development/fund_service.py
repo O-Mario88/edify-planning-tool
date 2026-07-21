@@ -117,6 +117,9 @@ class PDFundRequestService:
         fr.save(update_fields=["status", "updated_at"])
         req.status = PDStatus.DISBURSED
         req.save(update_fields=["status", "updated_at"])
+        from apps.professional_development.approval_service import _audit_decision
+
+        _audit_decision("pd_disburse", req, principal)
         PDFundRequestService._notify(
             req.owner_user_id,
             "PD funds disbursed",
@@ -183,6 +186,9 @@ class PDFundRequestService:
         req.accountability_reviewed_by = principal.user_id
         req.accountability_reviewed_at = timezone.now()
         req.save()
+        from apps.professional_development.approval_service import _audit_decision
+
+        _audit_decision("pd_accountability_cleared", req, principal)
         PDFundRequestService._notify(
             req.owner_user_id,
             "PD accountability cleared",
@@ -215,19 +221,20 @@ class PDFundRequestService:
         if not recipient_user_id:
             return
         try:
-            from apps.notifications.models import Notification
+            # Through the canonical service: a raw insert had no dedupe key, no
+            # audit row and no realtime publish, so a daily reminder stacked a
+            # new row every day for the same unchanged condition.
+            from apps.notifications.services import WorkflowNotificationService
 
-            Notification.objects.create(
-                recipient_id=recipient_user_id,
+            WorkflowNotificationService.trigger(
+                event_type="pd_action_required",
+                category="professional_development",
+                priority="high",
                 title=title,
                 body=body,
-                category="professional_development",
                 context_type="pd_request",
                 context_id=req.id,
-                target_route=f"/my-professional-development/request?id={req.id}",
-                action_label="Open",
-                action_required=True,
-                priority="high",
+                recipients=[recipient_user_id],
             )
         except Exception:  # noqa: BLE001
             pass

@@ -927,17 +927,23 @@ def notifications_page_view(request):
 
     qs = Notification.objects.filter(recipient_id=user.id)
 
-    # Calculate KPIs before filtering
+    # KPIs describe the same population the list does. `total` counted
+    # archived rows while the default list excluded them, so the page could
+    # read "412 total" above a hundred visible items. Resolved rows are
+    # history, not work.
+    live_qs = qs.exclude(Q(status="archived") | Q(resolved_at__isnull=False))
     kpis = {
-        "total": qs.count(),
-        "unread": qs.filter(status="unread").count(),
-        "action_required": qs.filter(action_required=True, status="unread").count(),
-        "critical": qs.filter(priority="urgent", status="unread").count(),
+        "total": live_qs.count(),
+        "unread": live_qs.filter(status="unread").count(),
+        "action_required": live_qs.filter(
+            action_required=True, status="unread"
+        ).count(),
+        "critical": live_qs.filter(priority="urgent", status="unread").count(),
     }
 
     # Apply status filter
     if selected_status == "all":
-        qs = qs.exclude(status="archived")
+        qs = live_qs
     else:
         qs = qs.filter(status=selected_status)
 
@@ -948,8 +954,6 @@ def notifications_page_view(request):
     if action_required_only:
         qs = qs.filter(action_required=True)
     if q:
-        from django.db.models import Q
-
         qs = qs.filter(Q(title__icontains=q) | Q(body__icontains=q))
 
     notifications = qs.order_by("-created_at")[:100]
@@ -978,14 +982,19 @@ def notifications_page_view(request):
 def _get_sorted_drawer_notifications(user) -> list[Notification]:
     """Helper to get notifications for drawer sorted by Critical/Action-Required first, then latest."""
     notifs_qs = Notification.objects.filter(recipient_id=user.id).exclude(
-        status="archived"
+        Q(status="archived") | Q(resolved_at__isnull=False)
     )
     notifs = list(notifs_qs)
 
     def sort_key(n):
-        p_val = {"urgent": 0, "high": 1, "normal": 2, "low": 3}.get(n.priority, 2)
+        # Unread outranks priority. Sorting on priority first meant a READ
+        # urgent row beat an UNREAD one — and since a job promotes anything
+        # stale to urgent, the top of the drawer filled with old read items
+        # while genuinely new work fell off the end of the twenty.
+        unread = 0 if n.status == "unread" else 1
         ar_val = 0 if n.action_required and n.status == "unread" else 1
-        return (p_val, ar_val, -n.created_at.timestamp())
+        p_val = {"urgent": 0, "high": 1, "normal": 2, "low": 3}.get(n.priority, 2)
+        return (unread, ar_val, p_val, -n.created_at.timestamp())
 
     notifs.sort(key=sort_key)
     return notifs[:20]
@@ -996,9 +1005,11 @@ def notification_drawer_view(request):
     """Notification drawer view — loaded via HTMX when clicking notification bell."""
     user = request.user
     notifs = _get_sorted_drawer_notifications(user)
-    unread_count = Notification.objects.filter(
-        recipient_id=user.id, status="unread"
-    ).count()
+    unread_count = (
+        Notification.objects.filter(recipient_id=user.id, status="unread")
+        .exclude(resolved_at__isnull=False)
+        .count()
+    )
 
     context = {
         "notifications": notifs,

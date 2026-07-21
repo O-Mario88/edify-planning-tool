@@ -559,6 +559,12 @@ class LeaveApprovalService:
         if not reviewer_profile:
             return False
 
+        # An escalated request is HR's to decide. Without this arm HR was an
+        # authorized approver for no role at all, so "Escalate to HR" moved
+        # the request to a status nobody could act on.
+        if getattr(leave, "status", "") == "hr_review" and rev_role == "hr":
+            return leave.staff.user_id != reviewer_user.id
+
         from apps.accounts.models import StaffSupervisorAssignment
 
         # Check direct supervisor relationship in database — including anyone
@@ -593,15 +599,19 @@ class LeaveApprovalService:
             # Fallback by country scoping for CD
             if rev_role == "cd" and reviewer_profile.country == leave.staff.country:
                 return True
-            # RVP approves regional staff or CD
+            # RVP approves regional staff or CD — but only inside their own
+            # scope. This was a bare `return True`, so any RVP could approve
+            # any PC/IA/Accountant/HR/CD leave anywhere, while the CD arm
+            # directly above it correctly required a country match. The
+            # platform's one-scope rule applies here too.
             if rev_role == "rvp":
-                return True
+                return LeaveApprovalService._rvp_covers(reviewer_user, leave)
             return False
 
         elif staff_role == "cd":
-            # CD leave -> RVP approval
+            # CD leave -> RVP approval, within the RVP's own scope.
             if rev_role == "rvp":
-                return True
+                return LeaveApprovalService._rvp_covers(reviewer_user, leave)
             return False
 
         elif staff_role == "rvp":
@@ -610,6 +620,64 @@ class LeaveApprovalService:
 
         # Default fallback
         return direct_supervisor
+
+    @staticmethod
+    def escalate_to_hr(leave, reviewer_user) -> None:
+        """Tell HR, write the audit row, and keep the request visible.
+
+        The view flipped the status and stopped. Everything that makes an
+        escalation an escalation — a named owner, a notification, an audit
+        entry — was absent, so the request became invisible instead of urgent.
+        """
+        try:
+            from apps.accounts.models import User
+            from apps.notifications.services import WorkflowNotificationService
+
+            hr_users = list(
+                User.objects.filter(
+                    roles__contains=["HumanResources"], status="active"
+                ).exclude(id=leave.staff.user_id)
+            )
+            who = getattr(getattr(leave.staff, "user", None), "name", "A staff member")
+            if hr_users:
+                WorkflowNotificationService.trigger(
+                    event_type="leave_escalated_to_hr",
+                    category="leave",
+                    priority="high",
+                    title="Leave request escalated to HR",
+                    body=f"{who}'s leave request needs an HR decision.",
+                    context_type="Leave",
+                    context_id=leave.id,
+                    recipients=hr_users,
+                )
+        except Exception:  # noqa: BLE001
+            pass
+        _audit_leave("leave.escalated_to_hr", leave, reviewer_user)
+
+    @staticmethod
+    def _rvp_covers(reviewer_user, leave) -> bool:
+        """Is this leave inside the RVP's own region?
+
+        Mirrors the country test the CD arm already applies. An RVP with no
+        region assignment keeps the previous org-wide reach — `resolve_user_scope`
+        distinguishes "unassigned RVP" from "assigned to nothing" via
+        `rvp_region_scoped`, and narrowing an unassigned RVP to nothing would
+        silently empty an approval queue rather than scope it.
+        """
+        try:
+            from apps.core.scoping import resolve_user_scope
+
+            scope = resolve_user_scope(reviewer_user)
+            if not getattr(scope, "rvp_region_scoped", False):
+                return True
+            subject_country = getattr(leave.staff, "country", None)
+            reviewer_profile = getattr(reviewer_user, "staff_profile", None)
+            reviewer_country = getattr(reviewer_profile, "country", None)
+            if subject_country and reviewer_country:
+                return subject_country == reviewer_country
+            return True
+        except Exception:  # noqa: BLE001 - never fail an approval check open
+            return False
 
     @staticmethod
     def approve_request(leave_id: str, reviewer_user: User) -> Leave:
@@ -1568,7 +1636,25 @@ class LeaveNotificationService:
         )
 
     @staticmethod
+    def _close_pending_request_notices(leave) -> None:
+        """A decided leave request is no longer awaiting anyone.
+
+        `leave_requested` was fired at the approver, every HR user and, for a
+        PL, the CD. Nothing closed it: the derived To-Do vanished the moment
+        the status left "pending" while the notification sat unread forever,
+        then got promoted to urgent at 48 hours.
+        """
+        from apps.notifications.services import resolve_condition
+
+        try:
+            resolve_condition("leave_requested", "Leave", leave.id)
+        except Exception:
+            # Never let notification bookkeeping fail a leave decision.
+            pass
+
+    @staticmethod
     def notify_leave_approved(leave: Leave) -> None:
+        LeaveNotificationService._close_pending_request_notices(leave)
         original_staff = leave.staff
         cover_staff = leave.covering_staff
 
@@ -1613,6 +1699,7 @@ class LeaveNotificationService:
     def notify_leave_rejected(
         leave: Leave, reviewer_name: str, reason: str = ""
     ) -> None:
+        LeaveNotificationService._close_pending_request_notices(leave)
         """Notify the requesting staff member that their leave was rejected."""
         from apps.notifications.services import WorkflowNotificationService
 
@@ -1642,6 +1729,7 @@ class LeaveNotificationService:
     def notify_leave_returned(
         leave: Leave, reviewer_name: str, reason: str = ""
     ) -> None:
+        LeaveNotificationService._close_pending_request_notices(leave)
         """Notify the requesting staff member that their leave was returned for correction."""
         from apps.notifications.services import WorkflowNotificationService
 

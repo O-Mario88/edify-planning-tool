@@ -620,10 +620,34 @@ def pd_dashboard_action_view(request):
                     "accountability_submitted",
                 ),
             }.get(bucket, ())
-            sent = 0
-            for req in ProfessionalDevelopmentRequest.objects.filter(
+            # Scope the send to exactly what the dashboard was showing. This
+            # filtered on status alone — no staff scope, no FY, no country —
+            # while the button's own label came from the SCOPED count. A
+            # Program Lead with four supervisees clicked "Remind All (4)" and
+            # notified every PD requester in every country, in every financial
+            # year. `cpd_learning` is granted to PL, CD and RVP as well as HR.
+            from apps.professional_development.hr_dashboard_service import (
+                _scoped_staff_ids,
+            )
+
+            scoped_ids, locked_country = _scoped_staff_ids(request.user)
+            reminder_fy = (request.POST.get("fy") or "").strip()
+            reminder_country = (
+                locked_country or (request.POST.get("country") or "").strip()
+            )
+
+            due_qs = ProfessionalDevelopmentRequest.objects.filter(
                 status__in=due_statuses
-            ):
+            )
+            if scoped_ids is not None:
+                due_qs = due_qs.filter(staff_id__in=scoped_ids)
+            if reminder_fy:
+                due_qs = due_qs.filter(fy=reminder_fy)
+            if reminder_country:
+                due_qs = due_qs.filter(country=reminder_country)
+
+            sent = 0
+            for req in due_qs:
                 if req.owner_user_id:
                     PDApprovalRoutingService._notify(
                         req.owner_user_id,
