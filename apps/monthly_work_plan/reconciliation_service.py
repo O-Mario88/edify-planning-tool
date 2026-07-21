@@ -30,7 +30,7 @@ from datetime import date
 from django.db.models import Q, Sum
 from django.utils import timezone
 
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
 from .models import MonthlyWorkPlanBudget, MonthlyWorkPlanBudgetStatus
 
@@ -273,8 +273,29 @@ def _blocking_reason(budget, rec: dict, settled: bool) -> str | None:
     return None
 
 
+def _require_envelope_owner(principal) -> None:
+    """Only the country envelope's owner may move its lifecycle.
+
+    The CD-only restriction previously existed solely as a template flag, so a
+    crafted POST from any role holding the `country_budget` page — the
+    Accountant among them — could mark the month disbursed or close it. The
+    Accountant executes payments; they do not close the country's books.
+    """
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if has_permission(principal, Permission.COUNTRY_BUDGET_SUBMIT.value):
+        return
+    if getattr(principal, "active_role", None) in ("CountryDirector", "Admin"):
+        return
+    raise Forbidden(
+        "Only the Country Director can move the country budget's lifecycle."
+    )
+
+
 def mark_disbursed(budget_id: str, principal) -> dict:
     """Move an envelope to `disbursed` once money has actually moved."""
+    _require_envelope_owner(principal)
     budget = _get(budget_id)
     state = settlement_state(budget)
     if not state["canMarkDisbursed"]:
@@ -289,6 +310,7 @@ def mark_disbursed(budget_id: str, principal) -> dict:
 
 def close_month(budget_id: str, principal) -> dict:
     """Close a fully-accounted envelope — the end of the loop."""
+    _require_envelope_owner(principal)
     budget = _get(budget_id)
     state = settlement_state(budget)
     if not state["canClose"]:

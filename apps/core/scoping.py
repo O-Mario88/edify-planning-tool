@@ -402,6 +402,29 @@ def school_queryset(scope: UserScope):
     return qs.none()
 
 
+def owner_ids(principal) -> list[str]:
+    """Both identifiers a person's work can be attributed to.
+
+    `Activity.responsible_staff_id` holds a StaffProfile id when the row was
+    written through `activities.services.create`, and a User id when it came
+    from the seeder or an older path. Both exist in live data, so any check
+    that compares against only one of them silently disowns most of a field
+    worker's activities — which is exactly what `can_upload_evidence` and
+    `can_view_record` did, refusing the CCEO access to ~94% of their own work.
+
+    One helper, used everywhere, so the two id spaces stop being a per-module
+    guess.
+    """
+    return [
+        i
+        for i in (
+            getattr(principal, "user_id", None) or getattr(principal, "id", None),
+            getattr(principal, "staff_profile_id", None),
+        )
+        if i
+    ]
+
+
 def scoped_school_queryset(scope: UserScope, base=None):
     """The school rows an *analytics* surface may aggregate over.
 
@@ -470,4 +493,5 @@ __all__ = [
     "school_queryset",
     "scoped_school_queryset",
     "aggregate_school_filter",
+    "owner_ids",
 ]

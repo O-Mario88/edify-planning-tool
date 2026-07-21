@@ -55,7 +55,14 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "dashboard": ALL_ROLES,
     "todos": ALL_ROLES,
     "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN},
-    "team_targets": {PL, CD, HR, IA, ACCOUNTANT, ADMIN, PROJECT_COORDINATOR},
+    # Supervised-team target oversight. `supervised_users` resolves a team only
+    # for the PL (their supervisees) and the CD (country lens); every other
+    # role got an empty page. Removed for the Accountant, who supervises nobody
+    # and holds no programme-performance remit, and for the Project
+    # Coordinator, who owns projects rather than a staff team.
+    # NOTE: HR and IA are still listed and still resolve to an empty team —
+    # out of scope for the field-role audit, flagged in the proposal.
+    "team_targets": {PL, CD, HR, IA, ADMIN},
     # Every Edify employee is PD-eligible (Partners are external org staff, not
     # on the Edify PD/BambooHR benefit) — one shared page for all of them.
     "my_professional_development": {

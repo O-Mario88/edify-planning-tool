@@ -281,6 +281,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # Explicitly granted directory access — assigns project schools.
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
+        # Project eligibility IS an SSA judgement: evaluate_school_need()
+        # admits a school only where its latest confirmed SSA is weak in one of
+        # the project's target interventions. The coordinator was expected to
+        # make that call against data they could not read.
+        P.SSA_VIEW,
         P.PLANNING_VIEW,
         P.PLANNING_CREATE,
         P.ACTIVITY_ASSIGN,

@@ -45,6 +45,32 @@ from .salesforce import (
 )
 
 
+# Work that a reviewer sent back. Every return path in the platform lands on one
+# of these, and each must be able to re-enter the completion flow — otherwise
+# "Fix and Resubmit" is a button that cannot succeed and the return is a
+# one-way door out of the workflow.
+RETURNED_STATUSES = (
+    "returned",
+    "returned_by_pl",
+    "returned_by_ia",
+)
+
+# Statuses from which a field worker may (re)enter completion: work in progress,
+# plus anything a reviewer returned for correction.
+COMPLETABLE_STATUSES = (
+    "completion_started",
+    "in_progress",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+) + RETURNED_STATUSES
+
+# Statuses from which work may be submitted upward for review.
+SUBMITTABLE_STATUSES = COMPLETABLE_STATUSES + (
+    "completed",  # legacy staged rows created before this canonical path
+)
+
+
 # Salesforce's own two-way split, not the platform's grouping. Salesforce
 # classifies every activity as either "training" or "visit", and it puts
 # cluster meetings and SSA activities on the training side. That is a mapping
@@ -510,13 +536,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     """Submit completion: evidence present, Salesforce ID validated, attendance
     for trainings, CCEO routes to PL / staff routes to IA."""
     a = _get_in_scope(activity_id, principal)
-    if a.status not in (
-        "completion_started",
-        "in_progress",
-        "evidence_uploaded",
-        "evidence_accepted",
-        "salesforce_id_required",
-    ):
+    if a.status not in COMPLETABLE_STATUSES:
         raise BadRequest(
             "Click Complete first to unlock evidence upload and Activity Code entry."
         )
@@ -645,14 +665,7 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     """
     data = data or {}
     a = _get_in_scope(activity_id, principal)
-    if a.status not in (
-        "completion_started",
-        "in_progress",
-        "evidence_uploaded",
-        "evidence_accepted",
-        "salesforce_id_required",
-        "completed",  # legacy staged rows created before this canonical path
-    ):
+    if a.status not in SUBMITTABLE_STATUSES:
         raise BadRequest("Activity is not ready to be submitted for review.")
 
     from apps.evidence.models import EvidenceRecord

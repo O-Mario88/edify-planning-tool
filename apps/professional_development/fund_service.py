@@ -160,7 +160,13 @@ class PDFundRequestService:
 
     # ── Accountability clearance (§23) ───────────────────────────────────────
     @staticmethod
+    @transaction.atomic
     def clear_accountability(req_id: str, principal) -> ProfessionalDevelopmentRequest:
+        # select_for_update() outside an atomic block raises
+        # TransactionManagementError in production. Django's TestCase wraps
+        # every test in a transaction, which hid this completely — the
+        # Accountant's clearance action 500'd for real users while the suite
+        # stayed green.
         req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=req_id)
         _assert_finance_role(req, principal)
         if req.status != PDStatus.ACCOUNTABILITY_SUBMITTED:

@@ -175,9 +175,14 @@ class RolePermissionService:
                     end_datetime__gte=now,
                     status="active",
                 ).exists()
+            from apps.core.scoping import owner_ids
+
             return (
                 obj.school_id in scope.school_ids
-                or obj.responsible_staff_id == user.id
+                # Either id space — see scoping.owner_ids. Comparing only
+                # against user.id disowned most of a field worker's activities.
+                or obj.responsible_staff_id in owner_ids(user)
+                or getattr(obj, "monitored_by_staff_id", None) in owner_ids(user)
                 or is_covering
             )
 
@@ -306,10 +311,18 @@ class RolePermissionService:
         role = getattr(user, "active_role", None)
         if role in ["PartnerAdmin", "PartnerFieldOfficer"]:
             return activity.assigned_partner_id is not None
-        return activity.responsible_staff_id == user.id or role in [
-            "Admin",
-            "ImpactAssessment",
-        ]
+        if role in ["Admin", "ImpactAssessment"]:
+            return True
+        from apps.core.scoping import owner_ids
+
+        mine = owner_ids(user)
+        # The owner in either id space, or the staff member monitoring a
+        # partner-delivered activity — they are the one who must accept the
+        # partner's evidence before the chain can move.
+        return (
+            activity.responsible_staff_id in mine
+            or getattr(activity, "monitored_by_staff_id", None) in mine
+        )
 
     @staticmethod
     def can_enter_activity_sf_id(user, activity) -> bool:

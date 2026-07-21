@@ -228,6 +228,21 @@ def get(principal, query: dict) -> dict:
     }
 
 
+# Statuses meaning "the visit happened and the paperwork is in progress".
+# `start_completion` writes `completion_started`, but the evidence / SF-ID /
+# submit branches below only ever tested `completed` — a status the canonical
+# CCEO path never produces. That mismatch silently withheld every one of those
+# next actions (and therefore every To-Do) from the people doing the work.
+_WORKED_STATUSES = (
+    "completed",
+    "completion_started",
+    "in_progress",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+)
+
+
 def compute_next_action(a, today) -> dict:
     """Computes the single primary action and its properties for a given activity."""
     # 1. Returned by IA or PL -> Fix and Resubmit
@@ -262,7 +277,7 @@ def compute_next_action(a, today) -> dict:
         }
 
     # 4. Completed but no evidence -> Upload Evidence
-    if a.evidence_status == "none" and a.status == "completed":
+    if a.evidence_status == "none" and a.status in _WORKED_STATUSES:
         return {
             "text": "Upload Evidence",
             "action": "evidence",
@@ -272,7 +287,7 @@ def compute_next_action(a, today) -> dict:
 
     # 5. Evidence uploaded but no Activity SF ID -> Enter Activity SF ID
     if (
-        a.status == "completed"
+        a.status in _WORKED_STATUSES
         and a.evidence_status == "uploaded"
         and not a.salesforce_activity_id
     ):
@@ -285,7 +300,7 @@ def compute_next_action(a, today) -> dict:
 
     # 5.5 Ready to Submit for Review
     if (
-        a.status == "completed"
+        a.status in _WORKED_STATUSES
         and a.evidence_status == "uploaded"
         and a.salesforce_activity_id
     ):

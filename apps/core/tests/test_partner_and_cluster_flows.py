@@ -28,7 +28,12 @@ from django.test import override_settings
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
-from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
+from apps.accounts.models import (
+    StaffProfile,
+    StaffSchoolAssignment,
+    StaffSupervisorAssignment,
+    User,
+)
 from apps.activities.models import ActivityScheduleCostLine
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.fy import get_operational_fy
@@ -76,6 +81,12 @@ class PartnerAndClusterFlowTest(APITestCase):
         self.pl = self._user("pl@flow.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
         self.cceo_staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
         self.pl_staff = StaffProfile.objects.create(user=self.pl, title="PL")
+        # The PL reviews this CCEO's completions, so the supervision link the
+        # workflow depends on has to exist. Without it the fixture modelled a
+        # PL reviewing a stranger's work — which the review queue now refuses.
+        StaffSupervisorAssignment.objects.create(
+            supervisee=self.cceo_staff, supervisor=self.pl_staff
+        )
 
         # Cost catalogue (reference data) — staff visit + partner lump sum +
         # the fixed three-item cluster-training recipe.
