@@ -10,6 +10,7 @@ from collections import defaultdict
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from apps.core.permissions import (
+    require_export_permission,
     require_page_permission,
     get_scoped_object_or_404,
     RolePermissionService,
@@ -1442,6 +1443,7 @@ def projects_list_view(request):
 
 
 @require_page_permission("projects")
+@require_export_permission
 def special_projects_analytics_view(request):
     """Special Project Impact Intelligence — verified SSA movement, partner
     performance, classification and recommendations, all computed live."""
@@ -1537,6 +1539,7 @@ def special_projects_analytics_view(request):
 
 
 @require_page_permission("projects")
+@require_export_permission
 def special_projects_planning_view(request):
     """Special Projects Planning — coordinator-scoped project schools with
     readiness + schedule / assign-to-partner (project-stamped) actions."""
@@ -1616,6 +1619,7 @@ def special_projects_planning_view(request):
 
 
 @require_page_permission("projects")
+@require_export_permission
 def special_projects_my_plan_view(request):
     """Special-project My Plan — the coordinator's scheduled project activities
     (staff-owned actionable; partner-planned read-only monitoring)."""

@@ -630,7 +630,9 @@ def get_frontend_context(principal, query: dict) -> dict:
     ).count()
 
     total_period_count = qs_period.count()
-    completed_period_count = qs_period.filter(status__in=COMPLETED_WORK_STATUSES).count()
+    completed_period_count = qs_period.filter(
+        status__in=COMPLETED_WORK_STATUSES
+    ).count()
     completion_readiness = (
         int(completed_period_count / total_period_count * 100)
         if total_period_count > 0

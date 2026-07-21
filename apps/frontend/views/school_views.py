@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
+    require_export_permission,
     RolePermissionService,
     get_scoped_object_or_404,
     require_page_permission,
@@ -113,6 +114,7 @@ def school_intelligence_partial(request, school_id):
 
 
 @require_page_permission("school_directory")
+@require_export_permission
 def school_directory_view(request):
     user = request.user
     scope = resolve_user_scope(user)

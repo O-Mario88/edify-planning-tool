@@ -1043,6 +1043,25 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
             a.payment_status = "ia_confirmed"
         else:
             a.payment_status = "pending_ia"
+
+        # Core package slots must COMPLETE, not stall at "Scheduled" — no
+        # writer ever marked one Completed, so the champion gate
+        # (completed_slots >= 9) was unreachable for every school. IA
+        # confirmation is the completion moment. The assessment slot ("a1")
+        # additionally had no activity link at all: it completes when the
+        # school's core_assessment_visit is verified.
+        from apps.core_schools.models import CoreActivitySlot, cslot_id
+
+        slot = CoreActivitySlot.objects.filter(activity_id=a.id).first()
+        if slot is None and a.activity_type == "core_assessment_visit" and a.school_id:
+            slot = CoreActivitySlot.objects.filter(
+                id=cslot_id(a.school.school_id, "a", 1, fy=a.fy)
+            ).first()
+            if slot is not None and not slot.activity_id:
+                slot.activity_id = a.id
+        if slot is not None:
+            slot.status = "Completed"
+            slot.save(update_fields=["status", "activity_id", "updated_at"])
         a.save(
             update_fields=[
                 "status",
@@ -1282,6 +1301,14 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             )
 
             pa.status = "partner_scheduled"
+            try:
+                from apps.notifications.services import resolve_condition
+
+                resolve_condition(
+                    "partner_scheduled_activity", "partner_assignment", pa.id
+                )
+            except Exception:  # noqa: BLE001 - bookkeeping never blocks scheduling
+                pass
             pa.scheduled_date = scheduled_date
             # Normalise historic User-id assignments as they are activated,
             # so future read paths have one staff identity source of truth.

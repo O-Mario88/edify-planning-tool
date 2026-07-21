@@ -145,3 +145,24 @@ gating let CD/RVP/PL/CCEO mint auto-confirmed SSA (staff uploads are born
 "confirmed"), violating the IA-authority hard gate. OPEN: Permission.EXPORT
 enforced by only 1 of ~20 CSV endpoints (MED — wire can_export or retire it);
 HR roster API predicate differs from page gate (LOW).
+
+## TIER 2-3 PROGRESS (2026-07-22)
+
+TRACK VERDICTS (rerun): closure/targets PASS (0 dup credits, 0 calendar bugs,
+0 zero-cost lines); projects/leadership ENFORCED (pause/close blocks planning
+at create(); CD injection blocked) after fixing review() scope + partner
+notification resolution; navigation PASS (236/236 links, 9/9 KPIs exact);
+scope track: all previously-fixed leaks CLOSED except two of my own fixes —
+now closed: region-less RVP allocation fails closed; weekly_service +
+fund_requests/services fail-open staff_ids guards now unconditional.
+
+DONE: export gate (require_export_permission on 14 org-dataset views; own-data
+exports exempt by design); champion slots complete on ia_confirm incl.
+assessment slot a1 linkage; leadership review() scoped to
+_may_see_people_insight for staff_hr.
+
+REMAINING for READY: final full suite green; weakest-intervention
+consolidation (18 sites → recommendation_engine); HR empty registers
+build-or-descope decision; reconciliation at seeded volume; mobile walkthrough;
+backup-restore drill; budget_ceiling_ugx enforcement (or accept advisory —
+product call, documented).

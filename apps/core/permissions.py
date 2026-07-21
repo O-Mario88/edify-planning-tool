@@ -510,3 +510,28 @@ __all__ = [
     "render_access_denied",
     "get_scoped_object_or_404",
 ]
+
+
+def require_export_permission(view):
+    """Gate a CSV/data export on Permission.EXPORT.
+
+    The verification audit found `data.export` enforced by exactly one of
+    ~20 export endpoints — every other page permission implicitly granted
+    bulk extraction. One decorator, wrapped OUTSIDE require_page_permission,
+    so scope still applies and the refusal is a page, not a traceback.
+    """
+    from functools import wraps
+
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        wants_export = request.GET.get("export") or request.GET.get("format") == "csv"
+        is_export_route = "export" in request.path
+        if (wants_export or is_export_route) and not RolePermissionService.can_export(
+            request.user, request.path
+        ):
+            return render_access_denied(
+                request, "Your role does not include data export."
+            )
+        return view(request, *args, **kwargs)
+
+    return wrapped

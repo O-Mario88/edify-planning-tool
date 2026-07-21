@@ -4,7 +4,11 @@ Disbursements, Budget Overview, Cost Catalogue, Fund Requests list
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import render_access_denied, require_page_permission
+from apps.core.permissions import (
+    require_export_permission,
+    render_access_denied,
+    require_page_permission,
+)
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
@@ -629,6 +633,7 @@ def cost_settings_view(request):
 
 
 @require_page_permission("consolidated_fund_allocation")
+@require_export_permission
 def fund_allocation_view(request):
     import csv
     from django.http import HttpResponse

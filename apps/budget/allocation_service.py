@@ -27,9 +27,12 @@ class MonthlyFundAllocationService:
             return staff_qs
         region_ids = list(getattr(scope, "region_ids", []) or [])
         if not region_ids:
-            # Fail closed — an RVP with no assigned region sees no roster,
-            # rather than the whole country.
-            return staff_qs.none() if scope.rvp_region_scoped else staff_qs
+            # Fail closed unconditionally. The first version fell back to the
+            # full roster when rvp_region_scoped was False — which is exactly
+            # the region-less case — handing a summary-only role every staff
+            # member's itemised monthly spend. Verified open by the scope
+            # track; no region provisioned means no roster, full stop.
+            return staff_qs.none()
         district_ids = District.objects.filter(region_id__in=region_ids).values_list(
             "id", flat=True
         )

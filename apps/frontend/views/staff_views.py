@@ -8,7 +8,11 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from apps.core.permissions import render_access_denied, require_page_permission
+from apps.core.permissions import (
+    require_export_permission,
+    render_access_denied,
+    require_page_permission,
+)
 from apps.core.scoping import owner_ids
 from django.db.models import Q, Count
 from django.utils import timezone
@@ -1467,6 +1471,7 @@ def team_targets_catchup_action_view(request, plan_id):
 
 
 @require_page_permission("team_targets")
+@require_export_permission
 def team_targets_export_view(request):
     from django.http import HttpResponse
     from apps.targets.fy_calendar import FinancialYearCalendarService as Cal

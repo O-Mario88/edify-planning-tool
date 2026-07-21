@@ -169,6 +169,12 @@ def review(insight_id: str, data: dict, principal) -> dict:
     i = LeadershipDecisionInsight.objects.filter(id=insight_id).first()
     if not i:
         raise NotFoundError("Insight not found.")
+    # The board filters what a reviewer may SEE; this write path fetched by
+    # raw id with no check at all, so HR or a Program Lead could accept or
+    # reject a staff-confidential insight their own board hides. The same
+    # visibility rule gates the decision.
+    if i.decision_type == "staff_hr" and not _may_see_people_insight(principal, i):
+        raise NotFoundError("Insight not found.")
     i.status = data.get("status", "accepted")
     i.reviewed_by_user_id = principal.user_id
     i.reviewed_by_role = principal.active_role

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Sum
 
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import require_export_permission, require_page_permission
 from apps.activities.models import Activity
 from apps.fund_requests.models import (
     AdvanceRequestStatus,
@@ -615,6 +615,7 @@ def activity_finance_detail_view(request, activity_id):
 
 
 @require_page_permission("disbursements")
+@require_export_permission
 def batch_payments_view(request):
     """Batch Payments Page."""
     from django.db.models import F

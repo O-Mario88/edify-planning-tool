@@ -1292,7 +1292,9 @@ def activity_impact_report(principal, query: dict) -> list[dict]:
     from apps.activities.services import calculate_activity_impact
 
     qs = Activity.objects.filter(
-        status__in=COMPLETED_WORK_STATUSES, focus_intervention__isnull=False, deleted_at__isnull=True
+        status__in=COMPLETED_WORK_STATUSES,
+        focus_intervention__isnull=False,
+        deleted_at__isnull=True,
     ).order_by("-planned_date")
 
     out = []

@@ -318,3 +318,21 @@ class SsaUploadAuthorityTests(Fixture):
         from apps.schools.models import SSAImportBatch
 
         self.assertEqual(SSAImportBatch.objects.count(), 0)
+
+
+class ExportPermissionTests(Fixture):
+    """data.export gates bulk extraction; page permission alone is not enough."""
+
+    def test_a_cceo_cannot_export_the_school_directory(self):
+        self.client.force_login(self.cceo)
+        r = self.client.get("/schools?export=csv")
+        self.assertNotEqual(
+            r.get("Content-Type", ""),
+            "text/csv",
+            "a role without data.export must not receive a CSV",
+        )
+
+    def test_page_load_without_export_still_works(self):
+        self.client.force_login(self.cceo)
+        r = self.client.get("/schools")
+        self.assertEqual(r.status_code, 200)

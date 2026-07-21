@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import require_export_permission, require_page_permission
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_partner_ids
 from django.db.models import Q
@@ -35,6 +35,7 @@ PARTNER_ROLES = (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.
 
 
 @require_page_permission("partners")
+@require_export_permission
 def partners_list_view(request):
     """Partner Activities workspace for staff and partner organisations.
 

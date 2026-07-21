@@ -672,7 +672,9 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     # Last meeting
     last_meeting = (
         cluster.activities.filter(
-            activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
+            activity_type="cluster_meeting",
+            status__in=COMPLETED_WORK_STATUSES,
+            deleted_at__isnull=True,
         )
         .order_by("-planned_date")
         .first()
@@ -1143,7 +1145,9 @@ class ClusterDashboardService:
             acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
 
             last_meeting = (
-                acts.filter(activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES)
+                acts.filter(
+                    activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES
+                )
                 .order_by("-planned_date")
                 .first()
             )
@@ -1172,7 +1176,9 @@ class ClusterDashboardService:
             )
 
             meeting_count_fy = acts.filter(
-                activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES, fy=fy
+                activity_type="cluster_meeting",
+                status__in=COMPLETED_WORK_STATUSES,
+                fy=fy,
             ).count()
 
             intervention_scores = cluster_intervention_summary(c.id, user)

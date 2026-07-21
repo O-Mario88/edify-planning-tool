@@ -29,8 +29,10 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
     period_key = data.get("periodKey") or _period_key(fy, period, data)
     scope = resolve_user_scope(principal)
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    if scope.staff_ids:
-        qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
+    if not scope.country_scope:
+        # Unconditional for non-country roles: an empty staff_ids narrowed to
+        # nothing before, not to the whole country's activities.
+        qs = qs.filter(responsible_staff_id__in=scope.staff_ids or ["__none__"])
     qs = _filter_period(qs, period, period_key, data).prefetch_related(
         "schedule_cost_lines"
     )
@@ -200,7 +202,10 @@ def list_requests(query: dict, principal) -> list[dict]:
         qs = qs.filter(fy=query["fy"])
     if query.get("status"):
         qs = qs.filter(status=query["status"])
-    if not scope.country_scope and scope.staff_ids:
+    # An empty staff_ids must narrow to nothing, not to everything —
+    # the truthiness gate skipped the filter for any principal without
+    # a staff profile and fell through to the unfiltered queryset.
+    if not scope.country_scope:
         q = Q(submitted_by_user_id=principal.user_id)
         if scope.supervised_staff_ids:
             from apps.accounts.models import StaffProfile

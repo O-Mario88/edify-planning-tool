@@ -3,7 +3,7 @@ import datetime
 
 from django.http import HttpResponse
 from django.shortcuts import render
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import require_export_permission, require_page_permission
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core.fy import get_operational_fy
@@ -90,6 +90,7 @@ def analytics_dashboard_view(request):
 
 
 @require_page_permission("analytics")
+@require_export_permission
 def analytics_export_view(request):
     """Download the caller's current role-scoped analytics KPIs as CSV."""
     data = AnalyticsDashboardService.get_analytics_data(
@@ -148,6 +149,7 @@ def pl_analytics_view(request):
 
 
 @require_page_permission("pl_analytics")
+@require_export_permission
 def pl_analytics_export_view(request):
     """CSV export of the PL's at-risk school list — scoped to the supervised
     portfolio (never another PL's schools)."""
@@ -675,6 +677,7 @@ def cd_analytics_drilldown_view(request):
 
 
 @require_page_permission("cd_analytics")
+@require_export_permission
 def cd_analytics_export_view(request):
     """CSV export of the CD's country oversight roster (PL performance + risk).
     Read-only export; respects the CD role gate."""

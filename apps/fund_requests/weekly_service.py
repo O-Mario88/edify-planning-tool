@@ -164,7 +164,10 @@ def list_weekly_requests(query: dict, principal) -> list[dict]:
         qs = qs.filter(status=query["status"])
 
     # Scope checks:
-    if not scope.country_scope and scope.staff_ids:
+    # An empty staff_ids must narrow to nothing, not to everything —
+    # the truthiness gate skipped the filter for any principal without
+    # a staff profile and fell through to the unfiltered queryset.
+    if not scope.country_scope:
         q = Q(responsible_user=principal.user_id)
         if scope.supervised_staff_ids:
             from apps.accounts.models import StaffProfile

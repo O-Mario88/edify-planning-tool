@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
+    require_export_permission,
     require_page_permission,
     RolePermissionService,
     get_scoped_object_or_404,
@@ -125,6 +126,7 @@ def get_cluster_impact_data(cluster_id, focus_intervention, principal):
 
 
 @require_page_permission("clusters")
+@require_export_permission
 def cluster_list_view(request):
     user = request.user
 

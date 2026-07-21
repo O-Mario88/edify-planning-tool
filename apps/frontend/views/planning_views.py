@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
+    require_export_permission,
     require_page_permission,
     RolePermissionService,
     get_scoped_object_or_404,
@@ -273,6 +274,7 @@ def special_projects_bulk_partner_view(request):
 
 
 @require_page_permission("planning")
+@require_export_permission
 def planning_dashboard_view(request):
     fy = get_operational_fy()
 
@@ -1069,6 +1071,7 @@ def planning_intelligence_view(request):
 
 
 @require_page_permission("planning")
+@require_export_permission
 def bulk_action_view(request):
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)

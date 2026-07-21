@@ -20,7 +20,7 @@ from django.http import (
 from django.shortcuts import redirect, render
 
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import require_export_permission, require_page_permission
 
 from apps.professional_development.models import (
     PDCourseType,
@@ -509,6 +509,7 @@ def pd_fund_action_view(request, fund_request_id):
 
 
 @require_page_permission("my_professional_development")
+@require_export_permission
 def pd_export_view(request):
     from django.http import HttpResponse
     from django.utils import timezone
