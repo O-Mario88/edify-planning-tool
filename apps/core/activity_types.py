@@ -125,3 +125,22 @@ def check() -> None:
             f"unclassified ActivityType(s): {sorted(missing)} -- add them to a "
             f"group in apps/core/activity_types.py"
         )
+
+
+# ── Work-done status vocabulary ──────────────────────────────────────────────
+# "completed" is a status NO production transition writes — the real chain ends
+# at ia_verified → closed. It survives only on legacy/seeded rows. Fifty-four
+# read sites filtered on it alone, so verified real work counted for nothing
+# while unverified seed rows counted everywhere. One constant, so the answer to
+# "is this activity finished?" stops being a per-module guess.
+#
+# COMPLETED_WORK_STATUSES: display/ops semantics — the work happened (includes
+# the legacy value so historical rows stay visible).
+# Target CREDIT must instead use targets.my_targets.IA_VERIFIED_STATUSES,
+# which excludes the unverified legacy value.
+COMPLETED_WORK_STATUSES = (
+    "ia_verified",
+    "closed",
+    "accountant_confirmed",
+    "completed",
+)

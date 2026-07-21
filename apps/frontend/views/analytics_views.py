@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from apps.core.permissions import require_page_permission
 from django.utils import timezone
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core.fy import get_operational_fy
 from apps.geography.models import Region, District
 from apps.clusters.models import Cluster
@@ -237,9 +238,7 @@ def analytics_drilldown_view(request):
             return {}
         from apps.accounts.models import User
 
-        return dict(
-            User.objects.filter(id__in=owner_ids).values_list("id", "name")
-        )
+        return dict(User.objects.filter(id__in=owner_ids).values_list("id", "name"))
 
     def _owner_label(school, owner_names):
         # Fall back to the denormalised raw name before giving up: an owner may
@@ -294,7 +293,7 @@ def analytics_drilldown_view(request):
         acts = list(
             activities.filter(
                 quarter=quarter,
-                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                status__in=COMPLETED_WORK_STATUSES,
             ).select_related("school", "cluster")[:100]
         )
         staff_ids = [a.responsible_staff_id for a in acts if a.responsible_staff_id]
@@ -391,7 +390,7 @@ def analytics_drilldown_view(request):
                     "coaching_visit",
                     "core_visit",
                 ],
-                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                status__in=COMPLETED_WORK_STATUSES,
                 scheduled_date__gte=sixty_days_ago,
             )
             .values_list("school_id", flat=True)
@@ -431,7 +430,7 @@ def analytics_drilldown_view(request):
                     "cluster_training",
                     "core_training",
                 ],
-                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                status__in=COMPLETED_WORK_STATUSES,
                 quarter=quarter,
             )
             .values_list("school_id", flat=True)

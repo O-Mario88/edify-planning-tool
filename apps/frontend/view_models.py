@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from typing import TYPE_CHECKING
 from apps.core.permissions import has_permission
 
@@ -25,6 +26,7 @@ class SchoolDirectoryViewModel:
         from apps.ssa.models import SsaRecord
         from apps.activities.models import Activity
         from apps.ssa.presentation import build_ssa_score_summary
+        from apps.targets.my_targets import IA_VERIFIED_STATUSES
 
         school_ids = list(school_ids)
         if not school_ids:
@@ -58,7 +60,7 @@ class SchoolDirectoryViewModel:
             Activity.objects.filter(
                 school_id__in=school_ids,
                 activity_type__in=["school_visit", "core_visit", "baseline_ssa_visit"],
-                status="completed",
+                status__in=COMPLETED_WORK_STATUSES,
                 deleted_at__isnull=True,
             )
             .values("school_id")
@@ -70,7 +72,7 @@ class SchoolDirectoryViewModel:
             Activity.objects.filter(
                 school_id__in=school_ids,
                 activity_type__in=["training", "core_training"],
-                status="completed",
+                status__in=COMPLETED_WORK_STATUSES,
                 deleted_at__isnull=True,
             )
             .values("school_id")
@@ -85,8 +87,15 @@ class SchoolDirectoryViewModel:
         # attendance in Python instead of re-querying per school.
         wanted = set(school_ids)
         cluster_attended = Activity.objects.filter(
-            activity_type__in=["cluster_training", "cluster_meeting"],
-            status="completed",
+            # Trainings only — "a meeting is not a training"
+            # (apps/core/activity_types.py); counting meetings here let a
+            # school with 4 meetings and 0 trainings read as trained.
+            # And credit requires verification: "completed" is a status no
+            # production transition writes (only the demo seeder), so this
+            # gate credited unverified seed rows and skipped real verified
+            # work that ends at ia_verified/closed.
+            activity_type__in=["cluster_training"],
+            status__in=IA_VERIFIED_STATUSES,
             deleted_at__isnull=True,
             attended_school_ids__overlap=list(wanted),
         ).values_list("attended_school_ids", flat=True)

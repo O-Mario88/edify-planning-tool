@@ -263,9 +263,7 @@ class ScopeDoctrineContract(TestCase):
     def test_summary_only_roles_are_declared_once(self):
         from apps.core.scoping import COUNTRY_ROLES, SUMMARY_ONLY_ROLES
 
-        self.assertEqual(
-            SUMMARY_ONLY_ROLES, {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
-        )
+        self.assertEqual(SUMMARY_ONLY_ROLES, {EdifyRole.REGIONAL_VICE_PRESIDENT.value})
         self.assertNotIn(
             EdifyRole.REGIONAL_VICE_PRESIDENT.value,
             COUNTRY_ROLES,

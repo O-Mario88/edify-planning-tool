@@ -10,7 +10,7 @@ work whose evidence is not accepted.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 from django.test import Client, TestCase
 from django.utils import timezone
@@ -25,8 +25,12 @@ from apps.schools.models import School
 
 def _user(email, name, role):
     return User.objects.create_user(
-        email=email, name=name, roles=[role], active_role=role,
-        password="pw12345678", is_active=True,
+        email=email,
+        name=name,
+        roles=[role],
+        active_role=role,
+        password="pw12345678",
+        is_active=True,
     )
 
 
@@ -36,15 +40,21 @@ class NextActionBranchTests(TestCase):
         region = Region.objects.create(name="NA2 Region")
         district = District.objects.create(name="NA2 District", region=region)
         cls.school = School.objects.create(
-            name="NA2 Primary", school_id="N2-1",
-            region_id=region.id, district_id=district.id,
+            name="NA2 Primary",
+            school_id="N2-1",
+            region_id=region.id,
+            district_id=district.id,
         )
 
     def _act(self, **kw):
         defaults = dict(
-            school_id=self.school.id, activity_type="school_visit",
-            status="completion_started", fy="2026", quarter="Q4",
-            planned_date=timezone.now(), evidence_status="none",
+            school_id=self.school.id,
+            activity_type="school_visit",
+            status="completion_started",
+            fy="2026",
+            quarter="Q4",
+            planned_date=timezone.now(),
+            evidence_status="none",
         )
         defaults.update(kw)
         return Activity.objects.create(**defaults)
@@ -53,12 +63,20 @@ class NextActionBranchTests(TestCase):
         from apps.fund_requests.models import AdvanceRequest
 
         line = ActivityScheduleCostLine.objects.create(
-            activity=activity, cost_setting_key="transport",
-            label="Transport", unit_cost=50_000, amount=50_000,
+            activity=activity,
+            cost_setting_key="transport",
+            label="Transport",
+            unit_cost=50_000,
+            amount=50_000,
         )
         defaults = dict(
-            activity=activity, budget_line=line, fy="2026", quarter="Q4",
-            planned_date=timezone.now(), amount=50_000, status="disbursed",
+            activity=activity,
+            budget_line=line,
+            fy="2026",
+            quarter="Q4",
+            planned_date=timezone.now(),
+            amount=50_000,
+            status="disbursed",
             disbursed_amount=50_000,
         )
         defaults.update(kw)
@@ -66,7 +84,8 @@ class NextActionBranchTests(TestCase):
 
     def test_partner_evidence_awaiting_review_is_the_next_action(self):
         act = self._act(
-            delivery_type="partner", evidence_status="uploaded",
+            delivery_type="partner",
+            evidence_status="uploaded",
             status="completion_started",
         )
         action = compute_next_action(act, date.today())
@@ -82,7 +101,9 @@ class NextActionBranchTests(TestCase):
         """The drawer and route existed; nothing ever pointed at them."""
         act = self._act(status="ia_verified", evidence_status="accepted")
         self._advance(
-            act, status="reimbursement_disbursed", reimbursed_amount=12_000,
+            act,
+            status="reimbursement_disbursed",
+            reimbursed_amount=12_000,
         )
         act = Activity.objects.prefetch_related(
             "schedule_cost_lines__advance_requests"
@@ -95,15 +116,24 @@ class NextActionBranchTests(TestCase):
         """Reading only the first cost line hid outstanding money on lines 2+."""
         act = self._act(status="ia_verified", evidence_status="accepted")
         settled_line = ActivityScheduleCostLine.objects.create(
-            activity=act, cost_setting_key="lunch", label="Lunch",
-            unit_cost=5_000, amount=5_000,
+            activity=act,
+            cost_setting_key="lunch",
+            label="Lunch",
+            unit_cost=5_000,
+            amount=5_000,
         )
         from apps.fund_requests.models import AdvanceRequest
 
         AdvanceRequest.objects.create(
-            activity=act, budget_line=settled_line, fy="2026", quarter="Q4",
-            planned_date=timezone.now(), amount=5_000, status="accounted",
-            disbursed_amount=5_000, accounted_amount=5_000,
+            activity=act,
+            budget_line=settled_line,
+            fy="2026",
+            quarter="Q4",
+            planned_date=timezone.now(),
+            amount=5_000,
+            status="accounted",
+            disbursed_amount=5_000,
+            accounted_amount=5_000,
             accountability_netsuite_id="NS-1",
         )
         # A second line still carrying live money.
@@ -148,8 +178,10 @@ class PriorityQueueRenderTests(TestCase):
         region = Region.objects.create(name="PQ Region")
         district = District.objects.create(name="PQ District", region=region)
         cls.school = School.objects.create(
-            name="PQ Primary", school_id="PQ-1",
-            region_id=region.id, district_id=district.id,
+            name="PQ Primary",
+            school_id="PQ-1",
+            region_id=region.id,
+            district_id=district.id,
         )
 
     def setUp(self):
@@ -160,9 +192,13 @@ class PriorityQueueRenderTests(TestCase):
 
     def test_due_today_work_appears_in_the_priority_queue(self):
         Activity.objects.create(
-            school_id=self.school.id, activity_type="school_visit",
-            status="scheduled", fy="2026", quarter="Q4",
-            responsible_staff_id=self.sp.id, planned_date=timezone.now(),
+            school_id=self.school.id,
+            activity_type="school_visit",
+            status="scheduled",
+            fy="2026",
+            quarter="Q4",
+            responsible_staff_id=self.sp.id,
+            planned_date=timezone.now(),
         )
         client = Client()
         client.force_login(self.cceo)
@@ -232,7 +268,6 @@ class MetricAttributionTests(TestCase):
         so the explanatory comment naming the old label does not trip it.
         """
         import inspect
-        import re
 
         from apps.analytics import pl_dashboard_service
 

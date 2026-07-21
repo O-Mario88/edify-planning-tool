@@ -42,7 +42,9 @@ class ProjectDetailView(APIView):
     def patch(self, request: Request, project_id: str) -> Response:
         # CD/ProjectCoordinator/Admin sets the project manager (single staff id).
         if "managerStaffId" in request.data:
-            return Response(services.set_manager(project_id, request.data, request.user))
+            return Response(
+                services.set_manager(project_id, request.data, request.user)
+            )
         return Response(services.get_one(project_id, request.user))
 
 

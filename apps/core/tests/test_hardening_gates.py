@@ -417,7 +417,6 @@ class ConcurrentMutationTest(TransactionTestCase):
             f"expected exactly one activity, got {count}; results={results}",
         )
 
-
     def test_concurrent_closure_closes_once(self):
         """Two threads closing the same activity must produce one closure.
 

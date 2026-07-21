@@ -41,7 +41,9 @@ class EscalationChannelTests(TestCase):
     def setUp(self):
         self.cd = _user("cd-esc@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=self.cd, title="CD", country="Uganda")
-        self.rvp = _user("rvp-esc@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        self.rvp = _user(
+            "rvp-esc@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
         self.pl = _user("pl-esc@t.org", "Pat", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
 
@@ -129,7 +131,9 @@ class EscalationChannelTests(TestCase):
 
         esc = self._raise()
         escalation_service.resolve(
-            esc.id, {"decision": "declined", "decision_note": "Not this quarter."}, self.rvp
+            esc.id,
+            {"decision": "declined", "decision_note": "Not this quarter."},
+            self.rvp,
         )
         self.assertTrue(
             AuditLog.objects.filter(
@@ -169,7 +173,9 @@ class EscalationPageTests(TestCase):
     def setUp(self):
         self.cd = _user("cd-pg-esc@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=self.cd, title="CD", country="Uganda")
-        self.rvp = _user("rvp-pg-esc@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        self.rvp = _user(
+            "rvp-pg-esc@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
         self.client = Client()
 
@@ -191,7 +197,9 @@ class EscalationPageTests(TestCase):
         cceo = _user("cceo-esc@t.org", "Cara", EdifyRole.CCEO.value)
         self.client.force_login(cceo)
         resp = self.client.get("/escalations", follow=True)
-        self.assertNotIn("escalations", resp.request["PATH_INFO"].lower().split("/")[-1:] or [""])
+        self.assertNotIn(
+            "escalations", resp.request["PATH_INFO"].lower().split("/")[-1:] or [""]
+        )
 
     def test_cd_can_post_an_escalation_through_the_page(self):
         self.client.force_login(self.cd)

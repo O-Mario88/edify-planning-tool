@@ -551,20 +551,29 @@ class EntitlementGateTest(TestCase):
             self.cceo,
         )
 
-    def test_client_can_schedule_multiple_visits_without_entitlement_block(self):
+    def test_client_second_visit_is_refused_until_the_first_is_released(self):
+        """UPDATED BY MANDATE. This test previously pinned the permissive
+        behaviour ("multiple visits without entitlement block") — the
+        post-remediation verification brief §11 mandates one visit and one
+        training per client school per FY, and the audit measured three
+        schools already in breach. The old assertion documented the defect.
+        """
+        from apps.core.exceptions import BadRequest
+
         first = self._schedule_visit(5)
-        second = self._schedule_visit(12)
-        self.assertNotEqual(first["id"], second["id"])
-        # Cancelling remains a normal lifecycle action, not a prerequisite to
-        # scheduling another visit.
+        with self.assertRaises(BadRequest):
+            self._schedule_visit(12)
+        # Cancelling releases the entitlement.
         Activity.objects.filter(id=first["id"]).update(status="cancelled")
         third = self._schedule_visit(12)
-        self.assertNotEqual(second["id"], third["id"])
+        self.assertNotEqual(first["id"], third["id"])
 
-    def test_client_can_schedule_multiple_trainings_without_entitlement_block(self):
-        first = self._schedule_training(5)
-        second = self._schedule_training(12)
-        self.assertNotEqual(first["id"], second["id"])
+    def test_client_second_training_is_refused(self):
+        from apps.core.exceptions import BadRequest
+
+        self._schedule_training(5)
+        with self.assertRaises(BadRequest):
+            self._schedule_training(12)
 
     def test_client_slots_are_scoped_to_the_scheduled_activity_fy(self):
         self._schedule_visit(5)
@@ -616,7 +625,7 @@ class EntitlementGateTest(TestCase):
         self.assertEqual(issues["clientDuplicateActiveEntitlements"], 1)
         self.assertFalse(issues["clean"])
 
-    def test_core_staff_can_schedule_more_than_two_visits(self):
+    def test_raw_core_visit_scheduling_is_refused(self):
         self.school.school_type = "core"
         self.school.save()
         from apps.activities.services import create
@@ -636,14 +645,18 @@ class EntitlementGateTest(TestCase):
                 self.cceo,
             )
 
-        core_visit(3)
-        core_visit(4)
-        core_visit(5)
+        # UPDATED BY MANDATE (§12): core types may no longer reach create()
+        # without the Core Schools slot lock at all — the raw path was the
+        # bypass around the 2+2 staff cap.
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaises(BadRequest):
+            core_visit(3)
         self.assertEqual(
             Activity.objects.filter(
                 school=self.school,
                 activity_type="core_visit",
                 deleted_at__isnull=True,
             ).count(),
-            3,
+            0,
         )

@@ -677,9 +677,7 @@ class HRPDDashboardService:
                     staff_id=sp.id, fy=fy
                 ).first()
                 if existing:
-                    spent = StaffPDService.committed_and_accounted_cents(
-                        sp.id, fy
-                    )
+                    spent = StaffPDService.committed_and_accounted_cents(sp.id, fy)
                     if spent > amount_cents:
                         skipped.append(sp.id)
                         continue

@@ -6,42 +6,96 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('flags', '0001_initial'),
+        ("flags", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='LeadershipEscalation',
+            name="LeadershipEscalation",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('raised_by_user_id', models.CharField(max_length=30)),
-                ('raised_by_name', models.CharField(blank=True, max_length=255, null=True)),
-                ('assigned_to_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('country_id', models.CharField(default='Uganda', max_length=64)),
-                ('category', models.CharField(max_length=64)),
-                ('subject', models.CharField(max_length=255)),
-                ('detail', models.TextField()),
-                ('requested_decision', models.CharField(blank=True, max_length=512, null=True)),
-                ('severity', models.CharField(choices=[('critical', 'Critical'), ('high', 'High'), ('normal', 'Normal')], default='normal', max_length=16)),
-                ('scope_type', models.CharField(blank=True, max_length=32, null=True)),
-                ('scope_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('scope_name', models.CharField(blank=True, max_length=255, null=True)),
-                ('due_date', models.DateField(blank=True, null=True)),
-                ('status', models.CharField(choices=[('open', 'Open'), ('acknowledged', 'Acknowledged'), ('resolved', 'Resolved')], default='open', max_length=16)),
-                ('acknowledged_at', models.DateTimeField(blank=True, null=True)),
-                ('acknowledged_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('decision', models.CharField(blank=True, max_length=64, null=True)),
-                ('decision_note', models.TextField(blank=True, null=True)),
-                ('resolved_at', models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("raised_by_user_id", models.CharField(max_length=30)),
+                (
+                    "raised_by_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "assigned_to_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("country_id", models.CharField(default="Uganda", max_length=64)),
+                ("category", models.CharField(max_length=64)),
+                ("subject", models.CharField(max_length=255)),
+                ("detail", models.TextField()),
+                (
+                    "requested_decision",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                (
+                    "severity",
+                    models.CharField(
+                        choices=[
+                            ("critical", "Critical"),
+                            ("high", "High"),
+                            ("normal", "Normal"),
+                        ],
+                        default="normal",
+                        max_length=16,
+                    ),
+                ),
+                ("scope_type", models.CharField(blank=True, max_length=32, null=True)),
+                ("scope_id", models.CharField(blank=True, max_length=30, null=True)),
+                ("scope_name", models.CharField(blank=True, max_length=255, null=True)),
+                ("due_date", models.DateField(blank=True, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("open", "Open"),
+                            ("acknowledged", "Acknowledged"),
+                            ("resolved", "Resolved"),
+                        ],
+                        default="open",
+                        max_length=16,
+                    ),
+                ),
+                ("acknowledged_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "acknowledged_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("decision", models.CharField(blank=True, max_length=64, null=True)),
+                ("decision_note", models.TextField(blank=True, null=True)),
+                ("resolved_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'leadership_escalation',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['status', 'severity'], name='leadership__status_1fbd67_idx'), models.Index(fields=['raised_by_user_id'], name='leadership__raised__7750be_idx'), models.Index(fields=['country_id', 'status'], name='leadership__country_04d3b5_idx')],
+                "db_table": "leadership_escalation",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["status", "severity"],
+                        name="leadership__status_1fbd67_idx",
+                    ),
+                    models.Index(
+                        fields=["raised_by_user_id"],
+                        name="leadership__raised__7750be_idx",
+                    ),
+                    models.Index(
+                        fields=["country_id", "status"],
+                        name="leadership__country_04d3b5_idx",
+                    ),
+                ],
             },
         ),
     ]

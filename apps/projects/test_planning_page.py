@@ -67,6 +67,7 @@ class SpecialProjectPlanningPageTests(TestCase):
             quarter=self.quarter,
             average_score=4.7,
             uploaded_by=self.admin.id,
+            verification_status="confirmed",
         )
         SsaScore.objects.create(
             ssa_record=self.ssa,

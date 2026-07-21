@@ -586,9 +586,7 @@ class CDAnalyticsService:
             "bottom": list(reversed(measured[-5:])) if len(measured) > 5 else [],
             "measured_count": len(measured),
             "unset_count": sum(1 for r in ranked if r["unset"]),
-            "country_median": (
-                measured[len(measured) // 2]["pct"] if measured else 0
-            ),
+            "country_median": (measured[len(measured) // 2]["pct"] if measured else 0),
         }
 
     @staticmethod

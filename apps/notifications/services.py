@@ -8,8 +8,13 @@ from django.utils import timezone
 from .models import Notification
 
 # Roles that approve leave, in the lowercased form `resolve()` compares against.
-_APPROVER_ROLES = {"program lead", "countrydirector", "regionalvicepresident",
-                   "humanresources", "admin"}
+_APPROVER_ROLES = {
+    "program lead",
+    "countrydirector",
+    "regionalvicepresident",
+    "humanresources",
+    "admin",
+}
 
 
 class NotificationLinkResolver:
@@ -99,7 +104,10 @@ class NotificationLinkResolver:
             route = "/fund-requests/weekly"
             label = "View Approved Request"
 
-        elif event_type in ("weekly_fund_request_ready", "fund_request_sent_to_accountant"):
+        elif event_type in (
+            "weekly_fund_request_ready",
+            "fund_request_sent_to_accountant",
+        ):
             route = "/disbursements"
             label = "Disburse Funds"
 

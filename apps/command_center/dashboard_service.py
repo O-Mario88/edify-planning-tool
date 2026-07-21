@@ -1,3 +1,4 @@
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from datetime import date, timedelta
 
 from django.db.models import Avg, Sum
@@ -324,7 +325,7 @@ class DashboardMetricsService:
             ).count(),
             "planned_visits": activities_this_month,
             "evidence_pending": activities_qs.filter(
-                status="completed", evidence__isnull=True
+                status__in=COMPLETED_WORK_STATUSES, evidence__isnull=True
             ).count(),
             "payments_due": _ugx_compact_top(
                 WeeklyFundRequest.objects.filter(
@@ -397,7 +398,7 @@ class DashboardMetricsService:
                 }
             )
         _evidence_pending = activities_qs.filter(
-            status="completed", evidence__isnull=True
+            status__in=COMPLETED_WORK_STATUSES, evidence__isnull=True
         ).count()
         if _evidence_pending:
             attention_items.append(

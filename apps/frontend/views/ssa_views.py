@@ -114,9 +114,25 @@ def ssa_template_download_view(request):
     return response
 
 
+def _may_upload_ssa(request) -> bool:
+    """Official SSA creation requires the SSA_UPLOAD permission, not just the
+    page. The page key "ssa" is open to CD/RVP/PL/CCEO for READING, but a
+    staff-collected upload is born verification_status="confirmed"
+    (ssa/services.py) — so page access alone let four non-IA roles mint
+    official confirmed SSA without IA ever touching it. The API sibling
+    already enforces ssa.upload; the frontend must match it.
+    """
+    return has_permission(request.user, Permission.SSA_UPLOAD.value)
+
+
 @require_page_permission("ssa")
 def ssa_upload_center_view(request):
     if request.method == "POST":
+        if not _may_upload_ssa(request):
+            messages.error(
+                request, "Only Impact Assessment may upload official SSA data."
+            )
+            return redirect("/ssa/upload/")
         file = request.FILES.get("file")
         if not file:
             messages.error(request, "A file is required for upload.")
@@ -152,6 +168,12 @@ def ssa_upload_preview_view(request, batch_id):
     rows = batch.rows.all()
 
     if request.method == "POST":
+        # The commit is the moment records are minted — same gate as upload.
+        if not _may_upload_ssa(request):
+            messages.error(
+                request, "Only Impact Assessment may finalize an SSA import."
+            )
+            return redirect("/ssa")
         result = import_ssa_batch(batch, request.user)
         messages.success(
             request,

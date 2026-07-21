@@ -491,7 +491,9 @@ def schedule_modal_view(request):
     # Resolve focus recommendations
     recommendations = []
     latest_ssa = (
-        school.ssa_records.filter(deleted_at__isnull=True)
+        school.ssa_records.filter(
+            deleted_at__isnull=True, verification_status="confirmed"
+        )
         .order_by("-date_of_ssa")
         .first()
     )
@@ -1002,7 +1004,9 @@ def planning_intelligence_view(request):
 
     # Fetch latest SSA date
     latest_ssa = (
-        school.ssa_records.filter(deleted_at__isnull=True)
+        school.ssa_records.filter(
+            deleted_at__isnull=True, verification_status="confirmed"
+        )
         .order_by("-date_of_ssa")
         .first()
     )
@@ -1301,7 +1305,9 @@ def schedule_activity_form_view(request):
     recommendations = []
     if selected_school:
         latest_ssa = (
-            selected_school.ssa_records.filter(deleted_at__isnull=True)
+            selected_school.ssa_records.filter(
+                deleted_at__isnull=True, verification_status="confirmed"
+            )
             .order_by("-date_of_ssa")
             .first()
         )

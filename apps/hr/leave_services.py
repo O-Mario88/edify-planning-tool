@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import logging
 from datetime import date, datetime, timedelta
 from django.db import transaction
@@ -572,7 +573,10 @@ class LeaveApprovalService:
         # approver going on leave froze their own approval queue: the platform
         # has a coverage mechanism precisely so authority moves with the
         # person, and this resolver was ignoring it.
-        supervisor_profiles = [reviewer_profile.id, *_covered_staff_ids(reviewer_profile)]
+        supervisor_profiles = [
+            reviewer_profile.id,
+            *_covered_staff_ids(reviewer_profile),
+        ]
         direct_supervisor = StaffSupervisorAssignment.objects.filter(
             supervisee=leave.staff, supervisor_id__in=supervisor_profiles
         ).exists()
@@ -961,7 +965,7 @@ class LeaveImpactAnalysisService:
         if staff.user.active_role == EdifyRole.IMPACT_ASSESSMENT.value:
             ia_verification_count = Activity.objects.filter(
                 ia_verification_status="pending",
-                status="completed",
+                status__in=COMPLETED_WORK_STATUSES,
                 deleted_at__isnull=True,
             ).count()
 

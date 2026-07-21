@@ -84,11 +84,13 @@ class DecisionLogScopeTests(TestCase):
     def setUp(self):
         self.cd = _user("cd-log@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=self.cd, title="CD", country="Uganda")
-        self.foreign_cd = _user("cd-ke-log@t.org", "Kofi", EdifyRole.COUNTRY_DIRECTOR.value)
-        StaffProfile.objects.create(
-            user=self.foreign_cd, title="CD", country="Kenya"
+        self.foreign_cd = _user(
+            "cd-ke-log@t.org", "Kofi", EdifyRole.COUNTRY_DIRECTOR.value
         )
-        self.rvp = _user("rvp-log@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        StaffProfile.objects.create(user=self.foreign_cd, title="CD", country="Kenya")
+        self.rvp = _user(
+            "rvp-log@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
         self.cceo = _user("cceo-log@t.org", "Cara", EdifyRole.CCEO.value)
         StaffProfile.objects.create(user=self.cceo, title="CCEO", country="Uganda")

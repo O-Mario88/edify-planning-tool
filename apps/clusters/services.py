@@ -8,6 +8,7 @@ active cluster per sub-county by default — a 2nd requires CLUSTER_OVERRIDE.
 
 from __future__ import annotations
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 
@@ -511,7 +512,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
     cluster_activities = list(
         Activity.objects.filter(
             cluster=cluster,
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             activity_type__in=[
                 "cluster_meeting",
                 "training",
@@ -571,7 +572,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         last_visit = (
             s.activities.filter(
                 activity_type="school_visit",
-                status="completed",
+                status__in=COMPLETED_WORK_STATUSES,
                 deleted_at__isnull=True,
             )
             .order_by("-planned_date")
@@ -587,7 +588,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         last_training = (
             s.activities.filter(
                 activity_type__in=["training", "school_improvement_training"],
-                status="completed",
+                status__in=COMPLETED_WORK_STATUSES,
                 deleted_at__isnull=True,
             )
             .order_by("-planned_date")
@@ -671,7 +672,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     # Last meeting
     last_meeting = (
         cluster.activities.filter(
-            activity_type="cluster_meeting", status="completed", deleted_at__isnull=True
+            activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
         )
         .order_by("-planned_date")
         .first()
@@ -686,7 +687,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     last_training = (
         cluster.activities.filter(
             activity_type__in=["training", "school_improvement_training"],
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
         )
         .order_by("-planned_date")
@@ -815,7 +816,7 @@ def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
     cluster = _scoped_cluster(cluster_id, principal)
 
     activities = cluster.activities.filter(
-        status="completed", deleted_at__isnull=True
+        status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
     ).order_by("-planned_date")
 
     from apps.activities.services import calculate_activity_impact
@@ -1077,9 +1078,7 @@ class ClusterDashboardService:
             # Fails CLOSED. The previous `and scope.district_ids` meant a user
             # with no district assignment — true for most seeded CCEOs — fell
             # through to every cluster in the country instead of none.
-            base_qs = base_qs.filter(
-                district_id__in=scope.district_ids or ["__none__"]
-            )
+            base_qs = base_qs.filter(district_id__in=scope.district_ids or ["__none__"])
 
         # 2. Filters from request
         q = request.GET.get("q", "").strip()
@@ -1144,7 +1143,7 @@ class ClusterDashboardService:
             acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
 
             last_meeting = (
-                acts.filter(activity_type="cluster_meeting", status="completed")
+                acts.filter(activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES)
                 .order_by("-planned_date")
                 .first()
             )
@@ -1161,7 +1160,7 @@ class ClusterDashboardService:
                         "school_improvement_training",
                         "cluster_training",
                     ],
-                    status="completed",
+                    status__in=COMPLETED_WORK_STATUSES,
                 )
                 .order_by("-planned_date")
                 .first()
@@ -1173,7 +1172,7 @@ class ClusterDashboardService:
             )
 
             meeting_count_fy = acts.filter(
-                activity_type="cluster_meeting", status="completed", fy=fy
+                activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES, fy=fy
             ).count()
 
             intervention_scores = cluster_intervention_summary(c.id, user)
@@ -1467,9 +1466,7 @@ class ClusterRecommendationService:
                 "recommendationReason",
                 "Cluster has solid SSA scores and frequent meetings.",
             ),
-            "activity_label": planning.get(
-                "recommendationActivityLabel", "Schedule"
-            ),
+            "activity_label": planning.get("recommendationActivityLabel", "Schedule"),
             "focus_intervention": planning.get(
                 "recommendationFocusIntervention", "leadership"
             ),

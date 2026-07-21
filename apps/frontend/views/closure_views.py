@@ -212,9 +212,9 @@ def blocked_closure_view(request):
     # reason, so listing them all leaks the same information the activity
     # queue would.
     visible = _in_scope(request, Activity.objects.all()).values("id")
-    blockers = ClosureBlocker.objects.filter(
-        activity_id__in=visible
-    ).select_related("activity", "activity__school")
+    blockers = ClosureBlocker.objects.filter(activity_id__in=visible).select_related(
+        "activity", "activity__school"
+    )
 
     context = {"blockers": blockers}
     return render(request, "pages/closure/blocked_closure.html", context)

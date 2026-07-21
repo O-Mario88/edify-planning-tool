@@ -16,7 +16,6 @@ from django.test import TestCase
 
 from apps.accounts.models import (
     StaffProfile,
-    StaffSchoolAssignment,
     StaffSupervisorAssignment,
     User,
 )
@@ -119,10 +118,75 @@ class LinkedItemAuthorizationTests(TestCase):
         self.assertIn("can_access_context(user, context_type, item_id)", source)
 
     def test_send_drops_unauthorised_linked_items(self):
-        from apps.messaging import services
+        """Executed, not inspected.
 
-        source = inspect.getsource(services.send)
-        self.assertIn("can_access_context(sender, context_type, item_id)", source)
+        The first version of this assertion checked the SOURCE TEXT and
+        happily passed while the code referenced an undefined name — the whole
+        branch would have raised NameError the moment anyone sent a message
+        with a linked item. Source assertions cannot see that; only running
+        the code can.
+        """
+        from apps.accounts.models import StaffSchoolAssignment
+        from apps.geography.models import District as _D, Region as _R
+        from apps.messaging import services
+        from apps.schools.models import School as _S
+
+        region = _R.objects.create(name="LI Region")
+        district = _D.objects.create(name="LI District", region=region)
+        sender = _user("li-cceo@t.org", "Sender", EdifyRole.CCEO.value)
+        sp = StaffProfile.objects.create(user=sender, country="Uganda")
+        mine = _S.objects.create(
+            name="Mine",
+            school_id="LI-1",
+            region_id=region.id,
+            district_id=district.id,
+            account_owner_id=sp.id,
+        )
+        theirs = _S.objects.create(
+            name="Theirs",
+            school_id="LI-2",
+            region_id=region.id,
+            district_id=district.id,
+        )
+        StaffSchoolAssignment.objects.create(staff=sp, school_id=mine.id)
+        recipient = _user("li-pl@t.org", "Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        sp_pl = StaffProfile.objects.create(user=recipient, country="Uganda")
+        # The supervising PL legitimately shares this school's context; the
+        # LINKED item is the only thing under test here.
+        StaffSupervisorAssignment.objects.create(supervisee=sp, supervisor=sp_pl)
+
+        # A RESOLVABLE context is the leaking case: the linked id resolves to
+        # a real record whose NAME is then persisted onto the thread. (With a
+        # record-less context like `system` an id resolves to nothing, so the
+        # label is just the id echoed back and there is nothing to leak.)
+        msg = services.send(
+            {
+                "recipientId": recipient.id,
+                "subject": "s",
+                "contextType": "school",
+                "contextId": mine.school_id,
+                "body": "b",
+                "linkedItems": [theirs.school_id],
+            },
+            sender,
+        )
+        from apps.messaging.models import MessageThread
+
+        thread = MessageThread.objects.get(id=msg["threadId"])
+        linked_ids = {i.get("id") for i in (thread.linked_items or [])}
+        self.assertNotIn(
+            theirs.school_id,
+            linked_ids,
+            "an unauthorised linked item leaked a record's name into the panel",
+        )
+
+        # And the summary must not resolve it either.
+        summary = services.context_summary(
+            sender, "school", mine.school_id, [theirs.school_id]
+        )
+        self.assertNotIn(
+            "Theirs", str(summary), "the compose summary resolved a foreign record"
+        )
 
 
 class FilteredKpiAgreementTests(TestCase):
@@ -157,9 +221,9 @@ class FilteredKpiAgreementTests(TestCase):
     def test_school_directory_kpis_follow_the_filter(self):
         self.client.force_login(self.admin)
         unfiltered = self.client.get("/schools").context["kpi_strip_items"]
-        filtered = self.client.get(
-            f"/schools?district={self.district.id}"
-        ).context["kpi_strip_items"]
+        filtered = self.client.get(f"/schools?district={self.district.id}").context[
+            "kpi_strip_items"
+        ]
 
         def _total(items):
             for item in items:
@@ -186,3 +250,28 @@ class FilteredKpiAgreementTests(TestCase):
             first_filter,
             "the KPI block ran before the filters were even read",
         )
+
+
+class DrilldownGuardExecutesTests(TestCase):
+    """The allocation drilldown guard must actually run.
+
+    It referenced a service that was never imported into that function, so the
+    guard I added would have raised NameError on the first request — while the
+    whole suite stayed green, because nothing exercised the view. Fetching it
+    is the only assertion that can catch that class of mistake.
+    """
+
+    def test_the_drilldown_refuses_an_out_of_scope_staff_member(self):
+        rvp = _user("dd-rvp@t.org", "RVP", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        StaffProfile.objects.create(user=rvp, country="Uganda")
+        target = _user("dd-cceo@t.org", "Field", EdifyRole.CCEO.value)
+        StaffProfile.objects.create(user=target, country="Uganda")
+
+        self.client.force_login(rvp)
+        r = self.client.get(
+            "/finance/fund-allocation/drilldown"
+            f"?staff_id={target.id}&month=April&fy=2026&category=all"
+        )
+        # Whatever the policy outcome, the view must RESPOND — a NameError
+        # would surface as a 500 here.
+        self.assertNotEqual(r.status_code, 500)

@@ -3,6 +3,7 @@ GROUP 1 — Core Operations Views
 Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-Team, Notifications, Profile
 """
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -200,7 +201,7 @@ def staff_directory_view(request):
         for row in (
             Activity.objects.filter(
                 responsible_staff_id__in=all_ids,
-                status="completed",
+                status__in=COMPLETED_WORK_STATUSES,
                 activity_type__in=VISIT_TYPES,
                 deleted_at__isnull=True,
             )
@@ -272,9 +273,7 @@ def staff_profile_view(request, user_id):
     # "Never trust the URL" — the same rule the team-targets drawer already
     # applies. Holding the page permission is not authority over an arbitrary
     # employee's 360 profile.
-    if not _directory_scope(
-        request.user, User.objects.filter(id=member.id)
-    ).exists():
+    if not _directory_scope(request.user, User.objects.filter(id=member.id)).exists():
         return render_access_denied(
             request, "You do not have access to this employee's profile."
         )
@@ -298,7 +297,7 @@ def staff_profile_view(request, user_id):
         .order_by("-planned_date")[:50]
     )
 
-    completed = [a for a in activities if a.status == "completed"]
+    completed = [a for a in activities if a.status in COMPLETED_WORK_STATUSES]
     overdue = [
         a
         for a in activities
@@ -316,7 +315,7 @@ def staff_profile_view(request, user_id):
     schools_covered = (
         Activity.objects.filter(
             responsible_staff_id__in=member_ids,
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
             deleted_at__isnull=True,
         )
@@ -397,7 +396,7 @@ def today_view(request):
     # Evidence missing (completed but no evidence)
     evidence_gap = Activity.objects.filter(
         responsible_staff_id=user.id,
-        status="completed",
+        status__in=COMPLETED_WORK_STATUSES,
         evidence__isnull=True,
         deleted_at__isnull=True,
     ).select_related("school")[:5]
@@ -449,7 +448,7 @@ def visits_log_view(request):
         )
 
     visits = list(visits_qs[:100])
-    completed = sum(1 for v in visits if v.status == "completed")
+    completed = sum(1 for v in visits if v.status in COMPLETED_WORK_STATUSES)
     pending = sum(
         1
         for v in visits
@@ -500,7 +499,7 @@ def trainings_log_view(request):
         )
 
     trainings = list(trainings_qs[:100])
-    completed = sum(1 for t in trainings if t.status == "completed")
+    completed = sum(1 for t in trainings if t.status in COMPLETED_WORK_STATUSES)
 
     context = {
         "trainings": trainings,
@@ -548,7 +547,7 @@ def _quarter_completed_counts(activity_types, fy, staff_ids):
             responsible_staff_id__in=list(staff_ids),
             activity_type__in=activity_types,
             fy=fy,
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
         )
         .values("quarter")
@@ -824,7 +823,7 @@ def my_team_view(request):
         cceo_ids = owner_ids(cceo)
         completed = Activity.objects.filter(
             responsible_staff_id__in=cceo_ids,
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
         ).count()
         overdue = Activity.objects.filter(
@@ -835,7 +834,7 @@ def my_team_view(request):
         ).count()
         evidence_gap = Activity.objects.filter(
             responsible_staff_id__in=cceo_ids,
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             evidence__isnull=True,
             deleted_at__isnull=True,
         ).count()
@@ -1111,7 +1110,7 @@ def profile_view(request):
     ).count()
     completed = Activity.objects.filter(
         responsible_staff_id=user.id,
-        status="completed",
+        status__in=COMPLETED_WORK_STATUSES,
         deleted_at__isnull=True,
     ).count()
 

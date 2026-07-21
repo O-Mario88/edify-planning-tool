@@ -96,9 +96,10 @@ def _supervisor_user_ids(activity) -> list[str]:
     )
     if not owner:
         return []
-    sp = StaffProfile.objects.filter(id=owner).first() or StaffProfile.objects.filter(
-        user_id=owner
-    ).first()
+    sp = (
+        StaffProfile.objects.filter(id=owner).first()
+        or StaffProfile.objects.filter(user_id=owner).first()
+    )
     if not sp:
         return []
     links = StaffSupervisorAssignment.objects.filter(supervisee=sp).select_related(
@@ -412,6 +413,88 @@ def _apply_schedule_cost_snapshot(
     sync_monthly_drafts_for_activity(activity, prior_buckets=prior_buckets)
 
 
+def _assert_schedule_entitlement(activity_type, school, fy, data):
+    """The annual entitlement gates that scheduling must enforce.
+
+    Verification-audit findings C3 and the core-bypass HIGH:
+    * A CLIENT school's package is one visit and one training per fiscal
+      year. The guard had been removed outright — only a system-health
+      detector remained, whose comment claimed prevention that no longer
+      existed, and three schools had already breached it in dev data.
+    * CORE work was schedulable by POSTing activity_type=core_visit straight
+      to the generic endpoint, skipping CorePackageSchedulingService — no
+      slot, no quarter window, no staff cap. Core types must arrive through
+      the slot machinery, which sets coreSlotVerified after locking a slot.
+    """
+    if not school:
+        return
+    if activity_type in ("core_visit", "core_training"):
+        if not data.get("coreSlotVerified"):
+            raise BadRequest(
+                "Core support must be scheduled from the Core Schools page, "
+                "which reserves one of the package's slots."
+            )
+        return
+    if getattr(school, "school_type", None) != "client":
+        return
+    ENTITLEMENT_TYPES = {
+        "school_visit": ("school_visit",),
+        "training": ("training", "in_school_training", "school_improvement_training"),
+        "in_school_training": (
+            "training",
+            "in_school_training",
+            "school_improvement_training",
+        ),
+        "school_improvement_training": (
+            "training",
+            "in_school_training",
+            "school_improvement_training",
+        ),
+    }
+    family = ENTITLEMENT_TYPES.get(activity_type)
+    if not family:
+        return
+    live = (
+        Activity.objects.filter(
+            school=school,
+            activity_type__in=family,
+            fy=fy,
+            deleted_at__isnull=True,
+        )
+        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .count()
+    )
+    if live >= 1:
+        kind = "visit" if family == ("school_visit",) else "training"
+        raise BadRequest(
+            f"This client school's {kind} entitlement for FY{fy} is already "
+            "used. Reschedule the existing activity instead of creating a "
+            "second one."
+        )
+
+
+def _cluster_member_school_ids(activity, raw_ids) -> list[str]:
+    """Attendance may only credit schools that belong to the activity's cluster.
+
+    `attended_school_ids` is a raw string array with no FK and no constraint,
+    and the view forwarded request.POST.getlist unfiltered — so an injected id
+    was invisible in IA's review workspace (which iterates real members) while
+    counting on every training/attendance surface. Filter server-side, and
+    de-duplicate: ["S1","S1","S1"] must credit S1 once.
+    """
+    ids = list(dict.fromkeys(str(i).strip() for i in (raw_ids or []) if str(i).strip()))
+    if not ids:
+        return []
+    if not activity.cluster_id:
+        return ids
+    member_ids = set(
+        School.objects.filter(
+            cluster_id=activity.cluster_id, deleted_at__isnull=True
+        ).values_list("id", flat=True)
+    )
+    return [i for i in ids if i in member_ids]
+
+
 # ── Create ───────────────────────────────────────────────────────────────────
 def create(data: dict, principal) -> dict:
     """Create and cost a scheduled activity without business-policy blocks.
@@ -471,6 +554,7 @@ def create(data: dict, principal) -> dict:
     if not school and not cluster_id:
         raise BadRequest("Activity must reference a school or cluster")
     _assert_target_in_scope(school=school, cluster_id=cluster_id, principal=principal)
+    _assert_schedule_entitlement(activity_type, school, fy, data)
 
     is_partner = data.get("deliveryType") == "partner" or bool(
         data.get("assignedPartnerId")
@@ -508,9 +592,7 @@ def create(data: dict, principal) -> dict:
         from apps.projects.models import Project
         from apps.projects.services import assert_accepts_new_work
 
-        project = Project.objects.filter(
-            id=project_id, deleted_at__isnull=True
-        ).first()
+        project = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
         if project is None:
             raise BadRequest("Unknown project.")
         assert_accepts_new_work(project)
@@ -728,7 +810,9 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.teachers_attended = data.get("teachersAttended")
         a.leaders_attended = data.get("leadersAttended")
         a.other_participants = data.get("otherParticipants")
-        a.attended_school_ids = data.get("attendedSchoolIds") or []
+        a.attended_school_ids = _cluster_member_school_ids(
+            a, data.get("attendedSchoolIds")
+        )
         a.status = next_status
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
@@ -874,7 +958,9 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
         a.teachers_attended = count("teachersAttended")
         a.leaders_attended = count("leadersAttended")
         a.other_participants = count("otherParticipants")
-        a.attended_school_ids = list(data.get("attendedSchoolIds") or [])
+        a.attended_school_ids = _cluster_member_school_ids(
+            a, data.get("attendedSchoolIds")
+        )
         if a.status in (
             "scheduled",
             "in_progress",

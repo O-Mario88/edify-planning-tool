@@ -102,8 +102,7 @@ class AnalyticsDrilldownOwnerColumnTest(TestCase):
         self.assertEqual(
             response.status_code,
             200,
-            f"/analytics/drilldown?metric={metric} returned "
-            f"{response.status_code}",
+            f"/analytics/drilldown?metric={metric} returned " f"{response.status_code}",
         )
         return response
 
@@ -160,9 +159,7 @@ class AnalyticsDrilldownOwnerColumnTest(TestCase):
 
         with CaptureQueriesContext(connection) as ctx:
             self._drilldown("no_ssa")
-        owner_queries = [
-            q for q in ctx.captured_queries if 'FROM "user"' in q["sql"]
-        ]
+        owner_queries = [q for q in ctx.captured_queries if 'FROM "user"' in q["sql"]]
         self.assertLessEqual(
             len(owner_queries),
             3,

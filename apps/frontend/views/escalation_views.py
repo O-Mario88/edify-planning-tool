@@ -61,7 +61,7 @@ def escalations_view(request):
                 )
                 messages.success(
                     request,
-                    f"Decision recorded — the Country Director has been notified.",
+                    "Decision recorded — the Country Director has been notified.",
                 )
             else:
                 messages.error(request, "Unknown action.")

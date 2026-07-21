@@ -548,6 +548,9 @@ class CoreSchoolsPlanningTest(TestCase):
         result = asvc.create(
             {
                 "activityType": "core_visit",
+                # Slot policy is covered by test_verification_criticals /
+                # test_production_gates; these tests exercise My Plan routing.
+                "coreSlotVerified": True,
                 "schoolId": self.school.school_id,
                 "deliveryType": "partner",
                 "assignedPartnerId": self.partner.id,
@@ -570,6 +573,9 @@ class CoreSchoolsPlanningTest(TestCase):
         result = asvc.create(
             {
                 "activityType": "core_visit",
+                # Slot policy is covered by test_verification_criticals /
+                # test_production_gates; these tests exercise My Plan routing.
+                "coreSlotVerified": True,
                 "schoolId": self.school.school_id,
                 "deliveryType": "partner",
                 "assignedPartnerId": self.partner.id,

@@ -92,7 +92,6 @@ def ia_verification_queue_view(request):
         .count()
     )
 
-
     # ── Filtering ────────────────────────────────────────────────────────────
     fy_filter = request.GET.get("fy")
     quarter_filter = request.GET.get("quarter")

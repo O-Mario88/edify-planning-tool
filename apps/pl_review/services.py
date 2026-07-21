@@ -103,10 +103,7 @@ def queue(principal) -> list[dict]:
             Q(responsible_staff_id__in=mine)
             | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=mine)
         )
-    return [
-        _serialize(a)
-        for a in qs.select_related("school").order_by("-updated_at")
-    ]
+    return [_serialize(a) for a in qs.select_related("school").order_by("-updated_at")]
 
 
 def _get_reviewable(activity_id: str, principal) -> Activity:
@@ -234,7 +231,9 @@ def _impact_assessment_ids() -> list[str]:
     )
 
 
-def _notify_after_review(activity, event_type, title, body, recipients, priority="normal"):
+def _notify_after_review(
+    activity, event_type, title, body, recipients, priority="normal"
+):
     """Best-effort — a notification failure must not undo the review."""
     recipients = [r for r in (recipients or []) if r]
     if not recipients:

@@ -4,33 +4,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('notifications', '0002_notification_category'),
+        ("notifications", "0002_notification_category"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='notification',
-            name='last_reminded_at',
+            model_name="notification",
+            name="last_reminded_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='notification',
-            name='reminder_count',
+            model_name="notification",
+            name="reminder_count",
             field=models.PositiveIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='notification',
-            name='resolved_at',
+            model_name="notification",
+            name="resolved_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddIndex(
-            model_name='notification',
-            index=models.Index(fields=['recipient_id', 'source_event_type', 'context_id'], name='notif_dedupe_idx'),
+            model_name="notification",
+            index=models.Index(
+                fields=["recipient_id", "source_event_type", "context_id"],
+                name="notif_dedupe_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='notification',
-            index=models.Index(fields=['resolved_at'], name='notif_resolved_idx'),
+            model_name="notification",
+            index=models.Index(fields=["resolved_at"], name="notif_resolved_idx"),
         ),
     ]

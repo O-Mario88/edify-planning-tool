@@ -43,6 +43,7 @@ def _may_close_stage(req, principal) -> bool:
 
     return _may_review_hr_stage(req, principal)
 
+
 # HR return-reason → the status the record snaps back to, and who must act.
 RETURN_REASON_TARGETS = {
     "certificate_missing": PDStatus.MARKED_COMPLETE,
@@ -303,7 +304,6 @@ class PDCourseTrackingService:
         Informational — not a hard gate for sign-off beyond the employee's
         own confirmation, which HR reviews at sign-off time regardless."""
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
-        role = getattr(principal, "active_role", "")
         if not _may_close_stage(req, principal):
             raise Forbidden("Only HR may verify a BambooHR upload.")
         req.bamboohr_verified_by = principal.user_id
@@ -391,7 +391,6 @@ class PDCourseTrackingService:
     @transaction.atomic
     def sign_off(req_id: str, principal) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=req_id)
-        role = getattr(principal, "active_role", "")
         if not _may_close_stage(req, principal):
             raise Forbidden(
                 "Only HR (or leadership, for HR's own course) may sign off."
@@ -447,7 +446,6 @@ class PDCourseTrackingService:
         if target is None:
             raise BadRequest("Unknown return reason.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
-        role = getattr(principal, "active_role", "")
         if not _may_close_stage(req, principal):
             raise Forbidden("Only HR may return a completion for correction.")
         if req.staff_id == (principal.staff_profile_id or ""):

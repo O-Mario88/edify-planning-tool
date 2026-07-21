@@ -4,15 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0017_refreshtoken_consumed_at_refreshtoken_family_id_and_more'),
+        ("accounts", "0017_refreshtoken_consumed_at_refreshtoken_family_id_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='staffprofile',
-            name='onboarding_state',
-            field=models.CharField(choices=[('pending', 'Pending'), ('active', 'Active'), ('suspended', 'Suspended'), ('exited', 'Exited')], default='pending', max_length=32),
+            model_name="staffprofile",
+            name="onboarding_state",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Pending"),
+                    ("active", "Active"),
+                    ("suspended", "Suspended"),
+                    ("exited", "Exited"),
+                ],
+                default="pending",
+                max_length=32,
+            ),
         ),
     ]

@@ -334,7 +334,10 @@ def core_schedule_visit_action(request):
                 is_partner_delivery=bool(partner_id),
             )
 
-            # 1. Create standard Activity in DB
+            # 1. Create standard Activity in DB. The flag records that a
+            # package slot was locked above — create() refuses core types
+            # without it, closing the raw-POST bypass around the slot cap.
+            payload["coreSlotVerified"] = True
             act_data = create_activity(payload, request.user)
 
             # 2. Update the policy-checked core support slot.
@@ -491,7 +494,10 @@ def core_schedule_training_action(request):
                 is_partner_delivery=bool(partner_id),
             )
 
-            # 1. Create standard Activity in DB
+            # 1. Create standard Activity in DB. The flag records that a
+            # package slot was locked above — create() refuses core types
+            # without it, closing the raw-POST bypass around the slot cap.
+            payload["coreSlotVerified"] = True
             act_data = create_activity(payload, request.user)
 
             # 2. Update the policy-checked core support slot.

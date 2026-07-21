@@ -141,9 +141,11 @@ def open_cycle(staff_profile, principal, *, fy: str, due_date, review_type=None)
 
     from apps.accounts.models import StaffSupervisorAssignment
 
-    link = StaffSupervisorAssignment.objects.filter(
-        supervisee=staff_profile
-    ).select_related("supervisor").first()
+    link = (
+        StaffSupervisorAssignment.objects.filter(supervisee=staff_profile)
+        .select_related("supervisor")
+        .first()
+    )
 
     review, created = PerformanceReview.objects.get_or_create(
         staff=staff_profile,
@@ -172,7 +174,10 @@ def set_priorities(review_id: str, principal, priorities: list[dict]):
     review = get_for_actor(review_id, principal)
     if not (_is_owner(review, principal) or _role(principal) in _HR_ROLES):
         raise Forbidden("Only the employee may draft their own priorities.")
-    if review.stage not in (ReviewStage.PRIORITIES_DRAFT, ReviewStage.PRIORITIES_MANAGER_REVIEW):
+    if review.stage not in (
+        ReviewStage.PRIORITIES_DRAFT,
+        ReviewStage.PRIORITIES_MANAGER_REVIEW,
+    ):
         raise BadRequest("Priorities can no longer be edited at this stage.")
     if not priorities:
         raise BadRequest("At least one priority is required.")

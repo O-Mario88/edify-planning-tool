@@ -31,7 +31,6 @@ SEVERE_DROP = 1.5
 
 def declining_schools(principal, query: dict | None = None) -> dict:
     """Schools whose confirmed SSA fell year over year, worst first."""
-    import pandas as pd
 
     from apps.analytics.impact_engine import improvement_frame
 
@@ -110,7 +109,11 @@ def declining_schools(principal, query: dict | None = None) -> dict:
     # of the question, and the part that tells a CD what to actually change.
     by_intervention = (
         frame.groupby("intervention")
-        .agg(avg_delta=("delta", "mean"), declining=("delta", lambda s: int((s < 0).sum())), n=("delta", "size"))
+        .agg(
+            avg_delta=("delta", "mean"),
+            declining=("delta", lambda s: int((s < 0).sum())),
+            n=("delta", "size"),
+        )
         .reset_index()
         .sort_values("avg_delta")
     )

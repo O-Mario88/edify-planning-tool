@@ -119,10 +119,10 @@ class LeavePrivacyTests(TestCase):
         )
         cls.staff = _user("lp-staff@t.org", "Leave Staff", EdifyRole.CCEO.value)
         cls.sp = StaffProfile.objects.create(user=cls.staff, country="Uganda")
-        cls.other_pl = _user("lp-pl@t.org", "Unrelated PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
-        cls.other_sp = StaffProfile.objects.create(
-            user=cls.other_pl, country="Uganda"
+        cls.other_pl = _user(
+            "lp-pl@t.org", "Unrelated PL", EdifyRole.COUNTRY_PROGRAM_LEAD.value
         )
+        cls.other_sp = StaffProfile.objects.create(user=cls.other_pl, country="Uganda")
         cls.leave = Leave.objects.create(
             staff=cls.sp,
             type="sick_leave",
@@ -147,9 +147,7 @@ class LeavePrivacyTests(TestCase):
 
         rows = services.list_leave(self.other_pl, {})
         for row in rows:
-            self.assertNotIn(
-                "reason", row, "a list response must not carry the reason"
-            )
+            self.assertNotIn("reason", row, "a list response must not carry the reason")
 
     def test_message_leave_picker_never_shows_the_leave_type(self):
         from apps.messaging import services
@@ -226,7 +224,9 @@ class LeadershipPeopleInsightTests(TestCase):
             suggested_action="Review",
             generated_at=timezone.now(),
         )
-        accountant = _user("ins-acc@t.org", "Acc One", EdifyRole.PROGRAM_ACCOUNTANT.value)
+        accountant = _user(
+            "ins-acc@t.org", "Acc One", EdifyRole.PROGRAM_ACCOUNTANT.value
+        )
         rows = services._list({}, accountant)
         self.assertEqual(
             [r for r in rows if r["decisionType"] == DecisionType.STAFF_HR.value],
@@ -261,7 +261,9 @@ class NotificationSecurityTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.ia = _user("ns-ia@t.org", "IA One", EdifyRole.IMPACT_ASSESSMENT.value)
-        cls.other = _user("ns-other@t.org", "Other One", EdifyRole.COUNTRY_DIRECTOR.value)
+        cls.other = _user(
+            "ns-other@t.org", "Other One", EdifyRole.COUNTRY_DIRECTOR.value
+        )
 
     def test_ia_alerts_are_addressed_to_the_viewer(self):
         """The query selected by title substring across the whole table."""
@@ -337,9 +339,7 @@ class PDMoneyGuardTests(TestCase):
         )
         import inspect
 
-        source = inspect.getsource(
-            PDCourseTrackingService.mark_deferred_or_withdrawn
-        )
+        source = inspect.getsource(PDCourseTrackingService.mark_deferred_or_withdrawn)
         self.assertIn("_released_funds_guard", source)
 
 

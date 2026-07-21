@@ -198,6 +198,29 @@ class CorePackageSchedulingService:
                 )
 
             activity_kind = f"core_{activity_type}"
+            # The staff share of a core package is 2 visits + 2 trainings PER
+            # FISCAL YEAR — the remainder belongs to partners. The previous
+            # check was one-per-quarter, which quietly permitted 4 + 4 across
+            # the year: the whole package staff-delivered, nothing left for a
+            # partner, and the delivery cost moved onto internal staff lines.
+            STAFF_ANNUAL_CAP = 2
+            staff_this_fy = (
+                Activity.objects.filter(
+                    school=school,
+                    activity_type=activity_kind,
+                    fy=current_fy,
+                    delivery_type="staff",
+                    deleted_at__isnull=True,
+                )
+                .exclude(status__in=["cancelled", "rejected", "deferred"])
+                .count()
+            )
+            if staff_this_fy >= STAFF_ANNUAL_CAP:
+                raise BadRequest(
+                    f"Staff may deliver at most {STAFF_ANNUAL_CAP} core {activity_type}s "
+                    f"per year ({staff_this_fy} already scheduled). The remaining "
+                    "slots are reserved for partner delivery."
+                )
             staff_already_scheduled = (
                 Activity.objects.filter(
                     school=school,
@@ -1040,8 +1063,7 @@ class CoreInterventionImpactService:
                 follow_up_average__isnull=False,
             )
             deltas = [
-                p.follow_up_average - p.baseline_average
-                for p in plans_for_intervention
+                p.follow_up_average - p.baseline_average for p in plans_for_intervention
             ]
             has_improvement_data = bool(deltas)
             avg_improvement = round(sum(deltas) / len(deltas), 1) if deltas else 0

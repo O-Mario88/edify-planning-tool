@@ -202,7 +202,10 @@ def close_onboarding(plan_id: str, principal, *, force: bool = False):
         "hr.onboarding_closed",
         plan,
         principal,
-        {"forcedWithOpenTasks": bool(outstanding and force), "probationReviewId": review.id},
+        {
+            "forcedWithOpenTasks": bool(outstanding and force),
+            "probationReviewId": review.id,
+        },
     )
     return plan
 

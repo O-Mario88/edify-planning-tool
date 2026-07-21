@@ -58,9 +58,7 @@ class FundAllocationScopeTests(TestCase):
     def test_service_without_a_principal_returns_nothing(self):
         from apps.budget.allocation_service import MonthlyFundAllocationService
 
-        qs = MonthlyFundAllocationService._scope_staff(
-            None, StaffProfile.objects.all()
-        )
+        qs = MonthlyFundAllocationService._scope_staff(None, StaffProfile.objects.all())
         self.assertEqual(qs.count(), 0, "no principal must not mean no limit")
 
     def test_service_requires_a_principal_parameter(self):
@@ -132,9 +130,7 @@ class SupervisedTeamExcludesDepartedStaffTests(TestCase):
         sp_pl = StaffProfile.objects.create(user=pl, country="Uganda")
         gone = _user("sd-gone@t.org", "Departed", EdifyRole.CCEO.value)
         sp_gone = StaffProfile.objects.create(user=gone, country="Uganda")
-        StaffSupervisorAssignment.objects.create(
-            supervisee=sp_gone, supervisor=sp_pl
-        )
+        StaffSupervisorAssignment.objects.create(supervisee=sp_gone, supervisor=sp_pl)
 
         scope = resolve_user_scope(pl)
         self.assertIn(sp_gone.id, scope.supervised_staff_ids)

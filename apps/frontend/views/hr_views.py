@@ -13,7 +13,6 @@ from apps.hr.models import (
     CompensationRecord,
     ComplianceRequirement,
     EmployeeComplianceRecord,
-    EmployeeRelationsCase,
     OffboardingPlan,
     OnboardingPlan,
     PayrollReadinessRecord,
@@ -1517,7 +1516,9 @@ def hr_audit_log_view(request):
                     actor_names.get(event.actor_id, event.actor_id or "System"),
                 ),
                 _cell("Role", event.actor_role),
-                _cell("Record", f"{event.subject_kind or '—'} · {event.subject_id or '—'}"),
+                _cell(
+                    "Record", f"{event.subject_kind or '—'} · {event.subject_id or '—'}"
+                ),
                 _cell(
                     "Outcome",
                     "Success" if event.success else "Refused",

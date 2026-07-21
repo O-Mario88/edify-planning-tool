@@ -149,7 +149,9 @@ def resolve(escalation_id: str, data: dict, principal) -> LeadershipEscalation:
         raise BadRequest("Select a decision.")
     note = (data.get("decision_note") or "").strip()
     if not note:
-        raise BadRequest("Record why — the CD needs the reasoning, not just the verdict.")
+        raise BadRequest(
+            "Record why — the CD needs the reasoning, not just the verdict."
+        )
 
     esc.status = EscalationStatus.RESOLVED
     esc.decision = decision

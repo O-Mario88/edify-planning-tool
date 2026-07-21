@@ -197,7 +197,9 @@ def _serialize(row: AuditLog) -> dict:
     return {
         "id": row.id,
         "action": row.action,
-        "label": ACTION_LABELS.get(row.action, row.action.replace("_", " ").capitalize()),
+        "label": ACTION_LABELS.get(
+            row.action, row.action.replace("_", " ").capitalize()
+        ),
         "group": _group_for(row.action),
         "actorRole": row.actor_role,
         "actorId": row.actor_id,

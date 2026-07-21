@@ -84,6 +84,10 @@ class ActivitySchedulingAtomicityTest(TestCase):
         # focused on the specific 3-write sequence under test.
         data = {
             "activityType": ActivityType.CORE_VISIT,
+            # These tests exercise the 3-write transaction, not slot policy —
+            # create() now refuses core types that skipped the Core Schools
+            # slot lock, so mark the payload as slot-verified.
+            "coreSlotVerified": True,
             "schoolId": self.school.school_id,
             "scheduledDate": scheduled_date,
             "activityPurposeText": "Routine visit",

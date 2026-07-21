@@ -20,7 +20,9 @@ class ChampionEligibilityService:
 
         # 1. Latest SSA (40%)
         latest_ssa = (
-            school.ssa_records.filter(deleted_at__isnull=True)
+            school.ssa_records.filter(
+                deleted_at__isnull=True, verification_status="confirmed"
+            )
             .order_by("-date_of_ssa")
             .first()
         )
@@ -32,7 +34,9 @@ class ChampionEligibilityService:
         # 2. Improvement Delta (25%)
         # Compare latest with earliest SSA
         earliest_ssa = (
-            school.ssa_records.filter(deleted_at__isnull=True)
+            school.ssa_records.filter(
+                deleted_at__isnull=True, verification_status="confirmed"
+            )
             .order_by("date_of_ssa")
             .first()
         )
@@ -71,7 +75,9 @@ class ChampionEligibilityService:
 
         # 6. Repeat Performance / Sustainability (5%)
         # At least two SSA records over time
-        all_ssas = school.ssa_records.filter(deleted_at__isnull=True).count()
+        all_ssas = school.ssa_records.filter(
+            deleted_at__isnull=True, verification_status="confirmed"
+        ).count()
         sustain_score = 5.0 if all_ssas >= 2 else 2.5
 
         # Total Champion Score

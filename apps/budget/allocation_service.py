@@ -30,9 +30,9 @@ class MonthlyFundAllocationService:
             # Fail closed — an RVP with no assigned region sees no roster,
             # rather than the whole country.
             return staff_qs.none() if scope.rvp_region_scoped else staff_qs
-        district_ids = District.objects.filter(
-            region_id__in=region_ids
-        ).values_list("id", flat=True)
+        district_ids = District.objects.filter(region_id__in=region_ids).values_list(
+            "id", flat=True
+        )
         return staff_qs.filter(primary_district_id__in=district_ids)
 
     @staticmethod

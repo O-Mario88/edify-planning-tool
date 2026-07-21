@@ -591,8 +591,7 @@ class TemporaryCoverageAssignment(TimeStampedModel):
 
         now = _tz.now()
         return (
-            self.status == "active"
-            and self.start_datetime <= now <= self.end_datetime
+            self.status == "active" and self.start_datetime <= now <= self.end_datetime
         )
 
     class Meta:

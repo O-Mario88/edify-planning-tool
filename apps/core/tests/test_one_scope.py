@@ -109,7 +109,9 @@ class RvpPagesReturnDataTests(TestCase):
             )
 
     def setUp(self):
-        self.rvp = _user("rvp-pg@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        self.rvp = _user(
+            "rvp-pg@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
         self.client = Client()
         self.client.force_login(self.rvp)

@@ -169,9 +169,7 @@ def create(data: dict, principal) -> dict:
         if supervisor_staff_id:
             from apps.accounts.supervisor_service import assign_supervisor
 
-            assign_supervisor(
-                sp.id, {"supervisorId": supervisor_staff_id}, principal
-            )
+            assign_supervisor(sp.id, {"supervisorId": supervisor_staff_id}, principal)
 
         selected_districts = []
         if primary_district_id:

@@ -118,7 +118,9 @@ class ResolutionTests(TestCase):
 
     def test_unknown_event_or_missing_context_is_a_no_op(self):
         self.assertEqual(resolve_condition("nope", "Activity", "act-9"), 0)
-        self.assertEqual(resolve_condition("activity_submitted_for_review", None, None), 0)
+        self.assertEqual(
+            resolve_condition("activity_submitted_for_review", None, None), 0
+        )
 
 
 class LeaveResolutionTests(TestCase):

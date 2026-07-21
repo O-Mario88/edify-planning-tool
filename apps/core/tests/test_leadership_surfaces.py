@@ -16,7 +16,6 @@ from apps.accounts.models import (
     Leave,
     StaffProfile,
     StaffSchoolAssignment,
-    StaffSupervisorAssignment,
     User,
 )
 from apps.activities.models import Activity
@@ -85,7 +84,7 @@ class DecisionIntelligencePageTests(TestCase):
 
 
 class DecliningSchoolsTests(TestCase):
-    """"Which schools are declining" had no answer: the only identified queue
+    """ "Which schools are declining" had no answer: the only identified queue
     ranked by absolute score, not by movement."""
 
     @classmethod
@@ -98,7 +97,9 @@ class DecliningSchoolsTests(TestCase):
     def setUp(self):
         self.cd = _user("cd-dec@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=self.cd, title="CD", country="Uganda")
-        self.rvp = _user("rvp-dec@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        self.rvp = _user(
+            "rvp-dec@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
 
     def test_no_paired_cycles_reads_as_unknown_not_as_no_decline(self):
@@ -136,7 +137,9 @@ class CoreSchoolHealthTests(TestCase):
     def setUp(self):
         self.cd = _user("cd-core@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=self.cd, title="CD", country="Uganda")
-        self.rvp = _user("rvp-core@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        self.rvp = _user(
+            "rvp-core@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
         self.client = Client()
 
@@ -216,7 +219,9 @@ class LeaveVisitCollisionTests(TestCase):
         # The heatmap reads `scheduled_date` (the confirmed calendar slot),
         # not `planned_date`.
         moment = timezone.make_aware(
-            timezone.datetime.combine(when, timezone.datetime.min.time().replace(hour=9))
+            timezone.datetime.combine(
+                when, timezone.datetime.min.time().replace(hour=9)
+            )
         )
         return Activity.objects.create(
             school_id=self.school.id,

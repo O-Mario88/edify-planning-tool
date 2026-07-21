@@ -26,8 +26,6 @@ from apps.hr.models import (
     Application,
     ApplicationStage,
     Candidate,
-    OnboardingPlan,
-    OnboardingStatus,
     Vacancy,
     VacancyStatus,
 )
@@ -159,9 +157,7 @@ def close_vacancy(vacancy_id: str, principal, *, reason: str = "") -> Vacancy:
     vacancy.status = VacancyStatus.CLOSED
     vacancy.closed_at = timezone.now()
     vacancy.decision_reason = reason or vacancy.decision_reason
-    vacancy.save(
-        update_fields=["status", "closed_at", "decision_reason", "updated_at"]
-    )
+    vacancy.save(update_fields=["status", "closed_at", "decision_reason", "updated_at"])
     _audit("hr.vacancy_closed", "vacancy", vacancy.id, principal, {"reason": reason})
     return vacancy
 
@@ -271,9 +267,10 @@ def advance_application(
             f"An application at '{app.get_stage_display()}' cannot move to "
             f"'{dict(ApplicationStage.choices).get(to_stage, to_stage)}'."
         )
-    if to_stage in (ApplicationStage.REJECTED, ApplicationStage.OFFER) and not (
-        reason or ""
-    ).strip():
+    if (
+        to_stage in (ApplicationStage.REJECTED, ApplicationStage.OFFER)
+        and not (reason or "").strip()
+    ):
         raise BadRequest("A reason is required for this decision.")
 
     app.stage = to_stage

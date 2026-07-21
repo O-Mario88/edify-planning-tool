@@ -451,7 +451,11 @@ def scoped_school_queryset(scope: UserScope, base=None):
     school_model = _get_school_model()
     if school_model is None:
         return None
-    qs = base if base is not None else school_model.objects.filter(deleted_at__isnull=True)
+    qs = (
+        base
+        if base is not None
+        else school_model.objects.filter(deleted_at__isnull=True)
+    )
     if scope.country_scope:
         return qs
     if scope.can_view_summary_only:

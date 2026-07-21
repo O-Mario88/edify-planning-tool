@@ -12,7 +12,6 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.test import TestCase
-from django.utils import timezone
 
 from apps.accounts.models import (
     StaffProfile,
@@ -89,9 +88,7 @@ class RecruitmentChainTests(TestCase):
             {"vacancy_id": vacancy.id, "name": "Bea", "email": "bea@x.org"}, self.hr
         )
         with self.assertRaises(BadRequest):
-            rec.advance_application(
-                app.id, self.hr, to_stage=ApplicationStage.REJECTED
-            )
+            rec.advance_application(app.id, self.hr, to_stage=ApplicationStage.REJECTED)
 
     def _to_accepted(self, vacancy, email="cara@x.org"):
         app = rec.record_application(
@@ -214,9 +211,7 @@ class PerformanceWorkflowTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.hr = _user("pf-hr@t.org", "HR Three", "HumanResources")
-        cls.manager = _user(
-            "pf-pl@t.org", "Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value
-        )
+        cls.manager = _user("pf-pl@t.org", "Lead", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
         cls.employee = _user("pf-cceo@t.org", "Worker", EdifyRole.CCEO.value)
         StaffSupervisorAssignment.objects.create(
             supervisee=cls.employee.staff_profile,
@@ -271,7 +266,9 @@ class PerformanceWorkflowTests(TestCase):
         perf.submit_reflection(review.id, self.employee, reflection="My year")
         with self.assertRaises(Forbidden):
             perf.submit_assessment(review.id, self.employee, assessment="Great")
-        perf.submit_assessment(review.id, self.manager, assessment="Solid", rating="Strong")
+        perf.submit_assessment(
+            review.id, self.manager, assessment="Solid", rating="Strong"
+        )
         with self.assertRaises(Forbidden):
             perf.calibrate(review.id, self.employee, result="Strong")
 
@@ -280,7 +277,9 @@ class PerformanceWorkflowTests(TestCase):
         perf.set_priorities(review.id, self.employee, self._priorities())
         perf.agree_priorities(review.id, self.manager)
         with self.assertRaises(Forbidden):
-            perf.submit_reflection(review.id, self.manager, reflection="On their behalf")
+            perf.submit_reflection(
+                review.id, self.manager, reflection="On their behalf"
+            )
 
     def test_the_four_channels_stay_separate(self):
         review = self._cycle()
@@ -441,8 +440,13 @@ class EmployeeRelationsTests(TestCase):
     def test_cause_includes_the_non_blaming_categories(self):
         from apps.hr.models import RecoveryCause
 
-        for expected in ("capacity", "workload", "availability", "data_quality",
-                         "manager_support"):
+        for expected in (
+            "capacity",
+            "workload",
+            "availability",
+            "data_quality",
+            "manager_support",
+        ):
             self.assertIn(
                 expected,
                 RecoveryCause.values,

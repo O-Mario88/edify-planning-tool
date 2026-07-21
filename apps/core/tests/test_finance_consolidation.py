@@ -29,8 +29,12 @@ from apps.schools.models import School
 
 def _user(email, name, role):
     return User.objects.create_user(
-        email=email, name=name, roles=[role], active_role=role,
-        password="pw12345678", is_active=True,
+        email=email,
+        name=name,
+        roles=[role],
+        active_role=role,
+        password="pw12345678",
+        is_active=True,
     )
 
 
@@ -40,42 +44,61 @@ class PartnerPaymentGuardTests(TestCase):
         region = Region.objects.create(name="Fin Region")
         district = District.objects.create(name="Fin District", region=region)
         cls.school = School.objects.create(
-            name="Fin Primary", school_id="FN-1",
-            region_id=region.id, district_id=district.id,
+            name="Fin Primary",
+            school_id="FN-1",
+            region_id=region.id,
+            district_id=district.id,
         )
         cls.partner = Partner.objects.create(name="Fin Partner")
 
     def setUp(self):
         self.acct = _user("acct-fin@t.org", "Ada", EdifyRole.PROGRAM_ACCOUNTANT.value)
-        StaffProfile.objects.create(user=self.acct, title="Accountant", country="Uganda")
+        StaffProfile.objects.create(
+            user=self.acct, title="Accountant", country="Uganda"
+        )
         self.act = Activity.objects.create(
-            school_id=self.school.id, activity_type="school_visit",
-            status="ia_verified", delivery_type="partner",
+            school_id=self.school.id,
+            activity_type="school_visit",
+            status="ia_verified",
+            delivery_type="partner",
             assigned_partner_id=self.partner.id,
-            payment_status="ia_confirmed", evidence_status="accepted",
+            payment_status="ia_confirmed",
+            evidence_status="accepted",
             salesforce_activity_id="SVE-FIN-1",
             ia_verification_status="confirmed",
-            fy="2026", quarter="Q4", planned_date=timezone.now(),
+            fy="2026",
+            quarter="Q4",
+            planned_date=timezone.now(),
         )
         # The gate reads real records, not the denormalised status fields: a
         # non-quarantined EvidenceRecord and at least one cost line.
         from apps.evidence.models import EvidenceRecord
 
         EvidenceRecord.objects.create(
-            activity_id=self.act.id, kind="photo", uri="visit.jpg",
-            original_name="visit.jpg", uploaded_by=self.acct.user_id,
+            activity_id=self.act.id,
+            kind="photo",
+            uri="visit.jpg",
+            original_name="visit.jpg",
+            uploaded_by=self.acct.user_id,
             quarantined=False,
         )
         self.cost_line = ActivityScheduleCostLine.objects.create(
-            activity=self.act, cost_setting_key="partner_visit_lump_sum",
-            label="Partner Visit", unit_cost=35_000, amount=35_000,
+            activity=self.act,
+            cost_setting_key="partner_visit_lump_sum",
+            label="Partner Visit",
+            unit_cost=35_000,
+            amount=35_000,
         )
 
     def _pay(self):
         return PartnerPaymentService.pay_partner(
-            activity=self.act, partner_name=self.partner.name, amount=35_000,
-            method="bank_transfer", reference="REF-1",
-            user_id=self.acct.user_id, netsuite_id="NS-FIN-1",
+            activity=self.act,
+            partner_name=self.partner.name,
+            amount=35_000,
+            method="bank_transfer",
+            reference="REF-1",
+            user_id=self.acct.user_id,
+            netsuite_id="NS-FIN-1",
         )
 
     def test_payment_writes_a_ledger_row(self):
@@ -93,9 +116,14 @@ class PartnerPaymentGuardTests(TestCase):
         from apps.fund_requests.models import AdvanceRequest
 
         AdvanceRequest.objects.create(
-            activity=self.act, budget_line=self.cost_line, fy="2026", quarter="Q4",
-            planned_date=timezone.now(), amount=35_000,
-            status="disbursed", disbursed_amount=35_000,
+            activity=self.act,
+            budget_line=self.cost_line,
+            fy="2026",
+            quarter="Q4",
+            planned_date=timezone.now(),
+            amount=35_000,
+            status="disbursed",
+            disbursed_amount=35_000,
         )
         with self.assertRaises(ValueError) as ctx:
             self._pay()

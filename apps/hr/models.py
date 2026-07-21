@@ -128,7 +128,9 @@ class Application(TimeStampedModel):
         Candidate, on_delete=models.CASCADE, related_name="applications"
     )
     stage = models.CharField(
-        max_length=64, choices=ApplicationStage.choices, default=ApplicationStage.APPLIED
+        max_length=64,
+        choices=ApplicationStage.choices,
+        default=ApplicationStage.APPLIED,
     )
     status_notes = models.TextField(null=True, blank=True)
     # Every stage change carries a reason, and the offer carries an approver —
@@ -297,12 +299,18 @@ class ReviewStage(models.TextChoices):
 
     NOT_STARTED = "not_started", "Not started"
     PRIORITIES_DRAFT = "priorities_draft", "Employee drafting priorities"
-    PRIORITIES_MANAGER_REVIEW = "priorities_manager_review", "Manager reviewing priorities"
+    PRIORITIES_MANAGER_REVIEW = (
+        "priorities_manager_review",
+        "Manager reviewing priorities",
+    )
     PRIORITIES_AGREED = "priorities_agreed", "Priorities agreed"
     EMPLOYEE_REFLECTION = "employee_reflection", "Employee reflection"
     MANAGER_ASSESSMENT = "manager_assessment", "Manager assessment"
     CALIBRATION = "calibration", "Calibration"
-    AWAITING_ACKNOWLEDGEMENT = "awaiting_acknowledgement", "Awaiting employee acknowledgement"
+    AWAITING_ACKNOWLEDGEMENT = (
+        "awaiting_acknowledgement",
+        "Awaiting employee acknowledgement",
+    )
     CLOSED = "closed", "Closed"
 
 
@@ -421,7 +429,9 @@ class PerformancePriority(TimeStampedModel):
 
     current_result = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(
-        max_length=32, choices=PriorityStatus.choices, default=PriorityStatus.NOT_ASSESSED
+        max_length=32,
+        choices=PriorityStatus.choices,
+        default=PriorityStatus.NOT_ASSESSED,
     )
 
     # The same four-channel separation, at priority level.

@@ -143,9 +143,7 @@ def reconcile_month(budget: MonthlyWorkPlanBudget) -> dict:
     Returns the four figures a decision-maker needs on the same screen, plus
     the System A vs System B delta that no surface previously showed.
     """
-    advances, unattributed = _advances_for_month(
-        budget.month_key, budget.country_id
-    )
+    advances, unattributed = _advances_for_month(budget.month_key, budget.country_id)
     moved = advances.filter(status__in=_money_moved_statuses())
 
     disbursed = moved.aggregate(t=Sum("disbursed_amount"))["t"] or 0
@@ -304,7 +302,10 @@ def mark_disbursed(budget_id: str, principal) -> dict:
             or "This envelope is not at the sent-to-accountant stage."
         )
     return _advance_status(
-        budget, MonthlyWorkPlanBudgetStatus.DISBURSED, principal, state["reconciliation"]
+        budget,
+        MonthlyWorkPlanBudgetStatus.DISBURSED,
+        principal,
+        state["reconciliation"],
     )
 
 

@@ -45,9 +45,7 @@ def outstanding_work(staff_profile) -> dict:
         out["schools"] = owned_schools
 
     open_activities = (
-        Activity.objects.filter(
-            responsible_staff_id__in=ids, deleted_at__isnull=True
-        )
+        Activity.objects.filter(responsible_staff_id__in=ids, deleted_at__isnull=True)
         .exclude(status__in=("closed", "cancelled", "completed"))
         .count()
     )

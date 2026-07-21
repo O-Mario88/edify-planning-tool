@@ -6,6 +6,7 @@ scope-constrained. Ports the legacy analytics.service aggregation logic.
 
 from __future__ import annotations
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.db.models import Avg, Count, Q, Sum
 
 from apps.core.enums import PlanningReadiness
@@ -1291,7 +1292,7 @@ def activity_impact_report(principal, query: dict) -> list[dict]:
     from apps.activities.services import calculate_activity_impact
 
     qs = Activity.objects.filter(
-        status="completed", focus_intervention__isnull=False, deleted_at__isnull=True
+        status__in=COMPLETED_WORK_STATUSES, focus_intervention__isnull=False, deleted_at__isnull=True
     ).order_by("-planned_date")
 
     out = []
@@ -1321,7 +1322,7 @@ def school_impact(school_id: str, principal) -> dict:
         raise NotFoundError("School not found.")
 
     activities = Activity.objects.filter(
-        school=school, status="completed", deleted_at__isnull=True
+        school=school, status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
     ).order_by("-planned_date")
 
     improved_count = 0

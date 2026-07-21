@@ -2,6 +2,7 @@
 GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import calendar
 import re
 from collections import defaultdict
@@ -206,7 +207,7 @@ def fy_overview_view(request):
     )
     total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
     completed_activities = Activity.objects.filter(
-        status="completed", deleted_at__isnull=True
+        status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
     ).count()
 
     context = {
@@ -454,7 +455,7 @@ def work_plan_view(request):
         activities_qs.values("planned_date__month")
         .annotate(
             total=Count("id"),
-            completed=Count("id", filter=Q(status="completed")),
+            completed=Count("id", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
         )
         .order_by("planned_date__month")
     )
@@ -463,7 +464,7 @@ def work_plan_view(request):
         "monthly_summary": monthly_summary,
         "fy": fy,
         "total": activities_qs.count(),
-        "completed": activities_qs.filter(status="completed").count(),
+        "completed": activities_qs.filter(status__in=COMPLETED_WORK_STATUSES).count(),
     }
     return render(request, "pages/work_plan/index.html", context)
 
@@ -630,7 +631,7 @@ def reports_view(request):
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
     total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
     completed = Activity.objects.filter(
-        status="completed", deleted_at__isnull=True
+        status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
     ).count()
 
     activities_fy = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
@@ -840,7 +841,7 @@ def coverage_view(request):
     visited = (
         Activity.objects.filter(
             activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
         )
         .values("school_id")
@@ -918,8 +919,6 @@ def admin_users_view(request):
     from apps.core.rbac import EdifyRole
 
     if request.method == "POST":
-        from django.db import transaction
-
         action = request.POST.get("action")
         if action == "create":
             # Delegate to the canonical service instead of re-implementing it.
@@ -1004,7 +1003,9 @@ def admin_users_view(request):
                 "CountryDirector",
                 "RegionalVicePresident",
             ],
-        ).select_related("user").order_by("user__name")
+        )
+        .select_related("user")
+        .order_by("user__name")
     ]
 
     context = {
@@ -1836,7 +1837,7 @@ def completed_activities_view(request):
     """Completed activities history."""
     activities = (
         Activity.objects.filter(
-            status="completed",
+            status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
         )
         .select_related("school", "cluster")

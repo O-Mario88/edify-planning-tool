@@ -20,9 +20,7 @@ def sidebar_counts(request):
         # is history — leaving it in the badge made the number climb forever
         # and it was the only signal most users ever saw.
         notifications_count = (
-            Notification.objects.filter(
-                recipient_id=request.user.id, status="unread"
-            )
+            Notification.objects.filter(recipient_id=request.user.id, status="unread")
             .exclude(resolved_at__isnull=False)
             .count()
         )

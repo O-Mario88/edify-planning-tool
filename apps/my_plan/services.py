@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import calendar
 from datetime import date, timedelta
 from django.db.models import Q
@@ -629,7 +630,7 @@ def get_frontend_context(principal, query: dict) -> dict:
     ).count()
 
     total_period_count = qs_period.count()
-    completed_period_count = qs_period.filter(status="completed").count()
+    completed_period_count = qs_period.filter(status__in=COMPLETED_WORK_STATUSES).count()
     completion_readiness = (
         int(completed_period_count / total_period_count * 100)
         if total_period_count > 0
@@ -1148,7 +1149,7 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     # 2. Awaiting Evidence
     awaiting_evidence_acts = qs.filter(
-        status="completed", evidence_status="none"
+        status__in=COMPLETED_WORK_STATUSES, evidence_status="none"
     ).select_related("school", "school__district", "cluster")[:3]
     for ae in awaiting_evidence_acts:
         attention_needed.append(
@@ -1166,7 +1167,7 @@ def get_frontend_context(principal, query: dict) -> dict:
 
     # 3. SF ID Missing
     sf_missing_acts = qs.filter(
-        status="completed", salesforce_activity_id__isnull=True
+        status__in=COMPLETED_WORK_STATUSES, salesforce_activity_id__isnull=True
     ).select_related("school", "school__district", "cluster")[:3]
     for sf in sf_missing_acts:
         attention_needed.append(

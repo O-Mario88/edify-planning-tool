@@ -741,7 +741,17 @@ def _accountant_settlement_todos():
     todos = []
     today = date.today()
 
-    def row(key, title, desc, url, priority="high", due=None, tone="info", status="waiting_me", label="Waiting on Me"):
+    def row(
+        key,
+        title,
+        desc,
+        url,
+        priority="high",
+        due=None,
+        tone="info",
+        status="waiting_me",
+        label="Waiting on Me",
+    ):
         return {
             "id": key,
             "title": title,

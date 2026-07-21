@@ -1,3 +1,4 @@
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission, RolePermissionService
 from django.contrib import messages
@@ -1464,7 +1465,7 @@ def evidence_center_view(request):
     )
     returned_statuses = ("returned", "returned_by_pl", "returned_by_ia")
     tab_filters = {
-        "pending": Q(status="completed", evidence_status="none"),
+        "pending": Q(status__in=COMPLETED_WORK_STATUSES, evidence_status="none"),
         "sf_missing": Q(evidence_status="uploaded")
         & (Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")),
         "submitted": Q(status__in=submitted_statuses),

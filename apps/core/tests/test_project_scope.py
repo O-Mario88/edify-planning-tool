@@ -148,7 +148,9 @@ class FundRequestReviewScopeTests(TestCase):
         self.owner_sp = StaffProfile.objects.create(
             user=self.owner, title="CCEO", country="Uganda"
         )
-        self.their_pl = _user("fr-pl2@t.org", "Pia", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.their_pl = _user(
+            "fr-pl2@t.org", "Pia", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
         StaffProfile.objects.create(user=self.their_pl, title="PL", country="Uganda")
 
         self.fr = FundRequest.objects.create(

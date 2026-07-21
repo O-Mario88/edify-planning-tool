@@ -14,7 +14,7 @@ Three defects made the core loop unusable and are locked shut here:
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 from django.test import TestCase
 from django.utils import timezone
@@ -274,7 +274,9 @@ class CountryEnvelopeSeparationOfDutiesTests(TestCase):
         )
 
         self.acct = _user("acct-sod@t.org", "Ada", EdifyRole.PROGRAM_ACCOUNTANT.value)
-        StaffProfile.objects.create(user=self.acct, title="Accountant", country="Uganda")
+        StaffProfile.objects.create(
+            user=self.acct, title="Accountant", country="Uganda"
+        )
         self.budget = MonthlyWorkPlanBudget.objects.create(
             fy="2026",
             month_key="2026-05",

@@ -1,3 +1,4 @@
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
 from apps.core.enums import ActivityStatus, SsaIntervention
@@ -493,7 +494,7 @@ class PlanningDashboardService:
                         "core_visit",
                         "baseline_ssa_visit",
                     ],
-                    status="completed",
+                    status__in=COMPLETED_WORK_STATUSES,
                     deleted_at__isnull=True,
                 )
                 .values("school_id")
@@ -504,7 +505,7 @@ class PlanningDashboardService:
                 Activity.objects.filter(
                     school_id__in=school_ids,
                     activity_type__in=["training", "core_training"],
-                    status="completed",
+                    status__in=COMPLETED_WORK_STATUSES,
                     deleted_at__isnull=True,
                 )
                 .values("school_id")
@@ -518,7 +519,7 @@ class PlanningDashboardService:
             wanted_school_ids = set(school_ids)
             cluster_attendance = Activity.objects.filter(
                 activity_type__in=["cluster_training", "cluster_meeting"],
-                status="completed",
+                status__in=COMPLETED_WORK_STATUSES,
                 deleted_at__isnull=True,
                 attended_school_ids__overlap=list(wanted_school_ids),
             ).values_list("attended_school_ids", flat=True)

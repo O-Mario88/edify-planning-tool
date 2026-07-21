@@ -197,6 +197,7 @@ def assert_accepts_new_work(project: Project) -> None:
             "first."
         )
 
+
 # What each RVP strategic decision does to project state. Decisions absent from
 # this map (continue / measure / budget changes) are deliberately status-neutral
 # — they are guidance, not lifecycle moves.

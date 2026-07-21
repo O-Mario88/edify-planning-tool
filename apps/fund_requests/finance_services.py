@@ -401,6 +401,18 @@ class ReimbursementService:
             raise ValueError("Reimbursement is blocked: IA Verification Missing")
 
         with transaction.atomic():
+            # Re-read under lock and refuse a repeat. This was the only
+            # money-moving path with no idempotency protection at all — a
+            # double-click or a network retry marked the claim paid twice and
+            # wrote two Disbursement rows for one debt. The advance and
+            # partner channels both guard this; the reimbursement channel is
+            # the same money and gets the same guard.
+            claim = type(claim).objects.select_for_update().get(id=claim.id)
+            if claim.status == "paid":
+                raise ValueError(
+                    "This reimbursement has already been paid "
+                    f"({claim.payment_reference or 'no reference'})."
+                )
             claim.status = "paid"
             claim.payment_method = method
             claim.payment_reference = reference

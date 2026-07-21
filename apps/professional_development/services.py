@@ -146,9 +146,7 @@ class StaffPDService:
         Used to refuse an allocation cut that would drop someone below what
         they have already committed or spent.
         """
-        rows = ProfessionalDevelopmentRequest.objects.filter(
-            staff_id=staff_id, fy=fy
-        )
+        rows = ProfessionalDevelopmentRequest.objects.filter(staff_id=staff_id, fy=fy)
         committed = sum(
             r.requested_amount_cents
             for r in rows

@@ -245,7 +245,11 @@ def get_planning(principal, filters=None) -> dict:
 
     ssa_prefetch = Prefetch(
         "school__ssa_records",
-        queryset=SsaRecord.objects.filter(fy=selected_fy, deleted_at__isnull=True)
+        queryset=SsaRecord.objects.filter(
+            fy=selected_fy,
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        )
         .prefetch_related("scores")
         .order_by("-date_of_ssa"),
         to_attr="planning_ssa_records",

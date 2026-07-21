@@ -96,7 +96,9 @@ class FlagsApiAuthorizationTests(TestCase):
         for user in (self.cceo, self.other_pl):
             client.force_login(user)
             resp = client.get("/api/flags/program-leads")
-            self.assertEqual(resp.status_code, 403, f"{user.active_role} must be refused")
+            self.assertEqual(
+                resp.status_code, 403, f"{user.active_role} must be refused"
+            )
 
         client.force_login(self.cd)
         resp = client.get("/api/flags/program-leads")
@@ -187,9 +189,7 @@ class PdHrStageAuthorizationTests(TestCase):
         req = self._request_at_hr(self.cceo_sp, self.cceo)
         PDApprovalRoutingService.hr_return(req.id, self.hr, "Fix the dates")
         self.assertTrue(
-            AuditLog.objects.filter(
-                action="pd_hr_return", subject_id=req.id
-            ).exists(),
+            AuditLog.objects.filter(action="pd_hr_return", subject_id=req.id).exists(),
             "PD decisions must land on the tamper-evident audit chain.",
         )
 
@@ -267,9 +267,7 @@ class MonthlyPlanApprovalScopeTests(TestCase):
 
     def test_unrelated_pl_cannot_return_another_teams_plan(self):
         with self.assertRaises(Forbidden):
-            planning_services.return_plan(
-                self.plan.id, {"reason": "no"}, self.other_pl
-            )
+            planning_services.return_plan(self.plan.id, {"reason": "no"}, self.other_pl)
 
     def test_plan_lifecycle_signatures_match_the_view_contract(self):
         """The DRF lifecycle view calls fn(plan_id, request.data, request.user);
@@ -292,7 +290,9 @@ class StaffPerformancePiiTests(TestCase):
     """C5 — the performance API returned staff email to summary-only roles."""
 
     def test_rvp_payload_carries_no_email(self):
-        rvp = _user("rvp-perf@t.org", "Remy VP", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        rvp = _user(
+            "rvp-perf@t.org", "Remy VP", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         subject = _user("cceo-perf@t.org", "Cara CCEO", EdifyRole.CCEO.value)
         StaffProfile.objects.create(user=subject, title="CCEO", country="Uganda")
         client = Client()

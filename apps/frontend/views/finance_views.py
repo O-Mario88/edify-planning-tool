@@ -993,6 +993,7 @@ def allocation_drilldown_view(request):
     month_num = MONTH_MAP.get(month_name.lower(), 4)
 
     from apps.accounts.models import StaffProfile, User
+    from apps.budget.allocation_service import MonthlyFundAllocationService
 
     staff_user = get_object_or_404(User, id=staff_id)
     # The roster above is scoped; this drilldown was not, so an out-of-scope

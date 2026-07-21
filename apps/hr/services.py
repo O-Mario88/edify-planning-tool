@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from django.utils import timezone
 
 from apps.accounts.models import Leave, StaffProfile
 from apps.core.rbac import EdifyRole
@@ -141,7 +140,7 @@ def request_leave(data: dict, principal, attachment_file=None) -> dict:
 
 
 def review_leave(leave_id: str, decision: str, principal) -> dict:
-    from apps.core.exceptions import BadRequest, NotFoundError
+    from apps.core.exceptions import BadRequest
     from apps.hr.leave_services import LeaveApprovalService
 
     if decision not in ("approved", "rejected"):

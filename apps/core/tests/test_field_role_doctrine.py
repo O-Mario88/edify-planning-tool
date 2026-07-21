@@ -33,17 +33,17 @@ class CceoDoctrine(TestCase):
     def test_can_execute_the_field_workflow(self):
         held = _perms(CCEO)
         for needed in (
-            Permission.SCHOOL_VIEW,          # see assigned schools
+            Permission.SCHOOL_VIEW,  # see assigned schools
             Permission.SCHOOL_DIRECTORY_VIEW,  # work the operational directory
-            Permission.SSA_VIEW,             # read school SSA need
+            Permission.SSA_VIEW,  # read school SSA need
             Permission.CLUSTER_VIEW,
-            Permission.CLUSTER_ASSIGN,       # add schools to clusters
+            Permission.CLUSTER_ASSIGN,  # add schools to clusters
             Permission.PLANNING_VIEW,
-            Permission.PLANNING_CREATE,      # plan support
-            Permission.ACTIVITY_ASSIGN,      # assign to partners
-            Permission.ACTIVITY_COMPLETE,    # execute
+            Permission.PLANNING_CREATE,  # plan support
+            Permission.ACTIVITY_ASSIGN,  # assign to partners
+            Permission.ACTIVITY_COMPLETE,  # execute
             Permission.EVIDENCE_REVIEW,
-            Permission.PARTNER_VIEW,         # supervise partners
+            Permission.PARTNER_VIEW,  # supervise partners
             Permission.PROJECT_ASSIGN_SCHOOL,  # add eligible schools to projects
             Permission.BUDGET_VIEW_DETAIL,
         ):
@@ -52,16 +52,16 @@ class CceoDoctrine(TestCase):
     def test_holds_no_leadership_or_finance_control(self):
         held = _perms(CCEO)
         for forbidden in (
-            Permission.PAYMENT_ACT,             # cannot disburse
-            Permission.COST_SETTINGS_MANAGE,    # cannot change the rate card
-            Permission.COUNTRY_BUDGET_SUBMIT,   # cannot touch country budgets
+            Permission.PAYMENT_ACT,  # cannot disburse
+            Permission.COST_SETTINGS_MANAGE,  # cannot change the rate card
+            Permission.COUNTRY_BUDGET_SUBMIT,  # cannot touch country budgets
             Permission.COUNTRY_BUDGET_APPROVE,
-            Permission.IA_VERIFY,               # cannot verify its own work
+            Permission.IA_VERIFY,  # cannot verify its own work
             Permission.SSA_UPLOAD,
             Permission.STAFF_MANAGE,
             Permission.USER_MANAGE,
             Permission.SYSTEM_ADMIN,
-            Permission.PROJECT_MANAGE,          # cannot own projects
+            Permission.PROJECT_MANAGE,  # cannot own projects
         ):
             self.assertNotIn(
                 forbidden.value, held, f"CCEO must not hold {forbidden.value}"
@@ -94,10 +94,10 @@ class ProgramLeadDoctrine(TestCase):
         for needed in (
             Permission.SCHOOL_VIEW,
             Permission.SCHOOL_DIRECTORY_VIEW,
-            Permission.PLANNING_CREATE,      # own field work
+            Permission.PLANNING_CREATE,  # own field work
             Permission.ACTIVITY_ASSIGN,
             Permission.ACTIVITY_COMPLETE,
-            Permission.BUDGET_APPROVE,       # approves supervised CCEO requests
+            Permission.BUDGET_APPROVE,  # approves supervised CCEO requests
             Permission.EVIDENCE_REVIEW,
             Permission.STAFF_PERFORMANCE_VIEW,  # team targets
             Permission.SSA_VIEW,
@@ -108,9 +108,9 @@ class ProgramLeadDoctrine(TestCase):
     def test_holds_no_country_or_finance_control(self):
         held = _perms(PL)
         for forbidden in (
-            Permission.PAYMENT_ACT,            # cannot disburse
-            Permission.IA_VERIFY,              # cannot IA-verify
-            Permission.COST_SETTINGS_MANAGE,   # cannot change prices
+            Permission.PAYMENT_ACT,  # cannot disburse
+            Permission.IA_VERIFY,  # cannot IA-verify
+            Permission.COST_SETTINGS_MANAGE,  # cannot change prices
             Permission.COUNTRY_BUDGET_SUBMIT,  # cannot override country budgets
             Permission.COUNTRY_BUDGET_APPROVE,
             Permission.FUND_REQUEST_APPROVE_ESCALATED,  # escalation is the CD's
@@ -143,9 +143,9 @@ class ProjectCoordinatorDoctrine(TestCase):
             Permission.PROJECT_MANAGE,
             Permission.PROJECT_ASSIGN_SCHOOL,
             Permission.PLANNING_VIEW,
-            Permission.PLANNING_CREATE,      # project planning
-            Permission.ACTIVITY_ASSIGN,      # assign project work to partners
-            Permission.EVIDENCE_REVIEW,      # monitor project evidence
+            Permission.PLANNING_CREATE,  # project planning
+            Permission.ACTIVITY_ASSIGN,  # assign project work to partners
+            Permission.EVIDENCE_REVIEW,  # monitor project evidence
             Permission.PARTNER_VIEW,
             Permission.SCHOOL_VIEW,
             Permission.SCHOOL_DIRECTORY_VIEW,  # assigns project schools
@@ -159,9 +159,9 @@ class ProjectCoordinatorDoctrine(TestCase):
     def test_holds_no_country_finance_or_verification_control(self):
         held = _perms(PC)
         for forbidden in (
-            Permission.BUDGET_APPROVE,        # cannot approve country-wide funds
-            Permission.PAYMENT_ACT,           # cannot disburse
-            Permission.IA_VERIFY,             # cannot IA-verify
+            Permission.BUDGET_APPROVE,  # cannot approve country-wide funds
+            Permission.PAYMENT_ACT,  # cannot disburse
+            Permission.IA_VERIFY,  # cannot IA-verify
             Permission.COST_SETTINGS_MANAGE,
             Permission.COUNTRY_BUDGET_SUBMIT,
             Permission.COUNTRY_BUDGET_APPROVE,
@@ -210,11 +210,11 @@ class ProgramAccountantDoctrine(TestCase):
         verification."""
         held = _perms(ACCT)
         for forbidden in (
-            Permission.IA_VERIFY,           # never verifies activity quality
-            Permission.PLANNING_CREATE,     # never plans field activities
-            Permission.ACTIVITY_ASSIGN,     # never changes school assignments
+            Permission.IA_VERIFY,  # never verifies activity quality
+            Permission.PLANNING_CREATE,  # never plans field activities
+            Permission.ACTIVITY_ASSIGN,  # never changes school assignments
             Permission.ACTIVITY_COMPLETE,
-            Permission.SSA_UPLOAD,          # never edits SSA
+            Permission.SSA_UPLOAD,  # never edits SSA
             Permission.SCHOOL_EDIT,
             Permission.COST_SETTINGS_MANAGE,  # never changes prices
             Permission.CLUSTER_ASSIGN,

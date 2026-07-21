@@ -8,7 +8,7 @@ Three loops were severed:
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 from django.test import Client, TestCase
 from django.utils import timezone
@@ -42,7 +42,9 @@ class ProjectLifecycleTests(TestCase):
     decision happened."""
 
     def setUp(self):
-        self.rvp = _user("rvp-life@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value)
+        self.rvp = _user(
+            "rvp-life@t.org", "Remy", EdifyRole.REGIONAL_VICE_PRESIDENT.value
+        )
         StaffProfile.objects.create(user=self.rvp, title="RVP", country="Uganda")
         self.project = Project.objects.create(
             name="SP-EDTECH",
@@ -75,7 +77,9 @@ class ProjectLifecycleTests(TestCase):
         self.assertTrue(self.project.is_live, "a paused project stays visible")
 
     def test_scale_and_redesign_move_status(self):
-        project_services.apply_decision(self.project, "scale", self.rvp, "Strong impact")
+        project_services.apply_decision(
+            self.project, "scale", self.rvp, "Strong impact"
+        )
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, ProjectStatus.SCALING.value)
         self.assertTrue(self.project.accepts_new_work)
@@ -375,10 +379,18 @@ class QuarterForecastTests(TestCase):
 
     def test_fy_quarters_cover_every_month_of_an_oct_to_sep_year(self):
         expected = {
-            10: "Q1", 11: "Q1", 12: "Q1",
-            1: "Q2", 2: "Q2", 3: "Q2",
-            4: "Q3", 5: "Q3", 6: "Q3",
-            7: "Q4", 8: "Q4", 9: "Q4",
+            10: "Q1",
+            11: "Q1",
+            12: "Q1",
+            1: "Q2",
+            2: "Q2",
+            3: "Q2",
+            4: "Q3",
+            5: "Q3",
+            6: "Q3",
+            7: "Q4",
+            8: "Q4",
+            9: "Q4",
         }
         for month, quarter in expected.items():
             self.assertEqual(recon._fy_quarter(month), quarter, f"month {month}")
@@ -423,7 +435,9 @@ class QuarterForecastTests(TestCase):
         dec_start, dec_end = recon._aware_bounds("2026-12")
         jan_start, _jan_end = recon._aware_bounds("2027-01")
         self.assertEqual(
-            dec_end, jan_start, "a payment at the month boundary must land in exactly one envelope"
+            dec_end,
+            jan_start,
+            "a payment at the month boundary must land in exactly one envelope",
         )
 
     def test_malformed_month_key_is_rejected(self):

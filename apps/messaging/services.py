@@ -69,7 +69,18 @@ IA_CONTEXTS = {
 # resolves to nothing must be refused rather than waved through.
 _STAGE_CONTEXTS = {
     # Anyone may raise a technical/support issue; Admin is the counterparty.
-    "system": {"ADMIN", "CCEO", "PL", "CD", "RVP", "HR", "IA", "ACCOUNTANT", "PARTNER", "PROJECT_COORDINATOR"},
+    "system": {
+        "ADMIN",
+        "CCEO",
+        "PL",
+        "CD",
+        "RVP",
+        "HR",
+        "IA",
+        "ACCOUNTANT",
+        "PARTNER",
+        "PROJECT_COORDINATOR",
+    },
     # Country and team envelopes — leadership and finance only.
     "finance": {"ACCOUNTANT", "PL", "CD", "RVP", "ADMIN"},
     "budget": {"ACCOUNTANT", "PL", "CD", "RVP", "ADMIN"},
@@ -1232,7 +1243,7 @@ def send(data: dict, principal) -> dict:
         # Authorise each linked item — their labels are persisted onto the
         # thread and shown to every participant, so an unchecked id leaked a
         # record's name through the panel.
-        if not can_access_context(sender, context_type, item_id):
+        if not can_access_context(principal, context_type, item_id):
             continue
         _, item_label = resolve_context_record(context_type, item_id)
         linked_items.append({"id": item_id, "label": item_label})

@@ -1,3 +1,4 @@
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import csv
 from urllib.parse import urlencode
 
@@ -450,7 +451,7 @@ def dashboard_view(request):
                 f"/planning/assign-partner-modal?{urlencode(partner_query)}"
             )
 
-        completed_cnt = cc_activities.filter(status="completed").count()
+        completed_cnt = cc_activities.filter(status__in=COMPLETED_WORK_STATUSES).count()
         in_progress_cnt = cc_activities.filter(
             status__in=["in_progress", "completion_started"]
         ).count()
@@ -748,7 +749,6 @@ def dashboard_view(request):
         # No health scores, teacher-impact counts, budgets, or status/dates are
         # rendered here because the Project model has no such fields yet.
         from apps.projects.models import (
-            Project,
             ProjectSchoolAssignment,
             ProjectPartnerAssignment,
         )
@@ -799,9 +799,7 @@ def dashboard_view(request):
                 "project_name": a.project.name,
                 "district": a.school.district.name if a.school.district_id else "—",
             }
-            for a in ProjectSchoolAssignment.objects.filter(
-                project_id__in=scoped_ids
-            )
+            for a in ProjectSchoolAssignment.objects.filter(project_id__in=scoped_ids)
             .select_related("school", "school__district", "project")
             .order_by("-created_at")[:8]
         ]
@@ -809,9 +807,7 @@ def dashboard_view(request):
         # Partners actually assigned to a special project.
         project_partners = [
             {"partner_name": a.partner.name, "project_name": a.project.name}
-            for a in ProjectPartnerAssignment.objects.filter(
-                project_id__in=scoped_ids
-            )
+            for a in ProjectPartnerAssignment.objects.filter(project_id__in=scoped_ids)
             .select_related("partner", "project")
             .order_by("partner__name")
         ]

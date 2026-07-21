@@ -51,7 +51,6 @@ def _activity_ids(context):
     return ids
 
 
-
 def _schedulable_date():
     """The next date REG-02 will actually accept.
 

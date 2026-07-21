@@ -58,6 +58,30 @@ services:
     ports:
       - "${PORT:-4000}:4000"
 
+  # The scheduler is a DEDICATED process, not a thread inside a web worker —
+  # multiple web replicas would each start one and double-fire every job.
+  # Without this service no reminder, escalation sweep, digest, PD nudge or
+  # target sync ever ran in a compose deployment: ENABLE_BACKGROUND_JOBS
+  # defaults to false and only the Procfile knew about runscheduler.
+  worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python manage.py runscheduler
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      SECURE_SSL_REDIRECT: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=16 chars)}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
+      ENABLE_BACKGROUND_JOBS: "true"
+      EVIDENCE_STORAGE_DIR: /data/evidence
+    volumes:
+      - edify_evidence:/data/evidence
+
 volumes:
   edify_pgdata:
   edify_evidence:

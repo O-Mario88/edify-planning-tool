@@ -26,9 +26,7 @@ class PageInventoryTest(SimpleTestCase):
         )
         for job in platform["scheduled_jobs"]:
             self.assertTrue(job.get("cron"), f"{job['name']} has no schedule")
-            self.assertTrue(
-                job.get("description"), f"{job['name']} has no description"
-            )
+            self.assertTrue(job.get("description"), f"{job['name']} has no description")
             self.assertTrue(
                 job.get("idempotency_note") or not job.get("idempotent"),
                 f"{job['name']} claims idempotency without saying why",

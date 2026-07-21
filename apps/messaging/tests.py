@@ -111,9 +111,7 @@ class MessagingBaseTest(TestCase):
             responsible_user=cls.cceo1.id,
             status="submitted",
         )
-        cls.partner_org = Partner.objects.create(
-            name="Test Partner", user=cls.partner
-        )
+        cls.partner_org = Partner.objects.create(name="Test Partner", user=cls.partner)
         cls.partner_assignment = PartnerAssignment.objects.create(
             partner=cls.partner_org,
             school=cls.school1,
@@ -271,7 +269,9 @@ class ContextPermissionTest(MessagingBaseTest):
 class RecipientPolicyTest(MessagingBaseTest):
     def test_hr_cannot_message_partner_by_default(self):
         with self.assertRaises(Forbidden):
-            self._send(self.hr, self.partner, ctype="school", cid=self.school1.school_id)
+            self._send(
+                self.hr, self.partner, ctype="school", cid=self.school1.school_id
+            )
 
     def test_rvp_cannot_message_partner_by_default(self):
         with self.assertRaises(Forbidden):

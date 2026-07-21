@@ -4,35 +4,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('projects', '0007_project_measurement_end_fy_and_more'),
+        ("projects", "0007_project_measurement_end_fy_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='budget_ceiling_ugx',
+            model_name="project",
+            name="budget_ceiling_ugx",
             field=models.BigIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='status',
-            field=models.CharField(choices=[('proposed', 'Proposed'), ('active', 'Active'), ('under_review', 'Under Review'), ('paused', 'Paused'), ('scaling', 'Scaling'), ('closed', 'Closed')], default='active', max_length=32),
+            model_name="project",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("proposed", "Proposed"),
+                    ("active", "Active"),
+                    ("under_review", "Under Review"),
+                    ("paused", "Paused"),
+                    ("scaling", "Scaling"),
+                    ("closed", "Closed"),
+                ],
+                default="active",
+                max_length=32,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='status_changed_at',
+            model_name="project",
+            name="status_changed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='status_changed_by',
+            model_name="project",
+            name="status_changed_by",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AddField(
-            model_name='project',
-            name='status_reason',
+            model_name="project",
+            name="status_reason",
             field=models.TextField(blank=True, null=True),
         ),
     ]

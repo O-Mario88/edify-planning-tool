@@ -259,9 +259,7 @@ class ActivityClosureService:
             # notification below are append-only. Without this guard a double
             # close records the closure twice in the tamper-evident audit chain,
             # which is precisely the record used to reconstruct who closed what.
-            locked = (
-                Activity.objects.select_for_update().filter(pk=activity.pk).first()
-            )
+            locked = Activity.objects.select_for_update().filter(pk=activity.pk).first()
             if locked is not None and locked.status == "closed":
                 existing = ActivityClosure.objects.filter(activity=activity).first()
                 if existing is not None:
@@ -412,9 +410,7 @@ class ActivityReopenService:
             # and the second one reversed target credit that was never granted
             # twice. ActivityReopenRequest.activity is a plain ForeignKey, so
             # nothing at the database level catches the duplicate.
-            locked = (
-                Activity.objects.select_for_update().filter(pk=activity.pk).first()
-            )
+            locked = Activity.objects.select_for_update().filter(pk=activity.pk).first()
             current_status = locked.status if locked is not None else activity.status
             if current_status not in ActivityReopenService.REOPENABLE_STATUSES:
                 raise BadRequest(

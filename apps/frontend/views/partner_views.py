@@ -3,6 +3,7 @@ GROUP 3 — Partner Views
 Partner directory, partner detail, partner portal pages
 """
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import csv
 from collections import defaultdict
 
@@ -442,7 +443,7 @@ def partner_detail_view(request, partner_id):
     context = {
         "partner": partner,
         "activities": activities,
-        "completed": sum(1 for a in activities if a.status == "completed"),
+        "completed": sum(1 for a in activities if a.status in COMPLETED_WORK_STATUSES),
         "partner_progress": partner_progress,
     }
     return render(request, "pages/partners/detail.html", context)
@@ -550,7 +551,7 @@ def partner_evidence_view(request):
 
     pending = Activity.objects.filter(
         assigned_partner_id__in=partner_ids,
-        status="completed",
+        status__in=COMPLETED_WORK_STATUSES,
         evidence__isnull=True,
         deleted_at__isnull=True,
     ).select_related("school")[:10]
