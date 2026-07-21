@@ -113,9 +113,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # own role-to-staff audience rule before returning schedules.
     "calendar": ALL_ROLES,
     "planning": {CCEO, PL, PROJECT_COORDINATOR, ADMIN},
-    "weekly_fund_request": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
+    # The Project Coordinator owns weekly requests too — weekly_service's
+    # _ROUTE_TO_CD names them explicitly — so locking them out of the page meant
+    # they generated requests they could never see or confirm.
+    "weekly_fund_request": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
     "fund_approvals": {PL, ADMIN},
-    "fund_requests": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
+    "fund_requests": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
     "monthly_request": {CD, PL, RVP, ACCOUNTANT, IA, PROJECT_COORDINATOR, ADMIN},
     "my_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
     "monthly_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
@@ -170,7 +173,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "decision_intelligence": {CD, RVP, PL, ACCOUNTANT, HR, ADMIN},
     # Schools losing ground. Same audience as SSA intelligence; the service
     # withholds school identity from summary-only roles.
-    "declining_schools": {CD, RVP, PL, IA, CCEO, ADMIN},
+    "declining_schools": {CD, RVP, PL, IA, CCEO, PROJECT_COORDINATOR, ADMIN},
     # Read-only core-package health. The operational /core-schools page stays
     # {CCEO, PL, IA, ADMIN}; this is the leadership lens its KPIs used to link
     # to and then 403 on.
