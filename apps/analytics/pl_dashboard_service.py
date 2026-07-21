@@ -279,7 +279,11 @@ class ProgramLeadDashboardService:
         return [
             card(
                 "target",
-                "Team Target Progress",
+                # NOT "Team Target Progress" — that label belongs to the
+                # weighted, validated-only ledger figure on Team Targets, and
+                # this is a raw execution count. pl_analytics_service documents
+                # that the two must never share a name, then this card did.
+                "Team Execution Progress",
                 f"{team_pct}%",
                 "success",
                 "field execution, not IA-verified",

@@ -671,8 +671,17 @@ class PLAnalyticsService:
         ids = {cceo["staff_id"]}
         if cceo["user_id"]:
             ids.add(cceo["user_id"])
+        # Attribute by ownership only. The previous OR-clause also credited
+        # every activity performed AT this CCEO's schools — which meant a
+        # partner's delivery, a Program Lead's own visit, and a colleague's
+        # work at a shared school all raised this CCEO's number, and two CCEOs
+        # sharing a school each counted the same activity. Ownership spans both
+        # id spaces (see scoping.owner_ids), plus the monitoring staff member
+        # on partner-delivered work, which is the one form of partner delivery
+        # this person genuinely drove.
         c_done = completed_qs.filter(
-            Q(responsible_staff_id__in=ids) | Q(school_id__in=cceo["school_ids"])
+            Q(responsible_staff_id__in=ids)
+            | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=ids)
         )
         achieved_total = (
             c_done.filter(activity_type__in=VISIT_TYPES).count()

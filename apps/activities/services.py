@@ -70,6 +70,18 @@ SUBMITTABLE_STATUSES = COMPLETABLE_STATUSES + (
     "completed",  # legacy staged rows created before this canonical path
 )
 
+# Statuses from which a field worker may begin completing.
+# `rescheduled` is included deliberately: `reschedule()` writes it, and nothing
+# accepted it back, so moving an activity's date turned it into an accidental
+# terminal state — it could only ever be rescheduled again, never worked.
+STARTABLE_STATUSES = (
+    "scheduled",
+    "in_progress",
+    "partner_scheduled",
+    "assigned_to_partner",
+    "rescheduled",
+)
+
 
 def _supervisor_user_ids(activity) -> list[str]:
     """The reviewers who should be told this activity is waiting on them.
@@ -621,12 +633,7 @@ def start_completion(
     activity_id: str, data: dict | None = None, principal=None
 ) -> dict:
     a = _get_in_scope(activity_id, principal)
-    if a.status not in (
-        "scheduled",
-        "in_progress",
-        "partner_scheduled",
-        "assigned_to_partner",
-    ):
+    if a.status not in STARTABLE_STATUSES:
         raise BadRequest("Activity must be scheduled before completion can start.")
     a.status = "completion_started"
     a.save(update_fields=["status", "updated_at"])

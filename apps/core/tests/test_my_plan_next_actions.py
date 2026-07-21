@@ -181,3 +181,65 @@ class PriorityQueueRenderTests(TestCase):
             ctx["priority_count"],
             len(ctx["waiting_on_me"]) + len(ctx["due_today"]),
         )
+
+
+class StatusReachabilityTests(TestCase):
+    """Two statuses were dead ends the workflow could still write."""
+
+    def test_rescheduled_work_can_be_started_again(self):
+        from apps.activities.services import STARTABLE_STATUSES
+
+        self.assertIn(
+            "rescheduled",
+            STARTABLE_STATUSES,
+            "reschedule() writes this status; refusing it makes rescheduling "
+            "a one-way trip out of the workflow",
+        )
+
+    def test_returned_work_can_be_completed_and_resubmitted(self):
+        from apps.activities.services import (
+            COMPLETABLE_STATUSES,
+            RETURNED_STATUSES,
+            SUBMITTABLE_STATUSES,
+        )
+
+        for status in RETURNED_STATUSES:
+            self.assertIn(status, COMPLETABLE_STATUSES)
+            self.assertIn(status, SUBMITTABLE_STATUSES)
+
+
+class MetricAttributionTests(TestCase):
+    """A CCEO must be credited for their own work, not their school's."""
+
+    def test_cceo_target_does_not_credit_by_school(self):
+        import inspect
+
+        from apps.analytics.pl_analytics_service import PLAnalyticsService
+
+        source = inspect.getsource(PLAnalyticsService._cceo_target)
+        self.assertNotIn(
+            'Q(school_id__in=cceo["school_ids"])',
+            source,
+            "crediting every activity at a CCEO's school counts partner work, "
+            "a PL's own visits, and a colleague's work as this CCEO's achievement",
+        )
+
+    def test_execution_and_target_kpis_do_not_share_a_label(self):
+        """The weighted validated ledger owns 'Team Target Progress'; the PL
+        dashboard card is a raw execution count and must not borrow it.
+
+        Asserted against the rendered card labels rather than the source text,
+        so the explanatory comment naming the old label does not trip it.
+        """
+        import inspect
+        import re
+
+        from apps.analytics import pl_dashboard_service
+
+        source = inspect.getsource(pl_dashboard_service)
+        # Strip comments before looking for the label as a live string.
+        code = "\n".join(
+            line for line in source.splitlines() if not line.strip().startswith("#")
+        )
+        self.assertNotIn('"Team Target Progress"', code)
+        self.assertIn('"Team Execution Progress"', code)
