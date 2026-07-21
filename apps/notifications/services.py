@@ -6,6 +6,10 @@ from django.db import transaction
 from django.utils import timezone
 from .models import Notification
 
+# Roles that approve leave, in the lowercased form `resolve()` compares against.
+_APPROVER_ROLES = {"program lead", "countrydirector", "regionalvicepresident",
+                   "humanresources", "admin"}
+
 
 class NotificationLinkResolver:
     @staticmethod
@@ -68,11 +72,67 @@ class NotificationLinkResolver:
 
         elif event_type == "fund_request_approved":
             if role == "accountant":
-                route = "/fund-requests"
+                # The Accountant disburses from the Disbursement Dashboard, not
+                # the requester-facing fund-requests list.
+                route = "/disbursements"
                 label = "Disburse Funds"
             else:
-                route = "/fund-requests"
+                route = "/fund-requests/weekly"
                 label = "View Fund Request"
+
+        # ── The weekly money chain ────────────────────────────────────────
+        # None of these had a branch, so every one of them fell through to
+        # "/dashboard" and the recipient had to go and find the work.
+        elif event_type in (
+            "weekly_fund_request_submitted",
+            "weekly_fund_request_returned",
+        ):
+            route = "/fund-requests/weekly"
+            label = (
+                "Review Fund Request"
+                if event_type.endswith("submitted")
+                else "Fix Fund Request"
+            )
+
+        elif event_type == "weekly_fund_request_approved":
+            route = "/fund-requests/weekly"
+            label = "View Approved Request"
+
+        elif event_type in ("weekly_fund_request_ready", "fund_request_sent_to_accountant"):
+            route = "/disbursements"
+            label = "Disburse Funds"
+
+        elif event_type in (
+            "weekly_fund_request_disbursed",
+            "fund_request_disbursed",
+        ):
+            route = "/fund-requests/weekly"
+            label = "Confirm Receipt"
+
+        elif event_type == "fund_request_returned":
+            route = "/fund-requests/weekly"
+            label = "Fix Fund Request"
+
+        # ── The activity chain ────────────────────────────────────────────
+        elif event_type == "activity_submitted_for_review":
+            route = "/pl/review-queue"
+            label = "Review Completion"
+
+        elif event_type == "activity_returned_by_pl":
+            route = f"/my-plan/{context_id}"
+            label = "Fix and Resubmit"
+
+        elif event_type == "activity_ia_verified":
+            route = f"/my-plan/{context_id}"
+            label = "View Activity"
+
+        elif event_type == "accountability_cleared":
+            route = f"/my-plan/{context_id}"
+            label = "View Activity"
+
+        elif event_type == "reimbursement_due":
+            route = f"/my-plan/{context_id}/confirm-reimbursement-receipt"
+            label = "Confirm Reimbursement"
 
         elif event_type == "leave_requested":
             route = "/leave/approvals"
@@ -139,6 +199,22 @@ class NotificationLinkResolver:
         elif context_type == "Message":
             route = f"/messages/{context_id}"
             label = "Open Chat"
+        # Context fallbacks for the record types that had none. Without these a
+        # new event type silently degrades to "View Dashboard" instead of at
+        # least reaching the right surface.
+        elif context_type in ("WeeklyFundRequest", "FundRequest", "AdvanceRequest"):
+            if role == "accountant":
+                route = "/disbursements"
+                label = "Open Finance Queue"
+            else:
+                route = "/fund-requests/weekly"
+                label = "Open Fund Request"
+        elif context_type == "Leave":
+            route = "/leave/approvals" if role in _APPROVER_ROLES else "/personal-time-off/"
+            label = "Review Leave" if role in _APPROVER_ROLES else "Open Leave"
+        elif context_type == "Project":
+            route = "/projects"
+            label = "Open Project"
 
         return route, label
 
@@ -184,6 +260,23 @@ class WorkflowNotificationService:
             else:
                 user_id = str(r)
                 user_obj = User.objects.filter(id=user_id).first()
+                if not user_obj:
+                    # Callers in the activity chain address recipients by
+                    # `Activity.responsible_staff_id`, which holds a
+                    # StaffProfile id as often as a User id. Resolving only the
+                    # User space meant those notifications were silently
+                    # dropped by the `continue` below — which is why the whole
+                    # activity chain appeared to have no notifications at all.
+                    from apps.accounts.models import StaffProfile
+
+                    sp = (
+                        StaffProfile.objects.filter(id=user_id)
+                        .select_related("user")
+                        .first()
+                    )
+                    if sp and sp.user_id:
+                        user_obj = sp.user
+                        user_id = sp.user_id
 
             if not user_obj:
                 continue

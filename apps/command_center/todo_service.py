@@ -423,6 +423,104 @@ def _ia_todos(principal, role):
     return todos
 
 
+def _pl_review_todos(principal, role):
+    """Completions waiting on THIS reviewer.
+
+    No rule existed for the review queue at all, so a Program Lead was never
+    told that a CCEO had submitted work — they had to remember to open
+    /pl/review-queue. This is the single most-used handoff in the platform.
+    """
+    if role not in ("Program Lead", "Admin"):
+        return []
+    from apps.pl_review.services import queue as review_queue
+
+    todos = []
+    for row in review_queue(principal)[:10]:
+        where = row.get("schoolName") or row.get("clusterName") or "the field"
+        todos.append(
+            {
+                "id": f"plrev-{row['id']}",
+                "title": "Review Completion",
+                "description": f"{row.get('activityTypeLabel') or 'Activity'} at {where} "
+                "is waiting on your confirmation",
+                "category": "Execution",
+                "priority": "high",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "info",
+                "due_label": "—",
+                "due_tone": "neutral",
+                "linked": f"{where} · completion",
+                "action_label": "Review",
+                "action_url": "/pl/review-queue",
+                "actionable": True,
+                "source": "Activity workflow",
+                "_due_sort": date.max,
+            }
+        )
+    return todos
+
+
+def _partner_delay_todos(principal, scope, today):
+    """Partner work I own that is past its date.
+
+    A partner-scheduled activity that slips produced no next action for the
+    staff member who assigned it — `compute_next_action` has no partner-delay
+    branch, so the row fell through to a non-actionable default and vanished
+    from every queue.
+    """
+    from apps.activities.models import Activity
+
+    owner_ids = _owner_ids(principal, scope)
+    if not owner_ids:
+        return []
+    late = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="partner",
+            monitored_by_staff_id__in=owner_ids,
+            planned_date__lt=today,
+        )
+        .exclude(
+            status__in=[
+                "closed",
+                "cancelled",
+                "rejected",
+                "ia_verified",
+                "awaiting_ia_verification",
+                "submitted_to_pl",
+            ]
+        )
+        .select_related("school")[:10]
+    )
+    todos = []
+    for a in late:
+        where = a.school.name if a.school_id else "the field"
+        days = (today - a.planned_date).days if a.planned_date else 0
+        todos.append(
+            {
+                "id": f"pdelay-{a.id}",
+                "title": "Chase Partner Delivery",
+                "description": f"{a.get_activity_type_display()} at {where} is "
+                f"{days} day{'s' if days != 1 else ''} past its planned date",
+                "category": "Partner",
+                "priority": "high",
+                "status_key": "overdue",
+                "status_label": "Overdue",
+                "status_tone": "danger",
+                "due_label": "Overdue",
+                "due_tone": "danger",
+                "linked": f"{where} · partner",
+                "action_label": "Open",
+                "action_url": f"/my-plan/{a.id}",
+                "actionable": True,
+                "source": "Partner workflow",
+                "_due_sort": a.planned_date or date.max,
+            }
+        )
+    return todos
+
+
 def _leave_todos(principal, role):
     if role not in ("Program Lead", "CountryDirector", "HumanResources", "Admin"):
         return []
@@ -606,7 +704,123 @@ def _accountant_todos(principal, role):
                 "_due_sort": date.today(),
             }
         )
-    return todos[:15]
+
+    todos += _accountant_settlement_todos()
+    return todos[:20]
+
+
+def _accountant_settlement_todos():
+    """The settlement queues that had no To-Do at all.
+
+    Reimbursements owed, returns awaiting verification, partner payments due,
+    and advances where money went out and accountability never came back. Each
+    of these queues exists in the finance views; none of them produced a task,
+    so the work was only ever found by browsing to the right page.
+    """
+    from datetime import timedelta
+
+    from apps.activities.models import Activity
+    from apps.fund_requests.models import AdvanceRequest
+
+    todos = []
+    today = date.today()
+
+    def row(key, title, desc, url, priority="high", due=None, tone="info", status="waiting_me", label="Waiting on Me"):
+        return {
+            "id": key,
+            "title": title,
+            "description": desc,
+            "category": "Finance",
+            "priority": priority,
+            "status_key": status,
+            "status_label": label,
+            "status_tone": tone,
+            "due_label": "Overdue" if status == "overdue" else "—",
+            "due_tone": "danger" if status == "overdue" else "neutral",
+            "linked": desc[:60],
+            "action_label": "Open",
+            "action_url": url,
+            "actionable": True,
+            "source": "Finance workflow",
+            "_due_sort": due or date.max,
+        }
+
+    # Money the organisation owes an employee.
+    for adv in AdvanceRequest.objects.filter(status="reimbursement_submitted")[:5]:
+        todos.append(
+            row(
+                f"reimb-{adv.id}",
+                "Process Reimbursement",
+                f"UGX {adv.reimbursed_amount or adv.accounted_amount or 0:,} owed on an "
+                "advance-funded over-spend",
+                "/disbursements",
+                priority="critical",
+            )
+        )
+
+    # Cash handed back that nobody has verified.
+    for adv in AdvanceRequest.objects.filter(
+        returned_amount__gt=0, return_verified_at__isnull=True
+    )[:5]:
+        todos.append(
+            row(
+                f"return-{adv.id}",
+                "Verify Returned Cash",
+                f"UGX {adv.returned_amount or 0:,} returned and awaiting your verification",
+                "/disbursements",
+            )
+        )
+
+    # Partner work cleared by IA and awaiting payment. `assigned_partner_id` is
+    # a plain CharField, not an FK, so the names are resolved in one query.
+    payable = list(
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="partner",
+            payment_status="ia_confirmed",
+        )[:5]
+    )
+    partner_names = {}
+    if payable:
+        from apps.partners.models import Partner
+
+        partner_names = dict(
+            Partner.objects.filter(
+                id__in=[a.assigned_partner_id for a in payable if a.assigned_partner_id]
+            ).values_list("id", "name")
+        )
+    for a in payable:
+        who = partner_names.get(a.assigned_partner_id) or "A partner"
+        todos.append(
+            row(
+                f"ppay-{a.id}",
+                "Pay Partner",
+                f"{who} has IA-verified work awaiting payment",
+                "/accounts/partner-payments/",
+            )
+        )
+
+    # Money out, accountability never returned — the loop that silently stays open.
+    stale_before = today - timedelta(days=14)
+    stale = AdvanceRequest.objects.filter(
+        status="disbursed", disbursed_at__date__lt=stale_before
+    )[:5]
+    for adv in stale:
+        todos.append(
+            row(
+                f"stale-{adv.id}",
+                "Chase Overdue Accountability",
+                f"UGX {adv.disbursed_amount or 0:,} disbursed over 14 days ago with no "
+                "accountability submitted",
+                "/disbursements",
+                priority="critical",
+                due=stale_before,
+                tone="danger",
+                status="overdue",
+                label="Overdue",
+            )
+        )
+    return todos
 
 
 def _country_budget_todos(principal, role):
@@ -1626,6 +1840,8 @@ def get_todos(principal) -> dict:
 
     todos = []
     todos += _activity_todos(principal, scope, today, fy)
+    todos += _pl_review_todos(principal, role)
+    todos += _partner_delay_todos(principal, scope, today)
     todos += _fund_request_todos(principal, role)
     todos += _school_quality_todos(scope)
     todos += _ia_todos(principal, role)

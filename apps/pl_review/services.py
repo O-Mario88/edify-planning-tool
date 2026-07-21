@@ -162,6 +162,13 @@ def confirm(activity_id: str, principal) -> dict:
         ]
     )
     _audit("pl_review_confirm", a, principal)
+    _notify_after_review(
+        a,
+        "activity_submitted_for_review",
+        "Activity awaiting verification",
+        f"{getattr(principal, 'name', 'A reviewer')} confirmed a completion.",
+        _impact_assessment_ids(),
+    )
     return _serialize(a)
 
 
@@ -185,4 +192,47 @@ def return_activity(activity_id: str, data: dict, principal) -> dict:
         ]
     )
     _audit("pl_review_return", a, principal, reason=reason)
+    # The submitter must be told, WITH the reason — returning work silently is
+    # how a completion sat untouched until someone happened to reopen My Plan.
+    owner = _owning_staff_id(a)
+    _notify_after_review(
+        a,
+        "activity_returned_by_pl",
+        "Your completion was returned",
+        reason or "Your Program Lead returned this completion for correction.",
+        [owner],
+        priority="high",
+    )
     return _serialize(a)
+
+
+def _impact_assessment_ids() -> list[str]:
+    from apps.accounts.models import User
+
+    return list(
+        User.objects.filter(
+            roles__contains=["ImpactAssessment"], status="active"
+        ).values_list("id", flat=True)
+    )
+
+
+def _notify_after_review(activity, event_type, title, body, recipients, priority="normal"):
+    """Best-effort — a notification failure must not undo the review."""
+    recipients = [r for r in (recipients or []) if r]
+    if not recipients:
+        return
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type=event_type,
+            category="activity",
+            priority=priority,
+            title=title,
+            body=body,
+            context_type="Activity",
+            context_id=activity.id,
+            recipients=recipients,
+        )
+    except Exception:  # noqa: BLE001
+        pass

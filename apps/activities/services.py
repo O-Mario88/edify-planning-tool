@@ -71,6 +71,107 @@ SUBMITTABLE_STATUSES = COMPLETABLE_STATUSES + (
 )
 
 
+def _supervisor_user_ids(activity) -> list[str]:
+    """The reviewers who should be told this activity is waiting on them.
+
+    Resolves through StaffSupervisorAssignment in both id spaces, since
+    `responsible_staff_id` may hold either a StaffProfile or a User id.
+    """
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+
+    owner = activity.responsible_staff_id or getattr(
+        activity, "monitored_by_staff_id", None
+    )
+    if not owner:
+        return []
+    sp = StaffProfile.objects.filter(id=owner).first() or StaffProfile.objects.filter(
+        user_id=owner
+    ).first()
+    if not sp:
+        return []
+    links = StaffSupervisorAssignment.objects.filter(supervisee=sp).select_related(
+        "supervisor__user"
+    )
+    return [
+        link.supervisor.user_id
+        for link in links
+        if link.supervisor and link.supervisor.user_id
+    ]
+
+
+def _notify_chain(activity, event_type, title, body, recipients, priority="normal"):
+    """Tell the next actor that work has arrived.
+
+    The activity chain previously fired no notifications at all: a CCEO's
+    submission, a PL's return, an IA verification and a finance clearance all
+    changed state in silence, leaving the next person to discover the work by
+    browsing. Best-effort — a notification failure must never roll back the
+    workflow transition that just succeeded.
+    """
+    recipients = [r for r in (recipients or []) if r]
+    if not recipients:
+        return
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type=event_type,
+            category="activity",
+            priority=priority,
+            title=title,
+            body=body,
+            context_type="Activity",
+            context_id=activity.id,
+            recipients=recipients,
+        )
+    except Exception:  # noqa: BLE001 - never block the transition
+        pass
+
+
+def _where(activity) -> str:
+    if activity.school_id and activity.school:
+        return activity.school.name
+    if activity.cluster_id and activity.cluster:
+        return activity.cluster.name
+    return "the field"
+
+
+def _notify_completion_routed(a, next_status, principal) -> None:
+    """Tell whoever now owns the review that it has arrived.
+
+    A CCEO's completion routes to their supervising PL; everyone else's goes
+    straight to Impact Assessment. Neither handoff previously produced any
+    signal at all.
+    """
+    who = getattr(principal, "name", None) or "A staff member"
+    what = a.get_activity_type_display()
+    if next_status == "submitted_to_pl":
+        _notify_chain(
+            a,
+            "activity_submitted_for_review",
+            "Completion awaiting your review",
+            f"{who} submitted {what} at {_where(a)}.",
+            _supervisor_user_ids(a),
+            priority="high",
+        )
+        return
+
+    from apps.accounts.models import User
+
+    ia_ids = list(
+        User.objects.filter(
+            roles__contains=["ImpactAssessment"], status="active"
+        ).values_list("id", flat=True)
+    )
+    _notify_chain(
+        a,
+        "activity_submitted_for_review",
+        "Activity awaiting verification",
+        f"{who} submitted {what} at {_where(a)}.",
+        ia_ids,
+    )
+
+
 # Salesforce's own two-way split, not the platform's grouping. Salesforce
 # classifies every activity as either "training" or "visit", and it puts
 # cluster meetings and SSA activities on the training side. That is a mapping
@@ -647,6 +748,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "status": "pending",
             },
         )
+    _notify_completion_routed(a, next_status, principal)
     return _serialize(a)
 
 
@@ -736,6 +838,7 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
                 "status": "pending",
             },
         )
+    _notify_completion_routed(a, next_status, principal)
     return _serialize(a)
 
 
