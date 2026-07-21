@@ -291,6 +291,10 @@ class StaffOnboardingState(models.TextChoices):
     PENDING = "pending", "Pending"
     ACTIVE = "active", "Active"
     SUSPENDED = "suspended", "Suspended"
+    # There was no terminal state, so a fully offboarded person stayed
+    # "active" and kept appearing in the roster, the org chart, the headcount,
+    # planning scope and supervisor chains indefinitely.
+    EXITED = "exited", "Exited"
 
 
 class StaffProfile(SoftDeleteModel):

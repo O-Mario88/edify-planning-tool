@@ -521,8 +521,17 @@ class AdminUserOperationsTest(TestCase):
         self.assertFalse(target.must_change_password)
         self.assertTrue(target.check_password("MyNewSecurePass1!"))
 
-    def test_create_user_without_password_fails(self):
-        """Password is now required — creating without one should fail."""
+    def test_create_user_without_password_sends_an_invitation(self):
+        """No password means the new user sets their own.
+
+        This page used to REQUIRE a provisioner-chosen plaintext password,
+        which made the canonical service's tokenised invitation path
+        unreachable from the only surface anyone uses — so whoever created the
+        account knew the credential. Omitting the password is now the safer
+        path, not an error.
+        """
+        from apps.accounts.models import UserInvitation
+
         url = reverse("frontend:admin_users")
         create_data = {
             "action": "create",
@@ -534,7 +543,11 @@ class AdminUserOperationsTest(TestCase):
         }
         res = self.client.post(url, create_data)
         self.assertEqual(res.status_code, 302)
-        self.assertFalse(User.objects.filter(email="nopwd@edify.test").exists())
+        user = User.objects.filter(email="nopwd@edify.test").first()
+        self.assertIsNotNone(user)
+        self.assertEqual(user.status, "pending_invited")
+        self.assertFalse(user.is_active)
+        self.assertTrue(UserInvitation.objects.filter(user=user).exists())
 
 
 class UpdateUserPrivilegeEscalationTest(TestCase):

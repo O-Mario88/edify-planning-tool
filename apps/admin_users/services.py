@@ -120,6 +120,11 @@ def create(data: dict, principal) -> dict:
                 status="active",
                 is_active=True,
                 password_set_at=timezone.now(),
+                # A provisioner-chosen password is known to someone other than
+                # its owner, so it must not survive first login. The HTML page
+                # set this and the service did not; consolidating on the
+                # service would otherwise have quietly dropped the guarantee.
+                must_change_password=True,
             )
             invite_token = None
         else:
@@ -141,8 +146,32 @@ def create(data: dict, principal) -> dict:
         additional_districts = data.get("additionalDistrictIds") or []
 
         sp = StaffProfile.objects.create(
-            user=user, primary_district_id=primary_district_id, title=role
+            user=user,
+            primary_district_id=primary_district_id,
+            title=role,
+            # Country and department were never captured at provisioning, so
+            # `country` sat on its "Uganda" default and `department` stayed
+            # NULL for everyone — which made the country-scoped HR surfaces
+            # inert and left workforce planning grouping by "Unassigned".
+            country=(data.get("country") or "Uganda"),
+            department=data.get("department") or None,
         )
+
+        # Assign the supervisor. `StaffSupervisorAssignment` had NO writer
+        # outside the demo seeder and no field on any form, so every person
+        # provisioned through this service had no reporting line — which
+        # simultaneously emptied their Program Lead's team scope, left their
+        # leave with no authorized approver, gave field-debrief routing no
+        # target, gave PD approval routing no target, and dropped them from
+        # Team Targets. system_health could already detect the condition; it
+        # had no way to fix it.
+        supervisor_staff_id = (data.get("supervisorStaffId") or "").strip()
+        if supervisor_staff_id:
+            from apps.accounts.supervisor_service import assign_supervisor
+
+            assign_supervisor(
+                sp.id, {"supervisorId": supervisor_staff_id}, principal
+            )
 
         selected_districts = []
         if primary_district_id:

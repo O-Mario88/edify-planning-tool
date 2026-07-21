@@ -184,14 +184,28 @@ class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus
 </div>
 
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Password</label>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Password <span class="text-slate-400 normal-case font-medium">— optional</span></label>
 <input
 type="password"
 name="password"
-required
-placeholder="Set a password for this user"
+placeholder="Leave blank to send an invitation instead"
 class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface edify-primary-focus transition-all"
 >
+<p class="edify-text-caption text-slate-400 mt-1">Leave blank and the new user sets their own password from a one-time invitation link — nobody else ever knows it.</p>
+</div>
+
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Supervisor</label>
+<select
+name="supervisor_staff_id"
+class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
+>
+<option value="">No supervisor yet</option>
+{% for s in supervisor_options %}
+<option value="{{ s.id }}">{{ s.name }} — {{ s.role }}</option>
+{% endfor %}
+</select>
+<p class="edify-text-caption text-slate-400 mt-1">Without a supervisor this person has no leave approver, no team scope, and no development-request routing.</p>
 </div>
 
 <div class="grid grid-cols-2 gap-4">

@@ -922,92 +922,58 @@ def admin_users_view(request):
 
         action = request.POST.get("action")
         if action == "create":
-            from django.utils import timezone
+            # Delegate to the canonical service instead of re-implementing it.
+            # This branch was a hand-rolled copy of `admin_users.services.create`
+            # that had drifted in three ways: it never wrote the
+            # `admin.user_created` audit row the API sibling writes, so an
+            # account provisioned from this page had no recorded origin; it
+            # REQUIRED a provisioner-chosen plaintext password, making the
+            # service's tokenised invitation path unreachable from the only
+            # surface anyone actually uses; and it had no supervisor field, so
+            # everyone created here started with no reporting line.
+            from apps.admin_users.services import create as create_user_service
+            from apps.core.exceptions import BadRequest, ConflictError, Forbidden
 
-            email = request.POST.get("email", "").lower().strip()
-            name = request.POST.get("name", "").strip()
-            phone = request.POST.get("phone", "").strip()
-            role = request.POST.get("role")
-            additional = request.POST.getlist("additional_roles")
-            district_id = request.POST.get("primary_district")
-            additional_districts = request.POST.getlist("additional_districts")
+            payload = {
+                "email": request.POST.get("email", "").lower().strip(),
+                "name": request.POST.get("name", "").strip(),
+                "phone": request.POST.get("phone", "").strip(),
+                "role": request.POST.get("role"),
+                "additionalRoles": request.POST.getlist("additional_roles"),
+                "primaryDistrictId": request.POST.get("primary_district") or None,
+                "additionalDistrictIds": [
+                    d for d in request.POST.getlist("additional_districts") if d
+                ],
+                "supervisorStaffId": (
+                    request.POST.get("supervisor_staff_id") or ""
+                ).strip(),
+                "country": (request.POST.get("country") or "").strip() or None,
+                "department": (request.POST.get("department") or "").strip() or None,
+            }
+            # An empty password means "send an invitation" — the safer default,
+            # and the one the service already supported.
             password = request.POST.get("password", "").strip()
+            if password:
+                payload["password"] = password
 
-            if not email or not name or not role:
+            if not payload["email"] or not payload["name"] or not payload["role"]:
                 messages.error(request, "Name, email, and primary role are required.")
                 return redirect("frontend:admin_users")
 
-            if not password:
-                messages.error(request, "Password is required when creating a user.")
-                return redirect("frontend:admin_users")
-
-            if User.objects.filter(email=email, deleted_at__isnull=True).exists():
-                messages.error(request, "A user with this email already exists.")
-                return redirect("frontend:admin_users")
-
-            from apps.core.security import validate_password
-
-            violations = validate_password(password, email)
-            if violations:
-                messages.error(request, " ".join(violations))
-                return redirect("frontend:admin_users")
-
-            # Same Admin-grant guard the canonical service applies. This is a
-            # hand-rolled copy of create(), and it inherited none of the
-            # service's protections -- an HR user could create an active
-            # account carrying role='Admin' from this page.
-            from apps.admin_users.services import assert_may_administer
-            from apps.core.exceptions import BadRequest
-
             try:
-                assert_may_administer(
-                    None,
-                    request.user,
-                    requested_roles=list(dict.fromkeys([role, *additional])),
-                )
-            except BadRequest as exc:
+                create_user_service(payload, request.user)
+            except (BadRequest, ConflictError, Forbidden) as exc:
                 messages.error(request, str(getattr(exc, "detail", exc)))
                 return redirect("frontend:admin_users")
 
-            with transaction.atomic():
-                user = User.objects.create_user(
-                    email=email,
-                    name=name,
-                    phone=phone,
-                    roles=list(dict.fromkeys([role, *additional])),
-                    active_role=role,
-                    password=password,
-                    status="active",
-                    is_active=True,
-                    password_set_at=timezone.now(),
-                    must_change_password=True,
-                )
-                from apps.accounts.models import StaffProfile, StaffGeographyAssignment
-
-                sp = StaffProfile.objects.create(
-                    user=user, primary_district_id=district_id or None, title=role
-                )
-
-                selected_districts = []
-                if district_id:
-                    selected_districts.append(district_id)
-                for ad in additional_districts:
-                    if ad:
-                        selected_districts.append(ad)
-                selected_districts = list(dict.fromkeys(selected_districts))
-
-                for d_id in selected_districts:
-                    StaffGeographyAssignment.objects.create(staff=sp, district_id=d_id)
-
-                from apps.core.email import mailer
-
-                mailer.send_temporary_password_notification(
-                    to=email, name=name, invited_by_name=request.user.name
-                )
-
             messages.success(
                 request,
-                f"User '{name}' successfully created with password set. Notification sent to {email}.",
+                f"User '{payload['name']}' created. "
+                + (
+                    "A temporary password notification was sent."
+                    if password
+                    else "An invitation to set their own password was sent."
+                ),
             )
             return redirect("frontend:admin_users")
 
@@ -1019,12 +985,35 @@ def admin_users_view(request):
     districts = District.objects.all().order_by("name")
     roles = [r.value for r in EdifyRole]
 
+    # Supervisor candidates for the create form. Only the roles that actually
+    # supervise someone under the reporting-line rules in
+    # `accounts.supervisor_service` (PL supervises CCEO, CD supervises PL).
+    from apps.accounts.models import StaffProfile as _SP
+
+    supervisor_options = [
+        {
+            "id": sp.id,
+            "name": sp.user.name,
+            "role": sp.user.active_role,
+        }
+        for sp in _SP.objects.filter(
+            deleted_at__isnull=True,
+            user__deleted_at__isnull=True,
+            user__active_role__in=[
+                "Program Lead",
+                "CountryDirector",
+                "RegionalVicePresident",
+            ],
+        ).select_related("user").order_by("user__name")
+    ]
+
     context = {
         "users": users[:100],
         "total": users.count(),
         "search": search,
         "districts": districts,
         "available_roles": roles,
+        "supervisor_options": supervisor_options,
         "topbar_search": {
             "placeholder": "Search users by name, email, or role…",
             "value": search,

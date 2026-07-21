@@ -3,26 +3,26 @@
 <!-- Card A: Core Assessment Performance by Staff -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Staff</h4>
-<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg core assessment score of owned schools.</p>
+<h4 class="text-[12px] font-semibold text-slate-800 tracking-wider">Performance by Staff</h4>
+<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg core assessment score of owned schools (out of 10).</p>
 </div>
 
 <div class="space-y-3.5">
 {% for s in perf_insights.staff_insights %}
 <div class="space-y-1.5">
 <div class="flex justify-between items-center edify-text-caption font-semibold text-slate-700">
-<span>{{ s.name }}</span>
-<span class="text-[var(--edify-primary)] font-semibold">{{ s.score }}%</span>
+<span class="truncate">{{ s.name }}</span>
+<span class="text-[var(--edify-primary)] font-semibold tabular-nums">{{ s.score|floatformat:1 }}/10</span>
 </div>
 <div class="w-full bg-slate-100 h-2 rounded-pill overflow-hidden border border-slate-200/50 shadow-inner">
-<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-pill transition-all duration-500" style="width: {{ s.score }}%;"></div>
+<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-pill transition-all duration-500" style="width: {% widthratio s.score 10 100 %}%;"></div>
 </div>
 </div>
 {% endfor %}
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -32,8 +32,8 @@
 <!-- Card B: Core Assessment Performance by Partner -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Partner</h4>
-<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg core assessment score of assigned partner schools.</p>
+<h4 class="text-[12px] font-semibold text-slate-800 tracking-wider">Performance by Partner</h4>
+<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg core assessment score of assigned partner schools (out of 10).</p>
 </div>
 
 <div class="space-y-3.5">
@@ -41,17 +41,17 @@
 <div class="space-y-1.5">
 <div class="flex justify-between items-center edify-text-caption font-semibold text-slate-700">
 <span class="truncate max-w-[125px]">{{ p.name }}</span>
-<span class="text-[var(--edify-primary)] font-semibold">{{ p.score }}%</span>
+<span class="text-[var(--edify-primary)] font-semibold tabular-nums">{{ p.score|floatformat:1 }}/10</span>
 </div>
 <div class="w-full bg-slate-100 h-2 rounded-pill overflow-hidden border border-slate-200/50 shadow-inner">
-<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-pill transition-all duration-500" style="width: {{ p.score }}%;"></div>
+<div class="bg-gradient-to-r from-[var(--edify-primary)]/70 to-[var(--edify-primary)] h-full rounded-pill transition-all duration-500" style="width: {% widthratio p.score 10 100 %}%;"></div>
 </div>
 </div>
 {% endfor %}
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -61,29 +61,29 @@
 <!-- Card C: Core Assessment Performance by Region -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Region</h4>
-<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg score comparison across regional teams.</p>
+<h4 class="text-[12px] font-semibold text-slate-800 tracking-wider">Performance by Region</h4>
+<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Avg score comparison across regional teams (out of 10).</p>
 </div>
 
-<div class="flex items-end justify-between h-[110px] px-3 pb-2.5 bg-slate-50/50 /45 rounded-surface gap-2.5 shadow-inner">
+<div class="flex items-end justify-between h-[110px] px-3 pb-2.5 bg-slate-50/50 rounded-surface gap-2.5 shadow-inner">
 {% for r in perf_insights.region_insights %}
 <div class="flex flex-col items-center flex-1 group relative">
 <!-- Tooltip on Hover -->
-<div class="absolute -top-6 bg-slate-800 text-white edify-text-caption font-bold px-1.5 py-0.5 rounded-small shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none select-none z-20">
-{{ r.score }}%
+<div class="absolute -top-6 bg-slate-800 text-white edify-text-caption font-bold px-1.5 py-0.5 rounded-small shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none select-none z-20 tabular-nums">
+{{ r.score|floatformat:1 }}/10
 </div>
-<!-- Premium Gradient Bar -->
+<!-- Premium Gradient Bar (height scales 0-10 → up to 90px) -->
 <div
 class="w-5 bg-gradient-to-t from-[var(--edify-primary)]/40 to-[var(--edify-primary)] hover:from-[var(--edify-primary)]/60 hover:to-[var(--edify-primary)] rounded-t-md transition-all duration-300 shadow-sm hover:shadow"
-style="height: {{ r.score|default:50 }}px;"
+style="height: {% widthratio r.score 10 90 %}px;"
 ></div>
-<span class="edify-text-caption font-semibold text-slate-500 mt-2.5 uppercase tracking-wider truncate max-w-[32px] block">{{ r.name|slice:":3" }}</span>
+<span class="edify-text-caption font-semibold text-slate-500 mt-2.5 tracking-wider truncate max-w-[32px] block">{{ r.name|slice:":3" }}</span>
 </div>
 {% endfor %}
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -93,12 +93,12 @@ style="height: {{ r.score|default:50 }}px;"
 <!-- Card D: Staff vs Partner Performance by Intervention -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Staff vs Partner by Intervention</h4>
-<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Average score improvement delta per focus area.</p>
+<h4 class="text-[12px] font-semibold text-slate-800 tracking-wider">Staff vs Partner by Intervention</h4>
+<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Average score per focus area, staff vs partner (out of 10).</p>
 </div>
 
 <div class="space-y-2 edify-text-caption font-semibold text-slate-600">
-<div class="flex justify-between edify-text-caption font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
+<div class="flex justify-between edify-text-caption font-semibold text-slate-400 tracking-wider border-b border-slate-100 pb-1.5">
 <span>Intervention</span>
 <span>Staff / Partner</span>
 </div>
@@ -107,10 +107,10 @@ style="height: {{ r.score|default:50 }}px;"
 {% for row in perf_insights.intervention_comparison %}
 <div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
 <span class="truncate edify-text-caption font-semibold text-slate-700">{{ row.label }}</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] edify-text-caption font-semibold">{{ row.staff_pct }}%</span>
+<div class="flex items-center gap-1 shrink-0 tabular-nums">
+<span class="px-1.5 py-0.5 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] edify-text-caption font-semibold">{{ row.staff_pct|floatformat:1 }}</span>
 <span class="text-slate-300 edify-text-caption font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-semibold">{{ row.partner_pct }}%</span>
+<span class="px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-semibold">{{ row.partner_pct|floatformat:1 }}</span>
 </div>
 </div>
 {% empty %}
@@ -122,7 +122,7 @@ Not enough staff/partner split data yet.
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -132,12 +132,12 @@ Not enough staff/partner split data yet.
 <!-- Card E: Intervention Impact Tracker (Trend Chart) -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
 <div class="space-y-1">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Intervention Impact Tracker</h4>
-<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Overall monthly assessment scores progression.</p>
+<h4 class="text-[12px] font-semibold text-slate-800 tracking-wider">Intervention Impact Tracker</h4>
+<p class="edify-text-caption text-slate-400 font-semibold leading-normal">Overall monthly assessment scores progression (out of 10).</p>
 </div>
 
 <!-- Mini SVG Line Chart (built from real perf_insights.overall_trend history) -->
-<div class="h-[110px] flex items-center justify-center bg-slate-50/50 /45 rounded-surface px-2.5 shadow-inner">
+<div class="h-[110px] flex items-center justify-center bg-slate-50/50 rounded-surface px-2.5 shadow-inner relative">
 {% if perf_insights.overall_trend_path %}
 <svg class="h-full w-full overflow-visible" viewBox="0 0 100 50">
 <defs>
@@ -146,14 +146,18 @@ Not enough staff/partner split data yet.
 <stop offset="100%" stop-color="var(--edify-primary)" stop-opacity="0.0"/>
 </linearGradient>
 </defs>
-<!-- Grid lines -->
-<line x1="0" y1="10" x2="100" y2="10" stroke="var(--edify-border)" stroke-width="2"/>
-<line x1="0" y1="25" x2="100" y2="25" stroke="var(--edify-border)" stroke-width="2"/>
-<line x1="0" y1="40" x2="100" y2="40" stroke="var(--edify-border)" stroke-width="2"/>
+<!-- Grid lines (0, 5, 10 on a 0-10 scale mapped to 50-0 vertical) -->
+<line x1="0" y1="0" x2="100" y2="0" stroke="var(--edify-border)" stroke-width="0.5"/>
+<line x1="0" y1="25" x2="100" y2="25" stroke="var(--edify-border)" stroke-width="0.5"/>
+<line x1="0" y1="50" x2="100" y2="50" stroke="var(--edify-border)" stroke-width="0.5"/>
+<!-- Scale labels (10 / 5 / 0) -->
+<text x="1" y="3" font-size="3" fill="var(--edify-text-muted)">10</text>
+<text x="1" y="27" font-size="3" fill="var(--edify-text-muted)">5</text>
+<text x="1" y="49" font-size="3" fill="var(--edify-text-muted)">0</text>
 <!-- Gradient fill area under real trend path -->
 <path d="{{ perf_insights.overall_trend_path }} L 100 50 L 0 50 Z" fill="url(#staff-gradient)"/>
-<!-- Line (real monthly average score history) -->
-<path d="{{ perf_insights.overall_trend_path }}" fill="none" stroke="var(--edify-primary)" stroke-width="2" stroke-linecap="round"/>
+<!-- Line (real monthly average score history, 0-10 scale) -->
+<path d="{{ perf_insights.overall_trend_path }}" fill="none" stroke="var(--edify-primary)" stroke-width="1.5" stroke-linecap="round"/>
 </svg>
 {% else %}
 <div class="text-center px-4">
@@ -164,7 +168,7 @@ Not enough staff/partner split data yet.
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="edify-text-caption font-semibold text-[var(--edify-primary)] hover:text-[var(--edify-primary)]/80 flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>

@@ -14,7 +14,6 @@ from apps.hr.models import (
     ComplianceRequirement,
     EmployeeComplianceRecord,
     EmployeeRelationsCase,
-    HRAuditEvent,
     OffboardingPlan,
     OnboardingPlan,
     PayrollReadinessRecord,
@@ -1345,6 +1344,12 @@ def offboarding_view(request):
             | Q(status__icontains=query)
             | Q(handover_owner__user__name__icontains=query)
         )
+    from apps.hr.offboarding_service import accounts_past_last_working_day
+
+    overdue_exits = (
+        accounts_past_last_working_day().filter(staff_id__in=visible_ids).count()
+    )
+
     rows = [
         {
             "cells": [
@@ -1392,6 +1397,15 @@ def offboarding_view(request):
                 plans.filter(status="Closed").count(),
                 "completed transitions",
                 "success",
+            ),
+            # Nothing read `last_working_day`, so this condition was invisible:
+            # an account stayed live past its approved termination date
+            # indefinitely, with the person still in every roster and scope.
+            _metric(
+                "Past exit date, still active",
+                overdue_exits,
+                "accounts to close now",
+                "danger" if overdue_exits else "success",
             ),
         ],
         rows=rows,
@@ -1466,52 +1480,89 @@ def hr_analytics_view(request):
 
 @require_page_permission("hr_audit_log")
 def hr_audit_log_view(request):
+    """The real HR trail, from the tamper-evident chain.
+
+    This read `HRAuditEvent` — a second, hash-chain-less audit table with no
+    writer anywhere in the codebase. The page therefore rendered zero rows
+    while describing itself as the accountability view for sensitive HR
+    actions, which reads as "nothing has happened" rather than "nothing can be
+    recorded here". Meanwhile the actual trail — leave decisions, PD approvals,
+    coverage grants, supervisor changes, account disablement, allocation
+    changes — was accumulating in `apps.audit.AuditLog` all along.
+    """
+    from apps.audit.models import AuditLog
+
     query = (request.GET.get("q") or "").strip()
-    events = HRAuditEvent.objects.select_related("actor")
+    events = AuditLog.objects.filter(
+        Q(action__startswith="hr.")
+        | Q(action__startswith="pd.")
+        | Q(action__startswith="pd_")
+        | Q(action__startswith="leave.")
+        | Q(action__startswith="admin.user")
+        | Q(action__startswith="admin.supervisor")
+    )
     if query:
         events = events.filter(
-            Q(actor__name__icontains=query)
-            | Q(action__icontains=query)
-            | Q(role__icontains=query)
-            | Q(record_id__icontains=query)
+            Q(action__icontains=query)
+            | Q(actor_role__icontains=query)
+            | Q(subject_id__icontains=query)
+            | Q(subject_kind__icontains=query)
         )
+    events = events.order_by("-created_at")
+
+    actor_names = dict(
+        StaffProfile.objects.filter(
+            user_id__in=[e.actor_id for e in events[:200] if e.actor_id]
+        )
+        .select_related("user")
+        .values_list("user_id", "user__name")
+    )
     rows = [
         {
             "cells": [
                 _cell("Action", event.action, primary=True),
-                _cell("Actor", event.actor.name if event.actor else "System"),
-                _cell("Role", event.role),
-                _cell("Record", event.record_id),
+                _cell(
+                    "Actor",
+                    actor_names.get(event.actor_id, event.actor_id or "System"),
+                ),
+                _cell("Role", event.actor_role),
+                _cell("Record", f"{event.subject_kind or '—'} · {event.subject_id or '—'}"),
+                _cell(
+                    "Outcome",
+                    "Success" if event.success else "Refused",
+                    status=True,
+                ),
                 _cell("Timestamp", event.created_at.strftime("%d %b %Y, %H:%M")),
             ]
         }
-        for event in events.order_by("-created_at")
+        for event in events[:200]
     ]
+    total = events.count()
     return _render_workspace(
         request,
         title="HR System Audit Log",
-        description="An append-style accountability view for sensitive HR actions. Event payload details remain out of the list to reduce incidental PII exposure.",
+        description="Sensitive people decisions as recorded on the platform's tamper-evident, hash-chained audit trail. Payload detail stays out of the list to limit incidental PII exposure.",
         metrics=[
-            _metric("Events", events.count(), "matching audit records"),
+            _metric("Events", total, "matching audit records"),
             _metric(
-                "Human actors",
-                events.exclude(actor__isnull=True).values("actor").distinct().count(),
-                "distinct users",
+                "Refused actions",
+                events.filter(success=False).count(),
+                "denied or blocked attempts",
+                "warning",
             ),
             _metric(
-                "System events",
-                events.filter(actor__isnull=True).count(),
-                "automated actions",
+                "Acting roles",
+                events.values("actor_role").distinct().count(),
+                "roles represented",
+            ),
+            _metric(
+                "Showing",
+                min(total, 200),
+                "most recent events",
                 "info",
-            ),
-            _metric(
-                "Roles",
-                events.values("role").distinct().count(),
-                "acting roles represented",
             ),
         ],
         rows=rows,
         primary_action={"label": "Open System Health", "href": "/system-health"},
-        empty_title="No HR audit events recorded",
-        empty_body="Sensitive HR actions will appear here after they are written to the HR audit trail.",
+        empty_title="No HR audit events recorded yet",
     )
