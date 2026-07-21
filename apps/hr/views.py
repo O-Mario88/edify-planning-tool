@@ -48,7 +48,9 @@ class HrLeaveCalendarView(APIView):
     required_permissions = LEAVE
 
     def get(self, request: Request) -> Response:
-        return Response(services.approved_leave_calendar(_q(request)))
+        return Response(
+            services.approved_leave_calendar(request.user, _q(request))
+        )
 
 
 def _review_view(decision: str):

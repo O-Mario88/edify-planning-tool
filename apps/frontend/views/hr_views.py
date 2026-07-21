@@ -848,7 +848,8 @@ def culture_engagement_view(request):
         }
         for item in grouped
     ]
-    relations = EmployeeRelationsCase.objects.all()
+    # Same scope as the register itself — the counts leaked what the list hid.
+    relations = _employee_relations_scope(request.user)
     return _render_workspace(
         request,
         title="Culture & Engagement",
@@ -882,10 +883,36 @@ def culture_engagement_view(request):
     )
 
 
+def _employee_relations_scope(viewer_user):
+    """Employee-relations cases the viewer may see.
+
+    Admin org-wide; everyone else confined to cases owned in their own
+    country, and a case marked confidential is visible only to its owner.
+    `audit.log` records the access — reading a restricted people register is
+    itself an event worth attributing.
+    """
+    qs = EmployeeRelationsCase.objects.select_related("case_owner")
+    if getattr(viewer_user, "active_role", "") == "Admin":
+        return qs
+    viewer = getattr(viewer_user, "staff_profile", None)
+    country = getattr(viewer, "country", None)
+    if not country:
+        return qs.none()
+    qs = qs.filter(case_owner__staff_profile__country=country)
+    return qs.filter(
+        Q(is_confidential=False) | Q(case_owner_id=viewer_user.id)
+    )
+
+
 @require_page_permission("employee_relations")
 def employee_relations_view(request):
     query = (request.GET.get("q") or "").strip()
-    cases = EmployeeRelationsCase.objects.select_related("case_owner")
+    # The highest-privacy register on the platform was the ONE HR surface with
+    # no scope at all — every grievance, harassment, whistleblowing and
+    # safeguarding case in every country, with `is_confidential` rendered as a
+    # label that filtered nothing. The model carries no country or subject
+    # field, so the owner's country is the available bound today.
+    cases = _employee_relations_scope(request.user)
     if query:
         cases = cases.filter(
             Q(case_type__icontains=query)

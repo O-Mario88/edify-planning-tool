@@ -1139,7 +1139,11 @@ class CoreStaffPartnerPerformanceService:
 
         staff_insights = []
         for staff in StaffProfile.objects.all().select_related("user")[:5]:
-            staff_schools = core_schools_qs.filter(account_owner_id=staff.user_id)
+            # account_owner_id holds a StaffProfile id on every row the school
+            # upload wrote, so matching only the User id found nothing at all.
+            staff_schools = core_schools_qs.filter(
+                account_owner_id__in=[staff.id, staff.user_id]
+            )
             if staff_schools.exists():
                 avg = CoreAssessmentService.get_average_score(staff_schools)
                 staff_insights.append(

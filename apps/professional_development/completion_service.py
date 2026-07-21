@@ -158,6 +158,21 @@ class PDCourseTrackingService:
         return req
 
     @staticmethod
+    def _released_funds_guard(req) -> bool:
+        """True when real money has already left for this request.
+
+        `fund_request` is a reverse one-to-one, so a missing row raises rather
+        than returning None.
+        """
+        from apps.professional_development.models import (
+            ProfessionalDevelopmentDisbursement,
+        )
+
+        return ProfessionalDevelopmentDisbursement.objects.filter(
+            fund_request__request_id=req.id
+        ).exists()
+
+    @staticmethod
     def mark_deferred_or_withdrawn(
         req_id: str, principal, *, outcome: str, reason: str
     ) -> ProfessionalDevelopmentRequest:
@@ -176,9 +191,28 @@ class PDCourseTrackingService:
             raise BadRequest(
                 "This course cannot be deferred or withdrawn from its current state."
             )
+        # Money already released cannot be walked away from. WITHDRAWN and
+        # DEFERRED are in neither COMMITTED_STATUSES nor the disbursed set, so
+        # withdrawing after disbursement restored the employee's full annual
+        # allocation while the disbursement row still stood — the same funds
+        # could then be requested again, with no accountability owed and no
+        # notification to HR or Finance.
+        if PDCourseTrackingService._released_funds_guard(req):
+            raise BadRequest(
+                "Funds have already been disbursed for this course. Submit "
+                "accountability, or return the funds, before withdrawing."
+            )
         req.status = PDStatus.DEFERRED if outcome == "deferred" else PDStatus.WITHDRAWN
         req.deferred_withdrawn_reason = reason[:512]
         req.save()
+        from apps.professional_development.approval_service import _audit_decision
+
+        _audit_decision(
+            "pd_deferred" if outcome == "deferred" else "pd_withdrawn",
+            req,
+            principal,
+            reason=req.deferred_withdrawn_reason,
+        )
         return req
 
     # ── §21 Certificate upload ────────────────────────────────────────────────

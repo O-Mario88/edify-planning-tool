@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import render_access_denied, require_page_permission
 from apps.accounts.models import (
     Leave,
     LeaveTypePolicy,
@@ -906,6 +906,14 @@ def leave_approvals_view(request):
 def leave_impact_partial(request, leave_id):
     """Partial HTMX view showing leave impact metrics, overlaps, and conflicts."""
     leave = get_object_or_404(Leave, id=leave_id)
+    # The panel renders the employee's email, leave type and free-text reason —
+    # medical and family detail. Every other action on this object checks the
+    # approver predicate; this read had none, so holding the page permission
+    # was enough to walk any leave id in any country.
+    if not LeaveApprovalService.is_authorized_approver(request.user, leave):
+        return render_access_denied(
+            request, "You are not the authorized approver for this leave request."
+        )
     impact = LeaveImpactAnalysisService.analyze_impact(
         leave.staff, leave.start_date, leave.end_date, leave.type
     )

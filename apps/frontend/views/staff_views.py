@@ -5,7 +5,10 @@ Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-
 
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import require_page_permission
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from apps.core.permissions import render_access_denied, require_page_permission
+from apps.core.scoping import owner_ids
 from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import date, timedelta
@@ -18,6 +21,46 @@ from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
+
+
+def _directory_may_see_email(user) -> bool:
+    """Who may read a colleague's email address in the People Directory.
+
+    `apps/core/rbac.py` annotates the RVP's staff grant as a "region
+    staff-performance summary (no PII/email)", and `apps/hr/services.py`
+    already strips email for exactly this set on the API roster — the HTML
+    directory rendered it to everyone.
+    """
+    return getattr(user, "active_role", "") in {
+        "Admin",
+        "HumanResources",
+        "CountryDirector",
+        "Program Lead",
+    }
+
+
+def _directory_scope(user, qs):
+    """Narrow the People Directory to the viewer's authority.
+
+    The directory listed every active user in the deployment with no scope
+    filter at all, so any Program Lead could enumerate every other PL's team
+    and every country's staff. Mirrors `hr_views._profile_scope`, which already
+    gets this right for the HR workspaces.
+    """
+    role = getattr(user, "active_role", "") or ""
+    if role == "Admin":
+        return qs
+    from apps.core.scoping import resolve_user_scope
+
+    if role == "Program Lead":
+        scope = resolve_user_scope(user)
+        team = set(scope.supervised_staff_ids or [])
+        return qs.filter(Q(staff_profile__id__in=team) | Q(id=user.id))
+    sp = getattr(user, "staff_profile", None)
+    country = getattr(sp, "country", None)
+    if not country:
+        return qs.none()
+    return qs.filter(staff_profile__country=country)
 
 
 @require_page_permission("staff_directory")
@@ -38,10 +81,15 @@ def staff_directory_view(request):
         .prefetch_related("staff_profile")
         .order_by("name")
     )
+    staff_qs = _directory_scope(request.user, staff_qs)
+    show_email = _directory_may_see_email(request.user)
 
     if search:
+        # Email is only searchable by someone allowed to see it — otherwise the
+        # search box is an oracle that confirms an address without showing it.
+        name_match = Q(name__icontains=search)
         staff_qs = staff_qs.filter(
-            Q(name__icontains=search) | Q(email__icontains=search)
+            name_match | Q(email__icontains=search) if show_email else name_match
         )
 
     if active_tab == "cceo":
@@ -221,13 +269,28 @@ def staff_directory_view(request):
 def staff_profile_view(request, user_id):
     """Full staff 360° profile — activities, visits, evidence, SSA coverage."""
     member = get_object_or_404(User, id=user_id, deleted_at__isnull=True)
+    # "Never trust the URL" — the same rule the team-targets drawer already
+    # applies. Holding the page permission is not authority over an arbitrary
+    # employee's 360 profile.
+    if not _directory_scope(
+        request.user, User.objects.filter(id=member.id)
+    ).exists():
+        return render_access_denied(
+            request, "You do not have access to this employee's profile."
+        )
     fy = get_operational_fy()
     now = date.today()
+
+    # Both id spaces. `responsible_staff_id` and `School.account_owner_id` each
+    # hold a StaffProfile id or a User id depending on which path wrote the row,
+    # so matching on one alone silently disowns most of a person's work — the
+    # regression `owner_ids` exists to end.
+    member_ids = owner_ids(member)
 
     # Activities this FY
     activities = (
         Activity.objects.filter(
-            responsible_staff_id=member.id,
+            responsible_staff_id__in=member_ids,
             fy=fy,
             deleted_at__isnull=True,
         )
@@ -252,7 +315,7 @@ def staff_profile_view(request, user_id):
     # Schools covered
     schools_covered = (
         Activity.objects.filter(
-            responsible_staff_id=member.id,
+            responsible_staff_id__in=member_ids,
             status="completed",
             activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
             deleted_at__isnull=True,
@@ -267,7 +330,7 @@ def staff_profile_view(request, user_id):
     from apps.ssa.services import get_ssa_progress_by_fy
 
     assigned_schools = School.objects.filter(
-        account_owner_id=member.id, deleted_at__isnull=True
+        account_owner_id__in=member_ids, deleted_at__isnull=True
     )
     staff_progress = get_ssa_progress_by_fy(assigned_schools)
 
@@ -755,19 +818,23 @@ def my_team_view(request):
 
     team_data = []
     for cceo in cceos:
+        # Both id spaces — the directory list already counts this way
+        # (`_user_ids`), so matching on the User id alone here made the row and
+        # its own drill-down disagree, and read as underperformance.
+        cceo_ids = owner_ids(cceo)
         completed = Activity.objects.filter(
-            responsible_staff_id=cceo.id,
+            responsible_staff_id__in=cceo_ids,
             status="completed",
             deleted_at__isnull=True,
         ).count()
         overdue = Activity.objects.filter(
-            responsible_staff_id=cceo.id,
+            responsible_staff_id__in=cceo_ids,
             planned_date__lt=today,
             status__in=["scheduled", "in_progress", "completion_started"],
             deleted_at__isnull=True,
         ).count()
         evidence_gap = Activity.objects.filter(
-            responsible_staff_id=cceo.id,
+            responsible_staff_id__in=cceo_ids,
             status="completed",
             evidence__isnull=True,
             deleted_at__isnull=True,
@@ -988,7 +1055,17 @@ def mark_notification_read(request, notif_id):
             },
         )
 
+    # Same-host only. This took the destination straight from the query string,
+    # so `/notifications/<id>/read?redirect=https://evil.example.com` was a live
+    # open redirect on an authenticated route — a phishing link that leaves from
+    # the real Edify domain.
     redirect_to = request.GET.get("redirect") or request.POST.get("redirect") or "/"
+    if not url_has_allowed_host_and_scheme(
+        redirect_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        redirect_to = "/notifications"
     return redirect(redirect_to)
 
 

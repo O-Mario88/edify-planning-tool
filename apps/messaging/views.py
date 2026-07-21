@@ -42,7 +42,7 @@ class MessageContextsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
-        return Response(services.contexts(_q(request)))
+        return Response(services.contexts(_q(request), request.user))
 
 
 class MessageThreadView(APIView):

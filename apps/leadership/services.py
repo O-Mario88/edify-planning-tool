@@ -20,7 +20,7 @@ from .models import (
 
 def boards(principal, query: dict) -> dict:
     fy = query.get("fy") or get_operational_fy()
-    insights_list = _list(query)
+    insights_list = _list(query, principal)
 
     by_type = {}
     for i in insights_list:
@@ -101,7 +101,28 @@ def snapshot(principal, query: dict) -> dict:
     }
 
 
-def _list(query: dict) -> list[dict]:
+#: Roles permitted to see person-level HR insights. `staff_hr` insights name an
+#: individual and quote the cause of their improvement plan — "conduct issue",
+#: "attendance issue". The dedicated /recovery-plans page is {HR, PL, ADMIN} and
+#: supervisor-scoped; this board is open to six roles including the Accountant,
+#: so without a filter it published exactly what that page protects.
+_PEOPLE_INSIGHT_ROLES = {"HumanResources", "CountryDirector", "Admin"}
+
+
+def _may_see_people_insight(principal, insight) -> bool:
+    role = getattr(principal, "active_role", "") or ""
+    if role in _PEOPLE_INSIGHT_ROLES:
+        return True
+    if role == "Program Lead":
+        # A PL sees only their own supervised team.
+        from apps.core.scoping import resolve_user_scope
+
+        scope = resolve_user_scope(principal)
+        return insight.scope_id in set(scope.supervised_staff_ids or [])
+    return False
+
+
+def _list(query: dict, principal=None) -> list[dict]:
     qs = LeadershipDecisionInsight.objects.all().order_by("-generated_at")
     if query.get("fy"):
         qs = qs.filter(fy=query["fy"])
@@ -111,7 +132,15 @@ def _list(query: dict) -> list[dict]:
         qs = qs.filter(risk_level=query["riskLevel"])
     if query.get("confidenceLevel"):
         qs = qs.filter(confidence_level=query["confidenceLevel"])
-    return [_serialize(i) for i in qs]
+    rows = list(qs)
+    if principal is not None:
+        rows = [
+            i
+            for i in rows
+            if i.decision_type != DecisionType.STAFF_HR.value
+            or _may_see_people_insight(principal, i)
+        ]
+    return [_serialize(i) for i in rows]
 
 
 def get_insight(insight_id: str) -> dict:

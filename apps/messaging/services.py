@@ -62,6 +62,33 @@ IA_CONTEXTS = {
     "evidence_upload",
 }
 
+# The only context keys that legitimately carry no record of their own, and the
+# roles allowed to open each. Everything else in CONTEXT_LABELS resolves to a
+# School, Cluster, Activity, WeeklyFundRequest, Leave, Project or
+# PartnerAssignment, and is authorised against that record — so an id that
+# resolves to nothing must be refused rather than waved through.
+_STAGE_CONTEXTS = {
+    # Anyone may raise a technical/support issue; Admin is the counterparty.
+    "system": {"ADMIN", "CCEO", "PL", "CD", "RVP", "HR", "IA", "ACCOUNTANT", "PARTNER", "PROJECT_COORDINATOR"},
+    # Country and team envelopes — leadership and finance only.
+    "finance": {"ACCOUNTANT", "PL", "CD", "RVP", "ADMIN"},
+    "budget": {"ACCOUNTANT", "PL", "CD", "RVP", "ADMIN"},
+    "monthly_request": {"ACCOUNTANT", "PL", "CD", "RVP", "ADMIN"},
+    # A budget LINE belongs to one activity, so the person who owns the work
+    # may raise it with the Accountant — that is the CCEO's stated doctrine.
+    "budget_line": {
+        "ACCOUNTANT",
+        "CCEO",
+        "PL",
+        "CD",
+        "RVP",
+        "PROJECT_COORDINATOR",
+        "ADMIN",
+    },
+    "accountability_confirmation": {"ACCOUNTANT", "CCEO", "PL", "CD", "ADMIN"},
+    "core_school": {"CCEO", "PL", "CD", "RVP", "IA", "ADMIN"},
+}
+
 # The compose picker tabs: (key, label). Order mirrors the approved design —
 # Schedule leads, then School, Cluster, Partner, Activity, Field Debrief, then
 # the finance/planning contexts. Generic types accept a free record id.
@@ -292,12 +319,26 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
     }:
         return False
 
+    # A context_type nobody defined is not a context. Refusing unknown keys
+    # first stops `?context_type=anything` from reaching the fallbacks below.
+    if context_type not in CONTEXT_LABELS:
+        return False
+
     record, _ = resolve_context_record(context_type, context_id)
     if record is None:
-        # Generic / unresolvable contexts fall back to role-level typing.
+        # FAIL CLOSED. This branch used to `return True`, which made any
+        # unresolvable (type, id) pair a master key: every role rule below is
+        # expressed as a constraint on a *resolved* record, so an id that
+        # resolved to nothing authorised everyone — sender and recipient alike.
+        # `resolve_context_record` also swallows exceptions and returns None, so
+        # a transient DB error read as "allow" rather than "deny".
         if context_type in IA_CONTEXTS:
             return role in {"IA", "CCEO", "PL", "PARTNER", "PROJECT_COORDINATOR"}
-        return True
+        # Workflow-stage keys carry no record of their own; they are typed by
+        # role, and no one outside the stage's participants may open them.
+        if context_type in _STAGE_CONTEXTS:
+            return role in _STAGE_CONTEXTS[context_type]
+        return False
 
     cls = record.__class__.__name__
     if cls in ("School", "Cluster", "Activity"):
@@ -577,22 +618,39 @@ def search_context_records(
 
             qs = Leave.objects.select_related("staff__user").order_by("-created_at")
             role = _role_slug(user)
-            if role not in {"HR", "CD", "RVP", "PL", "ADMIN"}:
-                sp = getattr(user, "staff_profile", None)
+            sp = getattr(user, "staff_profile", None)
+            if role in {"HR", "CD", "RVP", "ADMIN"}:
+                pass  # people-function roles see the whole leave register
+            elif role == "PL":
+                # A PL supervises a team; they are not an HR function. Listing
+                # every staff member's leave to them exposed the team they do
+                # not manage — and the label leaked the leave TYPE with it.
+                from apps.core.scoping import resolve_user_scope
+
+                scope = resolve_user_scope(user)
+                own = [sp.id] if sp else []
+                qs = qs.filter(staff_id__in=[*scope.supervised_staff_ids, *own])
+            else:
                 qs = qs.filter(staff=sp) if sp else qs.none()
             for leave in qs[:12]:
+                # Never the leave type. `Leave.type` is sick / maternity /
+                # paternity / bereavement / personal — a medical and family
+                # category that a record picker has no business displaying.
                 out.append(
                     {
                         "id": leave.id,
-                        "title": f"{leave.staff.user.name} — {leave.type}",
+                        "title": f"{leave.staff.user.name} — leave request",
                         "meta": f"{leave.start_date} → {leave.end_date}",
                         "status": leave.status,
                     }
                 )
         elif context_type == "project":
-            from apps.projects.models import Project
+            from apps.projects.scoping import scoped_projects
 
-            qs = Project.objects.filter(deleted_at__isnull=True)
+            # One project-visibility rule, the same helper the rest of the
+            # platform uses — an unscoped picker offered every project to
+            # every coordinator.
+            qs = scoped_projects(user).filter(deleted_at__isnull=True)
             if q:
                 qs = qs.filter(name__icontains=q)
             for p in qs[:12]:
@@ -1401,9 +1459,20 @@ def counts(principal) -> dict:
     return {"unread": unread_thread_count(user), "total": total}
 
 
-def contexts(query: dict) -> list[dict]:
+def contexts(query: dict, principal=None) -> list[dict]:
+    """Context keys drawn from the caller's OWN threads.
+
+    This took no principal at all and filtered on a caller-supplied
+    `recipientId`, so any authenticated user could enumerate the workflow
+    records another person was being messaged about — activity, fund-request
+    and leave ids — or, with no parameter, read them from the first 20 messages
+    system-wide.
+    """
+    if principal is None:
+        return []
+    uid = getattr(principal, "user_id", None) or getattr(principal, "id", None)
+    qs = Message.objects.filter(thread__participants__user_id=uid)
     recipient_id = query.get("recipientId")
-    qs = Message.objects.all()
     if recipient_id:
         qs = qs.filter(recipient_id=recipient_id)
     return [

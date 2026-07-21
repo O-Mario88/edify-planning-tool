@@ -76,16 +76,35 @@ def roster(principal) -> dict:
     }
 
 
+def _leave_country_scope(principal, qs):
+    """Confine a leave listing to the caller's own country.
+
+    This returned every leave record in the deployment — `reason` included,
+    which is free text where an employee explains a medical or family
+    circumstance. HR is a country function, not a global one.
+    """
+    if getattr(principal, "active_role", "") == "Admin":
+        return qs
+    sp = getattr(principal, "staff_profile", None)
+    country = getattr(sp, "country", None)
+    if not country:
+        return qs.none()
+    return qs.filter(staff__country=country)
+
+
 def list_leave(principal, query: dict) -> list[dict]:
     qs = Leave.objects.all().order_by("-created_at")
     if query.get("status"):
         qs = qs.filter(status=query["status"])
-    return [_serialize_leave(leave) for leave in qs]
+    qs = _leave_country_scope(principal, qs)
+    # No `reason` in a list response — it is detail, and detail belongs on the
+    # authorized single-record path.
+    return [_serialize_leave(leave, include_reason=False) for leave in qs]
 
 
-def approved_leave_calendar(query: dict) -> list[dict]:
-    qs = Leave.objects.filter(status="approved")
-    return [_serialize_leave(leave) for leave in qs]
+def approved_leave_calendar(principal, query: dict) -> list[dict]:
+    qs = _leave_country_scope(principal, Leave.objects.filter(status="approved"))
+    return [_serialize_leave(leave, include_reason=False) for leave in qs]
 
 
 def request_leave(data: dict, principal, attachment_file=None) -> dict:
@@ -125,30 +144,27 @@ def review_leave(leave_id: str, decision: str, principal) -> dict:
     from apps.core.exceptions import BadRequest, NotFoundError
     from apps.hr.leave_services import LeaveApprovalService
 
-    leave = Leave.objects.filter(id=leave_id).first()
-    if not leave:
-        raise NotFoundError("Leave request not found.")
     if decision not in ("approved", "rejected"):
         raise BadRequest("decision must be approved or rejected.")
-    # Hierarchy + self-approval authorization check — mirrors the main UI
-    # path (LeaveApprovalService.approve_request/reject_request) so this
-    # parallel /api/hr/leave endpoint enforces the same rule instead of
-    # letting any LEAVE_PLANNER_VIEW holder (e.g. HR staff) self-approve or
-    # approve/reject leave outside their supervisory hierarchy.
-    if not LeaveApprovalService.is_authorized_approver(principal, leave):
-        action = "approve" if decision == "approved" else "reject"
-        raise BadRequest(f"You are not authorized to {action} this leave request.")
-    leave.status = decision
-    leave.reviewed_by_user_id = principal.user_id
-    leave.reviewed_at = timezone.now()
-    leave.save(
-        update_fields=["status", "reviewed_by_user_id", "reviewed_at", "updated_at"]
-    )
+
+    # Delegate the whole transition, do not re-implement it. This path used to
+    # borrow only the authorization predicate and then write the row itself,
+    # skipping five things the canonical service does: recalculating the leave
+    # balance, creating the TemporaryCoverageAssignment, revoking any
+    # overlapping prior coverage, and the two audit rows. A leave approved here
+    # consumed no balance at all — the same 21 days could be spent twice — and
+    # left no audit entry for an approval decision.
+    #
+    # `request_leave` above was fixed to delegate; this sibling was left behind.
+    if decision == "approved":
+        leave = LeaveApprovalService.approve_request(leave_id, principal)
+    else:
+        leave = LeaveApprovalService.reject_request(leave_id, principal)
     return _serialize_leave(leave)
 
 
-def _serialize_leave(leave: Leave) -> dict:
-    return {
+def _serialize_leave(leave: Leave, include_reason: bool = True) -> dict:
+    out = {
         "id": leave.id,
         "staffId": leave.staff_id,
         "type": leave.type,
@@ -156,7 +172,9 @@ def _serialize_leave(leave: Leave) -> dict:
         "endDate": leave.end_date,
         "days": leave.days,
         "status": leave.status,
-        "reason": leave.reason,
         "reviewedByUserId": leave.reviewed_by_user_id,
         "reviewedAt": leave.reviewed_at.isoformat() if leave.reviewed_at else None,
     }
+    if include_reason:
+        out["reason"] = leave.reason
+    return out

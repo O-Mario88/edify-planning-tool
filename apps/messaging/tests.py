@@ -6,6 +6,8 @@ drafts, workflow-generated threads, archive/unread behaviour, attachments,
 and notification fan-out.
 """
 
+from datetime import timedelta
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
@@ -82,13 +84,49 @@ class MessagingBaseTest(TestCase):
         StaffSchoolAssignment.objects.create(staff=cls.sp1, school_id=cls.school1.id)
         StaffSchoolAssignment.objects.create(staff=cls.sp2, school_id=cls.school2.id)
 
+        # Real records, because `can_access_context` now fails closed. These
+        # fixtures used synthetic ids ("c1", "fr-1", "pa-x") that resolved to
+        # nothing, and the gate used to wave an unresolvable context through —
+        # so the suite was asserting the vulnerability rather than the rule.
+        from django.utils import timezone
+
+        from apps.activities.models import Activity
+        from apps.fund_requests.models import WeeklyFundRequest
+        from apps.partners.models import Partner, PartnerAssignment
+
+        cls.activity1 = Activity.objects.create(
+            school_id=cls.school1.id,
+            activity_type="school_visit",
+            status="scheduled",
+            fy="2026",
+            quarter="Q4",
+            responsible_staff_id=cls.sp1.id,
+            planned_date=timezone.now(),
+        )
+        _today = timezone.now().date()
+        cls.fund_request = WeeklyFundRequest.objects.create(
+            fy="2026",
+            week_start_date=_today,
+            week_end_date=_today + timedelta(days=6),
+            responsible_user=cls.cceo1.id,
+            status="submitted",
+        )
+        cls.partner_org = Partner.objects.create(
+            name="Test Partner", user=cls.partner
+        )
+        cls.partner_assignment = PartnerAssignment.objects.create(
+            partner=cls.partner_org,
+            school=cls.school1,
+            status="assigned",
+        )
+
     def _send(
         self,
         sender,
         recipient,
         *,
-        ctype="planning",
-        cid="c1",
+        ctype="system",
+        cid=None,
         subject="(no subject)",
         body="hello",
         **extra,
@@ -98,7 +136,7 @@ class MessagingBaseTest(TestCase):
                 "recipientId": recipient.id,
                 "subject": subject,
                 "contextType": ctype,
-                "contextId": cid,
+                "contextId": cid or "support-1",
                 "body": body,
                 **extra,
             },
@@ -167,8 +205,8 @@ class ThreadIdentityTest(MessagingBaseTest):
                 "recipientIds": [self.pl.id, self.ia.id],
                 "ccIds": [self.admin.id],
                 "subject": "Group",
-                "contextType": "planning",
-                "contextId": "c9",
+                "contextType": "system",
+                "contextId": "support-9",
                 "body": "b",
             },
             self.cceo1,
@@ -213,7 +251,7 @@ class ContextPermissionTest(MessagingBaseTest):
             services.reply(msg["threadId"], {"body": "stale access"}, self.cceo1)
 
     def test_partner_cannot_access_internal_staff_thread(self):
-        msg = self._send(self.cceo1, self.pl, ctype="planning", cid="c-int")
+        msg = self._send(self.cceo1, self.pl, ctype="activity", cid=self.activity1.id)
         with self.assertRaises(Forbidden):
             services.thread_detail(msg["threadId"], self.partner)
 
@@ -224,14 +262,16 @@ class ContextPermissionTest(MessagingBaseTest):
             )
         )
         self.assertTrue(
-            services.can_access_context(self.accountant, "fund_request", "fr-1")
+            services.can_access_context(
+                self.accountant, "fund_request", self.fund_request.id
+            )
         )
 
 
 class RecipientPolicyTest(MessagingBaseTest):
     def test_hr_cannot_message_partner_by_default(self):
         with self.assertRaises(Forbidden):
-            self._send(self.hr, self.partner, ctype="leave", cid="lv-1")
+            self._send(self.hr, self.partner, ctype="school", cid=self.school1.school_id)
 
     def test_rvp_cannot_message_partner_by_default(self):
         with self.assertRaises(Forbidden):
@@ -239,7 +279,10 @@ class RecipientPolicyTest(MessagingBaseTest):
 
     def test_partner_can_message_cceo(self):
         msg = self._send(
-            self.partner, self.cceo1, ctype="partner_assignment", cid="pa-x"
+            self.partner,
+            self.cceo1,
+            ctype="partner_assignment",
+            cid=self.partner_assignment.id,
         )
         self.assertTrue(msg["id"])
 
@@ -392,8 +435,8 @@ class InboxBehaviourTest(MessagingBaseTest):
             {
                 "recipientIds": [self.pl.id, self.ia.id],
                 "subject": "Group unread",
-                "contextType": "planning",
-                "contextId": "group-1",
+                "contextType": "system",
+                "contextId": "support-group-1",
                 "body": "Review together",
             },
             self.cceo1,

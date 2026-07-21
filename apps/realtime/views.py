@@ -9,11 +9,19 @@ debounces a router.refresh() (FE concern).
 
 from __future__ import annotations
 
+import asyncio
 import json
+import queue
+import time
 
 from django.http import StreamingHttpResponse
 
 from .bus import bus
+
+#: How often the loop checks the bus, and how long a quiet stream waits before
+#: sending a keep-alive. Polling is cheap; the sleep is what frees the loop.
+_POLL_SECONDS = 0.5
+_HEARTBEAT_SECONDS = 25.0
 
 
 def _sse(data: dict) -> bytes:
@@ -52,17 +60,48 @@ def stream(request):
 
     connections.close_all()
 
-    def event_stream():
-        yield _sse({"type": "connected", "at": _now_iso()})
+    async def event_stream():
+        """Async generator — required, not stylistic.
+
+        This was a *synchronous* infinite generator. Under ASGI (production
+        runs Daphne) Django cannot `async for` a sync iterator, so it falls back
+        to `await sync_to_async(list)(streaming_content)` — it tries to
+        materialise an endless stream into a list before sending a single byte.
+        The client received the 200 and its headers and then nothing, forever.
+
+        Worse, because the request was parked inside that blocking call, client
+        disconnect could not interrupt it: the `finally` never ran, so every
+        connection permanently leaked one executor thread and one 256-slot
+        queue. The endpoint has no rate limit, so opening streams in a loop was
+        enough to exhaust the process.
+
+        Subscribing before the first yield closes a smaller race — an event
+        published between "connected" and `subscribe()` used to be dropped.
+        """
         q = bus.subscribe(user_id)
         try:
+            yield _sse({"type": "connected", "at": _now_iso()})
+            last_beat = time.monotonic()
             while True:
-                try:
-                    event = q.get(timeout=25)
+                drained = False
+                while True:
+                    try:
+                        event = q.get_nowait()
+                    except queue.Empty:
+                        break
+                    drained = True
                     yield _sse(event)
-                except Exception:
-                    # Heartbeat every 25s.
+                now = time.monotonic()
+                if drained:
+                    last_beat = now
+                elif now - last_beat >= _HEARTBEAT_SECONDS:
+                    last_beat = now
                     yield _sse({"type": "heartbeat", "at": _now_iso()})
+                # Yield to the event loop. The bus is a thread-safe sync queue
+                # written from ordinary workflow code, so it is polled rather
+                # than awaited; sleeping here is what keeps the loop free and
+                # keeps cancellation working.
+                await asyncio.sleep(_POLL_SECONDS)
         finally:
             bus.unsubscribe(user_id, q)
 
