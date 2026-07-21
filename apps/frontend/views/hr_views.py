@@ -909,22 +909,13 @@ def culture_engagement_view(request):
 def _employee_relations_scope(viewer_user):
     """Employee-relations cases the viewer may see.
 
-    Admin org-wide; everyone else confined to cases owned in their own
-    country, and a case marked confidential is visible only to its owner.
-    `audit.log` records the access — reading a restricted people register is
-    itself an event worth attributing.
+    Now delegates to the canonical service, which scopes on the case's OWN
+    country and subject rather than inferring it from the owner's profile —
+    possible only since `EmployeeRelationsCase` gained a subject and a country.
     """
-    qs = EmployeeRelationsCase.objects.select_related("case_owner")
-    if getattr(viewer_user, "active_role", "") == "Admin":
-        return qs
-    viewer = getattr(viewer_user, "staff_profile", None)
-    country = getattr(viewer, "country", None)
-    if not country:
-        return qs.none()
-    qs = qs.filter(case_owner__staff_profile__country=country)
-    return qs.filter(
-        Q(is_confidential=False) | Q(case_owner_id=viewer_user.id)
-    )
+    from apps.hr.employee_relations_service import visible_cases
+
+    return visible_cases(viewer_user)
 
 
 @require_page_permission("employee_relations")

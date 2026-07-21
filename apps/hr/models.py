@@ -8,6 +8,45 @@ from apps.accounts.models import StaffProfile, User
 # ─── RECRUITMENT AND TALENT ACQUISITION ──────────────────────────────────────
 
 
+class VacancyStatus(models.TextChoices):
+    """Free strings in a comment let a typo silently zero a KPI — the class of
+    bug that made `OnboardingPlan.status` unreachable from its own view."""
+
+    DRAFT = "draft", "Draft"
+    PENDING_APPROVAL = "pending_approval", "Pending approval"
+    APPROVED = "approved", "Approved"
+    OPEN = "open", "Open"
+    CLOSED = "closed", "Closed"
+    CANCELLED = "cancelled", "Cancelled"
+
+
+class ApplicationStage(models.TextChoices):
+    APPLIED = "applied", "Applied"
+    SCREENING = "screening", "Screening"
+    INTERVIEW = "interview", "Interview"
+    ASSESSMENT = "assessment", "Assessment"
+    REFERENCE_CHECK = "reference_check", "Reference check"
+    OFFER = "offer", "Offer"
+    ACCEPTED = "accepted", "Offer accepted"
+    HIRED = "hired", "Hired"
+    REJECTED = "rejected", "Rejected"
+    WITHDRAWN = "withdrawn", "Withdrawn"
+
+
+class OnboardingStatus(models.TextChoices):
+    NOT_STARTED = "not_started", "Not started"
+    IN_PROGRESS = "in_progress", "In progress"
+    SUPERVISOR_REVIEW = "supervisor_review", "Awaiting supervisor confirmation"
+    READY_FOR_ACTIVATION = "ready_for_activation", "Ready for activation"
+    CLOSED = "closed", "Closed"
+
+
+class ProbationDecision(models.TextChoices):
+    CONFIRMED = "confirmed", "Confirm employment"
+    EXTENDED = "extended", "Extend probation"
+    ENDED = "ended", "End employment"
+
+
 class Vacancy(TimeStampedModel):
     """A requested or active job opening."""
 
@@ -36,8 +75,8 @@ class Vacancy(TimeStampedModel):
     approved_salary_band = models.CharField(max_length=64, null=True, blank=True)
     budget_source = models.CharField(max_length=128, null=True, blank=True)
     status = models.CharField(
-        max_length=32, default="Draft"
-    )  # Draft, Pending Approval, Approved, Open, Screening, etc.
+        max_length=32, choices=VacancyStatus.choices, default=VacancyStatus.DRAFT
+    )
     approved_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -45,6 +84,16 @@ class Vacancy(TimeStampedModel):
         blank=True,
         related_name="approved_vacancies",
     )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    requested_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_vacancies",
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+    decision_reason = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = "hr_vacancy"
@@ -59,6 +108,10 @@ class Candidate(TimeStampedModel):
     phone = models.CharField(max_length=64, null=True, blank=True)
     skills = models.TextField(null=True, blank=True)
     talent_pool_notes = models.TextField(null=True, blank=True)
+    # Applicant data is personal data held about someone who does not work
+    # here. Neither consent nor a retention horizon existed anywhere.
+    consent_given_at = models.DateTimeField(null=True, blank=True)
+    retention_until = models.DateField(null=True, blank=True)
 
     class Meta:
         db_table = "hr_candidate"
@@ -75,9 +128,35 @@ class Application(TimeStampedModel):
         Candidate, on_delete=models.CASCADE, related_name="applications"
     )
     stage = models.CharField(
-        max_length=64, default="Applied"
-    )  # Applied, Screened, Shortlisted, Interview 1, Interview 2, Assessment, Reference Check, Recommended, Offer, Hired, Rejected, Withdrawn, Talent Pool
+        max_length=64, choices=ApplicationStage.choices, default=ApplicationStage.APPLIED
+    )
     status_notes = models.TextField(null=True, blank=True)
+    # Every stage change carries a reason, and the offer carries an approver —
+    # previously a stage was a bare string with no record of who decided or why.
+    decision_reason = models.TextField(null=True, blank=True)
+    interview_panel = models.TextField(null=True, blank=True)
+    assessment_result = models.TextField(null=True, blank=True)
+    reference_check_note = models.TextField(null=True, blank=True)
+    offer_approved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_offers",
+    )
+    offer_accepted_at = models.DateTimeField(null=True, blank=True)
+    # THE handoff. There was no path at all from an accepted candidate to an
+    # account: nothing wrote stage="Hired", no signal or service connected the
+    # two, and the provisioning service took no candidate reference of any
+    # kind — so HR re-keyed name, email and phone into an empty modal.
+    provisioned_user = models.OneToOneField(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="source_application",
+    )
+    provisioned_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "hr_application"
@@ -95,9 +174,34 @@ class OnboardingPlan(TimeStampedModel):
         StaffProfile, on_delete=models.CASCADE, related_name="onboarding_plan"
     )
     status = models.CharField(
-        max_length=32, default="Not Started"
-    )  # Not Started, Documents Pending, Account Setup Pending, Orientation Pending, Role Training Pending, Supervisor Review Pending, Ready for Activation, Active, Overdue
+        max_length=32,
+        choices=OnboardingStatus.choices,
+        default=OnboardingStatus.NOT_STARTED,
+    )
     start_date = models.DateField(null=True, blank=True)
+    # A plan with no target date cannot be late, which is why the view's
+    # "Overdue" metric filtered on a value nothing could ever set.
+    target_completion_date = models.DateField(null=True, blank=True)
+    probation_review_date = models.DateField(null=True, blank=True)
+    source_application = models.ForeignKey(
+        "Application",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="onboarding_plans",
+    )
+    supervisor_confirmed_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def is_overdue(self) -> bool:
+        from django.utils import timezone as _tz
+
+        return bool(
+            self.target_completion_date
+            and self.status != OnboardingStatus.CLOSED
+            and self.target_completion_date < _tz.now().date()
+        )
 
     class Meta:
         db_table = "hr_onboarding_plan"
@@ -111,8 +215,26 @@ class OnboardingTask(TimeStampedModel):
         OnboardingPlan, on_delete=models.CASCADE, related_name="tasks"
     )
     name = models.CharField(max_length=255)
+    category = models.CharField(max_length=64, default="general")
+    owner_role = models.CharField(max_length=64, default="employee")
+    due_date = models.DateField(null=True, blank=True)
     is_completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True)
+    completed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="completed_onboarding_tasks",
+    )
+
+    @property
+    def is_overdue(self) -> bool:
+        from django.utils import timezone as _tz
+
+        return bool(
+            self.due_date and not self.is_completed and self.due_date < _tz.now().date()
+        )
 
     class Meta:
         db_table = "hr_onboarding_task"
@@ -164,52 +286,291 @@ class EmployeeComplianceRecord(TimeStampedModel):
 # ─── PERFORMANCE MANAGEMENT & RECOVERY ───────────────────────────────────────
 
 
+class ReviewStage(models.TextChoices):
+    """The performance journey, as stages a record actually moves through.
+
+    Previously the whole cycle was one free-string `status` whose vocabulary
+    lived in a `#` comment — no state machine, no legal-transition table, and
+    three separate aggregations string-matching on its prefix, so a single typo
+    silently zeroed a national KPI.
+    """
+
+    NOT_STARTED = "not_started", "Not started"
+    PRIORITIES_DRAFT = "priorities_draft", "Employee drafting priorities"
+    PRIORITIES_MANAGER_REVIEW = "priorities_manager_review", "Manager reviewing priorities"
+    PRIORITIES_AGREED = "priorities_agreed", "Priorities agreed"
+    EMPLOYEE_REFLECTION = "employee_reflection", "Employee reflection"
+    MANAGER_ASSESSMENT = "manager_assessment", "Manager assessment"
+    CALIBRATION = "calibration", "Calibration"
+    AWAITING_ACKNOWLEDGEMENT = "awaiting_acknowledgement", "Awaiting employee acknowledgement"
+    CLOSED = "closed", "Closed"
+
+
+class ReviewType(models.TextChoices):
+    ANNUAL_PRIORITIES = "annual_priorities", "Annual priorities"
+    MID_YEAR = "mid_year", "Mid-year review"
+    YEAR_END = "year_end", "Year-end review"
+    QUARTERLY = "quarterly", "Quarterly review"
+    PROBATION = "probation", "Probation review"
+
+
+class PriorityStatus(models.TextChoices):
+    ON_TRACK = "on_track", "On track"
+    AT_RISK = "at_risk", "At risk"
+    OFF_TRACK = "off_track", "Off track"
+    ACHIEVED = "achieved", "Achieved"
+    NOT_ASSESSED = "not_assessed", "Not assessed"
+
+
 class PerformanceReview(TimeStampedModel):
-    """Periodic staff performance reviews."""
+    """One employee's review for one period.
+
+    The four evidence channels are kept structurally SEPARATE — system
+    evidence, employee reflection, manager assessment, calibration — because
+    collapsing them is how a manager's opinion becomes indistinguishable from a
+    measured figure. Previously only `manager_feedback` existed; the other
+    three were never built.
+    """
 
     id = CuidField()
     staff = models.ForeignKey(
         StaffProfile, on_delete=models.CASCADE, related_name="performance_reviews"
     )
-    period = models.CharField(
-        max_length=32, db_index=True
-    )  # e.g. "FY 2024/25", "May 2025"
+    period = models.CharField(max_length=32, db_index=True)
+    fy = models.CharField(max_length=16, null=True, blank=True, db_index=True)
     review_type = models.CharField(
-        max_length=64, default="Quarterly Review"
-    )  # Quarterly Review, FY Review, Probation Review
-    status = models.CharField(
-        max_length=32, default="Not Started"
-    )  # Not Started, Self-Assessment Pending, Manager Review Pending, Calibration Pending, HR Review Pending, Completed, Closed
+        max_length=64, choices=ReviewType.choices, default=ReviewType.ANNUAL_PRIORITIES
+    )
+    stage = models.CharField(
+        max_length=40, choices=ReviewStage.choices, default=ReviewStage.NOT_STARTED
+    )
+    # Kept for the existing read surfaces; `stage` is the authority.
+    status = models.CharField(max_length=32, default="Not Started")
     due_date = models.DateField()
-    rating = models.CharField(
-        max_length=32, null=True, blank=True
-    )  # Strong (70-100%), Fair (50-69%), At Risk (<50%)
-    score = models.FloatField(default=0.0)  # computed Target Achievement %
+
+    manager = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviews_managed",
+    )
+
+    # ── Channel 1: system evidence, computed, never typed ──────────────────
+    # Sourced from the canonical validated ledger (targets.my_targets
+    # weighted_period_pct) plus workload context, so a shortfall can be read
+    # against the portfolio that produced it.
+    system_evidence = models.JSONField(null=True, blank=True)
+    system_score = models.FloatField(null=True, blank=True)
+    system_evidence_generated_at = models.DateTimeField(null=True, blank=True)
+
+    # ── Channel 2: the employee's own words ────────────────────────────────
+    employee_reflection = models.TextField(null=True, blank=True)
+    employee_reflection_at = models.DateTimeField(null=True, blank=True)
+
+    # ── Channel 3: the manager's judgement ─────────────────────────────────
     manager_feedback = models.TextField(null=True, blank=True)
+    manager_rating = models.CharField(max_length=32, null=True, blank=True)
+    manager_assessed_at = models.DateTimeField(null=True, blank=True)
+
+    # ── Channel 4: calibration across a cohort ─────────────────────────────
+    calibration_result = models.CharField(max_length=32, null=True, blank=True)
+    calibration_note = models.TextField(null=True, blank=True)
+    calibrated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="calibrated_reviews",
+    )
+    calibrated_at = models.DateTimeField(null=True, blank=True)
+
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    # Legacy field the existing dashboards read. Populated from system_score.
+    rating = models.CharField(max_length=32, null=True, blank=True)
+    score = models.FloatField(default=0.0)
 
     class Meta:
         db_table = "hr_performance_review"
+        indexes = [models.Index(fields=["staff", "fy"])]
+
+
+class PerformancePriority(TimeStampedModel):
+    """One outcome-based annual priority. Roughly five per employee.
+
+    None of this existed. A review was a single flat row, so the priorities a
+    manager and employee agreed in January were unrecoverable in December and
+    the year-end assessment was unfalsifiable.
+    """
+
+    id = CuidField()
+    review = models.ForeignKey(
+        PerformanceReview, on_delete=models.CASCADE, related_name="priorities"
+    )
+    sequence = models.PositiveSmallIntegerField(default=1)
+
+    outcome_statement = models.TextField()
+    strategic_alignment = models.CharField(max_length=255, null=True, blank=True)
+    measures_of_success = models.TextField(null=True, blank=True)
+    baseline = models.CharField(max_length=255, null=True, blank=True)
+    target = models.CharField(max_length=255, null=True, blank=True)
+    weight = models.PositiveSmallIntegerField(default=20)
+    support_needed = models.TextField(null=True, blank=True)
+
+    current_result = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(
+        max_length=32, choices=PriorityStatus.choices, default=PriorityStatus.NOT_ASSESSED
+    )
+
+    # The same four-channel separation, at priority level.
+    system_evidence = models.JSONField(null=True, blank=True)
+    employee_reflection = models.TextField(null=True, blank=True)
+    manager_assessment = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_performance_priority"
+        ordering = ["sequence"]
+        unique_together = (("review", "sequence"),)
+
+
+class PerformancePriorityMilestone(TimeStampedModel):
+    """A critical milestone under one priority."""
+
+    id = CuidField()
+    priority = models.ForeignKey(
+        PerformancePriority, on_delete=models.CASCADE, related_name="milestones"
+    )
+    description = models.CharField(max_length=512)
+    due_date = models.DateField(null=True, blank=True)
+    is_complete = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    evidence_url = models.CharField(max_length=512, null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_performance_priority_milestone"
+        ordering = ["due_date", "created_at"]
+
+
+class RecoveryPlanType(models.TextChoices):
+    """Informal support and a formal improvement plan are different things.
+
+    They were one model plus a free-string status, so "escalating to conduct"
+    was a status flip on the performance record rather than a handoff to a
+    process with different evidentiary standards.
+    """
+
+    INFORMAL = "informal", "Informal recovery plan"
+    FORMAL = "formal", "Formal performance improvement plan"
+
+
+class RecoveryCause(models.TextChoices):
+    """Why performance fell short.
+
+    The old free-text vocabulary lived in a comment and listed only
+    planning/execution/conduct/attendance/skills — omitting capacity,
+    workload, availability, data quality and manager support, i.e. every
+    cause that is not the individual's fault. The platform already computes
+    most of these elsewhere (the overload detector, workload_context, and the
+    provisional-vs-validated split that IS a data-quality signal).
+    """
+
+    CAPACITY = "capacity", "Capacity — portfolio beyond capacity"
+    WORKLOAD = "workload", "Workload — competing demands"
+    SKILL = "skill", "Skill gap"
+    AVAILABILITY = "availability", "Availability — leave or absence"
+    DATA_QUALITY = "data_quality", "Data quality — work done but not credited"
+    MANAGER_SUPPORT = "manager_support", "Manager support"
+    CONDUCT = "conduct", "Conduct"
+    OTHER = "other", "Other"
+
+
+class RecoveryStatus(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    ACTIVE = "active", "Active"
+    PROGRESS_REVIEW = "progress_review", "Progress review"
+    COMPLETED = "completed", "Successfully completed"
+    EXTENDED = "extended", "Extended"
+    ESCALATED = "escalated", "Escalated to a conduct case"
+    CLOSED = "closed", "Closed"
 
 
 class PerformanceImprovementPlan(TimeStampedModel):
-    """A recovery/improvement plan created when performance issues arise."""
+    """A recovery or improvement plan. `plan_type` says which."""
 
     id = CuidField()
     staff = models.ForeignKey(
         StaffProfile, on_delete=models.CASCADE, related_name="pip_plans"
     )
+    plan_type = models.CharField(
+        max_length=16,
+        choices=RecoveryPlanType.choices,
+        default=RecoveryPlanType.INFORMAL,
+    )
     status = models.CharField(
-        max_length=32, default="Draft"
-    )  # Draft, Active, Progress Review, Successfully Completed, Escalated, Closed
+        max_length=32, choices=RecoveryStatus.choices, default=RecoveryStatus.DRAFT
+    )
     cause = models.CharField(
-        max_length=128
-    )  # planning gap, execution gap, conduct issue, attendance issue, skills gap, etc.
+        max_length=128, choices=RecoveryCause.choices, default=RecoveryCause.OTHER
+    )
+    cause_evidence = models.TextField(null=True, blank=True)
     action_plan = models.TextField()
+    support_offered = models.TextField(null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
+    owner = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_plans_owned",
+    )
+    outcome = models.CharField(max_length=32, null=True, blank=True)
+    outcome_note = models.TextField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    # An escalation CREATES a case; it is never a status flip in place.
+    escalated_case = models.ForeignKey(
+        "EmployeeRelationsCase",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="source_recovery_plans",
+    )
 
     class Meta:
         db_table = "hr_pip_plan"
+
+
+class RecoveryMilestone(TimeStampedModel):
+    id = CuidField()
+    plan = models.ForeignKey(
+        PerformanceImprovementPlan, on_delete=models.CASCADE, related_name="milestones"
+    )
+    description = models.CharField(max_length=512)
+    due_date = models.DateField(null=True, blank=True)
+    is_complete = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_recovery_milestone"
+        ordering = ["due_date", "created_at"]
+
+
+class RecoveryCheckIn(TimeStampedModel):
+    id = CuidField()
+    plan = models.ForeignKey(
+        PerformanceImprovementPlan, on_delete=models.CASCADE, related_name="check_ins"
+    )
+    held_on = models.DateField()
+    note = models.TextField()
+    recorded_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "hr_recovery_check_in"
+        ordering = ["-held_on"]
 
 
 # ─── CPD AND SKILLS MATRIX ───────────────────────────────────────────────────
@@ -285,19 +646,53 @@ class SuccessionCandidate(TimeStampedModel):
 # ─── EMPLOYEE RELATIONS AND CULTURE ──────────────────────────────────────────
 
 
+class ERCaseType(models.TextChoices):
+    GRIEVANCE = "grievance", "Grievance"
+    CONFLICT = "conflict", "Conflict"
+    HARASSMENT = "harassment", "Harassment concern"
+    CONDUCT = "conduct", "Conduct concern"
+    WHISTLEBLOWING = "whistleblowing", "Whistleblowing"
+    SAFEGUARDING = "safeguarding", "Safeguarding referral"
+
+
+class ERCaseStatus(models.TextChoices):
+    SUBMITTED = "submitted", "Submitted"
+    TRIAGE = "triage", "Restricted triage"
+    INVESTIGATION = "investigation", "Investigation"
+    FINDINGS = "findings", "Findings recorded"
+    ACTION = "action", "Action decided"
+    APPEAL = "appeal", "Under appeal"
+    RESOLVED = "resolved", "Resolved"
+    CLOSED = "closed", "Closed"
+
+
 class EmployeeRelationsCase(TimeStampedModel):
-    """Confidential employee relations concern logging."""
+    """Confidential employee relations concern logging.
+
+    The model had NO subject-employee field, so a conduct case could not
+    record whom it concerned — which also made it impossible to scope, since
+    there was nothing to scope by. `country` and `subject_staff` exist for
+    exactly that: the register was the one HR surface with no scope at all.
+    """
 
     id = CuidField()
+    # Whom the case is about. Nullable because a whistleblowing report may
+    # legitimately name no individual.
+    subject_staff = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="relations_cases_about",
+    )
+    country = models.CharField(max_length=64, default="Uganda", db_index=True)
     case_type = models.CharField(
-        max_length=64, db_index=True
-    )  # Grievance, Conflict, Harassment Concern, Conduct Concern, Whistleblowing, Safeguarding Referral
-    severity = models.CharField(
-        max_length=32, default="medium"
-    )  # low, medium, high, critical
+        max_length=64, choices=ERCaseType.choices, db_index=True
+    )
+    severity = models.CharField(max_length=32, default="medium")
     status = models.CharField(
-        max_length=32, default="Submitted"
-    )  # Submitted, Triage, Under Review, Investigation, Resolved, Closed
+        max_length=32, choices=ERCaseStatus.choices, default=ERCaseStatus.SUBMITTED
+    )
     case_owner = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -305,12 +700,32 @@ class EmployeeRelationsCase(TimeStampedModel):
         blank=True,
         related_name="relations_cases_assigned",
     )
+    investigator = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="relations_cases_investigating",
+    )
+    raised_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="relations_cases_raised",
+    )
     description = models.TextField()
     findings = models.TextField(null=True, blank=True)
+    action_taken = models.TextField(null=True, blank=True)
+    appeal_note = models.TextField(null=True, blank=True)
     is_confidential = models.BooleanField(default=True)
+    opened_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    retention_until = models.DateField(null=True, blank=True)
 
     class Meta:
         db_table = "hr_relations_case"
+        indexes = [models.Index(fields=["country", "status"])]
 
 
 # ─── COMPENSATION AND PAYROLL READYNESS ──────────────────────────────────────
