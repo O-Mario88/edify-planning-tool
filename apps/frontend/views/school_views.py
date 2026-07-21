@@ -257,23 +257,28 @@ def school_directory_view(request):
         writer.writerows(export_rows)
         return response
 
-    # Compute scoped base KPIs for the KPI Row
-    total_schools = base_qs.count()
-    client_schools = base_qs.filter(school_type="client").count()
-    core_schools = base_qs.filter(school_type="core").count()
-    unclustered_schools = base_qs.filter(cluster_status="unclustered").count()
-    no_ssa_schools = base_qs.filter(current_fy_ssa_status="not_done").count()
-    staff_setup_schools = base_qs.filter(
+    # KPIs describe the population the table shows. Computed from `base_qs`
+    # they ignored every filter, so narrowing to one district left twelve rows
+    # under a "Total Schools 1,043" headline — three different populations on
+    # one screen. `filtered_qs` is pre-tab, which is the same population the
+    # tab counts already use.
+    kpi_qs = filtered_qs
+    total_schools = kpi_qs.count()
+    client_schools = kpi_qs.filter(school_type="client").count()
+    core_schools = kpi_qs.filter(school_type="core").count()
+    unclustered_schools = kpi_qs.filter(cluster_status="unclustered").count()
+    no_ssa_schools = kpi_qs.filter(current_fy_ssa_status="not_done").count()
+    staff_setup_schools = kpi_qs.filter(
         Q(account_owner_id__isnull=True)
         | Q(account_owner_id="")
         | Q(account_owner_status="pending")
     ).count()
-    planning_ready_schools = base_qs.filter(
+    planning_ready_schools = kpi_qs.filter(
         planning_readiness__in=PlanningReadiness.planning_ready_values()
     ).count()
-    duplicate_schools = base_qs.filter(duplicate_status="duplicate").count()
+    duplicate_schools = kpi_qs.filter(duplicate_status="duplicate").count()
     district_count = (
-        base_qs.exclude(district_id__isnull=True)
+        kpi_qs.exclude(district_id__isnull=True)
         .values("district_id")
         .distinct()
         .count()

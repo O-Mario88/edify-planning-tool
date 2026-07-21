@@ -45,7 +45,10 @@ def ia_verification_queue_view(request):
     )
 
     # ── KPI Strip Calculation ────────────────────────────────────────────────
-    waiting_count = activities.count()
+    # NOTE: the three counts that describe the QUEUE (waiting, SSA pending,
+    # high priority) are computed after filtering — see below. They used to be
+    # computed here, before the filters were even read, so the district/staff/
+    # type controls changed the table and never touched the headline above it.
 
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     verified_today = VerificationHistory.objects.filter(
@@ -82,7 +85,6 @@ def ia_verification_queue_view(request):
         round((sla_compliant_count / sla_total) * 100, 1) if sla_total else None
     )
 
-    ssa_pending = activities.filter(ssa_collection_expected=True).count()
     duplicate_risks = (
         DuplicateActivity.objects.filter(status="potential")
         .values("activity_id")
@@ -90,10 +92,6 @@ def ia_verification_queue_view(request):
         .count()
     )
 
-    # High Priority: e.g. CORE visits or trainings
-    high_priority = activities.filter(
-        activity_type__in=["core_visit", "core_training", "baseline_ssa_visit"]
-    ).count()
 
     # ── Filtering ────────────────────────────────────────────────────────────
     fy_filter = request.GET.get("fy")
@@ -142,6 +140,13 @@ def ia_verification_queue_view(request):
         filtered_qs = filtered_qs.filter(school__school_type="core")
     if status_filter:
         filtered_qs = filtered_qs.filter(status=status_filter)
+
+    # The queue KPIs, on the population the table below actually shows.
+    waiting_count = filtered_qs.count()
+    ssa_pending = filtered_qs.filter(ssa_collection_expected=True).count()
+    high_priority = filtered_qs.filter(
+        activity_type__in=["core_visit", "core_training", "baseline_ssa_visit"]
+    ).count()
 
     # Serialize for template table
     from apps.activities.services import _serialize

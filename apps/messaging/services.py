@@ -731,6 +731,13 @@ def context_summary(user, context_type, context_id, linked_ids=None) -> dict:
     for item_id in [context_id, *(linked_ids or [])]:
         if not item_id or any(i["id"] == item_id for i in out["items"]):
             continue
+        # Every linked item is authorised on its own. Only the PRIMARY context
+        # was checked, so `?type=leave&id=<own>&linked=<anyone else's>` returned
+        # that person's name and leave dates, and `type=school` returned any
+        # school's name and planning readiness — then persisted the labels into
+        # the thread panel for all participants.
+        if not can_access_context(user, context_type, item_id):
+            continue
         rec, item_label = resolve_context_record(context_type, item_id)
         status = ""
         try:
@@ -858,6 +865,14 @@ def threads_for_user(user, tab: str = "all", search: str = "") -> list[dict]:
             and search.lower() not in (t.subject or "").lower()
             and search.lower() not in (t.context_label or "").lower()
         ):
+            continue
+        # Revalidate before emitting a subject and a body extract. The click
+        # path refuses correctly, but the LIST did not re-check the context —
+        # so a user who lost the school, project or team a thread is about kept
+        # seeing the row, its subject and ninety characters of the latest
+        # message indefinitely. The refusal has to happen before the content
+        # is serialised, not after it is read.
+        if not can_access_context(user, t.context_type, t.context_id):
             continue
         rows.append(
             {
@@ -1214,6 +1229,11 @@ def send(data: dict, principal) -> dict:
     for item_id in data.get("linkedItems") or []:
         if item_id == context_id:
             continue
+        # Authorise each linked item — their labels are persisted onto the
+        # thread and shown to every participant, so an unchecked id leaked a
+        # record's name through the panel.
+        if not can_access_context(sender, context_type, item_id):
+            continue
         _, item_label = resolve_context_record(context_type, item_id)
         linked_items.append({"id": item_id, "label": item_label})
 
@@ -1444,10 +1464,31 @@ def workflow_message(
 
 
 def recent(principal, query: dict) -> list[dict]:
+    """Recent message bodies — revalidated, like the HTML path.
+
+    This returned the last fifty message BODIES across every thread the caller
+    was ever a participant of, with no re-check of the underlying record. The
+    page path re-runs `can_access_context` on every open (there is a test
+    proving a CCEO loses a thread when their school assignment is revoked);
+    this sibling did not, so the API was a way around it.
+    """
     uid = principal.user_id if hasattr(principal, "user_id") else principal.id
     thread_ids = MessageParticipant.objects.filter(user_id=uid).values("thread_id")
-    qs = Message.objects.filter(thread_id__in=thread_ids).order_by("-created_at")
-    return [_serialize(m) for m in qs[:50]]
+    qs = (
+        Message.objects.filter(thread_id__in=thread_ids)
+        .select_related("thread")
+        .order_by("-created_at")
+    )
+    out = []
+    for m in qs[:200]:
+        if not can_access_context(
+            principal, m.thread.context_type, m.thread.context_id
+        ):
+            continue
+        out.append(_serialize(m))
+        if len(out) >= 50:
+            break
+    return out
 
 
 def counts(principal) -> dict:
@@ -1493,8 +1534,17 @@ def thread(thread_id: str, principal) -> list[dict]:
     has_access = (
         is_member or messages.filter(Q(sender_id=uid) | Q(recipient_id=uid)).exists()
     )
-    if not has_access and getattr(principal, "active_role", None) != "Admin":
+    if not has_access and _role_slug(principal) != "ADMIN":
         raise Forbidden("You are not a participant in this conversation thread.")
+    # Same read-time revalidation the HTML path applies. Participation alone is
+    # not access: losing the school, project or team the thread is ABOUT must
+    # close the thread too.
+    if _role_slug(principal) != "ADMIN" and not can_access_context(
+        principal, t.context_type, t.context_id
+    ):
+        raise Forbidden(
+            "You no longer have access to the record this conversation is about."
+        )
     return [_serialize(m) for m in messages]
 
 

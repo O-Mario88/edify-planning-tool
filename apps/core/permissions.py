@@ -390,7 +390,34 @@ class RolePermissionService:
                 and recipient_role != "PartnerFieldOfficer"
             )
 
+        # A Program Lead supervises a team; they are not a country function.
+        # This fell through to `return True`, so the whole rule was a role-pair
+        # matrix with no relationship term at all — once the context gate was
+        # satisfied, any Program Lead could message any other Program Lead's
+        # CCEOs about restricted operational work.
+        if sender_role == "Program Lead":
+            if recipient_role != "CCEO":
+                return True  # peers, leadership, IA, finance, partners
+            return RolePermissionService._supervises(user, recipient)
+
         return True
+
+    @staticmethod
+    def _supervises(user, recipient) -> bool:
+        """Is `recipient` on `user`'s own supervised team?"""
+        try:
+            from apps.core.scoping import resolve_user_scope
+
+            scope = resolve_user_scope(user)
+            team = set(scope.supervised_staff_ids or [])
+            if not team:
+                # An unassigned supervisor keeps their previous reach rather
+                # than being silently cut off from everyone.
+                return True
+            recipient_sp = getattr(recipient, "staff_profile_id", None)
+            return bool(recipient_sp and recipient_sp in team)
+        except Exception:  # noqa: BLE001
+            return False
 
 
 def render_access_denied(request, message: str):
