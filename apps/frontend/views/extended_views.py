@@ -1619,7 +1619,6 @@ def special_projects_planning_view(request):
 
 
 @require_page_permission("projects")
-@require_export_permission
 def special_projects_my_plan_view(request):
     """Special-project My Plan — the coordinator's scheduled project activities
     (staff-owned actionable; partner-planned read-only monitoring)."""

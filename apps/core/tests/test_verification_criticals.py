@@ -323,16 +323,20 @@ class SsaUploadAuthorityTests(Fixture):
 class ExportPermissionTests(Fixture):
     """data.export gates bulk extraction; page permission alone is not enough."""
 
-    def test_a_cceo_cannot_export_the_school_directory(self):
+    def test_a_cceo_cannot_export_the_partner_register(self):
+        """Org-wide datasets are gated on data.export. Scoped own-data
+        exports (a CCEO's own school portfolio, their own plan) deliberately
+        remain on page permission — extraction of what you already see is
+        not the risk; the org register is."""
         self.client.force_login(self.cceo)
-        r = self.client.get("/schools?export=csv")
+        r = self.client.get("/partners?export=csv")
         self.assertNotEqual(
             r.get("Content-Type", ""),
             "text/csv",
-            "a role without data.export must not receive a CSV",
+            "a role without data.export must not receive the org register",
         )
 
     def test_page_load_without_export_still_works(self):
         self.client.force_login(self.cceo)
-        r = self.client.get("/schools")
+        r = self.client.get("/partners")
         self.assertEqual(r.status_code, 200)

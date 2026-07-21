@@ -166,3 +166,18 @@ consolidation (18 sites → recommendation_engine); HR empty registers
 build-or-descope decision; reconciliation at seeded volume; mobile walkthrough;
 backup-restore drill; budget_ceiling_ugx enforcement (or accept advisory —
 product call, documented).
+
+## CONTINUATION POINT (post export-gate narrowing)
+Gate narrowed: school_directory_view + special_projects_my_plan_view ungated
+(scoped own-data); regression now targets /partners?export=csv (ALL_ROLES page,
+org register). Final suite bxfp51ekj running on the exact tree.
+NEXT, in order: (1) commit on green; (2) weakest consolidation — swap the 11
+school-level inline min()/sort sites onto ssa.recommendation_engine
+.prioritized_interventions / school_recommendation, convergence test across
+surfaces; (3) HR empty registers: DESCOPE recommendation — hide sidebar
+entries for compliance/succession/compensation/payroll until writers exist
+(honest absence beats empty page), or build minimal writers if user prefers;
+(4) volume reconciliation: seed a month of activity via seed_demo, run money
+chain, assert UGX 0; (5) mobile walkthrough of My Plan/evidence/leave/PD/
+approvals at 390px via Client + template checks; (6) backup-restore drill
+(pg_dump/restore + verify_chain).
