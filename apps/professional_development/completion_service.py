@@ -29,6 +29,20 @@ from apps.professional_development.uploads import store_pd_file
 
 HR_ROLE = "HumanResources"
 
+
+def _may_close_stage(req, principal) -> bool:
+    """Who may verify BambooHR, sign off, or return a completion.
+
+    HR owns these stages. Leadership is only ever the fallback for HR's OWN
+    request, and only within its own country — the same rule the HR approval
+    stage already enforces. Without this the closing stages accepted any
+    CountryDirector or RegionalVicePresident for any employee in any country:
+    a CD in one country could close another country's record.
+    """
+    from apps.professional_development.approval_service import _may_review_hr_stage
+
+    return _may_review_hr_stage(req, principal)
+
 # HR return-reason → the status the record snaps back to, and who must act.
 RETURN_REASON_TARGETS = {
     "certificate_missing": PDStatus.MARKED_COMPLETE,
@@ -256,7 +270,7 @@ class PDCourseTrackingService:
         own confirmation, which HR reviews at sign-off time regardless."""
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         role = getattr(principal, "active_role", "")
-        if role not in (HR_ROLE, "CountryDirector", "RegionalVicePresident", "Admin"):
+        if not _may_close_stage(req, principal):
             raise Forbidden("Only HR may verify a BambooHR upload.")
         req.bamboohr_verified_by = principal.user_id
         req.bamboohr_verified_at = timezone.now()
@@ -344,7 +358,7 @@ class PDCourseTrackingService:
     def sign_off(req_id: str, principal) -> ProfessionalDevelopmentRequest:
         req = ProfessionalDevelopmentRequest.objects.select_for_update().get(id=req_id)
         role = getattr(principal, "active_role", "")
-        if role not in (HR_ROLE, "CountryDirector", "RegionalVicePresident", "Admin"):
+        if not _may_close_stage(req, principal):
             raise Forbidden(
                 "Only HR (or leadership, for HR's own course) may sign off."
             )
@@ -394,7 +408,7 @@ class PDCourseTrackingService:
             raise BadRequest("Unknown return reason.")
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         role = getattr(principal, "active_role", "")
-        if role not in (HR_ROLE, "CountryDirector", "RegionalVicePresident", "Admin"):
+        if not _may_close_stage(req, principal):
             raise Forbidden("Only HR may return a completion for correction.")
         if req.staff_id == (principal.staff_profile_id or ""):
             raise Forbidden(

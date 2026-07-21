@@ -428,12 +428,23 @@ def _leave_todos(principal, role):
         return []
     from apps.accounts.models import Leave
 
+    from apps.hr.leave_services import LeaveApprovalService
+
     todos = []
-    for lv in (
+    # Scoped with the SAME predicate the approvals page uses. Without it every
+    # PL, CD and HR user received a To-Do for every pending leave in the
+    # platform — including staff they do not supervise — and the linked page
+    # then filtered the item out, so the task could never be completed.
+    pending = (
         Leave.objects.filter(status="pending")
         .select_related("staff__user")
-        .order_by("start_date")[:10]
-    ):
+        .order_by("start_date")[:100]
+    )
+    for lv in pending:
+        if not LeaveApprovalService.is_authorized_approver(principal, lv):
+            continue
+        if len(todos) >= 10:
+            break
         who = getattr(getattr(lv.staff, "user", None), "name", None) or "a staff member"
         todos.append(
             {
@@ -449,7 +460,7 @@ def _leave_todos(principal, role):
                 "due_tone": "neutral",
                 "linked": f"Leave · {who}",
                 "action_label": "Review",
-                "action_url": "/leave-approvals",
+                "action_url": "/leave/approvals",
                 "actionable": True,
                 "source": "Leave workflow",
                 "_due_sort": date.max,
