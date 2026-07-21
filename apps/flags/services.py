@@ -39,10 +39,19 @@ def raise_flag(data: dict, principal) -> dict:
 
 
 def program_leads(principal) -> list[dict]:
-    """List Program Leads (the assignable actors for a CD flag)."""
+    """The assignable actors for a CD flag.
+
+    Restricted to the roles that can actually raise one: this is a picker, and
+    it previously returned every Program Lead's name and email to any caller
+    holding analytics.view — a staff directory by side door. Email is dropped
+    entirely; assignment needs an id and a name, nothing more.
+    """
+    role = getattr(principal, "active_role", "")
+    if role not in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value):
+        raise Forbidden("Only the Country Director assigns flags to a Program Lead.")
     users = User.objects.filter(deleted_at__isnull=True, status="active")
     pls = [u for u in users if EdifyRole.COUNTRY_PROGRAM_LEAD.value in (u.roles or [])]
-    return [{"id": u.id, "name": u.name, "email": u.email} for u in pls]
+    return [{"id": u.id, "name": u.name} for u in pls]
 
 
 # Roles allowed to read the whole flag board rather than just their own rows.

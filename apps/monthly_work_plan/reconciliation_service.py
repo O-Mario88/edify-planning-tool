@@ -77,19 +77,63 @@ def _aware_bounds(month_key: str) -> tuple:
     )
 
 
-def _advances_for_month(month_key: str):
+def _advances_for_month(month_key: str, country_id: str | None = None):
     """Advances whose activity falls in this envelope's month.
 
     Anchored on the activity's planned date rather than the disbursement date:
     the envelope funds a month of *work*, so a late disbursement for that
     month's work still belongs to that month's reconciliation.
+
+    AdvanceRequest carries no country column, so country attribution runs
+    through the responsible employee's StaffProfile. Today's deployment is
+    single-country (HOME_COUNTRY_ID), which is why this was previously
+    unfiltered — but a reconciliation that silently mixes countries would be
+    wrong the moment a second one exists, and this function is handed a budget
+    that already knows its country.
+
+    Deliberately NOT a hard filter: an advance whose owner has no country set
+    would silently vanish from the reconciliation, and money disappearing from
+    a reconciliation is a worse failure than money appearing in it. Callers get
+    the in-country set plus the unattributable remainder, and surface both.
     """
     from apps.fund_requests.models import AdvanceRequest
 
     start, end = _aware_bounds(month_key)
-    return AdvanceRequest.objects.filter(
+    qs = AdvanceRequest.objects.filter(
         Q(planned_date__gte=start, planned_date__lt=end)
         | Q(planned_date__isnull=True, created_at__gte=start, created_at__lt=end)
+    )
+    if not country_id or not _is_multi_country():
+        return qs, qs.none()
+
+    from apps.accounts.models import StaffProfile
+
+    in_country_users = set(
+        StaffProfile.objects.filter(country=country_id).values_list(
+            "user_id", flat=True
+        )
+    )
+    # responsible_user_id is a plain CharField holding a User id, not an FK.
+    in_country = qs.filter(responsible_user_id__in=in_country_users)
+    unattributed = qs.exclude(responsible_user_id__in=in_country_users)
+    return in_country, unattributed
+
+
+def _is_multi_country() -> bool:
+    """Whether more than one country is actually in play.
+
+    Single-country deployments skip the join entirely rather than paying for it
+    on every reconciliation.
+    """
+    from apps.accounts.models import StaffProfile
+
+    return (
+        StaffProfile.objects.exclude(country__isnull=True)
+        .exclude(country="")
+        .values("country")
+        .distinct()
+        .count()
+        > 1
     )
 
 
@@ -99,13 +143,23 @@ def reconcile_month(budget: MonthlyWorkPlanBudget) -> dict:
     Returns the four figures a decision-maker needs on the same screen, plus
     the System A vs System B delta that no surface previously showed.
     """
-    advances = _advances_for_month(budget.month_key)
+    advances, unattributed = _advances_for_month(
+        budget.month_key, budget.country_id
+    )
     moved = advances.filter(status__in=_money_moved_statuses())
 
     disbursed = moved.aggregate(t=Sum("disbursed_amount"))["t"] or 0
     accounted = moved.aggregate(t=Sum("accounted_amount"))["t"] or 0
     returned = moved.aggregate(t=Sum("returned_amount"))["t"] or 0
     committed = advances.aggregate(t=Sum("amount"))["t"] or 0
+
+    # Money in this month that could not be attributed to a country. Reported,
+    # never dropped — a reconciliation that quietly loses rows is worse than
+    # one that admits what it could not place.
+    unattributed_moved = unattributed.filter(status__in=_money_moved_statuses())
+    unattributed_total = (
+        unattributed_moved.aggregate(t=Sum("disbursed_amount"))["t"] or 0
+    )
 
     # System A: what was actually booked in NetSuite for this month's work.
     netsuite_total = _netsuite_total(budget.month_key)
@@ -133,6 +187,8 @@ def reconcile_month(budget: MonthlyWorkPlanBudget) -> dict:
         "accountedTotal": accounted,
         "returnedTotal": returned,
         "utilisationPct": utilisation,
+        "unattributedTotal": unattributed_total,
+        "unattributedCount": unattributed_moved.count(),
         "variance": variance,
         "variancePct": (round((variance / approved) * 100, 1) if approved else 0.0),
         "isOverspend": variance < 0,
@@ -283,6 +339,12 @@ def _get(budget_id: str) -> MonthlyWorkPlanBudget:
 # ── Forecast against the annual ceiling ──────────────────────────────────────
 
 
+# Days of a quarter that must have elapsed before a run-rate projection is
+# published. Two weeks of a ~92-day quarter is enough for the divisor to stop
+# dominating the arithmetic.
+MIN_FORECAST_DAYS = 14
+
+
 def quarter_forecast(fy: str, country_id: str | None = None) -> dict | None:
     """Answer "am I going to overspend this quarter?".
 
@@ -320,14 +382,24 @@ def quarter_forecast(fy: str, country_id: str | None = None) -> dict | None:
     projected = int(spent / fraction_elapsed) if fraction_elapsed > 0 else spent
     overspend = projected - ceiling
 
+    # A run-rate is meaningless in the first days of a quarter: dividing by
+    # 1/92 multiplies a single disbursement by 92, so one ordinary payment on
+    # day one "projects" a catastrophic overspend. Publishing that would train
+    # people to ignore the metric — the same failure mode as an alert that
+    # cries wolf. Below the threshold we still show spend-to-date, but we do
+    # not claim to know where the quarter lands.
+    reliable = elapsed >= MIN_FORECAST_DAYS
+
     return {
         "fy": fy,
         "quarter": quarter,
         "ceiling": ceiling,
         "spentToDate": spent,
-        "projectedTotal": projected,
-        "projectedOverspend": overspend,
-        "willOverspend": overspend > 0,
+        "projectedTotal": projected if reliable else None,
+        "projectedOverspend": overspend if reliable else None,
+        "willOverspend": bool(reliable and overspend > 0),
+        "isReliable": reliable,
+        "minForecastDays": MIN_FORECAST_DAYS,
         "pctElapsed": round(fraction_elapsed * 100, 1),
         "pctOfCeilingSpent": (round((spent / ceiling) * 100, 1) if ceiling else 0.0),
         "daysRemaining": total_days - elapsed,

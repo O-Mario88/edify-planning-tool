@@ -86,13 +86,15 @@ def core_school_health(principal, query: dict | None = None) -> dict:
             "baseline": plan.baseline_average,
             "followUp": plan.follow_up_average,
             "movement": movement,
+            # ssa_score_band returns (label, hex, tone) — the label is what a
+            # page shows.
             "baselineBand": (
-                ssa_score_band(plan.baseline_average)
+                ssa_score_band(plan.baseline_average)[0]
                 if plan.baseline_average is not None
                 else None
             ),
             "followUpBand": (
-                ssa_score_band(plan.follow_up_average)
+                ssa_score_band(plan.follow_up_average)[0]
                 if plan.follow_up_average is not None
                 else None
             ),

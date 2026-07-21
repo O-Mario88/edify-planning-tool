@@ -360,6 +360,22 @@ def create(data: dict, principal) -> dict:
         if avail["status"] == "blocked":
             raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
 
+    # A paused or closed Special Project must stop absorbing new commitments —
+    # that is what the RVP's pause/close decision means. Gating only the
+    # school-assignment paths left this funnel open, so a closed project could
+    # still accrue activities and, through costing, real spend.
+    project_id = data.get("projectId")
+    if project_id:
+        from apps.projects.models import Project
+        from apps.projects.services import assert_accepts_new_work
+
+        project = Project.objects.filter(
+            id=project_id, deleted_at__isnull=True
+        ).first()
+        if project is None:
+            raise BadRequest("Unknown project.")
+        assert_accepts_new_work(project)
+
     status = (
         "assigned_to_partner"
         if is_partner

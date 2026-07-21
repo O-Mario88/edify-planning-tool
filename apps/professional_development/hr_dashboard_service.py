@@ -142,14 +142,25 @@ def _scoped_staff_ids(principal):
         scope = resolve_user_scope(principal)
         if not scope.rvp_region_scoped:
             return None, None
+        # StaffSchoolAssignment.school_id is a plain CharField, not an FK, so
+        # the school's region cannot be reached by traversal — resolve the
+        # region's schools first, then the staff assigned to them.
+        from apps.accounts.models import StaffSchoolAssignment
+        from apps.schools.models import School
+
         region_school_ids = list(
-            StaffProfile.objects.filter(
-                school_links__school__region_id__in=scope.region_ids
-            )
-            .values_list("id", flat=True)
+            School.objects.filter(
+                region_id__in=scope.region_ids, deleted_at__isnull=True
+            ).values_list("id", flat=True)
+        )
+        if not region_school_ids:
+            return [], None
+        staff_ids = list(
+            StaffSchoolAssignment.objects.filter(school_id__in=region_school_ids)
+            .values_list("staff_id", flat=True)
             .distinct()
         )
-        return region_school_ids, None
+        return staff_ids, None
     # Any other role reaching this view (shouldn't happen — permission-gated) sees nothing.
     return [], None
 

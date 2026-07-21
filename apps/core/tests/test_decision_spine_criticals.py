@@ -89,6 +89,25 @@ class FlagsApiAuthorizationTests(TestCase):
         self.flag.refresh_from_db()
         self.assertEqual(self.flag.status, "resolved")
 
+    def test_program_leads_picker_is_cd_only_and_carries_no_email(self):
+        """This picker returned every Program Lead's name AND email to any
+        caller holding analytics.view — a staff directory by side door."""
+        client = Client()
+        for user in (self.cceo, self.other_pl):
+            client.force_login(user)
+            resp = client.get("/api/flags/program-leads")
+            self.assertEqual(resp.status_code, 403, f"{user.active_role} must be refused")
+
+        client.force_login(self.cd)
+        resp = client.get("/api/flags/program-leads")
+        self.assertEqual(resp.status_code, 200)
+        for row in resp.json():
+            self.assertIn("id", row)
+            self.assertIn("name", row)
+            self.assertNotIn(
+                "email", row, "assignment needs an id and a name, not contact PII"
+            )
+
     def test_api_requires_permission_not_just_authentication(self):
         client = Client()
         client.force_login(self.cceo)

@@ -791,6 +791,7 @@ def _execution_context(budget, fy, principal) -> dict:
             "netsuite_fmt": _ugx(rec["netsuiteTotal"]),
             "variance_fmt": _ugx(abs(rec["variance"])),
             "system_delta_fmt": _ugx(abs(rec["systemDelta"])),
+            "unattributed_fmt": _ugx(rec["unattributedTotal"]),
             "variance_label": "over budget" if rec["isOverspend"] else "under budget",
         },
         "forecast": recon.quarter_forecast(fy, budget.country_id),

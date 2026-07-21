@@ -75,8 +75,10 @@ def declining_schools(principal, query: dict | None = None) -> dict:
         sid = record["school_id"]
         info = meta.get(sid, {})
         worst_row = worst.loc[sid] if sid in worst.index else None
-        prev_band = ssa_score_band(record["prev"])
-        curr_band = ssa_score_band(record["curr"])
+        # ssa_score_band returns (label, hex, tone) — take the label; rendering
+        # the tuple puts raw Python in front of a director.
+        prev_band = ssa_score_band(record["prev"])[0]
+        curr_band = ssa_score_band(record["curr"])[0]
         rows.append(
             {
                 "schoolId": sid,

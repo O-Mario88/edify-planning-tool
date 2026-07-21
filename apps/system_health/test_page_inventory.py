@@ -12,14 +12,27 @@ class PageInventoryTest(SimpleTestCase):
         inventory = build_page_inventory()
         self.assertGreaterEqual(inventory["summary"]["routed_surfaces"], 90)
         self.assertGreaterEqual(inventory["summary"]["all_routes"], 200)
-        # Derived from the registries rather than hardcoded, so adding a role
-        # or a scheduled job doesn't fail an unrelated inventory assertion.
-        self.assertEqual(inventory["summary"]["roles"], len(EdifyRole.values()))
-        self.assertEqual(
-            inventory["summary"]["scheduled_jobs"], len(JOB_REGISTRY)
-        )
         self.assertGreaterEqual(inventory["summary"]["permission_keys"], 38)
         self.assertGreaterEqual(inventory["summary"]["component_templates"], 100)
+
+        # Counting the registries the inventory itself reads from would compare
+        # a value to itself. Assert the inventory reproduces them faithfully and
+        # that each entry is usable — those can actually fail.
+        platform = inventory["platform"]
+        self.assertEqual(set(platform["roles"]), {role.value for role in EdifyRole})
+        self.assertEqual(
+            {job["name"] for job in platform["scheduled_jobs"]},
+            {job.name for job in JOB_REGISTRY},
+        )
+        for job in platform["scheduled_jobs"]:
+            self.assertTrue(job.get("cron"), f"{job['name']} has no schedule")
+            self.assertTrue(
+                job.get("description"), f"{job['name']} has no description"
+            )
+            self.assertTrue(
+                job.get("idempotency_note") or not job.get("idempotent"),
+                f"{job['name']} claims idempotency without saying why",
+            )
 
         dashboard = next(
             page for page in inventory["pages"] if page["route"] == "/dashboard"
