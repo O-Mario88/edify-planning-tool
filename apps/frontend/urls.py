@@ -817,6 +817,11 @@ urlpatterns = [
     ),
     # My Team (PL view)
     path("my-team", staff_views.my_team_view, name="my_team"),
+    path(
+        "my-performance",
+        hr_views.my_performance_view,
+        name="my_performance",
+    ),
     # Notifications
     path(
         "notifications",

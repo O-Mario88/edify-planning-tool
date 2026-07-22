@@ -1,0 +1,74 @@
+{% extends "layouts/shell.html" %}
+{% block content %}
+<div class="space-y-5">
+  <div class="edify-page-header">
+    <div>
+      <h1 class="edify-page-title">My Performance</h1>
+      <p class="edify-page-subtitle">
+        What I agreed to deliver, and how I am progressing — computed from
+        verified work, never typed.
+      </p>
+    </div>
+    {% if cycle %}<span class="edify-badge">FY{{ cycle.fy }} · {{ cycle.get_status_display }}</span>{% endif %}
+  </div>
+
+  {% if not review %}
+  <div class="edify-surface rounded-surface border border-slate-100 p-8 text-center text-slate-400">
+    <p class="font-bold text-[13px]">No performance cycle is open for this year yet.</p>
+    <p class="edify-text-caption mt-1">HR opens the cycle; your draft agreement is generated from your role and portfolio.</p>
+  </div>
+  {% else %}
+  <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="text-[14px] font-bold text-slate-800">Agreed Priorities</h2>
+      <span class="edify-text-caption text-slate-400">{{ priorities|length }} priorities · weights total 100</span>
+    </div>
+    <div class="overflow-x-auto"><table class="w-full text-[13px]">
+      <thead><tr class="text-left edify-text-caption uppercase text-slate-400">
+        <th class="px-5 py-2.5">Priority</th><th class="px-3 py-2.5">Target</th>
+        <th class="px-3 py-2.5">Progress</th><th class="px-3 py-2.5">Weight</th>
+      </tr></thead>
+      <tbody>
+      {% for row in priorities %}
+      <tr class="border-t border-slate-50">
+        <td class="px-5 py-3">
+          <p class="font-bold text-slate-800">{{ row.p.outcome_statement }}</p>
+          <p class="edify-text-caption text-slate-400">{{ row.p.get_priority_layer_display }}{% if row.p.denominator_note %} · {{ row.p.denominator_note }}{% endif %}</p>
+        </td>
+        <td class="px-3 py-3 font-bold">{{ row.p.target|default:"—" }}</td>
+        <td class="px-3 py-3">
+          {% if row.progress.actual is not None %}
+            <span class="font-bold">{{ row.progress.actual }}{% if row.progress.target %} / {{ row.progress.target }}{% endif %}</span>
+            {% if row.progress.pct is not None %}<span class="edify-text-caption text-slate-400"> · {{ row.progress.pct }}%</span>{% endif %}
+          {% else %}<span class="text-slate-400">Conversational</span>{% endif %}
+        </td>
+        <td class="px-3 py-3">{{ row.p.weight }}%</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-2">
+    <div class="edify-surface rounded-surface border border-slate-100 p-5">
+      <h3 class="text-[13.5px] font-bold text-slate-800 mb-3">Development Plan</h3>
+      {% for d in development %}
+      <div class="py-2 border-t border-slate-50 first:border-t-0">
+        <p class="text-[13px] font-bold text-slate-700">{{ d.description }}</p>
+        <p class="edify-text-caption text-slate-400">{% if d.source == "pd_workflow" %}From the PD workflow · {{ d.status }}{% else %}Added by me{% endif %}</p>
+      </div>
+      {% empty %}<p class="edify-text-caption text-slate-400">PD-workflow courses appear here automatically; you can add your own items.</p>{% endfor %}
+    </div>
+    <div class="edify-surface rounded-surface border border-slate-100 p-5">
+      <h3 class="text-[13.5px] font-bold text-slate-800 mb-3">Values &amp; Commitments</h3>
+      {% for v in values %}
+      <div class="py-2 border-t border-slate-50 first:border-t-0">
+        <p class="text-[13px] font-bold text-slate-700">{{ v.value_name }}</p>
+        <p class="edify-text-caption text-slate-400">{{ v.agreed_behaviour|default:"" }}</p>
+      </div>
+      {% empty %}<p class="edify-text-caption text-slate-400">Values are agreed in conversation — never rated from activity counts.</p>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

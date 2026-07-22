@@ -439,6 +439,25 @@ class PerformancePriority(TimeStampedModel):
     employee_reflection = models.TextField(null=True, blank=True)
     manager_assessment = models.TextField(null=True, blank=True)
 
+    # ── Priority-to-target mapping (the engine) ──────────────────────────
+    # A measurable priority names its canonical metric; progress is DERIVED
+    # LIVE from the verified ledger on read — never typed, never synced by a
+    # job that can lag. "No percentage without a denominator": numeric
+    # targets carry one, computed from the real portfolio at build time.
+    priority_layer = models.CharField(
+        max_length=16,
+        choices=[
+            ("org", "Organization"),
+            ("role", "Role"),
+            ("project", "Project"),
+            ("personal", "Personal / Values"),
+        ],
+        default="role",
+    )
+    metric_key = models.CharField(max_length=64, null=True, blank=True)
+    target_number = models.IntegerField(null=True, blank=True)
+    denominator_note = models.CharField(max_length=255, null=True, blank=True)
+
     class Meta:
         db_table = "hr_performance_priority"
         ordering = ["sequence"]
@@ -825,3 +844,105 @@ class HRAuditEvent(TimeStampedModel):
             models.Index(fields=["record_id"]),
             models.Index(fields=["created_at"]),
         ]
+
+
+class PerformanceCycle(TimeStampedModel):
+    """HR opens one cycle per fiscal year; agreements hang off it."""
+
+    id = CuidField()
+    fy = models.CharField(max_length=16, unique=True)
+    status = models.CharField(
+        max_length=16,
+        choices=[("open", "Open"), ("locked", "Locked"), ("closed", "Closed")],
+        default="open",
+    )
+    opened_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta:
+        db_table = "hr_performance_cycle"
+
+
+class RolePriorityTemplate(TimeStampedModel):
+    """A role's standard priorities, from which drafts are generated."""
+
+    id = CuidField()
+    role = models.CharField(max_length=64, db_index=True)
+    priority_layer = models.CharField(max_length=16, default="role")
+    outcome_statement = models.TextField()
+    metric_key = models.CharField(max_length=64, null=True, blank=True)
+    default_weight = models.PositiveSmallIntegerField(default=20)
+    sequence = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        db_table = "hr_role_priority_template"
+        ordering = ["role", "sequence"]
+
+
+class PriorityAmendment(TimeStampedModel):
+    """A MANUAL, approved change to a locked priority. Never silent edits;
+    past quarterly snapshots are never rewritten."""
+
+    id = CuidField()
+    priority = models.ForeignKey(
+        PerformancePriority, on_delete=models.CASCADE, related_name="amendments"
+    )
+    requested_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="+"
+    )
+    reason = models.TextField()
+    changed_target = models.CharField(max_length=255, null=True, blank=True)
+    changed_target_number = models.IntegerField(null=True, blank=True)
+    effective_date = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=[
+            ("requested", "Requested"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+        ],
+        default="requested",
+    )
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_priority_amendment"
+
+
+class DevelopmentPlanItem(TimeStampedModel):
+    """A development-plan row. PD-workflow rows appear automatically on the
+    page (derived live from ProfessionalDevelopmentRequest); this model holds
+    only the MANUAL additions the employee makes on top."""
+
+    id = CuidField()
+    review = models.ForeignKey(
+        PerformanceReview, on_delete=models.CASCADE, related_name="development_items"
+    )
+    description = models.CharField(max_length=512)
+    expected_impact = models.TextField(null=True, blank=True)
+    progress_note = models.TextField(null=True, blank=True)
+    reflection = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_development_plan_item"
+
+
+class ValueCommitment(TimeStampedModel):
+    """An Edify Values commitment. MANUAL by mandate — values are never
+    auto-rated from activity counts."""
+
+    id = CuidField()
+    review = models.ForeignKey(
+        PerformanceReview, on_delete=models.CASCADE, related_name="value_commitments"
+    )
+    value_name = models.CharField(max_length=128)
+    agreed_behaviour = models.TextField(null=True, blank=True)
+    employee_reflection = models.TextField(null=True, blank=True)
+    manager_evidence = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_value_commitment"

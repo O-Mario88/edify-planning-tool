@@ -7,7 +7,7 @@ from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import redirect, render
 
 from apps.accounts.models import Leave, StaffProfile
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import render_access_denied, require_page_permission
 from apps.hr.models import (
     Application,
     CompensationRecord,
@@ -1558,3 +1558,42 @@ def hr_audit_log_view(request):
         primary_action={"label": "Open System Health", "href": "/system-health"},
         empty_title="No HR audit events recorded yet",
     )
+
+
+@require_page_permission("my_performance")
+def my_performance_view(request):
+    """My Performance — the employee's agreement, live progress, development
+    and values. Progress is derived on read from the verified ledger; the
+    page never shows a typed number."""
+    from apps.hr.models import PerformanceCycle, PerformanceReview
+    from apps.hr.performance_engine import development_rows, live_progress
+
+    sp = getattr(request.user, "staff_profile", None)
+    if sp is None:
+        return render_access_denied(request, "No staff profile is linked.")
+    from apps.core.fy import get_operational_fy
+
+    fy = get_operational_fy()
+    cycle = PerformanceCycle.objects.filter(fy=fy).first()
+    review = PerformanceReview.objects.filter(
+        staff=sp, fy=fy, review_type="annual_priorities"
+    ).first()
+    if cycle and review is None:
+        from apps.hr.performance_engine import build_draft_agreement
+
+        review = build_draft_agreement(sp, cycle, request.user)
+
+    priorities = []
+    if review:
+        for p in review.priorities.all():
+            progress = live_progress(p)
+            priorities.append({"p": p, "progress": progress})
+    context = {
+        "cycle": cycle,
+        "review": review,
+        "priorities": priorities,
+        "development": development_rows(review) if review else [],
+        "values": list(review.value_commitments.all()) if review else [],
+        "tab": request.GET.get("tab", "priorities"),
+    }
+    return render(request, "pages/hr/my_performance.html", context)
