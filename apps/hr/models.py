@@ -399,6 +399,13 @@ class PerformanceReview(TimeStampedModel):
     # Legacy field the existing dashboards read. Populated from system_score.
     rating = models.CharField(max_length=32, null=True, blank=True)
     score = models.FloatField(default=0.0)
+    functional_manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="functionally_managed_reviews",
+    )
 
     class Meta:
         db_table = "hr_performance_review"
@@ -438,6 +445,13 @@ class PerformancePriority(TimeStampedModel):
     system_evidence = models.JSONField(null=True, blank=True)
     employee_reflection = models.TextField(null=True, blank=True)
     manager_assessment = models.TextField(null=True, blank=True)
+
+    # Three distinct rating columns — the HR form keeps employee, manager
+    # and functional manager as separate voices, never merged.
+    employee_rating = models.CharField(max_length=32, null=True, blank=True)
+    manager_rating = models.CharField(max_length=32, null=True, blank=True)
+    functional_manager_rating = models.CharField(max_length=32, null=True, blank=True)
+    agreed_action = models.TextField(null=True, blank=True)
 
     # ── Priority-to-target mapping (the engine) ──────────────────────────
     # A measurable priority names its canonical metric; progress is DERIVED
@@ -846,11 +860,36 @@ class HRAuditEvent(TimeStampedModel):
         ]
 
 
+RATING_OPTIONS = [
+    ("far_exceeds", "Far Exceeds Priority"),
+    ("exceeds", "Exceeds Priority"),
+    ("met", "Met Priority"),
+    ("met_some", "Met Some Priority"),
+    ("did_not_meet", "Did Not Meet Priority"),
+]
+
+
 class PerformanceCycle(TimeStampedModel):
-    """HR opens one cycle per fiscal year; agreements hang off it."""
+    """HR opens one cycle per fiscal year; agreements hang off it.
+
+    The form stays LOCKED outside an authorized window: only HR activates a
+    quarter, extends it, reopens a record (with a reason) or closes it.
+    """
+
+    WINDOWS = [
+        ("none", "No window open"),
+        ("priority_setting", "FY priority setting"),
+        ("q1", "Q1 conversation"),
+        ("mid_year", "Mid-year review (Q2)"),
+        ("q3", "Q3 conversation"),
+        ("year_end", "End-of-year review (Q4)"),
+    ]
 
     id = CuidField()
     fy = models.CharField(max_length=16, unique=True)
+    active_window = models.CharField(max_length=32, choices=WINDOWS, default="none")
+    window_opened_at = models.DateTimeField(null=True, blank=True)
+    window_deadline = models.DateField(null=True, blank=True)
     status = models.CharField(
         max_length=16,
         choices=[("open", "Open"), ("locked", "Locked"), ("closed", "Closed")],
@@ -932,17 +971,50 @@ class DevelopmentPlanItem(TimeStampedModel):
 
 
 class ValueCommitment(TimeStampedModel):
-    """An Edify Values commitment. MANUAL by mandate — values are never
-    auto-rated from activity counts."""
+    """An Edify Values or Spiritual Formation commitment. MANUAL by mandate —
+    never auto-rated from activity counts. `kind` separates the two sections
+    of the form; both share the commitment/reflection shape."""
 
     id = CuidField()
     review = models.ForeignKey(
         PerformanceReview, on_delete=models.CASCADE, related_name="value_commitments"
     )
+    kind = models.CharField(
+        max_length=16,
+        choices=[("value", "Edify Value"), ("spiritual", "Spiritual Formation")],
+        default="value",
+    )
     value_name = models.CharField(max_length=128)
+    functional_manager_observation = models.TextField(null=True, blank=True)
     agreed_behaviour = models.TextField(null=True, blank=True)
     employee_reflection = models.TextField(null=True, blank=True)
     manager_evidence = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = "hr_value_commitment"
+
+
+class PerformanceSnapshot(TimeStampedModel):
+    """The immutable record a conversation is held against.
+
+    Taken when HR activates the window: live figures are frozen so the
+    numbers cannot shift mid-meeting, and after sign-off the row is locked
+    permanently. Amendments never rewrite an existing snapshot — history
+    keeps the original values, future periods use the amended ones.
+    """
+
+    id = CuidField()
+    review = models.ForeignKey(
+        PerformanceReview, on_delete=models.CASCADE, related_name="snapshots"
+    )
+    window = models.CharField(max_length=32)
+    data = models.JSONField()
+    taken_at = models.DateTimeField(auto_now_add=True)
+    signed_off_at = models.DateTimeField(null=True, blank=True)
+    signed_off_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        db_table = "hr_performance_snapshot"
+        unique_together = (("review", "window"),)

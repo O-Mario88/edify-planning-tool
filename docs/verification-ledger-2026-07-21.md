@@ -199,3 +199,61 @@ approvals at 390px via Client + template checks; (6) backup-restore drill
   rebuild_audit_chain command; verify_chain now {'ok': True}.
 - Mobile: five field workflows scanned — one unguarded table (leave PTO)
   fixed; design linter clean.
+
+## PERFORMANCE FORM MANDATE — delta plan (2026-07-22)
+BUILT+TESTED (commits 7a19e711 + uncommitted window layer, suite bq0bkbpm2):
+live_progress (verified-only, derived on read); builder with real denominators;
+partner weight; PD auto-merge + manual items; amendments (manual, no self-
+approve); HR-only windows (priority_setting/q1/MID_YEAR=Q2/q3/YEAR_END=Q4);
+immutable snapshots frozen at activation (proven: live moves, snapshot never);
+3 distinct rating columns w/ scoped writers; readiness job (7-day HR notify,
+registered, run twice, deduped).
+REMAINING DELTA, in order:
+1. Exact taxonomy: DEFAULT_TEMPLATES → categories Program Growth / Program
+   Quality (School Visits, Training, SSA, Capital-mixed) / PD / Spiritual
+   Formation / Edify Values. Capital = mixed (manual milestones + manager
+   assessment), metric_key None.
+2. ValueCommitment.kind field ("value"|"spiritual"); seed the SIX named
+   values on agreement build: Christ like Service; Devoted to Prayer;
+   Transformation through Relationships; All things done with excellence &
+   high Integrity; Applaud entrepreneurial spirit; Best Idea Wins.
+   ("Be joyful..." = versioned template decision, ask user, don't drop.)
+3. PerformanceReview.functional_manager FK (configured) +
+   save_functional_manager_input (third rating column writer).
+4. Performance Support routing: flag → informal RecoveryPlan (exists, Phase
+   9) recommendation service; NEVER auto-PIP (guard test).
+5. Targets sync: on agreement approval write StaffTargetProfile rows from
+   metric targets (check apps/targets StaffTargetProfile field names first).
+6. Docgen: snapshot → printable HTML (role-scoped, audited download); DOCX
+   only if python-docx already in requirements — check, do NOT add deps.
+7. HR return/reopen with reason + audit (states beyond open/close).
+
+## UI NORMALIZATION MANDATE (2026-07-22, mid-turn)
+Gold standard = My Plan filter experience. Plan:
+1. INSPECT My Plan filter implementation (templates/pages/my_plan/ + partials)
+   → extract canonical components: FilterToolbar/FilterSelect/FilterDrawer/
+   ActiveFilterChip/ClearFilters as shared template partials
+   (templates/components/filters/*) with data-component attributes.
+2. AUDIT (agents): every filter/dropdown/search per page — overlaps (negative
+   margin/absolute over cards), arrow spacing (need pr-10 + right-3 arrow),
+   duplicate search bars, native-vs-custom select mix.
+3. APPLY: migrate pages to shared components; filters in document flow
+   (Header → KPI → FilterToolbar → Content); max 3 inline + drawer.
+4. SEARCH: one persistent top-bar search, contextual per module
+   (?search= in URL, backend-scoped); remove page-level persistent search;
+   keep only in-drawer selector search (documented exceptions).
+5. TOPBAR: Messages icon beside bell (Search·Messages·Notifications·Help·
+   Profile), unread badge = messages page count, SSE update, centered
+   blurred panel desktop / full-screen mobile.
+6. SAFEGUARDS: template lint tests (one persistent search per page, no
+   absolute/negative-margin filter containers, select pr reserve, no dup ids)
+   + responsive checks at 8 widths.
+
+## URGENT-ATTENTION CARD MANDATE (2026-07-22)
+SSA-first precedence: No SSA (critical, suppress ALL intervention labels) →
+No Visit or Training → No Training → No Visit → canonical SSA recommendation.
+Month-scoped (planned activities in selected month only), deduped per school,
+role-scoped, scheduled-state as secondary text, 5-7 rows max. ONE backend
+resolver (resolve_urgent_issue) reusing: latest confirmed-FY SSA, entitlement
+gap (client 1+1, core slots), IA_VERIFIED completion, recommendation_engine.
+Tests per §14. No logic in templates/JS/exports.

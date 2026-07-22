@@ -274,4 +274,18 @@ __all__ = [
     "field_debrief_recurring_issues_job",
     "analytics_report_delivery_job",
     "escalation_sla_sweep_job",
+    "performance_readiness_job",
 ]
+
+
+def _do_performance_readiness() -> int:
+    from apps.hr.performance_engine import quarterly_readiness
+
+    quarterly_readiness()
+    return 1
+
+
+def performance_readiness_job():
+    if not _enabled():
+        return
+    run_tracked_job("performance_readiness", _do_performance_readiness)

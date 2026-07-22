@@ -203,3 +203,136 @@ class NoProfileBranchTests(TestCase):
         self.client.force_login(admin)
         r = self.client.get("/my-performance")
         self.assertNotEqual(r.status_code, 500)
+
+
+class ConversationWindowTests(EngineFixture):
+    """§7/§8/§10 — locked outside a window; snapshots freeze the numbers."""
+
+    def _agree(self):
+        return build_draft_agreement(self.sp, self.cycle, self.hr)
+
+    def test_the_form_is_locked_outside_a_window(self):
+        from apps.hr.performance_engine import save_employee_input
+
+        review = self._agree()
+        with self.assertRaises(Forbidden):
+            save_employee_input(
+                review.priorities.first(), {"employee_rating": "met"}, self.cceo
+            )
+
+    def test_only_hr_activates_and_activation_freezes_the_numbers(self):
+        from apps.hr.performance_engine import activate_window, live_progress
+
+        review = self._agree()
+        with self.assertRaises(Forbidden):
+            activate_window(self.cycle, "q1", self.cceo)
+        activate_window(self.cycle, "q1", self.hr)
+
+        snap = review.snapshots.get(window="q1")
+        visits_row = next(
+            r for r in snap.data["priorities"] if r["metric_key"] == "direct_visits"
+        )
+        self.assertEqual(visits_row["actual"], 0)
+
+        # Verified work AFTER activation moves the live number but NEVER the
+        # snapshot the conversation is held against.
+        Activity.objects.create(
+            school_id=self.schools[0].id,
+            activity_type="school_visit",
+            status="ia_verified",
+            responsible_staff_id=self.sp.id,
+            fy="2026",
+            quarter="Q1",
+        )
+        visits = review.priorities.get(metric_key="direct_visits")
+        self.assertEqual(live_progress(visits)["actual"], 1)
+        snap.refresh_from_db()
+        frozen = next(
+            r for r in snap.data["priorities"] if r["metric_key"] == "direct_visits"
+        )
+        self.assertEqual(frozen["actual"], 0, "a snapshot must never move")
+
+    def test_rating_columns_stay_separate_and_scoped(self):
+        from apps.accounts.models import StaffSupervisorAssignment
+        from apps.hr.performance_engine import (
+            activate_window,
+            save_employee_input,
+            save_manager_input,
+        )
+
+        review = self._agree()
+        activate_window(self.cycle, "q1", self.hr)
+        priority = review.priorities.first()
+
+        # The employee cannot write the manager's column…
+        with self.assertRaises(Forbidden):
+            save_manager_input(priority, {"manager_rating": "exceeds"}, self.cceo)
+        # …and an unrelated PL cannot either.
+        stranger = _user("pe-stranger@t.org", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        StaffProfile.objects.create(user=stranger, country="Uganda")
+        with self.assertRaises(Forbidden):
+            save_manager_input(priority, {"manager_rating": "exceeds"}, stranger)
+
+        save_employee_input(
+            priority,
+            {"employee_rating": "met", "employee_reflection": "…"},
+            self.cceo,
+        )
+        pl = _user("pe-pl@t.org", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        sp_pl = StaffProfile.objects.create(user=pl, country="Uganda")
+        StaffSupervisorAssignment.objects.create(supervisee=self.sp, supervisor=sp_pl)
+        save_manager_input(priority, {"manager_rating": "exceeds"}, pl)
+        priority.refresh_from_db()
+        self.assertEqual(priority.employee_rating, "met")
+        self.assertEqual(priority.manager_rating, "exceeds")
+        self.assertIsNone(priority.functional_manager_rating)
+
+
+class FormTaxonomyTests(EngineFixture):
+    def test_the_six_values_and_spiritual_row_are_seeded_manual(self):
+        from apps.hr.performance_engine import EDIFY_VALUES
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        names = set(
+            review.value_commitments.filter(kind="value").values_list(
+                "value_name", flat=True
+            )
+        )
+        self.assertEqual(names, set(EDIFY_VALUES))
+        self.assertTrue(review.value_commitments.filter(kind="spiritual").exists())
+
+    def test_capital_is_mixed_no_metric(self):
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        capital = review.priorities.get(strategic_alignment="Program Quality — Capital")
+        self.assertIsNone(capital.metric_key)
+
+    def test_functional_manager_is_a_separate_configured_voice(self):
+        from apps.hr.performance_engine import (
+            activate_window,
+            save_functional_manager_input,
+        )
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        activate_window(self.cycle, "q1", self.hr)
+        fm = _user("pe-fm@t.org", EdifyRole.COUNTRY_DIRECTOR.value)
+        priority = review.priorities.first()
+        with self.assertRaises(Forbidden):
+            save_functional_manager_input(
+                priority, {"functional_manager_rating": "met"}, fm
+            )
+        review.functional_manager = fm
+        review.save(update_fields=["functional_manager"])
+        save_functional_manager_input(
+            priority, {"functional_manager_rating": "met"}, fm
+        )
+        priority.refresh_from_db()
+        self.assertEqual(priority.functional_manager_rating, "met")
+
+    def test_support_flag_creates_informal_recovery_never_pip(self):
+        from apps.hr.models import RecoveryPlanType
+        from apps.hr.performance_engine import flag_performance_support
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        plan = flag_performance_support(review, "Two checkpoints behind", self.hr)
+        self.assertEqual(plan.plan_type, RecoveryPlanType.INFORMAL)
+        self.assertEqual(plan.status, "draft")

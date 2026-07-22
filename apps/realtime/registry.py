@@ -147,6 +147,18 @@ JOB_REGISTRY: list[JobSpec] = [
         retryable=True,
         max_retries=2,
     ),
+    JobSpec(
+        name="performance_readiness",
+        description="Daily performance-cycle readiness; notifies HR 7 days before quarter end.",
+        cron="daily 06:45 Africa/Kampala",
+        cron_kwargs={"hour": 6, "minute": 45},
+        expected_runtime_seconds=30,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note="Read-only report; the 7-day notification dedupes per condition via the canonical trigger.",
+        retryable=True,
+        max_retries=2,
+    ),
 ]
 
 JOB_NAMES = {spec.name for spec in JOB_REGISTRY}

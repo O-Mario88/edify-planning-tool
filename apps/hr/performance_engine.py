@@ -200,30 +200,100 @@ def _fy_start(fy: str):
 
 # ── Draft agreement builder ──────────────────────────────────────────────────
 
+EDIFY_VALUES = [
+    "Christ like Service",
+    "Devoted to Prayer",
+    "Transformation through Relationships",
+    "All things done with excellence & high Integrity",
+    "Applaud entrepreneurial spirit",
+    "Best Idea Wins",
+]
+
 DEFAULT_TEMPLATES = {
+    # (layer, category, outcome, metric_key, weight) — the form's exact
+    # hierarchy: Program Growth; Program Quality > School Visits / Training /
+    # SSA / Capital; PD, Spiritual Formation and Values live in their own
+    # sections, not as weighted priorities.
     "CCEO": [
-        ("role", "Complete verified SSA for all assigned schools", "ssa_coverage", 30),
-        ("role", "Complete all allocated direct school visits", "direct_visits", 20),
-        ("role", "Deliver the planned training programme", "trainings", 20),
         (
             "role",
+            "Program Growth",
+            "Recruit and activate new schools",
+            "new_schools",
+            15,
+        ),
+        (
+            "role",
+            "Program Quality — School Visits",
+            "Complete all allocated direct school visits",
+            "direct_visits",
+            20,
+        ),
+        (
+            "role",
+            "Program Quality — Training",
+            "Deliver the planned training programme",
+            "trainings",
+            20,
+        ),
+        (
+            "role",
+            "Program Quality — School Self Assessment",
+            "Complete verified SSA for all assigned schools",
+            "ssa_coverage",
+            20,
+        ),
+        (
+            "role",
+            "Program Quality — Capital",
+            "Share loan information promptly and track issues",
+            None,
+            10,
+        ),
+        (
+            "role",
+            "Program Growth",
             "Grow reach through supervised partner delivery",
             "partner_supported_schools",
             15,
         ),
-        ("org", "Full, timely financial accountability", "accountability_quality", 15),
     ],
     "Program Lead": [
-        ("role", "Deliver own field execution", "direct_visits", 25),
-        ("role", "Verified SSA coverage across the team", "ssa_coverage", 25),
-        ("role", "Team training delivery", "trainings", 20),
         (
             "role",
+            "Program Quality — School Visits",
+            "Deliver own field execution",
+            "direct_visits",
+            25,
+        ),
+        (
+            "role",
+            "Program Quality — School Self Assessment",
+            "Verified SSA coverage across the team",
+            "ssa_coverage",
+            25,
+        ),
+        (
+            "role",
+            "Program Quality — Training",
+            "Team training delivery",
+            "trainings",
+            20,
+        ),
+        (
+            "role",
+            "Program Growth",
             "Partner delivery across supervised portfolios",
             "partner_supported_schools",
             15,
         ),
-        ("org", "Full, timely financial accountability", "accountability_quality", 15),
+        (
+            "org",
+            "Program Quality",
+            "Full, timely financial accountability",
+            "accountability_quality",
+            15,
+        ),
     ],
 }
 
@@ -279,12 +349,15 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
             period=f"FY{cycle.fy}",
             due_date=_fy_start(str(int(cycle.fy) + 1)),
         )
-        for i, (layer, outcome, metric, weight) in enumerate(template, start=1):
+        for i, (layer, category, outcome, metric, weight) in enumerate(
+            template, start=1
+        ):
             denom = denominators.get(metric)
             PerformancePriority.objects.create(
                 review=review,
                 sequence=i,
                 priority_layer=layer,
+                strategic_alignment=category,
                 outcome_statement=outcome,
                 metric_key=metric,
                 weight=weight,
@@ -294,6 +367,17 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
                 ),
                 target=f"100% of {denom}" if denom else "As agreed",
             )
+        # The six named Edify Values, seeded as MANUAL commitment rows —
+        # commitments and reflections only, no counts anywhere near them.
+        from apps.hr.models import ValueCommitment
+
+        for name in EDIFY_VALUES:
+            ValueCommitment.objects.create(review=review, kind="value", value_name=name)
+        ValueCommitment.objects.create(
+            review=review,
+            kind="spiritual",
+            value_name="Spiritual Formation priority",
+        )
     try:
         from apps.audit.services import log as audit_log
 
@@ -397,3 +481,283 @@ def approve_amendment(amendment, principal):
     except Exception:  # noqa: BLE001
         pass
     return amendment
+
+
+# ── HR-controlled conversation windows (§7) ─────────────────────────────────
+
+_HR_ROLES = ("HumanResources", "Admin")
+
+
+def _assert_hr(principal):
+    if getattr(principal, "active_role", "") not in _HR_ROLES:
+        raise Forbidden("Only HR controls the performance window.")
+
+
+def activate_window(cycle, window: str, principal, deadline=None):
+    """HR opens a quarter. Activation TAKES THE SNAPSHOTS — every agreed
+    review is frozen at this moment, so the meeting's numbers cannot move
+    while the conversation is underway."""
+    _assert_hr(principal)
+    valid = {w for w, _ in type(cycle).WINDOWS} - {"none"}
+    if window not in valid:
+        raise BadRequest(f"Unknown window '{window}'.")
+    cycle.active_window = window
+    cycle.window_opened_at = timezone.now()
+    cycle.window_deadline = deadline
+    cycle.save(
+        update_fields=[
+            "active_window",
+            "window_opened_at",
+            "window_deadline",
+            "updated_at",
+        ]
+    )
+    from apps.hr.models import PerformanceReview
+
+    count = 0
+    for review in PerformanceReview.objects.filter(
+        fy=cycle.fy, review_type="annual_priorities"
+    ):
+        take_snapshot(review, window)
+        count += 1
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="hr.performance_window_activated",
+            subject_kind="PerformanceCycle",
+            subject_id=cycle.id,
+            actor_id=principal.user_id,
+            actor_role=principal.active_role,
+            payload={"window": window, "snapshots": count},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+    return count
+
+
+def close_window(cycle, principal):
+    _assert_hr(principal)
+    cycle.active_window = "none"
+    cycle.save(update_fields=["active_window", "updated_at"])
+
+
+def take_snapshot(review, window: str):
+    """Freeze the live figures for one review. Idempotent per window; an
+    existing snapshot is never overwritten — that is the whole point."""
+    from apps.hr.models import PerformanceSnapshot
+
+    existing = PerformanceSnapshot.objects.filter(review=review, window=window).first()
+    if existing:
+        return existing
+    rows = []
+    for p in review.priorities.all():
+        progress = live_progress(p)
+        rows.append(
+            {
+                "sequence": p.sequence,
+                "outcome": p.outcome_statement,
+                "layer": p.priority_layer,
+                "metric_key": p.metric_key,
+                "target": p.target,
+                "target_number": p.target_number,
+                "actual": progress["actual"],
+                "pct": progress["pct"],
+                "weight": p.weight,
+            }
+        )
+    return PerformanceSnapshot.objects.create(
+        review=review, window=window, data={"priorities": rows}
+    )
+
+
+# ── Edit boundaries during an activated quarter (§8, §9) ────────────────────
+# Verified totals are structurally uneditable — progress is DERIVED, there is
+# no stored "actual" field for anyone to touch. These guards cover the human
+# channels.
+
+
+def _active_cycle_for(review):
+    from apps.hr.models import PerformanceCycle
+
+    return PerformanceCycle.objects.filter(fy=review.fy).first()
+
+
+def _assert_window_open(review):
+    cycle = _active_cycle_for(review)
+    if not cycle or cycle.active_window == "none":
+        raise Forbidden(
+            "The performance form is locked outside an HR-activated window."
+        )
+    return cycle
+
+
+def save_employee_input(priority, data: dict, principal):
+    """The employee's own channels: reflection and their own rating. Never
+    the manager's columns, never system results."""
+    review = priority.review
+    _assert_window_open(review)
+    if review.staff.user_id != getattr(principal, "user_id", None):
+        raise Forbidden("Only the employee writes their own reflection.")
+    if "employee_reflection" in data:
+        priority.employee_reflection = data["employee_reflection"]
+    if "employee_rating" in data:
+        priority.employee_rating = data["employee_rating"]
+    priority.save(
+        update_fields=["employee_reflection", "employee_rating", "updated_at"]
+    )
+    return priority
+
+
+def save_manager_input(priority, data: dict, principal):
+    """The manager's channels — comments, their rating, agreed actions —
+    gated on the real reporting line."""
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    review = priority.review
+    _assert_window_open(review)
+    is_supervisor = StaffSupervisorAssignment.objects.filter(
+        supervisee=review.staff, supervisor__user_id=principal.user_id
+    ).exists()
+    if not (is_supervisor or getattr(principal, "active_role", "") in _HR_ROLES):
+        raise Forbidden("Only the reporting line writes the manager columns.")
+    for field in ("manager_assessment", "manager_rating", "agreed_action"):
+        if field in data:
+            setattr(priority, field, data[field])
+    priority.save(
+        update_fields=[
+            "manager_assessment",
+            "manager_rating",
+            "agreed_action",
+            "updated_at",
+        ]
+    )
+    return priority
+
+
+def quarterly_readiness(fy: str | None = None) -> dict:
+    """The 7-days-before-quarter-end readiness check (§6).
+
+    Returns the HR readiness picture and, when a quarter boundary is within
+    seven days, notifies HR. Called by the scheduled job daily; safe to run
+    any day — it only notifies inside the window, and the notification
+    service deduplicates per condition.
+    """
+
+    from apps.core.fy import get_operational_fy, get_quarter_for_date
+
+    from apps.hr.models import PerformanceCycle, PerformanceReview
+
+    today = timezone.now().date()
+    fy = fy or get_operational_fy()
+    quarter_ends = {
+        "Q1": (12, 31),
+        "Q2": (3, 31),
+        "Q3": (6, 30),
+        "Q4": (9, 30),
+    }
+    q = get_quarter_for_date(today)
+    m, d = quarter_ends[q]
+    year = today.year if (m, d) >= (today.month, today.day) else today.year + 1
+    end = today.replace(year=year, month=m, day=d)
+    days_left = (end - today).days
+
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+
+    staff = StaffProfile.objects.filter(
+        deleted_at__isnull=True, onboarding_state="active"
+    )
+    with_agreement = set(
+        PerformanceReview.objects.filter(
+            fy=fy, review_type="annual_priorities"
+        ).values_list("staff_id", flat=True)
+    )
+    missing_priorities = [s.id for s in staff if s.id not in with_agreement]
+    supervised = set(
+        StaffSupervisorAssignment.objects.filter(
+            supervisee__deleted_at__isnull=True
+        ).values_list("supervisee_id", flat=True)
+    )
+    missing_managers = [s.id for s in staff if s.id not in supervised]
+
+    report = {
+        "fy": fy,
+        "quarter": q,
+        "days_to_quarter_end": days_left,
+        "staff_in_cycle": staff.count(),
+        "missing_priorities": len(missing_priorities),
+        "missing_managers": len(missing_managers),
+        "cycle_open": PerformanceCycle.objects.filter(fy=fy).exists(),
+    }
+    if days_left == 7:
+        try:
+            from apps.accounts.models import User
+            from apps.notifications.services import WorkflowNotificationService
+
+            WorkflowNotificationService.trigger(
+                event_type="performance_window_due",
+                category="hr",
+                priority="high",
+                title=f"{q} performance conversations open in 7 days",
+                body=(
+                    f"{report['staff_in_cycle']} staff in cycle · "
+                    f"{report['missing_priorities']} without approved priorities · "
+                    f"{report['missing_managers']} without a manager. Review "
+                    "readiness and activate the window."
+                ),
+                context_type="PerformanceCycle",
+                context_id=fy,
+                recipients=list(
+                    User.objects.filter(
+                        roles__contains=["HumanResources"], status="active"
+                    )
+                ),
+            )
+        except Exception:  # noqa: BLE001
+            pass
+    return report
+
+
+def save_functional_manager_input(priority, data: dict, principal):
+    """The third, separate voice — only the CONFIGURED functional manager."""
+    review = priority.review
+    _assert_window_open(review)
+    if review.functional_manager_id != getattr(principal, "user_id", None):
+        raise Forbidden("Only the configured functional manager writes this column.")
+    if "functional_manager_rating" in data:
+        priority.functional_manager_rating = data["functional_manager_rating"]
+    priority.save(update_fields=["functional_manager_rating", "updated_at"])
+    return priority
+
+
+def flag_performance_support(review, reason: str, principal):
+    """Route a concern through Performance Support — an INFORMAL recovery
+    plan recommendation. Never a PIP, never automatic: this only records the
+    recommendation for the manager-and-HR decision."""
+    from apps.hr.models import PerformanceImprovementPlan, RecoveryPlanType
+
+    if not (reason or "").strip():
+        raise BadRequest("A support recommendation needs its reason recorded.")
+    plan = PerformanceImprovementPlan.objects.create(
+        staff=review.staff,
+        plan_type=RecoveryPlanType.INFORMAL,
+        status="draft",
+        cause="capacity",
+        action_plan=f"Performance support recommended: {reason}",
+        start_date=timezone.now().date(),
+        end_date=timezone.now().date(),
+    )
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="hr.performance_support_flagged",
+            subject_kind="PerformanceReview",
+            subject_id=review.id,
+            actor_id=getattr(principal, "user_id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload={"reason": reason},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+    return plan

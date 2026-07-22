@@ -63,7 +63,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # NOTE: HR and IA are still listed and still resolve to an empty team —
     # out of scope for the field-role audit, flagged in the proposal.
     "team_targets": {PL, CD, HR, IA, ADMIN},
-    "my_performance": {CCEO, PL, CD, RVP, HR, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
+    "my_performance": {
+        CCEO,
+        PL,
+        CD,
+        RVP,
+        HR,
+        IA,
+        ACCOUNTANT,
+        PROJECT_COORDINATOR,
+        ADMIN,
+    },
     # Every Edify employee is PD-eligible (Partners are external org staff, not
     # on the Edify PD/BambooHR benefit) — one shared page for all of them.
     "my_professional_development": {
