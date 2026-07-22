@@ -1535,6 +1535,16 @@ def special_projects_analytics_view(request):
 
     if context["is_htmx"]:
         return render(request, "partials/projects/analytics_workspace.html", context)
+    # One persistent search: the top bar, bound to this workspace.
+    context["topbar_search"] = {
+        "placeholder": "Search projects, partners, schools…",
+        "input_id": "topbar-search-input",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/projects/analytics",
+        "hx_target": "#spa-workspace",
+        "hx_trigger": "keyup changed delay:350ms, search",
+        "hx_include": "#spa-filters",
+    }
     return render(request, "pages/projects/analytics.html", context)
 
 
@@ -1615,6 +1625,16 @@ def special_projects_planning_view(request):
 
     if context["is_htmx"]:
         return render(request, "partials/projects/planning_workspace.html", context)
+    # One persistent search: the top bar, bound to this workspace.
+    context["topbar_search"] = {
+        "placeholder": "Search schools, projects, districts…",
+        "input_id": "topbar-search-input",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/projects/planning",
+        "hx_target": "#spp-workspace",
+        "hx_trigger": "keyup changed delay:350ms, search",
+        "hx_include": "#spp-filters",
+    }
     return render(request, "pages/projects/planning.html", context)
 
 
@@ -1688,6 +1708,16 @@ def special_projects_my_plan_view(request):
         return response
     if context["is_htmx"]:
         return render(request, "partials/projects/my_plan_workspace.html", context)
+    # One persistent search: the top bar, bound to this workspace.
+    context["topbar_search"] = {
+        "placeholder": "Search schools, projects, activities…",
+        "input_id": "topbar-search-input",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/projects/my-plan",
+        "hx_target": "#special-project-plan-workspace",
+        "hx_trigger": "keyup changed delay:350ms, search",
+        "hx_include": "#sp-plan-filters",
+    }
     return render(request, "pages/projects/my_plan.html", context)
 
 

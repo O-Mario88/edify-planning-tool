@@ -29,11 +29,7 @@
       <p>Plan SSA baselines, school support, partner assignments, and delivery for schools assigned from the School Directory.</p>
     </div>
     <div class="spp-header__tools">
-      <search class="spp-search">
-        {% include "partials/projects/planning_icon.html" with name="search" %}
-        <label class="sr-only" for="project-planning-search">Search project schools</label>
-        <input id="project-planning-search" type="search" name="q" value="{{ selected.q }}" form="spp-filters" placeholder="Search schools, projects, districts…" hx-get="/projects/planning" hx-target="#spp-workspace" hx-include="#spp-filters" hx-push-url="true" hx-trigger="search, keyup changed delay:350ms">
-      </search>
+      {% comment %}Search moved to the top bar (topbar_search) — one persistent search per page.{% endcomment %}
       <div class="spp-actions">
         <a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
         <button class="spp-button spp-button--secondary" type="button" @click="openBulk('partner')" :disabled="selected.length === 0" :title="selected.length ? 'Assign selected schools to a partner' : 'Select schools first'">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign <span x-show="selected.length" x-text="selected.length"></span></button>

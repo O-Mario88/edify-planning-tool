@@ -17,11 +17,7 @@
     </div>
 
     <div class="sp-plan__header-tools">
-      <search class="sp-plan__search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <label class="sr-only" for="special-project-search">Search project activities</label>
-        <input id="special-project-search" type="search" name="q" value="{{ selected.q }}" form="sp-plan-filters" placeholder="Search schools, projects, activities…" hx-get="/projects/my-plan" hx-target="#special-project-plan-workspace" hx-include="#sp-plan-filters" hx-push-url="true" hx-trigger="search, keyup changed delay:350ms">
-      </search>
+      {% comment %}Search moved to the top bar (topbar_search) — one persistent search per page.{% endcomment %}
       <div class="sp-plan__actions">
         <a id="sp-plan-export-link" class="sp-button sp-button--secondary" href="{{ export_url }}" aria-label="Export filtered project plan as CSV">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M5 17v3h14v-3"></path></svg>
