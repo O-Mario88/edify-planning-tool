@@ -56,19 +56,10 @@
 
     <form id="messages-filter-state" method="get" action="/messages" class="flex items-center gap-2 w-full lg:w-auto shrink-0">
       <input id="messages-active-tab" type="hidden" name="tab" :value="activeMessageTab">
-      <div class="relative flex-1 lg:flex-none lg:w-56">
-        <svg aria-hidden="true" class="h-3.5 w-3.5 text-slate-300 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        <label for="messages-search" class="sr-only">Search conversations</label>
-        <input id="messages-search" type="search" name="q" value="{{ search_q }}"
-               placeholder="Search threads…"
-               hx-get="/messages"
-               hx-target="#thread-list"
-               hx-swap="innerHTML"
-               hx-include="#messages-filter-state"
-               hx-push-url="true"
-               hx-trigger="keyup changed delay:300ms"
-               class="w-full min-h-11 lg:min-h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-control text-[16px] lg:text-xs font-semibold edify-focus-surface edify-primary-focus focus:outline-none">
-      </div>
+      {% comment %}Thread search lives in the TOP BAR (topbar_search context)
+      — the mandate allows exactly one persistent search per page and the
+      canonical one wins. The hidden tab field stays so the topbar request
+      carries the active tab.{% endcomment %}
       <label for="messages-sort" class="sr-only">Sort conversations</label>
       <select
         id="messages-sort"

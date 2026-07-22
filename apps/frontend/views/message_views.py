@@ -158,6 +158,17 @@ def messages_list_view(request):
         "recipients": services.recipients(request.user),
         "context_tabs": services.CONTEXT_TABS,
         "message_rules": MESSAGE_RULES,
+        # The page's ONE persistent search is the top bar, bound to the
+        # thread list — the body input it replaces did the same request.
+        "topbar_search": {
+            "placeholder": "Search conversations…",
+            "input_id": "topbar-search-input",
+            "value": request.GET.get("q", ""),
+            "hx_get": "/messages",
+            "hx_target": "#thread-list",
+            "hx_trigger": "keyup changed delay:300ms, search",
+            "hx_include": "#messages-filter-state",
+        },
     }
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/messages/inbox_update.html", context)
