@@ -533,9 +533,7 @@ class TeamTimelineGroupingTest(PLAnalyticsTest):
                         quarter="Q1",
                         planned_date=start.date(),
                         scheduled_date=timezone.make_aware(
-                            timezone.datetime(
-                                start.year, start.month, 1, 9, 0
-                            )
+                            timezone.datetime(start.year, start.month, 1, 9, 0)
                         ),
                         evidence_status="accepted",
                     )
@@ -600,9 +598,9 @@ class TeamTimelineGroupingTest(PLAnalyticsTest):
 
         made = self._spread_activities()
         # Make some of them verified so the series is not uniformly zero.
-        Activity.objects.filter(
-            id__in=[a.id for a in made[:4]]
-        ).update(status=VERIFIED_STATUSES[0])
+        Activity.objects.filter(id__in=[a.id for a in made[:4]]).update(
+            status=VERIFIED_STATUSES[0]
+        )
 
         pls = resolve_pl_scope(self.pl_a, {})
         acts = ProgramLeadDashboardService._team_acts(pls, FY, {})

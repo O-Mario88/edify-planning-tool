@@ -107,7 +107,9 @@ class MailerService:
             },
         )
         try:
-            with urllib.request.urlopen(req, timeout=15) as res:
+            # nosec B310 - the URL is the api.resend.com constant above,
+            # not a value that any caller or record can influence.
+            with urllib.request.urlopen(req, timeout=15) as res:  # nosec B310
                 if 200 <= res.status < 300:
                     return {"delivered": True}
                 detail = res.read().decode("utf-8", "ignore")

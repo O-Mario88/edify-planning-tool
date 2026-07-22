@@ -35,7 +35,6 @@ MONTH_LABELS = [
 
 
 class FinancialYearCalendarService:
-
     @staticmethod
     def quarter_of_month(month_of_fy: int) -> str:
         return QUARTERS[(month_of_fy - 1) // 3]
@@ -91,9 +90,7 @@ class FinancialYearCalendarService:
 
         return memoize(
             ("holidays", start, end),
-            lambda: frozenset(
-                PublicHolidayService.get_holidays_in_range(start, end)
-            ),
+            lambda: frozenset(PublicHolidayService.get_holidays_in_range(start, end)),
         )
 
     @staticmethod

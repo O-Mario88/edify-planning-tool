@@ -87,7 +87,10 @@ class StaticAssetsGateTest(SimpleTestCase):
         self.assertIn("Static assets are missing", issues[0])
 
     def test_fails_closed_when_static_root_missing_entirely(self):
-        with self.settings(STATIC_ROOT="/tmp/edify-static-does-not-exist-xyz"):
+        # nosec B108 - a deliberately absent path; nothing is written here.
+        with self.settings(
+            STATIC_ROOT="/tmp/edify-static-does-not-exist-xyz"  # nosec B108
+        ):
             issues = boot_gates._check_static_assets_collected()
         self.assertEqual(len(issues), 1)
 

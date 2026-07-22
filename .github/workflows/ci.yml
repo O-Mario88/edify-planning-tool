@@ -65,3 +65,36 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edify_ci
           JWT_SECRET: dev-secret-key-1234567890
           DJANGO_SETTINGS_MODULE: config.settings.dev
+
+  security:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      # Known-CVE scan. This is the gate that caught Django 5.2.4 sitting on
+      # fifty-one published advisories, so it fails the build rather than
+      # warning: a dependency advisory is not something to merge past.
+      - name: Dependency CVE scan
+        run: pip-audit --strict --progress-spinner off
+
+      # Static analysis. Scoped to medium severity and medium confidence —
+      # the low-confidence tier is almost entirely table names interpolated
+      # into migration SQL beside their own hardcoded tuple, and drowning a
+      # real finding in those is how a real finding gets ignored.
+      - name: Static security analysis
+        run: bandit -r apps config -ll -ii

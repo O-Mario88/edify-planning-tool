@@ -708,9 +708,7 @@ class PLAnalyticsService:
         staff_ids = [c["staff_id"] for c in cceos]
         profiles = {
             tp.staff_id: tp
-            for tp in StaffTargetProfile.objects.filter(
-                staff_id__in=staff_ids, fy=fy
-            )
+            for tp in StaffTargetProfile.objects.filter(staff_id__in=staff_ids, fy=fy)
         }
         targets: dict = {}
         for c in cceos:
@@ -740,9 +738,7 @@ class PLAnalyticsService:
         rows = completed_qs.filter(
             Q(responsible_staff_id__in=all_ids)
             | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=all_ids)
-        ).values_list(
-            "responsible_staff_id", "monitored_by_staff_id", "activity_type"
-        )
+        ).values_list("responsible_staff_id", "monitored_by_staff_id", "activity_type")
         buckets = (
             VISIT_TYPES,
             TRAINING_TYPES,
@@ -943,9 +939,7 @@ class PLAnalyticsService:
         fy_end = bounds[12][1].date()
         by_month = {
             (r["m"].year, r["m"].month): r
-            for r in acts.filter(
-                planned_date__gte=fy_start, planned_date__lt=fy_end
-            )
+            for r in acts.filter(planned_date__gte=fy_start, planned_date__lt=fy_end)
             .annotate(m=TruncMonth("planned_date"))
             .values("m")
             .annotate(

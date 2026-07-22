@@ -94,7 +94,12 @@ def _agenda_icon(activity_type):
     from django.utils.safestring import mark_safe
 
     def svg(path):
-        return mark_safe(
+        # Every call site below passes an SVG path literal defined in this
+        # function. No caller-supplied value, and no request data, ever
+        # reaches this string — `activity_type` is only ever compared, never
+        # interpolated. Suppressed unqualified because B308 is a blacklist
+        # check and ignores a test-id list.
+        return mark_safe(  # nosec
             '<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" '
             'viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" '
             f'aria-hidden="true">{path}</svg>'

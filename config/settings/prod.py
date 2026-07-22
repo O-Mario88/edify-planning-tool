@@ -92,7 +92,9 @@ if not ALLOWED_HOSTS:
     raise SystemExit(1)
 
 # Allow local loopback addresses for container health probes
-for host in ["localhost", "127.0.0.1", "0.0.0.0"]:
+# nosec B104 - this is the ALLOWED_HOSTS Host-header allowlist, not a
+# socket bind address. The bind address is set by the process manager.
+for host in ["localhost", "127.0.0.1", "0.0.0.0"]:  # nosec B104
     if host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(host)
 

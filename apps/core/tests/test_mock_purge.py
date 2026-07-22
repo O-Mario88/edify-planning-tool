@@ -204,7 +204,10 @@ class ProductionBlockingTest(TestCase):
 
         with self.assertRaises(CommandError):
             call_command(
-                "import_schools_local", "/tmp/nonexistent.csv", stdout=StringIO()
+                # nosec B108 - asserts the failure path for a missing file.
+                "import_schools_local",
+                "/tmp/nonexistent.csv",
+                stdout=StringIO(),
             )
 
     @override_settings(IS_PRODUCTION=True)

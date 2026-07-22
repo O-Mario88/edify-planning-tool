@@ -31,9 +31,7 @@ class RequestCacheScopeTest(TestCase):
 
         self.assertEqual(request_cache.memoize("k", compute), 1)
         self.assertEqual(request_cache.memoize("k", compute), 2)
-        self.assertEqual(
-            len(calls), 2, "a value was cached with no request in flight"
-        )
+        self.assertEqual(len(calls), 2, "a value was cached with no request in flight")
 
     def test_within_a_request_the_value_is_computed_once(self):
         calls = []
