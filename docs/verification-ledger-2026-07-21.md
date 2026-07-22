@@ -296,3 +296,18 @@ docgen (no new deps), HR return/reopen states]; (C) THE AUDIT:
 10. System Health: add missing §50 detectors.
 11. Scorecard: 120-pt honest scoring, hard gates first. NO bonus while any
     core category incomplete. Everything fixed, not listed.
+
+## SEARCH CONSOLIDATION — COMPLETE (2026-07-22)
+Allowlist 21 → 0. Every page-level persistent search removed and bound to
+the top bar (attach_to mode for GET filter forms, hx_* mode for HTMX pages).
+IA queue's two inputs reclassified as filters (honest placeholders, kept).
+Documented §17 exceptions: drawer/modal/compose pickers, pages/search,
+pages/help, pages/messages/new (context-record picker).
+TRAP FOUND TWICE: forms with hx-trigger "...changed from:input[name='q']"
+match the TOPBAR input globally once the body input is gone → double-fire.
+Detached on planning, clusters, fund_requests. CHECK THIS on any future
+top-bar binding.
+Guard: apps/frontend/test_search_consolidation.py (two-way — no new body
+search may appear; allowlist may only shrink).
+REMAINING UI WORK: mobile filter drawer + clear-filters on the My Plan gold
+standard; select-dialect convergence (boxed vs pill wrappers).

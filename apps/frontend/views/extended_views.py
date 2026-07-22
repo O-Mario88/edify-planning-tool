@@ -1744,6 +1744,13 @@ def pl_fund_approvals_view(request):
     ctx = get_pl_fund_approvals(request.user, filters)
     if request.headers.get("HX-Target") == "fund-approval-root":
         return render(request, "partials/fund_approvals/root.html", ctx)
+    ctx["topbar_search"] = {
+        "placeholder": "Search CCEO or district…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "fa-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/fund_approvals/index.html", ctx)
 
 

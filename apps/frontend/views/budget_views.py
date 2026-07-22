@@ -915,6 +915,15 @@ def weekly_fund_requests_view(request):
     context = _build_fund_requests_context(request)
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/fund_requests/root.html", context)
+    context["topbar_search"] = {
+        "placeholder": "Search schools, clusters, activities…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/fund-requests/weekly",
+        "hx_target": "#fund-requests-page-root",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
     return render(request, "pages/fund_requests/weekly.html", context)
 
 
@@ -945,6 +954,15 @@ def weekly_fund_request_confirm_action(request, request_id):
     context["action_ok"] = action_ok
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/fund_requests/root.html", context)
+    context["topbar_search"] = {
+        "placeholder": "Search schools, clusters, activities…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/fund-requests/weekly",
+        "hx_target": "#fund-requests-page-root",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
     return render(request, "pages/fund_requests/weekly.html", context)
 
 
@@ -965,6 +983,15 @@ def weekly_fund_request_self_funded_action(request, request_id):
     context["action_ok"] = action_ok
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/fund_requests/root.html", context)
+    context["topbar_search"] = {
+        "placeholder": "Search schools, clusters, activities…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/fund-requests/weekly",
+        "hx_target": "#fund-requests-page-root",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
     return render(request, "pages/fund_requests/weekly.html", context)
 
 
@@ -985,6 +1012,15 @@ def weekly_fund_request_approve_action(request, request_id):
     context["action_ok"] = action_ok
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/fund_requests/root.html", context)
+    context["topbar_search"] = {
+        "placeholder": "Search schools, clusters, activities…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/fund-requests/weekly",
+        "hx_target": "#fund-requests-page-root",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
     return render(request, "pages/fund_requests/weekly.html", context)
 
 
@@ -1006,6 +1042,15 @@ def weekly_fund_request_return_action(request, request_id):
     context["action_ok"] = action_ok
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/fund_requests/root.html", context)
+    context["topbar_search"] = {
+        "placeholder": "Search schools, clusters, activities…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/fund-requests/weekly",
+        "hx_target": "#fund-requests-page-root",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
     return render(request, "pages/fund_requests/weekly.html", context)
 
 

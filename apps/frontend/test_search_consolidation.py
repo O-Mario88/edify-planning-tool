@@ -19,17 +19,7 @@ from django.test import SimpleTestCase
 
 # Pages the inventory found with a persistent body search, not yet rewired to
 # the top-bar contract. THIS LIST MAY ONLY SHRINK.
-REMAINING = {
-    "pages/accounts/dashboard.html",
-    "pages/hr/professional_development_dashboard.html",
-    "partials/evidence/workspace.html",
-    "partials/disbursements/root.html",
-    "partials/fund_requests/root.html",
-    "partials/clusters/filters.html",
-    "partials/finance/fund_allocation_filters.html",
-    "partials/fund_approvals/root.html",
-    "partials/finance/country_budget/root.html",
-}
+REMAINING = {}
 
 # Enclosed-selector or dedicated-search surfaces, allowed by design (§17).
 # pages/messages/new.html: the compose flow's context-record picker — an

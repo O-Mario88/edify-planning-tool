@@ -95,7 +95,7 @@ All fund requests are automatically generated from scheduled activities in My Pl
 <form
 id="filters-form"
 hx-get="/fund-requests/weekly"
-hx-trigger="change, keyup delay:200ms changed from:input[name='q']"
+hx-trigger="change"
 hx-target="#fund-requests-page-root"
 hx-swap="innerHTML"
 hx-push-url="true"
@@ -106,7 +106,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <!-- Search -->
 <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-<input type="text" name="q" placeholder="Search schools, clusters, activities..." class="bg-transparent focus:outline-none w-48 font-bold placeholder-slate-400">
+{% comment %}Search moved to the top bar.{% endcomment %}
 </div>
 
 <!-- Fiscal Year -->

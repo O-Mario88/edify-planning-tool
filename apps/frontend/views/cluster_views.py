@@ -257,6 +257,15 @@ def cluster_list_view(request):
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/clusters/htmx_response.html", context)
 
+    context["topbar_search"] = {
+        "placeholder": "Search clusters…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/clusters",
+        "hx_target": "#clusters-table-container",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
     return render(request, "pages/clusters/index.html", context)
 
 

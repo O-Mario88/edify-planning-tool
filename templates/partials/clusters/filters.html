@@ -1,7 +1,7 @@
 <form
 id="filters-form"
 hx-get="/clusters"
-hx-trigger="change, keyup delay:200ms changed from:input[name='q'], refresh-clusters from:body"
+hx-trigger="change, refresh-clusters from:body"
 hx-target="#clusters-table-container"
 hx-push-url="true"
 class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold text-slate-600 w-full"
@@ -9,7 +9,7 @@ class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold text-sla
 <!-- Search -->
 <div class="flex items-center gap-1.5 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-<input type="text" name="q" value="{{ q }}" placeholder="Search clusters..." class="bg-transparent focus:outline-none w-32 font-bold placeholder-slate-400 text-slate-700">
+{% comment %}Search moved to the top bar.{% endcomment %}
 </div>
 
 <!-- Fiscal Year -->

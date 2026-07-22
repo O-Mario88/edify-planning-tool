@@ -491,6 +491,13 @@ def cpd_learning_view(request):
         return render(request, "partials/hr/pd_dashboard/tracker_table.html", context)
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/hr/pd_dashboard/body.html", context)
+    context["topbar_search"] = {
+        "placeholder": "Search PD requests…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "pd-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/hr/professional_development_dashboard.html", context)
 
 

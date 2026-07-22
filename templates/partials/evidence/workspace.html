@@ -19,7 +19,7 @@
     </div>
   </div>
 
-  <form method="get"
+  <form id="evidence-filters" method="get"
         action="/evidence/"
         hx-get="/evidence/"
         hx-target="#evidence-workspace"
@@ -27,15 +27,7 @@
         hx-push-url="true"
         class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3 flex flex-col sm:flex-row gap-2">
     <input type="hidden" name="tab" value="{{ active_tab }}">
-    <label class="sr-only" for="evidence-search">Search evidence records</label>
-    <input id="evidence-search"
-           name="q"
-           value="{{ search_query }}"
-           type="search"
-           maxlength="100"
-           placeholder="Search school, cluster, activity, or SF ID"
-           class="h-11 flex-1 min-w-0 rounded-control border border-slate-200 bg-slate-50 px-3 text-[16px] sm:text-[12px] text-slate-700 focus:outline-none">
-    <button type="submit" class="min-h-11 px-4 rounded-control btn-premium-primary text-[12px] font-bold">Search</button>
+    {% comment %}Search moved to the top bar (attach_to this form).{% endcomment %}
     {% if search_query %}
     <a href="?tab={{ active_tab }}"
        hx-get="?tab={{ active_tab }}"

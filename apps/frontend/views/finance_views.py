@@ -55,6 +55,13 @@ def disbursements_view(request):
     ctx["q"] = request.GET.get("q", "")
     if request.headers.get("HX-Target") == "disb-root":
         return render(request, "partials/disbursements/root.html", ctx)
+    ctx["topbar_search"] = {
+        "placeholder": "Search funds, people, plans…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "disb-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/disbursements/index.html", ctx)
 
 
@@ -935,6 +942,13 @@ def fund_allocation_view(request):
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/finance/fund_allocation_table.html", context)
 
+    context["topbar_search"] = {
+        "placeholder": "Search staff, owner, school, cluster…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "fund-allocation-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/finance/fund_allocation.html", context)
 
 
@@ -1265,6 +1279,13 @@ def country_budget_view(request):
     ctx = get_country_monthly_budget(request.user, _country_budget_filters(request))
     if request.headers.get("HX-Target") == "country-budget-root":
         return render(request, "partials/finance/country_budget/root.html", ctx)
+    ctx["topbar_search"] = {
+        "placeholder": "Search staff, activity, school…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "cb-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/finance/country_budget.html", ctx)
 
 

@@ -305,6 +305,14 @@ def accountant_dashboard_view(request):
         "analytics": finance_analytics,
         "fy": fy,
     }
+    context["topbar_search"] = {
+        "placeholder": "Search funds, people, activities…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/accounts",
+        "hx_target": "#accounts-root",
+        "hx_trigger": "keyup changed delay:250ms, search",
+    }
     return render(request, "pages/accounts/dashboard.html", context)
 
 
