@@ -41,3 +41,4 @@ package-lock.json
 # operation; committing them can wedge a later clone's git operations.
 _to_delete_git_locks/
 .zcode/
+referential-integrity-backup*.json

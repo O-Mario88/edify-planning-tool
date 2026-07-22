@@ -63,7 +63,20 @@ def report() -> dict:
     data["unmatchedSsa"] = _unmatched_ssa()
     data["evidenceStorage"] = _evidence_storage()
     data["documentationCoverage"] = _documentation_coverage()
+    data["referentialIntegrity"] = _referential_integrity()
     return data
+
+
+def _referential_integrity() -> dict:
+    """School references held in plain CharFields that resolve to no school.
+
+    The database cannot enforce these, so until this check existed a row
+    pointing at a school that was never imported was indistinguishable from a
+    valid one.
+    """
+    from apps.system_health.referential_integrity import referential_integrity
+
+    return referential_integrity()
 
 
 def _evidence_storage() -> dict:
