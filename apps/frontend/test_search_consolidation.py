@@ -81,3 +81,38 @@ class SearchConsolidationGuard(SimpleTestCase):
             "these pages no longer carry a body search — delete their lines "
             "from REMAINING so the guard tightens behind the fix",
         )
+
+
+class FilterToolbarContractGuard(SimpleTestCase):
+    """The My Plan filter row is the gold standard; these are the pieces the
+    mandate requires it to have, and the layout rules it must not break."""
+
+    def _templates(self):
+        root = Path(settings.BASE_DIR, "templates")
+        for path in root.rglob("*.html"):
+            yield str(path.relative_to(root)), path.read_text(errors="ignore")
+
+    def test_the_gold_standard_has_clear_filters_and_a_mobile_collapse(self):
+        root = Path(settings.BASE_DIR, "templates")
+        filters = (root / "partials/my_plan/filters.html").read_text()
+        page = (root / "pages/my_plan/index.html").read_text()
+        self.assertIn('data-component="filter-toolbar"', filters)
+        self.assertIn('data-component="clear-filters"', filters)
+        self.assertIn("max-lg:hidden", filters, "no mobile collapse")
+        self.assertIn('data-component="filter-trigger"', page)
+
+    def test_no_filter_toolbar_floats_over_page_content(self):
+        """§3: filters live in document flow — never absolute, never lifted
+        over a card by a negative margin."""
+        offenders = []
+        for rel, html in self._templates():
+            for marker in ('data-component="filter-toolbar"', 'id="filters-form"'):
+                idx = html.find(marker)
+                if idx == -1:
+                    continue
+                # inspect the opening tag only
+                start = html.rfind("<", 0, idx)
+                tag = html[start : html.find(">", idx) + 1]
+                if "absolute" in tag or "-mt-" in tag or "-top-" in tag:
+                    offenders.append(f"{rel}: {tag[:90]}")
+        self.assertEqual(offenders, [], "filter toolbar lifted out of flow")

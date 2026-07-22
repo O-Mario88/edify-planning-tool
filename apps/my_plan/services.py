@@ -1235,6 +1235,16 @@ def get_frontend_context(principal, query: dict) -> dict:
         "selected_staff": staff_id,
         "selected_activity_type": activity_type,
         "selected_status": status,
+        # Whether any filter is narrowing the view — drives Clear Filters.
+        # Computed server-side because the URL, not Alpine, is authoritative.
+        "filters_active": any(
+            [
+                district_id and district_id != "all",
+                staff_id and staff_id != "all",
+                activity_type and activity_type != "all",
+                status and status != "all",
+            ]
+        ),
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
         "school_visits": school_visits_list,

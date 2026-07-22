@@ -311,3 +311,27 @@ Guard: apps/frontend/test_search_consolidation.py (two-way — no new body
 search may appear; allowlist may only shrink).
 REMAINING UI WORK: mobile filter drawer + clear-filters on the My Plan gold
 standard; select-dialect convergence (boxed vs pill wrappers).
+
+## AUDIT BASELINE — TOOLING REALITY (2026-07-22, honest)
+CONFIGURED AND RUNNABLE: manage.py check; makemigrations --check;
+migrate --plan; ruff check; ruff format --check; manage.py test (1918);
+scripts/normalize_legacy_primary_utilities.py --check (design linter);
+node v24.14.0 + npm build (tailwind); collectstatic; system_health checks.
+NOT INSTALLED IN THIS ENV (cannot be run; do NOT claim results):
+pytest, coverage, mypy, bandit, playwright, axe/accessibility runner,
+visual-regression runner, dependency CVE scanner.
+→ Report these as NOT RUN with the reason, never as passed. Where a gate
+depends on them (§4 coverage/mypy/bandit, §46 automated a11y), substitute
+what CAN be proven: Django test suite, template/structural guards, manual
+ORM probes, and say so explicitly in the scorecard.
+
+## PROD BUILD CHAIN — VERIFIED (2026-07-22)
+npm run build: OK. collectstatic under config.settings.prod: OK
+(32 copied / 167 unmodified / 506 post-processed).
+Boot guards fail CLOSED and were each proven by refusal:
+  AUTHZ_MODE must be "enforce"; ENABLE_DEV_SEED must be false;
+  FIELD_ENCRYPTION_KEY required AND must be 32 bytes (64 hex).
+REQUIRED PROD ENV (deployment doc): SECRET_KEY, JWT_SECRET(>=16),
+SUPER_ADMIN_PASSWORD, DATABASE_URL, ALLOWED_HOSTS, AUTHZ_MODE=enforce,
+ENABLE_DEV_SEED=false, FIELD_ENCRYPTION_KEY=<64 hex>, plus
+ENABLE_BACKGROUND_JOBS=true on the worker service only.

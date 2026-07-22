@@ -24,9 +24,20 @@ class="btn btn-ghost h-9 shadow-sm"
 Export
 </a>
 
-<!-- Filter button (focuses the filters row form) -->
+{% comment %}Filter button. On mobile the filters row is collapsed (a
+cramped stack of dropdowns is unusable at 390px); this toggles it and
+scrolls it into view. On desktop the row is always visible, so the button
+only scrolls. State lives on the shell's Alpine scope via a plain data
+attribute so no new component is introduced.
+{% endcomment %}
 <button type="button"
-@click="document.getElementById('filters-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+data-component="filter-trigger"
+@click="
+  const row = document.getElementById('filters-form');
+  if (!row) return;
+  row.classList.toggle('max-lg:hidden');
+  row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+"
 class="btn btn-ghost h-9 shadow-sm"
 >
 <svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>

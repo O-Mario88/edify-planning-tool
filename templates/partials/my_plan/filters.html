@@ -1,10 +1,10 @@
 <!-- Filters Form for My Plan -->
-<form id="filters-form" method="GET" action="/my-plan"
+<form data-component="filter-toolbar" id="filters-form" method="GET" action="/my-plan"
 hx-get="/my-plan"
 hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
 hx-push-url="true"
-class="flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate-200 rounded-surface shadow-sm"
+class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate-200 rounded-surface shadow-sm"
 >
 <!-- Keep period and other tabs active state -->
 <input type="hidden" name="period" value="{{ period }}">
@@ -86,4 +86,17 @@ class="flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate
 <option value="returned_for_correction" {% if selected_status == 'returned_for_correction' %}selected{% endif %}>Returned</option>
 </select>
 </div>
+
+{% comment %}Clear Filters — shown only when a filter is actually active, so
+the control never occupies space it has not earned. Server-rendered rather
+than Alpine-derived: the filter state is authoritative in the URL.
+{% endcomment %}
+{% if filters_active %}
+<a href="/my-plan"
+   data-component="clear-filters"
+   class="inline-flex items-center gap-1 h-9 px-3 edify-primary-text edify-text-caption font-bold uppercase tracking-wider hover:underline">
+  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+  Clear Filters
+</a>
+{% endif %}
 </form>
