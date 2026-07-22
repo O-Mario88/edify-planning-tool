@@ -185,10 +185,16 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
 
     @property
     def staff_profile_id(self) -> str | None:
-        try:
-            return self.staff_profile.id
-        except Exception:
-            return None
+        """Cached on the instance: this is read dozens of times per request by
+        scoping and target code, and each miss was a fresh reverse-OneToOne
+        query. Django only caches the descriptor on a *successful* fetch, so
+        users without a profile re-queried every single time."""
+        if not hasattr(self, "_staff_profile_id_cache"):
+            try:
+                self._staff_profile_id_cache = self.staff_profile.id
+            except Exception:
+                self._staff_profile_id_cache = None
+        return self._staff_profile_id_cache
 
     @property
     def user_id(self) -> str:

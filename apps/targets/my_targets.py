@@ -94,11 +94,25 @@ OFFICIAL_TARGET_AREAS = (
 
 
 def active_target_areas() -> list[TargetArea]:
-    """Return the official active target areas, repairing only missing rows."""
+    """Return the official active target areas, repairing only missing rows.
+
+    Memoized for the life of a request. This is org-wide configuration, not
+    per-user data, but it was re-read on every ledger rebuild — 96 identical
+    queries on a single Country Director dashboard, which resolves the whole
+    country's staff. Outside a request there is no cache at all, so the
+    self-repair below still sees live data.
+    """
+    from apps.core.request_cache import store
+
+    bucket = store()
+    if bucket is not None and "target_areas" in bucket:
+        return bucket["target_areas"]
     areas = list(TargetArea.objects.filter(active=True).order_by("sort_order"))
     active_keys = {area.key for area in areas}
     missing = [area for area in OFFICIAL_TARGET_AREAS if area[0] not in active_keys]
     if not missing:
+        if bucket is not None:
+            bucket["target_areas"] = areas
         return areas
 
     existing_keys = set(
@@ -119,7 +133,10 @@ def active_target_areas() -> list[TargetArea]:
                     "active": True,
                 },
             )
-    return list(TargetArea.objects.filter(active=True).order_by("sort_order"))
+    repaired = list(TargetArea.objects.filter(active=True).order_by("sort_order"))
+    if bucket is not None:
+        bucket["target_areas"] = repaired
+    return repaired
 
 
 NEXT_ACTIONS = {
@@ -270,44 +287,25 @@ class TargetAchievementService:
         fy_start, fy_end = get_fy_date_range(fy)
         seen: set[tuple[str, str]] = set()
 
+        # Collected in memory, then flushed in bulk. This was a
+        # get_or_create PER SOURCE ROW, and rebuild() runs on ordinary page
+        # loads for every user in scope — 1,016 of the 1,761 queries on the
+        # Country Director dashboard came from here alone. Same semantics,
+        # same idempotency; four queries instead of N.
+        pending: dict[tuple[str, str], dict] = {}
+
         def upsert(area_key, source_type, source_id, when: date, status: str):
             seen.add((source_type, str(source_id)))
             month = Cal.month_of_fy_for(when, fy)
             if month is None or area_key not in areas:
                 return
-            row, created = TargetAchievementLedger.objects.get_or_create(
-                user_id=user.id,
-                area=areas[area_key],
-                source_type=source_type,
-                source_id=str(source_id),
-                defaults={
-                    "activity_date": when,
-                    "fy": fy,
-                    "credited_month": month,
-                    "credited_quarter": Cal.quarter_of_month(month),
-                    "validation_status": status,
-                    "validated_at": timezone.now() if status == "validated" else None,
-                },
-            )
-            if not created and (
-                row.validation_status != status or row.activity_date != when
-            ):
-                row.activity_date = when
-                row.credited_month = month
-                row.credited_quarter = Cal.quarter_of_month(month)
-                row.validation_status = status
-                if status == "validated" and not row.validated_at:
-                    row.validated_at = timezone.now()
-                row.save(
-                    update_fields=[
-                        "activity_date",
-                        "credited_month",
-                        "credited_quarter",
-                        "validation_status",
-                        "validated_at",
-                        "updated_at",
-                    ]
-                )
+            pending[(source_type, str(source_id))] = {
+                "area": areas[area_key],
+                "activity_date": when,
+                "credited_month": month,
+                "credited_quarter": Cal.quarter_of_month(month),
+                "validation_status": status,
+            }
 
         # ── Activity-based areas (visits, meetings, trainings) ──────────────
         for area_key, (stype, types) in AREA_SOURCES.items():
@@ -374,15 +372,73 @@ class TargetAchievementService:
                 status = "reversed"
             upsert("mscs", "mscs", story.id, story.story_date, status)
 
-        # ── Stale credits: a ledger row whose source record no longer exists
-        #    (or dropped out of the workflow) loses its credit — a rebuild can
-        #    never leave orphaned achievement behind. ─────────────────────────
-        for row in TargetAchievementLedger.objects.filter(
-            user_id=user.id, fy=fy
-        ).exclude(validation_status="reversed"):
-            if (row.source_type, row.source_id) not in seen:
-                row.validation_status = "reversed"
-                row.save(update_fields=["validation_status", "updated_at"])
+        # ── Flush: one read of the existing ledger, one bulk insert, one
+        #    bulk update, one reversal sweep. ─────────────────────────────
+        now = timezone.now()
+        existing = {
+            (r.source_type, r.source_id): r
+            for r in TargetAchievementLedger.objects.filter(user_id=user.id, fy=fy)
+        }
+        to_create, to_update = [], []
+        for key, want in pending.items():
+            row = existing.get(key)
+            if row is None:
+                to_create.append(
+                    TargetAchievementLedger(
+                        user_id=user.id,
+                        area=want["area"],
+                        source_type=key[0],
+                        source_id=key[1],
+                        fy=fy,
+                        activity_date=want["activity_date"],
+                        credited_month=want["credited_month"],
+                        credited_quarter=want["credited_quarter"],
+                        validation_status=want["validation_status"],
+                        validated_at=(
+                            now if want["validation_status"] == "validated" else None
+                        ),
+                    )
+                )
+            elif (
+                row.validation_status != want["validation_status"]
+                or row.activity_date != want["activity_date"]
+            ):
+                row.activity_date = want["activity_date"]
+                row.credited_month = want["credited_month"]
+                row.credited_quarter = want["credited_quarter"]
+                row.validation_status = want["validation_status"]
+                if want["validation_status"] == "validated" and not row.validated_at:
+                    row.validated_at = now
+                to_update.append(row)
+        if to_create:
+            TargetAchievementLedger.objects.bulk_create(
+                to_create, ignore_conflicts=True
+            )
+        if to_update:
+            TargetAchievementLedger.objects.bulk_update(
+                to_update,
+                [
+                    "activity_date",
+                    "credited_month",
+                    "credited_quarter",
+                    "validation_status",
+                    "validated_at",
+                    "updated_at",
+                ],
+            )
+
+        # A ledger row whose source no longer exists (or dropped out of the
+        # workflow) loses its credit — a rebuild never leaves orphaned
+        # achievement behind.
+        stale_ids = [
+            r.id
+            for key, r in existing.items()
+            if key not in seen and r.validation_status != "reversed"
+        ]
+        if stale_ids:
+            TargetAchievementLedger.objects.filter(id__in=stale_ids).update(
+                validation_status="reversed", updated_at=now
+            )
 
 
 class MyTargetQueryService:

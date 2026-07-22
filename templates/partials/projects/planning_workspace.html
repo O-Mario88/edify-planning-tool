@@ -77,7 +77,7 @@
             <td><span class="spp-action-copy">{{ row.action }}</span></td>
             <td><span>{{ row.partner }}</span></td>
             <td><div class="spp-row-actions">
-              {% if row.action_kind == 'schedule' and can_schedule %}<button type="button" hx-get="{{ row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Schedule</button>{% else %}<a href="{{ row.my_plan_url }}">My Plan</a>{% endif %}
+              {% if row.action_kind == 'schedule' and can_schedule %}<button type="button" hx-get="{{ row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML"><svg class="shrink-0 h-4 w-4 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule</button>{% else %}<a href="{{ row.my_plan_url }}">My Plan</a>{% endif %}
               {% if can_assign_partner %}<button type="button" class="is-secondary" hx-get="{{ row.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Partner</button>{% endif %}
             </div></td>
           </tr>

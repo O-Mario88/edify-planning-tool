@@ -38,6 +38,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from django.db.models import Avg, Count, Q, Sum
+from django.db.models.functions import TruncMonth
 
 from apps.accounts.models import StaffProfile, StaffTargetProfile
 from apps.activities.models import Activity
@@ -692,6 +693,77 @@ class PLAnalyticsService:
         pct = round(achieved_total / target_total * 100) if target_total else 0
         return pct, achieved_total, target_total
 
+    # Counting a whole team one CCEO at a time cost five queries per person
+    # (one target profile + four type counts) and ran three times per PL
+    # dashboard — 0.7s of the request on a 5-person team, and linear in team
+    # size. This resolves the identical numbers in two queries total, using the
+    # same ownership rule and the same per-bucket sum as _cceo_target above.
+    @staticmethod
+    def _cceo_targets_bulk(
+        cceos, completed_qs, fy: str, quarter: str | None = None
+    ) -> dict:
+        """{staff_id: (pct, achieved_total, target_total)} for every CCEO."""
+        if not cceos:
+            return {}
+        staff_ids = [c["staff_id"] for c in cceos]
+        profiles = {
+            tp.staff_id: tp
+            for tp in StaffTargetProfile.objects.filter(
+                staff_id__in=staff_ids, fy=fy
+            )
+        }
+        targets: dict = {}
+        for c in cceos:
+            tp = profiles.get(c["staff_id"])
+            total = 0
+            if tp:
+                total = (
+                    (tp.visits_target or 0)
+                    + (tp.trainings_target or 0)
+                    + (tp.cluster_meetings_target or 0)
+                    + (tp.ssa_target or 0)
+                )
+            if quarter in ("Q1", "Q2", "Q3", "Q4") and total:
+                total = round(total * 0.25)
+            targets[c["staff_id"]] = total
+
+        # Both id spaces map back to the owning CCEO. staff_id and user_id are
+        # each unique per person, so no activity can resolve to two CCEOs.
+        owner_of: dict = {}
+        for c in cceos:
+            owner_of[c["staff_id"]] = c["staff_id"]
+            if c["user_id"]:
+                owner_of[c["user_id"]] = c["staff_id"]
+        all_ids = set(owner_of)
+
+        achieved: dict = {sid: 0 for sid in staff_ids}
+        rows = completed_qs.filter(
+            Q(responsible_staff_id__in=all_ids)
+            | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=all_ids)
+        ).values_list(
+            "responsible_staff_id", "monitored_by_staff_id", "activity_type"
+        )
+        buckets = (
+            VISIT_TYPES,
+            TRAINING_TYPES,
+            CLUSTER_MEETING_TYPES,
+            SSA_COLLECTION_TYPES,
+        )
+        for resp, mon, atype in rows.iterator(chunk_size=2000):
+            # Mirror _cceo_target exactly: the monitoring fallback applies only
+            # when responsible_staff_id is NULL, not merely falsy.
+            owner = owner_of.get(mon) if resp is None else owner_of.get(resp)
+            if owner is None:
+                continue
+            achieved[owner] += sum(1 for b in buckets if atype in b)
+
+        out: dict = {}
+        for sid in staff_ids:
+            tgt = targets.get(sid, 0)
+            ach = achieved.get(sid, 0)
+            out[sid] = (round(ach / tgt * 100) if tgt else 0, ach, tgt)
+        return out
+
     @staticmethod
     def _team_target(
         pls: PLScope, fy: str, quarter=None, filters=None
@@ -704,10 +776,11 @@ class PLAnalyticsService:
         total_target = total_achieved = 0
         on_track = 0
         expected = PLAnalyticsService._expected_pace(fy)
+        bulk = PLAnalyticsService._cceo_targets_bulk(
+            pls.cceos, completed_qs, fy, quarter
+        )
         for c in pls.cceos:
-            pct, ach, tgt = PLAnalyticsService._cceo_target(
-                c, completed_qs, fy, quarter
-            )
+            pct, ach, tgt = bulk[c["staff_id"]]
             total_target += tgt
             total_achieved += ach
             if tgt and pct >= expected:
@@ -861,25 +934,45 @@ class PLAnalyticsService:
         target_types = (
             VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES + SSA_COLLECTION_TYPES
         )
+        # One grouped query for the whole timeline. Walking the 12 FY months and
+        # firing three COUNTs each cost 36 round-trips per render, and every one
+        # of them scanned `activity` — it was the single largest block of SQL
+        # time on the PL dashboard.
+        bounds = {m: get_month_date_range(fy, m) for m in range(1, 13)}
+        fy_start = bounds[1][0].date()
+        fy_end = bounds[12][1].date()
+        by_month = {
+            (r["m"].year, r["m"].month): r
+            for r in acts.filter(
+                planned_date__gte=fy_start, planned_date__lt=fy_end
+            )
+            .annotate(m=TruncMonth("planned_date"))
+            .values("m")
+            .annotate(
+                p=Count("id", filter=Q(status__in=PLANNED_STATUSES)),
+                c=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                t=Count(
+                    "id",
+                    filter=Q(
+                        status__in=COMPLETED_STATUSES,
+                        activity_type__in=target_types,
+                    ),
+                ),
+            )
+        }
         cumulative_done = 0
         pct_line = []
         # FY runs Oct(1) → Sep(12).
         for m_of_fy in range(1, 13):
-            start, end = get_month_date_range(fy, m_of_fy)
+            start, _ = bounds[m_of_fy]
             cal_month = start.month
             labels.append(f"{MONTHS_SHORT[cal_month]}")
-            month_qs = acts.filter(
-                planned_date__gte=start.date(), planned_date__lt=end.date()
-            )
-            p = month_qs.filter(status__in=PLANNED_STATUSES).count()
-            c = month_qs.filter(status__in=COMPLETED_STATUSES).count()
-            planned.append(p)
-            completed.append(c)
+            row = by_month.get((start.year, cal_month))
+            planned.append(row["p"] if row else 0)
+            completed.append(row["c"] if row else 0)
             # The achievement line tracks cumulative target-relevant completions
             # against the annual team target (rises through the year).
-            cumulative_done += month_qs.filter(
-                status__in=COMPLETED_STATUSES, activity_type__in=target_types
-            ).count()
+            cumulative_done += row["t"] if row else 0
             pct_line.append(
                 round(cumulative_done / team_target_total * 100)
                 if team_target_total
@@ -901,8 +994,11 @@ class PLAnalyticsService:
             status__in=COMPLETED_STATUSES
         )
         total_target = total_achieved = 0
+        bulk = PLAnalyticsService._cceo_targets_bulk(
+            pls.cceos, completed_qs, fy, quarter
+        )
         for c in pls.cceos:
-            _, ach, tgt = PLAnalyticsService._cceo_target(c, completed_qs, fy, quarter)
+            _, ach, tgt = bulk[c["staff_id"]]
             total_target += tgt
             total_achieved += ach
         pct = round(total_achieved / total_target * 100) if total_target else 0
@@ -1236,6 +1332,31 @@ class PLAnalyticsService:
         acts = _team_activity_qs(pls, fy, quarter, filters)
         completed_all = acts.filter(status__in=COMPLETED_STATUSES)
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
+        bulk_targets = PLAnalyticsService._cceo_targets_bulk(
+            pls.cceos, completed_all, fy, quarter
+        )
+        # One grouped SSA average for the whole team instead of one query per
+        # CCEO. Schools can be shared between CCEOs, so this is averaged per
+        # CCEO's own school set below rather than joined.
+        # Carry sum AND count per school, not the per-school average: the
+        # figure being reproduced is a flat mean over SSA *records*, so a
+        # school with two confirmed records must weigh twice as much as one
+        # with a single record. Averaging averages would silently reweight it.
+        ssa_by_school: dict = {}
+        if latest_fy:
+            every_school = {sid for c in pls.cceos for sid in c["school_ids"]}
+            if every_school:
+                ssa_by_school = {
+                    r["school_id"]: (r["s"] or 0, r["n"])
+                    for r in SsaRecord.objects.filter(
+                        school_id__in=every_school,
+                        verification_status="confirmed",
+                        fy=latest_fy,
+                        average_score__isnull=False,
+                    )
+                    .values("school_id")
+                    .annotate(s=Sum("average_score"), n=Count("id"))
+                }
         rows = []
         for c in pls.cceos:
             ids = {c["staff_id"]}
@@ -1253,18 +1374,16 @@ class PLAnalyticsService:
                     "awaiting_ia_verification",
                 )
             ).count()
-            target_pct, _, target_total = PLAnalyticsService._cceo_target(
-                c, completed_all, fy, quarter
-            )
+            target_pct, _, target_total = bulk_targets[c["staff_id"]]
             avg_ssa = None
             if latest_fy and c["school_ids"]:
-                avg_ssa = _norm(
-                    SsaRecord.objects.filter(
-                        school_id__in=c["school_ids"],
-                        verification_status="confirmed",
-                        fy=latest_fy,
-                    ).aggregate(a=Avg("average_score"))["a"]
-                )
+                total = count = 0
+                for sid in c["school_ids"]:
+                    part = ssa_by_school.get(sid)
+                    if part:
+                        total += part[0]
+                        count += part[1]
+                avg_ssa = _norm(total / count) if count else None
             evidence_total = c_acts.filter(
                 activity_type__in=VISIT_TYPES + TRAINING_TYPES
             ).count()

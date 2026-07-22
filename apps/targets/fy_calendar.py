@@ -35,6 +35,7 @@ MONTH_LABELS = [
 
 
 class FinancialYearCalendarService:
+
     @staticmethod
     def quarter_of_month(month_of_fy: int) -> str:
         return QUARTERS[(month_of_fy - 1) // 3]
@@ -79,37 +80,69 @@ class FinancialYearCalendarService:
 
     # ── Working-day pacing ───────────────────────────────────────────────────
     @staticmethod
-    def working_days(start: date, end: date, user=None) -> int:
-        """Weekdays in [start, end) minus public holidays minus the user's own
-        approved leave days."""
-        from apps.accounts.models import Leave
+    def _holidays_cached(start: date, end: date) -> frozenset:
+        """working_days() is called per team member, per period, per target
+        area, and every call re-queried PublicHoliday and CalendarBlock for the
+        SAME dates — 372 of the 471 queries on Team Targets. Holidays cannot
+        change within one request, so the answer is memoized for its duration
+        (and not at all outside a request; see apps.core.request_cache)."""
+        from apps.core.request_cache import memoize
         from apps.hr.leave_services import PublicHolidayService
 
-        # Union both holiday sources (PublicHoliday rows + CalendarBlock
-        # PUBLIC_HOLIDAY rows) — querying PublicHoliday alone silently missed
-        # holidays added only via the /public-holidays admin surface.
-        holidays = set(
-            PublicHolidayService.get_holidays_in_range(start, end - timedelta(days=1))
+        return memoize(
+            ("holidays", start, end),
+            lambda: frozenset(
+                PublicHolidayService.get_holidays_in_range(start, end)
+            ),
         )
-        leave_days: set[date] = set()
-        if user is not None:
-            sp_id = getattr(user, "staff_profile_id", None)
-            leaves = Leave.objects.filter(
+
+    @staticmethod
+    def _leave_days_cached(sp_id: str, start: date, end: date) -> frozenset:
+        """Same reasoning for a staff member's approved leave."""
+        from datetime import date as _d
+
+        from apps.accounts.models import Leave
+        from apps.core.request_cache import memoize
+
+        def _compute() -> frozenset:
+            days: set = set()
+            for lv in Leave.objects.filter(
                 status="approved",
-                staff_id__in=[i for i in [sp_id] if i],
+                staff_id=sp_id,
                 start_date__lt=end.isoformat(),
                 end_date__gte=start.isoformat(),
-            )
-            for lv in leaves:
+            ):
                 try:
-                    d0 = date.fromisoformat(lv.start_date)
-                    d1 = date.fromisoformat(lv.end_date)
+                    d0 = _d.fromisoformat(lv.start_date)
+                    d1 = _d.fromisoformat(lv.end_date)
                 except (TypeError, ValueError):
                     continue
                 d = max(d0, start)
                 while d <= min(d1, end - timedelta(days=1)):
-                    leave_days.add(d)
+                    days.add(d)
                     d += timedelta(days=1)
+            return frozenset(days)
+
+        return memoize(("leave", sp_id, start, end), _compute)
+
+    @staticmethod
+    def working_days(start: date, end: date, user=None) -> int:
+        """Weekdays in [start, end) minus public holidays minus the user's own
+        approved leave days."""
+
+        # Union both holiday sources (PublicHoliday rows + CalendarBlock
+        # PUBLIC_HOLIDAY rows) — querying PublicHoliday alone silently missed
+        # holidays added only via the /public-holidays admin surface.
+        holidays = FinancialYearCalendarService._holidays_cached(
+            start, end - timedelta(days=1)
+        )
+        leave_days: frozenset = frozenset()
+        if user is not None:
+            sp_id = getattr(user, "staff_profile_id", None)
+            if sp_id:
+                leave_days = FinancialYearCalendarService._leave_days_cached(
+                    sp_id, start, end
+                )
 
         n = 0
         d = start

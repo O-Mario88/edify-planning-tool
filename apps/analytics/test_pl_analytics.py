@@ -350,3 +350,292 @@ class PLAnalyticsTest(TestCase):
         ).update(current_fy_ssa_status="done")
         titles2 = {t["title"] for t in PLAnalyticsService.pl_todos(self.pl_a, fy=FY)}
         self.assertNotIn("Schedule SSA Collection", titles2)
+
+
+class CceoTargetBulkEquivalenceTest(PLAnalyticsTest):
+    """The batched team resolver must return exactly what the per-CCEO one does.
+
+    _cceo_targets_bulk replaced a five-queries-per-person loop that ran three
+    times per PL dashboard. It is a pure performance rewrite, so the only thing
+    that matters is that it never disagrees with _cceo_target — including on
+    the awkward cases: the monitoring fallback that applies only when
+    responsible_staff_id is NULL, ownership that lands in the User id space
+    rather than the StaffProfile one, and work at a CCEO's school that belongs
+    to somebody else.
+    """
+
+    def _assert_agrees(self, label):
+        from apps.analytics.pl_analytics_service import (
+            COMPLETED_STATUSES,
+            _team_activity_qs,
+        )
+
+        pls = resolve_pl_scope(self.pl_a, {})
+        self.assertTrue(pls.cceos, "fixture must put at least one CCEO in scope")
+        for quarter in (None, "Q1", "Q2", "Q3", "Q4"):
+            qs = _team_activity_qs(pls, FY, quarter, {}).filter(
+                status__in=COMPLETED_STATUSES
+            )
+            bulk = PLAnalyticsService._cceo_targets_bulk(pls.cceos, qs, FY, quarter)
+            for c in pls.cceos:
+                self.assertEqual(
+                    tuple(PLAnalyticsService._cceo_target(c, qs, FY, quarter)),
+                    tuple(bulk[c["staff_id"]]),
+                    f"{label}: disagreement for {c['staff_id']} in {quarter or 'FY'}",
+                )
+
+    def test_agrees_on_the_base_fixture(self):
+        self._assert_agrees("base fixture")
+
+    def test_agrees_when_work_is_owned_in_the_user_id_space(self):
+        """responsible_staff_id holds a StaffProfile id OR a User id."""
+        self._activity(self.cceo_a1.id, self.sch_a2, "school_visit", "staff")
+        self._assert_agrees("user-id ownership")
+
+    def test_agrees_on_partner_work_monitored_by_the_cceo(self):
+        """The monitoring fallback fires only when responsible_staff_id is NULL."""
+        Activity.objects.create(
+            school=self.sch_a1,
+            activity_type="school_visit",
+            delivery_type="partner",
+            status="completed",
+            responsible_staff_id=None,
+            monitored_by_staff_id=self.cceo_a1_sp.id,
+            assigned_partner_id=self.partner.id,
+            fy=FY,
+            quarter="Q3",
+            planned_date=date(2026, 4, 11),
+            scheduled_date=timezone.make_aware(timezone.datetime(2026, 4, 11, 9, 0)),
+            evidence_status="accepted",
+        )
+        self._assert_agrees("monitored partner work")
+
+    def test_agrees_when_a_colleague_works_at_this_cceos_school(self):
+        """Attribution is by ownership, never by school."""
+        self._activity(self.cceo_b1_sp.id, self.sch_a1, "school_visit", "staff")
+        self._assert_agrees("colleague at my school")
+
+    def test_a_colleagues_work_at_my_school_is_not_credited_to_me(self):
+        """Runtime proof of the rule the old source-grep test only approximated."""
+        from apps.analytics.pl_analytics_service import (
+            COMPLETED_STATUSES,
+            _team_activity_qs,
+        )
+
+        pls = resolve_pl_scope(self.pl_a, {})
+        cceo = next(c for c in pls.cceos if c["staff_id"] == self.cceo_a1_sp.id)
+        qs = _team_activity_qs(pls, FY, None, {}).filter(status__in=COMPLETED_STATUSES)
+        before = PLAnalyticsService._cceo_targets_bulk(pls.cceos, qs, FY)[
+            cceo["staff_id"]
+        ][1]
+
+        self._activity(self.cceo_b1_sp.id, self.sch_a1, "school_visit", "staff")
+
+        qs = _team_activity_qs(pls, FY, None, {}).filter(status__in=COMPLETED_STATUSES)
+        after = PLAnalyticsService._cceo_targets_bulk(pls.cceos, qs, FY)[
+            cceo["staff_id"]
+        ][1]
+        self.assertEqual(
+            before,
+            after,
+            "a visit performed by another CCEO at this CCEO's school raised "
+            "this CCEO's achievement — attribution leaked back to school_id",
+        )
+
+    def test_resolving_a_whole_team_costs_a_constant_number_of_queries(self):
+        """The regression this rewrite exists to prevent: query count must not
+        grow with team size."""
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from apps.analytics.pl_analytics_service import (
+            COMPLETED_STATUSES,
+            _team_activity_qs,
+        )
+
+        for n in range(6):
+            _, sp = self._staff(f"extra{n}@t.org", f"Extra {n}", EdifyRole.CCEO.value)
+            StaffSupervisorAssignment.objects.create(
+                supervisor=self.pl_a_sp, supervisee=sp
+            )
+            StaffTargetProfile.objects.create(staff=sp, fy=FY, visits_target=2)
+
+        pls = resolve_pl_scope(self.pl_a, {})
+        self.assertGreaterEqual(len(pls.cceos), 7)
+        qs = _team_activity_qs(pls, FY, None, {}).filter(status__in=COMPLETED_STATUSES)
+        with CaptureQueriesContext(connection) as ctx:
+            PLAnalyticsService._cceo_targets_bulk(pls.cceos, qs, FY)
+        self.assertLessEqual(
+            len(ctx.captured_queries),
+            3,
+            f"resolving {len(pls.cceos)} CCEOs took "
+            f"{len(ctx.captured_queries)} queries — it must be constant",
+        )
+
+
+class CceoAverageSsaWeightingTest(PLAnalyticsTest):
+    """A CCEO's average SSA is a flat mean over confirmed SSA *records*.
+
+    The batched lookup that replaced the per-CCEO query has to carry sum and
+    count per school rather than a per-school average, or a school with two
+    confirmed records would silently count the same as one with a single
+    record. This pins the weighting so that refactor can't drift.
+    """
+
+    def test_average_ssa_weights_by_record_not_by_school(self):
+        # cceo_a1 owns A1 (already has one FY record at 7.0) and A3 (8.0).
+        # Add a second confirmed record on A1 at 1.0. Record-weighted mean is
+        # (7.0 + 1.0 + 8.0) / 3 = 5.33; school-weighted would be
+        # ((7.0 + 1.0) / 2 + 8.0) / 2 = 6.0. The reported figure is _norm'd
+        # onto a 0-100 scale, so those are 53.3 and 60.0 respectively — far
+        # enough apart that this test can tell them apart.
+        self._ssa(self.sch_a1, FY, 1.0)
+
+        pls = resolve_pl_scope(self.pl_a, {})
+        rows = PLAnalyticsService.cceo_performance(pls, FY, None, {})["rows"]
+        row = next(r for r in rows if r["staff_id"] == self.cceo_a1_sp.id)
+
+        self.assertAlmostEqual(
+            float(row["avg_ssa"]),
+            53.3,
+            places=1,
+            msg="average SSA stopped weighting by record — a school with two "
+            "confirmed SSAs is now counted the same as one with a single SSA",
+        )
+
+
+class TeamTimelineGroupingTest(PLAnalyticsTest):
+    """The 12-month timeline is one grouped query, not 12 (or 36) COUNTs.
+
+    It used to walk the FY month by month firing three COUNTs per month, plus
+    twelve more for the verified series — 48 scans of `activity` per PL
+    dashboard render. These tests pin both the numbers and the query count so
+    the loop cannot creep back.
+    """
+
+    def _spread_activities(self):
+        """Put activity in three distinct FY months so a grouping bug that
+        collapses or shifts months is visible in the series."""
+        from apps.core.fy import get_month_date_range
+
+        made = []
+        for m_of_fy, n in ((1, 2), (7, 3), (12, 1)):
+            start, _ = get_month_date_range(FY, m_of_fy)
+            for i in range(n):
+                made.append(
+                    Activity.objects.create(
+                        school=self.sch_a1,
+                        activity_type="school_visit",
+                        delivery_type="staff",
+                        status="completed",
+                        responsible_staff_id=self.cceo_a1_sp.id,
+                        fy=FY,
+                        quarter="Q1",
+                        planned_date=start.date(),
+                        scheduled_date=timezone.make_aware(
+                            timezone.datetime(
+                                start.year, start.month, 1, 9, 0
+                            )
+                        ),
+                        evidence_status="accepted",
+                    )
+                )
+        return made
+
+    def test_timeline_matches_a_month_by_month_recount(self):
+        from apps.analytics.pl_analytics_service import (
+            CLUSTER_MEETING_TYPES,
+            COMPLETED_STATUSES,
+            PLANNED_STATUSES,
+            SSA_COLLECTION_TYPES,
+            TRAINING_TYPES,
+            VISIT_TYPES,
+            _team_activity_qs,
+        )
+        from apps.core.fy import get_month_date_range
+
+        self._spread_activities()
+        pls = resolve_pl_scope(self.pl_a, {})
+        acts = _team_activity_qs(pls, FY, None, {})
+        target_types = (
+            VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES + SSA_COLLECTION_TYPES
+        )
+
+        want_p, want_c, want_t = [], [], []
+        for m in range(1, 13):
+            start, end = get_month_date_range(FY, m)
+            mq = acts.filter(
+                planned_date__gte=start.date(), planned_date__lt=end.date()
+            )
+            want_p.append(mq.filter(status__in=PLANNED_STATUSES).count())
+            want_c.append(mq.filter(status__in=COMPLETED_STATUSES).count())
+            want_t.append(
+                mq.filter(
+                    status__in=COMPLETED_STATUSES, activity_type__in=target_types
+                ).count()
+            )
+
+        got = PLAnalyticsService.team_performance(pls, FY, None, {})
+        self.assertEqual(got["planned"], want_p)
+        self.assertEqual(got["completed"], want_c)
+        self.assertEqual(
+            sum(got["completed"]),
+            acts.filter(status__in=COMPLETED_STATUSES).count(),
+            "the grouped timeline dropped or double-counted rows",
+        )
+
+        _, _, tgt = PLAnalyticsService._team_target_totals(pls, FY, None, {})
+        cum, want_pct = 0, []
+        for v in want_t:
+            cum += v
+            want_pct.append(round(cum / tgt * 100) if tgt else 0)
+        self.assertEqual(got["pct"], want_pct)
+
+    def test_verified_series_matches_a_month_by_month_recount(self):
+        from apps.analytics.pl_dashboard_service import (
+            VERIFIED_STATUSES,
+            ProgramLeadDashboardService,
+        )
+        from apps.core.fy import get_month_date_range
+
+        made = self._spread_activities()
+        # Make some of them verified so the series is not uniformly zero.
+        Activity.objects.filter(
+            id__in=[a.id for a in made[:4]]
+        ).update(status=VERIFIED_STATUSES[0])
+
+        pls = resolve_pl_scope(self.pl_a, {})
+        acts = ProgramLeadDashboardService._team_acts(pls, FY, {})
+        want = []
+        for m in range(1, 13):
+            start, end = get_month_date_range(FY, m)
+            want.append(
+                acts.filter(
+                    planned_date__gte=start.date(),
+                    planned_date__lt=end.date(),
+                    status__in=VERIFIED_STATUSES,
+                ).count()
+            )
+        got = ProgramLeadDashboardService.team_performance(pls, FY, {})["verified"]
+        self.assertEqual(got, want)
+        self.assertGreater(sum(want), 0, "fixture must produce verified work")
+
+    def test_timeline_costs_a_constant_number_of_queries(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        self._spread_activities()
+        pls = resolve_pl_scope(self.pl_a, {})
+        with CaptureQueriesContext(connection) as ctx:
+            PLAnalyticsService.team_performance(pls, FY, None, {})
+        activity_counts = [
+            q
+            for q in ctx.captured_queries
+            if q["sql"].startswith('SELECT COUNT(*) AS "__count" FROM "activity"')
+        ]
+        self.assertLessEqual(
+            len(activity_counts),
+            2,
+            f"the 12-month timeline fired {len(activity_counts)} COUNTs against "
+            "`activity` — it must resolve the whole year in one grouped query",
+        )

@@ -532,14 +532,27 @@ class ProgramLeadDashboardService:
     def _overloaded_cceos(pls, fy, acts):
         today = date.today()
         wk_start = today - timedelta(days=today.weekday())
+        # One pass over this week's activities instead of a COUNT per CCEO.
+        # The date cast here is not index-assisted, so each of those counts was
+        # a full scan of `activity`.
+        owner_of = {}
+        for c in pls.cceos:
+            for i in ProgramLeadDashboardService._cceo_ids(c):
+                owner_of[i] = c["staff_id"]
+        week_load = dict.fromkeys((c["staff_id"] for c in pls.cceos), 0)
+        if owner_of:
+            for owner_id in acts.filter(
+                responsible_staff_id__in=list(owner_of),
+                scheduled_date__date__gte=wk_start,
+                scheduled_date__date__lte=wk_start + timedelta(days=6),
+            ).values_list("responsible_staff_id", flat=True):
+                key = owner_of.get(owner_id)
+                if key is not None:
+                    week_load[key] += 1
         out = []
         for c in pls.cceos:
             n_schools = len(c["school_ids"])
-            wk = acts.filter(
-                Q(responsible_staff_id__in=ProgramLeadDashboardService._cceo_ids(c)),
-                scheduled_date__date__gte=wk_start,
-                scheduled_date__date__lte=wk_start + timedelta(days=6),
-            ).count()
+            wk = week_load.get(c["staff_id"], 0)
             if n_schools > CCEO_SCHOOL_CAPACITY or wk > CCEO_WEEKLY_ACTIVITY_CAPACITY:
                 out.append({"name": c["name"], "schools": n_schools, "week_load": wk})
         return out
@@ -563,17 +576,28 @@ class ProgramLeadDashboardService:
         # Add a verified series aligned to the same 12 FY months.
         from apps.core.fy import get_month_date_range
 
+        from django.db.models import Count
+        from django.db.models.functions import TruncMonth
+
         acts = ProgramLeadDashboardService._team_acts(pls, fy, filters)
-        verified = []
-        for m in range(1, 13):
-            start, end = get_month_date_range(fy, m)
-            verified.append(
-                acts.filter(
-                    planned_date__gte=start.date(),
-                    planned_date__lt=end.date(),
-                    status__in=VERIFIED_STATUSES,
-                ).count()
+        bounds = {m: get_month_date_range(fy, m) for m in range(1, 13)}
+        # Same reasoning as PLAnalyticsService.team_performance: one grouped
+        # query instead of twelve COUNTs against `activity`.
+        by_month = {
+            (r["m"].year, r["m"].month): r["n"]
+            for r in acts.filter(
+                planned_date__gte=bounds[1][0].date(),
+                planned_date__lt=bounds[12][1].date(),
+                status__in=VERIFIED_STATUSES,
             )
+            .annotate(m=TruncMonth("planned_date"))
+            .values("m")
+            .annotate(n=Count("id"))
+        }
+        verified = [
+            by_month.get((bounds[m][0].year, bounds[m][0].month), 0)
+            for m in range(1, 13)
+        ]
         base["verified"] = verified
         return base
 
