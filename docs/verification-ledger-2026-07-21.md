@@ -390,3 +390,28 @@ INDEX gaps: CoreActivitySlot.activity_id (scanned on every Activity.save),
   WeeklyFundRequest has no Meta.indexes (fy/status/disbursed_at).
 TOOLING NOT RUN: pytest, coverage, mypy, bandit, playwright, axe,
   visual-regression, CVE scan — not installed in this environment.
+
+## 2026-07-22 — 10/10 blocker session (continued)
+
+**Closed this session**
+- `my_targets.rebuild()` bulk flush; team figures grouped; 12-month timeline one aggregate.
+- Request-scoped memo store (`apps/core/request_cache.py`) — no cache outside a request, by design and by test.
+- Security tool chains installed AND gated in CI: bandit + pip-audit fail the build. 10 vulnerable packages → 0 known CVEs (Django 5.2.4→5.2.16 cleared 51 advisories inside the LTS line).
+- SSA migration 0004: my nosec edit had broken forward (caught by full suite, fixed); latent reverse-path bug (array_replace argument order) found and fixed, both directions now tested, verified against the buggy order.
+- Referential integrity: detection on System Health + `repair_referential_integrity` (dry-run default, JSON backup, ORM cascade). 3,442 rows removed from dev DB; backup kept at repo root.
+- Volume proof at 15,000 schools (edify_volume, ANALYZE'd): PLScope `school_ref` subquery (IN-list 130-190ms → semi-join <10ms), `risk_list` ranks on thin values and hydrates only the displayed page, `_cycle_fys` memoized both services.
+
+**Measured (p95, 7 runs)**
+| page | 702 schools | 15,000 schools |
+|---|---|---|
+| PL /dashboard | ~780ms | 14,671 → **2,911ms** |
+| CD /dashboard | 1,246ms | 7,013 → **6,508ms** |
+| CD /team-targets | 351ms | 1,701ms |
+| RVP /dashboard | 560ms | 1,577ms |
+| CCEO pages | <300ms | <300ms |
+
+**Still open, honestly**
+- CD /dashboard over budget at both scales. Cause known and fix pattern proven on PL (school_ref + per-section grouping in cd_dashboard_service: regional_performance, ssa_matrix, priority_schools, pl_performance each 2-3s at volume).
+- PL /planning and team-targets ~1.7s at 15k — same treatment applies.
+- Tool chains: pytest/coverage/bandit/pip-audit now run; mypy, Playwright, axe, visual-regression remain uninstalled.
+- Coverage under --parallel undercounts; run serially for a truthful figure.

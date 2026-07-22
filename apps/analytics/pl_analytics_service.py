@@ -170,9 +170,15 @@ class PLScope:
     pl_staff_id: str | None
     cceos: list = field(
         default_factory=list
-    )  # [{staff_id,user_id,name,initials,school_ids}]
+    )  # [{staff_id,user_id,name,initials,school_ids,school_ref}]
     responsible_ids: set = field(default_factory=set)  # staff_ids ∪ user_ids
     school_ids: list = field(default_factory=list)
+    # What goes into `school_id__in=` filters. Same membership as school_ids,
+    # but when the portfolio is unfiltered it is an UNEVALUATED assignment
+    # subquery: at 15,000 schools an IN-list of materialised ids costs
+    # 130-190ms per query in bind+scan, the semi-join under 10ms. Python-side
+    # code (len, set ops) must keep using school_ids.
+    school_ref: object = None
     district_ids: list = field(default_factory=list)
     cluster_ids: list = field(default_factory=list)
     school_filtered: bool = False  # a district/cluster/type filter narrowed schools
@@ -184,8 +190,22 @@ def _initials(name: str) -> str:
 
 def resolve_pl_scope(user, filters: dict | None = None) -> PLScope:
     """Resolve the supervised-team portfolio for a Program Lead, applying the
-    school-narrowing filters (cceo / district / cluster / school_type)."""
+    school-narrowing filters (cceo / district / cluster / school_type).
+
+    Memoized per request — the dashboard resolves the same portfolio twice,
+    and at volume each resolution materialises thousands of school ids."""
+    from apps.core.request_cache import memoize
+
     filters = filters or {}
+    key = (
+        "pl_scope",
+        getattr(user, "pk", None),
+        tuple(sorted((k, str(v)) for k, v in filters.items() if v)),
+    )
+    return memoize(key, lambda: _resolve_pl_scope_uncached(user, filters))
+
+
+def _resolve_pl_scope_uncached(user, filters: dict) -> PLScope:
     scope = resolve_user_scope(user)
     pl_staff_id = getattr(user, "staff_profile_id", None)
 
@@ -265,12 +285,37 @@ def resolve_pl_scope(user, filters: dict | None = None) -> PLScope:
         school_ids = set(sq.values_list("id", flat=True))
         school_filtered = True
 
+    # Query-shaped refs for `school_id__in=` filters. Only the fully
+    # unfiltered portfolio may use a subquery — it reproduces exactly the
+    # assignment ∩ active-schools intersection computed above. Any narrowed
+    # path keeps the literal id collection.
+    if school_filtered:
+        school_ref: object = school_ids
+        for c in cceos:
+            c["school_ref"] = c["school_ids"]
+    else:
+        # The portfolio is own + team + coverage, so the subquery must span the
+        # same staff set resolve_user_scope used — not just the CCEOs.
+        portfolio_staff = list(scope.assignment_staff_ids) or cceo_sp_ids
+        school_ref = School.objects.filter(
+            id__in=StaffSchoolAssignment.objects.filter(
+                staff_id__in=portfolio_staff
+            ).values("school_id")
+        ).values("id")
+        for c in cceos:
+            c["school_ref"] = School.objects.filter(
+                id__in=StaffSchoolAssignment.objects.filter(
+                    staff_id=c["staff_id"]
+                ).values("school_id")
+            ).values("id")
+
     return PLScope(
         user=user,
         pl_staff_id=pl_staff_id,
         cceos=cceos,
         responsible_ids=responsible_ids,
         school_ids=list(school_ids),
+        school_ref=school_ref,
         district_ids=list(scope.district_ids),
         cluster_ids=list(scope.cluster_ids),
         school_filtered=school_filtered,
@@ -283,11 +328,11 @@ def _team_activity_qs(pls: PLScope, fy: str, quarter: str | None, filters: dict)
     otherwise use the union of team-owned OR portfolio-school activities."""
     base = Activity.objects.filter(fy=fy, deleted_at__isnull=True)
     if pls.school_filtered:
-        base = base.filter(school_id__in=pls.school_ids)
+        base = base.filter(school_id__in=pls.school_ref)
     else:
         base = base.filter(
             Q(responsible_staff_id__in=pls.responsible_ids)
-            | Q(school_id__in=pls.school_ids)
+            | Q(school_id__in=pls.school_ref)
         )
     if quarter:
         base = base.filter(quarter=quarter)
@@ -370,7 +415,7 @@ class PLAnalyticsService:
         from apps.clusters.models import Cluster
         from apps.partners.models import PartnerAssignment
 
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         district_ids = list(
             schools.exclude(district__isnull=True)
             .order_by("district_id")
@@ -397,7 +442,7 @@ class PLAnalyticsService:
         # Partners active in the portfolio (assigned to portfolio schools/clusters).
         partner_ids = list(
             PartnerAssignment.objects.filter(
-                Q(school_id__in=pls.school_ids) | Q(cluster_id__in=cluster_ids)
+                Q(school_id__in=pls.school_ref) | Q(cluster_id__in=cluster_ids)
             )
             .values_list("partner_id", flat=True)
             .distinct()
@@ -446,7 +491,7 @@ class PLAnalyticsService:
     def kpis(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
         acts = _team_activity_qs(pls, fy, quarter, filters)
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
 
         team_target_pct, cceos_on_track = PLAnalyticsService._team_target(
             pls, fy, quarter, filters
@@ -823,14 +868,27 @@ class PLAnalyticsService:
     @staticmethod
     def _cycle_fys(pls: PLScope, fy: str) -> tuple[str | None, str | None]:
         """The latest confirmed annual SSA FY (<= selected fy) and the previous
-        one, portfolio-wide. Annual cycle comparison, never monthly."""
+        one, portfolio-wide. Annual cycle comparison, never monthly.
+
+        Memoized per request: six identical calls per dashboard, and each one
+        carries the full portfolio id list into a DISTINCT query — the single
+        largest block of SQL time at 15,000 schools."""
+        from apps.core.request_cache import memoize
+
+        return memoize(
+            ("pl_cycle_fys", len(pls.school_ids), hash(frozenset(pls.school_ids)), fy),
+            lambda: PLAnalyticsService._cycle_fys_uncached(pls, fy),
+        )
+
+    @staticmethod
+    def _cycle_fys_uncached(pls: PLScope, fy: str) -> tuple[str | None, str | None]:
         # NOTE: .order_by("fy") is required — SsaRecord has Meta ordering, and
         # values_list(...).distinct() otherwise includes the ordering column in
         # the SELECT and returns duplicate FYs (silently collapsing the annual
         # cycle comparison to latest==prev).
         fys = list(
             SsaRecord.objects.filter(
-                school_id__in=pls.school_ids,
+                school_id__in=pls.school_ref,
                 verification_status="confirmed",
                 fy__lte=fy,
             )
@@ -849,7 +907,7 @@ class PLAnalyticsService:
         if not latest:
             return None
         avg = SsaRecord.objects.filter(
-            school_id__in=pls.school_ids, verification_status="confirmed", fy=latest
+            school_id__in=pls.school_ref, verification_status="confirmed", fy=latest
         ).aggregate(a=Avg("average_score"))["a"]
         return _norm(avg)
 
@@ -878,7 +936,7 @@ class PLAnalyticsService:
 
         def _by_intervention(cycle_fy):
             record_ids = SsaRecord.objects.filter(
-                school_id__in=pls.school_ids,
+                school_id__in=pls.school_ref,
                 verification_status="confirmed",
                 fy=cycle_fy,
             ).values_list("id", flat=True)
@@ -1003,7 +1061,7 @@ class PLAnalyticsService:
     def district_performance(
         pls: PLScope, fy: str, quarter: str | None, filters: dict
     ) -> dict:
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         acts = _team_activity_qs(pls, fy, quarter, filters)
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
         by_district = (
@@ -1036,7 +1094,7 @@ class PLAnalyticsService:
         district_critical_schools: dict = {}  # district_id -> {school_id, ...}
         if latest_fy:
             for sid, score in SsaRecord.objects.filter(
-                school_id__in=pls.school_ids,
+                school_id__in=pls.school_ref,
                 verification_status="confirmed",
                 fy=latest_fy,
             ).values_list("school_id", "average_score"):
@@ -1098,7 +1156,7 @@ class PLAnalyticsService:
     ) -> dict:
         from apps.clusters.models import Cluster
 
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         cluster_ids = list(
             schools.exclude(cluster_id__isnull=True)
             .exclude(cluster_id="")
@@ -1130,7 +1188,7 @@ class PLAnalyticsService:
         record_cluster: dict = {}  # ssa_record_id -> cluster_id
         if latest_fy:
             for rec_id, sid, score in SsaRecord.objects.filter(
-                school_id__in=pls.school_ids,
+                school_id__in=pls.school_ref,
                 verification_status="confirmed",
                 fy=latest_fy,
             ).values_list("id", "school_id", "average_score"):
@@ -1299,12 +1357,12 @@ class PLAnalyticsService:
             return 0
         cur = dict(
             SsaRecord.objects.filter(
-                school_id__in=pls.school_ids, verification_status="confirmed", fy=latest
+                school_id__in=pls.school_ref, verification_status="confirmed", fy=latest
             ).values_list("school_id", "average_score")
         )
         old = dict(
             SsaRecord.objects.filter(
-                school_id__in=pls.school_ids, verification_status="confirmed", fy=prev
+                school_id__in=pls.school_ref, verification_status="confirmed", fy=prev
             ).values_list("school_id", "average_score")
         )
         improved = 0
@@ -1357,7 +1415,7 @@ class PLAnalyticsService:
             if c["user_id"]:
                 ids.add(c["user_id"])
             c_acts = acts.filter(
-                Q(responsible_staff_id__in=ids) | Q(school_id__in=c["school_ids"])
+                Q(responsible_staff_id__in=ids) | Q(school_id__in=c["school_ref"])
             )
             completed = c_acts.filter(status__in=COMPLETED_STATUSES).count()
             backlog = c_acts.filter(
@@ -1444,7 +1502,7 @@ class PLAnalyticsService:
     # ── G. Insights / recommended actions ────────────────────────────────────
     @staticmethod
     def insights(pls: PLScope, fy: str, quarter: str | None, filters: dict) -> dict:
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         acts = _team_activity_qs(pls, fy, quarter, filters).filter(
             status__in=COMPLETED_STATUSES
         )
@@ -1577,7 +1635,7 @@ class PLAnalyticsService:
     # ── J. Core & champion school performance ────────────────────────────────
     @staticmethod
     def core_champion(pls: PLScope, fy: str) -> dict:
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         core_ids = set(schools.filter(school_type="core").values_list("id", flat=True))
         champ_ids = set(
             schools.filter(school_type="champion").values_list("id", flat=True)
@@ -1639,28 +1697,29 @@ class PLAnalyticsService:
             ):
                 trained[sid] = d
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
+        # Ranking only needs each school's latest average — a thin values
+        # query. Materialising every record WITH its prefetched scores to rank
+        # 15,000 schools and then display twelve cost ~3s at volume; the full
+        # records are fetched below for the displayed page only.
         low_ssa_ids = set()
-        latest_records = {}
+        latest_avg: dict = {}
         if latest_fy:
-            records = (
+            for sid, avg in (
                 SsaRecord.objects.filter(
-                    school_id__in=pls.school_ids,
+                    school_id__in=pls.school_ref,
                     verification_status="confirmed",
                     fy=latest_fy,
                 )
-                .prefetch_related("scores")
                 .order_by("school_id", "-date_of_ssa", "-created_at")
-            )
-            for record in records:
-                latest_records.setdefault(record.school_id, record)
+                .values_list("school_id", "average_score")
+            ):
+                latest_avg.setdefault(sid, avg)
             low_ssa_ids = {
-                school_id
-                for school_id, record in latest_records.items()
-                if record.average_score is not None and record.average_score < 5.0
+                sid for sid, avg in latest_avg.items() if avg is not None and avg < 5.0
             }
 
         schools = list(
-            School.objects.filter(id__in=pls.school_ids)
+            School.objects.filter(id__in=pls.school_ref)
             .select_related("district")
             # school_id and district_id MUST be listed: the loop below reads
             # s.school_id and s.district.name, and a deferred field triggers a
@@ -1679,20 +1738,10 @@ class PLAnalyticsService:
         rows = []
         for s in schools:
             issues, actions = [], []
-            record = latest_records.get(s.id)
+            # Weakest-intervention labels are resolved after pagination, for
+            # the displayed rows only; the ranking never used them.
             weakest_code = ""
             weakest_label = ""
-            if record:
-                weakest_score = min(
-                    record.scores.all(),
-                    key=lambda sc: (sc.score, sc.intervention),
-                    default=None,
-                )
-                if weakest_score:
-                    weakest_code = weakest_score.intervention
-                    weakest_label = dict(SsaIntervention.choices).get(
-                        weakest_code, weakest_code
-                    )
             no_ssa = s.current_fy_ssa_status != "done"
             not_visited = s.id not in visited
             not_trained = s.id not in trained
@@ -1773,7 +1822,47 @@ class PLAnalyticsService:
             )
         rows.sort(key=lambda r: -r["severity"])
         offset = max(int(offset or 0), 0)
-        return {"rows": rows[offset : offset + limit], "total": len(rows)}
+        page = rows[offset : offset + limit]
+
+        # Resolve the weakest intervention for the displayed rows only.
+        page_ids = [r["id"] for r in page]
+        if latest_fy and page_ids:
+            page_latest: dict = {}
+            for record in (
+                SsaRecord.objects.filter(
+                    school_id__in=page_ids,
+                    verification_status="confirmed",
+                    fy=latest_fy,
+                )
+                .prefetch_related("scores")
+                .order_by("school_id", "-date_of_ssa", "-created_at")
+            ):
+                page_latest.setdefault(record.school_id, record)
+            labels = dict(SsaIntervention.choices)
+            for r in page:
+                record = page_latest.get(r["id"])
+                if not record:
+                    continue
+                weakest_score = min(
+                    record.scores.all(),
+                    key=lambda sc: (sc.score, sc.intervention),
+                    default=None,
+                )
+                if not weakest_score:
+                    continue
+                code = weakest_score.intervention
+                label = labels.get(code, code)
+                r["weakest_intervention"] = label
+                r["weakest_intervention_code"] = code
+                upgrades = {
+                    "coaching_visit": f"Schedule {label} Coaching Visit",
+                    "school_improvement_training": f"Schedule {label} Training",
+                }
+                new_label = upgrades.get(r["recommended_activity_type"])
+                if new_label:
+                    r["recommended_activity_label"] = new_label
+                    r["next_action"] = new_label
+        return {"rows": page, "total": len(rows)}
 
     # ── L. Donor / reporting snapshot ────────────────────────────────────────
     @staticmethod
@@ -1873,7 +1962,7 @@ class PLAnalyticsService:
         fy = fy or get_operational_fy()
         pls = resolve_pl_scope(user, filters or {})
         PLAnalyticsService.insights(pls, fy, quarter, filters or {})
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         no_ssa = schools.exclude(current_fy_ssa_status="done").count()
         clusters = PLAnalyticsService.cluster_performance(
             pls, fy, quarter, filters or {}
@@ -2011,7 +2100,7 @@ class PLAnalyticsService:
 
         # KPI drill-down (default): a scoped school/CCEO list behind a KPI.
         metric = (params.get("metric") or "").strip()
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         if metric == "no_ssa":
             rows = list(
                 schools.exclude(current_fy_ssa_status="done")

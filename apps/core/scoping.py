@@ -51,6 +51,10 @@ class UserScope:
     core_school_ids: list[str] = field(default_factory=list)
     staff_ids: list[str] = field(default_factory=list)
     supervised_staff_ids: list[str] = field(default_factory=list)
+    # Every staff id whose StaffSchoolAssignment rows produced school_ids —
+    # self + active coverage + supervisees. Lets consumers rebuild the school
+    # set as a subquery instead of shipping thousands of literal ids.
+    assignment_staff_ids: list[str] = field(default_factory=list)
     partner_ids: list[str] = field(default_factory=list)
 
     # Capability flags.
@@ -87,7 +91,21 @@ def _uniq(items: Iterable[str]) -> list[str]:
 def resolve_user_scope(user) -> UserScope:
     """Resolve the scope for an AuthPrincipal. Defensive about missing apps —
     schools/partners/staff may not exist yet during the build; return an empty
-    scope of the right shape so the country/summary-only paths keep working."""
+    scope of the right shape so the country/summary-only paths keep working.
+
+    Memoized per request (apps.core.request_cache): a Program Lead dashboard
+    resolves scope five times, and at 15,000 schools each resolution walks the
+    full assignment tree. Scope inputs (role, assignments, geography) cannot
+    change mid-request; outside a request there is no cache."""
+    from apps.core.request_cache import memoize
+
+    return memoize(
+        ("user_scope", getattr(user, "pk", None), user.active_role),
+        lambda: _resolve_user_scope_uncached(user),
+    )
+
+
+def _resolve_user_scope_uncached(user) -> UserScope:
     role = user.active_role
     perms = permissions_for_role(role)
     has = lambda p: p in perms  # noqa: E731
@@ -101,6 +119,7 @@ def resolve_user_scope(user) -> UserScope:
     school_ids: list[str] = []
     own_school_ids: list[str] = []
     team_school_ids: list[str] = []
+    assignment_staff_ids: list[str] = []
     core_school_ids: list[str] = []
     supervised_staff_ids: list[str] = []
     partner_ids: list[str] = []
@@ -221,6 +240,9 @@ def resolve_user_scope(user) -> UserScope:
                 team_school_ids = [s for s in _uniq(team) if s not in own_school_ids]
 
         school_ids = _uniq([*own_school_ids, *team_school_ids])
+        assignment_staff_ids = _uniq(
+            [staff_id, *covered_staff_ids, *supervised_staff_ids]
+        )
 
         # Derive geography + clusters + core subset from the in-scope schools.
         if school_ids:
@@ -313,6 +335,7 @@ def resolve_user_scope(user) -> UserScope:
         school_ids=school_ids,
         own_school_ids=own_school_ids,
         team_school_ids=team_school_ids,
+        assignment_staff_ids=assignment_staff_ids,
         core_school_ids=core_school_ids,
         staff_ids=[staff_id] if staff_id else [],
         supervised_staff_ids=supervised_staff_ids,

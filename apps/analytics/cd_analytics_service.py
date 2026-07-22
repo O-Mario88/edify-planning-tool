@@ -167,6 +167,22 @@ def _country_activities(cd: CDScope):
 
 # ── SSA annual-cycle helpers (country-wide) ──────────────────────────────────
 def _cycle_fys(school_ids, fy):
+    """Latest + previous confirmed SSA FY for a school set. Memoized per
+    request — the CD dashboard asks four times for the same country-wide set,
+    and each call drags the whole id list into a DISTINCT query (~350ms at
+    15,000 schools)."""
+    from apps.core.request_cache import memoize
+
+    ids = school_ids if isinstance(school_ids, (list, set, frozenset)) else None
+    if ids is None:
+        return _cycle_fys_uncached(school_ids, fy)
+    return memoize(
+        ("cd_cycle_fys", len(ids), hash(frozenset(ids)), fy),
+        lambda: _cycle_fys_uncached(school_ids, fy),
+    )
+
+
+def _cycle_fys_uncached(school_ids, fy):
     fys = sorted(
         SsaRecord.objects.filter(
             school_id__in=school_ids, verification_status="confirmed", fy__lte=fy

@@ -111,7 +111,7 @@ class ProgramLeadDashboardService:
             "quick_actions": ProgramLeadDashboardService.quick_actions(user, pls, fy),
             "scope_meta": {
                 "cceo_count": len(pls.cceos),
-                "school_count": School.objects.filter(id__in=pls.school_ids).count(),
+                "school_count": School.objects.filter(id__in=pls.school_ref).count(),
             },
         }
 
@@ -218,10 +218,10 @@ class ProgramLeadDashboardService:
             ids.add(pl_id)
         ids.add(pls.user.id)
         if pls.school_filtered:
-            base = base.filter(school_id__in=pls.school_ids)
+            base = base.filter(school_id__in=pls.school_ref)
         else:
             base = base.filter(
-                Q(responsible_staff_id__in=ids) | Q(school_id__in=pls.school_ids)
+                Q(responsible_staff_id__in=ids) | Q(school_id__in=pls.school_ref)
             )
         atype = (filters.get("activity_type") or "").strip()
         if atype:
@@ -421,7 +421,7 @@ class ProgramLeadDashboardService:
         if latest_fy:
             low_ssa = set(
                 SsaRecord.objects.filter(
-                    school_id__in=pls.school_ids,
+                    school_id__in=pls.school_ref,
                     verification_status="confirmed",
                     fy=latest_fy,
                     average_score__lt=5.0,
@@ -433,7 +433,7 @@ class ProgramLeadDashboardService:
             .values_list("school_id", flat=True)
         )
         no_ssa_no_visit = set(
-            School.objects.filter(id__in=pls.school_ids)
+            School.objects.filter(id__in=pls.school_ref)
             .exclude(current_fy_ssa_status="done")
             .exclude(id__in=visited)
             .values_list("id", flat=True)
@@ -875,7 +875,7 @@ class ProgramLeadDashboardService:
             .values_list("school_id", flat=True)
         )
         all_ids = set(
-            School.objects.filter(id__in=pls.school_ids).values_list("id", flat=True)
+            School.objects.filter(id__in=pls.school_ref).values_list("id", flat=True)
         )
         no_visit = len(all_ids - visited)
         no_training = len(all_ids - trained)
@@ -952,7 +952,7 @@ class ProgramLeadDashboardService:
     @staticmethod
     def ssa_cluster_matrix(pls, fy) -> dict:
         latest_fy, _ = PLAnalyticsService._cycle_fys(pls, fy)
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
         cluster_ids = list(
             schools.exclude(cluster_id__isnull=True)
             .exclude(cluster_id="")
@@ -1213,7 +1213,7 @@ class ProgramLeadDashboardService:
         pls = resolve_pl_scope(user, filters)
         acts = ProgramLeadDashboardService._team_acts(pls, fy, filters)
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-        schools = School.objects.filter(id__in=pls.school_ids)
+        schools = School.objects.filter(id__in=pls.school_ref)
 
         def school_payload(qs, title):
             return {
@@ -1251,7 +1251,7 @@ class ProgramLeadDashboardService:
             if latest_fy:
                 low = set(
                     SsaRecord.objects.filter(
-                        school_id__in=pls.school_ids,
+                        school_id__in=pls.school_ref,
                         verification_status="confirmed",
                         fy=latest_fy,
                         average_score__lt=5.0,
