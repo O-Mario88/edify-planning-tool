@@ -1591,16 +1591,101 @@ def my_performance_view(request):
         review = build_draft_agreement(sp, cycle, request.user)
 
     priorities = []
+    weighted_num = weighted_den = 0
     if review:
-        for p in review.priorities.all():
-            progress = live_progress(p)
-            priorities.append({"p": p, "progress": progress})
+        for pr in review.priorities.all().prefetch_related("milestones"):
+            progress = live_progress(pr)
+            if progress["pct"] is not None and pr.weight:
+                weighted_num += min(progress["pct"], 100) * pr.weight
+                weighted_den += pr.weight
+            priorities.append(
+                {
+                    "p": pr,
+                    "progress": progress,
+                    "milestones": list(pr.milestones.all()[:3]),
+                }
+            )
+
+    # KPI strip — every figure derived, never typed.
+    overall_pct = round(weighted_num / weighted_den) if weighted_den else None
+    allocation = {"total": 0, "core": 0, "client": 0, "champion": 0}
+    if sp is not None:
+        from apps.hr.performance_engine import _assigned_school_ids
+        from apps.schools.models import School
+
+        assigned = _assigned_school_ids(sp)
+        allocation["total"] = len(assigned)
+        for stype, n in (
+            School.objects.filter(id__in=assigned)
+            .values_list("school_type")
+            .annotate(n=__import__("django").db.models.Count("id"))
+        ):
+            if stype in allocation:
+                allocation[stype] = n
+
+    layers = {"organizational": 0, "role": 0, "personal": 0}
+    for row in priorities:
+        layer = row["p"].priority_layer or "role"
+        layers[layer] = layers.get(layer, 0) + 1
+
+    WINDOW_LABELS = {
+        "priority_setting": "Priority Setting",
+        "q1": "Q1 Check-in",
+        "q2_midyear": "Q2 Mid-Year",
+        "q3": "Q3 Check-in",
+        "q4_yearend": "Q4 Year-End",
+    }
+    amendments = []
+    if review:
+        from apps.hr.models import PriorityAmendment
+
+        amendments = list(
+            PriorityAmendment.objects.filter(priority__review=review)
+            .select_related("priority", "requested_by")
+            .order_by("-created_at")[:20]
+        )
+    snapshots = []
+    if review:
+        for snap in review.snapshots.order_by("created_at"):
+            snapshots.append(
+                {"snap": snap, "label": WINDOW_LABELS.get(snap.window, snap.window)}
+            )
+
     context = {
         "cycle": cycle,
         "review": review,
         "priorities": priorities,
         "development": development_rows(review) if review else [],
         "values": list(review.value_commitments.all()) if review else [],
+        "amendments": amendments,
+        "snapshots": snapshots,
+        "overall_pct": overall_pct,
+        "allocation": allocation,
+        "layers": layers,
+        "active_window_label": (
+            WINDOW_LABELS.get(cycle.active_window) if cycle else None
+        ),
+        "stage_label": (
+            {
+                "not_started": "Draft — not started",
+                "draft": "Draft",
+                "employee_input": "Employee input",
+                "manager_review": "Manager review",
+                "approved": "Approved",
+                "returned": "Returned",
+                "signed_off": "Signed off",
+            }.get(review.stage, review.stage.replace("_", " ").capitalize())
+            if review
+            else None
+        ),
+        "tab_defs": [
+            ("priorities", "Agreed Priorities"),
+            ("targets", "Targets & Progress"),
+            ("development", "Development Plans"),
+            ("values", "Values & Commitments"),
+            ("amendments", "Amendments"),
+            ("conversations", "Conversations"),
+        ],
         "tab": request.GET.get("tab", "priorities"),
     }
     return render(request, "pages/hr/my_performance.html", context)
