@@ -761,3 +761,213 @@ def flag_performance_support(review, reason: str, principal):
     except Exception:  # noqa: BLE001
         pass
     return plan
+
+
+# ── Targets sync (§5: no separate manual target entry) ──────────────────────
+
+# Priority metric → canonical TargetArea key. Only metrics that ARE official
+# target areas map; partner management, new schools and accountability
+# quality are performance priorities without a personal target area, and
+# inventing one for them would create the second target system the mandate
+# forbids.
+_METRIC_TO_AREA = {
+    "direct_visits": "school_visits",
+    "cluster_meetings": "cluster_meetings",
+    "trainings": "cluster_trainings",
+    "ssa_coverage": "ssa_completed",
+}
+
+# Default quarterly phasing (§12). Configurable per cycle later; stated here
+# so the split is visible rather than implied by an even division.
+DEFAULT_PHASING = {1: 0.20, 2: 0.30, 3: 0.30, 4: 0.20}
+
+
+def _phased_split(annual: int) -> list[int]:
+    """Split an annual target into twelve months by the approved phasing,
+    preserving the total exactly (largest-remainder apportionment)."""
+    shares = [DEFAULT_PHASING[(m - 1) // 3 + 1] / 3.0 for m in range(1, 13)]
+    raw = [annual * s for s in shares]
+    base = [int(r) for r in raw]
+    remainder = annual - sum(base)
+    # Hand the leftover units to the months with the largest fractional part.
+    order = sorted(range(12), key=lambda i: raw[i] - base[i], reverse=True)
+    for i in order[: max(0, remainder)]:
+        base[i] += 1
+    return base
+
+
+def sync_targets_from_agreement(review, principal=None) -> int:
+    """On approval, populate My Targets from the agreed priorities.
+
+    ONE ledger: this writes MonthlyPersonalTarget, the same rows My Targets
+    and Team Targets already read. It does not create a parallel store, and
+    it never touches achievement — only the commitment. Idempotent via the
+    model's unique constraint on (user, area, fy, month).
+    """
+    from apps.targets.models import MonthlyPersonalTarget, TargetArea
+
+    user_id = review.staff.user_id
+    if not user_id:
+        return 0
+    areas = {a.key: a for a in TargetArea.objects.filter(active=True)}
+    written = 0
+    with transaction.atomic():
+        for p in review.priorities.all():
+            area_key = _METRIC_TO_AREA.get(p.metric_key or "")
+            if not area_key or area_key not in areas:
+                continue
+            annual = p.target_number or 0
+            if annual <= 0:
+                continue
+            # Spread the annual commitment across the FY's twelve months
+            # using the approved quarterly phasing, so an employee is
+            # measured against what was expected BY the review date.
+            #
+            # Distributed by largest remainder, NOT by rounding each month
+            # independently: a four-visit annual target rounds to zero in
+            # every month on its own and the whole commitment disappears.
+            # The twelve months must sum to exactly the annual number.
+            monthly = _phased_split(annual)
+            for month_of_fy, value in enumerate(monthly, start=1):
+                MonthlyPersonalTarget.objects.update_or_create(
+                    user_id=user_id,
+                    area=areas[area_key],
+                    fy=review.fy,
+                    month_of_fy=month_of_fy,
+                    defaults={"target": value},
+                )
+                written += 1
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="hr.targets_synced_from_agreement",
+            subject_kind="PerformanceReview",
+            subject_id=review.id,
+            actor_id=getattr(principal, "user_id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload={"rows": written},
+        )
+    except Exception:  # noqa: BLE001
+        pass
+    return written
+
+
+def approve_agreement(review, principal):
+    """Lock the agreement and populate targets — the §7 transition."""
+    _assert_hr(principal)
+    review.stage = "priorities_agreed"
+    review.save(update_fields=["stage", "updated_at"])
+    return sync_targets_from_agreement(review, principal)
+
+
+# ── HR return / reopen (§7: every reopen carries a reason and an audit row) ──
+
+
+def return_for_correction(review, reason: str, principal):
+    """HR sends a conversation back. Never silent: the reason is required and
+    the transition is audited."""
+    _assert_hr(principal)
+    if not (reason or "").strip():
+        raise BadRequest("Returning a conversation requires a reason.")
+    review.stage = "manager_assessment"
+    review.save(update_fields=["stage", "updated_at"])
+    _audit_review(review, "hr.performance_returned", principal, {"reason": reason})
+    return review
+
+
+def reopen_conversation(review, window: str, reason: str, principal):
+    """Reopen a signed-off conversation.
+
+    The SNAPSHOT IS NOT REGENERATED — reopening lets people correct their
+    words, not the numbers the conversation was held against. A new snapshot
+    would silently rewrite history, which §10 forbids.
+    """
+    _assert_hr(principal)
+    if not (reason or "").strip():
+        raise BadRequest("Reopening a conversation requires a reason.")
+    from apps.hr.models import PerformanceSnapshot
+
+    snap = PerformanceSnapshot.objects.filter(review=review, window=window).first()
+    if snap is None:
+        raise BadRequest("There is no signed conversation for that window.")
+    snap.signed_off_at = None
+    snap.signed_off_by = None
+    snap.save(update_fields=["signed_off_at", "signed_off_by", "updated_at"])
+    _audit_review(
+        review,
+        "hr.performance_reopened",
+        principal,
+        {"window": window, "reason": reason},
+    )
+    return snap
+
+
+def sign_off(review, window: str, principal):
+    """Lock the snapshot permanently."""
+    from apps.hr.models import PerformanceSnapshot
+
+    snap = PerformanceSnapshot.objects.filter(review=review, window=window).first()
+    if snap is None:
+        raise BadRequest("No snapshot exists for that window.")
+    if snap.signed_off_at:
+        return snap
+    snap.signed_off_at = timezone.now()
+    snap.signed_off_by_id = getattr(principal, "user_id", None)
+    snap.save(update_fields=["signed_off_at", "signed_off_by", "updated_at"])
+    _audit_review(review, "hr.performance_signed_off", principal, {"window": window})
+    return snap
+
+
+def _audit_review(review, action: str, principal, payload: dict) -> None:
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=action,
+            subject_kind="PerformanceReview",
+            subject_id=review.id,
+            actor_id=getattr(principal, "user_id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload=payload,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+# ── Document generation from the LOCKED snapshot (§14/§17) ─────────────────
+
+
+def conversation_document(review, window: str, principal) -> dict:
+    """The conversation record, rendered from the snapshot — never from live
+    data. Returns the context a printable document is built from; the caller
+    renders it to HTML (browser-printable to PDF). DOCX is deliberately not
+    generated here: no document library is installed, and adding a dependency
+    silently is worse than saying so.
+
+    Access is permission- and scope-checked by the caller's view; every
+    download writes an audit row.
+    """
+    from apps.hr.models import PerformanceSnapshot
+
+    snap = PerformanceSnapshot.objects.filter(review=review, window=window).first()
+    if snap is None:
+        raise BadRequest("No snapshot exists for that conversation.")
+    _audit_review(
+        review,
+        "hr.performance_document_downloaded",
+        principal,
+        {"window": window, "snapshot_id": snap.id},
+    )
+    return {
+        "review": review,
+        "staff": review.staff,
+        "window": window,
+        "snapshot": snap,
+        "priorities": snap.data.get("priorities", []),
+        "taken_at": snap.taken_at,
+        "signed_off_at": snap.signed_off_at,
+        "values": list(review.value_commitments.filter(kind="value")),
+        "spiritual": list(review.value_commitments.filter(kind="spiritual")),
+        "development": development_rows(review),
+    }

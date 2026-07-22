@@ -336,3 +336,138 @@ class FormTaxonomyTests(EngineFixture):
         plan = flag_performance_support(review, "Two checkpoints behind", self.hr)
         self.assertEqual(plan.plan_type, RecoveryPlanType.INFORMAL)
         self.assertEqual(plan.status, "draft")
+
+
+class TargetsSyncTests(EngineFixture):
+    """§5/§17 — approval populates My Targets; no second target system."""
+
+    def test_approval_writes_monthly_personal_targets(self):
+        from apps.hr.performance_engine import approve_agreement
+        from apps.targets.models import MonthlyPersonalTarget, TargetArea
+
+        for key, label, weight in [
+            ("school_visits", "School Visits", 30),
+            ("ssa_completed", "SSA Completed", 25),
+            ("cluster_trainings", "Cluster Trainings", 20),
+        ]:
+            TargetArea.objects.get_or_create(
+                key=key, defaults={"label": label, "weight": weight}
+            )
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        written = approve_agreement(review, self.hr)
+        self.assertGreater(written, 0)
+
+        rows = MonthlyPersonalTarget.objects.filter(user_id=self.cceo.id, fy="2026")
+        # 12 months per mapped area — the canonical My Targets rows, not a
+        # parallel store.
+        self.assertEqual(rows.filter(area__key="school_visits").count(), 12)
+        annual = sum(r.target for r in rows.filter(area__key="school_visits"))
+        self.assertAlmostEqual(annual, 4, delta=1)  # 4 assigned schools
+
+    def test_sync_is_idempotent(self):
+        from apps.hr.performance_engine import (
+            approve_agreement,
+            sync_targets_from_agreement,
+        )
+        from apps.targets.models import MonthlyPersonalTarget, TargetArea
+
+        TargetArea.objects.get_or_create(
+            key="school_visits", defaults={"label": "School Visits", "weight": 30}
+        )
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        approve_agreement(review, self.hr)
+        before = MonthlyPersonalTarget.objects.count()
+        sync_targets_from_agreement(review, self.hr)
+        self.assertEqual(MonthlyPersonalTarget.objects.count(), before)
+
+    def test_only_hr_approves(self):
+        from apps.hr.performance_engine import approve_agreement
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        with self.assertRaises(Forbidden):
+            approve_agreement(review, self.cceo)
+
+
+class PhasedSplitTests(TestCase):
+    """A small annual target must not vanish into per-month rounding."""
+
+    def test_the_split_always_sums_to_the_annual_target(self):
+        from apps.hr.performance_engine import _phased_split
+
+        for annual in (1, 3, 4, 12, 25, 80, 560):
+            months = _phased_split(annual)
+            self.assertEqual(len(months), 12)
+            self.assertEqual(sum(months), annual, f"{annual} lost units in phasing")
+
+    def test_phasing_is_seasonal_not_flat(self):
+        from apps.hr.performance_engine import _phased_split
+
+        months = _phased_split(120)
+        q1, q2 = sum(months[0:3]), sum(months[3:6])
+        self.assertLess(q1, q2, "Q1 is a 20% quarter, Q2 a 30% one")
+
+
+class ReopenAndDocumentTests(EngineFixture):
+    """§7/§10/§14 — reopen never rewrites history; documents come from the
+    locked snapshot."""
+
+    def _signed(self):
+        from apps.hr.performance_engine import activate_window, sign_off
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        activate_window(self.cycle, "q1", self.hr)
+        sign_off(review, "q1", self.hr)
+        return review
+
+    def test_reopen_requires_a_reason_and_hr(self):
+        from apps.hr.performance_engine import reopen_conversation
+
+        review = self._signed()
+        with self.assertRaises(Forbidden):
+            reopen_conversation(review, "q1", "x", self.cceo)
+        with self.assertRaises(BadRequest):
+            reopen_conversation(review, "q1", "  ", self.hr)
+
+    def test_reopening_unlocks_but_never_regenerates_the_snapshot(self):
+        from apps.hr.performance_engine import reopen_conversation
+
+        review = self._signed()
+        snap = review.snapshots.get(window="q1")
+        original = snap.data
+        taken = snap.taken_at
+        # Work lands AFTER sign-off; reopening must not absorb it.
+        Activity.objects.create(
+            school_id=self.schools[0].id,
+            activity_type="school_visit",
+            status="ia_verified",
+            responsible_staff_id=self.sp.id,
+            fy="2026",
+            quarter="Q1",
+        )
+        reopen_conversation(review, "q1", "Manager comment was wrong", self.hr)
+        snap.refresh_from_db()
+        self.assertIsNone(snap.signed_off_at)
+        self.assertEqual(snap.data, original, "history must not be rewritten")
+        self.assertEqual(snap.taken_at, taken)
+
+    def test_the_document_is_built_from_the_snapshot(self):
+        from apps.hr.performance_engine import conversation_document
+
+        review = self._signed()
+        doc = conversation_document(review, "q1", self.hr)
+        self.assertEqual(
+            doc["priorities"], review.snapshots.get(window="q1").data["priorities"]
+        )
+        self.assertEqual(len(doc["values"]), 6)
+        self.assertTrue(doc["spiritual"])
+        self.assertIsNotNone(doc["signed_off_at"])
+
+    def test_return_for_correction_requires_a_reason(self):
+        from apps.hr.performance_engine import return_for_correction
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        with self.assertRaises(BadRequest):
+            return_for_correction(review, "", self.hr)
+        return_for_correction(review, "Ratings incomplete", self.hr)
+        review.refresh_from_db()
+        self.assertEqual(review.stage, "manager_assessment")
