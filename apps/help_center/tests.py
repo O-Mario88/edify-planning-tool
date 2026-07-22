@@ -60,8 +60,8 @@ class KnowledgeCenterTest(TestCase):
 
         response = self.client.get("/help/context", {"for": "/my-plan"})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Help for this page")
-        self.assertContains(response, "Open full article")
+        # Contextual help now renders the full article page (not a popup).
+        self.assertTemplateUsed(response, "pages/help/article.html")
 
     def test_role_restricted_article_is_denied(self):
         self.client.force_login(self.accountant)

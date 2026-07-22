@@ -16,8 +16,8 @@ def _floor_money(apps, schema_editor):
             ("monthly_work_plan_budget", "total_amount"),
         ):
             c.execute(
-                # nosec B608 - table/col come from the hardcoded tuple above,
-                # never from data; identifiers cannot be parameterised in SQL.
+                # table/col come from the hardcoded tuple above, never from
+                # data; identifiers cannot be parameterised in SQL.
                 f"UPDATE {table} SET {col} = floor({col}::numeric) WHERE {col} IS NOT NULL"  # noqa: E501  # nosec B608
             )
 

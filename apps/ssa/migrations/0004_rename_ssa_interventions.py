@@ -39,14 +39,14 @@ def forward(apps, schema_editor):
         for table, col in _SCALAR_COLUMNS:
             for old, new in _RENAMES:
                 cursor.execute(
-                    f"UPDATE {table} SET {col} = %s WHERE {col} = %s"[new, old],  # nosec B608,
+                    f"UPDATE {table} SET {col} = %s WHERE {col} = %s",  # nosec B608
+                    [new, old],
                 )
         for table, col in _ARRAY_COLUMNS:
             for old, new in _RENAMES:
                 cursor.execute(
-                    f"UPDATE {table} SET {col} = array_replace({col}, %s, %s)"[  # nosec B608,
-                        old, new
-                    ],
+                    f"UPDATE {table} SET {col} = array_replace({col}, %s, %s)",  # nosec B608
+                    [old, new],
                 )
 
 
@@ -55,14 +55,19 @@ def reverse(apps, schema_editor):
         for table, col in _SCALAR_COLUMNS:
             for old, new in reversed(_RENAMES):
                 cursor.execute(
-                    f"UPDATE {table} SET {col} = %s WHERE {col} = %s"[old, new],  # nosec B608,
+                    f"UPDATE {table} SET {col} = %s WHERE {col} = %s",  # nosec B608
+                    [old, new],
                 )
         for table, col in _ARRAY_COLUMNS:
             for old, new in reversed(_RENAMES):
+                # array_replace(column, from, to). Reversing means turning the
+                # new value back into the old one, so `from` is `new`. This
+                # read [old, new] until 2026-07-22, which re-applied the
+                # forward rename instead of undoing it — a rollback of this
+                # migration left the array columns fully migrated.
                 cursor.execute(
-                    f"UPDATE {table} SET {col} = array_replace({col}, %s, %s)"[  # nosec B608,
-                        old, new
-                    ],
+                    f"UPDATE {table} SET {col} = array_replace({col}, %s, %s)",  # nosec B608
+                    [new, old],
                 )
 
 
