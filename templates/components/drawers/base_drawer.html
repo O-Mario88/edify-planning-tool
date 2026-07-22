@@ -2,7 +2,7 @@
 x-data="{
 active: false,
 size: '{{ drawer_size|default:'md' }}',
-type: 'center',
+type: '{{ drawer_type|default:'center' }}',
 isDirty: false
 }"
 x-init="

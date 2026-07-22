@@ -80,13 +80,35 @@ class FrontendViewsTestCase(TestCase):
         self.assertTrue(response.url.startswith("/login"))
 
     def test_dashboard_view_renders_successfully(self):
+        """UPDATED BY MANDATE: the urgent card is month-scoped and SSA-first.
+        The old assertion pinned the portfolio-wide card — every school
+        appeared regardless of the month, with an Assign menu. A school now
+        appears only with a planned activity in the selected month, carrying
+        ONE resolver-named action; with no current verified SSA that action
+        is Schedule SSA and no intervention conclusion may render."""
+        from django.utils import timezone as _tz
+
+        from apps.core.fy import get_operational_fy
+
+        from apps.activities.models import Activity as _A
+
+        _A.objects.create(
+            school_id=self.school.id,
+            activity_type="school_visit",
+            status="scheduled",
+            responsible_staff_id=self.cceo_user.staff_profile_id,
+            fy=get_operational_fy(),
+            quarter="Q4",
+            planned_date=_tz.now(),
+        )
         self.client.force_login(self.cceo_user)
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/cceo.html")
         self.assertContains(response, "Schools Needing Urgent Attention")
-        self.assertContains(response, "Complete SSA")
-        self.assertContains(response, "Assign")
+        self.assertContains(response, "No SSA")
+        self.assertContains(response, "Schedule SSA")
+        self.assertNotContains(response, "Financial Health ·")
 
     def test_program_lead_dashboard_renders_successfully(self):
         User = get_user_model()

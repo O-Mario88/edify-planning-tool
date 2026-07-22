@@ -131,7 +131,7 @@ class DesignSystemContractTest(SimpleTestCase):
         ).read_text()
         drawer_css = (ROOT / "static/css/drawers.css").read_text()
 
-        self.assertIn("type: 'center'", base_drawer)
+        self.assertIn("drawer_type|default:'center'", base_drawer)
         self.assertIn(".edify-popup-dialog {", drawer_css)
         self.assertIn("place-items: center;", drawer_css)
         self.assertIn(".edify-popup-dialog__surface {", drawer_css)

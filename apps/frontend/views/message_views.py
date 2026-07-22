@@ -178,7 +178,7 @@ def message_drawer_view(request):
     context = {
         "threads": threads,
         "unread_count": unread_count,
-        "drawer_type": "center",
+        "drawer_type": "right_top",
         "drawer_size": "sm",
     }
     return render(request, "partials/messages/message_drawer.html", context)

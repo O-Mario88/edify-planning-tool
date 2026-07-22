@@ -25,7 +25,8 @@
         <td class="px-3 py-3 align-top">
           <span class="inline-flex rounded-pill px-2 py-0.5 font-semibold edify-danger-soft edify-danger-text border edify-danger-border"
                 style="font-size: 12px">
-            {{ row.issue }}
+            {{ row.issue }}{% if row.issue_context %}
+            <span class="mt-0.5 block edify-text-caption edify-text-muted font-normal">{{ row.issue_context }}</span>{% endif %}
           </span>
           {% if row.weakest_intervention %}
           <span class="mt-1 block edify-text-muted">Weakest: {{ row.weakest_intervention }}</span>
@@ -47,23 +48,15 @@
             </button>
           </span>
           {% else %}
-          <div class="inline-flex flex-wrap justify-end gap-1.5">
-            <button type="button"
-                    class="edify-action-button primary"
-                    hx-get="{{ row.schedule_url }}"
-                    hx-target="#drawer-container"
-                    aria-label="Schedule activity for {{ row.school }}">
-              Schedule
-            </button>
-            {% if urgent_action_mode == "cceo" %}
-            <button type="button"
-                    class="edify-action-button secondary"
-                    hx-get="{{ row.partner_url }}"
-                    hx-target="#drawer-container">
-              Assign
-            </button>
-            {% endif %}
-          </div>
+          {% comment %}ONE action per school — the resolver names it
+          (Schedule SSA / Complete SSA / Open Planning / Plan Training /
+          Plan Visit / View Recommendation); the card never offers a menu.
+          {% endcomment %}
+          <a href="{{ row.action_url }}"
+             class="edify-action-button primary"
+             aria-label="{{ row.action_label }} for {{ row.school }}">
+            {{ row.action_label }}
+          </a>
           {% endif %}
         </td>
       </tr>

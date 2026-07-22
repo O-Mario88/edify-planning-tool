@@ -257,3 +257,16 @@ role-scoped, scheduled-state as secondary text, 5-7 rows max. ONE backend
 resolver (resolve_urgent_issue) reusing: latest confirmed-FY SSA, entitlement
 gap (client 1+1, core slots), IA_VERIFIED completion, recommendation_engine.
 Tests per §14. No logic in templates/JS/exports.
+
+## TOPBAR SEARCH REWIRE PATTERN (locked from school_views.py:444)
+context["topbar_search"] = {placeholder, input_id: "topbar-search-input",
+value: q, hx_get: <page url>, hx_target: <results container>,
+hx_trigger: "keyup delay:300ms, search", hx_include: "#<filter form id>"}.
+Then DELETE the body search input (keep name="q"/"search" param handling in
+the view). 21 pages listed in the inventory (messages, trainings, visits,
+debriefs, projects×3, ia queue, planning, accounts, partners, hr pd,
+notifications, leave approvals, evidence, disbursements, fund_requests,
+clusters, fund_allocation, fund_approvals, country_budget). Drawer/modal
+selector searches stay (documented exceptions). After rewires: template-lint
+test — at most one persistent search input per rendered page, and it is the
+topbar one.

@@ -1017,7 +1017,7 @@ def notification_drawer_view(request):
     context = {
         "notifications": notifs,
         "unread_count": unread_count,
-        "drawer_type": "center",
+        "drawer_type": "right_top",
         "drawer_size": "sm",
     }
     return render(request, "partials/notifications/notification_drawer.html", context)

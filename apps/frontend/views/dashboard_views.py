@@ -421,7 +421,7 @@ def dashboard_view(request):
         # the same SSA/activity risk contract as the PL dashboard, then exposes
         # both valid CCEO responses: schedule direct support or hand it to a
         # partner. The drawers enforce object scope and permissions again.
-        from apps.analytics.pl_analytics_service import PLScope, PLAnalyticsService
+        from apps.analytics.pl_analytics_service import PLScope
 
         _dashboard_fy = get_operational_fy()
         _risk_scope = PLScope(
@@ -432,9 +432,35 @@ def dashboard_view(request):
             district_ids=list(_scope.district_ids),
             cluster_ids=list(_scope.cluster_ids),
         )
-        urgent_schools = PLAnalyticsService.risk_list(
-            _risk_scope, _dashboard_fy, None, {}, limit=8
-        )["rows"]
+        # SSA-first, month-scoped, deduplicated — the canonical resolver.
+        # risk_list ranked the whole portfolio and would happily label a
+        # school "Financial Health — Critical" with no current verified SSA
+        # at all; the card now answers only "among the schools planned THIS
+        # MONTH, what needs me first", with No SSA outranking everything and
+        # suppressing every intervention conclusion.
+        from apps.planning.urgent_attention import monthly_urgent_schools
+
+        _urgent = monthly_urgent_schools(user, fy=_dashboard_fy, limit=8)
+        urgent_schools = [
+            {
+                "id": r["school_id"],
+                "school_id": r["school_id"],
+                "school": r["name"],
+                "district": r["where"],
+                "issue": r["label"],
+                "severity": r["severity"],
+                "issue_context": r.get("context") or "",
+                "weakest_intervention": "",
+                "weakest_intervention_code": "",
+                "recommended_activity_label": r.get("planned") or "",
+                "recommended_activity_type": "school_visit",
+                "owner_kind": "pl",
+                "owner_name": "",
+                "action_label": r["action_label"],
+                "action_url": r["action_url"],
+            }
+            for r in _urgent["rows"]
+        ]
         for row in urgent_schools:
             schedule_query = {
                 "school_id": row["id"],
