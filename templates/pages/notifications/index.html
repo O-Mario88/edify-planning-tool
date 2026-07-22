@@ -78,19 +78,9 @@
 
   <!-- Filters & Search Toolbar -->
   <div class="edify-surface border border-slate-200 rounded-surface p-5 shadow-xs">
-    <form method="get" action="/notifications" class="space-y-4">
+    <form id="notifications-filters" method="get" action="/notifications" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Search bar -->
-        <div class="col-span-1 md:col-span-2 relative">
-          <label class="edify-text-caption uppercase font-black text-slate-400 tracking-wider block mb-1">Search notifications</label>
-          <input
-            type="text"
-            name="q"
-            placeholder="Search keywords, schools, or event details..."
-            value="{{ q }}"
-            class="w-full h-10 px-3 border border-slate-250 rounded-control text-[13px] font-semibold text-slate-850 placeholder-slate-400 focus:outline-none edify-primary-focus"
-          >
-        </div>
+{% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
 
         <!-- Filter: Status -->
         <div>

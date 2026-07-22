@@ -371,6 +371,14 @@ def partners_list_view(request):
             key=lambda row: row["date"],
         )[:5],
     }
+    # One persistent search: the top bar, attached to the page filter form.
+    context["topbar_search"] = {
+        "placeholder": "Search schools or support…",
+        "name": "search",
+        "value": request.GET.get("search", ""),
+        "attach_to": "partner-activity-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/partners/index.html", context)
 
 

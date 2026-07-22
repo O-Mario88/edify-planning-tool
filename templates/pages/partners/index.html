@@ -41,11 +41,7 @@
           <option value="overdue" {% if selected_status == "overdue" %}selected{% endif %}>Overdue</option>
         </select>
       </label>
-      <label class="partner-workspace__search">
-        <span class="sr-only">Search</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2"/></svg>
-        <input type="search" name="q" value="{{ search }}" placeholder="Search schools or support…">
-      </label>
+{% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
       <button type="submit" class="btn-premium-secondary partner-workspace__filter-button">Apply</button>
       <button type="submit" name="export" value="csv" class="btn-premium-primary partner-workspace__export-button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></svg>

@@ -457,6 +457,16 @@ def planning_dashboard_view(request):
         context["is_planning_htmx_table"] = True
         return render(request, "partials/planning/school_table.html", context)
 
+    # One persistent search: the top bar, attached to the page filter form.
+    context["topbar_search"] = {
+        "placeholder": "Search planning schools…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/planning",
+        "hx_target": "#schools-table-container",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
     return render(request, "pages/planning/index.html", context)
 
 

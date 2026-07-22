@@ -409,7 +409,11 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn('name="per_page"', school_page)
         self.assertIn('hx-push-url="true"', school_page)
         self.assertIn('hx-swap="outerHTML"', planning_page)
-        self.assertIn('name="q"', planning_page)
+        # q is owned by the top-bar search (search-consolidation mandate);
+        # the page must not keep a dangling trigger on the removed input,
+        # which would match the topbar input globally and double-fire.
+        self.assertNotIn('name="q"', planning_page)
+        self.assertNotIn("from:input[name='q']", planning_page)
         self.assertIn('role="tablist"', planning_tabs)
         self.assertNotRegex(my_plan_tabs, r'hx-get="/my-plan\?period=')
         self.assertIn("messages-active-tab", messages)

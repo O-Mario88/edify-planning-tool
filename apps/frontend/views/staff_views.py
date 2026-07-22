@@ -979,6 +979,14 @@ def notifications_page_view(request):
         "q": q,
         "categories": categories,
     }
+    # One persistent search: the top bar, attached to the page filter form.
+    context["topbar_search"] = {
+        "placeholder": "Search notifications…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "notifications-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/notifications/index.html", context)
 
 

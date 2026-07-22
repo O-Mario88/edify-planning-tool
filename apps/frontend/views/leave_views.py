@@ -899,6 +899,14 @@ def leave_approvals_view(request):
         "selected_type": leave_type_filter,
         "selected_status": status_filter,
     }
+    # One persistent search: the top bar, attached to the page filter form.
+    context["topbar_search"] = {
+        "placeholder": "Search staff or reason…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "leave-approvals-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/leave/leave_approvals.html", context)
 
 
