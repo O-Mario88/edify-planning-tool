@@ -467,6 +467,14 @@ def visits_log_view(request):
         "status_filter": status_filter,
         "search": search,
     }
+    # One persistent search: the top bar.
+    context["topbar_search"] = {
+        "placeholder": "Search school or cluster…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "visits-filters",
+        "autosubmit": True,
+    }
     return render(request, "pages/visits/index.html", context)
 
 
@@ -511,6 +519,14 @@ def trainings_log_view(request):
         "completed": completed,
         "status_filter": status_filter,
         "search": search,
+    }
+    # One persistent search: the top bar.
+    context["topbar_search"] = {
+        "placeholder": "Search school or cluster…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "attach_to": "trainings-filters",
+        "autosubmit": True,
     }
     return render(request, "pages/trainings/index.html", context)
 

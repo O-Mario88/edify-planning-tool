@@ -63,11 +63,7 @@
         {% for key, label in risk_level_options %}<option value="{{ key }}" {% if key == risk_level %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
-    <label class="block lg:col-span-2">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Search</span>
-      <input type="search" name="q" value="{{ q|default:'' }}" placeholder="Search debrief titles or summaries…"
-             class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
-    </label>
+    {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
   </form>
 
   <div id="debrief-dashboard-body">

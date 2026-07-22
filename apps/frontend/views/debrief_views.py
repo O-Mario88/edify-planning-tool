@@ -49,6 +49,16 @@ def field_debrief_dashboard_view(request):
         return render(request, "partials/debriefs/dashboard_table.html", context)
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/debriefs/dashboard_body.html", context)
+    # One persistent search: the top bar.
+    context["topbar_search"] = {
+        "placeholder": "Search debrief titles or summaries…",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "hx_get": "/debriefs",
+        "hx_target": "#debrief-dashboard-body",
+        "hx_trigger": "keyup changed delay:300ms, search",
+        "hx_include": "#debrief-filters",
+    }
     return render(request, "pages/debriefs/dashboard.html", context)
 
 

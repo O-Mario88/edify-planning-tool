@@ -20,10 +20,6 @@ from django.test import SimpleTestCase
 # Pages the inventory found with a persistent body search, not yet rewired to
 # the top-bar contract. THIS LIST MAY ONLY SHRINK.
 REMAINING = {
-    "pages/trainings/index.html",
-    "pages/visits/index.html",
-    "pages/debriefs/dashboard.html",
-    "pages/ia/verification_queue.html",
     "pages/accounts/dashboard.html",
     "pages/hr/professional_development_dashboard.html",
     "partials/evidence/workspace.html",

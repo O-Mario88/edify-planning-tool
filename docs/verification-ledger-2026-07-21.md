@@ -270,3 +270,29 @@ clusters, fund_allocation, fund_approvals, country_budget). Drawer/modal
 selector searches stay (documented exceptions). After rewires: template-lint
 test — at most one persistent search input per rendered page, and it is the
 topbar one.
+
+## 12/10 READINESS MANDATE — master sequence (2026-07-22)
+Order: (A) finish UI normalization [allowlist 9 → 0: accounts dashboard,
+hr pd dashboard, evidence workspace, 6 finance partials; then mobile filter
+drawer + clear-filters on gold standard; select-dialect convergence];
+(B) performance-form delta [targets sync on approval, snapshot→printable
+docgen (no new deps), HR return/reopen states]; (C) THE AUDIT:
+1. Fresh baseline: check/migrations/ruff/format/test + collectstatic +
+   tailwind build + system health run. Record all counts honestly.
+2. Platform map + dependency graph (agents, compact outputs) → dead
+   models/routes/jobs inventory.
+3. Role Verification Matrix ×10 (walk nav/API/export/direct-URL per role).
+4. DB integrity: constraints for §11 invariants (unique SF ID, unique
+   partner payment [exists], unique target credit per source, unique core
+   slot, etc.) + orphan/duplicate sweeps + idempotent repairs.
+5. Concurrency pack §12 (threaded double-submit tests on the 8 money/credit
+   mutations not yet covered).
+6. §52 scenarios A-I as integration tests with real role accounts.
+7. Security pack §48 (suspended/offboarded/replayed-invite/direct-URL/
+   cross-country probes as tests).
+8. Performance §47: seed 15k schools on staging DB, query budgets, p95s.
+9. Failure injection §49 + backup/restore (done once — redo post-changes)
+   + rollback rehearsal + 8h soak (start early, runs while auditing).
+10. System Health: add missing §50 detectors.
+11. Scorecard: 120-pt honest scoring, hard gates first. NO bonus while any
+    core category incomplete. Everything fixed, not listed.

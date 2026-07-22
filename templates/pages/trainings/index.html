@@ -18,9 +18,8 @@ Schedule
 
 <!-- Filters -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
-<form method="get" action="/trainings" class="flex flex-wrap gap-3">
-<input type="text" name="q" value="{{ search }}" placeholder="Search school or cluster..."
-class="flex-1 min-w-48 h-9 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-200">
+<form id="trainings-filters" method="get" action="/trainings" class="flex flex-wrap gap-3">
+{% comment %}Search moved to the top bar.{% endcomment %}
 <select name="status" class="h-9 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 focus:outline-none">
 <option value="" {% if not status_filter %}selected{% endif %}>All Status</option>
 <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
