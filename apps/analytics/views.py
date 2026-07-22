@@ -25,8 +25,11 @@ def _q(request: Request) -> dict:
 
 
 def _get_cache_key(prefix: str, user, params: dict) -> str:
+    # sha256, not md5: this only needs to distinguish parameter sets, but an
+    # md5 call without usedforsecurity=False raises on a FIPS-enforcing host,
+    # which would take every analytics endpoint down rather than degrade it.
     param_str = json.dumps(params, sort_keys=True)
-    param_hash = hashlib.md5(param_str.encode("utf-8")).hexdigest()
+    param_hash = hashlib.sha256(param_str.encode("utf-8")).hexdigest()[:32]
     return f"analytics:{prefix}:{user.id}:{user.active_role}:{param_hash}"
 
 

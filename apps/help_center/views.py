@@ -261,10 +261,17 @@ def contextual(request):
     if not item:
         return HttpResponseForbidden("No authorised contextual help is available.")
     walkthrough = item.walkthroughs.filter(active=True).first()
+    # Render the full Knowledge Center article page (not a popup) so the user
+    # lands directly on the complete guide with the walkthrough integrated.
     return render(
         request,
-        "partials/help/contextual_dialog.html",
-        {"article": item, "path": path, "walkthrough": walkthrough},
+        "pages/help/article.html",
+        {
+            "article": item,
+            "related": item.related_articles.all(),
+            "walkthrough": walkthrough,
+            "context_path": path,
+        },
     )
 
 

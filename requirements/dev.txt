@@ -19,3 +19,8 @@ ruff==0.8.4
 # Debugging.
 django-debug-toolbar==4.4.6
 ipdb==0.13.13
+
+# Security tool chains (mandate §56). These were specified as required gates
+# but had never been installed, so neither had ever actually run.
+bandit==1.9.4
+pip-audit==2.10.1
