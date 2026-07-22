@@ -607,6 +607,15 @@ def create(data: dict, principal) -> dict:
     # failure right after creation leaves a scheduled Activity persisted with
     # zero budget lines.
     with transaction.atomic():
+        # Re-check the entitlement INSIDE the transaction. The pre-flight
+        # check above runs unlocked, so two concurrent schedules could both
+        # read "no live visit yet" and both insert — breaching the client
+        # school's one-visit/one-training FY entitlement by double-click,
+        # each insert drawing budget. Postgres serialises these two reads
+        # behind the school row lock, so the loser sees the winner's row.
+        if school is not None:
+            School.objects.select_for_update().filter(pk=school.pk).first()
+            _assert_schedule_entitlement(activity_type, school, fy, data)
         activity = Activity.objects.create(
             activity_type=activity_type,
             school=school,
@@ -1228,6 +1237,15 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
 
     pa = PartnerAssignment.objects.filter(id=activity_id).first()
     if pa:
+        # Lock the assignment and refuse a second scheduling. Unlocked, two
+        # simultaneous POSTs each created a costed Activity for one
+        # assignment: two money-bearing rows, and the core slot pointed at
+        # whichever committed last, orphaning the other.
+        pa = (
+            PartnerAssignment.objects.select_for_update().filter(id=activity_id).first()
+        )
+        if pa and pa.status in ("partner_scheduled", "scheduled", "completed"):
+            raise BadRequest("This assignment is already scheduled.")
         # Scope: a partner principal may only schedule its OWN assignment —
         # the id-only lookup previously let any partner schedule another
         # partner's assignment. Staff callers pass through the shared scope.

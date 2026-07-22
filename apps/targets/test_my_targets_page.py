@@ -108,7 +108,12 @@ class MyTargetsPageTest(TestCase):
     # Default status is ia_verified: target CREDIT requires IA verification
     # (§8), so a "done, credited" fixture visit must be IA-verified, not merely
     # "completed" (which is pre-IA and only ever provisional).
-    def _visit(self, planned, status="ia_verified", sf_id="SF-1", user=None, sp=None):
+    def _visit(self, planned, status="ia_verified", sf_id=None, user=None, sp=None):
+        # Unique per call: real Salesforce ids identify one activity, and the
+        # DB now enforces that. A shared literal only worked while it did not.
+        if sf_id is None:
+            type(self)._sf_seq = getattr(type(self), "_sf_seq", 0) + 1
+            sf_id = f"SF-{type(self)._sf_seq}"
         return Activity.objects.create(
             school=self.school,
             activity_type="school_visit",

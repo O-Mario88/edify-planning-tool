@@ -280,6 +280,16 @@ def force_password_reset(user_id: str, principal) -> dict:
 
 
 def _set_status(user_id: str, status: str, is_active: bool, principal=None) -> dict:
+    # Revoke any outstanding invitation too — a live token is a second
+    # credential path back into an account we are closing.
+    if status in ("suspended", "disabled"):
+        from django.utils import timezone as _tz
+
+        from apps.accounts.models import UserInvitation
+
+        UserInvitation.objects.filter(
+            user_id=user_id, accepted_at__isnull=True, revoked_at__isnull=True
+        ).update(revoked_at=_tz.now())
     user = _get_user(user_id)
     user.status = status
     user.is_active = is_active

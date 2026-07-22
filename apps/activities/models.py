@@ -194,7 +194,20 @@ class Activity(SoftDeleteModel):
                     & ~models.Q(salesforce_activity_id="")
                 ),
                 name="closed_activity_must_have_sf_id",
-            )
+            ),
+            # The Salesforce Activity ID is the external system's unique key
+            # for a piece of work. A hundred duplicate pairs existed with
+            # nothing preventing them: two verified activities at one school
+            # claiming the same external record, so IA verification and
+            # finance could not tell them apart. Partial, so the many rows
+            # legitimately awaiting an ID are unaffected.
+            models.UniqueConstraint(
+                fields=["salesforce_activity_id"],
+                condition=models.Q(salesforce_activity_id__isnull=False)
+                & ~models.Q(salesforce_activity_id="")
+                & models.Q(deleted_at__isnull=True),
+                name="uniq_activity_salesforce_id",
+            ),
         ]
 
     def save(self, *args, **kwargs):

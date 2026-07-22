@@ -7,7 +7,6 @@ from apps.core.enums import ActivityStatus, VerificationStatus
 from apps.core.exceptions import BadRequest
 from apps.activities.ia_services import (
     IAVerificationService,
-    DuplicateDetectionService,
     ActivityCertificationService,
     ActivityReturnService,
 )
@@ -142,20 +141,26 @@ class IAWorkflowTests(TestCase):
         )
         self.assertFalse(IAVerification.objects.filter(activity=self.activity).exists())
 
-    def test_detect_duplicates(self):
-        """Detects duplicate activities that have the same Salesforce ID."""
-        dup_activity = Activity.objects.create(
-            school=self.school,
-            activity_type="school_visit",
-            delivery_type="staff",
-            responsible_staff_id="staff-cceo",
-            planned_date=timezone.now().date(),
-            scheduled_date=timezone.now(),
-            status="completed",
-            salesforce_activity_id="SV-99999",  # Same SF ID
-        )
+    def test_duplicate_salesforce_ids_are_impossible_at_the_database(self):
+        """UPDATED BY AUDIT. This test used to create a second activity with
+        the same Salesforce id and assert the detector found it. The audit
+        measured 100 such duplicate pairs in real data and added a unique
+        constraint, so the duplicate can no longer be created at all — a
+        stronger guarantee than detecting it afterwards. The detector remains
+        for pre-existing and soft-deleted rows the partial index excludes.
+        """
+        from django.db import IntegrityError, transaction
 
-        dups = DuplicateDetectionService.detect_duplicates(self.activity)
-        self.assertTrue(len(dups) > 0)
-        self.assertTrue(any(d["activity"].id == dup_activity.id for d in dups))
-        self.assertTrue(any("Salesforce" in d["reason"] for d in dups))
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Activity.objects.create(
+                school=self.school,
+                activity_type="school_visit",
+                delivery_type="staff",
+                responsible_staff_id="staff-cceo",
+                planned_date=timezone.now().date(),
+                scheduled_date=timezone.now(),
+                status="completed",
+                salesforce_activity_id="SV-99999",  # Same SF ID
+            )
+
+        # The constraint fired; nothing to detect.

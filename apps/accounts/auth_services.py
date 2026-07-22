@@ -376,6 +376,13 @@ def set_password(token: str, new_password: str, confirm: str) -> dict:
     if invitation.expires_at < timezone.now():
         raise BadRequest("This invitation has expired.")
 
+    # A suspended or disabled account must not be revivable by an old
+    # invitation. suspend()/disable()/offboarding revoked refresh tokens but
+    # never the invitation, so anyone holding a <=7-day-old unused token
+    # could re-activate the account and set its password.
+    if invitation.user.status in ("suspended", "disabled"):
+        raise BadRequest("This account is not active. Contact an administrator.")
+
     violations = validate_password(new_password, invitation.user.email)
     if violations:
         raise BadRequest(" ".join(violations))

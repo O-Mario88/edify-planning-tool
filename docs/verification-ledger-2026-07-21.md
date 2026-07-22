@@ -335,3 +335,58 @@ REQUIRED PROD ENV (deployment doc): SECRET_KEY, JWT_SECRET(>=16),
 SUPER_ADMIN_PASSWORD, DATABASE_URL, ALLOWED_HOSTS, AUTHZ_MODE=enforce,
 ENABLE_DEV_SEED=false, FIELD_ENCRYPTION_KEY=<64 hex>, plus
 ENABLE_BACKGROUND_JOBS=true on the worker service only.
+
+## 12/10 AUDIT — FINDINGS AND FIXES (2026-07-22)
+
+### FIXED THIS PASS
+SEC-1 HIGH: unaccepted invite token re-activated a suspended/disabled
+  account (auth_services set status=active unconditionally; suspend/disable/
+  offboard never revoked invitations). Now: set_password refuses non-active
+  users; _set_status revokes outstanding invitations.
+SEC-2 HIGH: reset/invite tokens written to logs in plaintext whenever the
+  console email provider was active — a prod deploy missing RESEND_API_KEY
+  logged every live token. Now gated behind EMAIL_LOG_BODIES and never in
+  production.
+CONC-1 HIGH: leave approve_request was a bare status write — two approvers
+  created TWO active TemporaryCoverageAssignments. Now locked + status guard.
+CONC-2 HIGH: partner_schedule read the assignment unlocked with no state
+  guard — concurrent POSTs created two costed activities for one assignment.
+  Now locked + guard.
+CONC-3 HIGH: client entitlement check was TOCTOU (counted outside the
+  atomic). Now re-checked inside, behind a school row lock.
+DATA-1 CRITICAL: 100 duplicate Salesforce Activity IDs, NO constraint.
+  Repaired (100 later rows cleared; closed activities never stripped) +
+  partial unique constraint added (activities migration 0024).
+DATA-2: 50 stale current_fy_ssa_status='done' flags recomputed through the
+  canonical _recompute_readiness.
+PERF-1: pl_analytics .only() omitted school_id/district_id → 1 query per
+  school. PL /dashboard measured 1047 → 347 queries.
+
+### OPEN, WITH FIXES SPECIFIED (honest — NOT fixed)
+PERF-2 HIGH: my_targets.rebuild() get_or_creates per source row on every GET
+  (1016 of 1761 queries on CD /dashboard). Fix: batch via in_bulk +
+  bulk_create/update, or move to realtime/jobs.py:174 and have pages read.
+  NOT DONE — load-bearing ledger sync; needs its own verified change.
+PERF-3: holiday/leave lookups unmemoized (372 of 471 on /team-targets).
+PERF-4: month/cluster aggregate loops in analytics_dashboard_service:546,654.
+PERF-5: 1,691 SubCounty rows into a <select> (cluster_views:224,
+  planning_views:354) = 183-238KB HTML.
+PERF-6: unbounded export builders ssa_performance_service:516,
+  planning_service:750 built on EVERY render.
+DATA-3: 3,220 orphan school refs (CorePlan.school_id 222, CoreActivitySlot
+  1,998, StaffSchoolAssignment 1,000) — untyped CharFields vs FKs. Needs a
+  data-repair migration + FK conversion.
+DATA-4: Activity.responsible_staff_id holds two key namespaces (260 User,
+  218 StaffProfile) — owner_ids() covers it; the column should be normalised.
+CONC-4 MED: PD approval locks but never checks status → replayed hr_approve
+  drags a DISBURSED request back to APPROVED_PENDING_FUNDING; duplicate
+  CalendarBlock.
+CONC-5 MED: activate_window not atomic (partial snapshot set possible).
+SEC-3 MED: HTML POST /login has no IP throttle (DRF endpoint does); throttle
+  is per-worker in-process, not Redis.
+SEC-4 MED: invite redeem TOCTOU on an unthrottled AllowAny endpoint.
+SEC-5 MED: PD certificate files role-gated only, no country/region scope.
+INDEX gaps: CoreActivitySlot.activity_id (scanned on every Activity.save),
+  WeeklyFundRequest has no Meta.indexes (fy/status/disbursed_at).
+TOOLING NOT RUN: pytest, coverage, mypy, bandit, playwright, axe,
+  visual-regression, CVE scan — not installed in this environment.

@@ -62,10 +62,26 @@ class MailerService:
     def send(self, msg: MailMessage) -> dict:
         if self.provider == "resend":
             return self._send_via_resend(msg)
-        # Console / dev — log the full message so a tester can complete the flow.
-        logger.info(
-            "[dev mail] To: %s | Subject: %s\n%s", msg.to, msg.subject, msg.text
-        )
+        # Console / dev — the body carries password-reset and invitation
+        # TOKENS, so it is logged only when explicitly opted in. A production
+        # deploy that forgets RESEND_API_KEY silently falls back to this
+        # provider; without the gate it would write every live token to the
+        # log stream, where they outlive the email and are readable by anyone
+        # with log access.
+        from django.conf import settings as _s
+
+        if getattr(_s, "EMAIL_LOG_BODIES", False) and not getattr(
+            _s, "IS_PRODUCTION", False
+        ):
+            logger.info(
+                "[dev mail] To: %s | Subject: %s\n%s", msg.to, msg.subject, msg.text
+            )
+        else:
+            logger.info(
+                "[mail] To: %s | Subject: %s | body withheld (contains tokens)",
+                msg.to,
+                msg.subject,
+            )
         return {"delivered": False, "devPreview": msg.text}
 
     def _send_via_resend(self, msg: MailMessage) -> dict:

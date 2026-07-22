@@ -694,6 +694,15 @@ class LeaveApprovalService:
             raise BadRequest("You are not authorized to approve this leave request.")
 
         with transaction.atomic():
+            # Re-read under lock and refuse a repeat. This was a bare status
+            # write: two approvers clicking together both saw "pending", both
+            # ran the revoke-then-create pair below, and BOTH created an
+            # active TemporaryCoverageAssignment — duplicated delegated data
+            # access plus two coverage-granted audit rows. The guard also
+            # stops an already-rejected request being flipped to approved.
+            leave = type(leave).objects.select_for_update().get(id=leave.id)
+            if leave.status != "pending":
+                raise BadRequest(f"This leave request is already {leave.status}.")
             leave.status = "approved"
             leave.reviewed_by_user_id = reviewer_user.id
             leave.reviewed_at = timezone.now()

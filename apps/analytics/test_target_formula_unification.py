@@ -133,7 +133,11 @@ class TargetFormulaEndToEndTest(TestCase):
         return u, StaffProfile.objects.create(user=u, title=role)
 
     # Default ia_verified: target credit requires IA verification (§8).
-    def _visit(self, sp, month_of_fy, status="ia_verified", sf="SV-1"):
+    def _visit(self, sp, month_of_fy, status="ia_verified", sf=None):
+        # Unique per call — the DB now enforces Salesforce-id uniqueness.
+        if sf is None:
+            type(self)._sf_seq = getattr(type(self), "_sf_seq", 0) + 1
+            sf = f"SV-{type(self)._sf_seq}"
         d, _ = Cal.month_range(self.fy, month_of_fy)
         return Activity.objects.create(
             school=self.school,
