@@ -11,9 +11,10 @@
       <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Activity Log</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">{{ total }} recent activities assigned to your organization.</p>
     </div>
-    <form method="get" class="flex items-center gap-1.5 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 edify-text-caption font-bold text-slate-500 w-fit">
-      <span class="uppercase tracking-wider edify-text-caption">Status</span>
-      <select name="status" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+    <!-- Status filter — on the page background, per the platform filter-bar contract (consistency.css). -->
+    <form method="get" class="platform-filter-bar flex items-center gap-2 w-fit">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</span>
+      <select name="status" @change="$el.form.requestSubmit()" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all cursor-pointer">
         <option value="">All</option>
         <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
         <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>

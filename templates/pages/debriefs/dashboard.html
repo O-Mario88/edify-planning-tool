@@ -31,10 +31,10 @@
   </div>
   {% endif %}
 
-  <!-- Filters -->
+  <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
   <form id="debrief-filters" hx-get="/debriefs" hx-target="#debrief-dashboard-body" hx-swap="innerHTML"
         hx-trigger="change, search" hx-push-url="true"
-        class="rounded-surface border p-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 edify-surface edify-border">
+        class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
       <select name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">

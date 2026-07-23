@@ -76,9 +76,8 @@
     </div>
   </div>
 
-  <!-- Filters & Search Toolbar -->
-  <div class="edify-surface border border-slate-200 rounded-surface p-5 shadow-xs">
-    <form id="notifications-filters" method="get" action="/notifications" class="space-y-4">
+  <!-- Filters & Search Toolbar — on the page background, per the platform filter-bar contract (consistency.css). -->
+    <form id="notifications-filters" method="get" action="/notifications" class="platform-filter-bar space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
 
@@ -156,7 +155,6 @@
         </div>
       </div>
     </form>
-  </div>
 
   <!-- Notification Feed list -->
   <div class="edify-surface border border-slate-200 rounded-surface overflow-hidden shadow-xs">
