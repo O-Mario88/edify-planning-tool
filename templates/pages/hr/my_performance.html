@@ -30,53 +30,93 @@
   {% else %}
 
   {# ── KPI strip ─────────────────────────────────────────────────────── #}
+  {% comment %} Each card carries an icon badge; the tints use /10 opacity so
+  they read correctly in both light and the blue dark theme. {% endcomment %}
   <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Cycle summary">
-    <article class="edify-surface rounded-surface border border-slate-100 p-4">
-      <p class="edify-text-caption uppercase text-slate-400">Agreement Status</p>
-      {% if review.stage == "approved" or review.stage == "signed_off" %}
-      <p class="mt-1 text-[15px] font-bold text-emerald-600">Approved</p>
-      {% elif review.stage == "returned" %}
-      <p class="mt-1 text-[15px] font-bold text-amber-600">Returned</p>
-      {% else %}
-      <p class="mt-1 text-[15px] font-bold text-slate-800">{{ stage_label }}</p>
-      {% endif %}
-      <p class="edify-text-caption text-slate-400">{{ review.updated_at|date:"j M Y" }}</p>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Agreement Status</p>
+        {% if review.stage == "approved" or review.stage == "signed_off" %}
+        <p class="mt-0.5 text-[15px] font-bold text-emerald-600">Approved</p>
+        {% elif review.stage == "returned" %}
+        <p class="mt-0.5 text-[15px] font-bold text-amber-600">Returned</p>
+        {% else %}
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ stage_label }}</p>
+        {% endif %}
+        <p class="edify-text-caption text-slate-400">{{ review.updated_at|date:"j M Y" }}</p>
+      </div>
     </article>
 
-    <article class="edify-surface rounded-surface border border-slate-100 p-4">
-      <p class="edify-text-caption uppercase text-slate-400">Direct Schools Allocated</p>
-      <p class="mt-1 text-[15px] font-bold text-slate-800">{{ allocation.total }}</p>
-      <p class="edify-text-caption text-slate-400">{{ allocation.core }} Core · {{ allocation.client }} Client{% if allocation.champion %} · {{ allocation.champion }} Champion{% endif %}</p>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl" style="background: color-mix(in srgb, var(--brand-primary) 12%, transparent); color: var(--brand-primary);">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-3m-1 0h-2M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Direct Schools Allocated</p>
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ allocation.total }}</p>
+        <p class="edify-text-caption text-slate-400">{{ allocation.core }} Core · {{ allocation.client }} Client{% if allocation.champion %} · {{ allocation.champion }} Champion{% endif %}</p>
+      </div>
     </article>
 
-    <article class="edify-surface rounded-surface border border-slate-100 p-4">
-      <p class="edify-text-caption uppercase text-slate-400">Key Priorities</p>
-      <p class="mt-1 text-[15px] font-bold text-slate-800">{{ priorities|length }}</p>
-      <p class="edify-text-caption text-slate-400">{{ layers.organizational }} Org · {{ layers.role }} Role{% if layers.personal %} · {{ layers.personal }} Personal{% endif %}</p>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Key Priorities</p>
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ priorities|length }}</p>
+        <p class="edify-text-caption text-slate-400">{{ layers.organizational }} Org · {{ layers.role }} Role{% if layers.personal %} · {{ layers.personal }} Personal{% endif %}</p>
+      </div>
     </article>
 
-    <article class="edify-surface rounded-surface border border-slate-100 p-4">
-      <p class="edify-text-caption uppercase text-slate-400">Overall Progress (Weighted)</p>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-center gap-3">
       {% if overall_pct is not None %}
-      <p class="mt-1 text-[15px] font-bold {% if overall_pct >= 70 %}text-emerald-600{% elif overall_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ overall_pct }}%</p>
-      <div class="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-        <div class="h-full rounded-full {% if overall_pct >= 70 %}bg-emerald-500{% elif overall_pct >= 40 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ overall_pct }}%"></div>
+      {% comment %} A real progress ring: the arc length is the weighted %.
+      pathLength=100 lets the dasharray read straight from the number. {% endcomment %}
+      <span class="shrink-0 relative flex h-11 w-11 items-center justify-center">
+        <svg class="h-11 w-11 -rotate-90" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-200"/>
+          <circle cx="20" cy="20" r="16" fill="none" stroke-width="4" pathLength="100"
+                  stroke-dasharray="{{ overall_pct }} 100" stroke-linecap="round"
+                  class="{% if overall_pct >= 70 %}text-emerald-500{% elif overall_pct >= 40 %}text-amber-500{% else %}text-rose-500{% endif %}"
+                  stroke="currentColor"/>
+        </svg>
+        <span class="absolute text-[11px] font-bold text-slate-700 tabular-nums">{{ overall_pct }}</span>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Overall Progress</p>
+        <p class="mt-0.5 text-[15px] font-bold {% if overall_pct >= 70 %}text-emerald-600{% elif overall_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ overall_pct }}% weighted</p>
+        <p class="edify-text-caption text-slate-400">{% if overall_pct >= 70 %}On track{% elif overall_pct >= 40 %}Watch{% else %}Behind{% endif %}</p>
       </div>
       {% else %}
-      <p class="mt-1 text-[15px] font-bold text-slate-400">—</p>
-      <p class="edify-text-caption text-slate-400">No verified work yet</p>
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-500/10 text-slate-400">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Overall Progress</p>
+        <p class="mt-0.5 text-[15px] font-bold text-slate-400">—</p>
+        <p class="edify-text-caption text-slate-400">No verified work yet</p>
+      </div>
       {% endif %}
     </article>
 
-    <article class="edify-surface rounded-surface border border-slate-100 p-4">
-      <p class="edify-text-caption uppercase text-slate-400">Conversation Window</p>
-      {% if active_window_label %}
-      <p class="mt-1 text-[15px] font-bold text-slate-800">{{ active_window_label }}</p>
-      <p class="edify-text-caption text-slate-400">{% if cycle.window_deadline %}until {{ cycle.window_deadline|date:"j M Y" }}{% else %}open now{% endif %}</p>
-      {% else %}
-      <p class="mt-1 text-[15px] font-bold text-slate-400">None open</p>
-      <p class="edify-text-caption text-slate-400">HR schedules the next window</p>
-      {% endif %}
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl" style="background: color-mix(in srgb, var(--brand-primary) 12%, transparent); color: var(--brand-primary);">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Conversation Window</p>
+        {% if active_window_label %}
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ active_window_label }}</p>
+        <p class="edify-text-caption text-slate-400">{% if cycle.window_deadline %}until {{ cycle.window_deadline|date:"j M Y" }}{% else %}open now{% endif %}</p>
+        {% else %}
+        <p class="mt-0.5 text-[15px] font-bold text-slate-400">None open</p>
+        <p class="edify-text-caption text-slate-400">HR schedules the next window</p>
+        {% endif %}
+      </div>
     </article>
   </section>
 
@@ -84,7 +124,7 @@
   <nav class="flex flex-wrap gap-1 border-b border-slate-100" aria-label="Performance sections">
     {% for key, label in tab_defs %}
     <button type="button" @click="tab = '{{ key }}'"
-            :class="tab === '{{ key }}' ? 'border-brand-600 text-brand-700 font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'"
+            :class="tab === '{{ key }}' ? 'border-blue-600 text-blue-700 font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'"
             class="px-3.5 py-2.5 text-[13px] border-b-2 -mb-px transition-colors">{{ label }}</button>
     {% endfor %}
   </nav>
@@ -112,7 +152,7 @@
           <td class="px-5 py-3 font-bold text-slate-400">{{ row.p.sequence }}</td>
           <td class="px-3 py-3">
             <p class="font-bold text-slate-800">{{ row.p.outcome_statement }}</p>
-            <p class="edify-text-caption {% if row.p.priority_layer == 'organizational' %}text-emerald-600{% else %}text-brand-600{% endif %}">
+            <p class="edify-text-caption {% if row.p.priority_layer == 'organizational' %}text-emerald-600{% else %}text-blue-700{% endif %}">
               {{ row.p.priority_layer|capfirst }} Priority</p>
           </td>
           <td class="px-3 py-3">
@@ -149,7 +189,7 @@
             {% if row.progress.pct is not None %}
             <div class="mt-1 flex items-center gap-2">
               <div class="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                <div class="h-full rounded-full {% if row.progress.pct >= 100 %}bg-emerald-500{% elif row.progress.pct >= 60 %}bg-brand-500{% elif row.progress.pct >= 30 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
+                <div class="h-full rounded-full {% if row.progress.pct >= 100 %}bg-emerald-500{% elif row.progress.pct >= 60 %}bg-blue-600{% elif row.progress.pct >= 30 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
                      style="width: {% if row.progress.pct > 100 %}100{% else %}{{ row.progress.pct }}{% endif %}%"></div>
               </div>
               <span class="edify-text-caption text-slate-500">{{ row.progress.pct }}%</span>
