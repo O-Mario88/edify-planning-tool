@@ -76,7 +76,7 @@
           {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
           <textarea name="employee_reflection" rows="3" placeholder="Progress, achievements, barriers, support needed"
                     class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">{{ row.p.employee_reflection|default:"" }}</textarea>
-          <select name="employee_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+          <select aria-label="Employee rating" name="employee_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
             <option value="">Self-rating…</option>
             {% for val, label in ratings %}<option value="{{ val }}" {% if row.p.employee_rating == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
           </select>
@@ -98,7 +98,7 @@
           {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
           <textarea name="manager_assessment" rows="2" placeholder="Manager comment"
                     class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">{{ row.p.manager_assessment|default:"" }}</textarea>
-          <select name="manager_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+          <select aria-label="Manager rating" name="manager_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
             <option value="">Manager rating…</option>
             {% for val, label in ratings %}<option value="{{ val }}" {% if row.p.manager_rating == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
           </select>
@@ -121,7 +121,7 @@
           {% csrf_token %}
           <input type="hidden" name="channel" value="functional">
           {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
-          <select name="functional_manager_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+          <select aria-label="Functional manager rating" name="functional_manager_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
             <option value="">Functional rating…</option>
             {% for val, label in ratings %}<option value="{{ val }}" {% if row.p.functional_manager_rating == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
           </select>

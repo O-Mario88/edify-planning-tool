@@ -35,7 +35,7 @@ hx-post="/schools/{{ intelligence.school.id }}/change-type"
 class="flex items-center gap-2"
 >
 {% csrf_token %}
-<select
+<select aria-label="School type"
 name="school_type"
 class="h-8 px-2 edify-surface border border-slate-200 rounded-control text-[12px] font-bold focus:outline-none flex-1"
 >

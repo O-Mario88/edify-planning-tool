@@ -204,7 +204,7 @@
       </div>
 
       <div class="flex items-center gap-1.5">
-        <select
+        <select aria-label="Per page"
           name="per_page"
           hx-get="/planning?page=1&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
           hx-target="#schools-table-container"

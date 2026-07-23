@@ -22,7 +22,7 @@
 
         <!-- FY Select -->
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
-        <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
+        <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">{{ opt }}</option>{% endfor %}
         </select>
 
@@ -30,7 +30,7 @@
 
         <!-- Month Select -->
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Month</span>
-        <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
+        <select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
           <option value="" class="edify-text">All</option>
           {% for v, lbl in month_options %}<option value="{{ v }}" {% if month|stringformat:"s" == v %}selected{% endif %} class="edify-text">{{ lbl }}</option>{% endfor %}
         </select>
@@ -39,7 +39,7 @@
 
         <!-- Country Select -->
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Country</span>
-        <select name="country" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
+        <select aria-label="Country" name="country" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
           <option value="" class="edify-text">All Countries</option>
           <option value="Uganda" {% if country == "Uganda" %}selected{% endif %} class="edify-text">Uganda</option>
           <option value="Rwanda" {% if country == "Rwanda" %}selected{% endif %} class="edify-text">Rwanda</option>
@@ -51,7 +51,7 @@
 
         <!-- Department Select -->
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Dept</span>
-        <select name="department" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
+        <select aria-label="Department" name="department" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
           <option value="" class="edify-text">All Departments</option>
           <option value="Program Operations" {% if department == "Program Operations" %}selected{% endif %} class="edify-text">Program Operations</option>
           <option value="School Support" {% if department == "School Support" %}selected{% endif %} class="edify-text">School Support</option>

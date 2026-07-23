@@ -151,7 +151,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-1">
             <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Category <span class="text-rose-500">*</span></label>
-            <select name="category" x-model="category" required
+            <select aria-label="Category" name="category" x-model="category" required
                     class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold edify-primary-focus focus:outline-none cursor-pointer">
               <option value="" disabled {% if not pre_category %}selected{% endif %}>Select category…</option>
               {% for c in categories %}

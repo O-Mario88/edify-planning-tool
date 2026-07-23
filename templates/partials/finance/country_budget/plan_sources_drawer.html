@@ -13,7 +13,7 @@
         <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Plan Sources — {{ month_label }} {{ fy }}</h2>
         <p class="edify-text-caption font-semibold text-slate-400">{{ count }} scheduled, costed activity line{{ count|pluralize }} behind this month's budget.</p>
       </div>
-      <button @click="$dispatch('close-drawer')" class="text-slate-400 hover:text-slate-600 shrink-0"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      <button aria-label="Close" @click="$dispatch('close-drawer')" class="text-slate-400 hover:text-slate-600 shrink-0"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
     <div class="overflow-y-auto flex-1">
       {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}

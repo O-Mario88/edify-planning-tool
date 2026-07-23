@@ -9,7 +9,7 @@ class="flex flex-wrap items-center gap-2.5 text-[12px] font-bold"
 <!-- Month Dropdown -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
 <span class="text-[14px] text-slate-400"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
-<select name="month" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
+<select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
 <option value="October" {% if selected_month == 'October' %}selected{% endif %}>October</option>
 <option value="November" {% if selected_month == 'November' %}selected{% endif %}>November</option>
 <option value="December" {% if selected_month == 'December' %}selected{% endif %}>December</option>
@@ -28,7 +28,7 @@ class="flex flex-wrap items-center gap-2.5 text-[12px] font-bold"
 <!-- Region / Team Dropdown -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
 <span class="text-[14px] text-slate-400"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
-<select name="region" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
+<select aria-label="Region" name="region" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
 <option value="">All Regions / Teams</option>
 {% for r in regions %}
 <option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>

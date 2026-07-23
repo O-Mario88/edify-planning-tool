@@ -19,13 +19,13 @@
           class="flex flex-wrap items-stretch sm:items-center gap-2">
       <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5 edify-surface border edify-border edify-shadow-sm">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
-        <select name="fy" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+        <select aria-label="Fiscal year" name="fy" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </div>
       <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5 edify-surface border edify-border edify-shadow-sm">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">Activity</span>
-        <select name="activity_type" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+        <select aria-label="Activity type" name="activity_type" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           <option value="">All</option>
           <option value="school_visit" {% if filters.activity_type == 'school_visit' %}selected{% endif %}>School Visits</option>
           <option value="training" {% if filters.activity_type == 'training' %}selected{% endif %}>Trainings</option>

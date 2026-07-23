@@ -78,14 +78,14 @@ class="school-filters-form space-y-3"
 <div class="school-filter-grid grid gap-3">
 <!-- FY Selector -->
 <div>
-<select name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<select aria-label="Fiscal year" name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
 <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
 </select>
 </div>
 <!-- Region -->
 <div>
-<select name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<select aria-label="Region" name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Region: All</option>
 {% for r in regions %}
 <option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
@@ -94,7 +94,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- District -->
 <div>
-<select name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<select aria-label="District" name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">District: All</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
@@ -103,7 +103,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- Sub-county -->
 <div>
-<select name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<select aria-label="Sub-county" name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Sub-county: All</option>
 {% for sc in sub_counties %}
 <option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
@@ -112,7 +112,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- School Type -->
 <div>
-<select name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<select aria-label="School type" name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">School Type: All</option>
 {% for val, label in school_types %}
 <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
@@ -121,7 +121,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- Cluster Status -->
 <div>
-<select name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<select aria-label="Cluster status" name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Cluster Status: All</option>
 <option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
 <option value="unclustered" {% if selected_cluster_status == 'unclustered' %}selected{% endif %}>Unclustered</option>
@@ -129,7 +129,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- Project Status -->
 <div>
-<select name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<select aria-label="Project status" name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Project Status: All</option>
 <option value="assigned" {% if selected_project_status == 'assigned' %}selected{% endif %}>Assigned</option>
 <option value="unassigned" {% if selected_project_status == 'unassigned' %}selected{% endif %}>Not Assigned</option>
@@ -201,7 +201,7 @@ style="display: none;"
 
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
-<select name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<select aria-label="Cluster ID" name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose Cluster --</option>
 {% for c in clusters %}
 <option value="{{ c.id }}">{{ c.name }}</option>
@@ -237,7 +237,7 @@ style="display: none;"
 
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project</label>
-<select name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<select aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose Project --</option>
 {% for p in projects %}
 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -273,7 +273,7 @@ style="display: none;"
 
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
-<select name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<select aria-label="Staff ID" name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose CCEO --</option>
 {% for sp in staff_profiles %}
 <option value="{{ sp.id }}">{{ sp.user.name }}</option>
@@ -319,14 +319,14 @@ style="display: none;"
 <div class="grid grid-cols-2 gap-3">
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Type</label>
-<select name="school_type" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
+<select aria-label="School type" name="school_type" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
 <option value="client">Client</option>
 <option value="core">Core</option>
 </select>
 </div>
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
-<select name="district_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+<select aria-label="District ID" name="district_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose District --</option>
 {% for d in districts %}
 <option value="{{ d.id }}">{{ d.name }}</option>

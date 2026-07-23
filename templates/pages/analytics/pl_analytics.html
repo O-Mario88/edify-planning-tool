@@ -38,55 +38,55 @@
 
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">FY</span>
-      <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+      <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
         {% for opt in filter_options.fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Quarter</span>
-      <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+      <select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
         <option value="">FY Cumulative</option>
         {% for q in filter_options.quarters %}<option value="{{ q }}" {% if quarter == q %}selected{% endif %}>{{ q }}</option>{% endfor %}
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">District</span>
-      <select name="district" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
+      <select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All Districts</option>
         {% for d in filter_options.districts %}<option value="{{ d.id }}" {% if filters.district == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Cluster</span>
-      <select name="cluster" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
+      <select aria-label="Cluster" name="cluster" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All Clusters</option>
         {% for c in filter_options.clusters %}<option value="{{ c.id }}" {% if filters.cluster == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">CCEO</span>
-      <select name="cceo" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[110px] truncate">
+      <select aria-label="CCEO" name="cceo" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[110px] truncate">
         <option value="">All</option>
         {% for c in filter_options.cceos %}<option value="{{ c.id }}" {% if filters.cceo == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Partner</span>
-      <select name="partner" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[110px] truncate">
+      <select aria-label="Partner" name="partner" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[110px] truncate">
         <option value="">All Partners</option>
         {% for p in filter_options.partners %}<option value="{{ p.id }}" {% if filters.partner == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">School Type</span>
-      <select name="school_type" class="bg-transparent focus:outline-none cursor-pointer font-semibold capitalize">
+      <select aria-label="School type" name="school_type" class="bg-transparent focus:outline-none cursor-pointer font-semibold capitalize">
         <option value="">All</option>
         {% for t in filter_options.school_types %}<option value="{{ t }}" {% if filters.school_type == t %}selected{% endif %}>{{ t|title }}</option>{% endfor %}
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">Activity</span>
-      <select name="activity_type" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
+      <select aria-label="Activity type" name="activity_type" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All</option>
         {% for v, lbl in filter_options.activity_types %}<option value="{{ v }}" {% if filters.activity_type == v %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
       </select>

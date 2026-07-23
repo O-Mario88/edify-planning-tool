@@ -2562,9 +2562,13 @@ main .platform-responsive-table [data-priority="low"] {
   padding-inline-start: 0;
 }
 
-.school-ssa-group--danger { color: var(--edify-danger); }
-.school-ssa-group--success { color: var(--edify-success); }
-.school-ssa-group--warning { color: var(--edify-warning); }
+/* Score text sits on light surfaces, so it must use the AA-compliant text tone
+   (--edify-*-text), not the saturated fill tone. The text tokens alias back to
+   the base colour in the dark themes, so light-on-dark stays correct there. The
+   __dot inherits currentColor and simply deepens a touch — still legible. */
+.school-ssa-group--danger { color: var(--edify-danger-text); }
+.school-ssa-group--success { color: var(--edify-success-text); }
+.school-ssa-group--warning { color: var(--edify-warning-text); }
 
 .school-ssa-group h4 {
   margin: 0 0 .5rem;

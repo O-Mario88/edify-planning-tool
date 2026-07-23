@@ -34,7 +34,7 @@
         class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
-      <select name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Fiscal year" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>
     </label>
@@ -43,7 +43,7 @@
       {% if locked_country %}
       <div class="mt-1 w-full h-9 px-2 rounded-surface border text-[12px] font-semibold flex items-center edify-surface-muted edify-border edify-text">{{ locked_country }}</div>
       {% else %}
-      <select name="country" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Country" name="country" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">All Countries</option>
         {% for c in country_options %}<option value="{{ c }}" {% if c == country %}selected{% endif %}>{{ c }}</option>{% endfor %}
       </select>
@@ -51,21 +51,21 @@
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Role</span>
-      <select name="role" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Role" name="role" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">All Roles</option>
         {% for key, label in eligible_roles %}<option value="{{ key }}" {% if key == role_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Course Status</span>
-      <select name="status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Status" name="status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">All Statuses</option>
         {% for key, label in status_options %}<option value="{{ key }}" {% if key == status_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reminder Status</span>
-      <select name="reminder" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Reminder" name="reminder" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">Any</option>
         {% for key, label in reminder_options %}<option value="{{ key }}" {% if key == reminder_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>

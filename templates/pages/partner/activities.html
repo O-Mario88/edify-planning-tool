@@ -14,7 +14,7 @@
     <!-- Status filter — on the page background, per the platform filter-bar contract (consistency.css). -->
     <form method="get" class="platform-filter-bar flex items-center gap-2 w-fit">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</span>
-      <select name="status" @change="$el.form.requestSubmit()" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all cursor-pointer">
+      <select aria-label="Status" name="status" @change="$el.form.requestSubmit()" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all cursor-pointer">
         <option value="">All</option>
         <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
         <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>

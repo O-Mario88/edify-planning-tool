@@ -21,12 +21,12 @@
       <form hx-get="/dashboard" hx-target="#cd-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
             class="flex items-center gap-2 rounded-surface px-2.5 py-1.5 bg-white/10 border border-white/15">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
-        <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+        <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">FY {{ opt }}</option>{% endfor %}
         </select>
         <span class="h-4 w-px bg-white/15"></span>
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Month</span>
-        <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+        <select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           <option value="" class="edify-text">All</option>
           {% for v, lbl in month_options %}<option value="{{ v }}" {% if month|stringformat:"s" == v %}selected{% endif %} class="edify-text">{{ lbl }}</option>{% endfor %}
         </select>

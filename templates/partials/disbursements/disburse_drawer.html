@@ -27,12 +27,12 @@
       <div class="grid grid-cols-2 gap-3">
         <div class="space-y-1">
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Amount (UGX) <span class="text-rose-500">*</span></label>
-          <input type="number" name="amount" value="{{ selected.raw_amount }}" min="1" max="{{ selected.raw_amount }}" required
+          <input aria-label="Amount" type="number" name="amount" value="{{ selected.raw_amount }}" min="1" max="{{ selected.raw_amount }}" required
                  class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-700 bg-slate-50 tabular-nums edify-focus-surface focus:border-emerald-400 focus:outline-none">
         </div>
         <div class="space-y-1">
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Payment Method <span class="text-rose-500">*</span></label>
-          <select name="method" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12.5px] font-semibold text-slate-700 bg-slate-50 edify-focus-surface focus:border-emerald-400 focus:outline-none">
+          <select aria-label="Method" name="method" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12.5px] font-semibold text-slate-700 bg-slate-50 edify-focus-surface focus:border-emerald-400 focus:outline-none">
             <option value="">Select…</option>
             {% for m in payment_methods %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
           </select>

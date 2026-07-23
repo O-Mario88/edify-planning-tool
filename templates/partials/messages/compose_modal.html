@@ -64,7 +64,7 @@
         </div>
         <div class="space-y-1">
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Category <span class="text-rose-500">*</span></label>
-          <select name="category" x-model="category" required
+          <select aria-label="Category" name="category" x-model="category" required
                   class="w-full h-10 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold text-slate-700 edify-primary-focus focus:outline-none cursor-pointer">
             <option value="" disabled selected>Select…</option>
             {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}

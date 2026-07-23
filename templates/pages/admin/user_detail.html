@@ -79,7 +79,7 @@ You must edit it to their valid operational email address before sending the inv
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Full Name</label>
-<input
+<input aria-label="Name"
 type="text"
 name="name"
 value="{{ member.name }}"
@@ -90,7 +90,7 @@ class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-non
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Email Address</label>
-<input
+<input aria-label="Email"
 type="email"
 name="email"
 value="{{ member.email }}"
@@ -115,7 +115,7 @@ class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-non
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary Active Role</label>
-<select
+<select aria-label="Role"
 name="role"
 class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
 >
@@ -148,7 +148,7 @@ class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary District Assignment</label>
-<select
+<select aria-label="Primary district"
 name="primary_district"
 class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
 >

@@ -84,7 +84,7 @@ hx-swap="innerHTML"
 <input type="hidden" name="cluster_id" value="{{ selected_cluster.id }}">
 <input type="hidden" name="fixed_cluster" value="true">
 {% else %}
-<select
+<select aria-label="Cluster ID"
 name="cluster_id"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 hx-get="/clusters/planner-drawer"
@@ -160,7 +160,7 @@ class="h-5 w-5 text-[var(--edify-chart-blue)] border-slate-300 focus:ring-[var(-
 <div>
 <label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Expected Participants <span class="text-slate-400">(optional)</span></label>
 <div class="relative">
-<input
+<input aria-label="Expected participants"
 type="number"
 name="expected_participants"
 x-model.number="participants"
@@ -179,7 +179,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 </div>
 <div>
 <label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention <span class="text-slate-400">(optional)</span></label>
-<select
+<select aria-label="Focus intervention"
 name="focus_intervention"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
 >
@@ -308,11 +308,11 @@ x-transition:leave-end="opacity-0 transform scale-95"
 >
 <!-- Header -->
 <div class="flex items-center justify-between px-1">
-<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="prevMonth()" aria-label="Previous month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
 <span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
-<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<button type="button" @click="nextMonth()" aria-label="Next month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
 </div>
@@ -347,7 +347,7 @@ x-text="day"
 <div>
 <label class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Responsible Staff</label>
 {% if request.user.active_role == 'Program Lead' or request.user.active_role == 'Admin' %}
-<select
+<select aria-label="Responsible staff ID"
 name="responsible_staff_id"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
 >

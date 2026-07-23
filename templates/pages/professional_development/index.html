@@ -18,7 +18,7 @@
       <form hx-get="/my-professional-development" hx-target="#pd-body" hx-swap="innerHTML" hx-trigger="change" hx-push-url="true"
             class="flex items-center gap-2 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 edify-text-caption font-bold text-slate-500">
         <span class="uppercase tracking-wider edify-text-caption">FY</span>
-        <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+        <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </form>

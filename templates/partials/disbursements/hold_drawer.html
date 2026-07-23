@@ -26,7 +26,7 @@
       <input type="hidden" name="item" value="{{ selected.key }}">
       <div class="space-y-1">
         <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Hold Reason <span class="text-rose-500">*</span></label>
-        <select name="reason" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12.5px] font-semibold text-slate-700 bg-slate-50 edify-focus-surface focus:border-amber-400 focus:outline-none">
+        <select aria-label="Reason" name="reason" required class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12.5px] font-semibold text-slate-700 bg-slate-50 edify-focus-surface focus:border-amber-400 focus:outline-none">
           <option value="">Select a reason…</option>
           {% for r in hold_reasons %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
         </select>

@@ -37,13 +37,13 @@
         class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
-      <select name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Fiscal year" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Range</span>
-      <select name="range_days" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Range days" name="range_days" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="7" {% if range_days == 7 %}selected{% endif %}>Last 7 Days</option>
         <option value="30" {% if range_days == 30 %}selected{% endif %}>Last 30 Days</option>
         <option value="90" {% if range_days == 90 %}selected{% endif %}>Last 90 Days</option>
@@ -51,14 +51,14 @@
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</span>
-      <select name="district_id" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="District ID" name="district_id" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">All Districts</option>
         {% for did, dname in district_options %}<option value="{{ did }}" {% if did == district_id %}selected{% endif %}>{{ dname }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Risk Level</span>
-      <select name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+      <select aria-label="Risk level" name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">Any</option>
         {% for key, label in risk_level_options %}<option value="{{ key }}" {% if key == risk_level %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>

@@ -65,12 +65,12 @@
         <input type="hidden" name="action" value="activate_window">
         <input type="hidden" name="fy" value="{{ fy }}">
         <label class="text-[12px] text-slate-500">Activate window
-          <select name="window" class="mt-1 block rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+          <select aria-label="Window" name="window" class="mt-1 block rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
             {% for val, label in windows %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
           </select>
         </label>
         <label class="text-[12px] text-slate-500">Deadline
-          <input type="date" name="deadline" class="mt-1 block rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+          <input aria-label="Deadline" type="date" name="deadline" class="mt-1 block rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
         </label>
         <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Activate &amp; freeze snapshots</button>
       </form>
@@ -142,7 +142,7 @@
             {% elif row.stage == "slt_calibrated" %}
             <form method="post" action="/hr/performance-cycle/action" class="flex items-center gap-1">
               {% csrf_token %}<input type="hidden" name="action" value="confirm_rating"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
-              <select name="rating" class="rounded-md border border-slate-200 px-2 py-1 text-[12px]">{% for val, label in ratings %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
+              <select aria-label="Rating" name="rating" class="rounded-md border border-slate-200 px-2 py-1 text-[12px]">{% for val, label in ratings %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
               <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Confirm rating</button>
             </form>
             {% elif row.stage == "employee_acknowledged" %}

@@ -24,7 +24,7 @@
         </span>
       </div>
 
-      <select
+      <select aria-label="Type"
         name="type"
         class="px-3 py-1.5 text-xs rounded-control border font-bold transition edify-surface edify-border edify-text"
         @change="$el.form.requestSubmit()"
@@ -37,7 +37,7 @@
         <option value="bereavement_leave" {% if selected_type == 'bereavement_leave' %}selected{% endif %}>Bereavement Leave</option>
       </select>
 
-      <select
+      <select aria-label="Status"
         name="status"
         class="px-3 py-1.5 text-xs rounded-control border font-bold transition edify-surface edify-border edify-text"
         @change="$el.form.requestSubmit()"

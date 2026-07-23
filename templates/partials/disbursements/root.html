@@ -29,13 +29,13 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
         class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
-      <select name="fy" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+      <select aria-label="Fiscal year" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
         {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>{{ opt }}</option>{% endfor %}
       </select>
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
-      <select name="month" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+      <select aria-label="Month" name="month" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
         <option value="1" {% if month == 1 %}selected{% endif %}>January</option>
         <option value="2" {% if month == 2 %}selected{% endif %}>February</option>
         <option value="3" {% if month == 3 %}selected{% endif %}>March</option>
@@ -52,7 +52,7 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
     </label>
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Fund Status</span>
-      <select name="status" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+      <select aria-label="Status" name="status" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
         <option value="">All Statuses</option>
         {% for s in status_options %}<option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
       </select>

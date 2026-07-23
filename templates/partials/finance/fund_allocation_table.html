@@ -272,7 +272,7 @@ class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-sl
 </div>
 
 <div class="flex items-center gap-1.5">
-<select
+<select aria-label="Per page"
 name="per_page"
 hx-get="/finance/fund-allocation?page=1&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
 hx-target="#allocation-table-container"

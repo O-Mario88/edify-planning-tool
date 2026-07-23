@@ -31,7 +31,7 @@ items are the only manual country-level costs.{% endcomment %}
         class="platform-filter-bar">
       <label class="block">
         <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
-        <select name="month" class="mt-1 h-9 px-2.5 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 edify-surface focus:outline-none">
+        <select aria-label="Month" name="month" class="mt-1 h-9 px-2.5 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 edify-surface focus:outline-none">
           <option value="1" {% if month == 1 %}selected{% endif %}>January {{ fy }}</option>
           <option value="2" {% if month == 2 %}selected{% endif %}>February {{ fy }}</option>
           <option value="3" {% if month == 3 %}selected{% endif %}>March {{ fy }}</option>
@@ -48,7 +48,7 @@ items are the only manual country-level costs.{% endcomment %}
       </label>
       <label class="block">
         <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
-        <select name="fy" class="mt-1 h-9 px-2.5 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 edify-surface focus:outline-none">
+        <select aria-label="Fiscal year" name="fy" class="mt-1 h-9 px-2.5 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 edify-surface focus:outline-none">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </label>
@@ -124,8 +124,8 @@ items are the only manual country-level costs.{% endcomment %}
     <form hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML" class="grid grid-cols-1 gap-3 border-t border-slate-100 px-4 py-4 md:grid-cols-6">
       <input type="hidden" name="action" value="add_admin_line"><input type="hidden" name="budget_id" value="{{ budget_id }}"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
       <label class="md:col-span-2"><span class="edify-text-caption font-bold uppercase text-slate-400">Item</span><input required name="description" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="e.g. Office internet"></label>
-      <label><span class="edify-text-caption font-bold uppercase text-slate-400">Category</span><input name="cost_category" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="operations"></label>
-      <label><span class="edify-text-caption font-bold uppercase text-slate-400">Quantity</span><input required min="0.01" step="0.01" name="quantity" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="1"></label>
+      <label><span class="edify-text-caption font-bold uppercase text-slate-400">Category</span><input aria-label="Cost category" name="cost_category" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="operations"></label>
+      <label><span class="edify-text-caption font-bold uppercase text-slate-400">Quantity</span><input aria-label="Quantity" required min="0.01" step="0.01" name="quantity" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="1"></label>
       <label><span class="edify-text-caption font-bold uppercase text-slate-400">Unit cost (UGX)</span><input required min="1" name="unit_cost" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="0"></label>
       <div class="flex items-end"><button type="submit" class="h-9 w-full rounded-control edify-primary-solid px-3 text-[12px] font-bold text-white edify-primary-hover">Add admin item</button></div>
       <label class="md:col-span-6"><span class="edify-text-caption font-bold uppercase text-slate-400">Why is this needed? <span class="normal-case text-slate-300">(optional)</span></span><input name="justification" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="Short explanation for the RVP"></label>

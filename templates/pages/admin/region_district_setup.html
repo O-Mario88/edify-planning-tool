@@ -48,7 +48,7 @@
 {% csrf_token %}
 <input type="hidden" name="action" value="classify_district">
 <input type="hidden" name="district_id" value="{{ dist.id }}">
-<select name="district_type" @change="$el.form.requestSubmit()" class="edify-text-caption font-bold rounded-control border px-1.5 py-1 focus:outline-none
+<select aria-label="District type" name="district_type" @change="$el.form.requestSubmit()" class="edify-text-caption font-bold rounded-control border px-1.5 py-1 focus:outline-none
 {% if dist.district_type == 'secondary' %}border-purple-200 bg-purple-50 text-purple-700
 {% elif dist.district_type == 'primary' %}border-emerald-200 bg-emerald-50 text-emerald-700
 {% else %}border-amber-200 bg-amber-50 text-amber-700{% endif %}">
@@ -119,7 +119,7 @@
 {% csrf_token %}
 <input type="hidden" name="action" value="add_group_member">
 <input type="hidden" name="group_id" value="{{ group.id }}">
-<select name="district_id" required class="flex-1 rounded-control border border-slate-200 px-2 py-1.5 edify-text-caption edify-surface">
+<select aria-label="District ID" name="district_id" required class="flex-1 rounded-control border border-slate-200 px-2 py-1.5 edify-text-caption edify-surface">
 <option value="">Add secondary district...</option>
 {% for d in secondary_districts %}
 <option value="{{ d.id }}">{{ d.name }}</option>
@@ -156,7 +156,7 @@ class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] focu
 
 <div class="space-y-1">
 <label class="edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Region Assignment</label>
-<select
+<select aria-label="Region ID"
 name="region_id"
 required
 class="w-full rounded-control border border-slate-200 px-3 py-2 text-[12px] edify-surface focus:outline-none edify-primary-focus"

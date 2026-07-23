@@ -139,7 +139,7 @@ x-transition
 >
 <div class="flex items-center justify-between border-b  pb-3">
 <h3 class="text-[21px] font-extrabold tracking-tight text-slate-900 tracking-tight">Provision New System User</h3>
-<button
+<button aria-label="Close"
 @click="showAddModal = false"
 class="text-slate-400 hover:p-1 rounded-control hover:bg-slate-100 transition-colors"
 >
@@ -196,7 +196,7 @@ class="w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 focus
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Supervisor</label>
-<select
+<select aria-label="Supervisor staff ID"
 name="supervisor_staff_id"
 class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
 >
@@ -211,7 +211,7 @@ class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus
 <div class="grid grid-cols-2 gap-4">
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Primary Role</label>
-<select
+<select aria-label="Role"
 name="role"
 required
 class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
@@ -224,7 +224,7 @@ class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Primary District Assignment</label>
-<select
+<select aria-label="Primary district"
 name="primary_district"
 class="w-full h-9 px-2 rounded-control border border-slate-200 bg-slate-50 focus:outline-none edify-focus-surface cursor-pointer transition-all"
 >

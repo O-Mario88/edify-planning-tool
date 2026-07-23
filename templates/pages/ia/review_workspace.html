@@ -40,7 +40,7 @@ zoomSrc: ''
 <!-- Top Navigation bar of workspace -->
 <div class="edify-surface border-b border-slate-200 px-6 py-3 shrink-0 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<a href="/ia/verification/" class="h-8 w-8 rounded-control hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors">
+<a aria-label="Back to verification queue" href="/ia/verification/" class="h-8 w-8 rounded-control hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </a>
 <div>
@@ -415,7 +415,7 @@ style="display: none;"
 <div class="space-y-5">
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800">Return Activity</h3>
-<button @click="returnOpen = false" class="text-slate-400 hover:text-slate-600">
+<button aria-label="Close" @click="returnOpen = false" class="text-slate-400 hover:text-slate-600">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>
 </div>
@@ -476,7 +476,7 @@ style="display: none;"
 @click="zoomActive = false"
 >
 <div class="max-w-4xl w-full edify-surface rounded-surface overflow-hidden p-2 relative" @click.stop>
-<button class="absolute top-4 right-4 w-8 h-8 rounded-pill bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition-colors" @click="zoomActive = false">
+<button aria-label="Close" class="absolute top-4 right-4 w-8 h-8 rounded-pill bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition-colors" @click="zoomActive = false">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>
 <img :src="zoomSrc" class="w-full h-auto object-contain max-h-[80vh] rounded-surface" alt="Evidence zoom">

@@ -93,7 +93,7 @@ Core Scope
 <!-- FY -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Fiscal Year</label>
-<select name="fy" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
+<select aria-label="Fiscal year" name="fy" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
 <option value="">All FYs</option>
 <option value="FY24">FY24</option>
 <option value="FY25" selected>FY25</option>
@@ -104,7 +104,7 @@ Core Scope
 <!-- Quarter -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Quarter</label>
-<select name="quarter" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
+<select aria-label="Quarter" name="quarter" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
 <option value="">All Quarters</option>
 <option value="Q1">Q1</option>
 <option value="Q2">Q2</option>
@@ -116,7 +116,7 @@ Core Scope
 <!-- Activity Type -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Activity Type</label>
-<select x-ref="typeSelect" name="activity_type" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
+<select aria-label="Activity type" x-ref="typeSelect" name="activity_type" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
 <option value="">All Types</option>
 <option value="school_visit">School Visit</option>
 <option value="training">Training</option>
@@ -129,7 +129,7 @@ Core Scope
 <!-- School Scope (Core Schools) -->
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">School Scope</label>
-<select x-ref="scopeSelect" name="core_school" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
+<select aria-label="Core school" x-ref="scopeSelect" name="core_school" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-control text-[12px] font-bold px-3 edify-focus-surface edify-primary-focus focus:outline-none transition-all">
 <option value="">All Schools</option>
 <option value="true">Core Schools Only</option>
 </select>

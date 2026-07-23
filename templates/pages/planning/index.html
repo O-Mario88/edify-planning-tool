@@ -80,7 +80,7 @@ class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption fon
 <!-- Quarter -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">Quarter</span>
-<select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+<select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
 {% for q in quarter_options %}
 <option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
 {% endfor %}
@@ -90,7 +90,7 @@ class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption fon
 <!-- District -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">District</span>
-<select name="district" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
+<select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
 <option value="All">All Districts</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
@@ -101,7 +101,7 @@ class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption fon
 <!-- Staff -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">Staff</span>
-<select name="staff" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
+<select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
 <option value="All">All Staff</option>
 {% for s in staff_members %}
 <option value="{{ s.user.user_id }}" {% if selected_staff == s.user.user_id %}selected{% endif %}>{{ s.user.name }}</option>
@@ -112,7 +112,7 @@ class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption fon
 <!-- Planning Readiness -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">Readiness</span>
-<select name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[150px]">
+<select aria-label="Planning readiness" name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[150px]">
 <option value="All">All Readiness</option>
 {% for val, label in readiness_choices %}
 <option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
@@ -330,11 +330,11 @@ class="space-y-3"
 <input type="hidden" name="action" value="schedule">
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Visit Date</label>
-<input type="date" name="scheduled_date" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+<input aria-label="Scheduled date" type="date" name="scheduled_date" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 </div>
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Focus Intervention</label>
-<select name="focus_intervention" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+<select aria-label="Focus intervention" name="focus_intervention" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <option value="">Select...</option>
 {% for code, label in interventions %}
 <option value="{{ code }}">{{ label }}</option>
@@ -391,7 +391,7 @@ class="space-y-3"
 <input type="hidden" name="action" value="partner">
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Partner</label>
-<select name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+<select aria-label="Partner ID" name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <option value="">Select partner...</option>
 {% for p in partners %}
 <option value="{{ p.id }}">{{ p.name }}</option>
@@ -400,7 +400,7 @@ class="space-y-3"
 </div>
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Target Date (Optional)</label>
-<input type="date" name="scheduled_date" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+<input aria-label="Scheduled date" type="date" name="scheduled_date" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <p class="edify-text-caption font-semibold text-slate-400 mt-1">Leave blank if the partner will confirm their own schedule.</p>
 </div>
 <div id="bulk-assign-partner-feedback"></div>

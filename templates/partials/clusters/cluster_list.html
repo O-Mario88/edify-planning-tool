@@ -34,6 +34,7 @@ Create Cluster
 <div class="flex items-center gap-1">
 {% if page_obj.has_previous %}
 <button
+aria-label="Previous page"
 hx-get="/clusters?page={{ page_obj.previous_page_number }}"
 hx-include="#filters-form"
 hx-target="#clusters-table-container"
@@ -59,6 +60,7 @@ class="h-8 w-8 rounded-control border border-slate-200 edify-surface flex items-
 
 {% if page_obj.has_next %}
 <button
+aria-label="Next page"
 hx-get="/clusters?page={{ page_obj.next_page_number }}"
 hx-include="#filters-form"
 hx-target="#clusters-table-container"

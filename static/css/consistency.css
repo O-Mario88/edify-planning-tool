@@ -28,6 +28,18 @@
   color: var(--brand-primary-text) !important;
 }
 
+/* ── Status text contrast (light mode only) ──────────────────────────────────
+ * The saturated -500/-600 status utilities read below WCAG AA (4.5:1) as small
+ * text on white or the -50 tints (amber-600 3.06:1, emerald-600 3.49:1,
+ * rose-600 4.32:1). On light surfaces they resolve to the canonical AA text
+ * tone (--edify-*-text). Scoped to html.light so the dark themes — where the
+ * lighter hue is the correct one on dark surfaces — keep their treatment.
+ * Only text colour is affected; -bg / fill utilities are untouched. Higher
+ * specificity than a bare utility, so no !important is needed. */
+html.light :where(.text-amber-500, .text-amber-600) { color: var(--edify-warning-text); }
+html.light :where(.text-rose-500, .text-rose-600, .text-red-500, .text-red-600) { color: var(--edify-danger-text); }
+html.light :where(.text-emerald-500, .text-emerald-600) { color: var(--edify-success-text); }
+
 .edify-primary-on-solid {
   color: var(--brand-primary-on-solid) !important;
 }

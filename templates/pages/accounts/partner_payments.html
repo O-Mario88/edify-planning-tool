@@ -82,7 +82,7 @@ class="h-8 px-3.5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white
 >
 Pay Partner
 </button>
-<a href="/accounts/activities/{{ act.id }}/" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors">
+<a href="/accounts/activities/{{ act.id }}/" aria-label="View activity finance detail" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
 </a>
 </div>
@@ -120,7 +120,7 @@ style="display: none;"
 <div class="space-y-6">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Process Partner Payment</h3>
-<button @click="payOpen = false" class="text-slate-400 hover:text-slate-600">
+<button aria-label="Close" @click="payOpen = false" class="text-slate-400 hover:text-slate-600">
 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>
 </div>
@@ -130,7 +130,7 @@ style="display: none;"
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Partner Name</label>
-<input
+<input aria-label="Partner name"
 type="text"
 name="partner_name"
 required
@@ -141,7 +141,7 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12p
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Amount (UGX)</label>
-<input
+<input aria-label="Amount paid"
 type="number"
 name="amount_paid"
 required
@@ -152,7 +152,7 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12p
 
 <div>
 <label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Payment Method</label>
-<select name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-emerald-500 focus:outline-none transition-all">
+<select aria-label="Payment method" name="payment_method" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-control text-[12px] font-bold px-3 edify-focus-surface focus:border-emerald-500 focus:outline-none transition-all">
 {% for m in methods %}
 <option value="{{ m }}">{{ m }}</option>
 {% endfor %}

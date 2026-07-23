@@ -20,7 +20,7 @@
 <input type="hidden" name="action" value="raise">
 <div>
 <label class="block mb-1 font-bold text-slate-700">Assign to Program Lead</label>
-<select name="assigned_to_user_id" required class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+<select aria-label="Assigned to user ID" name="assigned_to_user_id" required class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
 <option value="">Select a Program Lead…</option>
 {% for pl in program_leads %}<option value="{{ pl.id }}">{{ pl.name }}</option>{% endfor %}
 </select>
@@ -31,11 +31,11 @@
 </div>
 <div class="sm:col-span-2">
 <label class="block mb-1 font-bold text-slate-700">Note</label>
-<textarea name="note" required rows="2" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]"></textarea>
+<textarea aria-label="Note" name="note" required rows="2" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]"></textarea>
 </div>
 <div class="sm:col-span-2">
 <label class="block mb-1 font-bold text-slate-700">Recommended Action</label>
-<input type="text" name="recommended_action" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+<input aria-label="Recommended action" type="text" name="recommended_action" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
 </div>
 <div class="sm:col-span-2 flex justify-end">
 <button type="submit" class="px-4 py-2 rounded-control bg-[var(--edify-primary)] text-white text-[12px] font-bold">Raise Flag</button>

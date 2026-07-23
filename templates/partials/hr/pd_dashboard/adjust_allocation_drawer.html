@@ -20,12 +20,12 @@
     <div class="grid grid-cols-2 gap-3">
       <div>
         <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Annual Allocation (per staff)</label>
-        <input type="number" name="annual_allocation" min="0" step="1" required value="{{ per_staff|floatformat:0 }}"
+        <input aria-label="Annual allocation" type="number" name="annual_allocation" min="0" step="1" required value="{{ per_staff|floatformat:0 }}"
                class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
       </div>
       <div>
         <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Currency</label>
-        <select name="currency" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px] edify-surface">
+        <select aria-label="Currency" name="currency" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px] edify-surface">
           {% for cur in "UGX,KES,RWF,TZS,USD"|split:"," %}
           <option value="{{ cur }}" {% if existing.currency == cur or not existing and cur == "UGX" %}selected{% endif %}>{{ cur }}</option>
           {% endfor %}

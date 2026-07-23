@@ -17,7 +17,7 @@
     <div class="flex flex-wrap items-center gap-2">
       <form method="get" class="flex items-center gap-2 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 edify-text-caption font-bold text-slate-500">
         <span class="uppercase tracking-wider edify-text-caption">FY</span>
-        <select name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+        <select aria-label="Fiscal year" name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </form>
@@ -229,7 +229,7 @@
                   <form method="post" action="/rvp/project/{{ p.id }}/decision" class="inline-flex items-center gap-1"
                         @submit="if (!window.confirm('Record this strategic decision? It is audited and notifies the Country Director.')) $event.preventDefault()">
                     {% csrf_token %}
-                    <select name="action" class="h-7 px-1.5 rounded-control border border-slate-200 edify-text-caption edify-surface">
+                    <select aria-label="Action" name="action" class="h-7 px-1.5 rounded-control border border-slate-200 edify-text-caption edify-surface">
                       <option value="scale">Approve Scale</option>
                       <option value="continue">Continue</option>
                       <option value="redesign">Request Redesign</option>
@@ -500,14 +500,14 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Responsible CD</label>
-            <select name="responsible_cd_id" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] edify-surface">
+            <select aria-label="Responsible CD ID" name="responsible_cd_id" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] edify-surface">
               <option value="">—</option>
               {% for c in cd_options %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
             </select>
           </div>
           <div>
             <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Deadline</label>
-            <input type="date" name="deadline" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+            <input aria-label="Deadline" type="date" name="deadline" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
           </div>
         </div>
         <div>

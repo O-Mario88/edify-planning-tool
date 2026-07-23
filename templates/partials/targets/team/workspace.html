@@ -94,14 +94,14 @@
         <div class="tt-form-pair">
           <label class="tt-form-field">
             <span>Team member</span>
-            <select name="staff_user_id" x-model="catchupStaff" required>
+            <select aria-label="Staff user ID" name="staff_user_id" x-model="catchupStaff" required>
               <option value="" disabled>Select a team member</option>
               {% for option in team_member_options %}<option value="{{ option.value }}">{{ option.label }}</option>{% endfor %}
             </select>
           </label>
           <label class="tt-form-field">
             <span>Target area</span>
-            <select name="area" x-model="catchupArea">
+            <select aria-label="Area" name="area" x-model="catchupArea">
               {% for area in areas %}<option value="{{ area.key }}">{{ area.label }}</option>{% endfor %}
             </select>
           </label>

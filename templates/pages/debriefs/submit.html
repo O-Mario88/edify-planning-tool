@@ -34,7 +34,7 @@
       </label>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Debrief Type</span>
-        <select name="kind" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+        <select aria-label="Kind" name="kind" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
           <option value="activity">Activity Debrief</option>
           <option value="daily">Daily Field Debrief</option>
           <option value="partner">Partner Debrief</option>
@@ -45,7 +45,7 @@
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Linked Activities</span>
         <p class="edify-text-caption text-slate-500 mb-1">Select one activity for a single-activity debrief, or several to cover them together in one debrief.</p>
-        <select name="activity_ids" multiple size="5" hx-get="/debriefs/activity-options" hx-trigger="load" hx-target="this" hx-swap="innerHTML"
+        <select aria-label="Activity IDs" name="activity_ids" multiple size="5" hx-get="/debriefs/activity-options" hx-trigger="load" hx-target="this" hx-swap="innerHTML"
                 class="mt-1 w-full px-2 py-1.5 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
           <option value="">Loading your recent activities…</option>
         </select>
@@ -58,7 +58,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Completion Status</span>
-          <select name="completion_status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+          <select aria-label="Completion status" name="completion_status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
             <option value="completed_as_planned">Completed as Planned</option>
             <option value="partially_completed">Partially Completed</option>
             <option value="unsuccessful">Unsuccessful</option>
@@ -69,33 +69,33 @@
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">If Not Completed — Why?</span>
-          <input type="text" name="incomplete_reason" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
+          <input aria-label="Incomplete reason" type="text" name="incomplete_reason" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Start Time</span>
-          <input type="time" name="actual_start_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
+          <input aria-label="Actual start time" type="time" name="actual_start_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual End Time</span>
-          <input type="time" name="actual_end_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
+          <input aria-label="Actual end time" type="time" name="actual_end_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
         </label>
       </div>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Who Participated?</span>
-        <textarea name="participants_summary" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
+        <textarea aria-label="Participants summary" name="participants_summary" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
       </label>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">What Was Done?</span>
-        <textarea name="what_was_done" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
+        <textarea aria-label="What was done" name="what_was_done" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
       </label>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Intended Purpose</span>
-          <textarea name="intended_purpose" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
+          <textarea aria-label="Intended purpose" name="intended_purpose" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
         </label>
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Was the Purpose Achieved?</span>
-          <select name="purpose_achieved" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+          <select aria-label="Purpose achieved" name="purpose_achieved" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
             <option value="">—</option><option value="true">Yes</option><option value="false">No</option>
           </select>
         </label>
@@ -142,19 +142,19 @@
     <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">D. Participant &amp; Engagement Quality</h2>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Expected</span><input type="number" min="0" name="expected_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Actual</span><input type="number" min="0" name="actual_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Leaders Present</span><input type="number" min="0" name="school_leaders_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Teachers Present</span><input type="number" min="0" name="teachers_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Expected</span><input aria-label="Expected participants" type="number" min="0" name="expected_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Actual</span><input aria-label="Actual participants" type="number" min="0" name="actual_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Leaders Present</span><input aria-label="School leaders present" type="number" min="0" name="school_leaders_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Teachers Present</span><input aria-label="Teachers present" type="number" min="0" name="teachers_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Participation Quality</span>
-          <select name="engagement_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+          <select aria-label="Engagement level" name="engagement_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
             <option value="excellent">Excellent</option><option value="good" selected>Good</option><option value="moderate">Moderate</option><option value="low">Low</option><option value="very_low">Very Low</option>
           </select>
         </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Attendance Concerns</span><input type="text" name="attendance_concerns" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Attendance Concerns</span><input aria-label="Attendance concerns" type="text" name="attendance_concerns" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
       </div>
     </div>
 
@@ -198,23 +198,23 @@
     <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">F. Route &amp; Travel Debrief</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Route</span><input type="text" name="planned_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Route</span><input type="text" name="actual_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Route</span><input aria-label="Planned route" type="text" name="planned_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Route</span><input aria-label="Actual route" type="text" name="actual_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Planned</span><input type="number" min="0" name="schools_planned_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Reached</span><input type="number" min="0" name="schools_reached_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel Start</span><input type="time" name="travel_start_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel End</span><input type="time" name="travel_end_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Planned</span><input aria-label="Schools planned count" type="number" min="0" name="schools_planned_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Reached</span><input aria-label="Schools reached count" type="number" min="0" name="schools_reached_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel Start</span><input aria-label="Travel start time" type="time" name="travel_start_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel End</span><input aria-label="Travel end time" type="time" name="travel_end_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Route Quality</span>
-          <select name="route_quality" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+          <select aria-label="Route quality" name="route_quality" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
             <option value="">—</option><option value="excellent">Excellent</option><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option>
           </select>
         </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Transport Issue</span><input type="text" name="transport_issue" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Transport Issue</span><input aria-label="Transport issue" type="text" name="transport_issue" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
       </div>
     </div>
 
@@ -240,7 +240,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
         <label class="block">
           <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Recommended Next Activity</span>
-          <select name="recommended_next_activity_type" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+          <select aria-label="Recommended next activity type" name="recommended_next_activity_type" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
             <option value="">No Further Action</option>
             <option value="school_visit">School Visit</option><option value="follow_up_visit">Follow-Up Visit</option>
             <option value="baseline_ssa">Baseline SSA</option><option value="ssa_refresh">SSA Refresh</option>
@@ -250,7 +250,7 @@
             <option value="finance_follow_up">Finance Follow-Up</option><option value="data_cleanup">Data Cleanup</option>
           </select>
         </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Follow-Up Date</span><input type="date" name="follow_up_date" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
+        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Follow-Up Date</span><input aria-label="Follow up date" type="date" name="follow_up_date" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
       </div>
       <p class="edify-text-caption text-slate-500">A recommendation only creates a Planning-ready draft once a supervisor accepts it — it never bypasses scheduling or costing.</p>
     </div>
@@ -323,7 +323,7 @@
       <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">J. Risk &amp; Escalation</h2>
       <label class="block">
         <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Escalation Level</span>
-        <select name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+        <select aria-label="Risk level" name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
           <option value="none">No Escalation</option><option value="monitor">Monitor</option>
           <option value="pl_attention">PL Attention</option><option value="cd_attention">CD Attention</option>
           <option value="ia_attention">IA Attention</option><option value="hr_attention">HR Attention</option>
@@ -335,7 +335,7 @@
         This is a restricted incident (safeguarding, fraud, safety, data integrity, misconduct) — routes only to authorized roles, never the general team or peer feed.
       </label>
       <div x-show="restrictedFlag" x-cloak class="pl-2">
-        <select name="restricted_incident_category" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
+        <select aria-label="Restricted incident category" name="restricted_incident_category" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
           <option value="safeguarding">Safeguarding</option><option value="fraud">Fraud or Misuse of Funds</option>
           <option value="staff_safety">Serious Staff Safety Issue</option><option value="data_integrity">Serious Data Integrity Issue</option>
           <option value="partner_misconduct">Major Partner Misconduct</option><option value="school_complaint">Severe School Complaint</option>
