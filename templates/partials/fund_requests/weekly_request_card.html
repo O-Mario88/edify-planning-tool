@@ -110,7 +110,11 @@ Return for Correction
 {% elif active_wfr.status == 'pending_responsible_confirmation' or active_wfr.status == 'not_requested' or active_wfr.status == 'returned_by_pl' or active_wfr.status == 'returned_by_cd' or active_wfr.status == 'returned_by_accountant' %}
 <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/confirm?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}&tab={{ active_tab }}&request_type={{ selected_request_type }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
 {% csrf_token %}
-<button type="submit" class="flex items-center gap-1.5 h-9 px-4 !edify-primary-solid !text-white text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
+{% comment %}The Tailwind "!" prefix only resolves for Tailwind-generated
+utilities; "!edify-primary-solid" matched no CSS class, leaving this confirm
+button white-on-white (1.05:1). Plain component classes restore the primary
+look.{% endcomment %}
+<button type="submit" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
 Confirm Advance Request
 </button>

@@ -106,7 +106,7 @@
                     <button type="button" @click="removeTo(r.id)" class="h-4 w-4 rounded-pill edify-primary-soft-hover flex items-center justify-center edify-primary-text">&times;</button>
                   </span>
                 </template>
-                <select @change="pickRecipient($event, 'to')"
+                <select aria-label="Add To recipient" @change="pickRecipient($event, 'to')"
                         class="flex-1 min-w-[120px] h-8 text-[12px] font-semibold text-slate-500 bg-transparent border-0 focus:outline-none cursor-pointer">
                   <option value="">Add recipient…</option>
                   {% for r in recipients %}
@@ -133,7 +133,7 @@
                   <button type="button" @click="removeCc(r.id)" class="h-4 w-4 rounded-pill hover:bg-slate-100 flex items-center justify-center text-slate-400">&times;</button>
                 </span>
               </template>
-              <select @change="pickRecipient($event, 'cc')"
+              <select aria-label="Add Cc recipient" @change="pickRecipient($event, 'cc')"
                       class="flex-1 min-w-[120px] h-8 text-[12px] font-semibold text-slate-500 bg-transparent border-0 focus:outline-none cursor-pointer">
                 <option value="">Add recipients…</option>
                 {% for r in recipients %}
@@ -225,7 +225,7 @@
                        name="q"
                        class="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-control edify-text-caption font-semibold edify-focus-surface edify-primary-focus focus:outline-none">
               </div>
-              <select x-model="statusFilter"
+              <select aria-label="Filter recipients by status" x-model="statusFilter"
                       hx-get="/messages/new/records"
                       hx-target="#context-records"
                       hx-swap="innerHTML"

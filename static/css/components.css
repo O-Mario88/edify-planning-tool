@@ -1241,12 +1241,15 @@ select:not([multiple]):not(.select-native) {
   align-items: center;
 }
 
+/* Trend chips are 11px text: the saturated fill tones read 2.5-3.6:1 on the
+   white KPI card, so they use the AA text tones. In the dark themes the -text
+   tokens alias back to the light fills, so dark surfaces keep their hue. */
 .kpi-strip__trend--up {
-  color: var(--edify-success);
+  color: var(--edify-success-text);
 }
 
 .kpi-strip__trend--down {
-  color: var(--edify-danger);
+  color: var(--edify-danger-text);
 }
 
 .kpi-strip__trend--neutral {

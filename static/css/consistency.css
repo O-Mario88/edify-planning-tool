@@ -36,9 +36,91 @@
  * lighter hue is the correct one on dark surfaces — keep their treatment.
  * Only text colour is affected; -bg / fill utilities are untouched. Higher
  * specificity than a bare utility, so no !important is needed. */
-html.light :where(.text-amber-500, .text-amber-600) { color: var(--edify-warning-text); }
-html.light :where(.text-rose-500, .text-rose-600, .text-red-500, .text-red-600) { color: var(--edify-danger-text); }
-html.light :where(.text-emerald-500, .text-emerald-600) { color: var(--edify-success-text); }
+html.light :where(.text-amber-300, .text-amber-400, .text-amber-500, .text-amber-600) { color: var(--edify-warning-text); }
+html.light :where(.text-rose-300, .text-rose-400, .text-rose-500, .text-rose-600,
+  .text-red-300, .text-red-400, .text-red-500, .text-red-600) { color: var(--edify-danger-text); }
+html.light :where(.text-emerald-300, .text-emerald-400, .text-emerald-500, .text-emerald-600) { color: var(--edify-success-text); }
+
+/* Success ACTION buttons: every emerald-500/600 button/link in the codebase
+ * carries white label text, which measures 2.5:1 / 3.65:1 — both under AA.
+ * On light surfaces the fill steps down to the success text tone (5.4:1 with
+ * white) and hover one step deeper, so hover:bg-emerald-700 stays visible.
+ * Scoped to button/a so emerald badges, dots and tints keep their hue. */
+html.light :where(button, a):where(.bg-emerald-500, .bg-emerald-600) { background-color: var(--edify-success-text); }
+html.light :where(button, a):where(.bg-emerald-500, .bg-emerald-600):hover { background-color: #064e3b; }
+
+/* Warning ACTION buttons, same reasoning: white on amber-500/600 reads
+ * 2.13/3.06:1. The fill steps to the warning text tone (amber-700, 4.77:1
+ * with white) and hover one step deeper so hover:bg-amber-600 stays visible. */
+html.light :where(button, a):where(.bg-amber-500, .bg-amber-600) { background-color: var(--edify-warning-text); }
+html.light :where(button, a):where(.bg-amber-500, .bg-amber-600):hover { background-color: #78350f; }
+
+/* White label text on the light -500 fills measures 2.1-3.5:1 — under AA
+ * wherever it appears (icon chips, stat pills, the disbursement mix bar,
+ * whose segment classes are assigned at runtime). On light fills the label
+ * goes dark (>=6:1 on each). Buttons/links are excluded: the action-button
+ * rules above darken their FILLS and keep the white label. Icons inherit
+ * currentColor and become dark-on-colour — compliant and consistent. */
+html.light :where(.bg-amber-500, .bg-emerald-500, .bg-cyan-500,
+  .bg-fuchsia-500, .bg-lime-600):where(.text-white):not(button):not(a) { color: #0f172a; }
+/* rose-500 passes with NEITHER white (3.8) nor dark (4.2) text at body sizes,
+ * so the fill steps to rose-600 and the white label then reads 4.7:1. */
+html.light :where(.bg-rose-500):where(.text-white) { background-color: #e11d48; }
+
+/* Orange status text (SF/reconciliation labels): orange-600 on the orange-50
+ * tint reads 3.37:1; orange-700 clears AA while keeping the hue family. */
+html.light :where(.text-orange-300, .text-orange-400, .text-orange-500, .text-orange-600) { color: #c2410c; }
+
+/* Teal informational text (IA analytics): teal-600 reads 3.5:1 on white;
+ * teal-700 clears AA in the same hue family. */
+html.light :where(.text-teal-300, .text-teal-400, .text-teal-500, .text-teal-600) { color: #0f766e; }
+
+/* Violet/purple accents (budget provenance labels): violet-500 reads 4.09:1
+ * on the violet tint; the canonical purple text tone clears AA. */
+html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-violet-600,
+  .text-purple-300, .text-purple-400, .text-purple-500, .text-purple-600) { color: var(--edify-purple-text); }
+
+/* Sky/cyan informational text (workflow-state pills): sky-600 reads 3.77:1 on
+ * the sky tint; the -700 steps clear AA in the same hue families. */
+html.light :where(.text-sky-300, .text-sky-400, .text-sky-500, .text-sky-600) { color: #0369a1; }
+html.light :where(.text-cyan-300, .text-cyan-400, .text-cyan-500, .text-cyan-600) { color: #0e7490; }
+
+/* ── Dark hero banners in light mode ─────────────────────────────────────────
+ * ~38 pages open with a bg-slate-900/800 hero (mapped to the brand navy by
+ * this bridge). Every light-mode "darken the text" remap — the grey remap in
+ * platform.css and the status remaps above — assumes a light surface and
+ * produces dark-on-dark inside these heroes (measured 2.16:1). Inside the
+ * dark-header family the same utilities resolve to their light-on-dark tones
+ * instead (each >=4.5:1 on the brand navy). The grey override needs
+ * !important to outrank the platform.css grey remap of equal importance. */
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-slate-300, .text-slate-400, .text-slate-500,
+         .text-gray-300, .text-gray-400, .text-gray-500,
+         .text-zinc-300, .text-zinc-400, .text-zinc-500,
+         .text-neutral-300, .text-neutral-400, .text-neutral-500) {
+  color: #cbd5e1 !important;
+}
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-emerald-300, .text-emerald-400, .text-emerald-500, .text-emerald-600) { color: #6ee7b7; }
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-amber-300, .text-amber-400, .text-amber-500, .text-amber-600) { color: #fcd34d; }
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-rose-300, .text-rose-400, .text-rose-500, .text-rose-600,
+         .text-red-300, .text-red-400, .text-red-500, .text-red-600) { color: #fda4af; }
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-orange-300, .text-orange-400, .text-orange-500, .text-orange-600) { color: #fdba74; }
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-teal-300, .text-teal-400, .text-teal-500, .text-teal-600) { color: #5eead4; }
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-violet-600,
+         .text-purple-300, .text-purple-400, .text-purple-500, .text-purple-600) { color: #c4b5fd; }
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"])
+  :where(.text-sky-300, .text-sky-400, .text-sky-500, .text-sky-600,
+         .text-cyan-300, .text-cyan-400, .text-cyan-500, .text-cyan-600) { color: #7dd3fc; }
+/* The brand-text alias is the dark navy in light mode — inside a dark hero it
+ * reads 1.92:1, so it lifts to the light brand tone there. !important matches
+ * the alias's own importance. */
+html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[var(--edify-primary"]) .edify-primary-text { color: #8ac6ea !important; }
 
 .edify-primary-on-solid {
   color: var(--brand-primary-on-solid) !important;
@@ -138,10 +220,13 @@ html.light :where(.text-emerald-500, .text-emerald-600) { color: var(--edify-suc
 .edify-text-subtle { color: var(--edify-text-subtle) !important; }
 .edify-shadow-sm { box-shadow: var(--edify-shadow-sm) !important; }
 .edify-shadow-md { box-shadow: var(--edify-shadow-md) !important; }
-.edify-success-text { color: var(--edify-success) !important; }
-.edify-warning-text { color: var(--edify-warning) !important; }
-.edify-danger-text { color: var(--edify-danger) !important; }
-.edify-info-text { color: var(--edify-info) !important; }
+/* These helpers promise TEXT tones. They pointed at the base fill tokens,
+   so every badge using them read 2.5-3.6:1 on the soft tints. The -text
+   tokens are the AA pairing (and alias back to the fills in dark themes). */
+.edify-success-text { color: var(--edify-success-text) !important; }
+.edify-warning-text { color: var(--edify-warning-text) !important; }
+.edify-danger-text { color: var(--edify-danger-text) !important; }
+.edify-info-text { color: var(--edify-info-text) !important; }
 .edify-success-soft { background-color: var(--edify-success-light) !important; }
 .edify-warning-soft { background-color: var(--edify-warning-light) !important; }
 .edify-danger-soft { background-color: var(--edify-danger-light) !important; }
@@ -169,7 +254,7 @@ main .edify-surface-muted.rounded-surface.border {
 
 /* A dark header is a self-contained surface; its title must never inherit the
  * global dark-text rule used by ordinary page content. */
-main :is(.edify-page-header--dark, [class~="bg-slate-900"], [class~="bg-slate-800"], [class~="bg-gray-900"], [class~="bg-gray-800"]) :is(h1, h2, h3) {
+main :is(.edify-page-header--dark, [class~="bg-slate-900"], [class~="bg-slate-800"], [class~="bg-gray-900"], [class~="bg-gray-800"], [class*="bg-[var(--edify-primary"]) :is(h1, h2, h3) {
   color: var(--edify-on-accent) !important;
 }
 

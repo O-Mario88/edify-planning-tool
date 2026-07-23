@@ -597,7 +597,9 @@ main table th {
   padding: 0.5625rem 0.6875rem !important;
   border-block-end: 1px solid var(--edify-border) !important;
   background: var(--edify-surface-muted) !important;
-  color: var(--edify-text-subtle) !important;
+  /* Header text sits ON the muted band: the subtle tone measures 4.24:1
+     there (11px needs 4.5). The muted tone reads 6.9:1 and stays quiet. */
+  color: var(--edify-text-muted) !important;
   font-size: var(--edify-text-micro-size) !important;
   font-weight: 600 !important;
   letter-spacing: var(--edify-text-micro-tracking) !important;
@@ -617,6 +619,14 @@ main table td :where(strong, .font-bold, .font-semibold),
 main table td[class*="font-"] {
   color: var(--edify-text);
   font-weight: 600 !important;
+}
+
+/* The rule above assumes light cells. Inside a solid brand cell (budget
+   group headers) the emphasis text keeps the on-solid colour — otherwise
+   bold children paint dark-on-navy (measured 2.29:1). */
+main table td:is(.edify-primary-solid, .edify-primary-on-solid)
+  :where(strong, .font-bold, .font-semibold) {
+  color: var(--brand-primary-on-solid);
 }
 
 main table tbody tr {
@@ -910,7 +920,10 @@ main .platform-hero__eyebrow {
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-muted);
-  color: var(--edify-text-subtle);
+  /* Micro type on the muted surface: the subtle tone measures 4.24:1 here,
+     just under AA for 11px text. The muted tone passes while keeping the
+     stamp visually quiet. */
+  color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
   line-height: 1.35;
 }

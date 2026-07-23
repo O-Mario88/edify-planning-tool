@@ -80,12 +80,15 @@
   --edify-success: #10b981;
   --edify-success-light: #ecfdf5;
   --edify-success-border: #a7f3d0;
-  --edify-success-text: #047857;
+  /* -text tones must clear 4.5:1 on ANY light surface, including the muted
+     chip (#E5EAED), not just white. emerald-700/amber-700 measured 4.49/4.14
+     there, so both step one notch deeper (5.9/6.2 on muted). */
+  --edify-success-text: #065f46;
 
   --edify-warning: #f59e0b;
   --edify-warning-light: #fffbeb;
   --edify-warning-border: #fde68a;
-  --edify-warning-text: #b45309;
+  --edify-warning-text: #92400e;
 
   --edify-danger: #ef4444;
   --edify-danger-light: #fef2f2;
