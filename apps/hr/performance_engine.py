@@ -255,7 +255,11 @@ def milestone_metrics(priority) -> list[dict]:
             deleted_at__isnull=True,
         )
         rows.append(
-            {"label": "New schools recruited", "value": recruited.count(), "kind": "auto"}
+            {
+                "label": "New schools recruited",
+                "value": recruited.count(),
+                "kind": "auto",
+            }
         )
         rows.append(
             {
@@ -322,11 +326,19 @@ def milestone_metrics(priority) -> list[dict]:
             deleted_at__isnull=True,
         ).count()
         rows += [
-            {"label": "Direct Visit target", "value": priority.target_number, "kind": "target"},
+            {
+                "label": "Direct Visit target",
+                "value": priority.target_number,
+                "kind": "target",
+            },
             {"label": "Direct Visits completed", "value": completed, "kind": "auto"},
             {"label": "Core School Visits", "value": core, "kind": "auto"},
             {"label": "Client School Visits", "value": client, "kind": "auto"},
-            {"label": "Partner Visits supervised", "value": partner_supervised, "kind": "auto"},
+            {
+                "label": "Partner Visits supervised",
+                "value": partner_supervised,
+                "kind": "auto",
+            },
             {
                 "label": "Visit completion",
                 "value": _pct(completed, priority.target_number),
@@ -351,7 +363,11 @@ def milestone_metrics(priority) -> list[dict]:
             elif types_of.get(sid) == "client":
                 client += 1
         rows += [
-            {"label": "Trainings planned", "value": priority.target_number, "kind": "target"},
+            {
+                "label": "Trainings planned",
+                "value": priority.target_number,
+                "kind": "target",
+            },
             {"label": "Trainings completed", "value": completed, "kind": "auto"},
             {"label": "Core trainings", "value": core, "kind": "auto"},
             {"label": "Client trainings", "value": client, "kind": "auto"},
@@ -372,7 +388,11 @@ def milestone_metrics(priority) -> list[dict]:
         done = len(verified_schools)
         core_done = sum(1 for s in verified_schools if types_of.get(s) == "core")
         rows += [
-            {"label": "Schools allocated for SSA", "value": allocated, "kind": "target"},
+            {
+                "label": "Schools allocated for SSA",
+                "value": allocated,
+                "kind": "target",
+            },
             {"label": "Verified SSA completed", "value": done, "kind": "auto"},
             {"label": "SSA coverage", "value": _pct(done, allocated), "kind": "calc"},
             {"label": "Missing SSA", "value": max(0, allocated - done), "kind": "auto"},
@@ -952,9 +972,7 @@ def save_value_reflection(commitment, data: dict, principal):
     is_manager = StaffSupervisorAssignment.objects.filter(
         supervisee=review.staff, supervisor__user_id=principal.user_id
     ).exists()
-    is_functional = review.functional_manager_id == getattr(
-        principal, "user_id", None
-    )
+    is_functional = review.functional_manager_id == getattr(principal, "user_id", None)
     is_hr = getattr(principal, "active_role", "") in _HR_ROLES
 
     fields = []
@@ -1244,9 +1262,7 @@ def calibrate(review, result, note, principal):
     """SLT calibration outcome, facilitated by HR. Only once ready."""
     _assert_hr(principal)
     if review.stage != "ready_for_slt_calibration":
-        raise BadRequest(
-            "Calibration can only run once HR quality review is complete."
-        )
+        raise BadRequest("Calibration can only run once HR quality review is complete.")
     review.calibration_result = result
     review.calibration_note = note or ""
     review.calibrated_by_id = getattr(principal, "user_id", None)
@@ -1262,9 +1278,7 @@ def calibrate(review, result, note, principal):
             "updated_at",
         ]
     )
-    _audit_review(
-        review, "hr.performance_calibrated", principal, {"result": result}
-    )
+    _audit_review(review, "hr.performance_calibrated", principal, {"result": result})
     return review
 
 
@@ -1272,9 +1286,7 @@ def confirm_final_rating(review, rating, principal):
     """Set the overall rating — ONLY after SLT calibration (§20)."""
     _assert_hr(principal)
     if review.stage != "slt_calibrated":
-        raise Forbidden(
-            "A final rating cannot be confirmed before SLT calibration."
-        )
+        raise Forbidden("A final rating cannot be confirmed before SLT calibration.")
     review.rating = _validate_rating(rating)
     review.stage = "final_rating_confirmed"
     review.save(update_fields=["rating", "stage", "updated_at"])
@@ -1366,7 +1378,11 @@ def activate_pip(plan, principal, action_plan=None):
             "updated_at",
         ]
     )
-    for days, label in ((30, "30-day review"), (60, "60-day review"), (90, "90-day review")):
+    for days, label in (
+        (30, "30-day review"),
+        (60, "60-day review"),
+        (90, "90-day review"),
+    ):
         RecoveryMilestone.objects.create(
             plan=plan,
             description=label,
@@ -1467,7 +1483,12 @@ def record_separation_response(sep, text, principal):
     sep.employee_responded_at = timezone.now()
     sep.stage = SeparationConversation.Stage.HR_REVIEW
     sep.save(
-        update_fields=["employee_response", "employee_responded_at", "stage", "updated_at"]
+        update_fields=[
+            "employee_response",
+            "employee_responded_at",
+            "stage",
+            "updated_at",
+        ]
     )
     _audit_separation(sep, "hr.separation_employee_responded", principal, {})
     return sep
@@ -1482,7 +1503,13 @@ def hr_review_separation(sep, note, principal):
     sep.hr_reviewed_at = timezone.now()
     sep.stage = SeparationConversation.Stage.AWAITING_LEADERSHIP_APPROVAL
     sep.save(
-        update_fields=["hr_review_note", "hr_reviewed_by", "hr_reviewed_at", "stage", "updated_at"]
+        update_fields=[
+            "hr_review_note",
+            "hr_reviewed_by",
+            "hr_reviewed_at",
+            "stage",
+            "updated_at",
+        ]
     )
     _audit_separation(sep, "hr.separation_hr_reviewed", principal, {})
     return sep

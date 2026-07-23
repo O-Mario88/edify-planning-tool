@@ -627,11 +627,16 @@ class ConversationFormViewTests(EngineFixture):
     def test_employee_saves_their_reflection_and_self_rating(self):
         self._client(self.cceo).post(
             f"/performance-conversation/priority/{self.priority.id}/save",
-            {"channel": "employee", "employee_reflection": "Behind on visits due to floods",
-             "employee_rating": "met_some"},
+            {
+                "channel": "employee",
+                "employee_reflection": "Behind on visits due to floods",
+                "employee_rating": "met_some",
+            },
         )
         self.priority.refresh_from_db()
-        self.assertEqual(self.priority.employee_reflection, "Behind on visits due to floods")
+        self.assertEqual(
+            self.priority.employee_reflection, "Behind on visits due to floods"
+        )
         self.assertEqual(self.priority.employee_rating, "met_some")
 
     def test_employee_cannot_write_the_manager_column(self):
@@ -832,9 +837,7 @@ class ConversationDocumentTests(EngineFixture):
         self.emp.force_login(self.cceo)
 
     def test_the_employee_can_open_their_own_locked_record(self):
-        r = self.emp.get(
-            f"/performance-conversation/{self.review.id}/document/q1"
-        )
+        r = self.emp.get(f"/performance-conversation/{self.review.id}/document/q1")
         self.assertEqual(r.status_code, 200)
         self.assertIn("Conversation Record", r.content.decode())
         self.assertIn("FY2026", r.content.decode())
@@ -1088,8 +1091,6 @@ class DocxAndAcknowledgeViewTests(EngineFixture):
         submit_for_calibration(self.review, self.hr)
         calibrate(self.review, "confirmed", "", self.hr)
         confirm_final_rating(self.review, "met", self.hr)
-        self.emp.post(
-            f"/performance-conversation/{self.review.id}/acknowledge"
-        )
+        self.emp.post(f"/performance-conversation/{self.review.id}/acknowledge")
         self.review.refresh_from_db()
         self.assertEqual(self.review.stage, "employee_acknowledged")

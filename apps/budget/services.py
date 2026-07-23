@@ -828,9 +828,12 @@ def budget_workspace(principal, query: dict) -> dict:
     # The Consolidated Fund Allocation page asks for the whole-country roll-up.
     # Honour it only for roles authorised to see national finance data, so a
     # personal My Budget page cannot be widened by a query parameter.
-    country_allowed = scope.country_scope or getattr(
-        principal, "active_role", ""
-    ) in ("CountryDirector", "Admin", "RegionalVicePresident", "Accountant")
+    country_allowed = scope.country_scope or getattr(principal, "active_role", "") in (
+        "CountryDirector",
+        "Admin",
+        "RegionalVicePresident",
+        "Accountant",
+    )
     if requested_scope == "country" and country_allowed:
         budget_scope = "country"
     elif is_program_lead and requested_scope == "team":

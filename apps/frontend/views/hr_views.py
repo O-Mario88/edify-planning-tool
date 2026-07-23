@@ -1728,9 +1728,9 @@ def _resolve_conversation(request):
     is_hr = role in ("HumanResources", "Admin")
 
     if staff_param and staff_param != getattr(viewer_sp, "id", None):
-        target = StaffProfile.objects.filter(id=staff_param).select_related(
-            "user"
-        ).first()
+        target = (
+            StaffProfile.objects.filter(id=staff_param).select_related("user").first()
+        )
     else:
         target = viewer_sp
     if target is None:
@@ -1739,9 +1739,12 @@ def _resolve_conversation(request):
     caps: set[str] = set()
     if viewer_sp and target.id == viewer_sp.id:
         caps.add("employee")
-    if viewer_sp and StaffSupervisorAssignment.objects.filter(
-        supervisee=target, supervisor=viewer_sp
-    ).exists():
+    if (
+        viewer_sp
+        and StaffSupervisorAssignment.objects.filter(
+            supervisee=target, supervisor=viewer_sp
+        ).exists()
+    ):
         caps.add("manager")
     fy = get_operational_fy()
     review = PerformanceReview.objects.filter(
@@ -1767,9 +1770,7 @@ def performance_conversation_view(request):
             request, "You are not part of this performance conversation."
         )
 
-    cycle = (
-        PerformanceCycle.objects.filter(fy=review.fy).first() if review else None
-    )
+    cycle = PerformanceCycle.objects.filter(fy=review.fy).first() if review else None
     window = cycle.active_window if cycle else "none"
     window_open = bool(cycle and window != "none")
 
@@ -1847,13 +1848,19 @@ def performance_input_save_view(request, priority_id):
 
     if request.method != "POST":
         return HttpResponseBadRequest("POST required.")
-    priority = PerformancePriority.objects.filter(id=priority_id).select_related(
-        "review__staff"
-    ).first()
+    priority = (
+        PerformancePriority.objects.filter(id=priority_id)
+        .select_related("review__staff")
+        .first()
+    )
     if priority is None:
         return HttpResponseBadRequest("Unknown priority.")
     channel = request.POST.get("channel", "")
-    data = {k: v for k, v in request.POST.items() if k not in ("csrfmiddlewaretoken", "channel", "staff")}
+    data = {
+        k: v
+        for k, v in request.POST.items()
+        if k not in ("csrfmiddlewaretoken", "channel", "staff")
+    }
     try:
         if channel == "employee":
             save_employee_input(priority, data, request.user)
@@ -1880,12 +1887,18 @@ def performance_value_save_view(request, commitment_id):
 
     if request.method != "POST":
         return HttpResponseBadRequest("POST required.")
-    commitment = ValueCommitment.objects.filter(id=commitment_id).select_related(
-        "review__staff"
-    ).first()
+    commitment = (
+        ValueCommitment.objects.filter(id=commitment_id)
+        .select_related("review__staff")
+        .first()
+    )
     if commitment is None:
         return HttpResponseBadRequest("Unknown commitment.")
-    data = {k: v for k, v in request.POST.items() if k not in ("csrfmiddlewaretoken", "staff")}
+    data = {
+        k: v
+        for k, v in request.POST.items()
+        if k not in ("csrfmiddlewaretoken", "staff")
+    }
     try:
         save_value_reflection(commitment, data, request.user)
     except Forbidden as e:
@@ -1906,9 +1919,9 @@ def performance_signoff_view(request, review_id):
 
     if request.method != "POST":
         return HttpResponseBadRequest("POST required.")
-    review = PerformanceReview.objects.filter(id=review_id).select_related(
-        "staff"
-    ).first()
+    review = (
+        PerformanceReview.objects.filter(id=review_id).select_related("staff").first()
+    )
     if review is None:
         return HttpResponseBadRequest("Unknown review.")
     window = request.POST.get("window", "")
@@ -1919,9 +1932,12 @@ def performance_signoff_view(request, review_id):
 
     viewer_sp = getattr(request.user, "staff_profile", None)
     is_employee = review.staff.user_id == request.user.id
-    is_manager = bool(viewer_sp) and StaffSupervisorAssignment.objects.filter(
-        supervisee=review.staff, supervisor=viewer_sp
-    ).exists()
+    is_manager = (
+        bool(viewer_sp)
+        and StaffSupervisorAssignment.objects.filter(
+            supervisee=review.staff, supervisor=viewer_sp
+        ).exists()
+    )
     is_hr = getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
     if not (is_employee or is_manager or is_hr):
         return HttpResponseForbidden("You cannot sign this conversation off.")
@@ -2102,9 +2118,7 @@ def hr_performance_action_view(request):
             messages.success(request, "Review signed and archived.")
         # ── PIP (§15) ───────────────────────────────────────────────────────
         elif action == "recommend_pip":
-            recommend_pip(
-                _staff(), request.POST.get("reason", ""), request.user
-            )
+            recommend_pip(_staff(), request.POST.get("reason", ""), request.user)
             messages.success(request, "Formal PIP recommended (draft).")
         elif action == "activate_pip":
             from apps.hr.models import PerformanceImprovementPlan
@@ -2169,9 +2183,11 @@ def performance_document_view(request, review_id, window):
     from apps.hr.models import PerformanceReview
     from apps.hr.performance_engine import conversation_document
 
-    review = PerformanceReview.objects.filter(id=review_id).select_related(
-        "staff__user"
-    ).first()
+    review = (
+        PerformanceReview.objects.filter(id=review_id)
+        .select_related("staff__user")
+        .first()
+    )
     if review is None:
         return HttpResponseBadRequest("Unknown review.")
 
@@ -2182,9 +2198,12 @@ def performance_document_view(request, review_id, window):
 
     viewer_sp = getattr(request.user, "staff_profile", None)
     is_employee = review.staff.user_id == request.user.id
-    is_manager = bool(viewer_sp) and StaffSupervisorAssignment.objects.filter(
-        supervisee=review.staff, supervisor=viewer_sp
-    ).exists()
+    is_manager = (
+        bool(viewer_sp)
+        and StaffSupervisorAssignment.objects.filter(
+            supervisee=review.staff, supervisor=viewer_sp
+        ).exists()
+    )
     is_functional = review.functional_manager_id == request.user.id
     is_hr = getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
     in_scope = _profile_scope(request).filter(id=review.staff_id).exists()
@@ -2216,10 +2235,14 @@ def performance_document_view(request, review_id, window):
         merged.append(
             {
                 "frozen": frozen,
-                "employee_rating": getattr(p, "get_employee_rating_display", lambda: None)()
+                "employee_rating": getattr(
+                    p, "get_employee_rating_display", lambda: None
+                )()
                 if p
                 else None,
-                "manager_rating": getattr(p, "get_manager_rating_display", lambda: None)()
+                "manager_rating": getattr(
+                    p, "get_manager_rating_display", lambda: None
+                )()
                 if p
                 else None,
                 "functional_rating": getattr(
@@ -2227,7 +2250,9 @@ def performance_document_view(request, review_id, window):
                 )()
                 if p
                 else None,
-                "employee_reflection": getattr(p, "employee_reflection", "") if p else "",
+                "employee_reflection": getattr(p, "employee_reflection", "")
+                if p
+                else "",
                 "manager_assessment": getattr(p, "manager_assessment", "") if p else "",
                 "agreed_action": getattr(p, "agreed_action", "") if p else "",
             }
@@ -2257,9 +2282,9 @@ def performance_acknowledge_view(request, review_id):
 
     if request.method != "POST":
         return HttpResponseBadRequest("POST required.")
-    review = PerformanceReview.objects.filter(id=review_id).select_related(
-        "staff"
-    ).first()
+    review = (
+        PerformanceReview.objects.filter(id=review_id).select_related("staff").first()
+    )
     if review is None:
         return HttpResponseBadRequest("Unknown review.")
     try:
