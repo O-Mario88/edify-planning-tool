@@ -824,16 +824,33 @@ def budget_workspace(principal, query: dict) -> dict:
     selected_period = query.get("period") if query.get("period") in periods else "week"
     selected = periods[selected_period]
     is_program_lead = scope.active_role == "Program Lead"
-    budget_scope = (
-        "team" if is_program_lead and query.get("budget_scope") == "team" else "my"
-    )
-    owner_ids = _workspace_owner_ids(
-        principal, scope, include_team=budget_scope == "team"
-    )
-    include_admin = getattr(principal, "active_role", "") in (
-        "CountryDirector",
-        "Admin",
-    )
+    requested_scope = query.get("budget_scope")
+    # The Consolidated Fund Allocation page asks for the whole-country roll-up.
+    # Honour it only for roles authorised to see national finance data, so a
+    # personal My Budget page cannot be widened by a query parameter.
+    country_allowed = scope.country_scope or getattr(
+        principal, "active_role", ""
+    ) in ("CountryDirector", "Admin", "RegionalVicePresident", "Accountant")
+    if requested_scope == "country" and country_allowed:
+        budget_scope = "country"
+    elif is_program_lead and requested_scope == "team":
+        budget_scope = "team"
+    else:
+        budget_scope = "my"
+
+    if budget_scope == "country":
+        # No owner filter → every staff member nationally, plus the country
+        # admin budget, in the same activity cost-plan format.
+        owner_ids = None
+        include_admin = True
+    else:
+        owner_ids = _workspace_owner_ids(
+            principal, scope, include_team=budget_scope == "team"
+        )
+        include_admin = getattr(principal, "active_role", "") in (
+            "CountryDirector",
+            "Admin",
+        )
 
     base_lines = (
         ActivityScheduleCostLine.objects.filter(
@@ -1153,7 +1170,7 @@ def budget_workspace(principal, query: dict) -> dict:
         "monthly_request_count": monthly_requests.count(),
         "role": getattr(principal, "active_role", ""),
         "scope_label": "Country"
-        if scope.country_scope
+        if budget_scope == "country" or scope.country_scope
         else ("Team" if budget_scope == "team" else "My"),
         "budget_scope": budget_scope,
         "is_program_lead": is_program_lead,

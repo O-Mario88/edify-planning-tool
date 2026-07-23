@@ -644,7 +644,6 @@ def cost_settings_view(request):
 def fund_allocation_view(request):
     import csv
     from django.http import HttpResponse
-    from apps.geography.models import Region, District
     from apps.budget.allocation_service import MonthlyFundAllocationService
 
     # 1. Parse filter inputs & parameters
@@ -681,20 +680,20 @@ def fund_allocation_view(request):
     }
     month_num = MONTH_MAP.get(month_name.lower(), 4)
 
-    # 2. Get Allocation Data & Calculations
-    data = MonthlyFundAllocationService.get_monthly_allocation(
-        month_num=month_num,
-        fy=fy,
-        region_id=region_id or None,
-        district_id=district_id or None,
-        search_q=search_q or None,
-        page=page,
-        per_page=per_page,
-        principal=request.user,
-    )
-
-    # Check if CSV export is requested
+    # CSV export keeps the per-staff consolidation (unchanged). The service is
+    # only run for the export path now — the on-screen page is the country
+    # cost-plan below and does not need the per-staff breakdown.
     if request.GET.get("export") == "csv":
+        data = MonthlyFundAllocationService.get_monthly_allocation(
+            month_num=month_num,
+            fy=fy,
+            region_id=region_id or None,
+            district_id=district_id or None,
+            search_q=search_q or None,
+            page=page,
+            per_page=per_page,
+            principal=request.user,
+        )
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = (
             f'attachment; filename="consolidated_fund_allocation_{month_name}_{fy}.csv"'
@@ -797,158 +796,26 @@ def fund_allocation_view(request):
                 )
         return response
 
-    insights = MonthlyFundAllocationService.calculate_insights(
-        rows_all=data["rows_all"],
-        grand_totals=data["grand_totals"],
-        total_staff_count=data["total_staff_count"],
+    # ── On-screen page: the country cost-plan (same format as the budget) ──
+    # Grouped by Week / Month / Quarter / FY and including the country admin
+    # budget. budget_workspace already builds this; budget_scope="country"
+    # drops the owner filter so it spans every staff member nationally.
+    from apps.budget.services import budget_workspace
+
+    context = budget_workspace(
+        request.user,
+        {
+            "fy": request.GET.get("fy") or fy,
+            "date": request.GET.get("date"),
+            "period": request.GET.get("period"),
+            "budget_scope": "country",
+        },
     )
-
-    # Format UGX compact helper
-    def format_ugx_compact(val):
-        if not val:
-            return "UGX 0"
-        if val >= 1_000_000_000:
-            return f"UGX {val / 1_000_000_000:.1f}B"
-        if val >= 1_000_000:
-            return f"UGX {val / 1_000_000:.1f}M"
-        if val >= 1_000:
-            return f"UGX {val / 1_000:.0f}K"
-        return f"UGX {val}"
-
-    grand_totals = data["grand_totals"]
-    total_staff_count = data["total_staff_count"]
-    total_activities_count = data["total_activities_count"]
-
-    kpi_strip_items = [
-        {
-            "label": "Total Allocation",
-            "value": format_ugx_compact(grand_totals.get("total_allocation", 0)),
-            "raw_value": int(grand_totals.get("total_allocation", 0)),
-            "helper": f"Across {total_staff_count} staff",
-            "icon": "finance",
-            "variant": "finance",
-        },
-        {
-            "label": "Staff Included",
-            "value": str(total_staff_count),
-            "raw_value": total_staff_count,
-            "helper": "Active staff",
-            "icon": "users",
-            "variant": "primary",
-        },
-        {
-            "label": "Planned Activities",
-            "value": str(total_activities_count),
-            "raw_value": total_activities_count,
-            "helper": "Across categories",
-            "icon": "chart",
-            "variant": "info",
-        },
-        {
-            "label": "Staff Visits Cost",
-            "value": format_ugx_compact(
-                grand_totals.get("staff_visits", {}).get("total", 0)
-            ),
-            "raw_value": int(grand_totals.get("staff_visits", {}).get("total", 0)),
-            "helper": f"{grand_totals.get('staff_visits', {}).get('count', 0)} visits",
-            "icon": "school",
-            "variant": "blue",
-        },
-        {
-            "label": "Partner Visits Cost",
-            "value": format_ugx_compact(
-                grand_totals.get("partner_visits", {}).get("total", 0)
-            ),
-            "raw_value": int(grand_totals.get("partner_visits", {}).get("total", 0)),
-            "helper": f"{grand_totals.get('partner_visits', {}).get('count', 0)} visits",
-            "icon": "users",
-            "variant": "purple",
-        },
-        {
-            "label": "SSA Cost",
-            "value": format_ugx_compact(grand_totals.get("ssa", {}).get("total", 0)),
-            "raw_value": int(grand_totals.get("ssa", {}).get("total", 0)),
-            "helper": f"{grand_totals.get('ssa', {}).get('count', 0)} visits",
-            "icon": "report",
-            "variant": "warning",
-        },
-        {
-            "label": "Cluster Training Cost",
-            "value": format_ugx_compact(
-                grand_totals.get("cluster_training", {}).get("total", 0)
-            ),
-            "raw_value": int(grand_totals.get("cluster_training", {}).get("total", 0)),
-            "helper": f"{grand_totals.get('cluster_training', {}).get('count', 0)} schools",
-            "icon": "target",
-            "variant": "success",
-        },
-        {
-            "label": "Admin Budget",
-            "value": format_ugx_compact(
-                grand_totals.get("admin_budget", {}).get("total", 0)
-            ),
-            "raw_value": int(grand_totals.get("admin_budget", {}).get("total", 0)),
-            "helper": "CD Plan",
-            "icon": "currency",
-            "variant": "neutral",
-        },
-    ]
-
-    # Pagination info
-    total_pages = (data["total_staff_count"] + per_page - 1) // per_page
-    from apps.core.pagination import make_pagination_window
-
-    pages_list = make_pagination_window(page, total_pages)
-    showing_start = (page - 1) * per_page + 1 if data["total_staff_count"] > 0 else 0
-    showing_end = min(page * per_page, data["total_staff_count"])
-
-    # 3. Filter Options Lists
-    regions = Region.objects.all().order_by("name")
-    districts = District.objects.all().order_by("name")
-
-    # 4. Render context
-    context = {
-        "rows": data["rows"],
-        "grand_totals": data["grand_totals"],
-        "kpi_strip_items": kpi_strip_items,
-        "total_staff_count": data["total_staff_count"],
-        "total_activities_count": data["total_activities_count"],
-        "insights": insights,
-        "admin_budget_data": data["admin_budget_data"],
-        # Pagination
-        "page": page,
-        "per_page": per_page,
-        "total_pages": total_pages,
-        "pages_list": pages_list,
-        "showing_start": showing_start,
-        "showing_end": showing_end,
-        # Filters dropdown options
-        "regions": regions,
-        "districts": districts,
-        # Selected states
-        "selected_month": month_name,
-        "selected_fy": fy,
-        "selected_region": region_id,
-        "selected_district": district_id,
-        "search_q": search_q,
-        # Dark sidebar indicator
-        "use_dark_sidebar": True,
-        "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
-        # The table partial only emits its hx-swap-oob blocks on HTMX
-        # refreshes — on full page loads they would render as duplicates.
-        "is_htmx": request.headers.get("HX-Request") == "true",
-    }
-
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "partials/finance/fund_allocation_table.html", context)
-
-    context["topbar_search"] = {
-        "placeholder": "Search staff, owner, school, cluster…",
-        "name": "q",
-        "value": request.GET.get("q", ""),
-        "attach_to": "fund-allocation-filters",
-        "autosubmit": True,
-    }
+    context["use_dark_sidebar"] = True
+    context["timestamp"] = timezone.now().strftime("%B %d, %Y %I:%M %p")
+    # The admin-budget drilldown and CSV export are keyed by a calendar month;
+    # offer the month the selected period begins in.
+    context["admin_month_name"] = context["selected"]["start"].strftime("%B")
     return render(request, "pages/finance/fund_allocation.html", context)
 
 

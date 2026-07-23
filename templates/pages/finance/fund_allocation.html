@@ -1,70 +1,131 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}Consolidated Fund Allocation — SIPA{% endblock %}
+{% block title %}Consolidated Fund Allocation — Edify{% endblock %}
 
 {% block shell_content %}
-<div
-x-data="{
-collapsed: false
-}"
-class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
->
+<div class="px-4 py-5 space-y-4 sm:px-6 max-w-[1500px] mx-auto">
 
-<!-- Breadcrumb -->
-<nav class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-<span>Finance</span>
-<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-<span class="text-slate-600 font-semibold">Consolidated Fund Allocation</span>
-</nav>
+  <!-- Breadcrumb -->
+  <nav class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+    <span>Finance</span>
+    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    <span class="text-slate-600 font-semibold">Consolidated Fund Allocation</span>
+  </nav>
 
-<!-- Header Row with Big Title & Controls -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
-<div>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Consolidated Fund Allocation</h1>
-<p class="text-[12px] text-slate-500 font-semibold mt-1">Monthly allocation summary across all {{ total_staff_count }} staff members</p>
+  <!-- Header -->
+  <div class="rounded-surface border border-slate-800 bg-slate-900 px-5 py-5 text-white shadow-sm sm:px-6">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">Country funding roll-up</p>
+        <h1 class="mt-1 text-[24px] font-bold tracking-tight edify-page-title">Consolidated Fund Allocation</h1>
+        <p class="mt-1 text-[13px] font-medium text-slate-300">Every staff member’s planned costs, nationally · {{ selected.title }} · FY {{ fy }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button"
+                hx-get="/finance/fund-allocation/admin-budget-drilldown?month={{ admin_month_name }}&fy={{ fy }}"
+                hx-target="#drawer-container" hx-swap="innerHTML"
+                class="rounded-control border border-white/15 bg-white/5 px-3 py-2 text-[12px] font-semibold text-slate-200 hover:bg-white/10 transition-colors">Admin Budget Breakdown</button>
+        <button type="button"
+                hx-get="/finance/fund-allocation/export-drawer?month={{ admin_month_name }}&fy={{ fy }}"
+                hx-target="#drawer-container" hx-swap="innerHTML"
+                class="rounded-control edify-surface edify-text px-3 py-2 text-[12px] font-bold shadow-sm hover:opacity-90 transition-opacity inline-flex items-center gap-1.5">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+          Export
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Period tabs: Week / Month / Quarter / FY -->
+  <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    {% for period in comparison %}
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ period.key }}" class="rounded-surface border p-4 transition-all {% if period.selected %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800 hover:-translate-y-0.5 edify-primary-border-hover hover:shadow-sm{% endif %}">
+      <p class="edify-text-caption font-bold uppercase tracking-wider {% if period.selected %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">{% if period.selected %}Grand total{% else %}{{ period.label }}{% endif %}</p>
+      <p class="mt-1 text-[20px] font-bold tabular-nums">{{ period.total|ugx }}</p>
+      <p class="mt-1 text-[11px] font-semibold {% if period.selected %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if period.selected %}{{ period.label }} · {% endif %}{{ period.title }}</p>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Activity cost plan (country-wide) -->
+  <div class="rounded-surface border border-slate-200 edify-surface p-3 shadow-sm sm:p-4">
+    <div class="flex flex-col gap-3 rounded-control border border-slate-100 bg-slate-50/70 px-4 py-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h2 class="text-[15px] font-bold text-slate-800">Activity cost plan — whole country</h2>
+        <p class="mt-0.5 text-[12px] font-medium text-slate-500">Costs are grouped by activity and item across every staff member. Training and meeting tables show sessions and participants; the country admin budget is included in the Month, Quarter and Fiscal Year views.</p>
+      </div>
+      <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm md:text-right">
+        <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
+        <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ total|ugx }}</p>
+      </div>
+    </div>
+    {% if admin_weekly_note %}
+    <div class="mx-5 mt-4 rounded-control border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-800">Country admin costs are planned by month, so they appear in the Month, Quarter and Fiscal Year views rather than being estimated into a week.</div>
+    {% endif %}
+    <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
+      <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
+        <tbody class="divide-y divide-slate-200">
+          {% for group in groups %}
+          <tr>
+            <td colspan="6" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
+              <div class="flex items-center gap-2">
+                <span class="budget-category-name">{{ group.label }}</span>
+                <span class="text-[11px] font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
+              </div>
+            </td>
+          </tr>
+          <tr class="font-bold">
+            <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
+            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' %}Meetings{% elif group.table_kind == 'training' %}Training sessions{% elif group.table_kind == 'admin' %}Quantity{% else %}No. of Days{% endif %}</th>
+            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}Participants{% elif group.table_kind == 'admin' %}—{% else %}No. of Persons{% endif %}</th>
+            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Rate / Unit</th>
+            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Staff cost</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity</th>
+          </tr>
+          {% for row in group.rows %}
+          <tr class="edify-primary-soft-hover">
+            <td class="px-4 py-3">
+              <p class="min-w-0 font-semibold text-slate-800">{{ row.item }}</p>
+            </td>
+            <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}{{ row.activity_count }}{% else %}{{ row.days }}{% endif %}</td>
+            <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{{ row.people }}</td>
+            <td class="px-3 py-3 text-right font-semibold tabular-nums text-slate-700">{% if row.mixed_rate %}Mixed{% else %}{{ row.rate|ugx }}{% endif %}</td>
+            <td class="px-3 py-3 text-right font-semibold tabular-nums text-emerald-700">{% if row.staff_total %}{{ row.staff_total|ugx }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ row.total|ugx }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="budget-subtotal-row">
+            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
+            <td class="px-3 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.staff_total|ugx }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total|ugx }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if groups %}
+        <tfoot>
+          <tr class="text-[15px] font-extrabold">
+            <td colspan="4" class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Grand total</td>
+            <td class="px-3 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ staff_total|ugx }}</td>
+            <td class="px-4 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ total|ugx }}</td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+  {% if groups %}
+  <p class="text-[11px] font-medium text-slate-500">Program costs: {{ program_total|ugx }}{% if admin_total %} · Country admin plan: {{ admin_total|ugx }}{% endif %} · Updated {{ timestamp }}</p>
+  {% else %}
+  <div class="rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
+    <svg class="mx-auto mb-3 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+    <p class="text-[15px] font-bold text-slate-800">No costed activities in this period</p>
+    <p class="mt-1 text-[12px] font-semibold text-slate-500">Choose another time view; the country roll-up fills in as staff schedule and cost their work.</p>
+  </div>
+  {% endif %}
+
+  <!-- Drawer container for admin breakdown and exports -->
+  <div id="drawer-container"></div>
 </div>
-
-<!-- Filters & Search Form (from supporting partial) -->
-{% include "partials/finance/fund_allocation_filters.html" %}
-</div>
-
-<!-- KPI Grid -->
-<div id="fund-allocation-kpis">
-{% include "partials/finance/fund_allocation_kpis.html" %}
-</div>
-
-<!-- Main Allocation Table Container -->
-{% include "partials/finance/fund_allocation_table.html" %}
-
-<!-- Accountant Insights Box -->
-<div class="space-y-3">
-<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Accountant Insights</h3>
-<div id="fund-allocation-insights">
-{% include "partials/finance/accountant_insights.html" %}
-</div>
-</div>
-
-<!-- Footer note strip -->
-<div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between edify-text-caption font-bold text-slate-400">
-<span class="flex items-center gap-1">
-<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-All amounts are in UGX. Costs are planned values for {{ selected_month }} {{ selected_fy }}. This is a consolidated view for all {{ total_staff_count }} staff members.
-</span>
-<span class="mt-2 sm:mt-0 flex items-center gap-1.5">
-Last updated: {{ timestamp }}
-<button
-@click="document.getElementById('fund-allocation-filters').dispatchEvent(new Event('change', { bubbles: true }))"
-class="h-5 w-5 hover:bg-slate-100 rounded-control flex items-center justify-center text-slate-500"
-title="Refresh data"
->
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7H18"/></svg>
-</button>
-</span>
-</div>
-
-</div>
-
-<!-- Drawer container for details and exports -->
-<div id="drawer-container"></div>
 {% endblock %}
