@@ -10,10 +10,10 @@
   <div class="rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap bg-white/10 backdrop-blur-xl border border-white/15 edify-shadow-md">
     <div>
       <div class="flex items-center gap-2">
-        <h1 class="text-[21px] font-semibold leading-[1.15] tracking-[-0.025em] edify-page-title" style="color:var(--edify-surface-raised);">HR Director Dashboard</h1>
+        <h1 class="text-[21px] font-semibold leading-[1.15] tracking-[-0.025em] edify-page-title" style="color:var(--edify-text);">HR Director Dashboard</h1>
         <span class="inline-flex h-2.5 w-2.5 items-center justify-center rounded-pill edify-primary-solid" title="Human Capital Operating System"></span>
       </div>
-      <p class="text-[12px] text-white/75 mt-0.5">Human capital overview across East Africa region. Monitor workforce health, performance and culture.</p>
+      <p class="text-[12px] edify-text-muted mt-0.5">Human capital overview across East Africa region. Monitor workforce health, performance and culture.</p>
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
@@ -21,16 +21,16 @@
             class="flex items-center gap-2 rounded-surface px-2.5 py-1.5 flex-wrap bg-white/10 border border-white/15">
 
         <!-- FY Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">FY</span>
-        <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
+        <select name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-text);">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">{{ opt }}</option>{% endfor %}
         </select>
 
         <span class="h-4 w-px bg-white/15"></span>
 
         <!-- Month Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">Month</span>
-        <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Month</span>
+        <select name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-text);">
           <option value="" class="edify-text">All</option>
           {% for v, lbl in month_options %}<option value="{{ v }}" {% if month|stringformat:"s" == v %}selected{% endif %} class="edify-text">{{ lbl }}</option>{% endfor %}
         </select>
@@ -38,8 +38,8 @@
         <span class="h-4 w-px bg-white/15"></span>
 
         <!-- Country Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">Country</span>
-        <select name="country" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Country</span>
+        <select name="country" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-text);">
           <option value="" class="edify-text">All Countries</option>
           <option value="Uganda" {% if country == "Uganda" %}selected{% endif %} class="edify-text">Uganda</option>
           <option value="Rwanda" {% if country == "Rwanda" %}selected{% endif %} class="edify-text">Rwanda</option>
@@ -50,8 +50,8 @@
         <span class="h-4 w-px bg-white/15"></span>
 
         <!-- Department Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase text-white/60">Dept</span>
-        <select name="department" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-surface-raised);">
+        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Dept</span>
+        <select name="department" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0" style="color:var(--edify-text);">
           <option value="" class="edify-text">All Departments</option>
           <option value="Program Operations" {% if department == "Program Operations" %}selected{% endif %} class="edify-text">Program Operations</option>
           <option value="School Support" {% if department == "School Support" %}selected{% endif %} class="edify-text">School Support</option>
