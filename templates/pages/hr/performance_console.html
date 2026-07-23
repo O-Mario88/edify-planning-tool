@@ -1,0 +1,140 @@
+{% extends "layouts/shell.html" %}
+{% block content %}
+<div class="space-y-5">
+
+  <div class="edify-page-header">
+    <div>
+      <h1 class="edify-page-title">Performance Cycle Console</h1>
+      <p class="edify-page-subtitle">
+        HR controls the whole cycle here — open it, activate a conversation
+        window (which freezes every snapshot), approve agreements, and return
+        or reopen records. Every action is audited.
+      </p>
+    </div>
+    <span class="edify-badge">FY{{ fy }}</span>
+  </div>
+
+  {% if messages %}
+  {% for m in messages %}
+  <div class="rounded-surface border px-4 py-2.5 text-[13px] {% if m.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ m }}</div>
+  {% endfor %}
+  {% endif %}
+
+  {# ── Readiness strip (§6) ──────────────────────────────────────────── #}
+  <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Cycle readiness">
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Cycle</p>
+      <p class="mt-1 text-[15px] font-bold {% if cycle %}text-emerald-600{% else %}text-slate-400{% endif %}">{% if cycle %}Open{% else %}Not opened{% endif %}</p>
+      <p class="edify-text-caption text-slate-400">{{ readiness.quarter }} · {{ readiness.days_to_quarter_end }} days to quarter end</p>
+    </article>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Staff in cycle</p>
+      <p class="mt-1 text-[15px] font-bold text-slate-800">{{ readiness.staff_in_cycle }}</p>
+      <p class="edify-text-caption text-slate-400">active employees</p>
+    </article>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Missing priorities</p>
+      <p class="mt-1 text-[15px] font-bold {% if readiness.missing_priorities %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ readiness.missing_priorities }}</p>
+      <p class="edify-text-caption text-slate-400">without an agreement</p>
+    </article>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Missing managers</p>
+      <p class="mt-1 text-[15px] font-bold {% if readiness.missing_managers %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ readiness.missing_managers }}</p>
+      <p class="edify-text-caption text-slate-400">no reporting line</p>
+    </article>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Active window</p>
+      <p class="mt-1 text-[15px] font-bold text-slate-800">{% if active_window == "none" %}None{% else %}{{ active_window }}{% endif %}</p>
+      <p class="edify-text-caption text-slate-400">{% if active_window == "none" %}form locked{% else %}form open{% endif %}</p>
+    </article>
+  </section>
+
+  {# ── Cycle controls ───────────────────────────────────────────────── #}
+  <div class="edify-surface rounded-surface border border-slate-100 p-5">
+    <div class="flex flex-wrap items-end gap-3">
+      {% if not cycle %}
+      <form method="post" action="/hr/performance-cycle/action">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_cycle">
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <button class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Open FY{{ fy }} cycle &amp; draft agreements</button>
+      </form>
+      {% else %}
+      <form method="post" action="/hr/performance-cycle/action" class="flex items-end gap-2">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="activate_window">
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <label class="text-[12px] text-slate-500">Activate window
+          <select name="window" class="mt-1 block rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+            {% for val, label in windows %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="text-[12px] text-slate-500">Deadline
+          <input type="date" name="deadline" class="mt-1 block rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+        </label>
+        <button class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Activate &amp; freeze snapshots</button>
+      </form>
+      {% if active_window != "none" %}
+      <form method="post" action="/hr/performance-cycle/action">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="close_window">
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <button class="rounded-md border border-slate-200 px-4 py-2 text-[13px] font-bold text-slate-600">Close window</button>
+      </form>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Agreements ───────────────────────────────────────────────────── #}
+  <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 class="text-[14px] font-bold text-slate-800">Agreements in scope ({{ review_rows|length }})</h2>
+    </div>
+    <div class="overflow-x-auto"><table class="w-full text-[13px]">
+      <thead><tr class="text-left edify-text-caption uppercase text-slate-400">
+        <th class="px-5 py-2.5">Employee</th>
+        <th class="px-3 py-2.5">Stage</th>
+        <th class="px-3 py-2.5 text-right">Actions</th>
+      </tr></thead>
+      <tbody>
+      {% for row in review_rows %}
+      <tr class="border-t border-slate-50">
+        <td class="px-5 py-3 font-bold text-slate-800">{{ row.name }}</td>
+        <td class="px-3 py-3">
+          <span class="edify-badge {% if row.approved %}data-tone-success{% endif %}"
+                {% if row.approved %}data-tone="success"{% endif %}>{{ row.stage_label }}</span>
+        </td>
+        <td class="px-3 py-3">
+          <div class="flex items-center justify-end gap-2">
+            <a href="/performance-conversation?staff={{ row.review.staff_id }}" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Open conversation</a>
+            {% if not row.approved %}
+            <form method="post" action="/hr/performance-cycle/action">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="approve">
+              <input type="hidden" name="fy" value="{{ fy }}">
+              <input type="hidden" name="review_id" value="{{ row.review.id }}">
+              <button class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Approve &amp; lock</button>
+            </form>
+            {% else %}
+            <form method="post" action="/hr/performance-cycle/action" onsubmit="this.reason.value=prompt('Reason for returning this agreement?')||'';return this.reason.value!==''">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="return">
+              <input type="hidden" name="fy" value="{{ fy }}">
+              <input type="hidden" name="review_id" value="{{ row.review.id }}">
+              <input type="hidden" name="reason" value="">
+              <button class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Return</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="px-5 py-8 text-center text-slate-400">No agreements yet — open the cycle to draft them.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+
+</div>
+{% endblock %}

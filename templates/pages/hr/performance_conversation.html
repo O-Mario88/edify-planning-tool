@@ -1,0 +1,170 @@
+{% extends "layouts/shell.html" %}
+{% block content %}
+<div class="space-y-5">
+
+  <div class="edify-page-header">
+    <div>
+      <h1 class="edify-page-title">{{ window_label }}</h1>
+      <p class="edify-page-subtitle">
+        {{ target.user.name }}{% if target.title %} · {{ target.title }}{% endif %}
+        — reflections and ratings are entered here; the numbers are frozen from the snapshot.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      {% if review %}<span class="edify-badge">FY{{ review.fy }}</span>{% endif %}
+      {% if signed %}<span class="edify-badge" data-tone="success">Signed off</span>
+      {% elif window_open %}<span class="edify-badge" data-tone="info">Window open</span>
+      {% else %}<span class="edify-badge" data-tone="warning">Locked</span>{% endif %}
+    </div>
+  </div>
+
+  {% if messages %}
+  {% for m in messages %}
+  <div class="rounded-surface border px-4 py-2.5 text-[13px] {% if m.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ m }}</div>
+  {% endfor %}
+  {% endif %}
+
+  {% if not review %}
+  <div class="edify-surface rounded-surface border border-slate-100 p-8 text-center text-slate-400">
+    <p class="font-bold text-[13px]">No performance agreement exists for this person yet.</p>
+    <p class="edify-text-caption mt-1">HR opens the cycle and the draft agreement is generated first.</p>
+  </div>
+  {% elif not window_open %}
+  <div class="edify-surface rounded-surface border border-slate-100 p-8 text-center text-slate-400">
+    <p class="font-bold text-[13px]">The performance form is locked.</p>
+    <p class="edify-text-caption mt-1">A conversation can only be completed inside an HR-activated window.</p>
+  </div>
+  {% else %}
+
+  <p class="edify-text-caption text-slate-400">
+    {% if snapshot %}Numbers frozen from the snapshot taken {{ snapshot.taken_at|date:"j M Y" }} — the conversation is held against these figures, not live data.{% endif %}
+    {% if signed %} This conversation is signed off and permanently locked.{% endif %}
+  </p>
+
+  {% for row in rows %}
+  <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-[14px] font-bold text-slate-800">{{ row.p.sequence }}. {{ row.p.outcome_statement }}</p>
+          <p class="edify-text-caption text-slate-400">{{ row.p.strategic_alignment }} · weight {{ row.p.weight }}%</p>
+        </div>
+        <div class="text-right shrink-0">
+          {% if row.shown_actual is not None %}
+          <p class="text-[14px] font-bold text-slate-800">{{ row.shown_actual }}{% if row.p.target_number %} / {{ row.p.target_number }}{% endif %}</p>
+          <p class="edify-text-caption text-slate-400">{% if row.shown_pct is not None %}{{ row.shown_pct }}% {% endif %}{% if row.frozen %}· frozen{% else %}· live{% endif %}</p>
+          {% else %}
+          <span class="edify-badge">Qualitative</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if row.milestones %}
+      <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 edify-text-caption text-slate-500">
+        {% for m in row.milestones %}<span>{{ m.label }}: <strong class="text-slate-700">{% if m.value is None %}—{% elif m.kind == "calc" %}{{ m.value }}%{% else %}{{ m.value }}{% endif %}</strong></span>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="grid gap-0 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+      {# Employee column #}
+      <div class="p-4">
+        <p class="edify-text-caption uppercase text-slate-400 mb-2">Employee</p>
+        {% if "employee" in caps and not signed %}
+        <form method="post" action="/performance-conversation/priority/{{ row.p.id }}/save" class="space-y-2">
+          {% csrf_token %}
+          <input type="hidden" name="channel" value="employee">
+          {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
+          <textarea name="employee_reflection" rows="3" placeholder="Progress, achievements, barriers, support needed"
+                    class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">{{ row.p.employee_reflection|default:"" }}</textarea>
+          <select name="employee_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+            <option value="">Self-rating…</option>
+            {% for val, label in ratings %}<option value="{{ val }}" {% if row.p.employee_rating == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-3 py-1.5 text-[12px] font-bold">Save my reflection</button>
+        </form>
+        {% else %}
+        <p class="text-[13px] text-slate-600 whitespace-pre-line">{{ row.p.employee_reflection|default:"—" }}</p>
+        {% if row.p.employee_rating %}<p class="edify-text-caption text-slate-400 mt-1">Rating: {{ row.p.get_employee_rating_display|default:row.p.employee_rating }}</p>{% endif %}
+        {% endif %}
+      </div>
+
+      {# Manager column #}
+      <div class="p-4">
+        <p class="edify-text-caption uppercase text-slate-400 mb-2">Manager</p>
+        {% if "manager" in caps and not signed %}
+        <form method="post" action="/performance-conversation/priority/{{ row.p.id }}/save" class="space-y-2">
+          {% csrf_token %}
+          <input type="hidden" name="channel" value="manager">
+          {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
+          <textarea name="manager_assessment" rows="2" placeholder="Manager comment"
+                    class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">{{ row.p.manager_assessment|default:"" }}</textarea>
+          <select name="manager_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+            <option value="">Manager rating…</option>
+            {% for val, label in ratings %}<option value="{{ val }}" {% if row.p.manager_rating == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <textarea name="agreed_action" rows="2" placeholder="Agreed action"
+                    class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">{{ row.p.agreed_action|default:"" }}</textarea>
+          <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-3 py-1.5 text-[12px] font-bold">Save manager review</button>
+        </form>
+        {% else %}
+        <p class="text-[13px] text-slate-600 whitespace-pre-line">{{ row.p.manager_assessment|default:"—" }}</p>
+        {% if row.p.manager_rating %}<p class="edify-text-caption text-slate-400 mt-1">Rating: {{ row.p.get_manager_rating_display|default:row.p.manager_rating }}</p>{% endif %}
+        {% if row.p.agreed_action %}<p class="edify-text-caption text-slate-500 mt-1">Agreed: {{ row.p.agreed_action }}</p>{% endif %}
+        {% endif %}
+      </div>
+
+      {# Functional manager column #}
+      <div class="p-4">
+        <p class="edify-text-caption uppercase text-slate-400 mb-2">Functional Manager</p>
+        {% if "functional" in caps and not signed %}
+        <form method="post" action="/performance-conversation/priority/{{ row.p.id }}/save" class="space-y-2">
+          {% csrf_token %}
+          <input type="hidden" name="channel" value="functional">
+          {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
+          <select name="functional_manager_rating" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+            <option value="">Functional rating…</option>
+            {% for val, label in ratings %}<option value="{{ val }}" {% if row.p.functional_manager_rating == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-3 py-1.5 text-[12px] font-bold">Save rating</button>
+        </form>
+        {% else %}
+        {% if row.p.functional_manager_rating %}<p class="text-[13px] text-slate-600">{{ row.p.get_functional_manager_rating_display|default:row.p.functional_manager_rating }}</p>{% else %}<p class="text-[13px] text-slate-400">—</p>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {# Values & Spiritual Formation — manual, reflective #}
+  {% if values or spiritual %}
+  <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 class="text-[14px] font-bold text-slate-800">Edify Values &amp; Spiritual Formation</h2>
+      <p class="edify-text-caption text-slate-400">Manual and reflective — never rated from activity counts.</p>
+    </div>
+    <ul class="divide-y divide-slate-50">
+      {% for v in values %}{% include "partials/hr/_value_commitment_row.html" with v=v %}{% endfor %}
+      {% for v in spiritual %}{% include "partials/hr/_value_commitment_row.html" with v=v %}{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Sign-off #}
+  {% if window_open and not signed and review %}
+  <div class="edify-surface rounded-surface border border-slate-100 p-5 flex items-center justify-between">
+    <div>
+      <p class="text-[13px] font-bold text-slate-800">Sign off this conversation</p>
+      <p class="edify-text-caption text-slate-400">Locks the snapshot permanently. Only HR can reopen it, with a reason.</p>
+    </div>
+    <form method="post" action="/performance-conversation/{{ review.id }}/sign-off">
+      {% csrf_token %}
+      <input type="hidden" name="window" value="{{ window }}">
+      {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
+      <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Sign off &amp; lock</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% endif %}
+</div>
+{% endblock %}

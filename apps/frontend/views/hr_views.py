@@ -1590,6 +1590,8 @@ def my_performance_view(request):
 
         review = build_draft_agreement(sp, cycle, request.user)
 
+    from apps.hr.performance_engine import milestone_metrics
+
     priorities = []
     weighted_num = weighted_den = 0
     if review:
@@ -1602,7 +1604,10 @@ def my_performance_view(request):
                 {
                     "p": pr,
                     "progress": progress,
-                    "milestones": list(pr.milestones.all()[:3]),
+                    # Auto-derived milestone breakdown (§2), plus any manual
+                    # milestone rows the manager added on top.
+                    "auto_milestones": milestone_metrics(pr),
+                    "milestones": list(pr.milestones.all()[:5]),
                 }
             )
 
@@ -1689,3 +1694,450 @@ def my_performance_view(request):
         "tab": request.GET.get("tab", "priorities"),
     }
     return render(request, "pages/hr/my_performance.html", context)
+
+
+# ── Performance conversation form (§9, §11, §12) ────────────────────────────
+# The working conversation: employee reflection + self-rating, manager review
+# and rating, functional-manager rating. HR-window-gated by the engine; every
+# write goes through the engine's role-scoped save_* functions, never the ORM
+# directly, so the §20 boundaries hold at the one write path.
+
+
+def _resolve_conversation(request):
+    """Return (review, target_staff, caps) for the conversation the viewer is
+    entitled to open, or (None, target, caps) when there is no agreement.
+
+    caps is the set of channels this viewer may write: any of 'employee',
+    'manager', 'functional', 'hr'. Raises PermissionDenied-style responses via
+    the caller when the viewer has no relationship at all.
+    """
+    from apps.accounts.models import StaffSupervisorAssignment
+    from apps.core.fy import get_operational_fy
+    from apps.hr.models import PerformanceReview
+
+    viewer_sp = getattr(request.user, "staff_profile", None)
+    staff_param = (request.GET.get("staff") or request.POST.get("staff") or "").strip()
+    role = getattr(request.user, "active_role", "")
+    is_hr = role in ("HumanResources", "Admin")
+
+    if staff_param and staff_param != getattr(viewer_sp, "id", None):
+        target = StaffProfile.objects.filter(id=staff_param).select_related(
+            "user"
+        ).first()
+    else:
+        target = viewer_sp
+    if target is None:
+        return None, None, set()
+
+    caps: set[str] = set()
+    if viewer_sp and target.id == viewer_sp.id:
+        caps.add("employee")
+    if viewer_sp and StaffSupervisorAssignment.objects.filter(
+        supervisee=target, supervisor=viewer_sp
+    ).exists():
+        caps.add("manager")
+    fy = get_operational_fy()
+    review = PerformanceReview.objects.filter(
+        staff=target, fy=fy, review_type="annual_priorities"
+    ).first()
+    if review and review.functional_manager_id == request.user.id:
+        caps.add("functional")
+    if is_hr:
+        caps.add("hr")
+    return review, target, caps
+
+
+def performance_conversation_view(request):
+    """The conversation form for one employee's active window."""
+    from apps.hr.models import PerformanceCycle, PerformanceRating
+    from apps.hr.performance_engine import live_progress, milestone_metrics
+
+    review, target, caps = _resolve_conversation(request)
+    if target is None:
+        return render_access_denied(request, "No staff profile is linked.")
+    if not caps:
+        return render_access_denied(
+            request, "You are not part of this performance conversation."
+        )
+
+    cycle = (
+        PerformanceCycle.objects.filter(fy=review.fy).first() if review else None
+    )
+    window = cycle.active_window if cycle else "none"
+    window_open = bool(cycle and window != "none")
+
+    snap = None
+    if review:
+        snap = review.snapshots.filter(window=window).first() if window_open else None
+    snap_by_seq = {}
+    if snap:
+        snap_by_seq = {r["sequence"]: r for r in snap.data.get("priorities", [])}
+
+    rows = []
+    if review:
+        for p in review.priorities.all().order_by("sequence"):
+            live = live_progress(p)
+            frozen = snap_by_seq.get(p.sequence)
+            rows.append(
+                {
+                    "p": p,
+                    "live": live,
+                    # The conversation is held against the FROZEN figure when a
+                    # snapshot exists; live is shown only before activation.
+                    "shown_actual": frozen["actual"] if frozen else live["actual"],
+                    "shown_pct": frozen["pct"] if frozen else live["pct"],
+                    "milestones": milestone_metrics(p),
+                    "frozen": bool(frozen),
+                }
+            )
+
+    WINDOW_LABELS = {
+        "priority_setting": "FY Priority Setting",
+        "q1": "Q1 Performance Conversation",
+        "mid_year": "Mid-Year Performance Conversation",
+        "q3": "Q3 Performance Conversation",
+        "year_end": "End-of-Year Performance Conversation",
+    }
+    signed = bool(snap and snap.signed_off_at)
+    context = {
+        "review": review,
+        "target": target,
+        "caps": caps,
+        "window": window,
+        "window_label": WINDOW_LABELS.get(window, "No window open"),
+        "window_open": window_open,
+        "rows": rows,
+        "ratings": PerformanceRating.choices,
+        "values": list(review.value_commitments.filter(kind="value")) if review else [],
+        "spiritual": list(review.value_commitments.filter(kind="spiritual"))
+        if review
+        else [],
+        "snapshot": snap,
+        "signed": signed,
+        "staff_param": target.id if "employee" not in caps else "",
+    }
+    return render(request, "pages/hr/performance_conversation.html", context)
+
+
+def _conversation_redirect(request, target_id, caps):
+    staff = "" if "employee" in caps else target_id
+    url = "/performance-conversation"
+    if staff:
+        url += f"?staff={staff}"
+    return redirect(url)
+
+
+def performance_input_save_view(request, priority_id):
+    """One POST per channel. The engine enforces window + role; we only route
+    the fields to the matching save_* function."""
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.hr.models import PerformancePriority
+    from apps.hr.performance_engine import (
+        save_employee_input,
+        save_functional_manager_input,
+        save_manager_input,
+    )
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    priority = PerformancePriority.objects.filter(id=priority_id).select_related(
+        "review__staff"
+    ).first()
+    if priority is None:
+        return HttpResponseBadRequest("Unknown priority.")
+    channel = request.POST.get("channel", "")
+    data = {k: v for k, v in request.POST.items() if k not in ("csrfmiddlewaretoken", "channel", "staff")}
+    try:
+        if channel == "employee":
+            save_employee_input(priority, data, request.user)
+        elif channel == "manager":
+            save_manager_input(priority, data, request.user)
+        elif channel == "functional":
+            save_functional_manager_input(priority, data, request.user)
+        else:
+            return HttpResponseBadRequest("Unknown channel.")
+    except Forbidden as e:
+        return HttpResponseForbidden(str(e))
+    except BadRequest as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, "Saved.")
+    _, target, caps = _resolve_conversation(request)
+    return _conversation_redirect(request, priority.review.staff_id, caps)
+
+
+def performance_value_save_view(request, commitment_id):
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.hr.models import ValueCommitment
+    from apps.hr.performance_engine import save_value_reflection
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    commitment = ValueCommitment.objects.filter(id=commitment_id).select_related(
+        "review__staff"
+    ).first()
+    if commitment is None:
+        return HttpResponseBadRequest("Unknown commitment.")
+    data = {k: v for k, v in request.POST.items() if k not in ("csrfmiddlewaretoken", "staff")}
+    try:
+        save_value_reflection(commitment, data, request.user)
+    except Forbidden as e:
+        return HttpResponseForbidden(str(e))
+    except BadRequest as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, "Saved.")
+    _, target, caps = _resolve_conversation(request)
+    return _conversation_redirect(request, commitment.review.staff_id, caps)
+
+
+def performance_signoff_view(request, review_id):
+    """The employee acknowledges and signs the conversation for the window."""
+    from apps.core.exceptions import BadRequest
+    from apps.hr.models import PerformanceReview
+    from apps.hr.performance_engine import sign_off
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    review = PerformanceReview.objects.filter(id=review_id).select_related(
+        "staff"
+    ).first()
+    if review is None:
+        return HttpResponseBadRequest("Unknown review.")
+    window = request.POST.get("window", "")
+    # Authorize against THIS review's employee — sign_off is a lock with no
+    # engine-level relationship check, so a stranger must not reach it by
+    # posting an arbitrary review id. Only the employee, their manager or HR.
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    viewer_sp = getattr(request.user, "staff_profile", None)
+    is_employee = review.staff.user_id == request.user.id
+    is_manager = bool(viewer_sp) and StaffSupervisorAssignment.objects.filter(
+        supervisee=review.staff, supervisor=viewer_sp
+    ).exists()
+    is_hr = getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
+    if not (is_employee or is_manager or is_hr):
+        return HttpResponseForbidden("You cannot sign this conversation off.")
+    caps = {"employee"} if is_employee else set()
+    try:
+        sign_off(review, window, request.user)
+    except BadRequest as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, "Conversation signed off and locked.")
+    return _conversation_redirect(request, review.staff_id, caps)
+
+
+# ── HR performance console (§4, §7) ─────────────────────────────────────────
+# The one control surface for the cycle: create it, see readiness, activate or
+# close a window (activation freezes every snapshot), approve or return each
+# agreement. Every state change routes through the engine so its HR-only
+# guards and audit rows apply; the view only gathers and dispatches.
+
+
+def _require_hr(request):
+    return getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
+
+
+def hr_performance_console_view(request):
+    from apps.core.fy import get_operational_fy
+    from apps.hr.models import PerformanceCycle, PerformanceReview
+    from apps.hr.performance_engine import quarterly_readiness
+
+    if not _require_hr(request):
+        return render_access_denied(request, "The performance console is HR-only.")
+
+    fy = request.GET.get("fy") or get_operational_fy()
+    cycle = PerformanceCycle.objects.filter(fy=fy).first()
+    readiness = quarterly_readiness(fy)
+
+    scope_ids = list(_profile_scope(request).values_list("id", flat=True))
+    reviews = (
+        PerformanceReview.objects.filter(
+            fy=fy, review_type="annual_priorities", staff_id__in=scope_ids
+        )
+        .select_related("staff__user")
+        .order_by("staff__user__name")
+    )
+    STAGE_LABELS = {
+        "not_started": "Draft — not started",
+        "priorities_draft": "Employee drafting",
+        "priorities_manager_review": "Manager review",
+        "priorities_agreed": "Approved & locked",
+        "manager_assessment": "Returned for correction",
+    }
+    review_rows = [
+        {
+            "review": r,
+            "name": r.staff.user.name if r.staff.user_id else "—",
+            "stage": r.stage,
+            "stage_label": STAGE_LABELS.get(r.stage, r.stage.replace("_", " ").title()),
+            "approved": r.stage in ("priorities_agreed",),
+        }
+        for r in reviews
+    ]
+
+    WINDOWS = [w for w in PerformanceCycle.WINDOWS if w[0] != "none"]
+    context = {
+        "fy": fy,
+        "cycle": cycle,
+        "readiness": readiness,
+        "review_rows": review_rows,
+        "windows": WINDOWS,
+        "active_window": cycle.active_window if cycle else "none",
+    }
+    return render(request, "pages/hr/performance_console.html", context)
+
+
+def hr_performance_action_view(request):
+    """One POST endpoint for the console's state changes; `action` selects."""
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.core.fy import get_operational_fy
+    from apps.hr.models import PerformanceCycle, PerformanceReview
+    from apps.hr.performance_engine import (
+        activate_window,
+        approve_agreement,
+        build_draft_agreement,
+        close_window,
+        reopen_conversation,
+        return_for_correction,
+    )
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    if not _require_hr(request):
+        return HttpResponseForbidden("HR only.")
+
+    action = request.POST.get("action", "")
+    fy = request.POST.get("fy") or get_operational_fy()
+    try:
+        if action == "create_cycle":
+            cycle, created = PerformanceCycle.objects.get_or_create(
+                fy=fy, defaults={"status": "active", "opened_by": request.user}
+            )
+            # Generate a draft agreement for every active staff member in scope.
+            made = 0
+            for sp in _profile_scope(request).filter(onboarding_state="active"):
+                build_draft_agreement(sp, cycle, request.user)
+                made += 1
+            messages.success(
+                request,
+                f"Cycle {'created' if created else 'already open'} · "
+                f"{made} draft agreements ready.",
+            )
+        elif action == "activate_window":
+            cycle = PerformanceCycle.objects.get(fy=fy)
+            window = request.POST.get("window", "")
+            deadline = request.POST.get("deadline") or None
+            n = activate_window(cycle, window, request.user, deadline=deadline)
+            messages.success(request, f"{window} activated · {n} snapshots frozen.")
+        elif action == "close_window":
+            cycle = PerformanceCycle.objects.get(fy=fy)
+            close_window(cycle, request.user)
+            messages.success(request, "Window closed. The form is locked again.")
+        elif action == "approve":
+            review = PerformanceReview.objects.get(id=request.POST["review_id"])
+            n = approve_agreement(review, request.user)
+            messages.success(
+                request, f"Agreement approved · {n} target rows written to My Targets."
+            )
+        elif action == "return":
+            review = PerformanceReview.objects.get(id=request.POST["review_id"])
+            return_for_correction(review, request.POST.get("reason", ""), request.user)
+            messages.success(request, "Returned for correction.")
+        elif action == "reopen":
+            review = PerformanceReview.objects.get(id=request.POST["review_id"])
+            reopen_conversation(
+                review,
+                request.POST.get("window", ""),
+                request.POST.get("reason", ""),
+                request.user,
+            )
+            messages.success(request, "Conversation reopened for correction.")
+        else:
+            return HttpResponseBadRequest("Unknown action.")
+    except (BadRequest, Forbidden) as e:
+        messages.error(request, str(e))
+    except PerformanceCycle.DoesNotExist:
+        messages.error(request, "No cycle exists for that year yet — create it first.")
+    except PerformanceReview.DoesNotExist:
+        messages.error(request, "That agreement no longer exists.")
+    return redirect(f"/hr/performance-cycle?fy={fy}")
+
+
+# ── Conversation document (§17) ─────────────────────────────────────────────
+# The record is rendered from the LOCKED snapshot, never live data. Access is
+# scope-checked (employee → own; manager → reports; leadership → their scope;
+# HR → policy scope) and every open is audit-logged by the engine.
+
+
+def performance_document_view(request, review_id, window):
+    from apps.core.exceptions import BadRequest
+    from apps.hr.models import PerformanceReview
+    from apps.hr.performance_engine import conversation_document
+
+    review = PerformanceReview.objects.filter(id=review_id).select_related(
+        "staff__user"
+    ).first()
+    if review is None:
+        return HttpResponseBadRequest("Unknown review.")
+
+    # Access is decided against THIS review's employee, not the viewer's own
+    # ambient conversation: relationship (employee / manager / functional / HR)
+    # OR leadership scope grants read; otherwise deny.
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    viewer_sp = getattr(request.user, "staff_profile", None)
+    is_employee = review.staff.user_id == request.user.id
+    is_manager = bool(viewer_sp) and StaffSupervisorAssignment.objects.filter(
+        supervisee=review.staff, supervisor=viewer_sp
+    ).exists()
+    is_functional = review.functional_manager_id == request.user.id
+    is_hr = getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
+    in_scope = _profile_scope(request).filter(id=review.staff_id).exists()
+    if not (is_employee or is_manager or is_functional or is_hr or in_scope):
+        return render_access_denied(
+            request, "You may not open this conversation record."
+        )
+    try:
+        # The engine writes the audit row for the download here.
+        doc = conversation_document(review, window, request.user)
+    except BadRequest as e:
+        messages.error(request, str(e))
+        return redirect(f"/performance-conversation?staff={review.staff_id}")
+
+    WINDOW_LABELS = {
+        "priority_setting": "FY Priority Setting",
+        "q1": "Q1 Performance Conversation",
+        "mid_year": "Mid-Year Performance Conversation",
+        "q3": "Q3 Performance Conversation",
+        "year_end": "End-of-Year Performance Conversation",
+    }
+    doc["window_label"] = WINDOW_LABELS.get(window, window)
+    # Merge the FROZEN figures (from the snapshot) with the ratings and
+    # reflections (which live on the priority, entered during the meeting).
+    by_seq = {p.sequence: p for p in review.priorities.all()}
+    merged = []
+    for frozen in doc["priorities"]:
+        p = by_seq.get(frozen["sequence"])
+        merged.append(
+            {
+                "frozen": frozen,
+                "employee_rating": getattr(p, "get_employee_rating_display", lambda: None)()
+                if p
+                else None,
+                "manager_rating": getattr(p, "get_manager_rating_display", lambda: None)()
+                if p
+                else None,
+                "functional_rating": getattr(
+                    p, "get_functional_manager_rating_display", lambda: None
+                )()
+                if p
+                else None,
+                "employee_reflection": getattr(p, "employee_reflection", "") if p else "",
+                "manager_assessment": getattr(p, "manager_assessment", "") if p else "",
+                "agreed_action": getattr(p, "agreed_action", "") if p else "",
+            }
+        )
+    doc["doc_rows"] = merged
+    return render(request, "pages/hr/conversation_document.html", doc)

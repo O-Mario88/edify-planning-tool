@@ -10,13 +10,16 @@
         conversations — progress is computed from verified work, never typed.
       </p>
     </div>
-    {% if cycle %}
     <div class="flex items-center gap-2">
+      {% if cycle %}
       <span class="edify-badge">FY{{ cycle.fy }} Performance Cycle</span>
       {% if cycle.status == "active" %}<span class="edify-badge" data-tone="success">Active</span>{% endif %}
       {% if active_window_label %}<span class="edify-badge" data-tone="info">{{ active_window_label }} window open</span>{% endif %}
+      {% endif %}
+      {% if review and active_window_label %}
+      <a href="/performance-conversation" class="edify-primary-solid edify-primary-on-solid rounded-md px-3.5 py-2 text-[13px] font-bold">Open conversation</a>
+      {% endif %}
     </div>
-    {% endif %}
   </div>
 
   {% if not review %}
@@ -113,16 +116,28 @@
               {{ row.p.priority_layer|capfirst }} Priority</p>
           </td>
           <td class="px-3 py-3">
-            {% if row.milestones %}
+            {% if row.auto_milestones %}
             <ul class="space-y-0.5 text-slate-500">
-              {% for m in row.milestones %}
-              <li class="flex items-start gap-1.5">
-                <span class="mt-0.5 {% if m.is_complete %}text-emerald-500{% else %}text-slate-300{% endif %}">•</span>
-                <span {% if m.is_complete %}class="line-through text-slate-400"{% endif %}>{{ m.description }}</span>
+              {% for m in row.auto_milestones %}
+              <li class="flex items-center justify-between gap-3">
+                <span class="flex items-center gap-1.5">
+                  {{ m.label }}
+                  {% if m.kind == "auto" %}<span class="edify-text-caption text-slate-300" title="Derived from verified records — cannot be typed">auto</span>{% endif %}
+                </span>
+                <span class="font-bold text-slate-700 tabular-nums">
+                  {% if m.value is None %}—{% elif m.kind == "calc" %}{{ m.value }}%{% else %}{{ m.value }}{% endif %}
+                </span>
               </li>
               {% endfor %}
             </ul>
-            {% else %}<span class="text-slate-300">—</span>{% endif %}
+            {% endif %}
+            {% for m in row.milestones %}
+            <div class="mt-1 flex items-start gap-1.5 text-slate-500">
+              <span class="mt-0.5 {% if m.is_complete %}text-emerald-500{% else %}text-slate-300{% endif %}">•</span>
+              <span {% if m.is_complete %}class="line-through text-slate-400"{% endif %}>{{ m.description }}</span>
+            </div>
+            {% endfor %}
+            {% if not row.auto_milestones and not row.milestones %}<span class="text-slate-300">—</span>{% endif %}
           </td>
           <td class="px-3 py-3 font-bold text-slate-700">
             {{ row.p.target|default:"—" }}
@@ -280,11 +295,15 @@
             <p class="text-[13px] font-bold text-slate-800">{{ row.label }}</p>
             <p class="edify-text-caption text-slate-400">Snapshot taken {{ row.snap.taken_at|date:"j M Y" }}</p>
           </div>
-          {% if row.snap.signed_off_at %}
-          <span class="edify-badge" data-tone="success">Signed off {{ row.snap.signed_off_at|date:"j M" }}</span>
-          {% else %}
-          <span class="edify-badge" data-tone="info">In progress</span>
-          {% endif %}
+          <div class="flex items-center gap-2">
+            <a href="/performance-conversation/{{ review.id }}/document/{{ row.snap.window }}"
+               class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Record</a>
+            {% if row.snap.signed_off_at %}
+            <span class="edify-badge" data-tone="success">Signed off {{ row.snap.signed_off_at|date:"j M" }}</span>
+            {% else %}
+            <span class="edify-badge" data-tone="info">In progress</span>
+            {% endif %}
+          </div>
         </li>
         {% empty %}
         <li class="px-5 py-8 text-center text-slate-400 text-[13px]">No conversations held yet — the first snapshot is taken when HR opens a window.</li>

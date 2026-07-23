@@ -471,3 +471,402 @@ class ReopenAndDocumentTests(EngineFixture):
         return_for_correction(review, "Ratings incomplete", self.hr)
         review.refresh_from_db()
         self.assertEqual(review.stage, "manager_assessment")
+
+
+class MilestoneAutoPopulationTests(EngineFixture):
+    """§2: each metric priority carries a canonical milestone breakdown,
+    derived from the same verified sources as the headline progress — never
+    typed, and only where a real source exists."""
+
+    def _milestones(self, review, metric_key):
+        from apps.hr.performance_engine import milestone_metrics
+
+        p = review.priorities.get(metric_key=metric_key)
+        return {m["label"]: m for m in milestone_metrics(p)}
+
+    def test_visit_milestones_split_core_client_and_completion(self):
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        # One verified visit at a client school, one at a core school.
+        School.objects.filter(id=self.schools[0].id).update(school_type="core")
+        for i in (0, 1):
+            Activity.objects.create(
+                school_id=self.schools[i].id,
+                activity_type="school_visit",
+                status="ia_verified",
+                responsible_staff_id=self.sp.id,
+                fy="2026",
+                quarter="Q4",
+            )
+        m = self._milestones(review, "direct_visits")
+        self.assertEqual(m["Direct Visits completed"]["value"], 2)
+        self.assertEqual(m["Core School Visits"]["value"], 1)
+        self.assertEqual(m["Client School Visits"]["value"], 1)
+        self.assertEqual(m["Direct Visit target"]["value"], 4)
+        self.assertEqual(m["Visit completion"]["value"], 50)  # 2 of 4
+        self.assertEqual(m["Direct Visits completed"]["kind"], "auto")
+
+    def test_training_milestones_sum_attendance_from_verified_work(self):
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        Activity.objects.create(
+            school_id=self.schools[0].id,
+            activity_type="training",
+            status="ia_verified",
+            responsible_staff_id=self.sp.id,
+            teachers_attended=12,
+            leaders_attended=3,
+            fy="2026",
+            quarter="Q4",
+        )
+        m = self._milestones(review, "trainings")
+        self.assertEqual(m["Trainings completed"]["value"], 1)
+        self.assertEqual(m["Teachers trained"]["value"], 12)
+        self.assertEqual(m["School leaders trained"]["value"], 3)
+
+    def test_ssa_milestones_show_coverage_and_the_gap(self):
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        from apps.ssa.models import SsaRecord
+
+        # Two of the four assigned schools have a confirmed current-FY SSA.
+        for i in (0, 1):
+            SsaRecord.objects.create(
+                school_id=self.schools[i].id,
+                date_of_ssa=timezone.now(),
+                fy="2026",
+                quarter="Q2",
+                average_score=7.0,
+                verification_status="confirmed",
+            )
+        m = self._milestones(review, "ssa_coverage")
+        self.assertEqual(m["Schools allocated for SSA"]["value"], 4)
+        self.assertEqual(m["Verified SSA completed"]["value"], 2)
+        self.assertEqual(m["SSA coverage"]["value"], 50)
+        self.assertEqual(m["Missing SSA"]["value"], 2)
+
+    def test_unverified_ssa_does_not_count_toward_milestones(self):
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        from apps.ssa.models import SsaRecord
+
+        SsaRecord.objects.create(
+            school_id=self.schools[0].id,
+            date_of_ssa=timezone.now(),
+            fy="2026",
+            quarter="Q2",
+            average_score=9.9,
+            verification_status="pending",
+        )
+        m = self._milestones(review, "ssa_coverage")
+        self.assertEqual(m["Verified SSA completed"]["value"], 0)
+        self.assertEqual(m["Missing SSA"]["value"], 4)
+
+    def test_capital_priority_has_no_auto_milestones(self):
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        from apps.hr.performance_engine import milestone_metrics
+
+        capital = review.priorities.filter(
+            strategic_alignment__icontains="Capital"
+        ).first()
+        self.assertIsNotNone(capital)
+        self.assertEqual(
+            milestone_metrics(capital),
+            [],
+            "Capital is a mixed/manual row — it carries no derived milestone "
+            "figures the manager could mistake for a measured result",
+        )
+
+    def test_a_partner_visit_never_appears_as_a_direct_visit_milestone(self):
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        Activity.objects.create(
+            school_id=self.schools[1].id,
+            activity_type="school_visit",
+            status="ia_verified",
+            delivery_type="partner",
+            monitored_by_staff_id=self.sp.id,
+            fy="2026",
+            quarter="Q4",
+        )
+        m = self._milestones(review, "direct_visits")
+        self.assertEqual(m["Direct Visits completed"]["value"], 0)
+        self.assertEqual(m["Partner Visits supervised"]["value"], 1)
+
+
+class ConversationFormViewTests(EngineFixture):
+    """The working conversation (§9, §11, §12): who may write which column,
+    and the window gate — proven through the HTTP layer, not just the engine."""
+
+    def setUp(self):
+        from apps.accounts.models import StaffSupervisorAssignment
+        from apps.hr.performance_engine import activate_window, build_draft_agreement
+
+        self.review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        # A real reporting line: manager supervises the CCEO.
+        self.manager = _user("pe-mgr@t.org", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.manager_sp = StaffProfile.objects.create(
+            user=self.manager, country="Uganda"
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.manager_sp, supervisee=self.sp
+        )
+        # HR opens Q1 — this freezes the snapshots and unlocks the form.
+        activate_window(self.cycle, "q1", self.hr)
+        self.priority = self.review.priorities.filter(
+            metric_key="direct_visits"
+        ).first()
+
+    def _client(self, user):
+        from django.test import Client
+
+        c = Client()
+        c.force_login(user)
+        return c
+
+    def test_employee_sees_their_own_conversation_form(self):
+        r = self._client(self.cceo).get("/performance-conversation")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("Save my reflection", r.content.decode())
+
+    def test_employee_saves_their_reflection_and_self_rating(self):
+        self._client(self.cceo).post(
+            f"/performance-conversation/priority/{self.priority.id}/save",
+            {"channel": "employee", "employee_reflection": "Behind on visits due to floods",
+             "employee_rating": "met_some"},
+        )
+        self.priority.refresh_from_db()
+        self.assertEqual(self.priority.employee_reflection, "Behind on visits due to floods")
+        self.assertEqual(self.priority.employee_rating, "met_some")
+
+    def test_employee_cannot_write_the_manager_column(self):
+        r = self._client(self.cceo).post(
+            f"/performance-conversation/priority/{self.priority.id}/save",
+            {"channel": "manager", "manager_rating": "exceeds"},
+        )
+        self.assertEqual(r.status_code, 403)
+        self.priority.refresh_from_db()
+        self.assertIsNone(self.priority.manager_rating)
+
+    def test_an_invalid_rating_is_refused(self):
+        self._client(self.cceo).post(
+            f"/performance-conversation/priority/{self.priority.id}/save",
+            {"channel": "employee", "employee_rating": "amazing"},
+        )
+        self.priority.refresh_from_db()
+        self.assertIsNone(
+            self.priority.employee_rating,
+            "only the five named ratings may be stored",
+        )
+
+    def test_manager_reviews_a_direct_report(self):
+        self._client(self.manager).post(
+            f"/performance-conversation/priority/{self.priority.id}/save",
+            {
+                "channel": "manager",
+                "staff": self.sp.id,
+                "manager_assessment": "Strong recovery plan",
+                "manager_rating": "met",
+                "agreed_action": "Two catch-up visits in Q2",
+            },
+        )
+        self.priority.refresh_from_db()
+        self.assertEqual(self.priority.manager_rating, "met")
+        self.assertEqual(self.priority.agreed_action, "Two catch-up visits in Q2")
+
+    def test_a_stranger_cannot_open_someone_elses_conversation(self):
+        outsider = _user("pe-out@t.org", EdifyRole.CCEO.value)
+        StaffProfile.objects.create(user=outsider, country="Uganda")
+        r = self._client(outsider).get(
+            f"/performance-conversation?staff={self.sp.id}", follow=False
+        )
+        # A page GET with no relationship is bounced to the dashboard, never
+        # shown the target's conversation.
+        self.assertIn(r.status_code, (302, 403))
+        if r.status_code == 200:
+            self.fail("a stranger was shown another employee's conversation")
+
+    def test_the_form_is_locked_when_no_window_is_open(self):
+        from apps.hr.performance_engine import close_window
+
+        close_window(self.cycle, self.hr)
+        r = self._client(self.cceo).get("/performance-conversation")
+        self.assertIn("The performance form is locked", r.content.decode())
+        # And a write is refused by the engine even if posted directly.
+        r2 = self._client(self.cceo).post(
+            f"/performance-conversation/priority/{self.priority.id}/save",
+            {"channel": "employee", "employee_reflection": "sneaking in"},
+        )
+        self.assertEqual(r2.status_code, 403)
+
+    def test_a_stranger_cannot_sign_off_someone_elses_conversation(self):
+        """sign_off is a permanent lock with no engine relationship check —
+        the view must refuse an unrelated user posting an arbitrary review id."""
+        outsider = _user("pe-signoff-out@t.org", EdifyRole.CCEO.value)
+        StaffProfile.objects.create(user=outsider, country="Kenya")
+        r = self._client(outsider).post(
+            f"/performance-conversation/{self.review.id}/sign-off",
+            {"window": "q1"},
+        )
+        self.assertEqual(r.status_code, 403)
+        self.assertFalse(
+            self.review.snapshots.get(window="q1").signed_off_at,
+            "an unrelated user must never be able to lock a conversation",
+        )
+
+    def test_sign_off_locks_the_conversation_and_hides_the_inputs(self):
+        self._client(self.cceo).post(
+            f"/performance-conversation/{self.review.id}/sign-off",
+            {"window": "q1"},
+        )
+        snap = self.review.snapshots.get(window="q1")
+        self.assertIsNotNone(snap.signed_off_at)
+        r = self._client(self.cceo).get("/performance-conversation")
+        self.assertNotIn("Save my reflection", r.content.decode())
+        self.assertIn("Signed off", r.content.decode())
+
+
+class HRConsoleTests(EngineFixture):
+    """§4/§7: HR is the only role that opens the cycle, activates a window,
+    approves an agreement or returns one — proven through the console POST."""
+
+    def setUp(self):
+        from django.test import Client
+
+        # The CCEO must be an active employee to be swept into the cycle, and
+        # HR needs a country-matched profile to hold them in scope.
+        self.sp.onboarding_state = "active"
+        self.sp.save(update_fields=["onboarding_state"])
+        self.hr_sp = StaffProfile.objects.create(user=self.hr, country="Uganda")
+        self.hr_client = Client()
+        self.hr_client.force_login(self.hr)
+
+    def test_hr_opens_the_cycle_and_drafts_agreements(self):
+        from apps.hr.models import PerformanceCycle, PerformanceReview
+
+        # Start clean: the fixture already made a cycle; use a fresh FY.
+        PerformanceCycle.objects.filter(fy="2027").delete()
+        self.hr_client.post(
+            "/hr/performance-cycle/action",
+            {"action": "create_cycle", "fy": "2027"},
+        )
+        self.assertTrue(PerformanceCycle.objects.filter(fy="2027").exists())
+        self.assertTrue(
+            PerformanceReview.objects.filter(staff=self.sp, fy="2027").exists(),
+            "opening the cycle drafts an agreement for each active employee",
+        )
+
+    def test_hr_approval_locks_the_agreement_and_writes_targets(self):
+        from apps.hr.performance_engine import build_draft_agreement
+        from apps.targets.models import MonthlyPersonalTarget
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        self.hr_client.post(
+            "/hr/performance-cycle/action",
+            {"action": "approve", "fy": "2026", "review_id": review.id},
+        )
+        review.refresh_from_db()
+        self.assertEqual(review.stage, "priorities_agreed")
+        self.assertTrue(
+            MonthlyPersonalTarget.objects.filter(
+                user_id=self.cceo.id, fy="2026"
+            ).exists(),
+            "approval populates My Targets — no separate manual target entry",
+        )
+
+    def test_activation_from_the_console_freezes_snapshots(self):
+        from apps.hr.models import PerformanceCycle, PerformanceSnapshot
+        from apps.hr.performance_engine import build_draft_agreement
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        self.hr_client.post(
+            "/hr/performance-cycle/action",
+            {"action": "activate_window", "fy": "2026", "window": "q1"},
+        )
+        cycle = PerformanceCycle.objects.get(fy="2026")
+        self.assertEqual(cycle.active_window, "q1")
+        self.assertTrue(
+            PerformanceSnapshot.objects.filter(review=review, window="q1").exists()
+        )
+
+    def test_returning_an_agreement_requires_a_reason(self):
+        from apps.hr.performance_engine import approve_agreement, build_draft_agreement
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        approve_agreement(review, self.hr)
+        # No reason → engine refuses, stage unchanged.
+        self.hr_client.post(
+            "/hr/performance-cycle/action",
+            {"action": "return", "fy": "2026", "review_id": review.id, "reason": ""},
+        )
+        review.refresh_from_db()
+        self.assertEqual(review.stage, "priorities_agreed")
+
+    def test_a_non_hr_user_cannot_drive_the_console(self):
+        from django.test import Client
+
+        from apps.hr.models import PerformanceCycle
+
+        c = Client()
+        c.force_login(self.cceo)
+        r = c.post(
+            "/hr/performance-cycle/action",
+            {"action": "create_cycle", "fy": "2028"},
+        )
+        self.assertEqual(r.status_code, 403)
+        self.assertFalse(PerformanceCycle.objects.filter(fy="2028").exists())
+
+
+class ConversationDocumentTests(EngineFixture):
+    """§17: the record renders from the LOCKED snapshot, is scope-checked, and
+    every open is audit-logged."""
+
+    def setUp(self):
+        from django.test import Client
+
+        from apps.hr.performance_engine import (
+            activate_window,
+            build_draft_agreement,
+            sign_off,
+        )
+
+        self.review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        activate_window(self.cycle, "q1", self.hr)
+        sign_off(self.review, "q1", self.hr)
+        self.emp = Client()
+        self.emp.force_login(self.cceo)
+
+    def test_the_employee_can_open_their_own_locked_record(self):
+        r = self.emp.get(
+            f"/performance-conversation/{self.review.id}/document/q1"
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("Conversation Record", r.content.decode())
+        self.assertIn("FY2026", r.content.decode())
+
+    def test_opening_the_record_writes_an_audit_row(self):
+        from apps.audit.models import AuditLog
+
+        before = AuditLog.objects.filter(
+            action="hr.performance_document_downloaded"
+        ).count()
+        self.emp.get(f"/performance-conversation/{self.review.id}/document/q1")
+        after = AuditLog.objects.filter(
+            action="hr.performance_document_downloaded"
+        ).count()
+        self.assertEqual(after, before + 1)
+
+    def test_a_stranger_cannot_open_the_record(self):
+        from django.test import Client
+
+        outsider = _user("pe-doc-out@t.org", EdifyRole.CCEO.value)
+        StaffProfile.objects.create(user=outsider, country="Kenya")
+        c = Client()
+        c.force_login(outsider)
+        r = c.get(
+            f"/performance-conversation/{self.review.id}/document/q1", follow=False
+        )
+        self.assertIn(r.status_code, (302, 403))
+
+    def test_a_window_with_no_snapshot_has_no_document(self):
+        r = self.emp.get(
+            f"/performance-conversation/{self.review.id}/document/year_end",
+            follow=True,
+        )
+        # Bounced back with an error rather than rendering a fabricated record.
+        self.assertNotIn("Conversation Record", r.content.decode())

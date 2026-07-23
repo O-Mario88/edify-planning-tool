@@ -192,6 +192,196 @@ def _school_operational_ids(school_pks) -> list[str]:
     )
 
 
+# ── Milestone auto-population (§2) ────────────────────────────────────────────
+# Each metric priority carries a canonical BREAKDOWN, derived live from the same
+# verified sources as live_progress. Only figures with a real source are
+# emitted; where the form's example milestone has no canonical origin (e.g.
+# "schools retained" needs prior-FY allocation history that does not exist yet)
+# it is omitted rather than fabricated — the no-mock-data rule.
+
+
+def _verified_owner_activities(staff, fy, types):
+    """Verified, non-partner activities this employee personally executed."""
+    from apps.activities.models import Activity
+
+    return Activity.objects.filter(
+        responsible_staff_id__in=_owner_ids_for(staff),
+        activity_type__in=types,
+        status__in=IA_VERIFIED_STATUSES,
+        fy=fy,
+        deleted_at__isnull=True,
+    ).exclude(delivery_type="partner")
+
+
+def _school_type_map(school_ids) -> dict:
+    from apps.schools.models import School
+
+    return dict(
+        School.objects.filter(id__in=school_ids).values_list("id", "school_type")
+    )
+
+
+def milestone_metrics(priority) -> list[dict]:
+    """The canonical milestone breakdown for one priority.
+
+    Returns [{label, value, kind}] where kind is 'auto' (derived and
+    uneditable), 'target' (the agreed denominator) or 'calc' (a percentage).
+    Non-metric priorities (Capital, personal, values) return [] — their rows
+    are mixed or manual and carry no auto figures.
+    """
+    key = priority.metric_key
+    if not key:
+        return []
+    staff = priority.review.staff
+    fy = priority.review.fy
+    from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+    from apps.ssa.models import SsaRecord
+
+    school_ids = _assigned_school_ids(staff)
+    types_of = _school_type_map(school_ids)
+
+    def _pct(num, den):
+        return round(100 * num / den) if den else None
+
+    rows: list[dict] = []
+
+    if key == "new_schools":
+        from apps.schools.models import School
+
+        owner = _owner_ids_for(staff)
+        recruited = School.objects.filter(
+            account_owner_id__in=owner,
+            created_at__gte=_fy_start(fy),
+            deleted_at__isnull=True,
+        )
+        rows.append(
+            {"label": "New schools recruited", "value": recruited.count(), "kind": "auto"}
+        )
+        rows.append(
+            {
+                "label": "New Core Schools recruited",
+                "value": recruited.filter(school_type="core").count(),
+                "kind": "auto",
+            }
+        )
+        # A school is "activated" once it has carried real verified work this
+        # FY — a defensible operational definition, not a fabricated status.
+        from apps.activities.models import Activity
+
+        activated = (
+            Activity.objects.filter(
+                responsible_staff_id__in=owner,
+                status__in=IA_VERIFIED_STATUSES,
+                fy=fy,
+                deleted_at__isnull=True,
+                school_id__in=school_ids,
+            )
+            .values("school_id")
+            .distinct()
+            .count()
+        )
+        rows.append({"label": "Schools activated", "value": activated, "kind": "auto"})
+
+    elif key == "partner_supported_schools":
+        from apps.activities.models import Activity
+
+        supported = (
+            Activity.objects.filter(
+                monitored_by_staff_id__in=_owner_ids_for(staff),
+                delivery_type="partner",
+                status__in=IA_VERIFIED_STATUSES,
+                fy=fy,
+                deleted_at__isnull=True,
+            )
+            .values("school_id")
+            .distinct()
+            .count()
+        )
+        rows.append(
+            {
+                "label": "Schools supported through managed partners",
+                "value": supported,
+                "kind": "auto",
+            }
+        )
+
+    elif key == "direct_visits":
+        acts = _verified_owner_activities(staff, fy, VISIT_TYPES)
+        by_school = list(acts.values_list("school_id", flat=True))
+        completed = len(by_school)
+        core = sum(1 for s in by_school if types_of.get(s) == "core")
+        client = sum(1 for s in by_school if types_of.get(s) == "client")
+        from apps.activities.models import Activity
+
+        partner_supervised = Activity.objects.filter(
+            monitored_by_staff_id__in=_owner_ids_for(staff),
+            activity_type__in=VISIT_TYPES,
+            delivery_type="partner",
+            status__in=IA_VERIFIED_STATUSES,
+            fy=fy,
+            deleted_at__isnull=True,
+        ).count()
+        rows += [
+            {"label": "Direct Visit target", "value": priority.target_number, "kind": "target"},
+            {"label": "Direct Visits completed", "value": completed, "kind": "auto"},
+            {"label": "Core School Visits", "value": core, "kind": "auto"},
+            {"label": "Client School Visits", "value": client, "kind": "auto"},
+            {"label": "Partner Visits supervised", "value": partner_supervised, "kind": "auto"},
+            {
+                "label": "Visit completion",
+                "value": _pct(completed, priority.target_number),
+                "kind": "calc",
+            },
+        ]
+
+    elif key == "trainings":
+        acts = _verified_owner_activities(staff, fy, TRAINING_TYPES)
+        agg = acts.values_list(
+            "school_id", "activity_type", "teachers_attended", "leaders_attended"
+        )
+        completed = teachers = leaders = core = client = cluster = 0
+        for sid, atype, t, ln in agg:
+            completed += 1
+            teachers += t or 0
+            leaders += ln or 0
+            if atype in ("cluster_training", "cluster_training_ssa_collection"):
+                cluster += 1
+            elif atype == "core_training" or types_of.get(sid) == "core":
+                core += 1
+            elif types_of.get(sid) == "client":
+                client += 1
+        rows += [
+            {"label": "Trainings planned", "value": priority.target_number, "kind": "target"},
+            {"label": "Trainings completed", "value": completed, "kind": "auto"},
+            {"label": "Core trainings", "value": core, "kind": "auto"},
+            {"label": "Client trainings", "value": client, "kind": "auto"},
+            {"label": "Cluster trainings", "value": cluster, "kind": "auto"},
+            {"label": "Teachers trained", "value": teachers, "kind": "auto"},
+            {"label": "School leaders trained", "value": leaders, "kind": "auto"},
+        ]
+
+    elif key == "ssa_coverage":
+        confirmed = SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            fy=fy,
+            verification_status="confirmed",
+            deleted_at__isnull=True,
+        )
+        verified_schools = set(confirmed.values_list("school_id", flat=True))
+        allocated = len(school_ids)
+        done = len(verified_schools)
+        core_done = sum(1 for s in verified_schools if types_of.get(s) == "core")
+        rows += [
+            {"label": "Schools allocated for SSA", "value": allocated, "kind": "target"},
+            {"label": "Verified SSA completed", "value": done, "kind": "auto"},
+            {"label": "SSA coverage", "value": _pct(done, allocated), "kind": "calc"},
+            {"label": "Missing SSA", "value": max(0, allocated - done), "kind": "auto"},
+            {"label": "Core Assessments", "value": core_done, "kind": "auto"},
+        ]
+
+    return rows
+
+
 def _fy_start(fy: str):
     from datetime import date
 
@@ -592,6 +782,18 @@ def _assert_window_open(review):
     return cycle
 
 
+def _validate_rating(value):
+    """A rating must be one of the five named options, or blank. Free text is
+    refused so the three columns stay comparable across a cohort (§12)."""
+    from apps.hr.models import PerformanceRating
+
+    if value in (None, ""):
+        return None
+    if value not in PerformanceRating.values:
+        raise BadRequest(f"'{value}' is not a valid performance rating.")
+    return value
+
+
 def save_employee_input(priority, data: dict, principal):
     """The employee's own channels: reflection and their own rating. Never
     the manager's columns, never system results."""
@@ -602,7 +804,7 @@ def save_employee_input(priority, data: dict, principal):
     if "employee_reflection" in data:
         priority.employee_reflection = data["employee_reflection"]
     if "employee_rating" in data:
-        priority.employee_rating = data["employee_rating"]
+        priority.employee_rating = _validate_rating(data["employee_rating"])
     priority.save(
         update_fields=["employee_reflection", "employee_rating", "updated_at"]
     )
@@ -621,9 +823,12 @@ def save_manager_input(priority, data: dict, principal):
     ).exists()
     if not (is_supervisor or getattr(principal, "active_role", "") in _HR_ROLES):
         raise Forbidden("Only the reporting line writes the manager columns.")
-    for field in ("manager_assessment", "manager_rating", "agreed_action"):
-        if field in data:
-            setattr(priority, field, data[field])
+    if "manager_assessment" in data:
+        priority.manager_assessment = data["manager_assessment"]
+    if "manager_rating" in data:
+        priority.manager_rating = _validate_rating(data["manager_rating"])
+    if "agreed_action" in data:
+        priority.agreed_action = data["agreed_action"]
     priority.save(
         update_fields=[
             "manager_assessment",
@@ -725,9 +930,53 @@ def save_functional_manager_input(priority, data: dict, principal):
     if review.functional_manager_id != getattr(principal, "user_id", None):
         raise Forbidden("Only the configured functional manager writes this column.")
     if "functional_manager_rating" in data:
-        priority.functional_manager_rating = data["functional_manager_rating"]
+        priority.functional_manager_rating = _validate_rating(
+            data["functional_manager_rating"]
+        )
     priority.save(update_fields=["functional_manager_rating", "updated_at"])
     return priority
+
+
+def save_value_reflection(commitment, data: dict, principal):
+    """Values and Spiritual Formation are MANUAL and reflective (§2, §20).
+
+    The employee writes their own commitment and reflection; the manager and
+    functional manager write their observations. No column is ever derived
+    from an activity count. Same window gate as the rest of the form.
+    """
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    review = commitment.review
+    _assert_window_open(review)
+    is_employee = review.staff.user_id == getattr(principal, "user_id", None)
+    is_manager = StaffSupervisorAssignment.objects.filter(
+        supervisee=review.staff, supervisor__user_id=principal.user_id
+    ).exists()
+    is_functional = review.functional_manager_id == getattr(
+        principal, "user_id", None
+    )
+    is_hr = getattr(principal, "active_role", "") in _HR_ROLES
+
+    fields = []
+    if is_employee:
+        for f in ("agreed_behaviour", "employee_reflection"):
+            if f in data:
+                setattr(commitment, f, data[f])
+                fields.append(f)
+    if is_manager or is_hr:
+        if "manager_evidence" in data:
+            commitment.manager_evidence = data["manager_evidence"]
+            fields.append("manager_evidence")
+    if is_functional:
+        if "functional_manager_observation" in data:
+            commitment.functional_manager_observation = data[
+                "functional_manager_observation"
+            ]
+            fields.append("functional_manager_observation")
+    if not fields:
+        raise Forbidden("You have no writable column on this commitment.")
+    commitment.save(update_fields=[*fields, "updated_at"])
+    return commitment
 
 
 def flag_performance_support(review, reason: str, principal):

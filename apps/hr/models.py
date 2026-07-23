@@ -330,6 +330,21 @@ class PriorityStatus(models.TextChoices):
     NOT_ASSESSED = "not_assessed", "Not assessed"
 
 
+class PerformanceRating(models.TextChoices):
+    """The five conversation ratings, verbatim from the HR document (§12).
+
+    Held as three SEPARATE columns on a priority — employee, manager and
+    functional manager each rate independently, and the columns must never be
+    collapsed into one.
+    """
+
+    FAR_EXCEEDS = "far_exceeds", "Far Exceeds Priority"
+    EXCEEDS = "exceeds", "Exceeds Priority"
+    MET = "met", "Met Priority"
+    MET_SOME = "met_some", "Met Some Priority"
+    DID_NOT_MEET = "did_not_meet", "Did Not Meet Priority"
+
+
 class PerformanceReview(TimeStampedModel):
     """One employee's review for one period.
 

@@ -1,0 +1,99 @@
+{% extends "layouts/shell.html" %}
+{% block content %}
+<div class="space-y-5 print:space-y-3" id="conversation-document">
+
+  <div class="edify-page-header print:hidden">
+    <div>
+      <h1 class="edify-page-title">Conversation Record</h1>
+      <p class="edify-page-subtitle">Rendered from the locked snapshot. Use Print to save the locked PDF.</p>
+    </div>
+    <button type="button" onclick="window.print()" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Print / Save as PDF</button>
+  </div>
+
+  <article class="edify-surface rounded-surface border border-slate-100 p-6 print:border-0 print:p-0 space-y-5">
+    {# Header block (§1) #}
+    <header class="border-b border-slate-100 pb-4">
+      <h2 class="text-[18px] font-bold text-slate-900">{{ window_label }}</h2>
+      <div class="mt-2 grid gap-x-8 gap-y-1 sm:grid-cols-2 text-[13px]">
+        <p><span class="text-slate-400">Employee:</span> <strong>{{ staff.user.name }}</strong></p>
+        <p><span class="text-slate-400">Financial year:</span> <strong>FY{{ review.fy }}</strong></p>
+        <p><span class="text-slate-400">Role:</span> {{ staff.title|default:"—" }}</p>
+        <p><span class="text-slate-400">Country:</span> {{ staff.country|default:"—" }}</p>
+        <p><span class="text-slate-400">Snapshot taken:</span> {{ taken_at|date:"j M Y" }}</p>
+        <p><span class="text-slate-400">Status:</span> {% if signed_off_at %}<strong class="text-emerald-600">Signed off {{ signed_off_at|date:"j M Y" }}</strong>{% else %}In progress{% endif %}</p>
+      </div>
+    </header>
+
+    {# Priorities with frozen figures + ratings (§12) #}
+    <section>
+      <h3 class="text-[14px] font-bold text-slate-800 mb-2">Priorities</h3>
+      <table class="w-full text-[12.5px] border-collapse">
+        <thead><tr class="text-left text-slate-400 border-b border-slate-200">
+          <th class="py-1.5 pr-2">Priority</th>
+          <th class="py-1.5 px-2">Target</th>
+          <th class="py-1.5 px-2">Actual</th>
+          <th class="py-1.5 px-2">%</th>
+          <th class="py-1.5 px-2">Employee</th>
+          <th class="py-1.5 px-2">Manager</th>
+          <th class="py-1.5 px-2">Functional</th>
+          <th class="py-1.5 pl-2">Weight</th>
+        </tr></thead>
+        <tbody>
+        {% for r in doc_rows %}
+        <tr class="border-b border-slate-100 align-top">
+          <td class="py-2 pr-2">
+            <strong class="text-slate-800">{{ r.frozen.outcome }}</strong>
+            {% if r.employee_reflection %}<p class="text-slate-500 mt-0.5">EE: {{ r.employee_reflection }}</p>{% endif %}
+            {% if r.manager_assessment %}<p class="text-slate-500">Mgr: {{ r.manager_assessment }}</p>{% endif %}
+            {% if r.agreed_action %}<p class="text-slate-500">Action: {{ r.agreed_action }}</p>{% endif %}
+          </td>
+          <td class="py-2 px-2 tabular-nums">{{ r.frozen.target|default:"—" }}</td>
+          <td class="py-2 px-2 tabular-nums">{{ r.frozen.actual|default:"—" }}</td>
+          <td class="py-2 px-2 tabular-nums">{% if r.frozen.pct is not None %}{{ r.frozen.pct }}%{% else %}—{% endif %}</td>
+          <td class="py-2 px-2">{{ r.employee_rating|default:"—" }}</td>
+          <td class="py-2 px-2">{{ r.manager_rating|default:"—" }}</td>
+          <td class="py-2 px-2">{{ r.functional_rating|default:"—" }}</td>
+          <td class="py-2 pl-2 tabular-nums">{{ r.frozen.weight }}%</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    {# Development plan #}
+    {% if development %}
+    <section>
+      <h3 class="text-[14px] font-bold text-slate-800 mb-1">Development Plan</h3>
+      <ul class="text-[12.5px] text-slate-600 list-disc pl-5 space-y-0.5">
+        {% for d in development %}<li>{{ d.description }}{% if d.source == "pd_workflow" %} <span class="text-slate-400">(PD workflow)</span>{% endif %}</li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {# Spiritual formation #}
+    {% if spiritual %}
+    <section>
+      <h3 class="text-[14px] font-bold text-slate-800 mb-1">Spiritual Formation</h3>
+      {% for v in spiritual %}
+      <p class="text-[12.5px] text-slate-600"><strong>{{ v.value_name }}</strong>{% if v.employee_reflection %} — {{ v.employee_reflection }}{% endif %}</p>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {# Edify Values #}
+    {% if values %}
+    <section>
+      <h3 class="text-[14px] font-bold text-slate-800 mb-1">Edify Values</h3>
+      {% for v in values %}
+      <p class="text-[12.5px] text-slate-600"><strong>{{ v.value_name }}</strong>{% if v.agreed_behaviour %} — {{ v.agreed_behaviour }}{% endif %}{% if v.employee_reflection %} · {{ v.employee_reflection }}{% endif %}</p>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <footer class="border-t border-slate-100 pt-3 text-[11px] text-slate-400">
+      This record is generated from an immutable snapshot. Figures cannot be
+      altered after the conversation; amendments apply to future periods only.
+    </footer>
+  </article>
+</div>
+{% endblock %}

@@ -822,6 +822,41 @@ urlpatterns = [
         hr_views.my_performance_view,
         name="my_performance",
     ),
+    path(
+        "performance-conversation",
+        hr_views.performance_conversation_view,
+        name="performance_conversation",
+    ),
+    path(
+        "performance-conversation/priority/<str:priority_id>/save",
+        hr_views.performance_input_save_view,
+        name="performance_input_save",
+    ),
+    path(
+        "performance-conversation/value/<str:commitment_id>/save",
+        hr_views.performance_value_save_view,
+        name="performance_value_save",
+    ),
+    path(
+        "performance-conversation/<str:review_id>/sign-off",
+        hr_views.performance_signoff_view,
+        name="performance_signoff",
+    ),
+    path(
+        "hr/performance-cycle",
+        hr_views.hr_performance_console_view,
+        name="hr_performance_console",
+    ),
+    path(
+        "hr/performance-cycle/action",
+        hr_views.hr_performance_action_view,
+        name="hr_performance_action",
+    ),
+    path(
+        "performance-conversation/<str:review_id>/document/<str:window>",
+        hr_views.performance_document_view,
+        name="performance_document",
+    ),
     # Notifications
     path(
         "notifications",
