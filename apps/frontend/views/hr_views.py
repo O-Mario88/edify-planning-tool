@@ -1573,7 +1573,7 @@ def hr_audit_log_view(request):
 
 
 @require_page_permission("my_performance")
-def my_performance_view(request):
+def my_performance_view(request, tab=None):
     """My Performance — the employee's agreement, live progress, development
     and values. Progress is derived on read from the verified ledger; the
     page never shows a typed number."""
@@ -1696,7 +1696,9 @@ def my_performance_view(request):
             ("amendments", "Amendments"),
             ("conversations", "Conversations"),
         ],
-        "tab": request.GET.get("tab", "priorities"),
+        # The tab can be fixed by the URL (sidebar deep-links to Development,
+        # Values, Documents) and otherwise falls back to the query string.
+        "tab": tab or request.GET.get("tab", "priorities"),
     }
     return render(request, "pages/hr/my_performance.html", context)
 

@@ -74,6 +74,52 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
         PROJECT_COORDINATOR,
         ADMIN,
     },
+    # The My Performance group's sibling links share my_performance's audience:
+    # they are the same feature, reached at their own tab or page.
+    "performance_conversations": {
+        CCEO,
+        PL,
+        CD,
+        RVP,
+        HR,
+        IA,
+        ACCOUNTANT,
+        PROJECT_COORDINATOR,
+        ADMIN,
+    },
+    "performance_development": {
+        CCEO,
+        PL,
+        CD,
+        RVP,
+        HR,
+        IA,
+        ACCOUNTANT,
+        PROJECT_COORDINATOR,
+        ADMIN,
+    },
+    "performance_values": {
+        CCEO,
+        PL,
+        CD,
+        RVP,
+        HR,
+        IA,
+        ACCOUNTANT,
+        PROJECT_COORDINATOR,
+        ADMIN,
+    },
+    "performance_documents": {
+        CCEO,
+        PL,
+        CD,
+        RVP,
+        HR,
+        IA,
+        ACCOUNTANT,
+        PROJECT_COORDINATOR,
+        ADMIN,
+    },
     # Every Edify employee is PD-eligible (Partners are external org staff, not
     # on the Edify PD/BambooHR benefit) — one shared page for all of them.
     "my_professional_development": {
@@ -336,6 +382,11 @@ ICONS = {
     "offboarding": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>',
     "hr_analytics": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>',
     "hr_audit_log": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+    "my_performance": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>',
+    "performance_conversations": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>',
+    "performance_development": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>',
+    "performance_values": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>',
+    "performance_documents": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>',
 }
 
 # Grouped list of all sidebar links in their categories
@@ -347,11 +398,6 @@ SIDEBAR_ITEMS = [
                 "label": "Dashboard",
                 "url": "/dashboard",
                 "page_key": "dashboard",
-            },
-            {
-                "label": "My Target",
-                "url": "/my-targets",
-                "page_key": "my_target",
             },
             {
                 "label": "Team Targets",
@@ -395,6 +441,44 @@ SIDEBAR_ITEMS = [
                 "label": "Leave Approvals",
                 "url": "/leave/approvals",
                 "page_key": "leave_approvals",
+            },
+        ],
+    },
+    {
+        # The individual's own performance workspace — the agreement drives the
+        # targets, so My Targets belongs here rather than in the general work
+        # list. Each link is a distinct path so exactly one highlights.
+        "group_label": "MY PERFORMANCE",
+        "items": [
+            {
+                "label": "Priority Dashboard",
+                "url": "/my-performance",
+                "page_key": "my_performance",
+            },
+            {
+                "label": "My Targets",
+                "url": "/my-targets",
+                "page_key": "my_target",
+            },
+            {
+                "label": "Conversations",
+                "url": "/performance-conversation",
+                "page_key": "performance_conversations",
+            },
+            {
+                "label": "Development Plans",
+                "url": "/my-performance/development",
+                "page_key": "performance_development",
+            },
+            {
+                "label": "Values & Behaviours",
+                "url": "/my-performance/values",
+                "page_key": "performance_values",
+            },
+            {
+                "label": "Documents",
+                "url": "/my-performance/documents",
+                "page_key": "performance_documents",
             },
         ],
     },
@@ -859,7 +943,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 # nav items); prefix match for everything else.
                 if url == "/dashboard":
                     is_active = current_path == url or current_path == "/"
-                elif url in {"/projects", "/ssa"}:
+                elif url in {"/projects", "/ssa", "/my-performance"}:
+                    # Exact match: /my-performance has sibling links at
+                    # /my-performance/development etc. that own their own
+                    # active state, so the dashboard link must not swallow them.
                     is_active = current_path == url
                 else:
                     is_active = current_path.startswith(url)

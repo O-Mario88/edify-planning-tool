@@ -822,6 +822,26 @@ urlpatterns = [
         hr_views.my_performance_view,
         name="my_performance",
     ),
+    # Sidebar deep-links into the Priority Dashboard's own tabs, each a
+    # distinct path so the sidebar highlights exactly one item.
+    path(
+        "my-performance/development",
+        hr_views.my_performance_view,
+        {"tab": "development"},
+        name="my_performance_development",
+    ),
+    path(
+        "my-performance/values",
+        hr_views.my_performance_view,
+        {"tab": "values"},
+        name="my_performance_values",
+    ),
+    path(
+        "my-performance/documents",
+        hr_views.my_performance_view,
+        {"tab": "conversations"},
+        name="my_performance_documents",
+    ),
     path(
         "performance-conversation",
         hr_views.performance_conversation_view,
