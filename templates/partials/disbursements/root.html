@@ -57,10 +57,6 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
         {% for s in status_options %}<option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
       </select>
     </label>
-    <label class="block lg:col-span-3">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Search funds, people, plans</span>
-{% comment %}Search moved to the top bar.{% endcomment %}
-    </label>
   </form>
 
   <!-- KPI strip -->

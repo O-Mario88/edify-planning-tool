@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Reimbursements Queue - Edify Command Center{% endblock %}
 
@@ -50,19 +51,19 @@ Review and process staff reimbursement claims. Reimbursements appear here only a
 </td>
 <!-- Approved Budget -->
 <td class="px-6 py-4 text-center">
-{{ claim.approved_budget }}
+{{ claim.approved_budget|ugx }}
 </td>
 <!-- Advanced -->
 <td class="px-6 py-4 text-center">
-{{ claim.amount_advanced }}
+{{ claim.amount_advanced|ugx }}
 </td>
 <!-- Actual Spend -->
 <td class="px-6 py-4 text-center font-semibold">
-{{ claim.actual_spend }}
+{{ claim.actual_spend|ugx }}
 </td>
 <!-- Claim Amount -->
 <td class="px-6 py-4 text-center text-amber-600 font-semibold">
-{{ claim.reimbursement_amount }} UGX
+{{ claim.reimbursement_amount|ugx }}
 </td>
 <!-- IA Status -->
 <td class="px-6 py-4 text-center">

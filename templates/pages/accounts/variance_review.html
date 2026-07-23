@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Variance Review - Edify Command Center{% endblock %}
 
@@ -50,22 +51,22 @@ Review activities where the actual spend differs from the approved/disbursed amo
 </td>
 <!-- Budgeted -->
 <td class="px-6 py-4 text-center">
-{{ item.budgeted_amount }}
+{{ item.budgeted_amount|ugx }}
 </td>
 <!-- Disbursed -->
 <td class="px-6 py-4 text-center">
-{{ item.disbursed_amount }}
+{{ item.disbursed_amount|ugx }}
 </td>
 <!-- Spend -->
 <td class="px-6 py-4 text-center text-slate-800 font-semibold">
-{{ item.actual_spend }}
+{{ item.actual_spend|ugx }}
 </td>
 <!-- Variance -->
 <td class="px-6 py-4 text-center">
 {% if item.variance > 0 %}
-<span class="text-rose-600 font-semibold">+{{ item.variance }} UGX</span>
+<span class="text-rose-600 font-semibold">{{ item.variance|ugx }}</span>
 {% else %}
-<span class="text-[var(--edify-chart-blue)] font-semibold">{{ item.variance }} UGX</span>
+<span class="text-[var(--edify-chart-blue)] font-semibold">{{ item.variance|ugx }}</span>
 {% endif %}
 </td>
 <!-- Reason -->

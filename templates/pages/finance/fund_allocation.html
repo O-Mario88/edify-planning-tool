@@ -54,7 +54,7 @@ All amounts are in UGX. Costs are planned values for {{ selected_month }} {{ sel
 <span class="mt-2 sm:mt-0 flex items-center gap-1.5">
 Last updated: {{ timestamp }}
 <button
-@click="document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
+@click="document.getElementById('fund-allocation-filters').dispatchEvent(new Event('change', { bubbles: true }))"
 class="h-5 w-5 hover:bg-slate-100 rounded-control flex items-center justify-center text-slate-500"
 title="Refresh data"
 >
