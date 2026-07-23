@@ -1757,6 +1757,7 @@ def _resolve_conversation(request):
     return review, target, caps
 
 
+@require_page_permission("performance_conversations")
 def performance_conversation_view(request):
     """The conversation form for one employee's active window."""
     from apps.hr.models import PerformanceCycle, PerformanceRating
@@ -1962,6 +1963,7 @@ def _require_hr(request):
     return getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
 
 
+@require_page_permission("performance_console")
 def hr_performance_console_view(request):
     from apps.core.fy import get_operational_fy
     from apps.hr.models import PerformanceCycle, PerformanceReview

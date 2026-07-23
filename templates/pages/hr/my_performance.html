@@ -124,7 +124,7 @@
   <nav class="flex flex-wrap gap-1 border-b border-slate-100" aria-label="Performance sections">
     {% for key, label in tab_defs %}
     <button type="button" @click="tab = '{{ key }}'"
-            :class="tab === '{{ key }}' ? 'border-blue-600 text-blue-700 font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'"
+            :class="tab === '{{ key }}' ? 'edify-primary-border edify-primary-text font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'"
             class="px-3.5 py-2.5 text-[13px] border-b-2 -mb-px transition-colors">{{ label }}</button>
     {% endfor %}
   </nav>
@@ -152,7 +152,7 @@
           <td class="px-5 py-3 font-bold text-slate-400">{{ row.p.sequence }}</td>
           <td class="px-3 py-3">
             <p class="font-bold text-slate-800">{{ row.p.outcome_statement }}</p>
-            <p class="edify-text-caption {% if row.p.priority_layer == 'organizational' %}text-emerald-600{% else %}text-blue-700{% endif %}">
+            <p class="edify-text-caption {% if row.p.priority_layer == 'organizational' %}text-emerald-600{% else %}edify-primary-text{% endif %}">
               {{ row.p.priority_layer|capfirst }} Priority</p>
           </td>
           <td class="px-3 py-3">
@@ -189,7 +189,7 @@
             {% if row.progress.pct is not None %}
             <div class="mt-1 flex items-center gap-2">
               <div class="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                <div class="h-full rounded-full {% if row.progress.pct >= 100 %}bg-emerald-500{% elif row.progress.pct >= 60 %}bg-blue-600{% elif row.progress.pct >= 30 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
+                <div class="h-full rounded-full {% if row.progress.pct >= 100 %}bg-emerald-500{% elif row.progress.pct >= 60 %}edify-primary-solid{% elif row.progress.pct >= 30 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
                      style="width: {% if row.progress.pct > 100 %}100{% else %}{{ row.progress.pct }}{% endif %}%"></div>
               </div>
               <span class="edify-text-caption text-slate-500">{{ row.progress.pct }}%</span>
