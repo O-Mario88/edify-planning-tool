@@ -844,6 +844,21 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   line-height: 2.25rem !important;
 }
 
+/* Budget category labels: distinguished in the dark header row by weight and
+   italic, on the platform's single UI font (Inter). Serif was dropped to
+   satisfy the global Inter-only rule; the visual emphasis is preserved. */
+.budget-category-name {
+  font-style: italic !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+/* Budget sub-totals: larger and bolder than body rows. */
+.budget-subtotal-row {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
 /* Button styles to match reference image 3 */
 .btn-primary, .edify-action-button.primary {
   background-color: var(--edify-accent) !important;

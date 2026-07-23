@@ -122,7 +122,7 @@
           {% for group in cost_groups %}
           <tr>
             <td colspan="5" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
-              <div class="flex items-center gap-2"><span class="font-semibold italic text-white">{{ group.label }}</span><span class="text-[11px] font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
+              <div class="flex items-center gap-2"><span class="budget-category-name">{{ group.label }}</span><span class="text-[11px] font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
             </td>
           </tr>
           <tr class="font-bold">
@@ -141,7 +141,7 @@
             <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.amount_fmt }}</td>
           </tr>
           {% endfor %}
-          <tr class="text-[13px] font-extrabold">
+          <tr class="budget-subtotal-row">
             <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
             <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total_fmt }}</td>
           </tr>

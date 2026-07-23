@@ -76,7 +76,7 @@
           <tr>
             <td colspan="6" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
               <div class="flex items-center gap-2">
-                <span class="font-semibold italic text-white">{{ group.label }}</span>
+                <span class="budget-category-name">{{ group.label }}</span>
                 <span class="text-[11px] font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
               </div>
             </td>
@@ -106,7 +106,7 @@
             <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ row.total|ugx }}</td>
           </tr>
           {% endfor %}
-          <tr class="text-[15px] font-extrabold">
+          <tr class="budget-subtotal-row">
             <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
             <td class="px-3 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.staff_total|ugx }}</td>
             <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total|ugx }}</td>
