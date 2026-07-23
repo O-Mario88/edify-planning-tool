@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+)
 from django.shortcuts import redirect, render
 
 from apps.accounts.models import Leave, StaffProfile
@@ -1978,6 +1983,8 @@ def hr_performance_console_view(request):
     ]
 
     WINDOWS = [w for w in PerformanceCycle.WINDOWS if w[0] != "none"]
+    from apps.hr.models import PerformanceRating
+
     context = {
         "fy": fy,
         "cycle": cycle,
@@ -1985,6 +1992,8 @@ def hr_performance_console_view(request):
         "review_rows": review_rows,
         "windows": WINDOWS,
         "active_window": cycle.active_window if cycle else "none",
+        "ratings": PerformanceRating.choices,
+        "is_year_end": bool(cycle and cycle.active_window == "year_end"),
     }
     return render(request, "pages/hr/performance_console.html", context)
 
@@ -1995,18 +2004,33 @@ def hr_performance_action_view(request):
     from apps.core.fy import get_operational_fy
     from apps.hr.models import PerformanceCycle, PerformanceReview
     from apps.hr.performance_engine import (
+        activate_pip,
         activate_window,
         approve_agreement,
+        archive_review,
         build_draft_agreement,
+        calibrate,
         close_window,
+        confirm_final_rating,
+        hr_review_separation,
+        open_separation,
+        pip_outcome,
+        recommend_pip,
         reopen_conversation,
         return_for_correction,
+        submit_for_calibration,
     )
 
     if request.method != "POST":
         return HttpResponseBadRequest("POST required.")
     if not _require_hr(request):
         return HttpResponseForbidden("HR only.")
+
+    def _review():
+        return PerformanceReview.objects.get(id=request.POST["review_id"])
+
+    def _staff():
+        return StaffProfile.objects.get(id=request.POST["staff_id"])
 
     action = request.POST.get("action", "")
     fy = request.POST.get("fy") or get_operational_fy()
@@ -2054,6 +2078,69 @@ def hr_performance_action_view(request):
                 request.user,
             )
             messages.success(request, "Conversation reopened for correction.")
+        # ── Year-end calibration chain (§14) ────────────────────────────────
+        elif action == "submit_calibration":
+            submit_for_calibration(_review(), request.user)
+            messages.success(request, "Ready for SLT calibration.")
+        elif action == "calibrate":
+            calibrate(
+                _review(),
+                request.POST.get("result", ""),
+                request.POST.get("note", ""),
+                request.user,
+            )
+            messages.success(request, "Calibration recorded.")
+        elif action == "confirm_rating":
+            confirm_final_rating(
+                _review(), request.POST.get("rating", ""), request.user
+            )
+            messages.success(request, "Final rating confirmed.")
+        elif action == "archive":
+            archive_review(_review(), request.user)
+            messages.success(request, "Review signed and archived.")
+        # ── PIP (§15) ───────────────────────────────────────────────────────
+        elif action == "recommend_pip":
+            recommend_pip(
+                _staff(), request.POST.get("reason", ""), request.user
+            )
+            messages.success(request, "Formal PIP recommended (draft).")
+        elif action == "activate_pip":
+            from apps.hr.models import PerformanceImprovementPlan
+
+            plan = PerformanceImprovementPlan.objects.get(id=request.POST["plan_id"])
+            activate_pip(
+                plan, request.user, action_plan=request.POST.get("action_plan")
+            )
+            messages.success(request, "PIP activated with 30/60/90-day milestones.")
+        elif action == "pip_outcome":
+            from apps.hr.models import PerformanceImprovementPlan
+
+            plan = PerformanceImprovementPlan.objects.get(id=request.POST["plan_id"])
+            pip_outcome(
+                plan,
+                request.POST.get("outcome", ""),
+                request.POST.get("note", ""),
+                request.user,
+            )
+            messages.success(request, "PIP outcome recorded.")
+        # ── Separation (§15) ────────────────────────────────────────────────
+        elif action == "open_separation":
+            open_separation(
+                _staff(),
+                {
+                    "reason": request.POST.get("reason", ""),
+                    "evidence": request.POST.get("evidence"),
+                    "policy_basis": request.POST.get("policy_basis"),
+                },
+                request.user,
+            )
+            messages.success(request, "Separation opened — awaiting employee response.")
+        elif action == "hr_review_separation":
+            from apps.hr.models import SeparationConversation
+
+            sep = SeparationConversation.objects.get(id=request.POST["separation_id"])
+            hr_review_separation(sep, request.POST.get("note", ""), request.user)
+            messages.success(request, "Separation moved to leadership approval.")
         else:
             return HttpResponseBadRequest("Unknown action.")
     except (BadRequest, Forbidden) as e:
@@ -2062,6 +2149,10 @@ def hr_performance_action_view(request):
         messages.error(request, "No cycle exists for that year yet — create it first.")
     except PerformanceReview.DoesNotExist:
         messages.error(request, "That agreement no longer exists.")
+    except (StaffProfile.DoesNotExist, KeyError):
+        messages.error(request, "That record could not be found.")
+    except ObjectDoesNotExist:
+        messages.error(request, "That record no longer exists.")
     return redirect(f"/hr/performance-cycle?fy={fy}")
 
 
@@ -2140,4 +2231,41 @@ def performance_document_view(request, review_id, window):
             }
         )
     doc["doc_rows"] = merged
+
+    # §17: a downloadable Word record. No document library is installed, so we
+    # serve the same record as a Word-openable HTML document (application/
+    # msword) rather than adding a dependency silently — Word opens it natively.
+    if request.GET.get("format") == "docx":
+        from django.template.loader import render_to_string
+
+        doc["as_docx"] = True
+        html = render_to_string("pages/hr/conversation_document.html", doc, request)
+        name = f"performance-{review.staff_id}-{window}.doc"
+        resp = HttpResponse(html, content_type="application/msword")
+        resp["Content-Disposition"] = f'attachment; filename="{name}"'
+        return resp
     return render(request, "pages/hr/conversation_document.html", doc)
+
+
+def performance_acknowledge_view(request, review_id):
+    """The employee acknowledges their confirmed final rating (§14)."""
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.hr.models import PerformanceReview
+    from apps.hr.performance_engine import acknowledge_review
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    review = PerformanceReview.objects.filter(id=review_id).select_related(
+        "staff"
+    ).first()
+    if review is None:
+        return HttpResponseBadRequest("Unknown review.")
+    try:
+        acknowledge_review(review, request.user)
+    except Forbidden as e:
+        return HttpResponseForbidden(str(e))
+    except BadRequest as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, "Final rating acknowledged.")
+    return redirect("/my-performance?tab=conversations")

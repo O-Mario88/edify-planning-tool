@@ -1220,3 +1220,321 @@ def conversation_document(review, window: str, principal) -> dict:
         "spiritual": list(review.value_commitments.filter(kind="spiritual")),
         "development": development_rows(review),
     }
+
+
+# ── Year-end calibration chain (§14) ────────────────────────────────────────
+# The overall rating and signatures are applied only AFTER SLT review. This is
+# an ordered state machine, not prose: a final rating cannot be confirmed
+# before calibration, and the record cannot archive before the employee
+# acknowledges it (§20 — no final rating bypasses the calibration workflow).
+
+_LEADERSHIP_ROLES = ("CountryDirector", "RegionalVicePresident", "Admin")
+
+
+def submit_for_calibration(review, principal):
+    """HR quality review passed → the record is ready for SLT calibration."""
+    _assert_hr(principal)
+    review.stage = "ready_for_slt_calibration"
+    review.save(update_fields=["stage", "updated_at"])
+    _audit_review(review, "hr.performance_ready_for_calibration", principal, {})
+    return review
+
+
+def calibrate(review, result, note, principal):
+    """SLT calibration outcome, facilitated by HR. Only once ready."""
+    _assert_hr(principal)
+    if review.stage != "ready_for_slt_calibration":
+        raise BadRequest(
+            "Calibration can only run once HR quality review is complete."
+        )
+    review.calibration_result = result
+    review.calibration_note = note or ""
+    review.calibrated_by_id = getattr(principal, "user_id", None)
+    review.calibrated_at = timezone.now()
+    review.stage = "slt_calibrated"
+    review.save(
+        update_fields=[
+            "calibration_result",
+            "calibration_note",
+            "calibrated_by",
+            "calibrated_at",
+            "stage",
+            "updated_at",
+        ]
+    )
+    _audit_review(
+        review, "hr.performance_calibrated", principal, {"result": result}
+    )
+    return review
+
+
+def confirm_final_rating(review, rating, principal):
+    """Set the overall rating — ONLY after SLT calibration (§20)."""
+    _assert_hr(principal)
+    if review.stage != "slt_calibrated":
+        raise Forbidden(
+            "A final rating cannot be confirmed before SLT calibration."
+        )
+    review.rating = _validate_rating(rating)
+    review.stage = "final_rating_confirmed"
+    review.save(update_fields=["rating", "stage", "updated_at"])
+    _audit_review(
+        review, "hr.performance_final_rating_confirmed", principal, {"rating": rating}
+    )
+    return review
+
+
+def acknowledge_review(review, principal):
+    """The employee acknowledges the confirmed final rating."""
+    if review.staff.user_id != getattr(principal, "user_id", None):
+        raise Forbidden("Only the employee acknowledges their own review.")
+    if review.stage != "final_rating_confirmed":
+        raise BadRequest("There is no confirmed final rating to acknowledge yet.")
+    review.acknowledged_at = timezone.now()
+    review.stage = "employee_acknowledged"
+    review.save(update_fields=["acknowledged_at", "stage", "updated_at"])
+    _audit_review(review, "hr.performance_acknowledged", principal, {})
+    return review
+
+
+def archive_review(review, principal):
+    """Sign and archive — only after the employee has acknowledged."""
+    _assert_hr(principal)
+    if review.stage != "employee_acknowledged":
+        raise BadRequest(
+            "A review is archived only after the employee acknowledges it."
+        )
+    review.stage = "signed_and_archived"
+    review.closed_at = timezone.now()
+    review.save(update_fields=["stage", "closed_at", "updated_at"])
+    _audit_review(review, "hr.performance_archived", principal, {})
+    return review
+
+
+# ── Formal PIP (§15) — never automatic ──────────────────────────────────────
+
+
+def recommend_pip(staff, reason, principal, cause="capacity", start=None):
+    """RECOMMEND a formal PIP. A manager or HR records the recommendation; it
+    creates a DRAFT plan only. Nothing here activates anything, and no score
+    ever reaches this function on its own (§15, §20)."""
+    from apps.hr.models import PerformanceImprovementPlan, RecoveryPlanType
+
+    if not (reason or "").strip():
+        raise BadRequest("A PIP recommendation needs its reason recorded.")
+    today = timezone.now().date()
+    plan = PerformanceImprovementPlan.objects.create(
+        staff=staff,
+        plan_type=RecoveryPlanType.FORMAL,
+        status="draft",
+        cause=cause,
+        cause_evidence=reason,
+        action_plan="(to be agreed at activation)",
+        start_date=start or today,
+        end_date=start or today,
+        recommended_by_id=getattr(principal, "user_id", None),
+    )
+    _audit_pip(plan, "hr.pip_recommended", principal, {"reason": reason})
+    return plan
+
+
+def activate_pip(plan, principal, action_plan=None):
+    """HR AUTHORIZES a formal PIP and lays out the 30/60/90-day milestones.
+    Activation is a deliberate authorized decision, recorded as such."""
+    from datetime import timedelta
+
+    from apps.hr.models import RecoveryMilestone, RecoveryPlanType
+
+    _assert_hr(principal)
+    if plan.plan_type != RecoveryPlanType.FORMAL:
+        raise BadRequest("Only a formal plan is activated as a PIP.")
+    if plan.status != "draft":
+        raise BadRequest("Only a draft PIP can be activated.")
+    plan.status = "active"
+    plan.authorized_by_id = getattr(principal, "user_id", None)
+    plan.authorized_at = timezone.now()
+    if action_plan:
+        plan.action_plan = action_plan
+    plan.end_date = plan.start_date + timedelta(days=90)
+    plan.save(
+        update_fields=[
+            "status",
+            "authorized_by",
+            "authorized_at",
+            "action_plan",
+            "end_date",
+            "updated_at",
+        ]
+    )
+    for days, label in ((30, "30-day review"), (60, "60-day review"), (90, "90-day review")):
+        RecoveryMilestone.objects.create(
+            plan=plan,
+            description=label,
+            due_date=plan.start_date + timedelta(days=days),
+        )
+    _audit_pip(plan, "hr.pip_activated", principal, {})
+    return plan
+
+
+def pip_outcome(plan, outcome, note, principal):
+    """complete / extend / escalate — an HR decision, never a score outcome."""
+    _assert_hr(principal)
+    valid = {"completed", "extended", "escalated"}
+    if outcome not in valid:
+        raise BadRequest(f"PIP outcome must be one of {sorted(valid)}.")
+    plan.status = outcome
+    plan.outcome = outcome
+    plan.outcome_note = note or ""
+    if outcome in ("completed", "escalated"):
+        plan.closed_at = timezone.now()
+    if outcome == "escalated":
+        from apps.hr.models import EmployeeRelationsCase
+
+        case = EmployeeRelationsCase.objects.create(
+            subject_staff=plan.staff,
+            country=plan.staff.country or "Uganda",
+            case_type="conduct",
+            description=note or "Escalated from a formal PIP.",
+            raised_by_id=getattr(principal, "user_id", None),
+        )
+        plan.escalated_case = case
+    plan.save(
+        update_fields=[
+            "status",
+            "outcome",
+            "outcome_note",
+            "closed_at",
+            "escalated_case",
+            "updated_at",
+        ]
+    )
+    _audit_pip(plan, "hr.pip_outcome", principal, {"outcome": outcome})
+    return plan
+
+
+def _audit_pip(plan, action, principal, payload):
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=action,
+            subject_kind="PerformanceImprovementPlan",
+            subject_id=plan.id,
+            actor_id=getattr(principal, "user_id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload=payload,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+# ── Separation (§15) — a restricted, due-process HR workflow ─────────────────
+
+
+def open_separation(staff, data: dict, principal):
+    """HR opens the separation workflow. Never automatic; the reason is
+    required and the subject employee will get to respond before any
+    approval."""
+    _assert_hr(principal)
+    from apps.hr.models import SeparationConversation
+
+    reason = (data.get("reason") or "").strip()
+    if not reason:
+        raise BadRequest("A separation must record its reason.")
+    sep = SeparationConversation.objects.create(
+        subject_staff=staff,
+        country=staff.country or "Uganda",
+        reason=reason,
+        evidence=data.get("evidence"),
+        policy_basis=data.get("policy_basis"),
+        manager_recommendation=data.get("manager_recommendation"),
+        recommended_by_id=data.get("recommended_by_id"),
+        opened_by_id=getattr(principal, "user_id", None),
+        stage=SeparationConversation.Stage.AWAITING_EMPLOYEE_RESPONSE,
+    )
+    _audit_separation(sep, "hr.separation_opened", principal, {})
+    return sep
+
+
+def record_separation_response(sep, text, principal):
+    """The subject employee's own response — the due-process step that must
+    precede any HR review."""
+    if sep.subject_staff.user_id != getattr(principal, "user_id", None):
+        raise Forbidden("Only the employee records their own response.")
+    from apps.hr.models import SeparationConversation
+
+    sep.employee_response = text
+    sep.employee_responded_at = timezone.now()
+    sep.stage = SeparationConversation.Stage.HR_REVIEW
+    sep.save(
+        update_fields=["employee_response", "employee_responded_at", "stage", "updated_at"]
+    )
+    _audit_separation(sep, "hr.separation_employee_responded", principal, {})
+    return sep
+
+
+def hr_review_separation(sep, note, principal):
+    _assert_hr(principal)
+    from apps.hr.models import SeparationConversation
+
+    sep.hr_review_note = note or ""
+    sep.hr_reviewed_by_id = getattr(principal, "user_id", None)
+    sep.hr_reviewed_at = timezone.now()
+    sep.stage = SeparationConversation.Stage.AWAITING_LEADERSHIP_APPROVAL
+    sep.save(
+        update_fields=["hr_review_note", "hr_reviewed_by", "hr_reviewed_at", "stage", "updated_at"]
+    )
+    _audit_separation(sep, "hr.separation_hr_reviewed", principal, {})
+    return sep
+
+
+def approve_separation(sep, principal):
+    """Authorized leadership approval. The approver may NOT be the person who
+    opened or recommended the separation (§15 — separation of duties)."""
+    from apps.hr.models import SeparationConversation
+
+    if getattr(principal, "active_role", "") not in _LEADERSHIP_ROLES:
+        raise Forbidden("Only authorized leadership may approve a separation.")
+    uid = getattr(principal, "user_id", None)
+    if uid and uid in (sep.recommended_by_id, sep.opened_by_id):
+        raise Forbidden(
+            "Whoever opened or recommended a separation may not approve it."
+        )
+    if sep.stage != SeparationConversation.Stage.AWAITING_LEADERSHIP_APPROVAL:
+        raise BadRequest("HR review must complete before leadership approval.")
+    sep.approved_by_id = uid
+    sep.approved_at = timezone.now()
+    sep.stage = SeparationConversation.Stage.APPROVED
+    sep.save(update_fields=["approved_by", "approved_at", "stage", "updated_at"])
+    _audit_separation(sep, "hr.separation_approved", principal, {})
+    return sep
+
+
+def decline_separation(sep, note, principal):
+    """HR or leadership declines. Recorded, not deleted."""
+    from apps.hr.models import SeparationConversation
+
+    role = getattr(principal, "active_role", "")
+    if role not in _HR_ROLES and role not in _LEADERSHIP_ROLES:
+        raise Forbidden("Only HR or leadership may decline a separation.")
+    sep.outcome_note = note or ""
+    sep.stage = SeparationConversation.Stage.DECLINED
+    sep.save(update_fields=["outcome_note", "stage", "updated_at"])
+    _audit_separation(sep, "hr.separation_declined", principal, {})
+    return sep
+
+
+def _audit_separation(sep, action, principal, payload):
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=action,
+            subject_kind="SeparationConversation",
+            subject_id=sep.id,
+            actor_id=getattr(principal, "user_id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload=payload,
+        )
+    except Exception:  # noqa: BLE001
+        pass

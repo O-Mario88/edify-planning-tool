@@ -870,3 +870,226 @@ class ConversationDocumentTests(EngineFixture):
         )
         # Bounced back with an error rather than rendering a fabricated record.
         self.assertNotIn("Conversation Record", r.content.decode())
+
+
+class CalibrationChainTests(EngineFixture):
+    """§14/§20: the overall rating cannot be confirmed before SLT calibration,
+    and the record cannot archive before the employee acknowledges it."""
+
+    def setUp(self):
+        self.review = build_draft_agreement(self.sp, self.cycle, self.hr)
+
+    def test_a_final_rating_cannot_bypass_calibration(self):
+        from apps.hr.performance_engine import confirm_final_rating
+
+        # Straight to a final rating with no calibration → refused.
+        with self.assertRaises(Forbidden):
+            confirm_final_rating(self.review, "exceeds", self.hr)
+
+    def test_the_full_calibration_chain_in_order(self):
+        from apps.hr.performance_engine import (
+            acknowledge_review,
+            archive_review,
+            calibrate,
+            confirm_final_rating,
+            submit_for_calibration,
+        )
+
+        submit_for_calibration(self.review, self.hr)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.stage, "ready_for_slt_calibration")
+
+        calibrate(self.review, "confirmed", "SLT agreed", self.hr)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.stage, "slt_calibrated")
+        self.assertEqual(self.review.calibration_result, "confirmed")
+
+        confirm_final_rating(self.review, "met", self.hr)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.stage, "final_rating_confirmed")
+        self.assertEqual(self.review.rating, "met")
+
+        # Only the employee acknowledges.
+        with self.assertRaises(Forbidden):
+            acknowledge_review(self.review, self.hr)
+        acknowledge_review(self.review, self.cceo)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.stage, "employee_acknowledged")
+        self.assertIsNotNone(self.review.acknowledged_at)
+
+        archive_review(self.review, self.hr)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.stage, "signed_and_archived")
+
+    def test_calibration_requires_hr_and_the_ready_stage(self):
+        from apps.hr.performance_engine import calibrate
+
+        with self.assertRaises(Forbidden):
+            calibrate(self.review, "confirmed", "", self.cceo)  # not HR
+        with self.assertRaises(BadRequest):
+            calibrate(self.review, "confirmed", "", self.hr)  # not ready yet
+
+    def test_archive_requires_acknowledgement_first(self):
+        from apps.hr.performance_engine import archive_review
+
+        with self.assertRaises(BadRequest):
+            archive_review(self.review, self.hr)
+
+
+class PipWorkflowTests(EngineFixture):
+    """§15/§20: a PIP is a deliberate authorized decision, never automatic."""
+
+    def test_recommend_creates_a_draft_only(self):
+        from apps.hr.performance_engine import recommend_pip
+
+        plan = recommend_pip(self.sp, "Two quarters materially behind", self.hr)
+        self.assertEqual(plan.plan_type, "formal")
+        self.assertEqual(plan.status, "draft")
+        self.assertEqual(plan.recommended_by_id, self.hr.id)
+        self.assertIsNone(plan.authorized_at, "recommending must not activate")
+
+    def test_recommend_requires_a_reason(self):
+        from apps.hr.performance_engine import recommend_pip
+
+        with self.assertRaises(BadRequest):
+            recommend_pip(self.sp, "   ", self.hr)
+
+    def test_activation_is_hr_authorized_and_lays_out_30_60_90(self):
+        from apps.hr.models import RecoveryMilestone
+        from apps.hr.performance_engine import activate_pip, recommend_pip
+
+        plan = recommend_pip(self.sp, "Behind on visits", self.hr)
+        with self.assertRaises(Forbidden):
+            activate_pip(plan, self.cceo)  # not HR
+        activate_pip(plan, self.hr, action_plan="Weekly coaching")
+        plan.refresh_from_db()
+        self.assertEqual(plan.status, "active")
+        self.assertIsNotNone(plan.authorized_at)
+        self.assertEqual(plan.authorized_by_id, self.hr.id)
+        self.assertEqual(RecoveryMilestone.objects.filter(plan=plan).count(), 3)
+
+    def test_escalation_creates_a_conduct_case(self):
+        from apps.hr.models import EmployeeRelationsCase
+        from apps.hr.performance_engine import (
+            activate_pip,
+            pip_outcome,
+            recommend_pip,
+        )
+
+        plan = recommend_pip(self.sp, "Behind", self.hr)
+        activate_pip(plan, self.hr)
+        pip_outcome(plan, "escalated", "No improvement after 90 days", self.hr)
+        plan.refresh_from_db()
+        self.assertEqual(plan.status, "escalated")
+        self.assertIsNotNone(plan.escalated_case_id)
+        self.assertTrue(
+            EmployeeRelationsCase.objects.filter(id=plan.escalated_case_id).exists()
+        )
+
+
+class SeparationWorkflowTests(EngineFixture):
+    """§15: separation is a restricted, due-process, separation-of-duties
+    workflow — never automatic, and the approver may not be the opener."""
+
+    def test_open_requires_hr_and_a_reason(self):
+        from apps.hr.performance_engine import open_separation
+
+        with self.assertRaises(Forbidden):
+            open_separation(self.sp, {"reason": "x"}, self.cceo)  # not HR
+        with self.assertRaises(BadRequest):
+            open_separation(self.sp, {"reason": "  "}, self.hr)
+
+    def test_full_due_process_and_separation_of_duties(self):
+        from apps.core.rbac import EdifyRole
+        from apps.hr.models import SeparationConversation
+        from apps.hr.performance_engine import (
+            approve_separation,
+            hr_review_separation,
+            open_separation,
+            record_separation_response,
+        )
+
+        sep = open_separation(
+            self.sp, {"reason": "Gross misconduct — documented"}, self.hr
+        )
+        self.assertEqual(sep.stage, "awaiting_employee_response")
+
+        # Only the subject employee may respond.
+        with self.assertRaises(Forbidden):
+            record_separation_response(sep, "not me", self.hr)
+        record_separation_response(sep, "My account of events", self.cceo)
+        sep.refresh_from_db()
+        self.assertEqual(sep.stage, "hr_review")
+
+        hr_review_separation(sep, "Reviewed; policy basis holds", self.hr)
+        sep.refresh_from_db()
+        self.assertEqual(sep.stage, "awaiting_leadership_approval")
+
+        # The person who OPENED it may not approve it, even as leadership.
+        cd = _user("pe-cd@t.org", EdifyRole.COUNTRY_DIRECTOR.value)
+        StaffProfile.objects.create(user=cd, country="Uganda")
+        # HR opened it, so HR-as-approver is blocked by role anyway; prove the
+        # opener rule by making the opener a CD.
+        sep2 = SeparationConversation.objects.create(
+            subject_staff=self.sp,
+            reason="x",
+            opened_by=cd,
+            stage="awaiting_leadership_approval",
+        )
+        with self.assertRaises(Forbidden):
+            approve_separation(sep2, cd)  # opener cannot approve
+
+        approve_separation(sep, cd)  # a different authorized leader may
+        sep.refresh_from_db()
+        self.assertEqual(sep.stage, "approved")
+        self.assertEqual(sep.approved_by_id, cd.id)
+
+    def test_a_cceo_cannot_approve_a_separation(self):
+        from apps.hr.performance_engine import approve_separation, open_separation
+
+        sep = open_separation(self.sp, {"reason": "x"}, self.hr)
+        sep.stage = "awaiting_leadership_approval"
+        sep.save(update_fields=["stage"])
+        with self.assertRaises(Forbidden):
+            approve_separation(sep, self.cceo)
+
+
+class DocxAndAcknowledgeViewTests(EngineFixture):
+    def setUp(self):
+        from django.test import Client
+
+        from apps.hr.performance_engine import (
+            activate_window,
+            build_draft_agreement,
+            sign_off,
+        )
+
+        self.review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        activate_window(self.cycle, "year_end", self.hr)
+        sign_off(self.review, "year_end", self.hr)
+        self.emp = Client()
+        self.emp.force_login(self.cceo)
+
+    def test_docx_download_serves_a_word_document(self):
+        r = self.emp.get(
+            f"/performance-conversation/{self.review.id}/document/year_end?format=docx"
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r["Content-Type"], "application/msword")
+        self.assertIn("attachment", r["Content-Disposition"])
+
+    def test_employee_acknowledges_a_confirmed_final_rating(self):
+        from apps.hr.performance_engine import (
+            calibrate,
+            confirm_final_rating,
+            submit_for_calibration,
+        )
+
+        submit_for_calibration(self.review, self.hr)
+        calibrate(self.review, "confirmed", "", self.hr)
+        confirm_final_rating(self.review, "met", self.hr)
+        self.emp.post(
+            f"/performance-conversation/{self.review.id}/acknowledge"
+        )
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.stage, "employee_acknowledged")

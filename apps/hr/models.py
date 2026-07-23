@@ -313,6 +313,25 @@ class ReviewStage(models.TextChoices):
     )
     CLOSED = "closed", "Closed"
 
+    # ── Year-end calibration chain (§14) ────────────────────────────────────
+    # The overall rating and signatures are applied AFTER SLT review — the HR
+    # document said so in prose; here it is an explicit, ordered state machine
+    # so a final rating cannot be confirmed before calibration (§20).
+    MANAGER_REVIEW_COMPLETE = "manager_review_complete", "Manager review complete"
+    FUNCTIONAL_MANAGER_COMPLETE = (
+        "functional_manager_complete",
+        "Functional manager complete",
+    )
+    HR_QUALITY_REVIEW = "hr_quality_review", "HR quality review"
+    READY_FOR_SLT_CALIBRATION = (
+        "ready_for_slt_calibration",
+        "Ready for SLT calibration",
+    )
+    SLT_CALIBRATED = "slt_calibrated", "SLT calibrated"
+    FINAL_RATING_CONFIRMED = "final_rating_confirmed", "Final rating confirmed"
+    EMPLOYEE_ACKNOWLEDGED = "employee_acknowledged", "Employee acknowledged"
+    SIGNED_AND_ARCHIVED = "signed_and_archived", "Signed and archived"
+
 
 class ReviewType(models.TextChoices):
     ANNUAL_PRIORITIES = "annual_priorities", "Annual priorities"
@@ -595,6 +614,23 @@ class PerformanceImprovementPlan(TimeStampedModel):
         blank=True,
         related_name="source_recovery_plans",
     )
+    # A formal PIP may only ACTIVATE after an authorized decision — never
+    # automatically from a score (§15, §20). These record that decision.
+    recommended_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pips_recommended",
+    )
+    authorized_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pips_authorized",
+    )
+    authorized_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "hr_pip_plan"
@@ -1033,3 +1069,86 @@ class PerformanceSnapshot(TimeStampedModel):
     class Meta:
         db_table = "hr_performance_snapshot"
         unique_together = (("review", "window"),)
+
+
+class SeparationConversation(TimeStampedModel):
+    """The restricted HR workflow a separation must pass through (§15).
+
+    Separation is NEVER an automatic outcome of a score. It is a deliberate,
+    audited, multi-party process: reason and evidence, the employee's own
+    response, HR review, and an authorized leadership approval that the
+    recommender may not give themselves. Every state change is logged.
+    """
+
+    class Stage(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        AWAITING_EMPLOYEE_RESPONSE = (
+            "awaiting_employee_response",
+            "Awaiting employee response",
+        )
+        HR_REVIEW = "hr_review", "HR review"
+        AWAITING_LEADERSHIP_APPROVAL = (
+            "awaiting_leadership_approval",
+            "Awaiting leadership approval",
+        )
+        APPROVED = "approved", "Approved"
+        DECLINED = "declined", "Declined"
+        WITHDRAWN = "withdrawn", "Withdrawn"
+
+    id = CuidField()
+    subject_staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="separation_conversations"
+    )
+    country = models.CharField(max_length=64, default="Uganda", db_index=True)
+    stage = models.CharField(
+        max_length=40, choices=Stage.choices, default=Stage.DRAFT, db_index=True
+    )
+
+    # The case (§15)
+    reason = models.TextField()
+    evidence = models.TextField(null=True, blank=True)
+    policy_basis = models.TextField(null=True, blank=True)
+
+    # Due process, tracked rather than assumed
+    employee_response = models.TextField(null=True, blank=True)
+    employee_responded_at = models.DateTimeField(null=True, blank=True)
+    manager_recommendation = models.TextField(null=True, blank=True)
+    recommended_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="separations_recommended",
+    )
+    hr_review_note = models.TextField(null=True, blank=True)
+    hr_reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="separations_reviewed",
+    )
+    hr_reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    # Authorized leadership approval — the recommender may never be the approver.
+    approved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="separations_approved",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    outcome_note = models.TextField(null=True, blank=True)
+
+    opened_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="separations_opened",
+    )
+
+    class Meta:
+        db_table = "hr_separation_conversation"
+        ordering = ["-created_at"]

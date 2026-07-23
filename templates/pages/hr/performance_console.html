@@ -126,6 +126,38 @@
               <button class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Return</button>
             </form>
             {% endif %}
+
+            {# Year-end calibration chain (§14) — the next step, driven by stage #}
+            {% if is_year_end %}
+            {% if row.stage == "hr_quality_review" or row.stage == "manager_assessment" %}
+            <form method="post" action="/hr/performance-cycle/action">
+              {% csrf_token %}<input type="hidden" name="action" value="submit_calibration"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
+              <button class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Ready for SLT</button>
+            </form>
+            {% elif row.stage == "ready_for_slt_calibration" %}
+            <form method="post" action="/hr/performance-cycle/action">
+              {% csrf_token %}<input type="hidden" name="action" value="calibrate"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}"><input type="hidden" name="result" value="confirmed">
+              <button class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Record calibration</button>
+            </form>
+            {% elif row.stage == "slt_calibrated" %}
+            <form method="post" action="/hr/performance-cycle/action" class="flex items-center gap-1">
+              {% csrf_token %}<input type="hidden" name="action" value="confirm_rating"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
+              <select name="rating" class="rounded-md border border-slate-200 px-2 py-1 text-[12px]">{% for val, label in ratings %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
+              <button class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Confirm rating</button>
+            </form>
+            {% elif row.stage == "employee_acknowledged" %}
+            <form method="post" action="/hr/performance-cycle/action">
+              {% csrf_token %}<input type="hidden" name="action" value="archive"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="review_id" value="{{ row.review.id }}">
+              <button class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Sign &amp; archive</button>
+            </form>
+            {% endif %}
+            {% endif %}
+
+            {# Risk escalation (§15) — always deliberate, never automatic #}
+            <form method="post" action="/hr/performance-cycle/action" onsubmit="this.reason.value=prompt('Reason to recommend a formal PIP for {{ row.name|escapejs }}?')||'';return this.reason.value!==''">
+              {% csrf_token %}<input type="hidden" name="action" value="recommend_pip"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="staff_id" value="{{ row.review.staff_id }}"><input type="hidden" name="reason" value="">
+              <button class="rounded-md border border-amber-200 text-amber-700 px-2.5 py-1 text-[12px] font-bold">Recommend PIP</button>
+            </form>
           </div>
         </td>
       </tr>

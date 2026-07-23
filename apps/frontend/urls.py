@@ -857,6 +857,11 @@ urlpatterns = [
         hr_views.performance_document_view,
         name="performance_document",
     ),
+    path(
+        "performance-conversation/<str:review_id>/acknowledge",
+        hr_views.performance_acknowledge_view,
+        name="performance_acknowledge",
+    ),
     # Notifications
     path(
         "notifications",
