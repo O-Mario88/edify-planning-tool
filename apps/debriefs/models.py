@@ -155,6 +155,14 @@ class DailyDebrief(SoftDeleteModel):
     what_happened = models.TextField(null=True, blank=True)
     what_went_well = models.TextField(null=True, blank=True)
     what_did_not_go_well = models.TextField(null=True, blank=True)
+    # Daily Debrief Q4 ("What challenges did you face?") — free narrative.
+    # Distinct from the structured DailyDebriefChallenge rows, which the
+    # insight engine derives AFTER submission; staff never re-enter them.
+    challenges_faced = models.TextField(null=True, blank=True)
+    # Daily Debrief "Add Other Work" — authorized work not present in My
+    # Plan. Free description only; material/unplanned work routes to the
+    # manager for future Planning, never recreates an Activity here.
+    other_work_description = models.TextField(null=True, blank=True)
     blockers = ArrayField(
         base_field=models.CharField(max_length=255), default=list, blank=True
     )
@@ -294,6 +302,18 @@ class DailyDebrief(SoftDeleteModel):
             models.Index(fields=["partner_id"]),
             models.Index(fields=["risk_level"]),
             models.Index(fields=["is_restricted_incident"]),
+        ]
+        constraints = [
+            # One Daily Debrief per user per local date. The daily flow
+            # normalizes `date` to midnight, so equality on the datetime is
+            # equality on the day. Draft → submitted reuses the same row;
+            # only the DAILY kind participates (activity/partner/etc. kinds
+            # may legitimately have several records a day).
+            models.UniqueConstraint(
+                fields=["submitted_by_user_id", "date"],
+                condition=models.Q(kind="daily", deleted_at__isnull=True),
+                name="uniq_daily_debrief_per_user_per_day",
+            )
         ]
 
     def __str__(self) -> str:

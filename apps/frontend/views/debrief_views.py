@@ -96,37 +96,84 @@ def field_debrief_detail_view(request, debrief_id):
 
 @require_page_permission("debriefs_list")
 def field_debrief_submit_view(request):
-    if request.method == "GET":
-        from apps.core.fy import get_operational_fy
+    """The simplified Daily Debrief (5 questions, work auto-fetched from My
+    Plan). GET renders the day's form (or its submitted read-only state);
+    POST handles `intent=autosave` (HTMX draft save, returns a saved chip)
+    and `intent=submit` (final submission → routed to PL/CD/HR)."""
+    from django.utils import timezone as _tz
 
+    from apps.debriefs.field_debrief_service import DailyDebriefFlowService
+
+    today = _tz.localdate()
+
+    if request.method == "GET":
+        state = DailyDebriefFlowService.get_state(request.user, today)
         return render(
             request,
             "pages/debriefs/submit.html",
             {
-                "fy": get_operational_fy(),
+                "today": today,
                 "can_submit": FieldDebriefService.can_submit(request.user),
+                **state,
             },
         )
 
     if not FieldDebriefService.can_submit(request.user):
-        return HttpResponseForbidden("Your role cannot submit a Field Debrief.")
+        return HttpResponseForbidden("Your role cannot submit a Daily Debrief.")
 
-    data = _parse_submission(request)
+    data = _parse_daily(request)
+    intent = request.POST.get("intent") or "submit"
+
+    if intent == "autosave":
+        try:
+            DailyDebriefFlowService.save_draft(request.user, data, today)
+        except (BadRequest, Forbidden) as exc:
+            return render(
+                request,
+                "partials/debriefs/autosave_chip.html",
+                {"error": str(exc)},
+                status=400,
+            )
+        return render(
+            request,
+            "partials/debriefs/autosave_chip.html",
+            {"saved_at": _tz.localtime()},
+        )
+
     try:
-        debrief = FieldDebriefService.submit(request.user, data)
+        DailyDebriefFlowService.submit(request.user, data, today)
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
+        state = DailyDebriefFlowService.get_state(request.user, today)
         return render(
             request,
             "pages/debriefs/submit.html",
             {
+                "today": today,
+                "can_submit": True,
                 "error": str(exc),
-                "form_data": request.POST,
+                **state,
             },
             status=400,
         )
-    messages.success(request, f"Field Debrief “{debrief.title}” submitted.")
-    return redirect(f"/debriefs/{debrief.id}")
+    messages.success(
+        request,
+        "Debrief submitted successfully. Your Program Lead, Country Director "
+        "and HR can now review it.",
+    )
+    return redirect("/debriefs/submit")
+
+
+def _parse_daily(request) -> dict:
+    p = request.POST
+    return {
+        "activity_ids": p.getlist("activity_ids"),
+        "what_went_well": p.get("what_went_well"),
+        "what_did_not_go_well": p.get("what_did_not_go_well"),
+        "challenges_faced": p.get("challenges_faced"),
+        "recommendations": p.get("recommendations"),
+        "other_work_description": p.get("other_work_description"),
+    }
 
 
 def _parse_submission(request) -> dict:

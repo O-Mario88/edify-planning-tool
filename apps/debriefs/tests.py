@@ -1044,22 +1044,39 @@ class ViewPermissionAndFlowTests(FieldDebriefTestBase):
         resp = self._client(self.cd).post("/debriefs/submit", {"title": "x"})
         self.assertEqual(resp.status_code, 403)
 
-    def test_submit_view_post_creates_debrief_with_indexed_challenge_rows(self):
+    def test_submit_view_post_creates_the_daily_debrief(self):
+        """The submit view now serves the simplified 5-question Daily
+        Debrief (the complex indexed-challenge form was removed by mandate;
+        structured-challenge submission survives at the service layer and is
+        covered by SubmissionTests)."""
+        today = timezone.localdate()
+        Activity.objects.create(
+            school=self.school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="scheduled",
+            responsible_staff_id=self.cceo_sp.id,
+            fy=FY,
+            quarter="Q1",
+            planned_date=today,
+        )
+        aid = Activity.objects.filter(
+            responsible_staff_id=self.cceo_sp.id, planned_date=today
+        ).values_list("id", flat=True)[0]
         resp = self._client(self.cceo).post(
             "/debriefs/submit",
             {
-                "title": "HTTP submitted debrief",
-                "kind": "activity",
-                "summary": "s",
-                "challenges[0][challenge_type]": "no_transport",
-                "challenges[0][description]": "No car available",
-                "challenges[0][severity]": "high",
+                "intent": "submit",
+                "activity_ids": [aid],
+                "challenges_faced": "No car available.",
             },
         )
         self.assertEqual(resp.status_code, 302)
-        d = DailyDebrief.objects.get(title="HTTP submitted debrief")
-        self.assertEqual(d.challenges.count(), 1)
-        self.assertEqual(d.challenges.first().challenge_type, "no_transport")
+        d = DailyDebrief.objects.get(
+            submitted_by_user_id=self.cceo.user_id, kind="daily"
+        )
+        self.assertEqual(d.status, DebriefStatus.SUBMITTED)
+        self.assertEqual(d.challenges_faced, "No car available.")
 
     def test_detail_view_404s_for_a_debrief_outside_viewer_scope_not_403(self):
         d = self._submit(self.other_cceo)  # a different team
@@ -1301,3 +1318,238 @@ class TodoIntegrationTests(FieldDebriefTestBase):
         self.assertFalse(
             any(t["id"] == f"debrief-restricted-{d.id}" for t in hr_todos_after)
         )
+
+
+class DailyDebriefFlowTests(FieldDebriefTestBase):
+    """The simplified 5-question Daily Debrief (mandate §3, §31): work is
+    SELECTED from My Plan rather than re-entered; submission routes but never
+    mutates activities, targets, or SSA; one active debrief per user-day."""
+
+    def setUp(self):
+        super().setUp()
+        from apps.debriefs.field_debrief_service import DailyDebriefFlowService
+
+        self.flow = DailyDebriefFlowService
+        self.today = timezone.localdate()
+        # Activities planned TODAY for the CCEO (the fixture ones are 2026-07-10).
+        self.today_visit = Activity.objects.create(
+            school=self.school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="in_progress",
+            responsible_staff_id=self.cceo_sp.id,
+            fy=FY,
+            quarter="Q1",
+            planned_date=self.today,
+        )
+        self.today_training = Activity.objects.create(
+            school=self.school,
+            activity_type="cluster_training",
+            delivery_type="staff",
+            status="scheduled",
+            responsible_staff_id=self.cceo_sp.id,
+            fy=FY,
+            quarter="Q1",
+            planned_date=self.today,
+        )
+        self.today_cancelled = Activity.objects.create(
+            school=self.school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="cancelled",
+            responsible_staff_id=self.cceo_sp.id,
+            fy=FY,
+            quarter="Q1",
+            planned_date=self.today,
+        )
+
+    def _answers(self, **overrides):
+        data = {
+            "activity_ids": [self.today_visit.id],
+            "what_went_well": "Head teacher engaged.",
+            "what_did_not_go_well": "Started late.",
+            "challenges_faced": "Flooded road at the junction.",
+            "recommendations": "Visit Mukono side first.",
+        }
+        data.update(overrides)
+        return data
+
+    # ── Q1 population (§31: auto-populate, date-scoped, authorized only) ────
+    def test_todays_activities_populate_and_other_dates_do_not(self):
+        rows = self.flow.get_state(self.cceo, self.today)["rows"]
+        ids = {r["activity"].id for r in rows}
+        self.assertIn(self.today_visit.id, ids)
+        self.assertIn(self.today_training.id, ids)
+        self.assertNotIn(self.activity.id, ids)  # fixture activity: 2026-07-10
+
+    def test_cancelled_activities_are_hidden(self):
+        ids = {a.id for a in self.flow.activities_for(self.cceo, self.today)}
+        self.assertNotIn(self.today_cancelled.id, ids)
+
+    def test_only_own_activities_are_offered_and_foreign_selection_rejected(self):
+        foreign = Activity.objects.create(
+            school=self.school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="scheduled",
+            responsible_staff_id=self.other_cceo_sp.id,
+            fy=FY,
+            quarter="Q1",
+            planned_date=self.today,
+        )
+        ids = {a.id for a in self.flow.activities_for(self.cceo, self.today)}
+        self.assertNotIn(foreign.id, ids)
+        with self.assertRaises(BadRequest):
+            self.flow.submit(
+                self.cceo, self._answers(activity_ids=[foreign.id]), self.today
+            )
+
+    def test_started_work_is_preselected_and_scheduled_is_not(self):
+        rows = {
+            r["activity"].id: r["checked"]
+            for r in self.flow.get_state(self.cceo, self.today)["rows"]
+        }
+        self.assertTrue(rows[self.today_visit.id])  # in_progress → preselected
+        self.assertFalse(rows[self.today_training.id])  # scheduled → not
+
+    # ── Submission side-effect freedom (§31) ────────────────────────────────
+    def test_submit_changes_no_activity_state_and_creates_no_target_credit(self):
+        from apps.targets.models import TargetAchievementLedger
+
+        ledger_before = TargetAchievementLedger.objects.count()
+        d = self.flow.submit(
+            self.cceo,
+            self._answers(activity_ids=[self.today_visit.id, self.today_training.id]),
+            self.today,
+        )
+        self.today_visit.refresh_from_db()
+        self.today_training.refresh_from_db()
+        self.assertEqual(self.today_visit.status, "in_progress")
+        self.assertEqual(self.today_training.status, "scheduled")
+        self.assertEqual(TargetAchievementLedger.objects.count(), ledger_before)
+        self.assertEqual(d.status, DebriefStatus.SUBMITTED)
+        self.assertEqual(d.activity_links.count(), 2)
+
+    def test_submit_requires_work_and_at_least_one_answer(self):
+        with self.assertRaises(BadRequest):
+            self.flow.submit(
+                self.cceo,
+                {
+                    "activity_ids": [],
+                    "what_went_well": "x",
+                },
+                self.today,
+            )
+        with self.assertRaises(BadRequest):
+            self.flow.submit(
+                self.cceo,
+                {"activity_ids": [self.today_visit.id]},
+                self.today,
+            )
+
+    def test_other_work_alone_is_sufficient(self):
+        d = self.flow.submit(
+            self.cceo,
+            self._answers(
+                activity_ids=[],
+                other_work_description="Covered a colleague's visit at St. Jude.",
+            ),
+            self.today,
+        )
+        self.assertEqual(d.status, DebriefStatus.SUBMITTED)
+
+    # ── One per user per day (§2, §31) ──────────────────────────────────────
+    def test_duplicate_daily_submission_is_blocked(self):
+        self.flow.submit(self.cceo, self._answers(), self.today)
+        with self.assertRaises(BadRequest):
+            self.flow.submit(self.cceo, self._answers(), self.today)
+
+    def test_draft_then_submit_reuses_one_row(self):
+        self.flow.save_draft(self.cceo, self._answers(), self.today)
+        self.flow.submit(self.cceo, self._answers(), self.today)
+        self.assertEqual(
+            DailyDebrief.objects.filter(
+                submitted_by_user_id=self.cceo.user_id, kind="daily"
+            ).count(),
+            1,
+        )
+
+    # ── Draft autosave + lock + clarification (§7, §25, §31) ────────────────
+    def test_autosave_persists_and_submission_locks(self):
+        c = self._client(self.cceo)
+        r = c.post(
+            "/debriefs/submit",
+            {
+                "intent": "autosave",
+                "activity_ids": [self.today_visit.id],
+                "what_went_well": "Draft text.",
+            },
+        )
+        self.assertEqual(r.status_code, 200)
+        d = DailyDebrief.objects.get(
+            submitted_by_user_id=self.cceo.user_id, kind="daily"
+        )
+        self.assertEqual(d.status, DebriefStatus.DRAFT)
+        self.assertEqual(d.what_went_well, "Draft text.")
+
+        r = c.post("/debriefs/submit", {**self._answers_post(), "intent": "submit"})
+        self.assertEqual(r.status_code, 302)
+        r = c.post(
+            "/debriefs/submit",
+            {"intent": "autosave", "what_went_well": "Too late."},
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def _answers_post(self):
+        return {
+            "activity_ids": [self.today_visit.id],
+            "what_went_well": "Head teacher engaged.",
+            "challenges_faced": "Flooded road.",
+        }
+
+    def test_returned_debrief_allows_edit_and_resubmit(self):
+        d = self.flow.submit(self.cceo, self._answers(), self.today)
+        FieldDebriefService.request_clarification(
+            self.pl, d.id, "Which junction exactly?"
+        )
+        d.refresh_from_db()
+        self.assertEqual(d.status, DebriefStatus.CLARIFICATION_REQUESTED)
+        updated = self.flow.submit(
+            self.cceo,
+            self._answers(challenges_faced="Flooded road at Mukono junction."),
+            self.today,
+        )
+        self.assertEqual(updated.id, d.id)
+        self.assertEqual(updated.status, DebriefStatus.UPDATED)
+        self.assertIn("Mukono", updated.challenges_faced)
+
+    # ── Routing + visibility (§9, §31) ──────────────────────────────────────
+    def test_submission_routes_to_supervising_pl_and_is_visible_in_scopes(self):
+        d = self.flow.submit(self.cceo, self._answers(), self.today)
+        self.assertTrue(
+            d.recipients.filter(recipient_user_id=self.pl.user_id).exists()
+        )
+        for reader in (self.pl, self.cd, self.hr):
+            self.assertIn(
+                d.id,
+                {
+                    x.id
+                    for x in FieldDebriefService.scoped_queryset(reader)
+                },
+                f"{reader.active_role} must see the daily debrief",
+            )
+        # Another PL's team must NOT see it (§31 cross-team block).
+        self.assertNotIn(
+            d.id,
+            {x.id for x in FieldDebriefService.scoped_queryset(self.other_pl)},
+        )
+
+    def test_view_get_renders_form_and_submitted_state(self):
+        c = self._client(self.cceo)
+        r = c.get("/debriefs/submit")
+        self.assertContains(r, "What did you work on today?")
+        self.assertContains(r, "Submit Daily Debrief")
+        self.flow.submit(self.cceo, self._answers(), self.today)
+        r = c.get("/debriefs/submit")
+        self.assertContains(r, "Work covered")
+        self.assertNotContains(r, "Submit Daily Debrief")

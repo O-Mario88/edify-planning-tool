@@ -898,3 +898,283 @@ def _school_ids_in_district(district_id: str) -> list[str]:
     return list(
         School.objects.filter(district_id=district_id).values_list("id", flat=True)
     )
+
+
+# ─── Daily Debrief (simplified 5-question flow) ──────────────────────────────
+# The daily flow is deliberately thin: Q1 is answered by SELECTING among the
+# activities My Plan already scheduled for the day (never re-entering them),
+# Q2-Q5 are four narrative fields. Everything else — routing, clarification,
+# leadership actions, insights, To-Dos — reuses the existing canonical
+# services above. Selecting an activity here NEVER mutates the activity:
+# start/complete/evidence/target-credit all stay in their own workflows.
+
+# Canonical states meaning "work on this activity happened / is happening
+# today" — used only to PRESELECT checkboxes; the submitter can correct.
+DAILY_PRESELECT_STATUSES = (
+    "in_progress",
+    "completion_started",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+    "submitted_to_pl",
+    "awaiting_ia_verification",
+    "ia_verified",
+    "accountant_confirmed",
+    "completed",
+)
+
+# Never offered as normal work options (mandate §31).
+DAILY_HIDDEN_STATUSES = ("cancelled",)
+
+# States an existing daily row may be in and still accept edits.
+DAILY_EDITABLE_STATUSES = (
+    DebriefStatus.DRAFT,
+    DebriefStatus.CLARIFICATION_REQUESTED,
+    DebriefStatus.RETURNED,
+)
+
+
+def _daily_midnight(on_date):
+    """The daily row's `date` value: local midnight of the debrief day, made
+    timezone-aware. Normalizing to midnight makes the per-user-per-day unique
+    constraint a plain equality."""
+    import datetime as _dt
+
+    return timezone.make_aware(_dt.datetime.combine(on_date, _dt.time.min))
+
+
+class DailyDebriefFlowService:
+    """The simplified Daily Debrief: auto-fetched work + five questions."""
+
+    @staticmethod
+    def activities_for(principal, on_date) -> list:
+        """The submitter's own activities planned for `on_date` — ONE bounded,
+        role-scoped query (mandate §30). Mirrors My Plan's ownership rule:
+        partner users see their partner-assigned work, staff see work they are
+        responsible for (or monitor as partner-delivery)."""
+        from apps.activities.models import Activity
+        from apps.core.scoping import owner_ids, resolve_user_scope
+
+        role = getattr(principal, "active_role", "")
+        scope = resolve_user_scope(principal)
+        if role in PARTNER_ROLES:
+            ownership = Q(assigned_partner_id__in=list(scope.partner_ids) or ["-"])
+        else:
+            ids = list(owner_ids(principal))
+            ownership = Q(responsible_staff_id__in=ids) | Q(
+                monitored_by_staff_id__in=ids, delivery_type="partner"
+            )
+
+        return list(
+            Activity.objects.filter(ownership)
+            .filter(
+                Q(planned_date=on_date) | Q(scheduled_date__date=on_date),
+                deleted_at__isnull=True,
+            )
+            .exclude(status__in=DAILY_HIDDEN_STATUSES)
+            .select_related("school", "cluster")
+            .order_by("scheduled_date", "id")
+        )
+
+    @staticmethod
+    def get_state(principal, on_date) -> dict:
+        """Everything the daily form needs: today's activities (with
+        preselection), any existing row for the day, and its editability."""
+        existing = (
+            DailyDebrief.objects.filter(
+                submitted_by_user_id=principal.user_id,
+                kind=DebriefKind.DAILY,
+                date=_daily_midnight(on_date),
+                deleted_at__isnull=True,
+            )
+            .prefetch_related("activity_links")
+            .first()
+        )
+        selected_ids = (
+            {link.activity_id for link in existing.activity_links.all()}
+            if existing
+            else None
+        )
+        activities = DailyDebriefFlowService.activities_for(principal, on_date)
+        rows = []
+        for a in activities:
+            rows.append(
+                {
+                    "activity": a,
+                    "checked": (
+                        a.id in selected_ids
+                        if selected_ids is not None
+                        else a.status in DAILY_PRESELECT_STATUSES
+                    ),
+                }
+            )
+        editable = existing is None or existing.status in DAILY_EDITABLE_STATUSES
+        return {
+            "existing": existing,
+            "rows": rows,
+            "editable": editable,
+            "submitted": existing is not None
+            and existing.status not in (DebriefStatus.DRAFT,),
+        }
+
+    @staticmethod
+    def _upsert(principal, data: dict, on_date) -> DailyDebrief:
+        """Create or update the single daily row for (user, date). Never
+        touches routing or status transitions — callers do that."""
+        role = getattr(principal, "active_role", "")
+        if role not in SUBMITTER_ROLES:
+            raise Forbidden("Your role cannot submit a Daily Debrief.")
+
+        sp = _staff_profile(principal)
+        partner_id = None
+        if role in PARTNER_ROLES:
+            from apps.core.scoping import resolve_partner_ids
+
+            partner_id = next(iter(resolve_partner_ids(principal)), None)
+
+        activity_ids = [a for a in data.get("activity_ids") or [] if a]
+        # Only the submitter's own planned-day activities may be linked —
+        # re-derive the allowed set server-side rather than trusting the form.
+        allowed = {
+            a.id for a in DailyDebriefFlowService.activities_for(principal, on_date)
+        }
+        rejected = [a for a in activity_ids if a not in allowed]
+        if rejected:
+            raise BadRequest("An activity outside today's plan cannot be selected.")
+
+        existing = (
+            DailyDebrief.objects.filter(
+                submitted_by_user_id=principal.user_id,
+                kind=DebriefKind.DAILY,
+                date=_daily_midnight(on_date),
+                deleted_at__isnull=True,
+            )
+            .prefetch_related("activity_links")
+            .first()
+        )
+        if existing and existing.status not in DAILY_EDITABLE_STATUSES:
+            raise BadRequest(
+                "Today's Daily Debrief is already submitted. "
+                "Ask your Program Lead to return it if a correction is needed."
+            )
+
+        fields = {
+            "what_went_well": (data.get("what_went_well") or "").strip() or None,
+            "what_did_not_go_well": (data.get("what_did_not_go_well") or "").strip()
+            or None,
+            "challenges_faced": (data.get("challenges_faced") or "").strip() or None,
+            "recommendations": (data.get("recommendations") or "").strip() or None,
+            "other_work_description": (data.get("other_work_description") or "").strip()
+            or None,
+        }
+
+        if existing:
+            for k, v in fields.items():
+                setattr(existing, k, v)
+            existing.linked_activity_ids = activity_ids
+            existing.save()
+            debrief = existing
+        else:
+            debrief = DailyDebrief.objects.create(
+                fy=get_operational_fy(),
+                date=_daily_midnight(on_date),
+                submitted_by_user_id=principal.user_id,
+                submitted_by_role=role,
+                staff_id=sp.id if sp else None,
+                partner_id=partner_id,
+                debrief_type=DebriefType.PARTNER
+                if role in PARTNER_ROLES
+                else DebriefType.STAFF,
+                kind=DebriefKind.DAILY,
+                status=DebriefStatus.DRAFT,
+                title=f"Daily Debrief — {on_date.strftime('%-d %b %Y')}",
+                linked_activity_ids=activity_ids,
+                submitted_at=timezone.now(),  # set again on real submission
+                **fields,
+            )
+
+        # Sync the real FK links (and the denormalized school ids) to match.
+        current = {link.activity_id: link for link in debrief.activity_links.all()}
+        for aid in set(current) - set(activity_ids):
+            current[aid].delete()
+        new_ids = [a for a in activity_ids if a not in current]
+        if new_ids:
+            from apps.activities.models import Activity
+
+            schools = dict(
+                Activity.objects.filter(id__in=new_ids).values_list(
+                    "id", "school_id"
+                )
+            )
+            DailyDebriefActivityLink.objects.bulk_create(
+                DailyDebriefActivityLink(
+                    debrief=debrief, activity_id=aid, school_id=schools.get(aid)
+                )
+                for aid in new_ids
+            )
+        debrief.linked_school_ids = [
+            s
+            for s in {
+                link.school_id
+                for link in debrief.activity_links.all()
+                if link.school_id
+            }
+        ]
+        debrief.save(update_fields=["linked_school_ids"])
+        return debrief
+
+    @staticmethod
+    def save_draft(principal, data: dict, on_date) -> DailyDebrief:
+        """Autosave — persists everything, transitions nothing."""
+        return DailyDebriefFlowService._upsert(principal, data, on_date)
+
+    @staticmethod
+    def submit(principal, data: dict, on_date) -> DailyDebrief:
+        """Final submission: validate, transition to SUBMITTED, route to
+        PL/CD/HR via the canonical routing, and emit the domain event.
+        Deliberately performs NO activity/target/SSA writes (mandate §31)."""
+        debrief = DailyDebriefFlowService._upsert(principal, data, on_date)
+
+        has_work = bool(debrief.linked_activity_ids) or bool(
+            debrief.other_work_description
+        )
+        if not has_work:
+            raise BadRequest(
+                "Select at least one activity you worked on, or describe "
+                "other authorized work."
+            )
+        answered = any(
+            [
+                debrief.what_went_well,
+                debrief.what_did_not_go_well,
+                debrief.challenges_faced,
+                debrief.recommendations,
+            ]
+        )
+        if not answered:
+            raise BadRequest("Answer at least one of the reflection questions.")
+
+        was_returned = debrief.status in (
+            DebriefStatus.CLARIFICATION_REQUESTED,
+            DebriefStatus.RETURNED,
+        )
+        debrief.status = DebriefStatus.UPDATED if was_returned else (
+            DebriefStatus.SUBMITTED
+        )
+        debrief.submitted_at = timezone.now()
+        debrief.save(update_fields=["status", "submitted_at"])
+
+        sp = _staff_profile(principal)
+        FieldDebriefService._route(principal, debrief, sp)
+
+        from apps.realtime.domain_events import emit
+
+        emit(
+            event_type="field_debrief.submitted",
+            actor_id=principal.user_id,
+            actor_role=getattr(principal, "active_role", ""),
+            subject_kind="daily_debrief",
+            subject_id=debrief.id,
+            payload={"date": str(on_date), "kind": "daily"},
+        )
+        return debrief

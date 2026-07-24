@@ -1,363 +1,192 @@
 {% extends "layouts/shell.html" %}
 
-{% block title %}New Field Debrief · Edify{% endblock %}
+{% block title %}Daily Debrief · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[900px] mx-auto"
-     x-data="fieldDebriefForm()">
+<div class="max-w-3xl mx-auto px-4 py-6" id="daily-debrief-page">
 
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[21px] font-extrabold tracking-tight edify-text edify-page-title">New Field Debrief</h1>
-      <p class="text-[12.5px] text-slate-400 font-normal mt-1.5">Capture what happened, what changed, and what leadership should do next — FY {{ fy }}.</p>
+  <!-- Canonical page header (§26): title + subtitle + date/status context. -->
+  <header class="edify-page-header mb-5">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h1 class="edify-page-title">Daily Debrief</h1>
+        <p class="edify-text-muted text-[13px] mt-1 max-w-xl">
+          Share what you worked on, what happened and what support could
+          improve tomorrow.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill edify-surface border border-slate-200 text-[12px] font-semibold edify-text-muted">
+          {{ today|date:"j M Y" }}
+        </span>
+        {% if existing and existing.status == 'clarification_requested' or existing and existing.status == 'returned' %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold"
+              style="background: var(--edify-warning-light); color: var(--edify-warning-text); border: 1px solid var(--edify-warning-border);">
+          Returned for clarification
+        </span>
+        {% elif submitted %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold"
+              style="background: var(--edify-success-light); color: var(--edify-success-text); border: 1px solid var(--edify-success-border);">
+          Submitted {{ existing.submitted_at|date:"g:i A" }}
+        </span>
+        {% elif existing %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill edify-surface border border-slate-200 text-[12px] font-semibold edify-text-muted">
+          Draft
+        </span>
+        {% endif %}
+      </div>
     </div>
-    <a href="/debriefs" class="text-[12px] font-bold text-slate-400 hover:text-slate-200">&larr; Back to Dashboard</a>
-  </div>
+  </header>
 
   {% if error %}
-  <div class="p-3.5 rounded-surface border text-[12px] font-bold bg-rose-50 text-rose-800 border-rose-100">{{ error }}</div>
+  <div class="mb-4 p-3 rounded-surface border text-[13px] font-semibold"
+       style="background: var(--edify-danger-light); color: var(--edify-danger-text); border-color: var(--edify-danger-border);"
+       role="alert">{{ error }}</div>
   {% endif %}
 
-  {% if not can_submit %}
-  <div class="p-3.5 rounded-surface border text-[12px] font-bold bg-amber-50 text-amber-800 border-amber-100">Your role cannot submit a Field Debrief.</div>
-  {% else %}
+  {% if submitted and not editable %}
+  <!-- ── Already submitted: read-only summary (§28) ─────────────────────── -->
+  <section class="edify-surface rounded-surface border border-slate-200 p-5 space-y-5" aria-label="Submitted debrief">
+    <div>
+      <h2 class="text-[14px] font-semibold edify-text mb-2">Work covered</h2>
+      {% if rows %}
+      <ul class="space-y-2">
+        {% for row in rows %}{% if row.checked %}
+        <li class="flex items-start gap-2 text-[13px]">
+          <svg class="h-4 w-4 mt-0.5 shrink-0" style="color: var(--edify-success-text)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <span>
+            <strong>{{ row.activity.get_activity_type_display }}</strong>
+            — {% if row.activity.school %}{{ row.activity.school.name }}{% elif row.activity.cluster %}{{ row.activity.cluster.name }}{% else %}—{% endif %}
+          </span>
+        </li>
+        {% endif %}{% endfor %}
+      </ul>
+      {% endif %}
+      {% if existing.other_work_description %}
+      <p class="text-[13px] mt-2"><strong>Other work:</strong> {{ existing.other_work_description }}</p>
+      {% endif %}
+    </div>
+    {% if existing.what_went_well %}<div><h3 class="text-[13px] font-semibold edify-text">What worked well</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.what_went_well }}</p></div>{% endif %}
+    {% if existing.what_did_not_go_well %}<div><h3 class="text-[13px] font-semibold edify-text">What did not work well</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.what_did_not_go_well }}</p></div>{% endif %}
+    {% if existing.challenges_faced %}<div><h3 class="text-[13px] font-semibold edify-text">Challenges</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.challenges_faced }}</p></div>{% endif %}
+    {% if existing.recommendations %}<div><h3 class="text-[13px] font-semibold edify-text">Suggestions</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.recommendations }}</p></div>{% endif %}
+    <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+      <p class="text-[12px] edify-text-muted">Your Program Lead, Country Director and HR can now review it.</p>
+      <a href="/debriefs/{{ existing.id }}" class="text-[12px] font-bold edify-primary-text hover:underline">View full record</a>
+    </div>
+  </section>
 
-  <form method="post" action="/debriefs/submit" class="space-y-4">
+  {% elif not can_submit %}
+  <section class="edify-empty-state" aria-label="Not available">
+    <p class="text-[13px] font-semibold edify-text">Daily Debrief is not available for your role.</p>
+  </section>
+
+  {% else %}
+  <!-- ── The form (§3): activities + four questions, autosaving ─────────── -->
+  <form method="post" action="/debriefs/submit" id="daily-debrief-form"
+        hx-post="/debriefs/submit"
+        hx-trigger="change delay:600ms from:input, keyup delay:2500ms from:textarea"
+        hx-vals='{"intent":"autosave"}'
+        hx-target="#autosave-chip"
+        hx-swap="innerHTML"
+        class="space-y-5">
     {% csrf_token %}
 
-    <!-- Title + linked activities -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <label class="block">
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Debrief Title <span class="text-rose-500">*</span></span>
-        <input type="text" name="title" required placeholder="e.g. Bright Hope Primary — Cluster Training Follow-Up"
-               class="mt-1 w-full h-10 px-3 rounded-control border text-[13px] font-semibold edify-border edify-surface-muted edify-text">
-      </label>
-      <label class="block">
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Debrief Type</span>
-        <select aria-label="Kind" name="kind" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-          <option value="activity">Activity Debrief</option>
-          <option value="daily">Daily Field Debrief</option>
-          <option value="partner">Partner Debrief</option>
-          <option value="supervision">Supervision Debrief</option>
-          <option value="incident">Incident Debrief</option>
-        </select>
-      </label>
-      <label class="block">
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Linked Activities</span>
-        <p class="edify-text-caption text-slate-500 mb-1">Select one activity for a single-activity debrief, or several to cover them together in one debrief.</p>
-        <select aria-label="Activity IDs" name="activity_ids" multiple size="5" hx-get="/debriefs/activity-options" hx-trigger="load" hx-target="this" hx-swap="innerHTML"
-                class="mt-1 w-full px-2 py-1.5 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-          <option value="">Loading your recent activities…</option>
-        </select>
-      </label>
-    </div>
+    <!-- Q1 — What did you work on today? -->
+    <section class="edify-surface rounded-surface border border-slate-200 p-4 sm:p-5" aria-labelledby="dd-q1">
+      <div class="flex items-center justify-between gap-3 mb-1">
+        <h2 id="dd-q1" class="text-[14px] font-semibold edify-text">1 · What did you work on today?</h2>
+        <span id="autosave-chip" class="text-[11px] edify-text-muted" aria-live="polite"></span>
+      </div>
+      <p class="text-[12px] edify-text-muted mb-3">Your scheduled activities from My Plan. Tick the ones you worked on — this never starts, completes or credits an activity.</p>
 
-    <!-- B. Execution Summary -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">B. Execution Summary</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Completion Status</span>
-          <select aria-label="Completion status" name="completion_status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-            <option value="completed_as_planned">Completed as Planned</option>
-            <option value="partially_completed">Partially Completed</option>
-            <option value="unsuccessful">Unsuccessful</option>
-            <option value="postponed">Postponed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="rescheduled">Rescheduled</option>
-          </select>
+      {% if rows %}
+      <div class="space-y-2">
+        {% for row in rows %}
+        <label class="flex items-start gap-3 p-3 rounded-control border border-slate-200 bg-slate-50 hover:bg-slate-100/60 transition-colors cursor-pointer">
+          <input type="checkbox" name="activity_ids" value="{{ row.activity.id }}"
+                 {% if row.checked %}checked{% endif %}
+                 class="mt-0.5 h-5 w-5 shrink-0">
+          <span class="min-w-0">
+            <span class="block text-[13px] font-semibold edify-text">{{ row.activity.get_activity_type_display }}</span>
+            <span class="block text-[12px] edify-text-muted truncate">
+              {% if row.activity.school %}{{ row.activity.school.name }}{% elif row.activity.cluster %}{{ row.activity.cluster.name }}{% else %}—{% endif %}
+            </span>
+            <span class="block text-[11px] edify-text-muted mt-0.5">
+              {% if row.activity.focus_intervention %}{{ row.activity.get_focus_intervention_display }} · {% endif %}
+              {% if row.activity.scheduled_date %}{{ row.activity.scheduled_date|date:"g:i A" }} · {% endif %}
+              {{ row.activity.get_status_display }}
+            </span>
+          </span>
         </label>
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">If Not Completed — Why?</span>
-          <input aria-label="Incomplete reason" type="text" name="incomplete_reason" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
-        </label>
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Start Time</span>
-          <input aria-label="Actual start time" type="time" name="actual_start_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
-        </label>
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual End Time</span>
-          <input aria-label="Actual end time" type="time" name="actual_end_time" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text">
-        </label>
+        {% endfor %}
       </div>
-      <label class="block">
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Who Participated?</span>
-        <textarea aria-label="Participants summary" name="participants_summary" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-      </label>
-      <label class="block">
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">What Was Done?</span>
-        <textarea aria-label="What was done" name="what_was_done" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-      </label>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Intended Purpose</span>
-          <textarea aria-label="Intended purpose" name="intended_purpose" rows="2" class="mt-1 w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        </label>
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Was the Purpose Achieved?</span>
-          <select aria-label="Purpose achieved" name="purpose_achieved" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-            <option value="">—</option><option value="true">Yes</option><option value="false">No</option>
-          </select>
-        </label>
+      {% else %}
+      <div class="edify-empty-state !py-6">
+        <p class="text-[13px] font-semibold edify-text">No Activities scheduled today</p>
+        <p class="text-[12px] edify-text-muted mt-1">There are no scheduled Activities in My Plan for today. You can describe other authorized work below.</p>
       </div>
-    </div>
+      {% endif %}
 
-    <!-- Narrative summary -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Summary</h2>
-      <textarea name="summary" rows="2" placeholder="One or two lines summarizing this debrief" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-      <textarea name="what_happened" rows="2" placeholder="What happened?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <textarea name="what_went_well" rows="2" placeholder="What went well?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        <textarea name="what_did_not_go_well" rows="2" placeholder="What didn't go well?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-      </div>
-    </div>
+      <!-- Add Other Work — collapsed by default (§3). -->
+      <details class="mt-3 group" {% if existing.other_work_description %}open{% endif %}>
+        <summary class="text-[12px] font-bold edify-primary-text cursor-pointer select-none list-none inline-flex items-center gap-1">
+          <svg class="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          Add Other Work
+        </summary>
+        <div class="mt-2">
+          <label for="dd-other" class="block text-[12px] font-semibold edify-text-muted mb-1">Authorized work not in My Plan (short description)</label>
+          <textarea id="dd-other" name="other_work_description" rows="2" maxlength="1000"
+                    class="w-full rounded-control border border-slate-200 text-[13px] p-3"
+                    placeholder="e.g. Covered a colleague's school visit at St. Jude Primary">{{ existing.other_work_description|default:"" }}</textarea>
+          <p class="text-[11px] edify-text-muted mt-1">Repeated or material unplanned work is routed to your manager for future planning.</p>
+        </div>
+      </details>
+    </section>
 
-    <!-- C. School/Cluster Observations -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">C. School / Cluster Observations</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <textarea name="what_observed" rows="2" placeholder="What was observed?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        <textarea name="what_improved" rows="2" placeholder="What has improved?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        <textarea name="what_remains_weak" rows="2" placeholder="What remains weak?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        <textarea name="what_surprised" rows="2" placeholder="What surprised the field team?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-      </div>
-      <textarea name="support_needed_next" rows="2" placeholder="What support does the school/cluster need next?" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
+    <!-- Q2-Q5 — the four reflections. -->
+    <section class="edify-surface rounded-surface border border-slate-200 p-4 sm:p-5 space-y-4">
       <div>
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Interventions Discussed or Observed</span>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="christlike_behaviour"> Christlike Behaviour</label>
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="exposure_to_word_of_god"> Exposure to the Word of God</label>
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="financial_health"> Financial Health</label>
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="leadership"> Leadership</label>
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="government_requirement"> Government Requirements</label>
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="learning_environment"> Learning Environment</label>
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="teaching_environment"> Teacher's Environment</label>
-          <label class="flex items-center gap-1.5 edify-text-caption font-semibold edify-text"><input type="checkbox" name="intervention_tags" value="enrolment"> Enrolment</label>
-        </div>
+        <label for="dd-q2" class="block text-[14px] font-semibold edify-text">2 · What worked well?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">Describe what helped today's work succeed.</p>
+        <textarea id="dd-q2" name="what_went_well" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.what_went_well|default:"" }}</textarea>
       </div>
-    </div>
+      <div>
+        <label for="dd-q3" class="block text-[14px] font-semibold edify-text">3 · What did not work well?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">Describe anything that did not go as expected.</p>
+        <textarea id="dd-q3" name="what_did_not_go_well" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.what_did_not_go_well|default:"" }}</textarea>
+      </div>
+      <div>
+        <label for="dd-q4" class="block text-[14px] font-semibold edify-text">4 · What challenges did you face during the course of the day?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">Describe the barriers that affected your work today — e.g. transport, roads, funds, school leader availability, weather, network.</p>
+        <textarea id="dd-q4" name="challenges_faced" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.challenges_faced|default:"" }}</textarea>
+      </div>
+      <div>
+        <label for="dd-q5" class="block text-[14px] font-semibold edify-text">5 · What do you suggest should be done to improve?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">What practical action would improve the situation?</p>
+        <textarea id="dd-q5" name="recommendations" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.recommendations|default:"" }}</textarea>
+      </div>
+    </section>
 
-    <!-- D. Participant and Engagement Quality -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">D. Participant &amp; Engagement Quality</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Expected</span><input aria-label="Expected participants" type="number" min="0" name="expected_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Actual</span><input aria-label="Actual participants" type="number" min="0" name="actual_participants" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Leaders Present</span><input aria-label="School leaders present" type="number" min="0" name="school_leaders_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Teachers Present</span><input aria-label="Teachers present" type="number" min="0" name="teachers_present" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Participation Quality</span>
-          <select aria-label="Engagement level" name="engagement_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-            <option value="excellent">Excellent</option><option value="good" selected>Good</option><option value="moderate">Moderate</option><option value="low">Low</option><option value="very_low">Very Low</option>
-          </select>
-        </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Attendance Concerns</span><input aria-label="Attendance concerns" type="text" name="attendance_concerns" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-      </div>
-    </div>
+    <!-- Secondary, visible route for sensitive matters (§24). -->
+    <p class="text-[12px] edify-text-muted">
+      Safeguarding, fraud, harassment or another confidential concern?
+      <a href="/debriefs?restricted=1" class="font-bold edify-primary-text hover:underline">Report a Sensitive Issue</a>
+      — it follows a restricted workflow, not this form.
+    </p>
 
-    <!-- E. Challenges -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <div class="flex items-center justify-between pb-2 border-b edify-border">
-        <h2 class="text-[12.5px] font-bold uppercase tracking-wide edify-text">E. Challenges Encountered</h2>
-        <button type="button" @click="challenges.push({challenge_type:'', description:'', severity:'medium'})" class="edify-text-caption font-bold edify-primary-text">+ Add Challenge</button>
-      </div>
-      <template x-for="(c, i) in challenges" :key="i">
-        <div class="rounded-surface border p-3 space-y-2 edify-border edify-surface-muted">
-          <div class="flex items-center justify-between">
-            <select :name="'challenges[' + i + '][challenge_type]'" x-model="c.challenge_type" class="h-8 px-2 rounded-control border edify-text-caption font-semibold flex-1 edify-border edify-surface edify-text">
-              <option value="">Select challenge…</option>
-              <option value="leader_unavailable">School Leader Unavailable</option><option value="teachers_unavailable">Teachers Unavailable</option>
-              <option value="low_attendance">Low Attendance</option><option value="started_late">Activity Started Late</option>
-              <option value="transport_late">Transport Came Late</option><option value="no_transport">No Transport</option>
-              <option value="weather">Weather</option><option value="road_conditions">Road Conditions</option>
-              <option value="distance_route">Distance or Route Problem</option><option value="holiday_conflict">Public Holiday Conflict</option>
-              <option value="school_event_conflict">School Event Conflict</option><option value="funds_delayed">Funds Delayed</option>
-              <option value="funds_insufficient">Funds Insufficient</option><option value="partner_delayed">Partner Delayed</option>
-              <option value="materials_unavailable">Materials Unavailable</option><option value="technology_problem">Technology Problem</option>
-              <option value="data_quality">Data-Quality Problem</option><option value="ssa_form_issue">SSA Form Issue</option>
-              <option value="language_communication">Language or Communication Problem</option><option value="safety_concern">Safety Concern</option>
-              <option value="health_concern">Health Concern</option><option value="community_resistance">Community Resistance</option>
-              <option value="government_regulatory">Government or Regulatory Issue</option><option value="other">Other</option>
-            </select>
-            <select :name="'challenges[' + i + '][severity]'" x-model="c.severity" class="h-8 px-2 ml-2 rounded-control border edify-text-caption font-semibold edify-border edify-surface edify-text">
-              <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>
-            </select>
-            <button type="button" @click="challenges.splice(i, 1)" class="ml-2 text-rose-400 text-[16px] leading-none">&times;</button>
-          </div>
-          <input type="text" :name="'challenges[' + i + '][description]'" x-model="c.description" placeholder="Description" class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface edify-text">
-          <input type="text" :name="'challenges[' + i + '][immediate_response]'" placeholder="Immediate response taken" class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface edify-text">
-        </div>
-      </template>
-      <p x-show="challenges.length === 0" class="edify-text-caption text-slate-400 font-semibold">No challenges added — click "Add Challenge" if any occurred.</p>
-    </div>
-
-    <!-- F. Route and Travel Debrief -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">F. Route &amp; Travel Debrief</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Route</span><input aria-label="Planned route" type="text" name="planned_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Actual Route</span><input aria-label="Actual route" type="text" name="actual_route" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-      </div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Planned</span><input aria-label="Schools planned count" type="number" min="0" name="schools_planned_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Schools Reached</span><input aria-label="Schools reached count" type="number" min="0" name="schools_reached_count" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel Start</span><input aria-label="Travel start time" type="time" name="travel_start_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase">Travel End</span><input aria-label="Travel end time" type="time" name="travel_end_time" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Route Quality</span>
-          <select aria-label="Route quality" name="route_quality" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-            <option value="">—</option><option value="excellent">Excellent</option><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option>
-          </select>
-        </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Transport Issue</span><input aria-label="Transport issue" type="text" name="transport_issue" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-      </div>
-    </div>
-
-    <!-- G. Outcomes and Commitments -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">G. Outcomes &amp; Commitments</h2>
-      <textarea name="immediate_result" rows="2" placeholder="Immediate result" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-
-      <div class="flex items-center justify-between pt-1">
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Commitments</span>
-        <button type="button" @click="commitments.push({party:'school', commitment_text:''})" class="edify-text-caption font-bold edify-primary-text">+ Add Commitment</button>
-      </div>
-      <template x-for="(c, i) in commitments" :key="i">
-        <div class="rounded-surface border p-3 space-y-2 flex items-start gap-2 edify-border edify-surface-muted">
-          <select :name="'commitments[' + i + '][party]'" x-model="c.party" class="h-8 px-2 rounded-control border edify-text-caption font-semibold shrink-0 edify-border edify-surface edify-text">
-            <option value="school">School</option><option value="staff">Edify Staff</option><option value="partner">Partner</option>
-          </select>
-          <input type="text" :name="'commitments[' + i + '][commitment_text]'" x-model="c.commitment_text" placeholder="What was committed?" class="flex-1 h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface edify-text">
-          <button type="button" @click="commitments.splice(i, 1)" class="text-rose-400 text-[16px] leading-none shrink-0">&times;</button>
-        </div>
-      </template>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-        <label class="block">
-          <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Recommended Next Activity</span>
-          <select aria-label="Recommended next activity type" name="recommended_next_activity_type" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-            <option value="">No Further Action</option>
-            <option value="school_visit">School Visit</option><option value="follow_up_visit">Follow-Up Visit</option>
-            <option value="baseline_ssa">Baseline SSA</option><option value="ssa_refresh">SSA Refresh</option>
-            <option value="cluster_meeting">Cluster Meeting</option><option value="cluster_training">Cluster Training</option>
-            <option value="core_visit">Core Visit</option><option value="core_training">Core Training</option>
-            <option value="partner_coaching">Partner Coaching</option><option value="leadership_follow_up">Leadership Follow-Up</option>
-            <option value="finance_follow_up">Finance Follow-Up</option><option value="data_cleanup">Data Cleanup</option>
-          </select>
-        </label>
-        <label class="block"><span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Follow-Up Date</span><input aria-label="Follow up date" type="date" name="follow_up_date" class="mt-1 w-full h-9 px-3 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></label>
-      </div>
-      <p class="edify-text-caption text-slate-500">A recommendation only creates a Planning-ready draft once a supervisor accepts it — it never bypasses scheduling or costing.</p>
-    </div>
-
-    <!-- H. Support Required -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <div class="flex items-center justify-between pb-2 border-b edify-border">
-        <h2 class="text-[12.5px] font-bold uppercase tracking-wide edify-text">H. Support Required</h2>
-        <button type="button" @click="supportRequests.push({requested_from_role:'Program Lead', support_type:'intervention_guidance'})" class="edify-text-caption font-bold edify-primary-text">+ Request Support</button>
-      </div>
-      <template x-for="(s, i) in supportRequests" :key="i">
-        <div class="rounded-surface border p-3 space-y-2 edify-border edify-surface-muted">
-          <div class="flex items-center gap-2">
-            <select :name="'support_requests[' + i + '][requested_from_role]'" x-model="s.requested_from_role" class="h-8 px-2 rounded-control border edify-text-caption font-semibold flex-1 edify-border edify-surface edify-text">
-              <option value="Program Lead">Program Lead</option><option value="CountryDirector">Country Director</option>
-              <option value="ImpactAssessment">Impact Assessment</option><option value="HumanResources">HR</option>
-              <option value="Accountant">Accountant</option><option value="partner_manager">Partner Manager</option>
-              <option value="ProjectCoordinator">Project Coordinator</option><option value="RegionalVicePresident">RVP</option>
-            </select>
-            <select :name="'support_requests[' + i + '][support_type]'" x-model="s.support_type" class="h-8 px-2 rounded-control border edify-text-caption font-semibold flex-1 edify-border edify-surface edify-text">
-              <option value="technical">Technical Support</option><option value="intervention_guidance">Intervention Guidance</option>
-              <option value="budget">Budget Support</option><option value="transport">Transport Support</option>
-              <option value="partner">Partner Support</option><option value="training_materials">Training Materials</option>
-              <option value="ssa_data">SSA/Data Support</option><option value="workload">Workload Support</option>
-              <option value="hr_support">HR Support</option><option value="leadership_decision">Leadership Decision</option>
-              <option value="policy_clarification">Policy Clarification</option>
-            </select>
-            <button type="button" @click="supportRequests.splice(i, 1)" class="text-rose-400 text-[16px] leading-none">&times;</button>
-          </div>
-          <input type="text" :name="'support_requests[' + i + '][note]'" placeholder="Note (optional)" class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface edify-text">
-        </div>
-      </template>
-    </div>
-
-    <!-- I. Success and Learning -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">I. Success &amp; Learning</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <textarea name="key_success" rows="2" placeholder="Key success" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        <textarea name="key_lesson_learned" rows="2" placeholder="Key lesson learned" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        <textarea name="practice_worth_repeating" rows="2" placeholder="Practice worth repeating" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-        <textarea name="innovation_observed" rows="2" placeholder="Innovation observed" class="w-full px-3 py-2 rounded-control border text-[12px] edify-border edify-surface-muted edify-text"></textarea>
-      </div>
-      <div class="space-y-2 pt-1">
-        <label class="flex items-start gap-2 edify-text-caption font-semibold edify-text">
-          <input type="checkbox" name="potential_mscs_flag" x-model="mscsFlag" class="mt-0.5">
-          Potential Most Significant Change Story candidate
-        </label>
-        <div x-show="mscsFlag" x-cloak class="pl-6 space-y-2">
-          <input type="text" name="potential_mscs_title" placeholder="Story title" class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text">
-          <textarea name="potential_mscs_narrative" rows="2" placeholder="Narrative" class="w-full px-2 py-1.5 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text"></textarea>
-          <p class="edify-text-caption text-slate-500">Creates a draft story for Targets review — not an approved MSCS.</p>
-        </div>
-        <label class="flex items-start gap-2 edify-text-caption font-semibold edify-text">
-          <input type="checkbox" name="potential_champion_flag" x-model="championFlag" class="mt-0.5">
-          Potential Champion School signal
-        </label>
-        <div x-show="championFlag" x-cloak class="pl-6">
-          <input type="text" name="potential_champion_note" placeholder="What suggests this?" class="w-full h-8 px-2 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text">
-        </div>
-        <label class="flex items-start gap-2 edify-text-caption font-semibold edify-text">
-          <input type="checkbox" name="potential_partner_success_flag" class="mt-0.5">
-          Potential Partner success story
-        </label>
-      </div>
-    </div>
-
-    <!-- J. Risk and Escalation -->
-    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">J. Risk &amp; Escalation</h2>
-      <label class="block">
-        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Escalation Level</span>
-        <select aria-label="Risk level" name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-          <option value="none">No Escalation</option><option value="monitor">Monitor</option>
-          <option value="pl_attention">PL Attention</option><option value="cd_attention">CD Attention</option>
-          <option value="ia_attention">IA Attention</option><option value="hr_attention">HR Attention</option>
-          <option value="finance_attention">Finance Attention</option><option value="critical">Critical Leadership Attention</option>
-        </select>
-      </label>
-      <label class="flex items-start gap-2 edify-text-caption font-semibold bg-rose-500/10 border border-rose-500/20 rounded-surface p-2.5 edify-text">
-        <input type="checkbox" name="is_restricted_incident" x-model="restrictedFlag" class="mt-0.5">
-        This is a restricted incident (safeguarding, fraud, safety, data integrity, misconduct) — routes only to authorized roles, never the general team or peer feed.
-      </label>
-      <div x-show="restrictedFlag" x-cloak class="pl-2">
-        <select aria-label="Restricted incident category" name="restricted_incident_category" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold edify-border edify-surface-muted edify-text">
-          <option value="safeguarding">Safeguarding</option><option value="fraud">Fraud or Misuse of Funds</option>
-          <option value="staff_safety">Serious Staff Safety Issue</option><option value="data_integrity">Serious Data Integrity Issue</option>
-          <option value="partner_misconduct">Major Partner Misconduct</option><option value="school_complaint">Severe School Complaint</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-3">
-      <button type="submit" class="h-11 px-6 rounded-control edify-primary-solid edify-primary-hover text-white text-[13px] font-bold transition-colors">Submit Field Debrief</button>
-      <a href="/debriefs" class="h-11 px-6 inline-flex items-center rounded-control border text-[13px] font-bold edify-border edify-text">Cancel</a>
+    <!-- Sticky on mobile so the keyboard never buries it (§27). -->
+    <div class="sticky bottom-0 -mx-4 px-4 py-3 bg-[var(--edify-bg)]/85 backdrop-blur border-t border-slate-200 sm:static sm:m-0 sm:p-0 sm:bg-transparent sm:border-0">
+      <button type="submit" name="intent" value="submit"
+              class="btn-primary edify-action-button primary w-full sm:w-auto h-11 px-6 rounded-control text-[14px] font-bold">
+        Submit Daily Debrief
+      </button>
     </div>
   </form>
   {% endif %}
 </div>
-
-<script>
-function fieldDebriefForm() {
-  return {
-    challenges: [], commitments: [], supportRequests: [],
-    mscsFlag: false, championFlag: false, restrictedFlag: false,
-  };
-}
-</script>
 {% endblock %}
