@@ -11,6 +11,7 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 
 <!-- FY Filter -->
 <div class="flex flex-col min-w-[90px]">
+<span class="edify-filter-label">Fiscal year</span>
 <select name="fy" aria-label="Filter by fiscal year" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="2023" {% if fy == "2023" %}selected{% endif %}>FY 2023</option>
 <option value="2024" {% if fy == "2024" %}selected{% endif %}>FY 2024</option>
@@ -21,35 +22,39 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 
 <!-- Quarter Filter -->
 <div class="flex flex-col min-w-[100px]">
+<span class="edify-filter-label">Quarter</span>
 <select name="quarter" aria-label="Filter by quarter" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 {% for q in quarters %}
-<option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>Quarter: {{ q }}</option>
+<option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
 {% endfor %}
 </select>
 </div>
 
 <!-- Month Filter -->
 <div class="flex flex-col min-w-[110px]">
+<span class="edify-filter-label">Month</span>
 <select name="month" aria-label="Filter by month" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 {% for m in months %}
-<option value="{{ m.val }}" {% if selected_month == m.val %}selected{% endif %}>Month: {{ m.label }}</option>
+<option value="{{ m.val }}" {% if selected_month == m.val %}selected{% endif %}>{{ m.label }}</option>
 {% endfor %}
 </select>
 </div>
 
 <!-- Week Filter -->
 <div class="flex flex-col min-w-[160px]">
+<span class="edify-filter-label">Week</span>
 <select name="week" aria-label="Filter by week" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 {% for w in weeks %}
-<option value="{{ w.val }}" {% if selected_week == w.val %}selected{% endif %}>Week: {{ w.label }}</option>
+<option value="{{ w.val }}" {% if selected_week == w.val %}selected{% endif %}>{{ w.label }}</option>
 {% endfor %}
 </select>
 </div>
 
 <!-- District Filter -->
 <div class="flex flex-col min-w-[120px]">
+<span class="edify-filter-label">District</span>
 <select name="district" aria-label="Filter by district" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
-<option value="all">District: All</option>
+<option value="all">All districts</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
 {% endfor %}
@@ -58,8 +63,9 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 
 <!-- Staff Filter -->
 <div class="flex flex-col min-w-[130px]">
+<span class="edify-filter-label">Staff member</span>
 <select name="staff" aria-label="Filter by staff member" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
-<option value="all">Staff: All</option>
+<option value="all">All staff</option>
 {% for s in staff_users %}
 <option value="{{ s.id }}" {% if selected_staff == s.id %}selected{% endif %}>{{ s.name }}</option>
 {% endfor %}
@@ -68,8 +74,9 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 
 <!-- Activity Type Filter -->
 <div class="flex flex-col min-w-[140px]">
+<span class="edify-filter-label">Activity type</span>
 <select name="activity_type" aria-label="Filter by activity type" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
-<option value="all" {% if not selected_activity_type or selected_activity_type == 'all' %}selected{% endif %}>Activity Type: All</option>
+<option value="all" {% if not selected_activity_type or selected_activity_type == 'all' %}selected{% endif %}>All types</option>
 <option value="school_visit" {% if selected_activity_type == 'school_visit' %}selected{% endif %}>School Visit</option>
 <option value="cluster_training" {% if selected_activity_type == 'cluster_training' %}selected{% endif %}>Cluster Training</option>
 <option value="cluster_meeting" {% if selected_activity_type == 'cluster_meeting' %}selected{% endif %}>Cluster Meeting</option>
@@ -78,8 +85,9 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 
 <!-- Status Filter -->
 <div class="flex flex-col min-w-[120px]">
+<span class="edify-filter-label">Status</span>
 <select name="status" aria-label="Filter by status" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
-<option value="all" {% if not selected_status or selected_status == 'all' %}selected{% endif %}>Status: All</option>
+<option value="all" {% if not selected_status or selected_status == 'all' %}selected{% endif %}>All statuses</option>
 <option value="scheduled" {% if selected_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
 <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
 <option value="submitted" {% if selected_status == 'submitted' %}selected{% endif %}>Submitted</option>

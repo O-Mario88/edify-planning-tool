@@ -1622,3 +1622,44 @@ select:not([multiple]):not(.select-native) {
 }
 .edify-header-filters select,
 .edify-header-filters input { width: 100%; height: 39px; }
+
+/* ─── CANONICAL FILTER-CONTROL DESIGN (all widths) ──────────────────────────
+   Promotes the Partner Activities reference to every shared filter bar: a
+   small label ABOVE each control, the control itself a bordered surface
+   input, actions aligned at the end. Wrappers that used to carry the pill
+   border hand it to their control. */
+:is(#filters-form, #analytics-filters-form, #pl-analytics-filters,
+    #cd-analytics-filters, #cb-filters, #debrief-filters,
+    [data-component="filter-toolbar"], .platform-filter-bar) > div {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-width: 8.25rem;
+}
+:is(#filters-form, #analytics-filters-form, #pl-analytics-filters,
+    #cd-analytics-filters, #cb-filters, #debrief-filters,
+    [data-component="filter-toolbar"], .platform-filter-bar)
+  :is(> div > span:not(.sr-only), .edify-filter-label) {
+  color: var(--edify-text-muted) !important;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: none;
+  letter-spacing: 0;
+}
+:is(#filters-form, #analytics-filters-form, #pl-analytics-filters,
+    #cd-analytics-filters, #cb-filters, #debrief-filters,
+    [data-component="filter-toolbar"], .platform-filter-bar)
+  > div :is(select, input:not([type="hidden"]):not([type="checkbox"])) {
+  width: 100% !important;
+  height: 39px !important;
+  background: var(--edify-surface) !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--radius-control, 8px);
+  font-size: 12px;
+  font-weight: 600;
+}

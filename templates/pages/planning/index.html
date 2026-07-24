@@ -335,6 +335,7 @@ class="space-y-3"
 </div>
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Focus Intervention</label>
+<span class="edify-filter-label">Focus intervention</span>
 <select aria-label="Focus intervention" name="focus_intervention" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <option value="">Select...</option>
 {% for code, label in interventions %}
@@ -392,6 +393,7 @@ class="space-y-3"
 <input type="hidden" name="action" value="partner">
 <div>
 <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Partner</label>
+<span class="edify-filter-label">Partner ID</span>
 <select aria-label="Partner ID" name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
 <option value="">Select partner...</option>
 {% for p in partners %}

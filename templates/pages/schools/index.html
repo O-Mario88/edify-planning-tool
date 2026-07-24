@@ -79,6 +79,7 @@ class="school-filters-form space-y-3"
 <div class="school-filter-grid grid gap-3">
 <!-- FY Selector -->
 <div>
+<span class="edify-filter-label">Fiscal year</span>
 <select aria-label="Fiscal year" name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
 <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
@@ -86,6 +87,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- Region -->
 <div>
+<span class="edify-filter-label">Region</span>
 <select aria-label="Region" name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Region: All</option>
 {% for r in regions %}
@@ -95,6 +97,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- District -->
 <div>
+<span class="edify-filter-label">District</span>
 <select aria-label="District" name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">District: All</option>
 {% for d in districts %}
@@ -104,6 +107,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- Sub-county -->
 <div>
+<span class="edify-filter-label">Sub-county</span>
 <select aria-label="Sub-county" name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Sub-county: All</option>
 {% for sc in sub_counties %}
@@ -113,6 +117,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- School Type -->
 <div>
+<span class="edify-filter-label">School type</span>
 <select aria-label="School type" name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">School Type: All</option>
 {% for val, label in school_types %}
@@ -122,6 +127,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- Cluster Status -->
 <div>
+<span class="edify-filter-label">Cluster status</span>
 <select aria-label="Cluster status" name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Cluster Status: All</option>
 <option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
@@ -130,6 +136,7 @@ class="school-filters-form space-y-3"
 </div>
 <!-- Project Status -->
 <div>
+<span class="edify-filter-label">Project status</span>
 <select aria-label="Project status" name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">Project Status: All</option>
 <option value="assigned" {% if selected_project_status == 'assigned' %}selected{% endif %}>Assigned</option>
@@ -202,6 +209,7 @@ style="display: none;"
 
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
+<span class="edify-filter-label">Cluster ID</span>
 <select aria-label="Cluster ID" name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose Cluster --</option>
 {% for c in clusters %}
@@ -238,6 +246,7 @@ style="display: none;"
 
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project</label>
+<span class="edify-filter-label">Project ID</span>
 <select aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose Project --</option>
 {% for p in projects %}
@@ -274,6 +283,7 @@ style="display: none;"
 
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
+<span class="edify-filter-label">Staff ID</span>
 <select aria-label="Staff ID" name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose CCEO --</option>
 {% for sp in staff_profiles %}
@@ -320,6 +330,7 @@ style="display: none;"
 <div class="grid grid-cols-2 gap-3">
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Type</label>
+<span class="edify-filter-label">School type</span>
 <select aria-label="School type" name="school_type" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
 <option value="client">Client</option>
 <option value="core">Core</option>
@@ -327,6 +338,7 @@ style="display: none;"
 </div>
 <div class="space-y-1">
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
+<span class="edify-filter-label">District ID</span>
 <select aria-label="District ID" name="district_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
 <option value="">-- Choose District --</option>
 {% for d in districts %}

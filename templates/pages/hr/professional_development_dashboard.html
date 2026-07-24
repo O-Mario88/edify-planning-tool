@@ -44,6 +44,7 @@
       {% if locked_country %}
       <div class="mt-1 w-full h-9 px-2 rounded-surface border text-[12px] font-semibold flex items-center edify-surface-muted edify-border edify-text">{{ locked_country }}</div>
       {% else %}
+      <span class="edify-filter-label">Country</span>
       <select aria-label="Country" name="country" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
         <option value="">All Countries</option>
         {% for c in country_options %}<option value="{{ c }}" {% if c == country %}selected{% endif %}>{{ c }}</option>{% endfor %}

@@ -20,6 +20,7 @@ Schedule
 <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
 <form id="visits-filters" method="get" action="/visits" class="platform-filter-bar flex flex-wrap gap-3">
 {% comment %}Search moved to the top bar.{% endcomment %}
+<span class="edify-filter-label">Status</span>
 <select aria-label="Status" name="status" class="h-9 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 focus:outline-none">
 <option value="" {% if not status_filter %}selected{% endif %}>All Status</option>
 <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>

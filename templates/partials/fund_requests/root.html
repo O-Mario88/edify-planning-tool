@@ -106,6 +106,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <!-- Fiscal Year -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+<span class="edify-filter-label">Fiscal year</span>
 <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
 <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
@@ -114,6 +115,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 
 <!-- Quarter -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Quarter</span>
 <select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Quarter: Q1</option>
 <option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Quarter: Q2</option>
@@ -124,6 +126,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 
 <!-- Month -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Month</span>
 <select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="October" {% if selected_month == 'October' %}selected{% endif %}>Month: October</option>
 <option value="November" {% if selected_month == 'November' %}selected{% endif %}>Month: November</option>
@@ -142,6 +145,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 
 <!-- Week -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Week</span>
 <select aria-label="Week" name="week" class="bg-transparent focus:outline-none cursor-pointer" x-model="selectedWeek">
 {% for wk in dropdown_weeks %}
 <option value="{{ wk.val }}">{{ wk.label }}</option>
@@ -152,6 +156,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 {% if show_team_filters %}
 <!-- District -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">District</span>
 <select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">District: All</option>
 {% for d in districts %}
@@ -162,6 +167,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 
 <!-- Staff -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Staff</span>
 <select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">Staff: All</option>
 {% for p in staff_profiles %}
@@ -173,6 +179,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 
 <!-- Request Type -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Request type</span>
 <select aria-label="Request type" name="request_type" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">Request Type: All</option>
 <option value="school visits" {% if selected_request_type == 'school visits' %}selected{% endif %}>School Visits</option>
@@ -188,6 +195,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 
 <!-- Status -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Status</span>
 <select aria-label="Status" name="status" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">Status: All</option>
 <option value="pending_responsible_confirmation" {% if selected_status == 'pending_responsible_confirmation' %}selected{% endif %}>Draft</option>
