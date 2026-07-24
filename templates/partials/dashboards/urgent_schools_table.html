@@ -23,7 +23,11 @@
           {% endif %}
         </th>
         <td class="px-3 py-3 align-top">
-          <span class="inline-flex rounded-pill px-2 py-0.5 font-semibold edify-danger-soft edify-danger-text border edify-danger-border"
+          {% comment %}flex-col: the context line is a block child, but an
+          inline-flex row parent turns it into a side-by-side flex item and
+          glues it to the issue label ("No SSAscheduled for 9 Jul").
+          {% endcomment %}
+          <span class="inline-flex flex-col items-start rounded-pill px-2 py-0.5 font-semibold edify-danger-soft edify-danger-text border edify-danger-border"
                 style="font-size: 12px">
             {{ row.issue }}{% if row.issue_context %}
             <span class="mt-0.5 block edify-text-caption edify-text-muted font-normal">{{ row.issue_context }}</span>{% endif %}

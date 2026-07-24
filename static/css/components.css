@@ -288,12 +288,15 @@ main .bg-white {
 .theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
   button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
   button.bg-indigo-700, a.bg-indigo-700) {
-  color: var(--edify-on-accent) !important;
+  /* The sky-glass gradient runs #bdd8e9→#7bbde8→#6ea2b3; white labels read
+     1.4–2.1:1 on it. The navy ink is the login-reference pairing and clears
+     AA on every gradient stop (6.7–14:1), including the lighter hover ramp. */
+  color: var(--edify-navy-950) !important;
   background-color: var(--edify-sky-400) !important;
   background-image: var(--edify-button-primary-treatment) !important;
   border: 1px solid rgba(220, 240, 252, 0.58) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.70), 0 12px 28px -16px rgba(123,189,232,.82) !important;
-  text-shadow: 0 1px 1px rgba(0, 29, 57, 0.18);
+  text-shadow: none;
 }
 
 .theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
@@ -303,6 +306,16 @@ main .bg-white {
   background-image: linear-gradient(135deg, #e6f5ff 0%, var(--edify-sky-100) 48%, var(--edify-sky-400) 100%) !important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.88), 0 16px 34px -16px rgba(123,189,232,.94) !important;
   transform: translateY(-1px);
+}
+
+/* Every legacy primary family shares the sky-glass face in the blue theme, so
+   they all need the same navy ink (several of them set white via their own
+   later-loaded sheets — admin-dashboard.css, hcos-workspace.css). */
+.theme-blue :is(.premium-button-primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary) {
+  color: var(--edify-navy-950) !important;
+  text-shadow: none;
 }
 
 .theme-blue :is(.btn-ghost, .edify-action-button.secondary, .pto-button--secondary,
