@@ -801,30 +801,31 @@ main .platform-page-actions > :where(a, button) {
   white-space: nowrap;
 }
 
+/* Aligned to the canonical filter anatomy: a transparent bar ON the page
+   background, controls carrying the surface, right-aligned. The old
+   12-column grid-on-a-card treatment predated the platform-wide contract
+   and crushed page headers that host the bar inline. */
 main .platform-filter-bar {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 0.75rem;
-  padding: clamp(0.875rem, 1.4vw, 1.125rem);
-  border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-lg);
-  background: var(--edify-surface);
-  background-image: var(--edify-surface-treatment);
-  box-shadow: var(--edify-shadow-sm);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
 }
 
 main .platform-filter-bar > :where(label, div) {
-  grid-column: span 2;
   min-inline-size: 0;
 }
 
-main .platform-filter-bar > .platform-filter-search {
-  grid-column: span 4;
-}
-
 .theme-blue main .platform-filter-bar {
-  border-color: var(--edify-border);
-  background: var(--edify-surface-treatment);
+  border-color: transparent;
+  background: transparent;
   -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
   backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
   box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md);
