@@ -92,12 +92,29 @@ def core_schools_view(request):
     ready_core = core_schools_qs.filter(current_fy_ssa_status="done").count()
     avg_score = CoreAssessmentService.get_average_score(core_schools_qs)
     overall_trend = CoreAssessmentService.get_monthly_trend(core_schools_qs)
+    trend_values = [t["avg"] for t in overall_trend]
     perf_insights["overall_trend"] = overall_trend
     perf_insights["overall_trend_path"] = (
-        build_sparkline_path(overall_trend, width=100, height=50, padding=3)
-        if overall_trend
+        build_sparkline_path(trend_values, width=100, height=50, padding=3)
+        if trend_values
         else ""
     )
+    # Latest-period summary panel for the full-width tracker: real verified
+    # assessment periods only — no fabricated progression.
+    if overall_trend:
+        first, latest = overall_trend[0], overall_trend[-1]
+        change = round(latest["avg"] - first["avg"], 1)
+        perf_insights["trend_summary"] = {
+            "latest_label": latest["label"],
+            "latest_avg": latest["avg"],
+            "baseline_label": first["label"],
+            "change": change,
+            "direction": "Improving" if change > 0 else ("Declining" if change < 0 else "Stable"),
+            "assessments": latest["n"],
+            "periods": len(overall_trend),
+        }
+    else:
+        perf_insights["trend_summary"] = None
 
     visits_scheduled = (
         Activity.objects.filter(

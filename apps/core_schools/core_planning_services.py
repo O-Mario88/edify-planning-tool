@@ -929,14 +929,26 @@ class CoreAssessmentService:
         """
         monthly = (
             SsaRecord.objects.filter(
-                school__in=core_schools_qs, deleted_at__isnull=True
+                school__in=core_schools_qs,
+                deleted_at__isnull=True,
+                # Only verified assessments may drive the trend (methodology
+                # guardrail) — pending/returned records are not outcomes.
+                verification_status="confirmed",
             )
             .annotate(month=TruncMonth("date_of_ssa"))
             .values("month")
-            .annotate(avg=Avg("average_score"))
+            .annotate(avg=Avg("average_score"), n=Count("id"))
             .order_by("month")
         )
-        trend = [round(m["avg"], 1) for m in monthly if m["avg"] is not None]
+        trend = [
+            {
+                "label": m["month"].strftime("%b %Y"),
+                "avg": round(m["avg"], 1),
+                "n": m["n"],
+            }
+            for m in monthly
+            if m["avg"] is not None and m["month"] is not None
+        ]
         return trend if len(trend) >= 2 else []
 
 
@@ -1159,80 +1171,108 @@ class CoreStaffPartnerPerformanceService:
         avg_partner = sum(partner_deltas) / len(partner_deltas) if partner_deltas else 0
         delta = avg_staff - avg_partner
 
+        # Organization benchmark: the average verified core score across the
+        # whole scoped cohort — every row compares against this one number.
+        org_average = CoreAssessmentService.get_average_score(core_schools_qs)
+        org_average = round(org_average, 1) if org_average else None
+
+        def _vs_avg(score):
+            if score is None or org_average is None:
+                return None
+            return round(score - org_average, 1)
+
+        def _initials(name):
+            parts = [w for w in (name or "").split() if w]
+            return ((parts[0][0] + (parts[-1][0] if len(parts) > 1 else "")).upper()
+                    if parts else "–")
+
+        # A row appears only for staff who actually own schools in scope; a
+        # portfolio with no scored schools reads "insufficient", never 0.
         staff_insights = []
-        for staff in StaffProfile.objects.all().select_related("user")[:5]:
-            # account_owner_id holds a StaffProfile id on every row the school
-            # upload wrote, so matching only the User id found nothing at all.
+        for staff in StaffProfile.objects.all().select_related("user"):
             staff_schools = core_schools_qs.filter(
                 account_owner_id__in=[staff.id, staff.user_id]
             )
-            if staff_schools.exists():
-                avg = CoreAssessmentService.get_average_score(staff_schools)
-                staff_insights.append(
-                    {
-                        "name": staff.user.name,
-                        "score": round(avg, 1) if avg else 0,
-                    }
-                )
-        # Default fallback if empty: query real staff profiles in the database
-        if not staff_insights:
-            for staff in StaffProfile.objects.all().select_related("user")[:5]:
-                staff_insights.append(
-                    {
-                        "name": staff.user.name,
-                        "score": 0,
-                    }
-                )
+            count = staff_schools.count()
+            if not count:
+                continue
+            avg = CoreAssessmentService.get_average_score(staff_schools)
+            score = round(avg, 1) if avg else None
+            staff_insights.append(
+                {
+                    "name": staff.user.name,
+                    "initials": _initials(staff.user.name),
+                    "score": score,
+                    "school_count": count,
+                    "vs_avg": _vs_avg(score),
+                    "insufficient": score is None,
+                }
+            )
+        staff_insights.sort(key=lambda r: (r["score"] is None, -(r["score"] or 0)))
+        staff_insights = staff_insights[:5]
 
         partner_insights = []
-        for part in Partner.objects.all()[:5]:
+        for part in Partner.objects.all():
             part_assignments = PartnerAssignment.objects.filter(
                 partner=part, school__school_type="core"
             )
-            if part_assignments.exists():
-                assigned_school_ids = part_assignments.values_list(
-                    "school_id", flat=True
-                )
-                partner_schools = core_schools_qs.filter(id__in=assigned_school_ids)
-                avg = (
-                    CoreAssessmentService.get_average_score(partner_schools)
-                    if partner_schools.exists()
-                    else None
-                )
-                partner_insights.append(
-                    {
-                        "name": part.name,
-                        "score": round(avg, 1) if avg else 0,
-                    }
-                )
-        # Default fallback if empty: query real partners in the database
-        if not partner_insights:
-            for part in Partner.objects.all()[:5]:
-                partner_insights.append(
-                    {
-                        "name": part.name,
-                        "score": 0,
-                    }
-                )
+            if not part_assignments.exists():
+                continue
+            assigned_school_ids = part_assignments.values_list("school_id", flat=True)
+            partner_schools = core_schools_qs.filter(id__in=assigned_school_ids)
+            count = partner_schools.count()
+            if not count:
+                continue
+            avg = CoreAssessmentService.get_average_score(partner_schools)
+            score = round(avg, 1) if avg else None
+            partner_insights.append(
+                {
+                    "name": part.name,
+                    "initials": _initials(part.name),
+                    "score": score,
+                    "school_count": count,
+                    "vs_avg": _vs_avg(score),
+                    "insufficient": score is None,
+                }
+            )
+        partner_insights.sort(key=lambda r: (r["score"] is None, -(r["score"] or 0)))
+        partner_insights = partner_insights[:5]
 
-        # Region stats
+        # Regions: scoped to THIS cohort's schools and verified records only
+        # (the previous version averaged every SSA in the region, scoped or
+        # not). Regions with no scored core schools read as insufficient.
         region_insights = []
-        for reg in Region.objects.all()[:5]:
+        for reg in Region.objects.all():
+            reg_schools = core_schools_qs.filter(region=reg)
+            count = reg_schools.count()
+            if not count:
+                continue
             avg_reg = SsaRecord.objects.filter(
-                school__region=reg, deleted_at__isnull=True
+                school__in=reg_schools,
+                deleted_at__isnull=True,
+                verification_status="confirmed",
             ).aggregate(avg=Avg("average_score"))["avg"]
+            score = round(avg_reg, 1) if avg_reg else None
             region_insights.append(
                 {
                     "name": reg.name,
-                    "score": round(avg_reg or 0, 1),
+                    "score": score,
+                    "school_count": count,
+                    "vs_avg": _vs_avg(score),
+                    "insufficient": score is None,
                 }
             )
+        region_insights.sort(key=lambda r: (r["score"] is None, -(r["score"] or 0)))
+        scored_regions = [r for r in region_insights if r["score"] is not None]
+        top_region = scored_regions[0] if scored_regions else None
 
         return {
             "delta_pp": round(delta, 1),
+            "org_average": org_average,
             "staff_insights": staff_insights,
             "partner_insights": partner_insights,
             "region_insights": region_insights,
+            "top_region": top_region,
         }
 
     @staticmethod
@@ -1261,6 +1301,9 @@ class CoreStaffPartnerPerformanceService:
                     "label": label,
                     "staff_pct": staff_pct,
                     "partner_pct": partner_pct,
+                    # Both values are average core scores on the 0-10 scale —
+                    # the gap is score points, never percentage points.
+                    "gap": round(staff_pct - partner_pct, 1),
                 }
             )
         return rows
