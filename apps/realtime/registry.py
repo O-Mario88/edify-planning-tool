@@ -136,6 +136,18 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="daily_debrief_reminders",
+        description="End-of-day (and next-morning catch-up) reminders for field staff with scheduled activities but no Daily Debrief.",
+        cron="daily 18:00 + 08:00 Africa/Kampala",
+        cron_kwargs={"hour": "8,18", "minute": 0},
+        expected_runtime_seconds=60,
+        max_interval_minutes=60 * 14,
+        idempotent=True,
+        idempotency_note="WorkflowNotificationService dedupes on (recipient, event, context), so a rerun cannot double-notify the same user-date.",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="weekly_debrief_reports",
         description="Generates Monday-morning PL Weekly Team Debrief Report drafts for the closed Mon-Sun week.",
         cron="weekly Mon 06:00 Africa/Kampala",

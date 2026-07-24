@@ -203,6 +203,66 @@ def _do_field_debrief_recurring_issues() -> int:
     return int(result.get("created", 0)) + int(result.get("updated", 0))
 
 
+def daily_debrief_reminders_job():
+    """18:00 — remind field staff who had scheduled activities today but have
+    not submitted a Daily Debrief; 08:00 next morning re-reminds for
+    yesterday. Users with no scheduled work that day (leave, holidays,
+    office days) are never nagged (mandate: no debrief on non-work days).
+    One notification per user per run — the notification service dedupes
+    repeats against the same context."""
+
+    def _run():
+        from datetime import timedelta
+
+        from django.utils import timezone as tz
+
+        from apps.accounts.models import User
+        from apps.debriefs.field_debrief_service import (
+            SUBMITTER_ROLES,
+            DailyDebriefFlowService,
+            _daily_midnight,
+        )
+        from apps.debriefs.models import DailyDebrief, DebriefKind, DebriefStatus
+        from apps.notifications.services import WorkflowNotificationService
+
+        now = tz.localtime()
+        target = tz.localdate() if now.hour >= 12 else tz.localdate() - timedelta(days=1)
+        when = "today" if target == tz.localdate() else "yesterday"
+        reminded = 0
+        for user in User.objects.filter(
+            active_role__in=SUBMITTER_ROLES, is_active=True
+        ):
+            if not DailyDebriefFlowService.activities_for(user, target):
+                continue
+            done = (
+                DailyDebrief.objects.filter(
+                    submitted_by_user_id=user.user_id,
+                    kind=DebriefKind.DAILY,
+                    date=_daily_midnight(target),
+                    deleted_at__isnull=True,
+                )
+                .exclude(status=DebriefStatus.DRAFT)
+                .exists()
+            )
+            if done:
+                continue
+            WorkflowNotificationService.trigger(
+                event_type="field_debrief.due",
+                category="debrief",
+                priority="normal",
+                title=f"Daily Debrief due for {when}",
+                body="You had scheduled activities but no debrief yet. "
+                "It takes two to three minutes.",
+                context_type="daily_debrief_due",
+                context_id=f"{user.user_id}:{target}",
+                recipients=[user.user_id],
+            )
+            reminded += 1
+        return {"reminded": reminded, "for_date": str(target)}
+
+    return run_tracked_job("daily_debrief_reminders", _run)
+
+
 def weekly_debrief_reports_job():
     """Monday 06:00 — generate a PL Weekly Team Debrief Report draft for
     every Program Lead with a team, over the just-closed Mon-Sun week. PLs
