@@ -250,6 +250,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Impact Analytics runs statistical comparisons that need enough schools
     # in scope to be meaningful — leadership roles only.
     "impact_analytics": {CD, IA, PL, RVP, ADMIN},
+    # School Visit Effectiveness: the shared visit↔SSA-change module — field
+    # roles see their own delivery, leadership sees team/country strategy.
+    "visit_effectiveness": {CCEO, PL, IA, CD, RVP, PROJECT_COORDINATOR, ADMIN},
     # Partner sub-routes
     "partner_today": {PARTNER, ADMIN},
     "partner_schools": {PARTNER, ADMIN},
@@ -333,6 +336,7 @@ ICONS = {
     "analytics": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>',
     "ssa_performance": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l2-7 4 14 2-7h6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>',
     "impact_analytics": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.674M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>',
+    "visit_effectiveness": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>',
     "reports": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>',
     "escalations": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>',
     "declining_schools": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" /></svg>',
@@ -681,6 +685,11 @@ SIDEBAR_ITEMS = [
                 "label": "Impact Analytics",
                 "url": "/impact",
                 "page_key": "impact_analytics",
+            },
+            {
+                "label": "Visit Effectiveness",
+                "url": "/analytics/visit-effectiveness",
+                "page_key": "visit_effectiveness",
             },
             {
                 "label": "Analytics",

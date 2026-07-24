@@ -1,6 +1,7 @@
 from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
+    visit_effectiveness_views,
     pwa_views,
     rvp_views,
     auth_views,
@@ -1191,6 +1192,11 @@ urlpatterns = [
         "ssa/export",
         ssa_views.ssa_performance_export_view,
         name="ssa_performance_export",
+    ),
+    path(
+        "analytics/visit-effectiveness",
+        visit_effectiveness_views.visit_effectiveness_view,
+        name="visit_effectiveness",
     ),
     path("impact", impact_views.impact_analytics_view, name="impact_analytics"),
     path("fy", extended_views.fy_overview_view, name="fy_overview"),

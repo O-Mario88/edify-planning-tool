@@ -467,3 +467,86 @@ function enhanceEdifyTabs(root = document) {
 
 document.addEventListener('DOMContentLoaded', () => enhanceEdifyTabs());
 document.addEventListener('htmx:afterSettle', (event) => enhanceEdifyTabs(event.target));
+
+document.addEventListener('alpine:init', () => {
+  /* School Visit Effectiveness charts — one payload element, per-type
+     options. Series colours follow the platform chart semantics (actual =
+     brand blue, prior period = muted, decline = danger). */
+  Alpine.data('visitFxChart', (payloadId, chartType) => ({
+    chart: null,
+    init() { this.$nextTick(() => this.render()); },
+    destroy() { if (this.chart) this.chart.destroy(); },
+    payload() {
+      const node = document.getElementById(payloadId);
+      try { return JSON.parse(node.textContent || '{}'); } catch (e) { return {}; }
+    },
+    render() {
+      const all = this.payload();
+      const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+      const brand = css('--edify-chart-blue') || '#0d5b9e';
+      const muted = '#94a3b8';
+      const green = css('--edify-chart-green') || '#10b981';
+      const amber = css('--edify-chart-amber') || '#f59e0b';
+      const red = css('--edify-chart-red') || '#ef4444';
+      let opts = null;
+      if (chartType === 'interventions') {
+        const d = all.interventions || {};
+        opts = {
+          chart: { type: 'bar', height: 320 },
+          series: [
+            { name: 'Baseline', data: d.baseline || [] },
+            { name: 'Follow-up', data: d.followup || [] },
+          ],
+          xaxis: { categories: d.labels || [], labels: { rotate: -35, style: { fontSize: '10px' } } },
+          colors: [muted, brand],
+        };
+      } else if (chartType === 'scatter') {
+        const d = all.scatter || {};
+        opts = {
+          chart: { type: 'scatter', height: 320, zoom: { enabled: false } },
+          series: [
+            { name: 'Core', data: d.core || [] },
+            { name: 'Client', data: d.client || [] },
+          ],
+          xaxis: { title: { text: 'Delivered visits' }, tickAmount: 6 },
+          yaxis: { title: { text: 'SSA change' } },
+          colors: [brand, muted],
+          markers: { size: 5 },
+        };
+      } else if (chartType === 'purpose') {
+        const d = all.purpose || {};
+        opts = {
+          chart: { type: 'donut', height: 280 },
+          series: d.counts || [],
+          labels: d.labels || [],
+          colors: [amber, green, brand, '#8b5cf6', muted],
+          legend: { position: 'bottom' },
+        };
+      } else if (chartType === 'outcomes') {
+        const d = all.outcomes || {};
+        opts = {
+          chart: { type: 'bar', height: 280 },
+          series: [{ name: 'Schools', data: [d.improved || 0, d.unchanged || 0, d.declined || 0, d.not_yet_measurable || 0] }],
+          xaxis: { categories: ['Improved', 'Unchanged', 'Declined', 'Not yet measurable'] },
+          colors: [brand],
+          plotOptions: { bar: { distributed: true } },
+          fill: { colors: [green, muted, red, amber] },
+          legend: { show: false },
+        };
+      } else if (chartType === 'funnel') {
+        const d = all.funnel || {};
+        opts = {
+          chart: { type: 'bar', height: 280 },
+          series: [{ name: 'Visits', data: [d.scheduled || 0, d.delivered || 0, d.evidence || 0, d.aligned || 0, d.followup_ssa_available || 0] }],
+          plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
+          xaxis: { categories: ['Scheduled', 'Delivered', 'Evidence', 'Aligned', 'Follow-up SSA'] },
+          colors: [brand],
+        };
+      }
+      if (!opts || !this.$refs.el || typeof ApexCharts === 'undefined') return;
+      if (this.chart) this.chart.destroy();
+      this.chart = new ApexCharts(this.$refs.el, opts);
+      this.chart.render();
+    },
+  }));
+});
