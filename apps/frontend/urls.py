@@ -1425,6 +1425,16 @@ urlpatterns = [
     ),
     path("projects", extended_views.projects_list_view, name="projects_list"),
     path(
+        "projects/filter",
+        extended_views.projects_filtered_view,
+        name="projects_filtered",
+    ),
+    path(
+        "projects/filters-drawer",
+        extended_views.projects_filters_drawer_view,
+        name="projects_filters_drawer",
+    ),
+    path(
         "projects/analytics",
         extended_views.special_projects_analytics_view,
         name="special_projects_analytics",

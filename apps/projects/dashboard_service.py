@@ -19,6 +19,7 @@ from apps.core.scoping import resolve_user_scope
 
 from apps.core.enums import SsaIntervention
 from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+from apps.core.fy import fy_options, get_operational_fy
 
 from .models import (
     Project,
@@ -82,10 +83,57 @@ def _status_band(completion_pct: int, total_activities: int) -> tuple[str, str]:
     return "Behind", "danger"
 
 
-def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
+# Filter value → the derived `_status_band` labels it matches. Used by the
+# dashboard's status filter (status is derived, not stored, so it is applied
+# against the computed portfolio rows rather than at the SQL level).
+STATUS_FILTER_LABELS: dict[str, set[str]] = {
+    "planning": {"Planning"},
+    "on_track": {"On Track"},
+    "at_risk": {"At Risk"},
+    "behind": {"Behind"},
+}
+
+# Ordered (value, label) list for the status filter dropdown.
+STATUS_FILTER_OPTIONS = [
+    ("on_track", "On Track"),
+    ("at_risk", "At Risk"),
+    ("behind", "Behind"),
+    ("planning", "Planning"),
+]
+
+
+def _clean_choice(value: str | None, allowed: set[str], default: str = "") -> str:
+    """Whitelist a single-choice query param; fall back to `default`."""
+    return value if value in allowed else default
+
+
+def _resolve_filters(raw: dict | None) -> dict:
+    """Sanitize the projects-page filter params into a trusted dict.
+
+    `fy`     defaults to the operational FY (the page shows current-FY work).
+    `type`   validated against ``ProjectCategory`` values.
+    `status` validated against ``STATUS_FILTER_LABELS`` keys; applied later
+             on the derived portfolio rows (status is not stored).
+    """
+    raw = raw or {}
+    fy = _clean_choice(
+        raw.get("fy"), set(fy_options()), default=get_operational_fy()
+    )
+    ptype = _clean_choice(raw.get("type"), set(ProjectCategory.values))
+    status = _clean_choice(raw.get("status"), set(STATUS_FILTER_LABELS))
+    return {"fy": fy, "type": ptype, "status": status}
+
+
+def get_dashboard(
+    principal,
+    selected_project_id: str | None = None,
+    filters: dict | None = None,
+) -> dict:
     from apps.activities.models import Activity, ActivityScheduleCostLine
 
     scope = resolve_user_scope(principal)
+    filters = _resolve_filters(filters)
+    selected_fy = filters["fy"]
 
     # ── Scoped project set ────────────────────────────────────────────────────
     projects_qs = Project.objects.filter(deleted_at__isnull=True)
@@ -96,6 +144,10 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
             if staff_id
             else projects_qs.none()
         )
+    # Type filter narrows the project set itself, so KPIs / budget / impact
+    # all recompute against the filtered portfolio.
+    if filters["type"]:
+        projects_qs = projects_qs.filter(category=filters["type"])
     projects = list(projects_qs.order_by("name"))
     project_ids = [p.id for p in projects]
 
@@ -103,10 +155,16 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
     psa = ProjectSchoolAssignment.objects.filter(
         project_id__in=project_ids
     ).select_related("school", "school__district", "school__region")
-    acts = Activity.objects.filter(deleted_at__isnull=True, project_id__in=project_ids)
+    # FY is an attribute of activities/cost lines, not of the project itself,
+    # so it constrains the activity-derived figures (KPIs, completion, budget)
+    # rather than the project queryset — mirrors impact_service.
+    fy_q = Q(fy=selected_fy) | Q(fiscal_year=selected_fy)
+    acts = Activity.objects.filter(
+        deleted_at__isnull=True, project_id__in=project_ids
+    ).filter(fy_q)
     lines = ActivityScheduleCostLine.objects.filter(
         activity__project_id__in=project_ids
-    )
+    ).filter(activity__fy=selected_fy)
 
     school_ids = list({a.school_id for a in psa if a.school_id})
     partner_links = ProjectPartnerAssignment.objects.filter(
@@ -341,6 +399,13 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
                 "next_follow_up": next_date,
             }
         )
+
+    # Status is derived (not stored), so it is applied to the built portfolio
+    # rows, not the project queryset. The right-rail selection still resolves
+    # from the unfiltered `projects` set so a selected project stays visible.
+    if filters["status"]:
+        allowed_labels = STATUS_FILTER_LABELS[filters["status"]]
+        portfolio = [row for row in portfolio if row["status"] in allowed_labels]
 
     # ── Selected project (right rail) ─────────────────────────────────────────
     selected = None
@@ -578,4 +643,12 @@ def get_dashboard(principal, selected_project_id: str | None = None) -> dict:
         "impact_max": impact_max,
         "has_projects": bool(project_ids),
         "is_country": scope.country_scope,
+        # ── Filter state (for the dropdown form + drawer) ────────────────────
+        "fy_options": fy_options(),
+        "category_choices": ProjectCategory.choices,
+        "status_filter_options": STATUS_FILTER_OPTIONS,
+        "selected_fy": selected_fy,
+        "selected_type": filters["type"],
+        "selected_status": filters["status"],
+        "filters_active": bool(filters["type"] or filters["status"]),
     }

@@ -1422,24 +1422,69 @@ def core_school_detail_view(request, plan_id):
     return render(request, "pages/core_schools/detail.html", context)
 
 
-@require_page_permission("projects")
-def projects_list_view(request):
-    """Special Projects command center — scoped to the caller's projects.
+def _projects_context(request):
+    """Build the Projects dashboard context for both default and filtered views.
 
-    Every figure is computed live from the engine (Project / assignments /
-    Activity / ActivityScheduleCostLine) by `dashboard_service`; no mock data.
+    The default view (``/projects``) and the filtered view
+    (``/projects/filter``) render the same template/partial; the distinction
+    lives in the URL dispatcher. Filters come through as GET params and are
+    sanitized by ``get_dashboard._resolve_filters``.
     """
     from apps.projects.dashboard_service import get_dashboard
 
-    context = get_dashboard(request.user, request.GET.get("project"))
-    # Project creation stays on the existing governance workflow. Only roles
-    # that already have create authority see a "New Project" action; everyone
-    # else gets the role-appropriate "Add Eligible Schools" action.
+    context = get_dashboard(request.user, request.GET.get("project"), request.GET)
     context["can_create_projects"] = request.user.active_role in (
         "Admin",
         "CountryDirector",
     )
+    return context
+
+
+@require_page_permission("projects")
+def projects_list_view(request):
+    """Special Projects command center — the default (unfiltered) view.
+
+    No filter params are expected here; FY defaults to the operational year
+    inside the service. HTMX swaps target the ``#project-list`` partial so a
+    filter change does not reload the whole page.
+    """
+    context = _projects_context(request)
+    if request.headers.get("HX-Target") == "project-list":
+        return render(request, "partials/projects/portfolio_list.html", context)
     return render(request, "pages/projects/index.html", context)
+
+
+@require_page_permission("projects")
+def projects_filtered_view(request):
+    """Filtered Projects view — a distinct URL from the default list.
+
+    Reaching ``/projects/filter`` with no filter params is a user error (a
+    bare filtered URL means "clear the filters"), so it redirects back to the
+    default view rather than silently behaving identically to it.
+    """
+    from apps.projects.dashboard_service import _resolve_filters
+
+    filters = _resolve_filters(request.GET)
+    if not (filters["type"] or filters["status"]):
+        # FY alone is not "a filter" — it always has a value. Redirect so the
+        # address bar reflects the real (default) state, not a no-op filter URL.
+        return redirect("frontend:projects_list")
+
+    context = _projects_context(request)
+    if request.headers.get("HX-Target") == "project-list":
+        return render(request, "partials/projects/portfolio_list.html", context)
+    return render(request, "pages/projects/index.html", context)
+
+
+@require_page_permission("projects")
+def projects_filters_drawer_view(request):
+    """Render the advanced-filters drawer for the Projects page.
+
+    Options are sourced from the dashboard service so the drawer's choices
+    stay in sync with what the page actually filters on.
+    """
+    context = _projects_context(request)
+    return render(request, "partials/projects/filters_drawer.html", context)
 
 
 @require_page_permission("projects")
