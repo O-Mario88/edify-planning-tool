@@ -51,10 +51,20 @@
 
     <div class="relative w-full lg:flex-1 lg:min-w-0 aspect-square"
          @keydown.escape.window="reset()" @click.outside="reset()">
-      <div x-show="!ready"
+      <div x-show="!ready && !failed"
            class="absolute inset-0 flex items-center justify-center
                   edify-text-caption font-semibold text-slate-400">
         Loading district boundaries…
+      </div>
+      <div x-show="failed" x-cloak
+           class="absolute inset-0 flex flex-col items-center justify-center gap-2
+                  edify-text-caption font-semibold text-slate-400">
+        <span>The map could not load.</span>
+        <button type="button" @click="load()"
+                class="h-8 px-3 rounded-control border border-slate-200 edify-surface
+                       text-[12px] font-bold edify-primary-text">
+          Try again
+        </button>
       </div>
       <svg x-ref="svg" x-show="ready" viewBox="0 0 620 620"
            preserveAspectRatio="xMidYMid meet"
@@ -176,7 +186,8 @@
 <script>
 function subregionMap(){
   return {
-    ready:false, focused:null, cam:null, labels:null, subLabels:null,
+    ready:false, failed:false, attempts:0,
+    focused:null, cam:null, labels:null, subLabels:null,
     tip:{show:false,x:0,y:0,d:{},top:[],rows:[]},
     metrics:{}, colours:{}, geo:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
 
@@ -186,13 +197,37 @@ function subregionMap(){
       // district_insight ships an object keyed by district name, already in
       // the shape the card needs -- no re-indexing. (It replaced an array;
       // calling .forEach on the object threw here and left the map blank.)
-      this.metrics = JSON.parse(
-        document.getElementById('subregion-district-metrics').textContent) || {};
-      this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
-      const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
-      this.geo = await res.json();
-      this.draw();
-      this.ready = true;
+      // The whole chain is guarded: a transient boundary-fetch failure used
+      // to strand the card on "Loading…" until a manual refresh. Now it
+      // retries once on its own, then shows an honest error with a retry
+      // action instead of a silent blank square.
+      this.failed = false;
+      try {
+        this.metrics = JSON.parse(
+          document.getElementById('subregion-district-metrics').textContent) || {};
+        this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
+        const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
+        if (!res.ok) throw new Error('boundaries HTTP ' + res.status);
+        this.geo = await res.json();
+        if (this.$refs.svg) this.$refs.svg.replaceChildren();
+        this.draw();
+        this.ready = true;
+      } catch (err) {
+        this.attempts += 1;
+        if (this.attempts <= 1) {
+          setTimeout(() => this.load(), 800);
+        } else {
+          this.failed = true;
+        }
+      }
+      // A bfcache restore resurrects the page without re-running scripts;
+      // rehydrate if the component came back not ready.
+      if (!this._pageshowBound) {
+        this._pageshowBound = true;
+        window.addEventListener('pageshow', (e) => {
+          if (e.persisted && !this.ready) { this.attempts = 0; this.load(); }
+        });
+      }
     },
 
     draw(){
