@@ -105,6 +105,14 @@
   table-layout: fixed;
 }
 
+/* Below tablet width the fixed column budget crushes school names into
+   one-word-per-line stacks. Let the table keep a readable minimum width and
+   hand the excess to its scroll wrapper (auto beats the desktop clip). */
+@media (max-width: 48rem) {
+  .pl-urgent-table-scroll { overflow-x: auto !important; }
+  .pl-urgent-table { min-inline-size: 560px; table-layout: auto; }
+}
+
 .pl-dashboard-stack .pl-ssa-matrix {
   white-space: normal !important;
 }

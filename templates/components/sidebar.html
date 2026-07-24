@@ -70,8 +70,9 @@
     </div>
   </div>
 
-  <!-- Collapse Sidebar Button -->
-  <button @click="collapsed = !collapsed" class="app-sidebar__collapse-btn">
+  <!-- Collapse Sidebar Button — a desktop-rail affordance; the mobile drawer
+       closes via its own close button, so collapse is hidden below lg. -->
+  <button @click="collapsed = !collapsed" class="app-sidebar__collapse-btn max-lg:hidden">
     <svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" :class="collapsed ? 'rotate-180' : ''">
       <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
     </svg>

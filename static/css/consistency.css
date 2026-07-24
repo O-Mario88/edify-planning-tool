@@ -80,6 +80,37 @@ html.light :where(.text-teal-300, .text-teal-400, .text-teal-500, .text-teal-600
 html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-violet-600,
   .text-purple-300, .text-purple-400, .text-purple-500, .text-purple-600) { color: var(--edify-purple-text); }
 
+/* ── max-lg:hidden utility ──────────────────────────────────────────────────
+ * Templates use max-lg:hidden for below-desktop progressive disclosure (the
+ * My Plan filter grid starts hidden on mobile behind its Filter button; the
+ * sidebar collapse control is desktop-only), but the compiled Tailwind build
+ * never included the max-lg variant, so the class matched nothing and the
+ * Filter toggle read as a dead control. Implemented here at Tailwind's own
+ * breakpoint (below lg, 64rem). */
+@media (max-width: 63.9375rem) {
+  /* The :is(#filters-form) arm lifts specificity above the mobile filter-grid
+     contract (#filters-form { display:grid !important }) so the Filter-button
+     toggle wins; when the class is removed the grid layout applies as before. */
+  .max-lg\:hidden,
+  :is(#filters-form).max-lg\:hidden { display: none !important; }
+}
+
+/* ── Touch target size (WCAG 2.5.8) ─────────────────────────────────────────
+ * Card-header "View all" links render 16-18px tall — below the 24px minimum
+ * for standalone targets. On touch or narrow viewports (the same trigger the
+ * base form contract uses), the hit area grows to 44px while symmetric
+ * negative margins keep the visual position unchanged. */
+@media (max-width: 48rem), (pointer: coarse) {
+  main a.edify-primary-text,
+  main a[class*="edify-chart-blue"][href],
+  main a[class*="edify-text-caption"][href] {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -13px;
+  }
+}
+
 /* Sky/cyan informational text (workflow-state pills): sky-600 reads 3.77:1 on
  * the sky tint; the -700 steps clear AA in the same hue families. */
 html.light :where(.text-sky-300, .text-sky-400, .text-sky-500, .text-sky-600) { color: #0369a1; }

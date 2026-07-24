@@ -59,21 +59,21 @@
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260723a11ycontrast19">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260723a11ycontrast19">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260724mobilefield1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260724mobilefield1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260720btntext1">
-  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260723a11ycontrast19">
-<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260723a11ycontrast19">
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260724mobilefield1">
+<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260724mobilefield1">
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260715c">
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260719modalcontract1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260723a11ycontrast19">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260724mobilefield1">
     <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260718supporthub3">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260723a11ycontrast19">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260724mobilefield1">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -310,7 +310,7 @@ x-transition
 class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-surface border shadow-lg max-w-sm text-[12px] font-semibold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif msg.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}"
 >
 <span>{{ msg }}</span>
-<button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100" aria-label="Dismiss notification">&times;</button>
+<button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100 -my-1 -mr-2 flex h-8 w-8 shrink-0 items-center justify-center text-[16px]" aria-label="Dismiss notification">&times;</button>
 </div>
 {% endfor %}
 {% endif %}
