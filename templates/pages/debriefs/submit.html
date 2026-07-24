@@ -20,13 +20,13 @@
           {{ today|date:"j M Y" }}
         </span>
         {% if existing and existing.status == 'clarification_requested' or existing and existing.status == 'returned' %}
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold"
-              style="background: var(--edify-warning-light); color: var(--edify-warning-text); border: 1px solid var(--edify-warning-border);">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold edify-warning-soft border edify-warning-border"
+              style="color: var(--edify-warning-text)">
           Returned for clarification
         </span>
         {% elif submitted %}
-        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold"
-              style="background: var(--edify-success-light); color: var(--edify-success-text); border: 1px solid var(--edify-success-border);">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold edify-success-soft border edify-success-border"
+              style="color: var(--edify-success-text)">
           Submitted {{ existing.submitted_at|date:"g:i A" }}
         </span>
         {% elif existing %}
@@ -39,8 +39,8 @@
   </header>
 
   {% if error %}
-  <div class="mb-4 p-3 rounded-surface border text-[13px] font-semibold"
-       style="background: var(--edify-danger-light); color: var(--edify-danger-text); border-color: var(--edify-danger-border);"
+  <div class="mb-4 p-3 rounded-surface border text-[13px] font-semibold edify-danger-soft edify-danger-border"
+       style="color: var(--edify-danger-text)"
        role="alert">{{ error }}</div>
   {% endif %}
 

@@ -18,8 +18,7 @@
         <a href="?week={{ prev_week }}" class="h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-semibold" aria-label="Previous week">‹ Prev</a>
         <a href="?week={{ next_week }}" class="h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-semibold" aria-label="Next week">Next ›</a>
         {% if report %}
-        <span class="inline-flex items-center px-2.5 py-1 rounded-pill text-[12px] font-semibold
-          {% if is_final %}" style="background: var(--edify-success-light); color: var(--edify-success-text); border: 1px solid var(--edify-success-border);"
+        <span class="inline-flex items-center px-2.5 py-1 rounded-pill text-[12px] font-semibold {% if is_final %} edify-success-soft border edify-success-border" style="color: var(--edify-success-text)"
           {% else %}edify-surface border border-slate-200 edify-text-muted"{% endif %}>
           {{ report.get_status_display }} · v{{ report.version }}
         </span>
@@ -59,7 +58,7 @@
   </section>
 
   {% if s.missing_teams %}
-  <div class="mb-5 p-3 rounded-surface border text-[12px] font-semibold" style="background: var(--edify-warning-light); color: var(--edify-warning-text); border-color: var(--edify-warning-border);">
+  <div class="mb-5 p-3 rounded-surface border text-[12px] font-semibold edify-warning-soft edify-warning-border" style="color: var(--edify-warning-text)">
     Data completeness: {% for m in s.missing_teams %}{{ m.pl }} ({{ m.status }}){% if not forloop.last %} · {% endif %}{% endfor %}
   </div>
   {% endif %}
@@ -77,9 +76,9 @@
         <div class="flex items-start justify-between gap-3 flex-wrap">
           <h3 class="text-[13.5px] font-bold edify-text">{{ c.label }}</h3>
           <div class="flex items-center gap-1.5">
-            {% if c.trend == 'worsening' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold" style="background: var(--edify-danger-light); color: var(--edify-danger-text);">Worsening</span>
-            {% elif c.trend == 'repeated' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold" style="background: var(--edify-warning-light); color: var(--edify-warning-text);">Repeated</span>
-            {% elif c.trend == 'improving' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold" style="background: var(--edify-success-light); color: var(--edify-success-text);">Improving</span>
+            {% if c.trend == 'worsening' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold edify-danger-soft" style="color: var(--edify-danger-text)">Worsening</span>
+            {% elif c.trend == 'repeated' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold edify-warning-soft" style="color: var(--edify-warning-text)">Repeated</span>
+            {% elif c.trend == 'improving' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold edify-success-soft" style="color: var(--edify-success-text)">Improving</span>
             {% elif c.trend == 'new' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold edify-surface border border-slate-200 edify-text-muted">New</span>{% endif %}
             {% if c.confidence == 'low' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold edify-surface border border-slate-200 edify-text-muted" title="Low-confidence classification — confirm before acting">Needs review</span>{% endif %}
           </div>
