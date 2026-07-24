@@ -41,7 +41,7 @@
       <button type="button" x-show="focused" x-transition.opacity @click="reset()"
               class="rounded-control border border-slate-200 px-2.5 py-1
                      edify-text-caption font-bold text-slate-600 hover:bg-slate-50">
-        <span x-text="focused"></span> · Back &middot; Esc
+        <span x-text="focused && focused.replace('sub:', '')"></span> · Back &middot; Esc
       </button>
     </div>
   </div>
@@ -144,6 +144,13 @@
           <tbody class="divide-y divide-slate-50">
             {% for s in subregion_performance.subregions %}
             <tr class="text-[12px] hover:bg-slate-50/70 cursor-pointer" tabindex="0"
+                role="button"
+                aria-label="Focus {{ s.name }} on the map"
+                :aria-pressed="focused === 'sub:{{ s.name|escapejs }}'"
+                :class="focused === 'sub:{{ s.name|escapejs }}' && 'bg-slate-100/80'"
+                @click.stop="focusSub('{{ s.name|escapejs }}')"
+                @keydown.enter.prevent="focusSub('{{ s.name|escapejs }}')"
+                @keydown.space.prevent="focusSub('{{ s.name|escapejs }}')"
                 @mouseenter="highlight('{{ s.name|escapejs }}')"
                 @mouseleave="highlight(null)"
                 @focus="highlight('{{ s.name|escapejs }}')"
@@ -446,6 +453,46 @@ function subregionMap(){
       this.cam.querySelectorAll('#sr-cam > g:first-child path').forEach(p => {
         p.style.opacity = sub ? (p.dataset.sub === sub ? 1 : 0.18) : '';
       });
+    },
+
+    /* Clicking a table row flies the camera to the whole sub-region: the
+       union bbox of its district paths, districts kept lit while the rest
+       of the country dims — the same visual grammar as a district zoom.
+       Clicking the focused row again (or Esc / click outside) resets. */
+    focusSub(name){
+      if(!this.cam) return;
+      if(this.focused === 'sub:' + name){ this.reset(); return; }
+      if(this.focused) this.reset();
+      const paths = [...this.cam.querySelectorAll('#sr-cam > g:first-child path')];
+      const mine = paths.filter(p => p.dataset.sub === name);
+      if(!mine.length) return;
+      let x1=1e9, y1=1e9, x2=-1e9, y2=-1e9;
+      mine.forEach(p => { const b = p.getBBox();
+        x1=Math.min(x1,b.x); y1=Math.min(y1,b.y);
+        x2=Math.max(x2,b.x+b.width); y2=Math.max(y2,b.y+b.height); });
+      const bw = x2-x1, bh = y2-y1;
+      let s = Math.min(this.W/bw, this.H/bh) * 0.82;
+      s = Math.max(1.15, Math.min(s, 8));
+      const tx = this.W/2 - (x1 + bw/2)*s, ty = this.H/2 - (y1 + bh/2)*s;
+      this.cam.style.transform =
+        `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${s.toFixed(3)})`;
+      paths.forEach(p => {
+        const on = p.dataset.sub === name;
+        p.style.opacity = on ? 1 : 0.14;
+        p.style.filter  = on ? 'none' : 'grayscale(.6)';
+      });
+      const inSub = new Set(mine.map(p => p.dataset.district));
+      this.labels.querySelectorAll('text').forEach(t => {
+        const on = inSub.has(t.dataset.district);
+        t.style.opacity = on ? 1 : 0;
+        const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(t.getAttribute('transform'));
+        if(m) t.setAttribute('transform', on
+          ? `translate(${m[1]},${m[2]}) scale(${(1/s).toFixed(4)})`
+          : `translate(${m[1]},${m[2]})`);
+      });
+      this.subLabels.style.opacity = 0;
+      this.focused = 'sub:' + name;
+      this.tip.show = false;
     },
   };
 }
