@@ -41,7 +41,7 @@ Monitor weekly requests submitted by CCEOs for scheduled field activities.
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Week -->
 <td class="px-6 py-4">
-<div class="font-semibold text-slate-900 text-[12px]">Week: {{ req.week_start_date|date:"Y-\WW" }}</div>
+<div class="font-semibold text-slate-900 text-[12px]">{{ req.week_start_date|date:"Y-\WW" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ req.week_start_date|date:"Y-m-d" }} to {{ req.week_end_date|date:"Y-m-d" }}</div>
 </td>
 <!-- Staff -->

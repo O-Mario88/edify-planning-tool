@@ -1623,14 +1623,28 @@ select:not([multiple]):not(.select-native) {
 .edify-header-filters select,
 .edify-header-filters input { width: 100%; height: 39px; }
 
+/* Filter bars sit ON the page background — never on their own card. The
+   controls carry the surface; the bar itself is transparent. */
+:is(#filters-form, #core-filters-form, #analytics-filters-form,
+    #pl-analytics-filters, #cd-analytics-filters, #cb-filters,
+    #debrief-filters, #visits-filters, #trainings-filters,
+    #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters,
+    #project-filters, [data-component="filter-toolbar"],
+    .platform-filter-bar, .edify-filter-bar) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
 /* ─── CANONICAL FILTER-CONTROL DESIGN (all widths) ──────────────────────────
    Promotes the Partner Activities reference to every shared filter bar: a
    small label ABOVE each control, the control itself a bordered surface
    input, actions aligned at the end. Wrappers that used to carry the pill
    border hand it to their control. */
-:is(#filters-form, #analytics-filters-form, #pl-analytics-filters,
-    #cd-analytics-filters, #cb-filters, #debrief-filters,
-    [data-component="filter-toolbar"], .platform-filter-bar) > div {
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  div:not(.edify-filter-actions):has(> select, > span + select, > .edify-filter-label):not(:has(div)) {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1641,20 +1655,16 @@ select:not([multiple]):not(.select-native) {
   padding: 0 !important;
   min-width: 8.25rem;
 }
-:is(#filters-form, #analytics-filters-form, #pl-analytics-filters,
-    #cd-analytics-filters, #cb-filters, #debrief-filters,
-    [data-component="filter-toolbar"], .platform-filter-bar)
-  :is(> div > span:not(.sr-only), .edify-filter-label) {
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
   color: var(--edify-text-muted) !important;
   font-size: 10px;
   font-weight: 750;
   text-transform: none;
   letter-spacing: 0;
 }
-:is(#filters-form, #analytics-filters-form, #pl-analytics-filters,
-    #cd-analytics-filters, #cb-filters, #debrief-filters,
-    [data-component="filter-toolbar"], .platform-filter-bar)
-  > div :is(select, input:not([type="hidden"]):not([type="checkbox"])) {
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  div:not(:has(div)) :is(select, input:not([type="hidden"]):not([type="checkbox"])) {
   width: 100% !important;
   height: 39px !important;
   background: var(--edify-surface) !important;

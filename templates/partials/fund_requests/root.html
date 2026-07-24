@@ -117,10 +117,10 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <span class="edify-filter-label">Quarter</span>
 <select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Quarter: Q1</option>
-<option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Quarter: Q2</option>
-<option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Quarter: Q3</option>
-<option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Quarter: Q4</option>
+<option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Q1</option>
+<option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Q2</option>
+<option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Q3</option>
+<option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Q4</option>
 </select>
 </div>
 
@@ -128,18 +128,18 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <span class="edify-filter-label">Month</span>
 <select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="October" {% if selected_month == 'October' %}selected{% endif %}>Month: October</option>
-<option value="November" {% if selected_month == 'November' %}selected{% endif %}>Month: November</option>
-<option value="December" {% if selected_month == 'December' %}selected{% endif %}>Month: December</option>
-<option value="January" {% if selected_month == 'January' %}selected{% endif %}>Month: January</option>
-<option value="February" {% if selected_month == 'February' %}selected{% endif %}>Month: February</option>
-<option value="March" {% if selected_month == 'March' %}selected{% endif %}>Month: March</option>
-<option value="April" {% if selected_month == 'April' %}selected{% endif %}>Month: April</option>
-<option value="May" {% if selected_month == 'May' %}selected{% endif %}>Month: May</option>
-<option value="June" {% if selected_month == 'June' %}selected{% endif %}>Month: June</option>
-<option value="July" {% if selected_month == 'July' %}selected{% endif %}>Month: July</option>
-<option value="August" {% if selected_month == 'August' %}selected{% endif %}>Month: August</option>
-<option value="September" {% if selected_month == 'September' %}selected{% endif %}>Month: September</option>
+<option value="October" {% if selected_month == 'October' %}selected{% endif %}>October</option>
+<option value="November" {% if selected_month == 'November' %}selected{% endif %}>November</option>
+<option value="December" {% if selected_month == 'December' %}selected{% endif %}>December</option>
+<option value="January" {% if selected_month == 'January' %}selected{% endif %}>January</option>
+<option value="February" {% if selected_month == 'February' %}selected{% endif %}>February</option>
+<option value="March" {% if selected_month == 'March' %}selected{% endif %}>March</option>
+<option value="April" {% if selected_month == 'April' %}selected{% endif %}>April</option>
+<option value="May" {% if selected_month == 'May' %}selected{% endif %}>May</option>
+<option value="June" {% if selected_month == 'June' %}selected{% endif %}>June</option>
+<option value="July" {% if selected_month == 'July' %}selected{% endif %}>July</option>
+<option value="August" {% if selected_month == 'August' %}selected{% endif %}>August</option>
+<option value="September" {% if selected_month == 'September' %}selected{% endif %}>September</option>
 </select>
 </div>
 
@@ -158,7 +158,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <span class="edify-filter-label">District</span>
 <select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="">District: All</option>
+<option value="">All districts</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
 {% endfor %}
@@ -169,7 +169,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <span class="edify-filter-label">Staff</span>
 <select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="">Staff: All</option>
+<option value="">All staff</option>
 {% for p in staff_profiles %}
 <option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
 {% endfor %}
@@ -181,7 +181,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <span class="edify-filter-label">Request type</span>
 <select aria-label="Request type" name="request_type" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="">Request Type: All</option>
+<option value="">All types</option>
 <option value="school visits" {% if selected_request_type == 'school visits' %}selected{% endif %}>School Visits</option>
 <option value="cluster training" {% if selected_request_type == 'cluster training' %}selected{% endif %}>Cluster Training</option>
 <option value="cluster meetings" {% if selected_request_type == 'cluster meetings' %}selected{% endif %}>Cluster Meetings</option>
@@ -197,7 +197,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <span class="edify-filter-label">Status</span>
 <select aria-label="Status" name="status" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="">Status: All</option>
+<option value="">All statuses</option>
 <option value="pending_responsible_confirmation" {% if selected_status == 'pending_responsible_confirmation' %}selected{% endif %}>Draft</option>
 <option value="confirmed_for_advance" {% if selected_status == 'confirmed_for_advance' %}selected{% endif %}>Ready</option>
 <option value="self_funded" {% if selected_status == 'self_funded' %}selected{% endif %}>Self-funded</option>
