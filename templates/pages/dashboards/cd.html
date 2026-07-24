@@ -19,7 +19,7 @@
         <span class="sm:hidden">Country Wide · {{ scope_meta.school_count|intcomma }} schools</span>
       </span>
       <form hx-get="/dashboard" hx-target="#cd-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
-            class="flex items-center gap-2 rounded-surface px-2.5 py-1.5 bg-white/10 border border-white/15">
+            class="edify-filter-bar flex items-center gap-2 rounded-surface px-2.5 py-1.5 bg-white/10 border border-white/15">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
         <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">FY {{ opt }}</option>{% endfor %}

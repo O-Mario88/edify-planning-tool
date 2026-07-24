@@ -18,7 +18,7 @@
         <h1 class="mt-1 text-[24px] font-bold tracking-tight">Monthly Team Budget Request</h1>
         <p class="mt-1 text-[13px] font-medium text-slate-300">{{ month_label }} · FY {{ fy }} · Program Lead team</p>
       </div>
-      <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="grid grid-cols-2 gap-2 rounded-surface border border-white/10 bg-white/5 p-2.5 sm:flex sm:items-end">
+      <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="edify-filter-bar grid grid-cols-2 gap-2 rounded-surface border border-white/10 bg-white/5 p-2.5 sm:flex sm:items-end">
         <label class="block min-w-0">
           <span class="block px-1 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
           <select name="month" aria-label="Month" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white edify-primary-focus focus:outline-none">

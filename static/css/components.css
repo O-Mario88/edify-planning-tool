@@ -1636,6 +1636,7 @@ select:not([multiple]):not(.select-native) {
   box-shadow: none !important;
   padding: 0 !important;
   border-radius: 0 !important;
+  justify-content: flex-end;
 }
 
 /* ─── CANONICAL FILTER-CONTROL DESIGN (all widths) ──────────────────────────

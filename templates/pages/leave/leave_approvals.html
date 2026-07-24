@@ -15,7 +15,7 @@
     </div>
 
     <!-- Search & Filters -->
-    <form id="leave-approvals-filters" method="GET" class="flex flex-wrap items-center gap-3">
+    <form id="leave-approvals-filters" method="GET" class="edify-filter-bar flex flex-wrap items-center gap-3">
       <div class="relative">
         {% comment %}Search moved to the top bar.{% endcomment %}
         <span class="absolute left-2.5 top-2.5 text-slate-400">
@@ -25,6 +25,7 @@
         </span>
       </div>
 
+      <span class="edify-filter-label">Type</span>
       <select aria-label="Type"
         name="type"
         class="px-3 py-1.5 text-xs rounded-control border font-bold transition edify-surface edify-border edify-text"
@@ -38,6 +39,7 @@
         <option value="bereavement_leave" {% if selected_type == 'bereavement_leave' %}selected{% endif %}>Bereavement Leave</option>
       </select>
 
+      <span class="edify-filter-label">Status</span>
       <select aria-label="Status"
         name="status"
         class="px-3 py-1.5 text-xs rounded-control border font-bold transition edify-surface edify-border edify-text"
