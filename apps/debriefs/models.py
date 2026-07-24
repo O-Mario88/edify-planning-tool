@@ -716,3 +716,86 @@ __all__ = [
     "InsightEscalationLevel",
     "DailyDebriefInsight",
 ]
+
+
+class WeeklyReportScope(models.TextChoices):
+    PL_TEAM = "pl_team", "Program Lead Team"
+    COUNTRY = "country", "Country"
+    RVP = "rvp", "Regional (RVP)"
+    HR_PEOPLE = "hr_people", "HR People Intelligence"
+
+
+class WeeklyReportStatus(models.TextChoices):
+    DRAFT = "draft", "Draft Generated"
+    FINALIZED = "finalized", "Finalized"
+    SUPERSEDED = "superseded", "Superseded"
+
+
+class WeeklyDebriefReport(TimeStampedModel):
+    """One weekly (Mon-Sun) consolidated debrief report for a scope.
+
+    The consolidation itself — themes, occurrence counts, unique staff/
+    school/district scopes, per-cluster source links — lives in `snapshot`
+    (JSON), locked at generation time so late debriefs can never silently
+    alter a finalized report; regeneration creates a NEW VERSION row and
+    marks the old one superseded (mandate §17). Sections/reviews/signatures
+    are folded onto this row rather than modeled as satellite tables,
+    matching this app's stated modeling philosophy (see module docstring).
+    """
+
+    id = CuidField()
+    fy = models.CharField(max_length=16)
+    scope_kind = models.CharField(max_length=16, choices=WeeklyReportScope.choices)
+    # PL team → the PL's user id; country scopes → the country name.
+    scope_id = models.CharField(max_length=64)
+    week_start = models.DateField()
+    week_end = models.DateField()
+    status = models.CharField(
+        max_length=16,
+        choices=WeeklyReportStatus.choices,
+        default=WeeklyReportStatus.DRAFT,
+    )
+    version = models.IntegerField(default=1)
+    snapshot = models.JSONField(default=dict)
+    commentary = models.TextField(null=True, blank=True)
+    generated_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    signed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    signed_at = models.DateTimeField(null=True, blank=True)
+    pdf_checksum = models.CharField(max_length=64, null=True, blank=True)
+    pdf_generated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "weekly_debrief_report"
+        ordering = ["-week_start", "-version"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["scope_kind", "scope_id", "week_start", "version"],
+                name="uniq_weekly_report_scope_week_version",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["scope_kind", "scope_id", "week_start"]),
+            models.Index(fields=["status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_scope_kind_display()} report {self.week_start}"
+
+
+class WeeklyReportDistribution(TimeStampedModel):
+    """Audit row for every emailed copy of a weekly report (mandate §19)."""
+
+    id = CuidField()
+    report = models.ForeignKey(
+        WeeklyDebriefReport, on_delete=models.CASCADE, related_name="distributions"
+    )
+    sent_by_user_id = models.CharField(max_length=30)
+    recipients = models.JSONField(default=list)
+    subject = models.CharField(max_length=255)
+    report_version = models.IntegerField()
+    succeeded = models.BooleanField(default=False)
+    error = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "weekly_debrief_report_distribution"
+        indexes = [models.Index(fields=["report"])]

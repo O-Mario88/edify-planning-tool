@@ -1461,6 +1461,16 @@ urlpatterns = [
         name="debrief_submit",
     ),
     path(
+        "debriefs/weekly-report",
+        debrief_views.weekly_debrief_report_view,
+        name="debrief_weekly_report",
+    ),
+    path(
+        "debriefs/weekly-report/pdf",
+        debrief_views.weekly_debrief_report_pdf_view,
+        name="debrief_weekly_report_pdf",
+    ),
+    path(
         "debriefs/action",
         debrief_views.field_debrief_action_view,
         name="debrief_action",

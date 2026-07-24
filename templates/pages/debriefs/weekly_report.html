@@ -1,0 +1,163 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Weekly Debrief Report · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="max-w-4xl mx-auto px-4 py-6">
+
+  <header class="edify-page-header mb-5">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h1 class="edify-page-title">Weekly Debrief Report</h1>
+        <p class="edify-text-muted text-[13px] mt-1">
+          {% if report %}{{ report.get_scope_kind_display }} · {% endif %}
+          Consolidated intelligence from daily debriefs, {{ week_start|date:"j M" }} – {{ week_end|date:"j M Y" }}.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="?week={{ prev_week }}" class="h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-semibold" aria-label="Previous week">‹ Prev</a>
+        <a href="?week={{ next_week }}" class="h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-semibold" aria-label="Next week">Next ›</a>
+        {% if report %}
+        <span class="inline-flex items-center px-2.5 py-1 rounded-pill text-[12px] font-semibold
+          {% if is_final %}" style="background: var(--edify-success-light); color: var(--edify-success-text); border: 1px solid var(--edify-success-border);"
+          {% else %}edify-surface border border-slate-200 edify-text-muted"{% endif %}>
+          {{ report.get_status_display }} · v{{ report.version }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% if not report %}
+  <section class="edify-empty-state">
+    <p class="text-[13px] font-semibold edify-text">No report for this week yet</p>
+    <p class="text-[12px] edify-text-muted mt-1">
+      {% if role == 'RegionalVicePresident' or role == 'HumanResources' %}
+      The Country Director has not finalized this week's country report yet.
+      {% else %}Generate a draft from this week's daily debriefs.{% endif %}
+    </p>
+    {% if role == 'Program Lead' or role == 'CountryDirector' or role == 'Admin' %}
+    <form method="post" class="mt-3">{% csrf_token %}
+      <button name="action" value="generate" class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold">Generate Draft Report</button>
+    </form>
+    {% endif %}
+  </section>
+
+  {% else %}
+  {% with s=report.snapshot t=report.snapshot.totals %}
+
+  <!-- Week at a glance -->
+  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+    {% if report.scope_kind == 'pl_team' %}
+    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Reporting</p><p class="text-[20px] font-bold edify-text">{{ t.reporting }}<span class="text-[12px] edify-text-muted font-semibold"> / {{ t.members }}</span></p></div>
+    {% else %}
+    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">PL Reports</p><p class="text-[20px] font-bold edify-text">{{ t.pl_reports_included }}<span class="text-[12px] edify-text-muted font-semibold"> in · {{ t.pl_reports_missing }} missing</span></p></div>
+    {% endif %}
+    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Debriefs</p><p class="text-[20px] font-bold edify-text">{{ t.debriefs }}</p></div>
+    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Schools</p><p class="text-[20px] font-bold edify-text">{{ t.schools_supported }}</p></div>
+    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Activities</p><p class="text-[20px] font-bold edify-text">{% if t.activities_worked is not None %}{{ t.activities_worked }}{% elif t.direct_debriefs is not None %}{{ t.direct_debriefs }}{% else %}—{% endif %}</p></div>
+  </section>
+
+  {% if s.missing_teams %}
+  <div class="mb-5 p-3 rounded-surface border text-[12px] font-semibold" style="background: var(--edify-warning-light); color: var(--edify-warning-text); border-color: var(--edify-warning-border);">
+    Data completeness: {% for m in s.missing_teams %}{{ m.pl }} ({{ m.status }}){% if not forloop.last %} · {% endif %}{% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Consolidated clusters (already ordered challenge → suggestion → positive) -->
+  {% regroup s.clusters by kind as cluster_groups %}
+  {% for group in cluster_groups %}
+  <section class="mb-6">
+    <h2 class="text-[15px] font-semibold edify-text mb-3">
+      {% if group.grouper == 'challenge' %}Key Challenges{% elif group.grouper == 'suggestion' %}Staff Suggestions{% else %}What Worked Well{% endif %}
+    </h2>
+    <div class="space-y-3">
+      {% for c in group.list %}
+      <article class="edify-surface rounded-surface border border-slate-200 p-4">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <h3 class="text-[13.5px] font-bold edify-text">{{ c.label }}</h3>
+          <div class="flex items-center gap-1.5">
+            {% if c.trend == 'worsening' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold" style="background: var(--edify-danger-light); color: var(--edify-danger-text);">Worsening</span>
+            {% elif c.trend == 'repeated' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold" style="background: var(--edify-warning-light); color: var(--edify-warning-text);">Repeated</span>
+            {% elif c.trend == 'improving' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold" style="background: var(--edify-success-light); color: var(--edify-success-text);">Improving</span>
+            {% elif c.trend == 'new' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold edify-surface border border-slate-200 edify-text-muted">New</span>{% endif %}
+            {% if c.confidence == 'low' %}<span class="px-2 py-0.5 rounded-pill text-[11px] font-bold edify-surface border border-slate-200 edify-text-muted" title="Low-confidence classification — confirm before acting">Needs review</span>{% endif %}
+          </div>
+        </div>
+        <p class="text-[12px] edify-text-muted mt-1">
+          {{ c.mentions }} mention{{ c.mentions|pluralize }} ·
+          {{ c.unique_staff }} staff ·
+          {{ c.schools_affected }} school{{ c.schools_affected|pluralize }}{% if c.districts_affected %} ·
+          {{ c.districts_affected|join:", " }}{% endif %}{% if c.pl_teams %} ·
+          teams: {{ c.pl_teams|join:", " }}{% endif %}
+        </p>
+        {% for src in c.sources|slice:":2" %}
+        <blockquote class="mt-2 text-[12px] italic edify-text-muted border-l-2 border-slate-200 pl-3">
+          “{{ src.excerpt }}” — <a href="/debriefs/{{ src.debrief_id }}" class="edify-primary-text font-semibold not-italic hover:underline">source</a>
+        </blockquote>
+        {% endfor %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% empty %}
+  <section class="edify-empty-state mb-6">
+    <p class="text-[13px] font-semibold edify-text">No consolidated themes this week</p>
+    <p class="text-[12px] edify-text-muted mt-1">No daily debriefs matched this reporting week{% if report.scope_kind == 'country' %} from finalized team reports{% endif %}.</p>
+  </section>
+  {% endfor %}
+
+  {% if report.scope_kind == 'pl_team' and s.team %}
+  <section class="mb-6">
+    <h2 class="text-[15px] font-semibold edify-text mb-3">Team Submission Status</h2>
+    <div class="edify-surface rounded-surface border border-slate-200 p-4 grid sm:grid-cols-2 gap-2">
+      {% for m in s.team %}
+      <p class="text-[13px] flex items-center gap-2">
+        {% if m.submitted %}
+        <svg class="h-4 w-4 shrink-0" style="color: var(--edify-success-text)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        {% else %}
+        <svg class="h-4 w-4 shrink-0" style="color: var(--edify-warning-text)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.01M3.7 19h16.6a1.7 1.7 0 001.47-2.55L13.47 4.4a1.7 1.7 0 00-2.94 0L2.23 16.45A1.7 1.7 0 003.7 19z"/></svg>
+        {% endif %}
+        {{ m.name }}{% if not m.submitted %} <span class="text-[11px] edify-text-muted">— not submitted</span>{% endif %}
+      </p>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if report.commentary %}
+  <section class="mb-6">
+    <h2 class="text-[15px] font-semibold edify-text mb-2">Leadership Commentary</h2>
+    <p class="text-[13px] edify-text-muted whitespace-pre-line edify-surface rounded-surface border border-slate-200 p-4">{{ report.commentary }}</p>
+  </section>
+  {% endif %}
+
+  <!-- Actions -->
+  <section class="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
+    <a href="/debriefs/weekly-report/pdf?week={{ week_start|date:'Y-m-d' }}"
+       class="h-10 px-4 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[13px] font-bold edify-primary-text">Download PDF</a>
+    {% if is_owner and not is_final %}
+    <form method="post" class="inline-flex items-center gap-2 flex-wrap">{% csrf_token %}
+      <button name="action" value="generate" class="h-10 px-4 rounded-control border border-slate-200 edify-surface text-[13px] font-bold">Regenerate Draft</button>
+      <input type="text" name="commentary" aria-label="Sign-off commentary" placeholder="Optional commentary…"
+             class="h-10 px-3 rounded-control border border-slate-200 text-[13px] min-w-[220px]">
+      <button name="action" value="sign" class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold">Sign &amp; Finalize</button>
+    </form>
+    {% endif %}
+    {% if is_final %}
+    <details class="w-full mt-2">
+      <summary class="text-[12px] font-bold edify-primary-text cursor-pointer">Send by Email</summary>
+      <form method="post" class="mt-2 grid sm:grid-cols-2 gap-2 max-w-xl">{% csrf_token %}
+        <input type="hidden" name="action" value="email">
+        <input type="text" name="to" aria-label="Recipients (comma-separated emails)" placeholder="Recipients, comma-separated" required class="h-10 px-3 rounded-control border border-slate-200 text-[13px] sm:col-span-2">
+        <input type="text" name="subject" aria-label="Email subject" placeholder="Subject (optional)" class="h-10 px-3 rounded-control border border-slate-200 text-[13px] sm:col-span-2">
+        <button class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold sm:col-span-2">Send PDF</button>
+      </form>
+    </details>
+    {% endif %}
+  </section>
+
+  {% endwith %}
+  {% endif %}
+</div>
+{% endblock %}

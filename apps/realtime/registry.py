@@ -136,6 +136,18 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="weekly_debrief_reports",
+        description="Generates Monday-morning PL Weekly Team Debrief Report drafts for the closed Mon-Sun week.",
+        cron="weekly Mon 06:00 Africa/Kampala",
+        cron_kwargs={"day_of_week": "mon", "hour": 6, "minute": 0},
+        expected_runtime_seconds=120,
+        max_interval_minutes=60 * 24 * 8,
+        idempotent=True,
+        idempotency_note="Draft reports regenerate in place; finalized reports are never overwritten (a rerun creates a new version only when data changed and the owner regenerates).",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="analytics_report_delivery",
         description="Delivers due user-configured analytics CSV digests by email.",
         cron="every 15 min Africa/Kampala",

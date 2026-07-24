@@ -407,3 +407,124 @@ def field_debrief_activity_options_view(request):
     return HttpResponse(
         options or '<option value="">No recent activities found</option>'
     )
+
+
+@require_page_permission("debriefs_list")
+def weekly_debrief_report_view(request):
+    """Role-aware Weekly Debrief Report (mandate: PL team report, CD country
+    report, RVP/HR reading the finalized country intelligence). GET renders
+    the current report (generating a PL/CD draft on first visit); POST
+    handles sign / regenerate / email actions."""
+    from datetime import date as _date
+
+    from apps.core.rbac import EdifyRole
+    from apps.debriefs.models import WeeklyReportScope, WeeklyReportStatus
+    from apps.debriefs.weekly_report_service import (
+        WeeklyDebriefReportService as WRS,
+        week_bounds,
+    )
+
+    role = getattr(request.user, "active_role", "")
+    anchor = None
+    if request.GET.get("week"):
+        try:
+            anchor = _date.fromisoformat(request.GET["week"])
+        except ValueError:
+            anchor = None
+    start, end = week_bounds(anchor)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        report = WRS.visible_report(request.user, start)
+        try:
+            if action == "generate":
+                if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+                    report = WRS.generate_pl_report(request.user, start)
+                elif role in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value):
+                    report = WRS.generate_country_report(request.user, start)
+                else:
+                    return HttpResponseForbidden("Your role cannot generate reports.")
+                messages.success(request, "Report draft generated from this week's debriefs.")
+            elif action == "sign":
+                if not report:
+                    raise BadRequest("Generate the report before signing.")
+                WRS.sign(report, request.user, request.POST.get("commentary"))
+                messages.success(request, "Report signed and finalized.")
+            elif action == "email":
+                if not report:
+                    raise BadRequest("Generate the report before emailing it.")
+                WRS.send_email(
+                    report,
+                    request.user,
+                    (request.POST.get("to") or "").split(","),
+                    request.POST.get("subject")
+                    or f"Weekly Debrief Report — {start:%-d %b} to {end:%-d %b %Y}",
+                    request.POST.get("message") or "Please find the weekly debrief report attached.",
+                )
+                messages.success(request, "Report emailed with the PDF attached.")
+        except (BadRequest, Forbidden) as exc:
+            messages.error(request, str(exc))
+        return redirect(f"/debriefs/weekly-report?week={start.isoformat()}")
+
+    report = WRS.visible_report(request.user, start)
+    # First visit auto-generates the owner's draft so Monday reviews start
+    # from data, not an empty page (§2). Readers never trigger generation.
+    if report is None and role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        report = WRS.generate_pl_report(request.user, start)
+    elif report is None and role == EdifyRole.COUNTRY_DIRECTOR.value:
+        report = WRS.generate_country_report(request.user, start)
+
+    return render(
+        request,
+        "pages/debriefs/weekly_report.html",
+        {
+            "report": report,
+            "week_start": start,
+            "week_end": end,
+            "prev_week": (start - __import__("datetime").timedelta(days=7)).isoformat(),
+            "next_week": (start + __import__("datetime").timedelta(days=7)).isoformat(),
+            "is_owner": bool(
+                report
+                and (
+                    (report.scope_kind == WeeklyReportScope.PL_TEAM and report.scope_id == request.user.user_id)
+                    or (report.scope_kind == WeeklyReportScope.COUNTRY and role in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value))
+                )
+            ),
+            "is_final": bool(report and report.status == WeeklyReportStatus.FINALIZED),
+            "role": role,
+        },
+    )
+
+
+@require_page_permission("debriefs_list")
+def weekly_debrief_report_pdf_view(request):
+    """Download the visible report as PDF — permission + object scope come
+    from visible_report; every download regenerates from the locked snapshot
+    so the checksum always matches the served bytes."""
+    from datetime import date as _date
+
+    from django.http import HttpResponse
+
+    from apps.debriefs.weekly_report_service import (
+        WeeklyDebriefReportService as WRS,
+        week_bounds,
+    )
+
+    anchor = None
+    if request.GET.get("week"):
+        try:
+            anchor = _date.fromisoformat(request.GET["week"])
+        except ValueError:
+            anchor = None
+    start, _end = week_bounds(anchor)
+    report = WRS.visible_report(request.user, start)
+    if not report:
+        return HttpResponseBadRequest("No report is available for that week.")
+    data = WRS.generate_pdf(report)
+    scope = "PL" if report.scope_kind == "pl_team" else "Country"
+    filename = (
+        f"Edify_{scope}_Weekly_Debrief_{report.week_start}_to_{report.week_end}.pdf"
+    )
+    resp = HttpResponse(data, content_type="application/pdf")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return resp

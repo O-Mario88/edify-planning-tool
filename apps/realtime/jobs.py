@@ -203,6 +203,28 @@ def _do_field_debrief_recurring_issues() -> int:
     return int(result.get("created", 0)) + int(result.get("updated", 0))
 
 
+def weekly_debrief_reports_job():
+    """Monday 06:00 — generate a PL Weekly Team Debrief Report draft for
+    every Program Lead with a team, over the just-closed Mon-Sun week. PLs
+    then review, correct and sign; the CD compilation reads only finalized
+    team reports."""
+
+    def _run():
+        from apps.accounts.models import User
+        from apps.core.rbac import EdifyRole
+        from apps.debriefs.weekly_report_service import WeeklyDebriefReportService
+
+        generated = 0
+        for pl in User.objects.filter(
+            active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value, is_active=True
+        ):
+            WeeklyDebriefReportService.generate_pl_report(pl)
+            generated += 1
+        return {"pl_reports_generated": generated}
+
+    return run_tracked_job("weekly_debrief_reports", _run)
+
+
 def field_debrief_recurring_issues_job():
     if not _enabled():
         return
