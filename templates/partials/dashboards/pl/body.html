@@ -69,9 +69,9 @@
              hx-get="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
              class="inline-block mt-1.5 text-[12px] font-semibold"
              style="
-                    color:{% if a.tone == 'danger' %}var(--edify-danger)
-                    {% elif a.tone == 'success' %}var(--edify-success)
-                    {% else %}var(--edify-warning){% endif %};">{{ a.action }} &rarr;</a>
+                    color:{% if a.tone == 'danger' %}var(--edify-danger-text)
+                    {% elif a.tone == 'success' %}var(--edify-success-text)
+                    {% else %}var(--edify-warning-text){% endif %};">{{ a.action }} &rarr;</a>
         </div>
       </div>
       {% endfor %}

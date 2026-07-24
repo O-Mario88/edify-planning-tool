@@ -103,11 +103,31 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
 @media (max-width: 48rem), (pointer: coarse) {
   main a.edify-primary-text,
   main a[class*="edify-chart-blue"][href],
-  main a[class*="edify-text-caption"][href] {
+  main a[class*="edify-text-caption"][href],
+  .hcos-breadcrumbs a,
+  .admin-command__breadcrumbs a,
+  .admin-panel__header > a,
+  .tt-signal > a,
+  .tt-signal > button,
+  .spp-filter-reset a,
+  a.sp-filter-reset,
+  .sp-period-bar > a,
+  .sp-card__header > a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
     margin-block: -13px;
+  }
+
+  /* Row links inside data tables get a 32px hit area instead of 44px: rows can
+     sit closer than 44px apart, and overlapping tap targets between adjacent
+     rows would be worse than a slightly shorter one. 32px still clears the
+     24px WCAG 2.5.8 minimum with margin. */
+  main table td > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    margin-block: -8px;
   }
 }
 
