@@ -68,5 +68,51 @@ class AnalyticsReportSchedule(TimeStampedModel):
 __all__ = [
     "AnalyticsDashboardPreference",
     "AnalyticsReportSchedule",
+    "SchoolVisitAnalysisSnapshot",
     "DEFAULT_ANALYTICS_CARDS",
 ]
+
+
+class SchoolVisitAnalysisSnapshot(TimeStampedModel):
+    """A versioned, reproducible School Visit Effectiveness analysis run
+    (visit_effectiveness_engine). Snapshots are immutable once written: a
+    regeneration supersedes the old version and writes version N+1, so a
+    chart generated next month can never silently rewrite the analysis a
+    leadership decision was based on."""
+
+    id = CuidField()
+    scope_role = models.CharField(max_length=64)
+    scope_user_id = models.CharField(max_length=30)
+    methodology_version = models.CharField(max_length=32)
+    baseline_fy = models.CharField(max_length=16)
+    followup_fy = models.CharField(max_length=16)
+    included_schools = models.IntegerField(default=0)
+    excluded_summary = models.JSONField(default=dict)
+    visit_count = models.IntegerField(default=0)
+    data_confidence = models.CharField(max_length=24, default="none")
+    version = models.IntegerField(default=1)
+    status = models.CharField(
+        max_length=16,
+        choices=[("current", "Current"), ("superseded", "Superseded")],
+        default="current",
+    )
+    results = models.JSONField(default=dict)
+    generated_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "school_visit_analysis_snapshot"
+        ordering = ["-generated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "scope_role",
+                    "scope_user_id",
+                    "methodology_version",
+                    "version",
+                ],
+                name="uniq_visit_analysis_scope_version",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["scope_user_id", "status"]),
+        ]
