@@ -10,17 +10,15 @@ from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
 
-from apps.debriefs.field_debrief_service import DailyDebriefFlowService
 from apps.debriefs.models import (
     DailyDebrief,
     DebriefKind,
     DebriefStatus,
     DebriefType,
-    WeeklyDebriefReport,
     WeeklyReportScope,
     WeeklyReportStatus,
 )
-from apps.debriefs.tests import FY, FieldDebriefTestBase, User
+from apps.debriefs.tests import FY, FieldDebriefTestBase
 from apps.debriefs.weekly_report_service import (
     WeeklyDebriefReportService as WRS,
     classify_text,
