@@ -1593,3 +1593,32 @@ select:not([multiple]):not(.select-native) {
   }
 
 }
+
+/* ─── CANONICAL PAGE-HEADER ANATOMY ─────────────────────────────────────────
+   The Partner Activities header is the platform reference: eyebrow category
+   label above the title, subtitle under it, and (where a page filters in the
+   header) labelled controls aligned right. These classes let every page adopt
+   the same anatomy without page-scoped CSS copies. */
+.edify-page-eyebrow {
+  margin: 0 0 5px;
+  color: var(--brand-primary-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.edify-header-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+.edify-header-filters label { display: grid; gap: 4px; min-width: 8.25rem; }
+.edify-header-filters label > span:not(.sr-only) {
+  color: var(--edify-text-muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+.edify-header-filters select,
+.edify-header-filters input { width: 100%; height: 39px; }
