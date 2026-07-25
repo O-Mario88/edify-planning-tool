@@ -179,11 +179,16 @@ Beyond the scanner findings, the pipeline work surfaced these:
   — were absent from the bundle, so those templates rendered them as nothing.
   CI now fails if the bundle drifts.
 
-  One wrinkle worth knowing: the Tailwind CLI's first build after a source
-  change can lag by a pass — it dropped the `.text-red-500` utility but kept
-  the `--color-red-500` theme variable, and a second build removed that too.
-  So `npm run build:css` should be run until it produces no diff, which is
-  exactly what the gate enforces.
+  The gate then failed twice on builds that looked correct locally, and the
+  reason turned out to be worth the detour: Tailwind's automatic content
+  detection was scanning **every** non-gitignored file in the repository, not
+  just the two `@source` globs the stylesheet declares. Writing the words
+  `text-red-500` into this very audit document was enough to put that utility
+  back into the bundle. A stylesheet whose contents depend on prose is one
+  nobody can reproduce, and it meant a docs-only commit could fail the drift
+  gate. `@import "tailwindcss" source(none)` makes the declared globs the whole
+  of the scan; the bundle lost 46 classes that no template or view uses, and a
+  cold build in a fresh clone now reproduces it byte for byte.
 
 - **`package-lock.json` was gitignored.** Without it `npm ci` cannot run and
   every install resolves the tree afresh, so the bundle CI verifies was not

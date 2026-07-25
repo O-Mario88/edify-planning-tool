@@ -7,8 +7,16 @@
  * this file. Utility classes used anywhere in templates/ or apps/ (Python
  * views also emit class strings, e.g. status_class) are picked up by the
  * @source globs below.
+ *
+ * source(none) turns off Tailwind's automatic content detection, so the two
+ * globs below are the whole of it. Without it the scan reaches every file in
+ * the repository that is not gitignored — and a class name written in a
+ * markdown document was enough to put that utility back into the bundle. A
+ * stylesheet whose contents depend on prose is a stylesheet nobody can
+ * reproduce; it also made the drift gate fail on a commit that only edited
+ * docs.
  */
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 
 @source "../../templates";
 @source "../../apps";
