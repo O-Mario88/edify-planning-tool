@@ -34,9 +34,7 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
         # Analysis pages are reached from the Analytics workspace's
         # sub-navigation rather than from their own sidebar links, so they are
         # smoke-tested through the same door a user walks through.
-        urls |= {
-            section["url"] for section in build_analytics_sections(self.user, "/")
-        }
+        urls |= {section["url"] for section in build_analytics_sections(self.user, "/")}
         self.assertGreaterEqual(len(urls), 40)
 
         for url in sorted(urls):

@@ -449,7 +449,9 @@ def weekly_debrief_report_view(request):
                     report = WRS.generate_country_report(request.user, start)
                 else:
                     return HttpResponseForbidden("Your role cannot generate reports.")
-                messages.success(request, "Report draft generated from this week's debriefs.")
+                messages.success(
+                    request, "Report draft generated from this week's debriefs."
+                )
             elif action == "sign":
                 if not report:
                     raise BadRequest("Generate the report before signing.")
@@ -464,7 +466,8 @@ def weekly_debrief_report_view(request):
                     (request.POST.get("to") or "").split(","),
                     request.POST.get("subject")
                     or f"Weekly Debrief Report — {start:%-d %b} to {end:%-d %b %Y}",
-                    request.POST.get("message") or "Please find the weekly debrief report attached.",
+                    request.POST.get("message")
+                    or "Please find the weekly debrief report attached.",
                 )
                 messages.success(request, "Report emailed with the PDF attached.")
         except (BadRequest, Forbidden) as exc:
@@ -491,8 +494,15 @@ def weekly_debrief_report_view(request):
             "is_owner": bool(
                 report
                 and (
-                    (report.scope_kind == WeeklyReportScope.PL_TEAM and report.scope_id == request.user.user_id)
-                    or (report.scope_kind == WeeklyReportScope.COUNTRY and role in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value))
+                    (
+                        report.scope_kind == WeeklyReportScope.PL_TEAM
+                        and report.scope_id == request.user.user_id
+                    )
+                    or (
+                        report.scope_kind == WeeklyReportScope.COUNTRY
+                        and role
+                        in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value)
+                    )
                 )
             ),
             "is_final": bool(report and report.status == WeeklyReportStatus.FINALIZED),

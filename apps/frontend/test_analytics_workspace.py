@@ -270,7 +270,10 @@ class LeaveWorkspaceTest(TestCase):
         from apps.core.navigation import LEAVE_SECTIONS, build_sections
 
         user = _user("leave@workspace.test", EdifyRole.COUNTRY_DIRECTOR.value)
-        keys = [s["key"] for s in build_sections(LEAVE_SECTIONS, user, "/personal-time-off/")]
+        keys = [
+            s["key"]
+            for s in build_sections(LEAVE_SECTIONS, user, "/personal-time-off/")
+        ]
         self.assertEqual(keys, ["my_leave", "coverage", "holidays"])
 
     def test_each_leave_page_carries_the_strip(self):

@@ -50,18 +50,22 @@ class InterventionRenameRoundTripTest(TransactionTestCase):
             quarter="Q1",
             planned_date=date(2026, 4, 1),
         )
-        sets, params = [], []
-        if scalar is not None:
-            sets.append("focus_intervention = %s")
-            params.append(scalar)
-        if array is not None:
-            sets.append("secondary_focus_interventions = %s")
-            params.append(array)
+        # One static statement per column rather than a SET clause assembled
+        # from a list. Nothing here was ever attacker-controlled, but a query
+        # built by string join is indistinguishable from one that is — to a
+        # scanner and to the next reader — and two writes cost nothing.
         with connection.cursor() as c:
-            c.execute(
-                f"UPDATE activity SET {', '.join(sets)} WHERE id = %s",
-                [*params, aid],
-            )
+            if scalar is not None:
+                c.execute(
+                    "UPDATE activity SET focus_intervention = %s WHERE id = %s",
+                    [scalar, aid],
+                )
+            if array is not None:
+                c.execute(
+                    "UPDATE activity SET secondary_focus_interventions = %s "
+                    "WHERE id = %s",
+                    [array, aid],
+                )
 
     def test_reverse_restores_the_original_array_values(self):
         mod = self._module()

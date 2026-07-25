@@ -44,63 +44,200 @@ from .models import (
 # Distinct root causes are DISTINCT themes even when they share vocabulary;
 # a text mentioning several themes is tagged with each (never merged).
 THEMES: list[tuple[str, str, str, list[str]]] = [
-    ("poor_roads", "Poor Road Conditions", "challenge",
-     [r"\broads?\b.{0,40}\b(bad|poor|flood|impass|terrible|muddy)",
-      r"\b(bad|poor|flooded|muddy|impassable)\b.{0,25}\broads?\b", r"\bpotholes?\b"]),
-    ("transport_delay", "Transport Delays", "challenge",
-     [r"\btransport\b.{0,40}\b(late|delay)", r"\b(boda|vehicle|car|bus)\b.{0,30}\blate\b",
-      r"\barrived late\b.{0,40}\btransport\b"]),
-    ("no_transport", "Transport Unavailable", "challenge",
-     [r"\bno (transport|vehicle|car)\b", r"\b(vehicle|car|transport)\b.{0,30}\b(unavailable|not available|broke down)"]),
-    ("long_distance", "Long Travel Distance", "challenge",
-     [r"\blong (travel|distance|journey)\b", r"\bdistan(ce|t)\b.{0,30}\b(far|long|hours)\b",
-      r"\btook .{0,12}(hour|hrs)"]),
-    ("funds_delayed", "Delayed Funding", "challenge",
-     [r"\bfunds?\b.{0,40}\b(delay|late|not (yet )?(received|disbursed))", r"\bno (funds|money)\b",
-      r"\bdisbursement\b.{0,30}\bdelay"]),
-    ("leader_unavailable", "School Leader Unavailable", "challenge",
-     [r"\b(head ?teacher|school leader|proprietor|director)\b.{0,50}\b(unavailable|absent|not (there|present|available|around)|away)"]),
-    ("teacher_absence", "Teacher Absence", "challenge",
-     [r"\bteachers?\b.{0,40}\b(absent|did not attend|failed to attend|missing|few)"]),
-    ("low_attendance", "Low Attendance", "challenge",
-     [r"\blow (attendance|turnout)\b", r"\battendance\b.{0,30}\b(low|poor)\b", r"\bfew (participants|attendees)\b"]),
-    ("school_closed", "School Closure", "challenge",
-     [r"\bschool\b.{0,30}\bclosed\b", r"\bclosure\b"]),
-    ("weather", "Weather Disruption", "challenge",
-     [r"\b(heavy )?rain\b", r"\bstorm\b", r"\bweather\b"]),
-    ("network", "Poor Network / Connectivity", "challenge",
-     [r"\b(poor|no|bad|weak)\b.{0,15}\b(network|internet|signal|connectivity)\b"]),
-    ("electricity", "Electricity Problems", "challenge",
-     [r"\b(no |load.?shed|power (cut|outage|off)|electricity)\b"]),
-    ("facilities", "Poor Facilities", "challenge",
-     [r"\b(classroom|facility|facilities|building)\b.{0,40}\b(poor|bad|leak|broken|double.?booked|unavailable)"]),
-    ("partner_delay", "Partner Delays", "challenge",
-     [r"\bpartner\b.{0,50}\b(delay|late|did not|failed|no.?show|not schedule)"]),
-    ("workload", "Workload Pressure", "challenge",
-     [r"\b(overload|too (many|much)|workload|overwhelm|stretched|back.?to.?back)\b"]),
-    ("safety", "Safety Concern", "challenge",
-     [r"\b(unsafe|safety|insecur|robbery|accident)\b"]),
-    ("health", "Health / Wellbeing", "challenge",
-     [r"\b(sick|unwell|ill|malaria|fatigue[d]?|exhaust|burn.?out)\b"]),
-    ("materials", "Materials Unavailable", "challenge",
-     [r"\bmaterials?\b.{0,30}\b(unavailable|missing|not (there|available)|lack)", r"\bno materials\b"]),
-    ("data_tech", "Data / Technology Problems", "challenge",
-     [r"\b(system|app|salesforce|data|laptop|phone|tablet)\b.{0,40}\b(problem|error|fail|crash|not work|slow)"]),
-    ("ssa_need", "SSA Refresh Needed", "challenge",
-     [r"\bssa\b.{0,50}\b(refresh|outdated|missing|needed|expired|stale)", r"\b(fresh|new) ssa\b"]),
+    (
+        "poor_roads",
+        "Poor Road Conditions",
+        "challenge",
+        [
+            r"\broads?\b.{0,40}\b(bad|poor|flood|impass|terrible|muddy)",
+            r"\b(bad|poor|flooded|muddy|impassable)\b.{0,25}\broads?\b",
+            r"\bpotholes?\b",
+        ],
+    ),
+    (
+        "transport_delay",
+        "Transport Delays",
+        "challenge",
+        [
+            r"\btransport\b.{0,40}\b(late|delay)",
+            r"\b(boda|vehicle|car|bus)\b.{0,30}\blate\b",
+            r"\barrived late\b.{0,40}\btransport\b",
+        ],
+    ),
+    (
+        "no_transport",
+        "Transport Unavailable",
+        "challenge",
+        [
+            r"\bno (transport|vehicle|car)\b",
+            r"\b(vehicle|car|transport)\b.{0,30}\b(unavailable|not available|broke down)",
+        ],
+    ),
+    (
+        "long_distance",
+        "Long Travel Distance",
+        "challenge",
+        [
+            r"\blong (travel|distance|journey)\b",
+            r"\bdistan(ce|t)\b.{0,30}\b(far|long|hours)\b",
+            r"\btook .{0,12}(hour|hrs)",
+        ],
+    ),
+    (
+        "funds_delayed",
+        "Delayed Funding",
+        "challenge",
+        [
+            r"\bfunds?\b.{0,40}\b(delay|late|not (yet )?(received|disbursed))",
+            r"\bno (funds|money)\b",
+            r"\bdisbursement\b.{0,30}\bdelay",
+        ],
+    ),
+    (
+        "leader_unavailable",
+        "School Leader Unavailable",
+        "challenge",
+        [
+            r"\b(head ?teacher|school leader|proprietor|director)\b.{0,50}\b(unavailable|absent|not (there|present|available|around)|away)"
+        ],
+    ),
+    (
+        "teacher_absence",
+        "Teacher Absence",
+        "challenge",
+        [r"\bteachers?\b.{0,40}\b(absent|did not attend|failed to attend|missing|few)"],
+    ),
+    (
+        "low_attendance",
+        "Low Attendance",
+        "challenge",
+        [
+            r"\blow (attendance|turnout)\b",
+            r"\battendance\b.{0,30}\b(low|poor)\b",
+            r"\bfew (participants|attendees)\b",
+        ],
+    ),
+    (
+        "school_closed",
+        "School Closure",
+        "challenge",
+        [r"\bschool\b.{0,30}\bclosed\b", r"\bclosure\b"],
+    ),
+    (
+        "weather",
+        "Weather Disruption",
+        "challenge",
+        [r"\b(heavy )?rain\b", r"\bstorm\b", r"\bweather\b"],
+    ),
+    (
+        "network",
+        "Poor Network / Connectivity",
+        "challenge",
+        [r"\b(poor|no|bad|weak)\b.{0,15}\b(network|internet|signal|connectivity)\b"],
+    ),
+    (
+        "electricity",
+        "Electricity Problems",
+        "challenge",
+        [r"\b(no |load.?shed|power (cut|outage|off)|electricity)\b"],
+    ),
+    (
+        "facilities",
+        "Poor Facilities",
+        "challenge",
+        [
+            r"\b(classroom|facility|facilities|building)\b.{0,40}\b(poor|bad|leak|broken|double.?booked|unavailable)"
+        ],
+    ),
+    (
+        "partner_delay",
+        "Partner Delays",
+        "challenge",
+        [r"\bpartner\b.{0,50}\b(delay|late|did not|failed|no.?show|not schedule)"],
+    ),
+    (
+        "workload",
+        "Workload Pressure",
+        "challenge",
+        [r"\b(overload|too (many|much)|workload|overwhelm|stretched|back.?to.?back)\b"],
+    ),
+    (
+        "safety",
+        "Safety Concern",
+        "challenge",
+        [r"\b(unsafe|safety|insecur|robbery|accident)\b"],
+    ),
+    (
+        "health",
+        "Health / Wellbeing",
+        "challenge",
+        [r"\b(sick|unwell|ill|malaria|fatigue[d]?|exhaust|burn.?out)\b"],
+    ),
+    (
+        "materials",
+        "Materials Unavailable",
+        "challenge",
+        [
+            r"\bmaterials?\b.{0,30}\b(unavailable|missing|not (there|available)|lack)",
+            r"\bno materials\b",
+        ],
+    ),
+    (
+        "data_tech",
+        "Data / Technology Problems",
+        "challenge",
+        [
+            r"\b(system|app|salesforce|data|laptop|phone|tablet)\b.{0,40}\b(problem|error|fail|crash|not work|slow)"
+        ],
+    ),
+    (
+        "ssa_need",
+        "SSA Refresh Needed",
+        "challenge",
+        [
+            r"\bssa\b.{0,50}\b(refresh|outdated|missing|needed|expired|stale)",
+            r"\b(fresh|new) ssa\b",
+        ],
+    ),
     # positives
-    ("leader_engaged", "School Leadership Engaged", "positive",
-     [r"\b(head ?teacher|school leader|proprietor|leadership)\b.{0,60}\b(available|engaged|supportive|present|welcom|cooperat)"]),
-    ("teacher_participation", "Strong Teacher Participation", "positive",
-     [r"\bteachers?\b.{0,50}\b(engaged|participat|active|attentive|enthusias)"]),
-    ("good_attendance", "Strong Attendance", "positive",
-     [r"\b(good|strong|high|full)\b.{0,15}\b(attendance|turnout)\b"]),
-    ("partner_coordination", "Good Partner Coordination", "positive",
-     [r"\bpartner\b.{0,50}\b(coordinat|on time|delivered|support|well)"]),
-    ("transport_on_time", "Transport On Time", "positive",
-     [r"\btransport\b.{0,30}\b(on time|early|smooth)"]),
-    ("team_support", "Good Team Support", "positive",
-     [r"\bteam\b.{0,40}\b(support|helped|collaborat)"]),
+    (
+        "leader_engaged",
+        "School Leadership Engaged",
+        "positive",
+        [
+            r"\b(head ?teacher|school leader|proprietor|leadership)\b.{0,60}\b(available|engaged|supportive|present|welcom|cooperat)"
+        ],
+    ),
+    (
+        "teacher_participation",
+        "Strong Teacher Participation",
+        "positive",
+        [r"\bteachers?\b.{0,50}\b(engaged|participat|active|attentive|enthusias)"],
+    ),
+    (
+        "good_attendance",
+        "Strong Attendance",
+        "positive",
+        [r"\b(good|strong|high|full)\b.{0,15}\b(attendance|turnout)\b"],
+    ),
+    (
+        "partner_coordination",
+        "Good Partner Coordination",
+        "positive",
+        [r"\bpartner\b.{0,50}\b(coordinat|on time|delivered|support|well)"],
+    ),
+    (
+        "transport_on_time",
+        "Transport On Time",
+        "positive",
+        [r"\btransport\b.{0,30}\b(on time|early|smooth)"],
+    ),
+    (
+        "team_support",
+        "Good Team Support",
+        "positive",
+        [r"\bteam\b.{0,40}\b(support|helped|collaborat)"],
+    ),
 ]
 
 _COMPILED = [
@@ -114,7 +251,11 @@ def classify_text(text: str) -> list[str]:
     consolidation happens per theme, so different root causes never merge."""
     if not text:
         return []
-    return [key for key, _label, _kind, pats in _COMPILED if any(p.search(text) for p in pats)]
+    return [
+        key
+        for key, _label, _kind, pats in _COMPILED
+        if any(p.search(text) for p in pats)
+    ]
 
 
 def theme_label(key: str) -> str:
@@ -186,7 +327,9 @@ def _consolidate(debriefs: list[DailyDebrief]) -> list[dict]:
                 c["staff"].add(d.submitted_by_user_id)
                 c["schools"].update(d.linked_school_ids or [])
                 c["districts"].update(
-                    districts.get(s) for s in (d.linked_school_ids or []) if districts.get(s)
+                    districts.get(s)
+                    for s in (d.linked_school_ids or [])
+                    if districts.get(s)
                 )
                 c["activities"].update(d.linked_activity_ids or [])
                 c["dates"].add(str(d.date.date()))
@@ -286,7 +429,9 @@ class WeeklyDebriefReportService:
         return members
 
     @staticmethod
-    def _previous_finalized(scope_kind, scope_id, week_start) -> WeeklyDebriefReport | None:
+    def _previous_finalized(
+        scope_kind, scope_id, week_start
+    ) -> WeeklyDebriefReport | None:
         return (
             WeeklyDebriefReport.objects.filter(
                 scope_kind=scope_kind,
@@ -325,7 +470,10 @@ class WeeklyDebriefReportService:
         snapshot = {
             "week_start": str(start),
             "week_end": str(end),
-            "team": [{"user_id": u, "name": n, "submitted": u in submitted_ids} for u, n in members],
+            "team": [
+                {"user_id": u, "name": n, "submitted": u in submitted_ids}
+                for u, n in members
+            ],
             "totals": {
                 "members": len(members),
                 "reporting": len(submitted_ids),
@@ -338,7 +486,11 @@ class WeeklyDebriefReportService:
             "source_debrief_ids": [d.id for d in debriefs],
         }
         return WeeklyDebriefReportService._store(
-            WeeklyReportScope.PL_TEAM, pl_user.user_id, start, end, snapshot,
+            WeeklyReportScope.PL_TEAM,
+            pl_user.user_id,
+            start,
+            end,
+            snapshot,
             generated_by or pl_user,
         )
 
@@ -348,9 +500,10 @@ class WeeklyDebriefReportService:
     def generate_country_report(cd_user, week_start: date | None = None):
         from apps.accounts.models import StaffProfile, User
 
-        country = getattr(
-            StaffProfile.objects.filter(user=cd_user).first(), "country", None
-        ) or "Unknown"
+        country = (
+            getattr(StaffProfile.objects.filter(user=cd_user).first(), "country", None)
+            or "Unknown"
+        )
         start, end = week_bounds(week_start)
 
         pl_users = list(
@@ -375,7 +528,9 @@ class WeeklyDebriefReportService:
             if r and r.status == WeeklyReportStatus.FINALIZED:
                 pl_reports.append((pl, r))
             else:
-                missing_teams.append({"pl": pl.name, "status": r.status if r else "missing"})
+                missing_teams.append(
+                    {"pl": pl.name, "status": r.status if r else "missing"}
+                )
 
         # Direct country reports (no PL team of their own): PC, IA, Accountant.
         direct_roles = (
@@ -390,7 +545,9 @@ class WeeklyDebriefReportService:
                 is_active=True,
             ).values_list("id", flat=True)
         )
-        direct_debriefs = WeeklyDebriefReportService._week_debriefs(direct_ids, start, end)
+        direct_debriefs = WeeklyDebriefReportService._week_debriefs(
+            direct_ids, start, end
+        )
 
         # Merge PL clusters + direct-report clusters by theme (§5): counts stay
         # unique because staff/school id SETS are merged, never summed blindly.
@@ -399,9 +556,16 @@ class WeeklyDebriefReportService:
             for c in r.snapshot.get("clusters", []):
                 m = merged.setdefault(
                     c["theme"],
-                    {**c, "staff_set": set(), "school_set": set(),
-                     "district_set": set(), "pl_teams": set(), "mentions": 0,
-                     "activities_affected": 0, "sources": []},
+                    {
+                        **c,
+                        "staff_set": set(),
+                        "school_set": set(),
+                        "district_set": set(),
+                        "pl_teams": set(),
+                        "mentions": 0,
+                        "activities_affected": 0,
+                        "sources": [],
+                    },
                 )
                 m["mentions"] += c["mentions"]
                 m["activities_affected"] += c["activities_affected"]
@@ -410,17 +574,22 @@ class WeeklyDebriefReportService:
                 m["district_set"].update(c.get("districts_affected", []))
                 # unique staff can't be re-derived from counts — carry the max
                 # lower bound and the union where ids are present.
-                m["staff_set"].update(
-                    s["debrief_id"] for s in c.get("sources", [])
-                )
+                m["staff_set"].update(s["debrief_id"] for s in c.get("sources", []))
                 m["sources"] += c.get("sources", [])[:2]
         direct_clusters = _consolidate(direct_debriefs)
         for c in direct_clusters:
             m = merged.setdefault(
                 c["theme"],
-                {**c, "staff_set": set(), "school_set": set(),
-                 "district_set": set(), "pl_teams": set(), "mentions": 0,
-                 "activities_affected": 0, "sources": []},
+                {
+                    **c,
+                    "staff_set": set(),
+                    "school_set": set(),
+                    "district_set": set(),
+                    "pl_teams": set(),
+                    "mentions": 0,
+                    "activities_affected": 0,
+                    "sources": [],
+                },
             )
             m["mentions"] += c["mentions"]
             m["activities_affected"] += c["activities_affected"]
@@ -431,9 +600,7 @@ class WeeklyDebriefReportService:
 
         clusters = []
         for m in merged.values():
-            unique_staff_floor = max(
-                m.get("unique_staff", 0), len(m.pop("staff_set"))
-            )
+            unique_staff_floor = max(m.get("unique_staff", 0), len(m.pop("staff_set")))
             schools = m.pop("school_set")
             districts = m.pop("district_set")
             teams = m.pop("pl_teams")
@@ -459,9 +626,7 @@ class WeeklyDebriefReportService:
             "pl_reports_included": len(pl_reports),
             "pl_reports_missing": len(missing_teams),
             "direct_debriefs": len(direct_debriefs),
-            "debriefs": sum(
-                r.snapshot["totals"]["debriefs"] for _, r in pl_reports
-            )
+            "debriefs": sum(r.snapshot["totals"]["debriefs"] for _, r in pl_reports)
             + len(direct_debriefs),
             "schools_supported": len(
                 set().union(
@@ -510,7 +675,9 @@ class WeeklyDebriefReportService:
         if current and current.status == WeeklyReportStatus.DRAFT:
             current.snapshot = snapshot
             current.generated_by_user_id = by.user_id
-            current.save(update_fields=["snapshot", "generated_by_user_id", "updated_at"])
+            current.save(
+                update_fields=["snapshot", "generated_by_user_id", "updated_at"]
+            )
             return current
         version = (current.version + 1) if current else 1
         if current:
@@ -548,7 +715,13 @@ class WeeklyDebriefReportService:
         report.signed_by_user_id = principal.user_id
         report.signed_at = timezone.now()
         report.save(
-            update_fields=["status", "signed_by_user_id", "signed_at", "commentary", "updated_at"]
+            update_fields=[
+                "status",
+                "signed_by_user_id",
+                "signed_at",
+                "commentary",
+                "updated_at",
+            ]
         )
         return report
 
@@ -594,8 +767,16 @@ class WeeklyDebriefReportService:
     def _pdf_safe(text: str) -> str:
         """Core PDF fonts are latin-1; transliterate typographic characters
         rather than crash on an em-dash in someone's narrative."""
-        table = {"\u2014": "-", "\u2013": "-", "\u2018": "'", "\u2019": "'",
-                 "\u201c": '"', "\u201d": '"', "\u2026": "...", "\u00b7": " - "}
+        table = {
+            "\u2014": "-",
+            "\u2013": "-",
+            "\u2018": "'",
+            "\u2019": "'",
+            "\u201c": '"',
+            "\u201d": '"',
+            "\u2026": "...",
+            "\u00b7": " - ",
+        }
         for k, v in table.items():
             text = text.replace(k, v)
         return text.encode("latin-1", "replace").decode("latin-1")
@@ -618,12 +799,24 @@ class WeeklyDebriefReportService:
             pdf.ln(top)
             pdf.set_font("Helvetica", "B", size)
             pdf.set_text_color(13, 91, 158)  # --brand-primary
-            pdf.cell(0, 8, WeeklyDebriefReportService._pdf_safe(text), new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(
+                0,
+                8,
+                WeeklyDebriefReportService._pdf_safe(text),
+                new_x="LMARGIN",
+                new_y="NEXT",
+            )
             pdf.set_text_color(23, 35, 43)
 
         def p(text, size=9.5, style=""):
             pdf.set_font("Helvetica", style, size)
-            pdf.multi_cell(0, 5, WeeklyDebriefReportService._pdf_safe(text), new_x="LMARGIN", new_y="NEXT")
+            pdf.multi_cell(
+                0,
+                5,
+                WeeklyDebriefReportService._pdf_safe(text),
+                new_x="LMARGIN",
+                new_y="NEXT",
+            )
 
         # Cover header
         pdf.set_font("Helvetica", "B", 18)
@@ -634,11 +827,13 @@ class WeeklyDebriefReportService:
         pdf.set_font("Helvetica", "", 10)
         pdf.set_text_color(95, 112, 122)
         pdf.cell(
-            0, 6,
+            0,
+            6,
             f"Reporting week {report.week_start.strftime('%-d %b')} - "
             f"{report.week_end.strftime('%-d %b %Y')}  -  Version {report.version}"
             f"  -  Generated {timezone.localdate().strftime('%-d %b %Y')}",
-            new_x="LMARGIN", new_y="NEXT",
+            new_x="LMARGIN",
+            new_y="NEXT",
         )
         pdf.set_text_color(23, 35, 43)
 
@@ -674,8 +869,21 @@ class WeeklyDebriefReportService:
             h(heading)
             for c in rows:
                 pdf.set_font("Helvetica", "B", 10.5)
-                trend = {"new": "New", "repeated": "Repeated", "worsening": "Worsening", "improving": "Improving"}.get(c.get("trend", ""), "")
-                pdf.multi_cell(0, 5.5, WeeklyDebriefReportService._pdf_safe(f"{c['label']}" + (f"  [{trend}]" if trend else "")), new_x="LMARGIN", new_y="NEXT")
+                trend = {
+                    "new": "New",
+                    "repeated": "Repeated",
+                    "worsening": "Worsening",
+                    "improving": "Improving",
+                }.get(c.get("trend", ""), "")
+                pdf.multi_cell(
+                    0,
+                    5.5,
+                    WeeklyDebriefReportService._pdf_safe(
+                        f"{c['label']}" + (f"  [{trend}]" if trend else "")
+                    ),
+                    new_x="LMARGIN",
+                    new_y="NEXT",
+                )
                 pdf.set_font("Helvetica", "", 9)
                 pdf.set_text_color(95, 112, 122)
                 scope_bits = [
@@ -690,7 +898,13 @@ class WeeklyDebriefReportService:
                 if c.get("pl_teams"):
                     scope_bits.append(f"teams: {', '.join(c['pl_teams'][:4])}")
                 scope_bits.append(f"confidence: {c['confidence']}")
-                pdf.multi_cell(0, 4.5, WeeklyDebriefReportService._pdf_safe(" - ".join(scope_bits)), new_x="LMARGIN", new_y="NEXT")
+                pdf.multi_cell(
+                    0,
+                    4.5,
+                    WeeklyDebriefReportService._pdf_safe(" - ".join(scope_bits)),
+                    new_x="LMARGIN",
+                    new_y="NEXT",
+                )
                 pdf.set_text_color(23, 35, 43)
                 for src in c.get("sources", [])[:2]:
                     p(f'  "{src["excerpt"]}"', size=8.5, style="I")
@@ -703,7 +917,10 @@ class WeeklyDebriefReportService:
         if report.scope_kind == WeeklyReportScope.PL_TEAM and s.get("team"):
             h("Team Submission Status", 11)
             for m in s["team"]:
-                p(f"- {m['name']}: {'submitted' if m['submitted'] else 'NOT submitted'}", size=9)
+                p(
+                    f"- {m['name']}: {'submitted' if m['submitted'] else 'NOT submitted'}",
+                    size=9,
+                )
 
         if report.commentary:
             h("Leadership Commentary", 11)
@@ -717,7 +934,14 @@ class WeeklyDebriefReportService:
             if report.signed_at
             else "Draft - not yet signed"
         )
-        pdf.cell(0, 5, WeeklyDebriefReportService._pdf_safe(f"Edify Planning & Monitoring  -  {signed}  -  Internal use"), align="C")
+        pdf.cell(
+            0,
+            5,
+            WeeklyDebriefReportService._pdf_safe(
+                f"Edify Planning & Monitoring  -  {signed}  -  Internal use"
+            ),
+            align="C",
+        )
 
         return bytes(pdf.output())
 

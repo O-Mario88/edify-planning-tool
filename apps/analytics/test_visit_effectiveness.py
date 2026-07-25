@@ -36,7 +36,10 @@ def _aware(y, m, d):
 class VisitEffectivenessTestBase(TestCase):
     def setUp(self):
         self.cd = User.objects.create_user(
-            email="cd@vfx.org", name="CD", password="x", is_active=True,
+            email="cd@vfx.org",
+            name="CD",
+            password="x",
+            is_active=True,
             roles=[EdifyRole.COUNTRY_DIRECTOR.value],
             active_role=EdifyRole.COUNTRY_DIRECTOR.value,
         )
@@ -51,19 +54,27 @@ class VisitEffectivenessTestBase(TestCase):
 
     def _school(self, sid, name, stype, district=None):
         return School.objects.create(
-            school_id=sid, name=name, school_type=stype,
-            region=self.region, district=district or self.district,
+            school_id=sid,
+            name=name,
+            school_type=stype,
+            region=self.region,
+            district=district or self.district,
             enrollment=100,
         )
 
     def _ssa(self, school, fy, date, avg, status="confirmed", scores=None):
         r = SsaRecord.objects.create(
-            school=school, fy=fy, date_of_ssa=date, average_score=avg,
-            verification_status=status, collector_type="staff",
+            school=school,
+            fy=fy,
+            date_of_ssa=date,
+            average_score=avg,
+            verification_status=status,
+            collector_type="staff",
         )
         for iv in IVS:
             SsaScore.objects.create(
-                ssa_record=r, intervention=iv,
+                ssa_record=r,
+                intervention=iv,
                 score=(scores or {}).get(iv, avg),
             )
         return r
@@ -72,12 +83,25 @@ class VisitEffectivenessTestBase(TestCase):
         self._ssa(school, "2024", _aware(2024, 5, 10), base_avg, scores=base_scores)
         self._ssa(school, "2026", _aware(2026, 6, 10), follow_avg)
 
-    def _visit(self, school, date, status="ia_verified", delivery="staff",
-               atype="school_visit", focus=None):
+    def _visit(
+        self,
+        school,
+        date,
+        status="ia_verified",
+        delivery="staff",
+        atype="school_visit",
+        focus=None,
+    ):
         return Activity.objects.create(
-            school=school, activity_type=atype, delivery_type=delivery,
-            status=status, fy="2026", quarter="Q2", planned_date=date,
-            focus_intervention=focus, responsible_staff_id="staff-1",
+            school=school,
+            activity_type=atype,
+            delivery_type=delivery,
+            status=status,
+            fy="2026",
+            quarter="Q2",
+            planned_date=date,
+            focus_intervention=focus,
+            responsible_staff_id="staff-1",
         )
 
 
@@ -146,10 +170,15 @@ class VisitWindowTests(VisitEffectivenessTestBase):
     def test_staff_and_partner_delivery_never_blur(self):
         c = S.build_cohort(self.cd)  # noqa: F841 — cohort must exist first
         self._visit(self.core, dt.date(2025, 5, 1), delivery="staff")
-        self._visit(self.core, dt.date(2025, 5, 2), delivery="partner",
-                    atype="partner_ssa_collection")
-        self._visit(self.core, dt.date(2025, 5, 3), delivery="partner",
-                    atype="school_visit")
+        self._visit(
+            self.core,
+            dt.date(2025, 5, 2),
+            delivery="partner",
+            atype="partner_ssa_collection",
+        )
+        self._visit(
+            self.core, dt.date(2025, 5, 3), delivery="partner", atype="school_visit"
+        )
         d = S.build_dashboard(self.cd, {})
         self.assertEqual(d["coverage"]["staff_visits"], 1)
         self.assertEqual(d["coverage"]["partner_visits"], 2)
@@ -174,10 +203,12 @@ class AlignmentAndLanguageTests(VisitEffectivenessTestBase):
         weak_scores[SsaIntervention.ENROLMENT] = 2.5
         self._pair(self.core, base_scores=weak_scores)
         c = S.build_cohort(self.cd)
-        aligned = self._visit(self.core, dt.date(2025, 5, 1),
-                              focus=SsaIntervention.LEADERSHIP)
-        unaligned = self._visit(self.core, dt.date(2025, 5, 2),
-                                focus=SsaIntervention.FINANCIAL_HEALTH)
+        aligned = self._visit(
+            self.core, dt.date(2025, 5, 1), focus=SsaIntervention.LEADERSHIP
+        )
+        unaligned = self._visit(
+            self.core, dt.date(2025, 5, 2), focus=SsaIntervention.FINANCIAL_HEALTH
+        )
         v = S._alignment(c, S.visit_frame(c))
         row = v.set_index("id")
         self.assertTrue(bool(row.loc[aligned.id, "aligned"]))
@@ -198,8 +229,12 @@ class ScopeAndSnapshotTests(VisitEffectivenessTestBase):
     def test_role_without_school_scope_sees_nothing(self):
         self._pair(self.core)
         cceo = User.objects.create_user(
-            email="cceo@vfx.org", name="C", password="x", is_active=True,
-            roles=[EdifyRole.CCEO.value], active_role=EdifyRole.CCEO.value,
+            email="cceo@vfx.org",
+            name="C",
+            password="x",
+            is_active=True,
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
         )
         StaffProfile.objects.create(user=cceo, country="Uganda")
         d = S.build_dashboard(cceo, {})

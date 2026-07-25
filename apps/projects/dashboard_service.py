@@ -116,9 +116,7 @@ def _resolve_filters(raw: dict | None) -> dict:
              on the derived portfolio rows (status is not stored).
     """
     raw = raw or {}
-    fy = _clean_choice(
-        raw.get("fy"), set(fy_options()), default=get_operational_fy()
-    )
+    fy = _clean_choice(raw.get("fy"), set(fy_options()), default=get_operational_fy())
     ptype = _clean_choice(raw.get("type"), set(ProjectCategory.values))
     status = _clean_choice(raw.get("status"), set(STATUS_FILTER_LABELS))
     return {"fy": fy, "type": ptype, "status": status}

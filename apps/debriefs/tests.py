@@ -1526,16 +1526,11 @@ class DailyDebriefFlowTests(FieldDebriefTestBase):
     # ── Routing + visibility (§9, §31) ──────────────────────────────────────
     def test_submission_routes_to_supervising_pl_and_is_visible_in_scopes(self):
         d = self.flow.submit(self.cceo, self._answers(), self.today)
-        self.assertTrue(
-            d.recipients.filter(recipient_user_id=self.pl.user_id).exists()
-        )
+        self.assertTrue(d.recipients.filter(recipient_user_id=self.pl.user_id).exists())
         for reader in (self.pl, self.cd, self.hr):
             self.assertIn(
                 d.id,
-                {
-                    x.id
-                    for x in FieldDebriefService.scoped_queryset(reader)
-                },
+                {x.id for x in FieldDebriefService.scoped_queryset(reader)},
                 f"{reader.active_role} must see the daily debrief",
             )
         # Another PL's team must NOT see it (§31 cross-team block).

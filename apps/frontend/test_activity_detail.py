@@ -38,7 +38,11 @@ class ActivityDetailLayoutTest(TestCase):
                 self.assertIn(title, self.src)
 
     def test_each_action_says_what_it_does(self):
-        for label in ("Complete Activity", "Reschedule Activity", "Discuss This Activity"):
+        for label in (
+            "Complete Activity",
+            "Reschedule Activity",
+            "Discuss This Activity",
+        ):
             self.assertIn(label, self.src)
         self.assertIn("Mark activity as completed", self.src)
 
@@ -64,9 +68,7 @@ class ActivityTimelineTest(TestCase):
         self.school = School.objects.create(
             school_id="DET-1", name="Detail Primary", region=region, district=district
         )
-        StaffSchoolAssignment.objects.create(
-            staff=self.staff, school_id=self.school.id
-        )
+        StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
         self.client = Client()
         self.client.force_login(self.user)
 

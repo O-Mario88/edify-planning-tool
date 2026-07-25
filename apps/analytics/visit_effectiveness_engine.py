@@ -135,8 +135,14 @@ class SchoolVisitEffectivenessAnalyticsService:
         schools_qs = scoped_school_queryset(scope).filter(deleted_at__isnull=True)
         schools = pd.DataFrame(
             schools_qs.values(
-                "id", "name", "school_type", "district_id", "district__name",
-                "region_id", "region__name", "district__sub_region__name",
+                "id",
+                "name",
+                "school_type",
+                "district_id",
+                "district__name",
+                "region_id",
+                "region__name",
+                "district__sub_region__name",
             )
         )
         excluded: dict[str, int] = {}
@@ -234,11 +240,21 @@ class SchoolVisitEffectivenessAnalyticsService:
             )
             .exclude(status__in=EXCLUDED_VISIT_STATUSES)
             .values(
-                "id", "school_id", "activity_type", "status", "delivery_type",
-                "assigned_partner_id", "responsible_staff_id", "scheduled_date",
-                "planned_date", "focus_intervention", "purpose_intervention",
-                "secondary_focus_interventions", "ia_verification_status",
-                "evidence_status", "salesforce_activity_id",
+                "id",
+                "school_id",
+                "activity_type",
+                "status",
+                "delivery_type",
+                "assigned_partner_id",
+                "responsible_staff_id",
+                "scheduled_date",
+                "planned_date",
+                "focus_intervention",
+                "purpose_intervention",
+                "secondary_focus_interventions",
+                "ia_verification_status",
+                "evidence_status",
+                "salesforce_activity_id",
             )
         )
         if visits.empty:
@@ -259,9 +275,7 @@ class SchoolVisitEffectivenessAnalyticsService:
             & (visits["visit_date"] <= visits["followup_date"])
         ].copy()
 
-        visits["purpose"] = (
-            visits["activity_type"].map(PURPOSE_BY_TYPE).fillna("other")
-        )
+        visits["purpose"] = visits["activity_type"].map(PURPOSE_BY_TYPE).fillna("other")
         visits["executor"] = visits["delivery_type"].where(
             visits["delivery_type"].isin(["staff", "partner"]), "staff"
         )
@@ -311,7 +325,10 @@ class SchoolVisitEffectivenessAnalyticsService:
         scope = resolve_user_scope(principal)
         baseline_fy = query.get("baseline_fy") or DEFAULT_BASELINE_FY
         followup_fy = query.get("followup_fy") or DEFAULT_FOLLOWUP_FY
-        if baseline_fy in EXCLUDED_ASSESSMENT_FYS or followup_fy in EXCLUDED_ASSESSMENT_FYS:
+        if (
+            baseline_fy in EXCLUDED_ASSESSMENT_FYS
+            or followup_fy in EXCLUDED_ASSESSMENT_FYS
+        ):
             baseline_fy, followup_fy = DEFAULT_BASELINE_FY, DEFAULT_FOLLOWUP_FY
 
         svc = SchoolVisitEffectivenessAnalyticsService
@@ -353,12 +370,21 @@ class SchoolVisitEffectivenessAnalyticsService:
             },
             "cohort": {
                 "comparable_schools": n,
-                "core": int((cohort.schools["school_type"] == "core").sum()) if n else 0,
-                "client": int((cohort.schools["school_type"] == "client").sum()) if n else 0,
+                "core": int((cohort.schools["school_type"] == "core").sum())
+                if n
+                else 0,
+                "client": int((cohort.schools["school_type"] == "client").sum())
+                if n
+                else 0,
                 "excluded": cohort.excluded,
                 "sample_quality": (
-                    "none" if n == 0 else "very limited" if n < MIN_GROUP_N
-                    else "limited" if n < 30 else "adequate"
+                    "none"
+                    if n == 0
+                    else "very limited"
+                    if n < MIN_GROUP_N
+                    else "limited"
+                    if n < 30
+                    else "adequate"
                 ),
             },
         }
@@ -369,8 +395,16 @@ class SchoolVisitEffectivenessAnalyticsService:
 
         # ── coverage + delivery ────────────────────────────────────────────
         visited_ids = set(delivered["school_id"]) if not delivered.empty else set()
-        staff_v = delivered[delivered["executor"] == "staff"] if not delivered.empty else delivered
-        partner_v = delivered[delivered["executor"] == "partner"] if not delivered.empty else delivered
+        staff_v = (
+            delivered[delivered["executor"] == "staff"]
+            if not delivered.empty
+            else delivered
+        )
+        partner_v = (
+            delivered[delivered["executor"] == "partner"]
+            if not delivered.empty
+            else delivered
+        )
         pdc = (
             partner_v[partner_v["purpose"] == "data_collection"]
             if not partner_v.empty
@@ -401,15 +435,20 @@ class SchoolVisitEffectivenessAnalyticsService:
                 round(aligned / with_focus, 3) if with_focus else None
             ),
             "evidence_rate": round(int(delivered["has_evidence"].sum()) / dv, 3)
-            if not delivered.empty else 0,
+            if not delivered.empty
+            else 0,
             "salesforce_rate": round(int(delivered["has_salesforce"].sum()) / dv, 3)
-            if not delivered.empty else 0,
+            if not delivered.empty
+            else 0,
             "ia_clearance_rate": round(int(delivered["ia_cleared"].sum()) / dv, 3)
-            if not delivered.empty else 0,
+            if not delivered.empty
+            else 0,
             "funnel": {
                 "scheduled": int(len(visits)),
                 "delivered": int(len(delivered)),
-                "evidence": int(delivered["has_evidence"].sum()) if not delivered.empty else 0,
+                "evidence": int(delivered["has_evidence"].sum())
+                if not delivered.empty
+                else 0,
                 "aligned": aligned,
                 "followup_ssa_available": n,  # cohort definition guarantees it
             },
@@ -418,7 +457,9 @@ class SchoolVisitEffectivenessAnalyticsService:
         # ── SSA change (overall + per intervention, association language) ──
         sch = cohort.schools.copy()
         counts = (
-            delivered.groupby("school_id").size() if not delivered.empty else pd.Series(dtype=int)
+            delivered.groupby("school_id").size()
+            if not delivered.empty
+            else pd.Series(dtype=int)
         )
         sch["visit_count"] = sch["id"].map(counts.to_dict()).fillna(0).astype(int)
         improved = int((sch["overall_delta"] > 0.05).sum())
@@ -489,7 +530,9 @@ class SchoolVisitEffectivenessAnalyticsService:
             {
                 "key": k,
                 "label": PURPOSE_LABELS[k],
-                "count": int((delivered["purpose"] == k).sum()) if not delivered.empty else 0,
+                "count": int((delivered["purpose"] == k).sum())
+                if not delivered.empty
+                else 0,
             }
             for k in PURPOSE_LABELS
         ]
@@ -501,18 +544,27 @@ class SchoolVisitEffectivenessAnalyticsService:
         }
         med_visits = float(sch["visit_count"].median())
         quads = {
-            "replicate": sch[(sch["visit_count"] <= med_visits) & (sch["overall_delta"] > 0.05)],
-            "review_purpose": sch[(sch["visit_count"] > med_visits) & (sch["overall_delta"] <= 0.05)],
-            "efficient": sch[(sch["visit_count"] <= med_visits) & (sch["overall_delta"] > 0.5)],
-            "intervene": sch[(sch["visit_count"] > med_visits) & (sch["overall_delta"] < -0.05)],
+            "replicate": sch[
+                (sch["visit_count"] <= med_visits) & (sch["overall_delta"] > 0.05)
+            ],
+            "review_purpose": sch[
+                (sch["visit_count"] > med_visits) & (sch["overall_delta"] <= 0.05)
+            ],
+            "efficient": sch[
+                (sch["visit_count"] <= med_visits) & (sch["overall_delta"] > 0.5)
+            ],
+            "intervene": sch[
+                (sch["visit_count"] > med_visits) & (sch["overall_delta"] < -0.05)
+            ],
         }
         out["quadrants"] = {
             k: {
                 "count": int(len(v)),
                 "schools": (
-                    v.sort_values("overall_delta").head(8)[
-                        ["name", "visit_count", "overall_delta", "district__name"]
-                    ].round(2).to_dict("records")
+                    v.sort_values("overall_delta")
+                    .head(8)[["name", "visit_count", "overall_delta", "district__name"]]
+                    .round(2)
+                    .to_dict("records")
                     if out["scope"]["can_view_school_details"]
                     else []
                 ),
@@ -555,10 +607,14 @@ class SchoolVisitEffectivenessAnalyticsService:
                 {
                     "core": scatter[scatter["school_type"] == "core"][
                         ["visit_count", "overall_delta"]
-                    ].values.round(2).tolist(),
+                    ]
+                    .values.round(2)
+                    .tolist(),
                     "client": scatter[scatter["school_type"] == "client"][
                         ["visit_count", "overall_delta"]
-                    ].values.round(2).tolist(),
+                    ]
+                    .values.round(2)
+                    .tolist(),
                 }
             ),
             "purpose": json.dumps(

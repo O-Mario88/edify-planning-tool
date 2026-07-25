@@ -71,7 +71,5 @@ def sidebar_context(request):
         # withholds it when there is nowhere else to switch to, since a
         # one-section strip is decoration rather than navigation.
         "workspace": workspace,
-        "in_analytics_workspace": bool(
-            workspace and workspace["key"] == "analytics"
-        ),
+        "in_analytics_workspace": bool(workspace and workspace["key"] == "analytics"),
     }

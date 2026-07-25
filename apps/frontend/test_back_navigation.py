@@ -49,8 +49,10 @@ DRILL_DOWN_PAGES = [
     "core_schools/champions.html",
 ]
 
-INCLUDE = re.compile(r'\{%\s*include\s+"partials/_back_link\.html"\s+with\s+'
-                     r'back_href="(?P<href>[^"]+)"\s+back_label="(?P<label>[^"]+)"')
+INCLUDE = re.compile(
+    r'\{%\s*include\s+"partials/_back_link\.html"\s+with\s+'
+    r'back_href="(?P<href>[^"]+)"\s+back_label="(?P<label>[^"]+)"'
+)
 
 
 class BackControlCoverageTest(TestCase):
@@ -61,9 +63,7 @@ class BackControlCoverageTest(TestCase):
                 self.assertTrue(path.exists(), f"{rel} moved or was deleted")
                 src = path.read_text()
                 match = INCLUDE.search(src)
-                self.assertIsNotNone(
-                    match, f"{rel} has no shared back control"
-                )
+                self.assertIsNotNone(match, f"{rel} has no shared back control")
                 self.assertTrue(match.group("href").startswith("/"))
                 self.assertTrue(match.group("label").strip())
 

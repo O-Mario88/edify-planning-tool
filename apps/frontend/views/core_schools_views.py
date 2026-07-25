@@ -110,7 +110,9 @@ def core_schools_view(request):
             "latest_avg": latest["avg"],
             "baseline_label": first["label"],
             "change": change,
-            "direction": "Improving" if change > 0 else ("Declining" if change < 0 else "Stable"),
+            "direction": "Improving"
+            if change > 0
+            else ("Declining" if change < 0 else "Stable"),
             "assessments": latest["n"],
             "periods": len(overall_trend),
         }

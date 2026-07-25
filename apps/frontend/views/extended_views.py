@@ -751,9 +751,7 @@ def reports_view(request):
                 # A period with no target has nothing to be a percentage of,
                 # so it gets no ring rather than an empty one.
                 "gauge": (
-                    build_gauge(
-                        pct, label="Achieved", color=_reports_pct_colour(pct)
-                    )
+                    build_gauge(pct, label="Achieved", color=_reports_pct_colour(pct))
                     if target is not None
                     else None
                 ),

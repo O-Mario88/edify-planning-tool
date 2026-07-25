@@ -1268,14 +1268,14 @@ def _calendar_month_window(request):
 # apps.core.activity_types so a new activity type joins the right colour by
 # being added to the group it belongs to, not to a second list here.
 CALENDAR_COLOURS = {
-    "visit": "#0d5b9e",           # school visits — blue
+    "visit": "#0d5b9e",  # school visits — blue
     "cluster_meeting": "#10b981",  # cluster meetings — green
     "cluster_training": "#f97316",  # cluster trainings — orange
-    "other": "#64748b",           # anything else — quiet slate
-    "leave": "#e11d48",           # leave — red
-    "leave_pending": "#fb7185",   # leave not yet approved — lighter red
+    "other": "#64748b",  # anything else — quiet slate
+    "leave": "#e11d48",  # leave — red
+    "leave_pending": "#fb7185",  # leave not yet approved — lighter red
     "coverage": "#6366f1",
-    "holiday": "#94a3b8",         # public holidays — grey
+    "holiday": "#94a3b8",  # public holidays — grey
     "blackout": "#475569",
     "conference": "#a855f7",
 }

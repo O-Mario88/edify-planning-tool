@@ -47,7 +47,7 @@ class OverdueRowMenuMarkupTest(TestCase):
 
 
 class DebriefFocusActivityTest(TestCase):
-    """"Discuss this activity" has to arrive with its subject. An overdue
+    """ "Discuss this activity" has to arrive with its subject. An overdue
     activity is by definition not planned for today, so the daily form would
     not have listed it."""
 
@@ -69,9 +69,7 @@ class DebriefFocusActivityTest(TestCase):
             region=region,
             district=district,
         )
-        StaffSchoolAssignment.objects.create(
-            staff=self.staff, school_id=self.school.id
-        )
+        StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
         self.today = timezone.localdate()
         # Overdue: planned well before today.
         self.overdue = Activity.objects.create(
@@ -86,9 +84,7 @@ class DebriefFocusActivityTest(TestCase):
 
     def test_an_overdue_activity_is_carried_into_todays_form(self):
         without = DailyDebriefFlowService.get_state(self.user, self.today)
-        self.assertNotIn(
-            self.overdue.id, [r["activity"].id for r in without["rows"]]
-        )
+        self.assertNotIn(self.overdue.id, [r["activity"].id for r in without["rows"]])
 
         with_focus = DailyDebriefFlowService.get_state(
             self.user, self.today, focus_activity_id=self.overdue.id

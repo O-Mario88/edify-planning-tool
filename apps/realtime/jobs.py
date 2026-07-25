@@ -226,7 +226,9 @@ def daily_debrief_reminders_job():
         from apps.notifications.services import WorkflowNotificationService
 
         now = tz.localtime()
-        target = tz.localdate() if now.hour >= 12 else tz.localdate() - timedelta(days=1)
+        target = (
+            tz.localdate() if now.hour >= 12 else tz.localdate() - timedelta(days=1)
+        )
         when = "today" if target == tz.localdate() else "yesterday"
         reminded = 0
         for user in User.objects.filter(

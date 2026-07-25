@@ -147,8 +147,15 @@ def build_gauge(
     reads full — which is why every caller here passes one.
     """
     return build_rings(
-        [{"key": "gauge", "label": label, "value": value, "color": color,
-          "display": display}],
+        [
+            {
+                "key": "gauge",
+                "label": label,
+                "value": value,
+                "color": color,
+                "display": display,
+            }
+        ],
         share_of=share_of,
         size=GAUGE_SIZE,
         stroke=GAUGE_STROKE,

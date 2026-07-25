@@ -25,16 +25,12 @@ def visit_effectiveness_view(request):
         "baseline_fy": request.GET.get("baseline_fy") or None,
         "followup_fy": request.GET.get("followup_fy") or None,
     }
-    data = SchoolVisitEffectivenessAnalyticsService.build_dashboard(
-        request.user, query
-    )
+    data = SchoolVisitEffectivenessAnalyticsService.build_dashboard(request.user, query)
 
     role = getattr(request.user, "active_role", "")
     context = {
         "d": data,
-        "chart_payload": {
-            k: json.loads(v) for k, v in data.get("charts", {}).items()
-        },
+        "chart_payload": {k: json.loads(v) for k, v in data.get("charts", {}).items()},
         "selected_school_type": query["school_type"] or "",
         "is_field_role": role in ("CCEO", "ProjectCoordinator"),
         "is_pl": role == "Program Lead",
@@ -72,8 +68,6 @@ def _debrief_context(principal) -> list[dict]:
             .order_by("-date")[:400]
         )
         clusters = _consolidate(debriefs)
-        return [
-            c for c in clusters if c["kind"] == "challenge"
-        ][:6]
+        return [c for c in clusters if c["kind"] == "challenge"][:6]
     except Exception:  # context enrichment must never break the analysis page
         return []

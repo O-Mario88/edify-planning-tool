@@ -1190,8 +1190,11 @@ class CoreStaffPartnerPerformanceService:
 
         def _initials(name):
             parts = [w for w in (name or "").split() if w]
-            return ((parts[0][0] + (parts[-1][0] if len(parts) > 1 else "")).upper()
-                    if parts else "–")
+            return (
+                (parts[0][0] + (parts[-1][0] if len(parts) > 1 else "")).upper()
+                if parts
+                else "–"
+            )
 
         # A row appears only for staff who actually own schools in scope; a
         # portfolio with no scored schools reads "insufficient", never 0.

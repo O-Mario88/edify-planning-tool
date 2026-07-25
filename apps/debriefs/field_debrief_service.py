@@ -1132,9 +1132,7 @@ class DailyDebriefFlowService:
             from apps.activities.models import Activity
 
             schools = dict(
-                Activity.objects.filter(id__in=new_ids).values_list(
-                    "id", "school_id"
-                )
+                Activity.objects.filter(id__in=new_ids).values_list("id", "school_id")
             )
             DailyDebriefActivityLink.objects.bulk_create(
                 DailyDebriefActivityLink(
@@ -1188,8 +1186,8 @@ class DailyDebriefFlowService:
             DebriefStatus.CLARIFICATION_REQUESTED,
             DebriefStatus.RETURNED,
         )
-        debrief.status = DebriefStatus.UPDATED if was_returned else (
-            DebriefStatus.SUBMITTED
+        debrief.status = (
+            DebriefStatus.UPDATED if was_returned else (DebriefStatus.SUBMITTED)
         )
         debrief.submitted_at = timezone.now()
         debrief.save(update_fields=["status", "submitted_at"])

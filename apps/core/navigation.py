@@ -606,8 +606,7 @@ def build_sections(registry, user, current_path: str = "") -> list[dict]:
         # Overview points at /analytics/program-lead. Without this the section
         # bar vanished on exactly the page the workspace is named after.
         active = _path_matches(url, current_path, match) or (
-            url != section["url"]
-            and _path_matches(section["url"], current_path, match)
+            url != section["url"] and _path_matches(section["url"], current_path, match)
         )
         sections.append(
             {
@@ -1197,9 +1196,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                     # Keep the personal workspace available on first load;
                     # every other group opens only when it contains the page.
                     "expanded": (
-                        has_active_item
-                        or standalone
-                        or sec["group_label"] == "MY WORK"
+                        has_active_item or standalone or sec["group_label"] == "MY WORK"
                     ),
                 }
             )

@@ -201,7 +201,9 @@ class OpenConversationControlTests(EngineFixture):
     #: The sidebar also links to /performance-conversation, so the assertions
     #: below pin the header control itself rather than the bare URL.
     ENABLED = '<a data-control="open-conversation" href="/performance-conversation"'
-    DISABLED = '<span data-control="open-conversation" role="button" aria-disabled="true"'
+    DISABLED = (
+        '<span data-control="open-conversation" role="button" aria-disabled="true"'
+    )
 
     def _body(self):
         self.client.force_login(self.cceo)

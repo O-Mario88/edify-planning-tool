@@ -21,7 +21,7 @@ TEMPLATES = ROOT / "templates"
 # of a page painting its own tab strip.
 CONTAINER_PAINT = re.compile(
     r'role="tablist"[^>]*class="[^"]*'
-    r'(bg-slate-\d|bg-white|rounded-surface|rounded-control|\bp-1\b|border\b)'
+    r"(bg-slate-\d|bg-white|rounded-surface|rounded-control|\bp-1\b|border\b)"
 )
 TAB_PAINT = re.compile(
     r'role="tab"(?:[^>]|\n)*?class="[^"]*(btn-premium|edify-primary-solid|shadow-sm)'
@@ -39,9 +39,9 @@ class TabContractTest(TestCase):
         self.assertIn("border-radius: 0", block)
 
     def test_the_selected_tab_is_marked_by_an_underline(self):
-        block = self.css.split(
-            'main :where([role="tab"][aria-selected="true"]', 1
-        )[1].split("}", 1)[0]
+        block = self.css.split('main :where([role="tab"][aria-selected="true"]', 1)[
+            1
+        ].split("}", 1)[0]
         self.assertIn("border-block-end-color: var(--edify-accent)", block)
         self.assertIn("background: transparent", block)
         self.assertIn("box-shadow: none", block)

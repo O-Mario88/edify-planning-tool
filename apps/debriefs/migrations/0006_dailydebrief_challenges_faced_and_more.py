@@ -4,24 +4,27 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('debriefs', '0005_alter_dailydebrief_intervention_tags_and_more'),
+        ("debriefs", "0005_alter_dailydebrief_intervention_tags_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dailydebrief',
-            name='challenges_faced',
+            model_name="dailydebrief",
+            name="challenges_faced",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='dailydebrief',
-            name='other_work_description',
+            model_name="dailydebrief",
+            name="other_work_description",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddConstraint(
-            model_name='dailydebrief',
-            constraint=models.UniqueConstraint(condition=models.Q(('deleted_at__isnull', True), ('kind', 'daily')), fields=('submitted_by_user_id', 'date'), name='uniq_daily_debrief_per_user_per_day'),
+            model_name="dailydebrief",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("deleted_at__isnull", True), ("kind", "daily")),
+                fields=("submitted_by_user_id", "date"),
+                name="uniq_daily_debrief_per_user_per_day",
+            ),
         ),
     ]

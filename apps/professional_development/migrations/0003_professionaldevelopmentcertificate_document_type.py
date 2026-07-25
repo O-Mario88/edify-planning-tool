@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('professional_development', '0002_pdroleallocation'),
+        ("professional_development", "0002_pdroleallocation"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='professionaldevelopmentcertificate',
-            name='document_type',
-            field=models.CharField(choices=[('certificate', 'Certificate'), ('transcript', 'Transcript')], default='certificate', max_length=16),
+            model_name="professionaldevelopmentcertificate",
+            name="document_type",
+            field=models.CharField(
+                choices=[("certificate", "Certificate"), ("transcript", "Transcript")],
+                default="certificate",
+                max_length=16,
+            ),
         ),
     ]

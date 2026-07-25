@@ -5,18 +5,28 @@ from apps.projects.models import Project, ProjectCategory
 
 
 def _user(email, name, role):
-    u = User.objects.create_user(email=email, name=name, roles=[role], active_role=role,
-                                 password="pw12345678", is_active=True)
+    u = User.objects.create_user(
+        email=email,
+        name=name,
+        roles=[role],
+        active_role=role,
+        password="pw12345678",
+        is_active=True,
+    )
     return u
 
 
 class ProjectsFiltersSmokeTests(TestCase):
     def setUp(self):
         self.admin = _user("admin@t.org", "Admin", EdifyRole.ADMIN.value)
-        self.pilot = Project.objects.create(name="SP-PILOT", code="SP-PILOT",
-                                            category=ProjectCategory.PILOT.value)
-        self.intv = Project.objects.create(name="SP-INTV", code="SP-INTV",
-                                           category=ProjectCategory.INTERVENTION_SPECIFIC.value)
+        self.pilot = Project.objects.create(
+            name="SP-PILOT", code="SP-PILOT", category=ProjectCategory.PILOT.value
+        )
+        self.intv = Project.objects.create(
+            name="SP-INTV",
+            code="SP-INTV",
+            category=ProjectCategory.INTERVENTION_SPECIFIC.value,
+        )
         self.c = Client()
         self.c.force_login(self.admin)
 
@@ -30,7 +40,7 @@ class ProjectsFiltersSmokeTests(TestCase):
         self.assertContains(r, 'name="type"')
         self.assertContains(r, 'name="status"')
         # drawer route is live, not a 404 link
-        self.assertContains(r, '/projects/filters-drawer')
+        self.assertContains(r, "/projects/filters-drawer")
         self.assertContains(r, 'id="project-list"')
 
     def test_filtered_view_by_type(self):
@@ -51,8 +61,11 @@ class ProjectsFiltersSmokeTests(TestCase):
         self.assertContains(r, "Project Type")
 
     def test_htmx_partial_branch(self):
-        r = self.c.get("/projects", {"type": ProjectCategory.PILOT.value},
-                       HTTP_HX_TARGET="project-list")
+        r = self.c.get(
+            "/projects",
+            {"type": ProjectCategory.PILOT.value},
+            HTTP_HX_TARGET="project-list",
+        )
         self.assertEqual(r.status_code, 200)
         # partial should NOT contain the full page chrome
         self.assertNotContains(r, "Upcoming Follow-Ups")

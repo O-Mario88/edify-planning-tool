@@ -110,9 +110,7 @@ class CompletionUploadTest(TestCase):
         )
         StaffProfile.objects.create(user=other, title="CCEO")
         with self.assertRaises(Exception):
-            PDCourseTrackingService.upload_certificate(
-                self.request.id, other, _pdf()
-            )
+            PDCourseTrackingService.upload_certificate(self.request.id, other, _pdf())
 
 
 class CompletionUploadSurfaceTest(TestCase):
