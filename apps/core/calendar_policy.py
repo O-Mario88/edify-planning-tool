@@ -171,10 +171,28 @@ class SchedulingPolicyService:
 
         if user and sp:
             d_str = d.isoformat()
-            if Leave.objects.filter(
-                staff=sp, status="approved", start_date__lte=d_str, end_date__gte=d_str
-            ).exists():
-                blockers.append(f"{user.name} is on approved leave on this date.")
+            approved_leave = (
+                Leave.objects.filter(
+                    staff=sp,
+                    status="approved",
+                    start_date__lte=d_str,
+                    end_date__gte=d_str,
+                )
+                .select_related("covering_staff__user")
+                .first()
+            )
+            if approved_leave:
+                # Name the person covering. Work during someone's leave is not
+                # forbidden outright — it belongs to whoever is covering for
+                # them — so a refusal that does not say who that is leaves the
+                # scheduler to go and find out.
+                cover = getattr(
+                    getattr(approved_leave.covering_staff, "user", None), "name", ""
+                )
+                message = f"{user.name} is on approved leave on this date."
+                if cover:
+                    message += f" {cover} is covering — schedule this to them instead."
+                blockers.append(message)
             elif Leave.objects.filter(
                 staff=sp, status="pending", start_date__lte=d_str, end_date__gte=d_str
             ).exists():
