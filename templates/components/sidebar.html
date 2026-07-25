@@ -60,15 +60,73 @@
   </nav>
 </div>
 
-<!-- User Profile Area at the bottom -->
-<div class="app-sidebar__footer">
-  <div class="app-sidebar__user">
-    <span class="app-sidebar__user-avatar" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--edify-surface-raised);background:linear-gradient(135deg,var(--edify-accent),var(--edify-accent-hover));">
-      {{ request.user.name|avatar_initials }}
-    </span>
-    <div class="app-sidebar__user-info">
-      <span class="app-sidebar__user-name">{% if request.user.is_authenticated %}{{ request.user.name }}{% else %}Guest User{% endif %}</span>
-      <span class="app-sidebar__user-role">{% if request.user.is_authenticated %}{{ request.user.active_role }}{% else %}Visitor{% endif %}</span>
+{% comment %}
+Settings live in the bottom-left corner. This used to be a decorative avatar —
+it showed who you were and did nothing — while the only way into settings was
+a menu behind the topbar avatar. The gear is the control now, and the settings
+themselves hang off it: appearance switches the real theme store, and the rest
+are the same destinations the Settings page offers.
+
+The signed-in name and role stay as the control's label, because knowing which
+account you are in is the other thing this corner is for.
+{% endcomment %}
+<div class="app-sidebar__footer" x-data="{ settingsOpen: false }" @keydown.escape.window="settingsOpen = false">
+  <div class="app-sidebar__settings" @click.outside="settingsOpen = false">
+    <button type="button"
+            class="app-sidebar__user app-sidebar__settings-trigger"
+            @click="settingsOpen = !settingsOpen"
+            :aria-expanded="settingsOpen ? 'true' : 'false'"
+            aria-haspopup="true"
+            aria-label="Settings and account">
+      <span class="app-sidebar__user-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </span>
+      <div class="app-sidebar__user-info">
+        <span class="app-sidebar__user-name">{% if request.user.is_authenticated %}{{ request.user.name }}{% else %}Guest User{% endif %}</span>
+        <span class="app-sidebar__user-role">{% if request.user.is_authenticated %}{{ request.user.active_role }}{% else %}Visitor{% endif %}</span>
+      </div>
+      <svg class="app-sidebar__settings-caret" :class="settingsOpen ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+    </button>
+
+    <div class="app-sidebar__settings-menu"
+         x-show="settingsOpen"
+         x-cloak
+         x-transition.opacity.duration.120ms
+         role="menu"
+         aria-label="Settings">
+
+      <p class="app-sidebar__settings-heading">Appearance</p>
+      <div class="app-sidebar__theme-row" role="group" aria-label="Workspace theme">
+        <button type="button" role="menuitemradio" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('system')"
+                :aria-checked="$store.theme.preference === 'system' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'system' ? 'is-active' : ''">System</button>
+        <button type="button" role="menuitemradio" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('light')"
+                :aria-checked="$store.theme.preference === 'light' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'light' ? 'is-active' : ''">Light</button>
+        <button type="button" role="menuitemradio" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('blue')"
+                :aria-checked="$store.theme.preference === 'blue' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'blue' ? 'is-active' : ''">Edify Blue</button>
+        <button type="button" role="menuitemradio" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('dark')"
+                :aria-checked="$store.theme.preference === 'dark' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'dark' ? 'is-active' : ''">Night black</button>
+      </div>
+
+      <div class="app-sidebar__settings-divider" role="separator"></div>
+
+      <a href="/settings" class="app-sidebar__settings-item" role="menuitem">All settings</a>
+      <a href="/profile" class="app-sidebar__settings-item" role="menuitem">My profile</a>
+      <a href="/change-password" class="app-sidebar__settings-item" role="menuitem">Change password</a>
+      <a href="/notifications" class="app-sidebar__settings-item" role="menuitem">Notification centre</a>
+
+      <div class="app-sidebar__settings-divider" role="separator"></div>
+
+      <form method="post" action="/logout" class="m-0">{% csrf_token %}
+        <button type="submit" class="app-sidebar__settings-item app-sidebar__settings-item--danger" role="menuitem">Sign out</button>
+      </form>
     </div>
   </div>
 
