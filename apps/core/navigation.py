@@ -717,26 +717,16 @@ SIDEBAR_ITEMS = [
                 "url": "/my-targets",
                 "page_key": "my_target",
             },
-            {
-                "label": "Conversations",
-                "url": "/performance-conversation",
-                "page_key": "performance_conversations",
-            },
-            {
-                "label": "Development Plans",
-                "url": "/my-performance/development",
-                "page_key": "performance_development",
-            },
-            {
-                "label": "Values & Behaviours",
-                "url": "/my-performance/values",
-                "page_key": "performance_values",
-            },
-            {
-                "label": "Documents",
-                "url": "/my-performance/documents",
-                "page_key": "performance_documents",
-            },
+            # Development Plans, Values and Conversations were sidebar links
+            # into the Priority Dashboard's own tabs — the same page four
+            # times, each entry stealing the highlight from the dashboard it
+            # opened. The tabs are the navigation. Their routes stay, so deep
+            # links and bookmarks still resolve.
+            #
+            # "Documents" went with them: it pointed at
+            # /my-performance/documents, which the URL conf maps to the
+            # CONVERSATIONS tab, and no documents tab exists — a link that has
+            # never shown what it was named for.
         ],
     },
     {
@@ -1171,10 +1161,11 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 # nav items); prefix match for everything else.
                 if url == "/dashboard":
                     is_active = current_path == url or current_path == "/"
-                elif url in {"/projects", "/ssa", "/my-performance"}:
-                    # Exact match: /my-performance has sibling links at
-                    # /my-performance/development etc. that own their own
-                    # active state, so the dashboard link must not swallow them.
+                elif url in {"/projects", "/ssa"}:
+                    # Exact match where a sibling route owns its own active
+                    # state. /my-performance left this set when its tab
+                    # deep-links did: with no siblings to swallow, the
+                    # dashboard should highlight on /my-performance/* too.
                     is_active = current_path == url
                 else:
                     is_active = current_path.startswith(url)
