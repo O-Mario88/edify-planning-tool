@@ -3,7 +3,9 @@ GROUP 1 — Core Operations Views
 Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-Team, Notifications, Profile
 """
 
+from apps.core.htmx_errors import error_message
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from django.utils.html import escape
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -1460,7 +1462,7 @@ def team_targets_catchup_create_view(request):
             partner_id=(request.POST.get("partner_id") or "").strip() or None,
         )
     except Exception as exc:  # noqa: BLE001
-        return HttpResponseBadRequest(str(exc))
+        return HttpResponseBadRequest(escape(error_message(exc)))
     messages.success(request, "Catch-up plan submitted for approval.")
     return redirect("/team-targets")
 

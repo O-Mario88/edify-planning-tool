@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.utils.html import escape
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
@@ -1892,7 +1893,7 @@ def performance_input_save_view(request, priority_id):
         else:
             return HttpResponseBadRequest("Unknown channel.")
     except Forbidden as e:
-        return HttpResponseForbidden(str(e))
+        return HttpResponseForbidden(escape(str(e)))
     except BadRequest as e:
         messages.error(request, str(e))
     else:
@@ -1923,7 +1924,7 @@ def performance_value_save_view(request, commitment_id):
     try:
         save_value_reflection(commitment, data, request.user)
     except Forbidden as e:
-        return HttpResponseForbidden(str(e))
+        return HttpResponseForbidden(escape(str(e)))
     except BadRequest as e:
         messages.error(request, str(e))
     else:
@@ -2312,7 +2313,7 @@ def performance_acknowledge_view(request, review_id):
     try:
         acknowledge_review(review, request.user)
     except Forbidden as e:
-        return HttpResponseForbidden(str(e))
+        return HttpResponseForbidden(escape(str(e)))
     except BadRequest as e:
         messages.error(request, str(e))
     else:

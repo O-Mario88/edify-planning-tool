@@ -117,6 +117,36 @@ Hardened:
 | Dependabot alerts | 0 open (feature enabled during this audit) |
 | zizmor | no findings |
 
+### Alerts that remain open, and why
+
+Three `py/log-injection` alerts stay open, at
+`apps/audit/services.py`, and two in `apps/core_schools/core_planning_services.py`.
+
+They are controlled, and the control is the reason CodeQL cannot see it. All
+three already use lazy `%`-arguments, and a `SingleLineFilter` on the console
+handler escapes line breaks in a record's message and arguments on the way out
+— so a value carrying `\n` cannot end the line or begin a fabricated one. That
+filter is a runtime logging configuration, not a data-flow barrier in the
+source, so the taint path still reads as open to a static analyser.
+
+The alternative would be escaping at each of these three call sites, which
+would clear the alerts and leave the several hundred other logging calls
+depending on the filter regardless. A filter that covers every call site,
+including ones written next month, is the better control; three hand-escaped
+call sites would be scanner appeasement.
+
+`apps/core/tests/test_logging_filter.py` pins it: the escaping, the record's
+message and both argument forms, and — separately — that the filter is actually
+attached to the handler the root logger and `django.request` use. A filter
+configured but not attached is no control at all.
+
+Twelve `py/stack-trace-exposure` alerts also remain, all of them
+`raise BadRequest("...")` or `HttpResponseForbidden(escape(str(e)))` where the
+exception is a domain exception carrying a sentence written to be read by the
+person who triggered it. The four that genuinely wrapped an arbitrary
+exception's text into a user-facing message were fixed (§5); these are the
+intended behaviour of a domain error, and their bodies are escaped.
+
 ### Suppressions
 
 The tree has no `continue-on-error`, no `|| true`, no skipped or xfailed tests,

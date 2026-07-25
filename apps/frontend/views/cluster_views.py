@@ -1,5 +1,6 @@
 from django.utils.html import format_html
 from django.shortcuts import render, redirect, get_object_or_404
+from apps.core.htmx_errors import error_fragment
 from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
@@ -665,7 +666,10 @@ def cluster_detail_drawer_view(request, cluster_id):
         }
         return render(request, "partials/clusters/cluster_detail_drawer.html", context)
     except Exception as e:
-        return HttpResponse(f"<div class='p-4 text-red-500'>Error: {e}</div>")
+        # Was an f-string: unescaped, and it printed whatever the exception
+        # said. This one had no `status=`, which is why the earlier sweep of
+        # these fragments walked past it.
+        return error_fragment(e, action="Could not open the cluster")
 
 
 @require_page_permission("planning")

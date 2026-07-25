@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.core.htmx_errors import error_message
 from apps.core.exceptions import BadRequest
 from apps.core.redirects import local_redirect
 from apps.core.permissions import render_access_denied, require_page_permission
@@ -481,7 +482,9 @@ def eligible_cover_api(request):
             }
         )
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+        # Only a message written for a user goes back. Anything else is a bug,
+        # and its text can carry a constraint name or a query fragment.
+        return JsonResponse({"error": error_message(e)}, status=400)
 
 
 @require_page_permission("leave_tracker")
