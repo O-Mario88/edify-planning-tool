@@ -78,13 +78,7 @@
               {% if cov.is_live %}
               <form action="{% url 'frontend:revoke_coverage_action' cov.id %}" method="POST" class="inline">
                 {% csrf_token %}
-                <button
-                  type="submit"
-                  class="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-600 hover:text-white rounded-control edify-text-caption font-bold uppercase transition"
-                  @click="if (!window.confirm('Are you sure you want to revoke delegated access immediately?')) $event.preventDefault()"
-                >
-                  Revoke
-                </button>
+                {% include "partials/components/confirm_action.html" with uid=cov.id trigger_label="Revoke" trigger_class="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-600 hover:text-white rounded-control edify-text-caption font-bold uppercase transition" title="Revoke this delegated access?" body="It ends immediately. Anything the coverer has already done stays as it is, and they lose access to the work from now on." confirm_label="Revoke access" %}
               </form>
               {% else %}
               <span class="text-slate-400 font-bold edify-text-caption">No actions</span>

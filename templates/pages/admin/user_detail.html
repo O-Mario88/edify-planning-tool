@@ -329,16 +329,10 @@ Deleting this user immediately revokes their access (account disabled, active se
 <form
 method="POST"
 action="{% url 'frontend:admin_user_detail' member.id %}"
-@submit="if (!window.confirm('Delete {{ member.name|escapejs }}? Their access is revoked immediately. History and audit logs are retained.')) $event.preventDefault()"
 >
 {% csrf_token %}
 <input type="hidden" name="action" value="delete">
-<button
-type="submit"
-class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
->
-Delete User
-</button>
+{% include "partials/components/confirm_action.html" with uid=member.id trigger_label="Delete User" trigger_class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all" title="Delete this user?" body="Their access is revoked immediately — the account is disabled and any active session ends. History and audit logs are kept." confirm_label="Delete user" %}
 </form>
 </div>
 {% endif %}

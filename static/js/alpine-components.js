@@ -138,6 +138,49 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 
+  // Confirmation for an action that cannot be undone.
+  //
+  // Replaces window.confirm(), which sits outside the page: it cannot be
+  // themed, it says "OK/Cancel" rather than what will happen, and the browser
+  // renders it identically whether the answer deletes a school or dismisses a
+  // tooltip. This is a real dialog, so it has to do the things a real dialog
+  // does — trap focus, close on Escape, and put focus back where it was.
+  Alpine.data('confirmAction', () => ({
+    asking: false,
+    returnFocusTo: null,
+
+    ask() {
+      this.returnFocusTo = document.activeElement;
+      this.asking = true;
+      // The cancelling choice takes focus, so Return answers safely.
+      this.$nextTick(() => this.$refs.cancel?.focus());
+    },
+
+    dismiss() {
+      this.asking = false;
+      // Back to the control that opened it, not to the top of the document.
+      this.$nextTick(() => this.returnFocusTo?.focus?.());
+    },
+
+    // Tab must not walk out of the dialog into the page behind it.
+    trap(event) {
+      if (event.key !== 'Tab' || !this.asking) { return; }
+      const focusable = this.$refs.panel?.querySelectorAll(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || !focusable.length) { return; }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  }));
+
   // Row actions menu.
   //
   // The list is position:fixed rather than absolute, because an absolutely

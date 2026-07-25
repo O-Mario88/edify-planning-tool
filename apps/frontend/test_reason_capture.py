@@ -36,11 +36,10 @@ INLINE_HANDLER = re.compile(
 DJANGO_COMMENT = re.compile(
     r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}|\{#.*?#\}", re.S
 )
-# prompt() and alert() only. confirm() is still used at a dozen sites for
-# "discard changes?" and delete confirmations; replacing those needs a
-# shared ConfirmationDialog with focus trapping and an Escape route, and
-# widening this guard before that exists would fail on work not yet done.
-BROWSER_DIALOG = re.compile(r"\b(?:window\.)?(prompt|alert)\s*\(")
+# All three. confirm() joined the list once the shared confirm_action dialog
+# and the drawer's own discard panel replaced the twelve call sites that used
+# it — a guard that runs ahead of the work it describes is not a guard.
+BROWSER_DIALOG = re.compile(r"\b(?:window\.)?(prompt|alert|confirm)\s*\(")
 
 
 class NoInlineHandlersTest(TestCase):

@@ -296,15 +296,9 @@ Deleting this school removes it from every directory, dashboard, and analysis. S
 <form
 method="POST"
 action="{% url 'frontend:school_delete' school.school_id %}"
-@submit="if (!window.confirm('Delete {{ school.name|escapejs }}? It disappears from directories and analyses; SSA history and audit logs are retained.')) $event.preventDefault()"
 >
 {% csrf_token %}
-<button
-type="submit"
-class="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
->
-Delete School
-</button>
+{% include "partials/components/confirm_action.html" with uid=school.school_id trigger_label="Delete School" trigger_class="h-9 px-4 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all" title="Delete this school?" body="It disappears from every directory, dashboard and analysis. SSA history and audit logs are kept, and deletion is refused while activities are in flight or disbursed funds are unaccounted." confirm_label="Delete school" %}
 </form>
 </div>
 {% endif %}

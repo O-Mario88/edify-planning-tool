@@ -226,8 +226,7 @@
                 <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if p.impact_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif p.impact_tone == 'warning' %}bg-amber-50 text-amber-700{% elif p.impact_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ p.impact }}</span>{% if p.delta is not None %} <span class="edify-text-caption text-slate-400 tabular-nums">{{ p.delta }}pp</span>{% endif %}</td>
                 <td class="py-2.5 px-2 text-slate-600">{{ p.recommendation }}</td>
                 <td class="py-2.5 px-2 text-right">
-                  <form method="post" action="/rvp/project/{{ p.id }}/decision" class="inline-flex items-center gap-1"
-                        @submit="if (!window.confirm('Record this strategic decision? It is audited and notifies the Country Director.')) $event.preventDefault()">
+                  <form method="post" action="/rvp/project/{{ p.id }}/decision" class="inline-flex items-center gap-1">
                     {% csrf_token %}
                     <select aria-label="Action" name="action" class="h-7 px-1.5 rounded-control border border-slate-200 edify-text-caption edify-surface">
                       <option value="scale">Approve Scale</option>
@@ -239,7 +238,7 @@
                       <option value="close">Close</option>
                       <option value="measure">Request Measurement</option>
                     </select>
-                    <button type="submit" class="h-7 px-2 rounded-control bg-slate-800 text-white edify-text-caption font-bold hover:bg-slate-700">Record</button>
+                    {% include "partials/components/confirm_action.html" with uid=p.id trigger_label="Record" trigger_class="h-7 px-2 rounded-control bg-slate-800 text-white edify-text-caption font-bold hover:bg-slate-700" tone="neutral" title="Record this strategic decision?" body="It is written to the audit trail and the Country Director is notified. Choose a different action above if this is not the one you meant." confirm_label="Record decision" %}
                   </form>
                 </td>
               </tr>

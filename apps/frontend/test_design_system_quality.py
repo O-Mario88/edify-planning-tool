@@ -713,3 +713,67 @@ class TemplateCommentLeakGuardTest(SimpleTestCase):
             "visible page text. Use {% comment %}...{% endcomment %} for "
             f"multi-line notes: {offenders}",
         )
+
+
+class SolidControlInkTest(SimpleTestCase):
+    """A filled control is a fill plus its ink, and both must be tokens.
+
+    The destructive confirmation button was `background: var(--edify-danger)`
+    with `color: #fff`. That reads correctly in the light theme and fails badly
+    in the dark ones, where --edify-danger is a light salmon: white on it
+    measured 2.44:1, less than half the AA threshold, on the button that
+    deletes a school. Measuring the light theme to check the fix then showed
+    white on #ef4444 at 3.76:1 — also under AA, just less obviously.
+
+    Hence two tokens: --edify-danger-solid for the fill and
+    --edify-danger-on-solid for the ink, per theme. --edify-danger itself is
+    unchanged; it is the semantic red for borders, chart series and tints, and
+    recolouring all of those to fix a button would be the wrong trade.
+    """
+
+    AA_NORMAL_TEXT = 4.5
+
+    def _theme_blocks(self):
+        """Each theme's token block, keyed by the selector that opens it."""
+        source = _read("static/css/design-system.css")
+        blocks = {}
+        for match in re.finditer(r"(:root[^{]*)\{([^}]*)\}", source, re.S):
+            selector = match.group(1).strip()
+            body = match.group(2)
+            if "--edify-danger-solid" in body:
+                blocks[selector] = body
+        return blocks
+
+    @staticmethod
+    def _token(body, name):
+        match = re.search(rf"{re.escape(name)}:\s*(#[0-9a-fA-F]{{6}})", body)
+        return match.group(1) if match else None
+
+    def test_every_theme_defines_the_pair(self):
+        blocks = self._theme_blocks()
+        self.assertGreaterEqual(len(blocks), 3, f"themes found: {list(blocks)}")
+        for selector, body in blocks.items():
+            with self.subTest(theme=selector):
+                self.assertIsNotNone(self._token(body, "--edify-danger-solid"))
+                self.assertIsNotNone(self._token(body, "--edify-danger-on-solid"))
+
+    def test_the_destructive_button_is_readable_in_every_theme(self):
+        for selector, body in self._theme_blocks().items():
+            fill = self._token(body, "--edify-danger-solid")
+            ink = self._token(body, "--edify-danger-on-solid")
+            with self.subTest(theme=selector, fill=fill, ink=ink):
+                ratio = _contrast_ratio(ink, fill)
+                self.assertGreaterEqual(
+                    ratio,
+                    self.AA_NORMAL_TEXT,
+                    f"{selector}: {ink} on {fill} is {ratio:.2f}:1",
+                )
+
+    def test_no_solid_danger_control_hardcodes_its_ink(self):
+        """The whole point of the token is that no component chooses again."""
+        components = _read("static/css/components.css")
+        offenders = re.findall(
+            r"background:\s*var\(--edify-danger[^)]*\);\s*\n\s*color:\s*(#fff|#ffffff|white)\b",
+            components,
+        )
+        self.assertEqual(offenders, [], f"hardcoded ink on a danger fill: {offenders}")

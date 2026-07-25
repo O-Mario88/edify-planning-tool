@@ -209,13 +209,7 @@ class="w-full p-2.5 rounded-control border border-slate-200 mt-1 bg-slate-50 foc
 <button
 type="button"
 @click="
-if (isDirty) {
-if (confirm('You have unsaved changes. Discard changes?')) {
-$dispatch('close-drawer');
-}
-} else {
-$dispatch('close-drawer');
-}
+requestClose()
 "
 class="edify-action-button secondary h-9 transition-colors"
 >

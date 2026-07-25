@@ -91,6 +91,15 @@
   --edify-warning-text: #92400e;
 
   --edify-danger: #ef4444;
+  /* A filled destructive control is a fill plus its ink, and both have to
+     be tokens. --edify-danger itself is the semantic red for borders,
+     chart series and tints, and it is deliberately not used as a button
+     fill: white on #ef4444 measures 3.76:1, under AA for text this size.
+     rose-600 clears it at 4.70:1. In the dark themes the semantic red is
+     a light salmon, so there the ink flips dark instead — white on it was
+     rendering at 2.44:1. */
+  --edify-danger-solid: #e11d48;
+  --edify-danger-on-solid: #ffffff;
   --edify-danger-light: #fef2f2;
   --edify-danger-border: #fca5a5;
   --edify-danger-text: #be123c;
@@ -374,6 +383,8 @@
   --edify-warning-border: rgba(248, 197, 107, 0.28);
   --edify-warning-text: var(--edify-warning);
   --edify-danger: #ff8796;
+  --edify-danger-solid: #ff8796;
+  --edify-danger-on-solid: #2a0f14;
   --edify-danger-light: rgba(255, 135, 150, 0.12);
   --edify-danger-border: rgba(255, 135, 150, 0.28);
   --edify-danger-text: var(--edify-danger);
@@ -508,6 +519,8 @@ html.theme-blue body {
   --edify-warning-border: rgba(251, 146, 60, 0.38);
   --edify-warning-text: var(--edify-warning);
   --edify-danger: #e88c91;
+  --edify-danger-solid: #e88c91;
+  --edify-danger-on-solid: #241012;
   --edify-danger-light: rgba(121, 43, 47, 0.34);
   --edify-danger-border: rgba(232, 140, 145, 0.30);
   --edify-danger-text: var(--edify-danger);

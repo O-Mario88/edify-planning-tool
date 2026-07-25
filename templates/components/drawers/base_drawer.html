@@ -3,7 +3,18 @@ x-data="{
 active: false,
 size: '{{ drawer_size|default:'md' }}',
 type: '{{ drawer_type|default:'center' }}',
-isDirty: false
+isDirty: false,
+confirmDiscard: false,
+{# One close path for the backdrop, the Escape key, the header button and #}
+{# every footer Cancel. It was the same seven-line confirm() block copied #}
+{# into all of them, three times here and once in each child drawer. #}
+requestClose() {
+if (!this.isDirty) { this.$dispatch('close-drawer'); return;
+}
+this.confirmDiscard = true;
+this.$nextTick(() => this.$refs.discardKeep?.focus());
+},
+discard() { this.confirmDiscard = false; this.$dispatch('close-drawer'); }
 }"
 x-init="
 $nextTick(() => {
@@ -20,13 +31,7 @@ document.body.style.overflow = '';
 setTimeout(() => { $el.remove() }, 300);
 "
 @keydown.escape.window="
-if (isDirty) {
-if (confirm('You have unsaved changes. Discard changes?')) {
-$dispatch('close-drawer');
-}
-} else {
-$dispatch('close-drawer');
-}
+confirmDiscard ? (confirmDiscard = false) : requestClose()
 "
 class="relative z-50"
 >
@@ -35,13 +40,7 @@ class="relative z-50"
 class="drawer-backdrop"
 :class="[active ? 'active' : '', 'type-' + type]"
 @click="
-if (isDirty) {
-if (confirm('You have unsaved changes. Discard changes?')) {
-$dispatch('close-drawer');
-}
-} else {
-$dispatch('close-drawer');
-}
+requestClose()
 "
 ></div>
 
@@ -72,13 +71,7 @@ aria-labelledby="drawer-title"
 <button
 type="button"
 @click="
-if (isDirty) {
-if (confirm('You have unsaved changes. Discard changes?')) {
-$dispatch('close-drawer');
-}
-} else {
-$dispatch('close-drawer');
-}
+requestClose()
 "
 class="drawer-close-btn"
 aria-label="Close drawer"
@@ -90,6 +83,24 @@ aria-label="Close drawer"
 <!-- Body -->
 <div class="drawer-body">
 {% block drawer_body %}{% endblock %}
+</div>
+
+{% comment %}The discard confirmation, inside the drawer rather than in a
+browser dialog. It stays within the focus trap the drawer already has, is
+readable in both themes, and names what happens instead of asking OK/Cancel.
+The keep-editing button takes focus, so the safe answer is the one a return
+keypress gives.{% endcomment %}
+<div x-show="confirmDiscard" x-cloak class="drawer-discard" role="alertdialog"
+     aria-modal="true" aria-labelledby="drawer-discard-title">
+  <div class="drawer-discard__panel">
+    <p id="drawer-discard-title" class="drawer-discard__title">Discard your changes?</p>
+    <p class="drawer-discard__body">What you have typed here has not been saved and will be lost.</p>
+    <div class="drawer-discard__actions">
+      <button type="button" x-ref="discardKeep" @click="confirmDiscard = false"
+              class="drawer-discard__keep">Keep editing</button>
+      <button type="button" @click="discard()" class="drawer-discard__discard">Discard changes</button>
+    </div>
+  </div>
 </div>
 
 </div>

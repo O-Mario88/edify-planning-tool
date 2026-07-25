@@ -1,0 +1,69 @@
+{% comment %}
+Confirm an action that cannot be undone.
+
+Include this INSIDE the caller's own <form>, in place of its submit button —
+the method, action and hidden fields stay with the page, the asking does not.
+
+    <form method="post" action="{% url 'frontend:school_delete' school.school_id %}">
+      {% csrf_token %}
+      {% include "partials/components/confirm_action.html" with uid=school.school_id trigger_label="Delete school" title="Delete this school?" body="It disappears from every directory, dashboard and analysis. SSA history and audit logs are kept." confirm_label="Delete school" %}
+    </form>
+
+This replaced window.confirm() at six call sites. A browser dialog cannot be
+themed, renders identically whether it is deleting a school or dismissing a
+tooltip, and offers "OK / Cancel" where the user needs to read what is about
+to happen. It also sat outside the page, so nothing about it matched the
+product it was interrupting.
+
+`uid` must be unique on the page — it ties the dialog to its own title.
+Params: uid (required), trigger_label, title, body, confirm_label,
+cancel_label, tone ("danger" default | "neutral"), trigger_class,
+trigger_icon_name ("trash"), trigger_aria_label (required when the
+trigger is icon-only).
+{% endcomment %}
+<div x-data="confirmAction" @keydown.escape.window="asking && dismiss()" class="confirm-action">
+  <button type="button"
+          @click="ask()"
+          class="{{ trigger_class|default:'confirm-action__trigger' }}{% if tone != 'neutral' %} confirm-action__trigger--danger{% endif %}"
+          {% if trigger_aria_label %}aria-label="{{ trigger_aria_label }}"{% endif %}>
+    {% comment %}An icon-only trigger is legitimate in a dense row, but it must
+    still say what it does — trigger_aria_label carries that, and the template
+    integrity tests already refuse an icon button without an accessible name.
+    {% endcomment %}
+    {% if trigger_icon_name == "trash" %}
+    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+    </svg>
+    {% endif %}{{ trigger_label|default:"Delete" }}
+  </button>
+
+  <div x-show="asking" x-cloak
+       class="confirm-action__scrim"
+       role="alertdialog"
+       aria-modal="true"
+       aria-labelledby="confirm-title-{{ uid }}"
+       aria-describedby="confirm-body-{{ uid }}"
+       @keydown.tab="trap($event)"
+       @click.self="dismiss()">
+    <div class="confirm-action__panel" x-ref="panel">
+      <p id="confirm-title-{{ uid }}" class="confirm-action__title">
+        {{ title|default:"Are you sure?" }}
+      </p>
+      <p id="confirm-body-{{ uid }}" class="confirm-action__body">
+        {{ body|default:"This cannot be undone." }}
+      </p>
+      <div class="confirm-action__actions">
+        {% comment %}Cancel is first and holds focus: the safe answer is the
+        one a return keypress gives, which is the opposite of what an OK-first
+        browser dialog does.{% endcomment %}
+        <button type="button" x-ref="cancel" @click="dismiss()"
+                class="confirm-action__cancel">{{ cancel_label|default:"Cancel" }}</button>
+        <button type="submit"
+                class="confirm-action__confirm{% if tone != 'neutral' %} confirm-action__confirm--danger{% endif %}">
+          {{ confirm_label|default:"Confirm" }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

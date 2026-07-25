@@ -78,15 +78,10 @@
 </td>
 <td class="px-5 py-4 text-right">
 {% if batch.status == 'completed' or batch.status == 'imported' %}
-<form method="post" action="{% url 'frontend:admin_school_upload_history' %}" @submit="if (!window.confirm('Mark this upload batch as failed? This only flags the batch record — schools it already created or updated will NOT be reverted; correct them directly in the School Directory.')) $event.preventDefault()">
+<form method="post" action="{% url 'frontend:admin_school_upload_history' %}">
 {% csrf_token %}
 <input type="hidden" name="rollback_id" value="{{ batch.id }}">
-<button
-type="submit"
-class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all focus:outline-none"
->
-Mark Failed
-</button>
+{% include "partials/components/confirm_action.html" with uid=batch.id trigger_label="Mark Failed" trigger_class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all" title="Mark this upload batch as failed?" body="This flags the batch record only. Schools it already created or updated are NOT reverted — correct those directly in the School Directory." confirm_label="Mark batch failed" %}
 </form>
 {% else %}
 <span class="edify-text-caption text-slate-300 font-bold uppercase tracking-wider">Locked</span>
