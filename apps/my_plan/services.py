@@ -78,7 +78,11 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     sf_id = activity.salesforce_activity_id
     ia = activity.ia_verification_status
 
-    if status == "completed":
+    # "closed" was missing here and fell through every branch to the default
+    # "Scheduled" — so a finished, financially closed activity was labelled as
+    # still upcoming, in the My Plan tables and on its own detail page, where
+    # it sat next to a timeline that correctly called it complete.
+    if status in ("completed", "closed"):
         return "Activity complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
 
     if status in (

@@ -163,12 +163,44 @@ def activity_detail_view(request, activity_id):
         except User.DoesNotExist:
             pass
 
+    # Timeline read from the activity's own state — scheduled, then evidence,
+    # then completion. Nothing here is a placeholder: each step is Completed
+    # only when the record says so, and Pending otherwise.
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+    from apps.my_plan.services import status_tone
+
+    scheduled_at = a.scheduled_date or a.created_at
+    has_evidence = bool(evidence_list)
+    is_complete = a.status in COMPLETED_WORK_STATUSES
+    timeline = [
+        {
+            "label": "Activity scheduled",
+            "when": scheduled_at,
+            "done": bool(a.scheduled_date or a.planned_date),
+            "detail": "" if (a.scheduled_date or a.planned_date) else "Not scheduled",
+        },
+        {
+            "label": "Evidence upload",
+            "when": evidence_list[0].created_at if has_evidence else None,
+            "done": has_evidence,
+            "detail": f"{len(evidence_list)} file(s)" if has_evidence else "Pending",
+        },
+        {
+            "label": "Activity completion",
+            "when": a.updated_at if is_complete else None,
+            "done": is_complete,
+            "detail": status_label if is_complete else "Pending",
+        },
+    ]
+
     context = {
         "act": a,
         "evidence_list": evidence_list,
         "status_label": status_label,
         "status_class": status_class,
+        "status_tone": status_tone(status_class),
         "responsible_staff_name": staff_name,
+        "timeline": timeline,
     }
 
     if request.headers.get("HX-Request") == "true":
