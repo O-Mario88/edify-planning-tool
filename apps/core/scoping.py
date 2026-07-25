@@ -17,12 +17,16 @@ constraints matching the legacy schoolWhere / aggregateSchoolWhere.
 
 from __future__ import annotations
 
+import logging
+
 from dataclasses import dataclass, field
 from typing import Iterable
 
 from django.db.models import Q
 
 from apps.core.rbac import EdifyRole, Permission, permissions_for_role
+
+logger = logging.getLogger(__name__)
 
 
 COUNTRY_ROLES = {
@@ -289,7 +293,16 @@ def _resolve_user_scope_uncached(user) -> UserScope:
                         s["id"] for s in schools if s["school_type"] == "core"
                     ]
         except Exception:
-            pass
+            # Logged, not swallowed. A scope that fails to compute falls
+            # through to an empty one, and an empty scope is indistinguishable
+            # from "this coordinator manages nothing" — the page renders 200
+            # with no schools and nobody is told why. The fall-through is the
+            # safe behaviour (no data beats wrong data); the silence was not.
+            logger.exception(
+                "Project Coordinator scope computation failed for user %s; "
+                "falling back to an empty scope",
+                getattr(user, "user_id", None),
+            )
     elif role in (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.value):
         # Partner users see ONLY their own partner's activities.
         partner_ids = resolve_partner_ids(user)
@@ -322,7 +335,14 @@ def _resolve_user_scope_uncached(user) -> UserScope:
                             s["id"] for s in schools if s["school_type"] == "core"
                         ]
             except Exception:
-                pass
+                # Same reasoning as the coordinator branch above: a partner
+                # seeing an empty workspace and a partner whose scope query
+                # blew up look identical from the outside.
+                logger.exception(
+                    "Partner scope computation failed for user %s; falling "
+                    "back to an empty scope",
+                    getattr(user, "user_id", None),
+                )
 
     return UserScope(
         user_id=user.user_id,

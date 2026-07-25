@@ -390,6 +390,13 @@ FIELD_ENCRYPTION_KEY = os.environ.get("FIELD_ENCRYPTION_KEY") or ""
 
 # Email (two-mode mailer: dev console vs prod Resend HTTP API).
 EMAIL_PROVIDER = os.environ.get("EMAIL_PROVIDER", "console")  # console|resend
+
+# Backstop for anything still reaching django.core.mail. EMAIL_BACKEND defaults
+# to SMTP on localhost and EMAIL_TIMEOUT defaults to None, which means a mail
+# host that accepts the connection and then stops responding blocks the worker
+# for as long as the socket stays open. Product email goes through
+# apps.core.email.MailerService, which is bounded at 15s; this bounds the rest.
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT_SECONDS", "10"))
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY") or ""
 EMAIL_FROM = os.environ.get("EMAIL_FROM", "noreply@edify.org")
 

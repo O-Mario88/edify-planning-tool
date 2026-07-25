@@ -13,6 +13,7 @@ failure isolation, consistency.
 from __future__ import annotations
 
 import threading
+import time
 from datetime import datetime as _dt
 from datetime import timedelta
 from datetime import timezone as _dt_tz
@@ -757,3 +758,99 @@ class ConsistencyReconciliationTest(TestCase):
         detail = get_activity(activity.id, cceo)
         self.assertEqual(detail["status"], "scheduled")
         self.assertEqual(plan_rows[0].get("status"), "scheduled")
+
+
+class ConcurrentSchedulerTest(TransactionTestCase):
+    """Two scheduler processes starting at the same instant.
+
+    `acquire_lock` claims to be safe under concurrent callers because its
+    UPDATE...WHERE is a single statement the database serialises. The existing
+    test for it took the lock first and then called the job, which proves the
+    skip path but never races the acquire itself — the exact claim being made.
+
+    This is the deployment shape that produces it: a rolling restart where the
+    outgoing scheduler has not exited before the incoming one starts, or a
+    replica count that was briefly two. The brief's requirement is one
+    execution and zero duplicate output.
+    """
+
+    reset_sequences = False
+
+    def _race(self, fn, workers=2):
+        results = [None] * workers
+        barrier = threading.Barrier(workers)
+
+        def runner(index):
+            try:
+                barrier.wait(timeout=10)
+                results[index] = (True, fn())
+            except Exception as exc:  # noqa: BLE001
+                results[index] = (False, exc)
+            finally:
+                for conn in connections.all():
+                    conn.close()
+
+        threads = [threading.Thread(target=runner, args=(i,)) for i in range(workers)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=30)
+        return results
+
+    def test_only_one_racing_runner_acquires_the_lock(self):
+        from apps.realtime.execution import acquire_lock
+
+        outcomes = self._race(lambda: acquire_lock("daily_digest", ttl_seconds=600))
+        acquired = [result for ok, result in outcomes if ok and result]
+        self.assertEqual(
+            len(acquired),
+            1,
+            f"{len(acquired)} runners acquired the same lock: {outcomes}",
+        )
+
+    def test_only_one_racing_runner_executes_the_job_body(self):
+        """The lock is only worth having if it stops the work, not just the
+        row: two schedulers must not both send the same digest."""
+        from apps.realtime.execution import run_tracked_job
+        from apps.realtime.models import ScheduledJobExecution
+
+        ran = []
+        lock = threading.Lock()
+
+        def _body():
+            with lock:
+                ran.append(1)
+            # Long enough that a second runner would overlap if it got in.
+            time.sleep(0.2)
+            return 1
+
+        self._race(lambda: run_tracked_job("daily_digest", _body))
+
+        self.assertEqual(len(ran), 1, f"job body ran {len(ran)} times")
+        self.assertEqual(
+            ScheduledJobExecution.objects.filter(job_name="daily_digest").count(),
+            1,
+            "a skipped trigger must not record an execution",
+        )
+
+    def test_a_dead_runner_does_not_hold_the_lock_for_ever(self):
+        """A process killed mid-job leaves its lock row behind. The TTL is what
+        lets the next scheduler take over instead of the job silently never
+        running again."""
+        from apps.realtime.execution import acquire_lock
+        from apps.realtime.models import ScheduledJobLock
+
+        self.assertTrue(acquire_lock("daily_digest", ttl_seconds=600))
+        self.assertFalse(
+            acquire_lock("daily_digest", ttl_seconds=600),
+            "the lock must hold while it is live",
+        )
+
+        # The holder dies without releasing; its lease lapses.
+        ScheduledJobLock.objects.filter(job_name="daily_digest").update(
+            locked_until=timezone.now() - timedelta(seconds=1)
+        )
+        self.assertTrue(
+            acquire_lock("daily_digest", ttl_seconds=600),
+            "an expired lease must be reclaimable, or the job never runs again",
+        )

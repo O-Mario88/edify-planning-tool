@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.core import mail
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
@@ -183,17 +182,39 @@ class PdfAndDistributionTests(WeeklyReportTestBase):
         self.assertTrue(report.pdf_checksum)
 
     def test_email_attaches_pdf_and_blocks_rapid_duplicates(self):
+        """Asserted against the platform mailer rather than django's outbox.
+
+        Distribution used to go through django.core.mail, whose backend
+        resolves to SMTP on localhost with no timeout — so in production it was
+        either failing or hanging, and only the locmem test backend made it
+        look fine. It now uses apps.core.email.MailerService like every other
+        message the product sends, so that is what this asserts on.
+        """
+        import base64
+        from unittest import mock
+
         report = WRS.generate_pl_report(self.pl, self.week_start)
         WRS.sign(report, self.pl)
-        dist = WRS.send_email(
-            report, self.pl, ["cd@fd.org"], "Weekly report", "Attached."
-        )
+
+        with mock.patch(
+            "apps.core.email.MailerService.send", return_value={"delivered": True}
+        ) as send:
+            dist = WRS.send_email(
+                report, self.pl, ["cd@fd.org"], "Weekly report", "Attached."
+            )
+
         self.assertTrue(dist.succeeded)
-        self.assertEqual(len(mail.outbox), 1)
-        name, content, mime = mail.outbox[0].attachments[0]
-        self.assertTrue(name.endswith(".pdf"))
-        self.assertEqual(mime, "application/pdf")
-        self.assertTrue(bytes(content).startswith(b"%PDF"))
+        self.assertEqual(send.call_count, 1)
+        message = send.call_args.args[0]
+        self.assertEqual(message.to, "cd@fd.org")
+        self.assertEqual(len(message.attachments), 1)
+        attachment = message.attachments[0]
+        self.assertTrue(attachment["filename"].endswith(".pdf"))
+        self.assertTrue(
+            base64.b64decode(attachment["content"]).startswith(b"%PDF"),
+            "the attachment must be the real PDF, not a placeholder",
+        )
+
         with self.assertRaises(BadRequest):
             WRS.send_email(report, self.pl, ["cd@fd.org"], "Weekly report", "Again.")
 

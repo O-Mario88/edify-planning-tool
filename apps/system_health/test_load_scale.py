@@ -131,6 +131,22 @@ class ScaleGateTest(TestCase):
             id="scale-staff-cceo", user=cls.user, title="CCEO"
         )
 
+        # The finance queues redirect a CCEO, so measuring them as one asserts
+        # nothing but the speed of a 302. They get the role that opens them.
+        cls.accountant = User.objects.create(
+            id="scale-accountant",
+            email="scale-accountant@edify.org",
+            name="Scale Accountant",
+            roles=["Accountant"],
+            active_role="Accountant",
+            is_active=True,
+        )
+        cls.accountant.set_password("pass123")
+        cls.accountant.save()
+        StaffProfile.objects.create(
+            id="scale-staff-accountant", user=cls.accountant, title="Accountant"
+        )
+
         # Geography mirrors the real shape: the 135 UBOS districts spread over
         # their true regions, so the sub-region roll-up groups the same way it
         # will in production rather than collapsing into one bucket.
@@ -259,12 +275,13 @@ class ScaleGateTest(TestCase):
         self.client.force_login(self.user)
 
     # ── helpers ───────────────────────────────────────────────────────────
-    def _measure(self, url, *, allow_statuses=(200,)):
+    def _measure(self, url, *, allow_statuses=(200,), client=None):
         """Fetch `url` once, returning its query count and wall time."""
+        client = client or self.client
         reset_queries()
         with CaptureQueriesContext(connection) as ctx:
             started = time.perf_counter()
-            response = self.client.get(url)
+            response = client.get(url)
             elapsed = time.perf_counter() - started
 
         self.assertIn(
@@ -311,16 +328,16 @@ class ScaleGateTest(TestCase):
         )
         _analyze()
 
-    def _assert_scale_invariant(self, url, *, allow_statuses=(200,)):
+    def _assert_scale_invariant(self, url, *, allow_statuses=(200,), client=None):
         """The gate: a page's query count must not move when the estate grows.
 
         This is what makes the result independent of any particular school
         count. A page that is flat across a several-thousand-school jump is
         flat, full stop -- there is no size at which it suddenly is not.
         """
-        before = self._measure(url, allow_statuses=allow_statuses)
+        before = self._measure(url, allow_statuses=allow_statuses, client=client)
         self._grow()
-        after = self._measure(url, allow_statuses=allow_statuses)
+        after = self._measure(url, allow_statuses=allow_statuses, client=client)
 
         self.assertLessEqual(
             after["queries"],
@@ -365,6 +382,50 @@ class ScaleGateTest(TestCase):
         """The largest single table in the product, and the page most likely
         to be tempted into loading every row."""
         self._assert_scale_invariant("/schools")
+
+    @override_settings(DEBUG=False)
+    def test_my_plan_is_scale_invariant(self):
+        """The page every field user opens first, several times a day. It reads
+        the viewer's own activities, so its cost must not follow the estate."""
+        self._assert_scale_invariant("/my-plan")
+
+    @override_settings(DEBUG=False)
+    def test_planning_is_scale_invariant(self):
+        """Planning ranks recommendations across the schools in scope — the
+        page where a per-school SSA lookup would be easiest to write and most
+        expensive to keep."""
+        self._assert_scale_invariant("/planning")
+
+    @override_settings(DEBUG=False)
+    def test_school_profile_is_scale_invariant(self):
+        """One school's page must not read the population to render itself."""
+        school = School.objects.order_by("school_id").first()
+        self._assert_scale_invariant(f"/schools/{school.school_id}")
+
+    @override_settings(DEBUG=False)
+    def test_core_schools_is_scale_invariant(self):
+        """Nine package slots per core school is per-row work by construction,
+        so this is where it has to be batched rather than looped."""
+        self._assert_scale_invariant("/core-schools")
+
+    @override_settings(DEBUG=False)
+    def test_projects_portfolio_is_scale_invariant(self):
+        """Portfolio rows aggregate schools per project."""
+        self._assert_scale_invariant("/projects")
+
+    @override_settings(DEBUG=False)
+    def test_finance_queue_is_scale_invariant(self):
+        """Money queues are the pages where a slow render costs someone their
+        afternoon and a wrong number costs more than that.
+
+        Measured as the Accountant: a CCEO is redirected away, and an earlier
+        version of this test was quietly certifying the speed of that 302.
+        """
+        from django.test import Client
+
+        finance_client = Client()
+        finance_client.force_login(self.accountant)
+        self._assert_scale_invariant("/disbursements", client=finance_client)
 
     @override_settings(DEBUG=False)
     def test_closure_queue_is_scale_invariant(self):

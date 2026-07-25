@@ -960,8 +960,6 @@ class WeeklyDebriefReportService:
     # ── Email distribution (§19) ─────────────────────────────────────────────
     @staticmethod
     def send_email(report, principal, to: list[str], subject: str, message: str):
-        from django.core.mail import EmailMessage
-
         role = getattr(principal, "active_role", "")
         allowed = (
             report.scope_kind == WeeklyReportScope.PL_TEAM
@@ -1002,9 +1000,46 @@ class WeeklyDebriefReportService:
             report_version=report.version,
         )
         try:
-            email = EmailMessage(subject=subject, body=message, to=to)
-            email.attach(filename, data, "application/pdf")
-            email.send(fail_silently=False)
+            # The platform's own mailer, not django.core.mail. That backend
+            # resolves to SMTP on localhost with EMAIL_TIMEOUT unset, so a mail
+            # host that accepts the connection and then stops responding blocks
+            # this worker indefinitely — and it bypasses the provider every
+            # other email in the product goes through. MailMessage carries
+            # attachments precisely so reports could use it.
+            import base64
+
+            from apps.core.email import MailMessage, MailerService
+
+            attachment = {
+                "filename": filename,
+                "content": base64.b64encode(data).decode("ascii"),
+            }
+            mailer = MailerService()
+            results = [
+                mailer.send(
+                    MailMessage(
+                        to=recipient,
+                        subject=subject,
+                        text=message,
+                        attachments=[attachment],
+                    )
+                )
+                for recipient in to
+            ]
+            # `succeeded` records that the mailer accepted the message, which
+            # is what the rest of the system reads it for — the repeated-send
+            # guard above filters on it, so treating an accepted-but-not-
+            # delivered console send as a failure would quietly disable that
+            # guard everywhere the provider is the dev stub.
+            #
+            # A configured provider refusing a recipient IS a failure, and is
+            # raised so the row records it and the sender is told.
+            delivered = [r.get("delivered") for r in results]
+            if mailer.is_configured and not all(delivered):
+                raise RuntimeError(
+                    f"{delivered.count(False)} of {len(delivered)} recipients "
+                    "were not accepted by the mail provider."
+                )
             dist.succeeded = True
             dist.save(update_fields=["succeeded", "updated_at"])
         except Exception as exc:  # record, surface, allow safe retry
