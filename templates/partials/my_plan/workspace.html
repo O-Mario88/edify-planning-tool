@@ -7,16 +7,17 @@
 <!-- 2. KPI Cards Strip -->
 {% include "partials/my_plan/kpi_cards.html" %}
 
-<!-- 3. Grid Columns Area -->
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-
-<!-- Left Column (School Visits, trainings, meetings, and period tabs) -->
-<div class="lg:col-span-3 space-y-6">
+{% comment %}
+Planning Insights used to sit in a narrow right-hand column, which squeezed
+every activity table into three quarters of the width and wrapped their cells.
+It reads above the tables now, full width, and the tables get the whole row.
+{% endcomment %}
+{% include "partials/my_plan/planning_insights.html" %}
 
 <!-- Period Segmented Tabs row -->
 {% include "partials/my_plan/period_tabs.html" %}
 
-<!-- Activity Tables Grouped by Category exactly like mockup -->
+<!-- Activity Tables Grouped by Category -->
 <div class="space-y-8">
 
 <!-- 0. Attention region (returned / approval / partner monitoring / finance) -->
@@ -37,14 +38,5 @@
 
 <!-- Bottom Period breakdown -->
 {% include "partials/my_plan/period_breakdown.html" %}
-
-</div>
-
-<!-- Right Insights Column -->
-<div class="lg:col-span-1">
-{% include "partials/my_plan/planning_insights.html" %}
-</div>
-
-</div>
 
 </div>

@@ -19,7 +19,7 @@ Returned — Needs Correction
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table">
+<table class="edify-data-table mp-table">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -76,7 +76,7 @@ Waiting on Approval
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table">
+<table class="edify-data-table mp-table">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -93,11 +93,7 @@ Waiting on Approval
 </td>
 <td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
 <td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td>
-<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded-pill edify-text-caption">
-{{ row.status_label }}
-</span>
-</td>
+<td>{% include "partials/my_plan/row_badges.html" %}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -127,7 +123,7 @@ Partner Planned — Monitoring
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table">
+<table class="edify-data-table mp-table">
 <thead>
 <tr>
 <th>Partner</th>
@@ -189,7 +185,7 @@ Finance / Accountability Pending
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table">
+<table class="edify-data-table mp-table">
 <thead>
 <tr>
 <th>School / Cluster</th>

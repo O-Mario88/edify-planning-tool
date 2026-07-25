@@ -1,13 +1,14 @@
 {% load frontend_filters %}
 <div class="overflow-x-auto border border-slate-200/60 rounded-surface edify-surface shadow-sm">
-<table class="w-full text-left text-[12px] border-collapse ">
+<table class="mp-table w-full text-left text-[11.5px] border-collapse">
 <thead>
 <tr class="bg-slate-50/50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
-<th class="px-4 py-3 w-[30%]">Activity Details</th>
-<th class="px-4 py-3 text-center">Planned Date</th>
-<th class="px-4 py-3 text-center">Finances & Status Badges</th>
-<th class="px-4 py-3 text-right">Next Action</th>
-<th class="px-4 py-3"></th>
+<th class="px-3 py-2.5">Activity</th>
+<th class="px-3 py-2.5">Planned</th>
+<th class="px-3 py-2.5">Budget</th>
+<th class="px-3 py-2.5">Status</th>
+<th class="px-3 py-2.5 text-right">Next action</th>
+<th class="px-3 py-2.5 text-right">Actions</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -15,7 +16,7 @@
 <tr class="hover:bg-slate-50/40 transition-colors">
 
 <!-- Column 1: Details & Context -->
-<td class="px-4 py-3.5 space-y-1">
+<td class="mp-cell-wrap px-3 py-2.5">
 <div class="flex items-center gap-1.5 flex-wrap">
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border edify-primary-border-alpha-45">
 {{ act.activity_type_label }}
@@ -80,34 +81,24 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 </td>
 
 <!-- Column 2: Planned Date -->
-<td class="px-4 py-3.5 text-center">
-<span class="font-bold text-slate-700 text-[12px] bg-slate-50 border border-slate-200/70 px-2 py-1 rounded-pill">
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg> {{ act.planned_date|date:"M j, D"|default:"Unscheduled" }}
-</span>
-</td>
+<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-700">{{ act.planned_date|date:"j M"|default:"Unscheduled" }}</td>
 
-<!-- Column 3: Finance & Status Badges -->
-<td class="px-4 py-3.5 text-center">
-<div class="flex flex-col gap-1.5 items-center justify-center">
-<span class="text-[12px] font-semibold text-slate-800">{{ act.budget_total|ugx }}</span>
+<!-- Column 3: Budget -->
+<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-800">{{ act.budget_total|ugx }}</td>
 
-<div class="flex items-center justify-center gap-1 flex-wrap max-w-[200px]">
+{% comment %}Status badges on ONE line. Stacked, they gave a four-badge row
+three times the height of a two-badge row and made the table impossible to
+scan. The strip scrolls rather than wrapping.{% endcomment %}
+<td class="px-3 py-2.5">
+<div class="mp-badges">
 {% for label, variant in act.badges %}
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold border
-{% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
-{% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
-{% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150
-{% elif variant == 'purple' %}edify-primary-soft edify-primary-text edify-primary-border
-{% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
-{{ label }}
-</span>
+<span class="mp-badge mp-badge--{{ variant }}">{{ label }}</span>
 {% endfor %}
-</div>
 </div>
 </td>
 
 <!-- Column 4: Next Action -->
-<td class="px-4 py-3.5 text-right">
+<td class="px-3 py-2.5 text-right whitespace-nowrap">
 {% if act.execution_role == 'Partner' and not viewer_is_partner %}
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider">Monitoring — partner-owned</span>
 <p class="mt-1">
@@ -118,7 +109,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 hx-get="{{ act.next_action.url }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="inline-flex items-center justify-center h-8 px-3 rounded-control border border-slate-200 text-slate-600 text-[12px] font-semibold hover:bg-slate-50 shadow-sm transition-all"
+class="urgent-action"
 >
 {{ act.next_action.text }}
 </button>
@@ -127,147 +118,15 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-control border b
 hx-get="{{ act.next_action.url }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="inline-flex items-center justify-center h-8 px-3 rounded-control !bg-[var(--edify-primary)] !text-white text-[12px] font-semibold hover:bg-opacity-95 shadow-sm transition-all"
+class="urgent-action urgent-action--primary"
 >
 {{ act.next_action.text }}
 </button>
 {% endif %}
-{% if act.execution_role != 'Partner' or viewer_is_partner %}
-<p class="edify-text-caption text-slate-400 font-bold mt-1 uppercase tracking-wider">{{ act.next_action.description }}</p>
-{% endif %}
+
 </td>
 
-<!-- Column 5: Actions Dropdown -->
-<td class="px-4 py-3.5 text-center" x-data="{ open: false, top: 0, right: 0, toggle(e) { if (this.open) { this.open = false; return; } const r = e.currentTarget.getBoundingClientRect(); this.top = r.bottom + 4; this.right = window.innerWidth - r.right; this.open = true; } }">
-<button
-@click="toggle($event)"
-@click.outside="open = false"
-aria-label="More actions"
-:aria-expanded="open"
-class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-control hover:bg-slate-100 transition-colors"
->
-<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>
-</svg>
-</button>
-
-<div
-x-show="open"
-x-transition:enter="transition ease-out duration-100"
-x-transition:enter-start="transform opacity-0 scale-95"
-x-transition:enter-end="transform opacity-100 scale-100"
-x-transition:leave="transition ease-in duration-75"
-x-transition:leave-start="transform opacity-100 scale-100"
-x-transition:leave-end="transform opacity-0 scale-95"
-class="fixed w-52 rounded-surface edify-surface border border-slate-200 shadow-lg z-[60] py-1.5 text-left font-semibold text-[12px] text-slate-700"
-:style="`top: ${top}px; right: ${right}px;`"
-style="display: none;"
->
-<!-- View Details -->
-<button
-hx-get="/activities/{{ act.id }}"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
->
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg></span> View Details
-</button>
-
-{% if act.execution_role != 'Partner' or viewer_is_partner %}
-<!-- Reschedule -->
-{% if act.status != 'completed' %}
-<button
-type="button"
-data-reschedule-trigger
-hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
-hx-trigger="click consume"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 edify-primary-text edify-primary-soft-hover edify-primary-text-hover"
->
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span> Reschedule Activity
-</button>
-{% endif %}
-
-<!-- Start Activity -->
-{% if act.status == 'scheduled' or act.status == 'partner_scheduled' or act.status == 'assigned_to_partner' %}
-<button
-hx-get="/activities/{{ act.id }}/start"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 edify-primary-text edify-primary-text-hover"
->
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8m0 0h-5m5 0v5"/></svg></span> Start Activity
-</button>
-{% endif %}
-
-<!-- Complete -->
-{% if act.status != 'completed' %}
-<button
-hx-get="/activities/{{ act.id }}/complete"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-emerald-600 hover:text-emerald-700"
->
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span> Complete Activity
-</button>
-{% endif %}
-
-<!-- Upload Evidence -->
-<button
-hx-get="/activities/{{ act.id }}/evidence"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
->
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.2 7.4l-6.8 6.8a2 2 0 102.8 2.8l6.8-6.8a4 4 0 10-5.6-5.6L5.5 11.5a6 6 0 108.5 8.5l6-6"/></svg></span> Upload Evidence
-</button>
-
-<!-- Enter Activity SF ID -->
-<button
-hx-get="/activities/{{ act.id }}/salesforce-id"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
->
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M3 5a2 2 0 012-2h5.2a2 2 0 011.4.6l8.2 8.2a2 2 0 010 2.8l-5.2 5.2a2 2 0 01-2.8 0L3.6 11.6A2 2 0 013 10.2V5z"/></svg></span> Enter Activity SF ID
-</button>
-
-<!-- Submit for Review -->
-<button
-hx-get="/activities/{{ act.id }}/submit"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 edify-primary-text edify-primary-text-hover"
->
-<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12V4m0 0L9 7m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></span> Submit for Review
-</button>
-{% else %}
-<!-- Staff viewing partner-owned activity: read-only monitoring -->
-<div class="px-3.5 py-2 edify-text-caption text-slate-400 font-bold uppercase tracking-wider">
-Monitoring — partner-owned
-</div>
-{% endif %}
-
-<!-- View Timeline -->
-<button
-hx-get="/activities/{{ act.id }}/timeline"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-@click="open = false"
-class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-600"
->
-<span>⏱️</span> View Timeline
-</button>
-</div>
-</td>
+{% include "partials/my_plan/activity_row.html" with row=act %}
 
 </tr>
 {% endfor %}

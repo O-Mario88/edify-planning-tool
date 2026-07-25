@@ -52,6 +52,24 @@ def _scheduled_in_range(start: date, end: date) -> Q:
     )
 
 
+def status_tone(status_class: str) -> str:
+    """The badge palette key behind a status pill's legacy class string.
+
+    The row tables now colour-code status rather than outlining it, but the
+    label/class helper is shared with older surfaces — so the tone is derived
+    here instead of rewriting every caller."""
+    c = status_class or ""
+    if "emerald" in c:
+        return "green"
+    if "amber" in c:
+        return "amber"
+    if "rose" in c:
+        return "red"
+    if "primary" in c:
+        return "purple"
+    return "slate"
+
+
 def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     """Resolves operational status pill color and text for row tables."""
     status = activity.status
@@ -61,7 +79,7 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     ia = activity.ia_verification_status
 
     if status == "completed":
-        return "Completed", "bg-emerald-50 text-emerald-700 border-emerald-200"
+        return "Activity complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
 
     if status in (
         "submitted_to_pl",
@@ -77,7 +95,7 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
                 "edify-primary-soft edify-primary-text edify-primary-border",
             )
         if ia == "confirmed":
-            return "IA Verified", "bg-emerald-50 text-emerald-700 border-emerald-200"
+            return "IA complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
         return (
             "Accounts Pending",
             "edify-primary-soft edify-primary-text edify-primary-border",
@@ -865,12 +883,18 @@ def get_frontend_context(principal, query: dict) -> dict:
         else:
             badges.append(("No Budget", "slate"))
 
+        # A finished stage says so in the same words every time — "<stage>
+        # complete" — so a row can be read down its badges without translating
+        # "Verified", "Entered", "Uploaded" and "Cleared" into the same idea.
+        if a.status in COMPLETED_WORK_STATUSES:
+            badges.append(("Activity complete", "green"))
+
         # Evidence status
         if a.status == "completed":
             if a.evidence_status == "uploaded":
-                badges.append(("Evidence Uploaded", "green"))
+                badges.append(("Evidence complete", "green"))
             else:
-                badges.append(("Evidence Pending", "amber"))
+                badges.append(("Evidence pending", "amber"))
 
         # SF ID status
         if a.status in [
@@ -881,23 +905,23 @@ def get_frontend_context(principal, query: dict) -> dict:
             "accountant_confirmed",
         ]:
             if a.salesforce_activity_id:
-                badges.append(("SF ID Entered", "green"))
+                badges.append(("SF ID complete", "green"))
             else:
-                badges.append(("SF ID Missing", "red"))
+                badges.append(("SF ID missing", "red"))
 
         # IA status
         if a.ia_verification_status == "pending":
-            badges.append(("IA Pending", "purple"))
+            badges.append(("IA pending", "purple"))
         elif a.ia_verification_status == "confirmed":
-            badges.append(("IA Verified", "green"))
+            badges.append(("IA complete", "green"))
         elif a.ia_verification_status == "returned":
             badges.append(("Returned", "red"))
 
         # Accounts status
         if a.payment_status in ("pending", "pending_ia"):
-            badges.append(("Accounts Pending", "amber"))
+            badges.append(("Accounts pending", "amber"))
         elif a.payment_status in ("cleared", "accountant_cleared"):
-            badges.append(("Cleared", "green"))
+            badges.append(("Accounts complete", "green"))
         elif a.payment_status in ("disbursed", "netsuite_accountability"):
             badges.append(("Accountability Pending", "amber"))
         elif a.payment_status == "paid":
@@ -1021,6 +1045,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             "badges": badges,
             "status_label": status_label,
             "status_class": status_class,
+            "status_tone": status_tone(status_class),
         }
 
         # Legacy lists for compatibility

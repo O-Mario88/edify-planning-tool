@@ -186,9 +186,12 @@ class DesignSystemContractTest(SimpleTestCase):
     def test_reschedule_actions_follow_one_reliable_drawer_contract(self):
         """Every entry point opens the shared reschedule drawer consistently."""
 
+        # Files that actually RENDER a reschedule control. activity_table.html
+        # used to be one; it now delegates its whole action cell to
+        # activity_row.html, so the contract is checked where the control
+        # lives rather than where it used to.
         sources = (
             "templates/partials/my_plan/activity_row.html",
-            "templates/partials/my_plan/activity_table.html",
             "templates/partials/my_plan/activity_detail_drawer.html",
             "templates/pages/my_plan/detail.html",
         )

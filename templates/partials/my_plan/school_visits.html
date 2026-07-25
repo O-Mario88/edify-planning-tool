@@ -21,7 +21,7 @@ Open Planning
 <!-- Table Section -->
 <div class="overflow-x-auto">
 {% if school_visits %}
-<table class="edify-data-table">
+<table class="edify-data-table mp-table">
 <thead>
 <tr>
 <th>School Name</th>
@@ -41,12 +41,7 @@ Open Planning
 <td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td class="text-slate-600 font-semibold">{{ row.purpose }}</td>
 <td class="font-bold text-slate-700">{{ row.owner }}</td>
-<td>
-<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded-pill edify-text-caption">
-{{ row.status_label }}
-</span>
-{% include "partials/my_plan/row_badges.html" %}
-</td>
+<td>{% include "partials/my_plan/row_badges.html" %}</td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}
 </tr>

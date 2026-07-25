@@ -4235,3 +4235,87 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 @media (max-width: 48rem), (pointer: coarse) {
   .pd-proof__select, .pd-proof__file, .pd-proof__submit { min-block-size: 2.75rem; }
 }
+
+/* ─── MY PLAN ────────────────────────────────────────────────────────────────
+   Planning Insights reads full width above the tables rather than in a narrow
+   rail beside them, so its three sections sit side by side. */
+.mp-insights {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.mp-insights__head { grid-column: 1 / -1; }
+
+@media (min-width: 64rem) {
+  .mp-insights { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+}
+
+/* Status badges on one line. Stacked, a four-badge row stood three times the
+   height of a two-badge row and the table could not be scanned; the strip
+   scrolls instead of wrapping, and nothing in the row changes height. */
+.mp-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-inline-size: 10rem;
+}
+
+.mp-badges::-webkit-scrollbar { display: none; }
+
+/* No outline: eight bordered pills across a row read as a fence. Colour alone
+   carries the state, and a finished stage takes the light green. */
+.mp-badge {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 0;
+  border-radius: var(--edify-radius-pill);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mp-badge--green { background: #dcfce7; color: #15803d; }
+.mp-badge--amber { background: #fef3c7; color: #b45309; }
+.mp-badge--red { background: #ffe4e6; color: #be123c; }
+.mp-badge--purple { background: #ede9fe; color: #6d28d9; }
+.mp-badge--blue { background: var(--edify-accent-light); color: var(--edify-accent); }
+.mp-badge--slate { background: var(--edify-surface-muted); color: var(--edify-text-muted); }
+
+/* Nothing in a My Plan row wraps to a second line — but "no wrapping" alone
+   just pushes the table past the viewport and hides the Status and Actions
+   columns off the right edge. Long text truncates instead, so the row stays
+   one line AND the whole table stays on screen. */
+/* Auto layout, not fixed: these four tables have 4, 6, 7 and 10 columns, and
+   a fixed grid starves the name column in one to pad a short column in
+   another. Each cell caps its own width instead and truncates past it. */
+.mp-table { inline-size: 100%; }
+
+.mp-table :is(td, th) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-inline-size: 7.5rem;
+}
+
+/* The name is the row's identity — it gets the most room before truncating,
+   and the middle columns give up theirs so it can. */
+.mp-table :is(td, th):first-child { max-inline-size: 14rem; }
+
+/* The badge strip scrolls rather than truncating: a clipped status reads as a
+   different status. Actions are never clipped at all. */
+.mp-table td:has(.mp-badges),
+.mp-table td:has(.row-menu) { max-inline-size: none; overflow: visible; }
+.mp-table .mp-cell-wrap { white-space: normal; }
+
+.row-menu__note {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--edify-text-subtle);
+}

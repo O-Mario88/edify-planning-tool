@@ -1,16 +1,18 @@
-<!-- Status/finance badges for a My Plan category-table row (expects `row`) -->
-{% if row.badges %}
-<div class="flex items-center gap-1 flex-wrap mt-1 max-w-[220px]">
-{% for label, variant in row.badges %}
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold border
-{% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
-{% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
-{% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150
-{% elif variant == 'purple' %}edify-primary-soft edify-primary-text edify-primary-border
-{% elif variant == 'blue' %}edify-primary-soft edify-primary-text edify-primary-border
-{% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
-{{ label }}
-</span>
-{% endfor %}
+{% comment %}
+Status strip for a My Plan row (expects `row`).
+
+One line, always. These used to wrap inside a 220px box, so a row carrying four
+badges stood three times the height of a row carrying one and the table could
+not be scanned down. The strip scrolls sideways instead.
+
+No outlines either: eight bordered pills across a row read as a fence. Colour
+alone carries the state, and a finished stage takes the light green.
+{% endcomment %}
+<div class="mp-badges">
+  {% if row.status_label %}
+  <span class="mp-badge mp-badge--{{ row.status_tone|default:'slate' }}">{{ row.status_label }}</span>
+  {% endif %}
+  {% for label, variant in row.badges %}
+  <span class="mp-badge mp-badge--{{ variant }}">{{ label }}</span>
+  {% endfor %}
 </div>
-{% endif %}
