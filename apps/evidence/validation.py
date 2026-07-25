@@ -100,6 +100,11 @@ def _detect_families(head: bytes) -> list[str]:
     return found
 
 
+# Identity map over the allowed extensions, so a validated extension can be
+# exchanged for the constant with the same spelling.
+_CANONICAL_EXTENSION = {extension: extension for extension in EXTENSION_FAMILY}
+
+
 def assert_safe_upload(
     *, original_name: str, mime_type: str, head: bytes, size: int
 ) -> str:
@@ -123,7 +128,12 @@ def assert_safe_upload(
     actual = _detect_families(head[:512])
     if not any(f in expected_families for f in actual):
         raise BadRequest("The file content does not match its declared type.")
-    return ext
+    # Return this module's own spelling of the extension, not the slice taken
+    # off the submitted filename. The two compare equal — that is what the
+    # membership check above established — but only one of them is a value
+    # this module chose, and the returned extension is concatenated into a
+    # filesystem path by every caller.
+    return _CANONICAL_EXTENSION[ext]
 
 
 # Map declared MIME -> the extensions it may legitimately accompany.

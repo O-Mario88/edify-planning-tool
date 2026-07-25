@@ -1,6 +1,23 @@
 {% load frontend_filters %}
 <div class="space-y-5">
 
+  {% comment %}A Professional Development allocation belongs to a staff
+  profile, and not every signed-in account has one — an Admin, or anyone
+  invited before HR has finished setting them up. Without this the page showed
+  four zeroes with no explanation; before that it raised outright.{% endcomment %}
+  {% if balances.has_staff_profile is False %}
+  <div class="edify-surface rounded-surface border border-amber-200 bg-amber-50 p-4"
+       role="status">
+    <p class="text-[13px] font-bold text-amber-900">Your staff profile is not set up yet</p>
+    <p class="text-[12px] font-semibold text-amber-800 mt-1">
+      Professional Development runs off your staff record — allocation, supervisor
+      and department all come from it. HR creates that record; until it exists there
+      is nothing to allocate and no course you can request. The figures below are
+      genuinely zero rather than unavailable.
+    </p>
+  </div>
+  {% endif %}
+
   {# ── KPI strip ─────────────────────────────────────────────────────────── #}
   <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
     {% for k in kpis %}

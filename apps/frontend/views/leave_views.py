@@ -594,9 +594,15 @@ def leave_tracker_view(request):
     )
 
     if role == "PL":
-        sp_id = user.staff_profile.id
-        coverages = coverages.filter(
-            Q(original_staff_id=sp_id) | Q(covering_staff_id=sp_id)
+        # A Program Lead is scoped by their staff profile, and an account can
+        # exist before HR creates one — a new hire, or a role granted ahead of
+        # the record. Reading `.id` regardless raised, so the page 500d rather
+        # than showing the nothing they are correctly scoped to.
+        sp_id = getattr(user, "staff_profile_id", None)
+        coverages = (
+            coverages.filter(Q(original_staff_id=sp_id) | Q(covering_staff_id=sp_id))
+            if sp_id
+            else coverages.none()
         )
 
     # Next 4 weeks availability preview
@@ -1037,9 +1043,13 @@ def leave_coverage_view(request):
 
     role = get_user_role_slug(request.user)
     if role == "PL":
-        sp_id = request.user.staff_profile.id
-        coverages = coverages.filter(
-            Q(original_staff_id=sp_id) | Q(covering_staff_id=sp_id)
+        # See leave_tracker_view: scoped by staff profile, which an account
+        # may not have yet.
+        sp_id = getattr(request.user, "staff_profile_id", None)
+        coverages = (
+            coverages.filter(Q(original_staff_id=sp_id) | Q(covering_staff_id=sp_id))
+            if sp_id
+            else coverages.none()
         )
 
     context = {

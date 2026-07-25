@@ -4,6 +4,7 @@ Disbursements, Budget Overview, Cost Catalogue, Fund Requests list
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
 from apps.core.htmx_errors import error_fragment, notice_fragment
 from apps.core.redirects import local_redirect
 from apps.core.permissions import (
@@ -253,6 +254,7 @@ def finance_action_drawer_view(request):
     return render(request, "partials/finance/finance_action_drawer.html", context)
 
 
+@require_POST
 @require_page_permission("disbursements")
 def disburse_advance_action(request):
     """POST to disburse weekly advance."""
@@ -281,6 +283,11 @@ def disburse_advance_action(request):
             return error_fragment(e, status=400)
 
 
+# POST only. Each of these is `if request.method == "POST": ...` with no
+# else, so a GET fell off the end returning None and Django turned that
+# into a 500 — on a bookmarked link, a back button, or anything that
+# follows URLs. require_POST answers 405, which is the true answer.
+@require_POST
 @require_page_permission("disbursements")
 def clear_partner_payment_action(request):
     """POST to clear partner payment."""
@@ -341,6 +348,7 @@ def clear_partner_payment_action(request):
             return error_fragment(e, status=400)
 
 
+@require_POST
 @require_page_permission("disbursements")
 def process_reimbursement_action(request):
     """POST to disburse self-funded reimbursement."""
@@ -374,6 +382,7 @@ def process_reimbursement_action(request):
             return error_fragment(e, status=400)
 
 
+@require_POST
 @require_page_permission("disbursements")
 def confirm_accountability_action(request):
     """POST — Accountant clears SUBMITTED accountability on a weekly request.
@@ -485,6 +494,7 @@ def confirm_accountability_action(request):
             return error_fragment(e, status=400)
 
 
+@require_POST
 @require_page_permission("disbursements")
 def finance_return_action(request):
     """POST to return a confirmed-for-advance weekly fund request for

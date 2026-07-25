@@ -130,8 +130,21 @@ class StaffPDService:
 
     # ── Allocation + derived balances ───────────────────────────────────────
     @staticmethod
-    def get_or_create_allocation(user, fy: str) -> ProfessionalDevelopmentAllocation:
+    def get_or_create_allocation(
+        user, fy: str
+    ) -> ProfessionalDevelopmentAllocation | None:
+        """The person's FY envelope, or None when they have no staff profile.
+
+        A PD allocation belongs to a StaffProfile, and not every signed-in
+        account has one — an Admin, or anyone invited before HR has finished
+        setting them up. This used to read `sp.id` regardless, so those people
+        got a 500 on their own Professional Development page. `_staff` has
+        always been able to return None; the callers had simply never been
+        written for it.
+        """
         sp = _staff(user)
+        if sp is None:
+            return None
         alloc, _ = ProfessionalDevelopmentAllocation.objects.get_or_create(
             staff_id=sp.id,
             fy=fy,
@@ -161,6 +174,24 @@ class StaffPDService:
         − Accounted Used (mandate §4). Derived live from the requests."""
         sp = _staff(user)
         alloc = StaffPDService.get_or_create_allocation(user, fy)
+        if sp is None or alloc is None:
+            # Nothing is allocated and nothing can be requested until a staff
+            # profile exists, so every figure is genuinely zero — not a
+            # placeholder standing in for a number we could not fetch. Same
+            # keys as the real branch, so the page renders rather than failing
+            # on a missing one, and `has_staff_profile` lets it say why.
+            return {
+                "allocation": None,
+                "annual_allocation": 0,
+                "committed": 0,
+                "disbursed": 0,
+                "accounted": 0,
+                "returned": 0,
+                "remaining": 0,
+                "remaining_raw": 0,
+                "currency": "UGX",
+                "has_staff_profile": False,
+            }
         rows = ProfessionalDevelopmentRequest.objects.filter(staff_id=sp.id, fy=fy)
 
         # Committed money that has NOT yet been accounted for. A request lands
@@ -209,6 +240,7 @@ class StaffPDService:
             "remaining": max(0, remaining),
             "remaining_raw": remaining,
             "currency": alloc.currency,
+            "has_staff_profile": True,
         }
 
     # ── Allocation History (Quick Action drawer) — read-only, no side effects
@@ -263,10 +295,16 @@ class StaffPDService:
         bal = StaffPDService.balances(user, fy)
         today = date.today()
 
-        rows = list(
-            ProfessionalDevelopmentRequest.objects.filter(
-                staff_id=sp.id, fy=fy
-            ).order_by("-created_at")
+        # No staff profile means no requests to list — and no `sp.id` to
+        # filter by, which is what used to raise here.
+        rows = (
+            list(
+                ProfessionalDevelopmentRequest.objects.filter(
+                    staff_id=sp.id, fy=fy
+                ).order_by("-created_at")
+            )
+            if sp is not None
+            else []
         )
         active = [r for r in rows if r.status in ACTIVE_COURSE_STATUSES]
         # "Current course" = the active one soonest to need employee action,
