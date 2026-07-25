@@ -38,6 +38,7 @@ class Ring:
     radius: float
     circumference: float
     dash: str
+    display: str
     percent: float
     label_x: float
     label_y: float
@@ -55,7 +56,10 @@ def build_rings(
 ) -> dict:
     """Resolve `series` into concentric ring geometry.
 
-    `series` is an iterable of dicts with `key`, `label`, `value` and `color`.
+    `series` is an iterable of dicts with `key`, `label`, `value` and `color`,
+    and an optional `display` — the string to print on the ring and its chip.
+    Money needs it: a raw 13152000 on a ring is unreadable where "UGX 13.2M"
+    is not. Without it the value prints as-is.
     `share_of` is the denominator each value is a share of; when omitted the
     largest value is used, so the biggest ring reads full and the rest are
     proportional to it.
@@ -93,6 +97,11 @@ def build_rings(
                 label=str(item.get("label") or ""),
                 value=value,
                 color=str(item.get("color") or "currentColor"),
+                display=str(
+                    item["display"]
+                    if item.get("display") not in (None, "")
+                    else (int(value) if float(value).is_integer() else value)
+                ),
                 radius=round(radius, 2),
                 circumference=round(circumference, 2),
                 # An arc of 0 must not render a rounded cap sitting at twelve

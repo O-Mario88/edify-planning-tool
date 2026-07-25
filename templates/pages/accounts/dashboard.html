@@ -374,33 +374,7 @@ Open Canonical Disbursement Queue
 <!-- Disbursement Status Chart Visual -->
 <div class="edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Disbursement Status</h3>
-<div class="flex items-center justify-center gap-4">
-<!-- circular svg representation -->
-<div class="relative h-24 w-24 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-{% if donut.total %}
-<!-- Approved -->
-<path class="text-emerald-500" stroke-dasharray="{{ donut.approved_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Pending -->
-<path class="text-amber-500" stroke-dasharray="{{ donut.pending_pct }}, 100" stroke-dashoffset="-{{ donut.pending_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Disbursed -->
-<path class="edify-primary-text" stroke-dasharray="{{ donut.disbursed_pct }}, 100" stroke-dashoffset="-{{ donut.disbursed_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Returned -->
-<path class="text-rose-500" stroke-dasharray="{{ donut.returned_pct }}, 100" stroke-dashoffset="-{{ donut.returned_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-{% endif %}
-</svg>
-<div class="absolute flex flex-col justify-center items-center text-center">
-<span class="text-[12px] font-semibold text-slate-800 leading-none">{{ donut.total_compact }}</span>
-<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total</span>
-</div>
-</div>
-<div class="edify-text-caption space-y-1 font-bold text-slate-500">
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500"></span> Approved ({{ donut.approved_pct }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-500"></span> Pending ({{ donut.pending_pct }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill edify-primary-solid"></span> Disbursed ({{ donut.disbursed_pct }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-500"></span> Returned ({{ donut.returned_pct }}%)</div>
-</div>
+{% include "partials/components/donut_rings.html" with donut=donut_rings donut_label="Disbursement status by value" headline=donut.total_compact subline="total this FY" %}
 </div>
 </div>
 

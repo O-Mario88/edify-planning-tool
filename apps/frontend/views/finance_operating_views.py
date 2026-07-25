@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Sum
 
+from apps.core.donut import build_rings
 from apps.core.permissions import require_export_permission, require_page_permission
 from apps.activities.models import Activity
 from apps.fund_requests.models import (
@@ -225,6 +226,42 @@ def accountant_dashboard_view(request):
         donut[f"{key}_offset"] = round(offset, 1)
         offset += pct
 
+    # Concentric rings for the shared donut component. Money, so each ring is
+    # a share of the FY total and the centre reads the total itself.
+    donut_rings = build_rings(
+        [
+            {
+                "key": "disbursed",
+                "label": "Disbursed",
+                "value": total_disbursed_db,
+                "display": format_ugx_compact(total_disbursed_db),
+                "color": "var(--edify-success)",
+            },
+            {
+                "key": "approved",
+                "label": "Approved",
+                "value": pending_disb_sum,
+                "display": format_ugx_compact(pending_disb_sum),
+                "color": "var(--edify-accent)",
+            },
+            {
+                "key": "pending",
+                "label": "Pending",
+                "value": awaiting_sum,
+                "display": format_ugx_compact(awaiting_sum),
+                "color": "var(--edify-warning)",
+            },
+            {
+                "key": "returned",
+                "label": "Returned",
+                "value": returned_sum,
+                "display": format_ugx_compact(returned_sum),
+                "color": "var(--edify-danger)",
+            },
+        ],
+        share_of=donut_total or None,
+    )
+
     # Recent disbursement activity (latest real disbursements)
     recent_activity = []
     for w in sorted(
@@ -299,6 +336,7 @@ def accountant_dashboard_view(request):
         "all_funds": all_funds,
         "month_overview": month_overview,
         "donut": donut,
+        "donut_rings": donut_rings,
         "recent_activity": recent_activity,
         "recon_pending": recon_pending,
         "recon_stats": recon_stats,

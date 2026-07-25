@@ -33,7 +33,7 @@ as a sliver of progress that is not there.
       </g>
       {% for ring in donut.rings %}{% if ring.has_arc %}
       <text x="{{ ring.label_x }}" y="{{ ring.label_y }}" fill="{{ ring.color }}"
-            text-anchor="end" dominant-baseline="middle" class="edify-donut__value">{{ ring.value|floatformat:"-1" }}</text>
+            text-anchor="end" dominant-baseline="middle" class="edify-donut__value">{{ ring.display }}</text>
       {% endif %}{% endfor %}
     </svg>
 
@@ -49,7 +49,7 @@ as a sliver of progress that is not there.
     <li class="edify-donut__chip" style="border-color: {{ ring.color }}">
       <span class="edify-donut__dot" style="background: {{ ring.color }}" aria-hidden="true"></span>
       <span class="edify-donut__chip-label">{{ ring.label }}</span>
-      <span class="edify-donut__chip-value">{{ ring.value|floatformat:"-1" }}</span>
+      <span class="edify-donut__chip-value">{{ ring.display }}</span>
     </li>
     {% endfor %}
   </ul>
