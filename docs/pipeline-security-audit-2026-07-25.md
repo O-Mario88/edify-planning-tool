@@ -140,12 +140,22 @@ message and both argument forms, and — separately — that the filter is actua
 attached to the handler the root logger and `django.request` use. A filter
 configured but not attached is no control at all.
 
-Twelve `py/stack-trace-exposure` alerts also remain, all of them
-`raise BadRequest("...")` or `HttpResponseForbidden(escape(str(e)))` where the
-exception is a domain exception carrying a sentence written to be read by the
-person who triggered it. The four that genuinely wrapped an arbitrary
-exception's text into a user-facing message were fixed (§5); these are the
-intended behaviour of a domain error, and their bodies are escaped.
+Seven `py/stack-trace-exposure` alerts also remain — one in
+`leave_views.py` and six in the DRF upload and health endpoints. Every one of
+them is a domain exception being rendered: `raise BadRequest("...")` with an
+authored sentence, or DRF's own error contract turning that into a response
+body. Showing those is the point of having them.
+
+Every case where an *arbitrary* exception's text escaped has been fixed: the
+thirty-one HTML fragments, the four services that wrapped `str(exc)` into a
+BadRequest, the JSON error field, the cluster drawer, the catch-up plan
+handler. What is left is a domain error surface behaving as designed, with
+escaped bodies.
+
+**Final alert state on `main`: 0 Critical, 0 High, 11 Medium** — the three
+log-injection and seven stack-trace-exposure described above, and one
+url-redirection whose guard is Django's own `url_has_allowed_host_and_scheme`.
+Down from 100 open alerts, 17 of them High, when CodeQL first ran.
 
 ### Suppressions
 

@@ -1099,14 +1099,18 @@ def mark_notification_read(request, notif_id):
     # so `/notifications/<id>/read?redirect=https://evil.example.com` was a live
     # open redirect on an authenticated route — a phishing link that leaves from
     # the real Edify domain.
+    # Branch rather than reassign. The reassignment form is equally safe at
+    # runtime — the unsafe value never reaches redirect() — but the guarded
+    # and unguarded values share a name, so neither a reader skimming the
+    # function nor static analysis can see which one is being returned.
     redirect_to = request.GET.get("redirect") or request.POST.get("redirect") or "/"
-    if not url_has_allowed_host_and_scheme(
+    if url_has_allowed_host_and_scheme(
         redirect_to,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
     ):
-        redirect_to = "/notifications"
-    return redirect(redirect_to)
+        return redirect(redirect_to)
+    return redirect("/notifications")
 
 
 @require_page_permission("dashboard")
