@@ -118,13 +118,16 @@
               <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-2.5 py-1 text-[12px] font-bold">Approve &amp; lock</button>
             </form>
             {% else %}
-            <form method="post" action="/hr/performance-cycle/action" onsubmit="this.reason.value=prompt('Reason for returning this agreement?')||'';return this.reason.value!==''">
+            {% comment %}The reason was collected by window.prompt() from an
+            inline onsubmit handler and written into a hidden input —
+            unlabelled, unreviewable before sending, and silent to a screen
+            reader. It is a real field now.{% endcomment %}
+            <form method="post" action="/hr/performance-cycle/action">
               {% csrf_token %}
               <input type="hidden" name="action" value="return">
               <input type="hidden" name="fy" value="{{ fy }}">
               <input type="hidden" name="review_id" value="{{ row.review.id }}">
-              <input type="hidden" name="reason" value="">
-              <button type="submit" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Return</button>
+              {% include "partials/components/reason_disclosure.html" with uid=row.review.id trigger_label="Return" field_label="Reason for returning this agreement" submit_label="Return agreement" placeholder="Say what needs changing, so the employee and their manager can act on it." %}
             </form>
             {% endif %}
 
@@ -155,9 +158,9 @@
             {% endif %}
 
             {# Risk escalation (§15) — always deliberate, never automatic #}
-            <form method="post" action="/hr/performance-cycle/action" onsubmit="this.reason.value=prompt('Reason to recommend a formal PIP for {{ row.name|escapejs }}?')||'';return this.reason.value!==''">
-              {% csrf_token %}<input type="hidden" name="action" value="recommend_pip"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="staff_id" value="{{ row.review.staff_id }}"><input type="hidden" name="reason" value="">
-              <button type="submit" class="rounded-md border border-amber-200 text-amber-700 px-2.5 py-1 text-[12px] font-bold">Recommend PIP</button>
+            <form method="post" action="/hr/performance-cycle/action">
+              {% csrf_token %}<input type="hidden" name="action" value="recommend_pip"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="staff_id" value="{{ row.review.staff_id }}">
+              {% include "partials/components/reason_disclosure.html" with uid="pip-"|add:row.review.staff_id trigger_label="Recommend PIP" tone="danger" field_label="Why a formal performance improvement plan is warranted" submit_label="Recommend PIP" placeholder="This starts a formal process. Set out what has been observed and over what period." rows=4 %}
             </form>
           </div>
         </td>

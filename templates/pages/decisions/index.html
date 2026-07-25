@@ -14,7 +14,10 @@
 <div class="flex items-center gap-2">
 <form method="GET" class="flex items-center gap-2">
 <label class="sr-only" for="fy-select">Financial year</label>
-<select id="fy-select" name="fy" onchange="this.form.submit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+{% comment %}@change rather than an inline onchange: the handler moves
+into the Alpine layer the rest of the app uses, and requestSubmit()
+runs the form's own validation where submit() skips it.{% endcomment %}
+<select id="fy-select" name="fy" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
 {% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
 </select>
 </form>

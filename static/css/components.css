@@ -1974,3 +1974,97 @@ select:not([multiple]):not(.select-native) {
   color: var(--edify-text);
   font-variant-numeric: tabular-nums;
 }
+
+/* ─── REASON DISCLOSURE ──────────────────────────────────────────────────────
+   One capture control for "why?", shared by every action that requires a
+   written justification. It replaced, among others, two window.prompt() calls
+   collecting the reason for returning a performance agreement and for
+   recommending a formal PIP — unlabelled, unstyled, unvalidated, and silent to
+   a screen reader. Tokens only; no page overrides it. */
+.reason-disclosure { display: inline-block; text-align: start; }
+
+.reason-disclosure__trigger,
+.reason-disclosure__submit {
+  min-block-size: 2rem;
+  padding-inline: 0.75rem;
+  border-radius: var(--edify-radius-sm);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reason-disclosure__trigger {
+  border: 1px solid var(--edify-border);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text-muted);
+}
+
+.reason-disclosure__trigger:hover,
+.reason-disclosure__trigger[aria-expanded="true"] {
+  border-color: var(--edify-border-strong);
+  color: var(--edify-text);
+}
+
+.reason-disclosure__trigger--danger { color: var(--edify-danger-text); }
+
+.reason-disclosure__panel {
+  margin-block-start: 8px;
+  min-inline-size: 16rem;
+  padding: 10px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+.reason-disclosure__label {
+  display: block;
+  margin-block-end: 4px;
+  color: var(--edify-text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.reason-disclosure__required { color: var(--edify-danger-text); }
+
+.reason-disclosure__field {
+  inline-size: 100%;
+  padding: 8px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+
+.reason-disclosure__field:focus-visible,
+.reason-disclosure__trigger:focus-visible,
+.reason-disclosure__submit:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+}
+
+.reason-disclosure__submit {
+  inline-size: 100%;
+  margin-block-start: 8px;
+  border: 1px solid var(--edify-border-strong);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+}
+
+.reason-disclosure__submit--danger {
+  border-color: transparent;
+  background: var(--edify-danger);
+  color: #fff;
+}
+
+/* Touch targets on a phone: the same control, at a size a thumb can hit. */
+@media (pointer: coarse) {
+  .reason-disclosure__trigger,
+  .reason-disclosure__submit { min-block-size: 2.75rem; }
+}

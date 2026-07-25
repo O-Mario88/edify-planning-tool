@@ -14,7 +14,10 @@
 <form method="GET" class="flex items-center gap-2">
 {% if log.activeGroup %}<input type="hidden" name="group" value="{{ log.activeGroup }}">{% endif %}
 <label class="sr-only" for="days-select">Period</label>
-<select id="days-select" name="days" onchange="this.form.submit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+{% comment %}@change rather than an inline onchange: the handler moves
+into the Alpine layer the rest of the app uses, and requestSubmit()
+runs the form's own validation where submit() skips it.{% endcomment %}
+<select id="days-select" name="days" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
 {% for option in log.dayOptions %}<option value="{{ option }}" {% if option == log.days %}selected{% endif %}>Last {{ option }} days</option>{% endfor %}
 </select>
 </form>

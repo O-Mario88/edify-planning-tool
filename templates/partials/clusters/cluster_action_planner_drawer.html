@@ -64,7 +64,7 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 </div>
 {% endif %}
 
-<form
+<form x-data="{ partnerError: '' }"
 id="action-planner-form"
 action="/clusters/schedule-activity"
 method="post"
@@ -379,6 +379,14 @@ value="{% if selected_cluster.responsible_staff_id %}{{ selected_cluster.respons
 {% if request.user.active_role != 'PartnerAdmin' and request.user.active_role != 'PartnerFieldOfficer' %}
 <div>
 <label for="assigned-partner-select" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Assign to Partner (Optional)</label>
+{% comment %}The Assign button used to answer an empty selection with a
+browser alert(): outside the drawer, unstyled, dismissible only by clicking
+OK, and leaving the user to find their way back to the field it was about.
+The message belongs beside the field, announced where a screen reader will
+reach it.{% endcomment %}
+<p x-show="partnerError" x-cloak role="alert"
+   class="mb-1 text-[11.5px] font-semibold text-rose-600"
+   x-text="partnerError"></p>
 <select
 name="assigned_partner_id"
 id="assigned-partner-select"
@@ -465,8 +473,11 @@ class="px-6 h-9 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white f
 @click="
 let partnerSelect = document.getElementById('assigned-partner-select');
 if (partnerSelect && !partnerSelect.value) {
-alert('Please choose a partner first in the Assign to Partner dropdown.');
 $event.preventDefault();
+partnerError = 'Choose a partner before assigning this activity.';
+partnerSelect.focus();
+} else {
+partnerError = '';
 }
 "
 >
