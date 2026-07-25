@@ -1,0 +1,42 @@
+{% comment %}
+The month's scheduled activities, grouped by day.
+
+Every row is a real Activity from the database, scoped through the same
+audience helper the operations calendar uses. Reloaded on its own when the
+calendar pages to another month, so the list never describes a month the grid
+is not showing.
+{% endcomment %}
+<div id="calendar-activity-panel" class="cal-panel" data-month="{{ month_start|date:'n' }}" data-year="{{ month_start|date:'Y' }}">
+  <div class="cal-panel__head">
+    <div>
+      <h2 class="cal-panel__title">Scheduled activities</h2>
+      <p class="cal-panel__month">{{ month_start|date:"F Y" }}</p>
+    </div>
+    <span class="cal-panel__count">{{ activity_total }}</span>
+  </div>
+
+  {% if activity_days %}
+  <ol class="cal-panel__days">
+    {% for day in activity_days %}
+    <li class="cal-day">
+      <div class="cal-day__date">
+        <span class="cal-day__dow">{{ day.date|date:"D" }}</span>
+        <span class="cal-day__num">{{ day.date|date:"j" }}</span>
+      </div>
+      <ul class="cal-day__items">
+        {% for item in day.items %}
+        <li class="cal-item">
+          <a href="/my-plan/{{ item.id }}" class="cal-item__label">{{ item.label }}</a>
+          {% if item.where %}<span class="cal-item__where">{{ item.where }}</span>{% endif %}
+          <span class="cal-item__meta">{% if item.time %}{{ item.time }} · {% endif %}{{ item.status }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  {% comment %}An empty month is a real answer, not a failure to load.{% endcomment %}
+  <p class="cal-panel__empty">Nothing scheduled in {{ month_start|date:"F" }}.</p>
+  {% endif %}
+</div>

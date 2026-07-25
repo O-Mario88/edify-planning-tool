@@ -772,6 +772,11 @@ urlpatterns = [
     ),
     path("leave/calendar", leave_views.leave_calendar_view, name="leave_calendar"),
     path("leave/calendar/", leave_views.leave_calendar_view),
+    path(
+        "leave/calendar/activities",
+        leave_views.leave_calendar_activities_partial,
+        name="leave_calendar_activities",
+    ),
     # Lives under /leave/ — an "admin/…" prefix would be shadowed by the
     # Django admin site mounted at admin/ in config/urls.py.
     path("leave/policies", leave_views.leave_policies_view, name="leave_policies"),

@@ -1157,7 +1157,7 @@ def leave_calendar_view(request):
                 )
                 .date()
                 .isoformat(),
-                "color": "#10b981",  # Teal/Green
+                "color": CALENDAR_COLOURS["leave"],
                 "textColor": "#ffffff",
                 "extendedProps": {
                     "type": "Approved Leave",
@@ -1181,7 +1181,7 @@ def leave_calendar_view(request):
                 )
                 .date()
                 .isoformat(),
-                "color": "#f59e0b",  # Yellow/Amber
+                "color": CALENDAR_COLOURS["leave_pending"],
                 "textColor": "#ffffff",
                 "extendedProps": {
                     "type": "Pending Leave",
@@ -1197,7 +1197,7 @@ def leave_calendar_view(request):
                 "title": f"Cover: {c.covering_staff.user.name}",
                 "start": c.start_datetime.isoformat(),
                 "end": c.end_datetime.isoformat(),
-                "color": "#6366f1",
+                "color": CALENDAR_COLOURS["coverage"],
                 "textColor": "#ffffff",
                 "extendedProps": {
                     "type": "Coverage Assignment",
@@ -1209,13 +1209,11 @@ def leave_calendar_view(request):
 
     # Calendar Blocks (Holidays = red/pink, Blackouts = gray, Conferences = purple)
     for b in blocks:
-        color = "#94a3b8"  # gray default
-        if b.block_type == "PUBLIC_HOLIDAY":
-            color = "#f43f5e"  # red/pink
-        elif b.block_type == "BLACKOUT_DATE":
-            color = "#475569"  # dark slate
+        color = CALENDAR_COLOURS["holiday"]
+        if b.block_type == "BLACKOUT_DATE":
+            color = CALENDAR_COLOURS["blackout"]
         elif b.block_type == "STAFF_CONFERENCE":
-            color = "#a855f7"  # purple
+            color = CALENDAR_COLOURS["conference"]
 
         events.append(
             {
@@ -1231,8 +1229,176 @@ def leave_calendar_view(request):
             }
         )
 
-    context = {"events": events}
+    # The page is "who is away and what is scheduled", but it only ever carried
+    # the first half.
+    month_start, _ = _calendar_month_window(request)
+    activity_events, activity_days = _calendar_activities(request, month_start)
+    events.extend(activity_events)
+
+    context = {
+        "events": events,
+        "month_start": month_start,
+        "activity_days": activity_days,
+        "activity_total": sum(len(d["items"]) for d in activity_days),
+    }
     return render(request, "pages/leave/leave_calendar.html", context)
+
+
+def _calendar_month_window(request):
+    """The month the calendar is showing, from ?month=&year= or today."""
+    from apps.core.clock import ClockService
+
+    today = ClockService.today()
+    try:
+        month = int(request.GET.get("month", today.month))
+        year = int(request.GET.get("year", today.year))
+    except (TypeError, ValueError):
+        month, year = today.month, today.year
+    if not 1 <= month <= 12 or not 2000 <= year <= 2100:
+        month, year = today.month, today.year
+
+    start = date(year, month, 1)
+    end = date(
+        year + (1 if month == 12 else 0), 1 if month == 12 else month + 1, 1
+    ) - timedelta(days=1)
+    return start, end
+
+
+# Calendar colour code. Keyed off the canonical activity groupings in
+# apps.core.activity_types so a new activity type joins the right colour by
+# being added to the group it belongs to, not to a second list here.
+CALENDAR_COLOURS = {
+    "visit": "#0d5b9e",           # school visits — blue
+    "cluster_meeting": "#10b981",  # cluster meetings — green
+    "cluster_training": "#f97316",  # cluster trainings — orange
+    "other": "#64748b",           # anything else — quiet slate
+    "leave": "#e11d48",           # leave — red
+    "leave_pending": "#fb7185",   # leave not yet approved — lighter red
+    "coverage": "#6366f1",
+    "holiday": "#94a3b8",         # public holidays — grey
+    "blackout": "#475569",
+    "conference": "#a855f7",
+}
+
+
+def _activity_colour(activity_type: str) -> str:
+    """Which colour an activity takes on the calendar."""
+    from apps.core.activity_types import (
+        CLUSTER_MEETING_TYPES,
+        TRAINING_TYPES,
+        VISIT_TYPES,
+    )
+
+    if activity_type in VISIT_TYPES:
+        return CALENDAR_COLOURS["visit"]
+    if activity_type in CLUSTER_MEETING_TYPES:
+        return CALENDAR_COLOURS["cluster_meeting"]
+    if activity_type in TRAINING_TYPES:
+        # Every training reads orange: the request named cluster training, and
+        # splitting the rest into a fourth colour would say there is a
+        # distinction the calendar does not otherwise draw.
+        return CALENDAR_COLOURS["cluster_training"]
+    return CALENDAR_COLOURS["other"]
+
+
+def _calendar_activities(request, month_start):
+    """This month's scheduled activities, as calendar events and grouped by day.
+
+    Scoped through the same audience helper the operations calendar uses, so
+    the two pages never disagree about who may see whose work.
+    """
+    from apps.activities.models import Activity
+    from apps.frontend.views.extended_views import _calendar_staff_audience
+
+    month_end = date(
+        month_start.year + (1 if month_start.month == 12 else 0),
+        1 if month_start.month == 12 else month_start.month + 1,
+        1,
+    ) - timedelta(days=1)
+
+    activity_owner_ids, _ = _calendar_staff_audience(request.user)
+    activities = (
+        Activity.objects.filter(deleted_at__isnull=True)
+        .filter(
+            Q(scheduled_date__date__range=(month_start, month_end))
+            | Q(
+                scheduled_date__isnull=True,
+                planned_date__range=(month_start, month_end),
+            )
+        )
+        .exclude(status__in=["cancelled", "rejected"])
+        .select_related("school", "cluster")
+        .order_by("planned_date", "scheduled_date", "created_at")
+    )
+    if activity_owner_ids is not None:
+        activities = activities.filter(
+            Q(responsible_staff_id__in=activity_owner_ids)
+            | Q(
+                monitored_by_staff_id__in=activity_owner_ids,
+                delivery_type="partner",
+            )
+        )
+
+    events: list[dict] = []
+    by_day: dict = {}
+    for activity in activities:
+        when = (
+            activity.scheduled_date.date()
+            if activity.scheduled_date
+            else activity.planned_date
+        )
+        if not when:
+            continue
+        where = (
+            activity.school.name
+            if activity.school_id
+            else (activity.cluster.name if activity.cluster_id else "")
+        )
+        label = activity.get_activity_type_display()
+        events.append(
+            {
+                "title": f"{label}{f' — {where}' if where else ''}",
+                "start": when.isoformat(),
+                "allDay": activity.scheduled_date is None,
+                "color": _activity_colour(activity.activity_type),
+                "textColor": "#ffffff",
+                "extendedProps": {
+                    "type": "Scheduled Activity",
+                    "staff": where or "—",
+                    "description": activity.get_status_display(),
+                },
+            }
+        )
+        by_day.setdefault(when, []).append(
+            {
+                "id": activity.id,
+                "label": label,
+                "where": where,
+                "status": activity.get_status_display(),
+                "time": activity.scheduled_date.strftime("%-I:%M %p")
+                if activity.scheduled_date
+                else "",
+            }
+        )
+
+    return events, [{"date": day, "items": by_day[day]} for day in sorted(by_day)]
+
+
+@require_page_permission("leave_calendar")
+def leave_calendar_activities_partial(request):
+    """The month-activity panel on its own, so the calendar can refresh it when
+    the user pages to another month without reloading the whole view."""
+    month_start, _ = _calendar_month_window(request)
+    _, activity_days = _calendar_activities(request, month_start)
+    return render(
+        request,
+        "partials/leave/calendar_activity_panel.html",
+        {
+            "month_start": month_start,
+            "activity_days": activity_days,
+            "activity_total": sum(len(d["items"]) for d in activity_days),
+        },
+    )
 
 
 def _audit_leave_policy(request, action: str, subject, before: dict) -> None:

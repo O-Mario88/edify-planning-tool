@@ -3939,3 +3939,205 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   .row-menu__trigger { min-block-size: 2.75rem; }
   .row-menu__item { min-block-size: 2.75rem; line-height: 2.75rem; }
 }
+
+/* ─── TEAM AVAILABILITY CALENDAR ─────────────────────────────────────────────
+   FullCalendar ships its own button chrome, which arrived oversized, uppercase
+   and unevenly spaced against the rest of the platform. These rules put its
+   toolbar on the same control sizing as every other page. */
+.cal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* 80rem, not 64rem: with the nav rail taking ~325px, a 1024px viewport leaves
+   about 700px of content, and a 21rem panel would squeeze the month grid to
+   roughly 350px — narrower than the grid can render a week in. Below this the
+   list sits under the calendar, which is the honest fallback. */
+@media (min-width: 80rem) {
+  .cal-layout { grid-template-columns: minmax(0, 1fr) 21rem; align-items: start; }
+}
+
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--edify-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.cal-legend li { display: inline-flex; align-items: center; gap: 6px; }
+
+.cal-legend__dot {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: var(--edify-radius-pill);
+  flex: 0 0 auto;
+}
+
+/* ── FullCalendar toolbar ─────────────────────────────────────────────────── */
+#calendar.fc .fc-toolbar.fc-header-toolbar {
+  margin-block-end: 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#calendar.fc .fc-toolbar-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+  color: var(--edify-text) !important;
+}
+
+#calendar.fc .fc-button-group { gap: 0; }
+
+#calendar.fc .fc-button-primary {
+  min-block-size: 2rem !important;
+  padding: 0 0.75rem !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background: var(--edify-surface) !important;
+  color: var(--edify-text-muted) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  box-shadow: none !important;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+
+#calendar.fc .fc-button-primary:hover {
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text) !important;
+  border-color: var(--edify-border) !important;
+}
+
+/* The segmented view switcher reads as one control, not three loose pills. */
+#calendar.fc .fc-button-group .fc-button-primary { border-radius: 0 !important; margin-inline-start: -1px !important; }
+#calendar.fc .fc-button-group .fc-button-primary:first-child {
+  border-start-start-radius: var(--edify-radius-sm) !important;
+  border-end-start-radius: var(--edify-radius-sm) !important;
+  margin-inline-start: 0 !important;
+}
+#calendar.fc .fc-button-group .fc-button-primary:last-child {
+  border-start-end-radius: var(--edify-radius-sm) !important;
+  border-end-end-radius: var(--edify-radius-sm) !important;
+}
+
+#calendar.fc .fc-button-primary.fc-button-active {
+  background: var(--edify-accent) !important;
+  border-color: var(--edify-accent) !important;
+  color: var(--edify-on-accent) !important;
+  z-index: 1;
+}
+
+#calendar.fc .fc-button-primary:disabled {
+  background: var(--edify-surface-muted) !important;
+  border-color: var(--edify-border) !important;
+  color: var(--edify-text-disabled) !important;
+  opacity: 1 !important;
+}
+
+#calendar.fc .fc-button-primary:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+}
+
+/* Prev/next carry a chevron, not a word — keep them square and quiet. */
+#calendar.fc .fc-prev-button, .fc .fc-next-button { padding-inline: 0.5rem !important; }
+
+/* ── Grid ─────────────────────────────────────────────────────────────────── */
+#calendar.fc th {
+  background: transparent !important;
+  border-color: var(--edify-border) !important;
+  padding-block: 8px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  color: var(--edify-text-subtle) !important;
+}
+
+#calendar.fc :is(td, th) {
+  border-color: color-mix(in oklab, var(--edify-border) 60%, transparent) !important;
+}
+
+#calendar.fc .fc-daygrid-day-number { font-size: 11.5px; font-weight: 600; color: var(--edify-text-muted); }
+
+#calendar.fc .fc-daygrid-day.fc-day-today { background: var(--edify-accent-light) !important; }
+
+#calendar.fc .fc-event {
+  border: 0 !important;
+  border-radius: var(--edify-radius-sm) !important;
+  padding: 1px 5px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+/* ── Month activity panel ─────────────────────────────────────────────────── */
+.cal-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-block-end: 1px solid var(--edify-border);
+}
+
+.cal-panel__title { margin: 0; font-size: 13px; font-weight: 700; color: var(--edify-text); }
+.cal-panel__month { margin: 2px 0 0; font-size: 11.5px; font-weight: 600; color: var(--edify-text-muted); }
+
+.cal-panel__count {
+  min-inline-size: 24px;
+  padding: 2px 8px;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-panel__days {
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-block-size: 34rem;
+  overflow-y: auto;
+}
+
+.cal-day { display: flex; gap: 10px; padding: 8px; }
+
+.cal-day__date {
+  flex: 0 0 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block-start: 2px;
+}
+
+.cal-day__dow { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--edify-text-subtle); }
+.cal-day__num { font-size: 15px; font-weight: 700; color: var(--edify-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+.cal-day__items { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; min-inline-size: 0; }
+
+.cal-item {
+  display: grid;
+  gap: 1px;
+  padding: 6px 8px;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-muted);
+}
+
+.cal-item__label { font-size: 12px; font-weight: 600; color: var(--edify-text); text-decoration: none; }
+.cal-item__label:hover { color: var(--edify-accent); }
+.cal-item__where { font-size: 11px; color: var(--edify-text-muted); overflow-wrap: anywhere; }
+.cal-item__meta { font-size: 10.5px; font-weight: 600; color: var(--edify-text-subtle); }
+
+.cal-panel__empty { margin: 0; padding: 24px 16px; text-align: center; font-size: 12px; font-weight: 600; color: var(--edify-text-muted); }

@@ -1,111 +1,93 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
-{% block title %}Team Leave Calendar — Edify{% endblock %}
+{% block title %}Team Availability Calendar — Edify{% endblock %}
 
 {% block shell_content %}
-<!-- FullCalendar CSS and JS -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-  <!-- Header -->
-  <div class="border-b border-slate-200 pb-4">
-    <p class="edify-page-eyebrow">Time & Availability</p>
-    <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Team Availability Calendar</h1>
-    <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Visualize leave blocks, active coverages, and potential scheduling bottlenecks</p>
+  <div class="edify-page-header flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+    <div class="min-w-0">
+      <p class="edify-page-eyebrow">Time & Availability</p>
+      <h1 class="edify-page-title">Team Availability Calendar</h1>
+      <p class="edify-page-subtitle">Leave, coverage, holidays and scheduled activities on one grid.</p>
+    </div>
+    <ul class="cal-legend">
+      <li><span class="cal-legend__dot" style="background:#0d5b9e"></span>School visit</li>
+      <li><span class="cal-legend__dot" style="background:#10b981"></span>Cluster meeting</li>
+      <li><span class="cal-legend__dot" style="background:#f97316"></span>Training</li>
+      <li><span class="cal-legend__dot" style="background:#e11d48"></span>Leave</li>
+      <li><span class="cal-legend__dot" style="background:#fb7185"></span>Leave (pending)</li>
+      <li><span class="cal-legend__dot" style="background:#6366f1"></span>Coverage</li>
+      <li><span class="cal-legend__dot" style="background:#94a3b8"></span>Public holiday</li>
+    </ul>
   </div>
 
-  <!-- Legend -->
-  <div class="flex flex-wrap items-center gap-6 p-4 edify-surface border border-slate-100 rounded-surface shadow-sm text-[12px] font-semibold text-slate-600">
-    <span class="text-slate-400 font-bold uppercase tracking-wider edify-text-caption">Legend:</span>
-    <div class="flex items-center gap-2">
-      <span class="w-3.5 h-3.5 rounded-pill bg-emerald-500"></span>
-      <span>Approved Leave</span>
+  {% comment %}Calendar and the month's activity list side by side: the grid
+  answers "when", the list answers "what, in order" — which a month grid cannot
+  do without being read cell by cell.{% endcomment %}
+  <div class="cal-layout">
+    <div class="edify-surface rounded-surface border border-slate-100 p-4 shadow-sm">
+      <div id="calendar"></div>
     </div>
-    <div class="flex items-center gap-2">
-      <span class="w-3.5 h-3.5 rounded-pill bg-amber-500"></span>
-      <span>Pending Approval</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="w-3.5 h-3.5 rounded-pill edify-primary-solid"></span>
-      <span>Active Coverage Assignment</span>
-    </div>
-  </div>
 
-  <!-- Calendar Container -->
-  <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm">
-    <div id="calendar" class="min-h-[600px] text-[13px] font-medium"></div>
+    <aside class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+      {% include "partials/leave/calendar_activity_panel.html" %}
+    </aside>
   </div>
-
 </div>
 
+{{ events|json_script:"calendar-events" }}
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('calendar');
+    if (!el || typeof FullCalendar === 'undefined') { return; }
+
+    // Rendered through json_script rather than interpolated into the source.
+    // The events were previously written straight into JS as a Python repr,
+    // which happened to parse only because JavaScript tolerates single-quoted
+    // keys — one apostrophe in a staff name would have broken the page.
+    var events = JSON.parse(document.getElementById('calendar-events').textContent);
+
+    var panel = document.getElementById('calendar-activity-panel');
+
+    function loadPanelFor(date) {
+      if (!panel) { return; }
+      var month = date.getMonth() + 1, year = date.getFullYear();
+      if (panel.dataset.month == month && panel.dataset.year == year) { return; }
+      fetch('/leave/calendar/activities?month=' + month + '&year=' + year, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (html) {
+          if (html) { panel.outerHTML = html; panel = document.getElementById('calendar-activity-panel'); }
+        })
+        .catch(function () { /* leave the current month's list in place */ });
+    }
+
+    var calendar = new FullCalendar.Calendar(el, {
       initialView: 'dayGridMonth',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,listMonth'
-      },
-      events: {{ events|safe }},
-      eventClick: function(info) {
-        // Show interactive alert or custom modal with details
-        var props = info.event.extendedProps;
-        alert(
-          "Event Type: " + props.type + "\n" +
-          "Staff: " + props.staff + "\n" +
-          "Cover Person: " + (props.cover || 'None') + "\n" +
-          "Details: " + info.event.title
-        );
+      height: 'auto',
+      firstDay: 1,
+      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
+      buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+      dayMaxEventRows: 3,
+      events: events,
+      // The list must follow the grid; otherwise paging to August leaves a
+      // panel still headed July.
+      datesSet: function (info) { loadPanelFor(info.view.currentStart); },
+      eventClick: function (info) {
+        var p = info.event.extendedProps || {};
+        window.dispatchEvent(new CustomEvent('edify-toast', {
+          detail: { message: (p.type || 'Event') + ' — ' + info.event.title }
+        }));
       }
     });
     calendar.render();
   });
 </script>
-
-<style>
-  /* Custom FullCalendar premium styling fixes to match Edify dashboard theme */
-  .fc .fc-button-primary {
-    background-color: var(--edify-chart-blue) !important;
-    border-color: var(--edify-chart-blue) !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    border-radius: 8px !important;
-    padding: 6px 12px !important;
-  }
-  .fc .fc-button-primary:hover {
-    background-color: var(--edify-chart-blue) !important;
-    border-color: var(--edify-chart-blue) !important;
-  }
-  .fc .fc-button-primary:disabled {
-    background-color: var(--edify-border) !important;
-    border-color: var(--edify-border) !important;
-  }
-  .fc .fc-toolbar-title {
-    font-size: 16px !important;
-    font-weight: 800 !important;
-    color: var(--edify-text) !important;
-  }
-  .fc-theme-standard th {
-    background-color: var(--edify-surface-muted) !important;
-    border-color: var(--edify-surface-muted) !important;
-    padding: 8px 0 !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    color: var(--edify-text-subtle) !important;
-    letter-spacing: 0.05em !important;
-  }
-  .fc-theme-standard td, .fc-theme-standard th {
-    border-color: var(--edify-surface-muted) !important;
-  }
-  .fc .fc-daygrid-day.fc-day-today {
-    background-color: var(--edify-purple-light) !important;
-  }
-</style>
 {% endblock %}
