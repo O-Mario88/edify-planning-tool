@@ -38,7 +38,7 @@
     </p>
     {% if role == 'Program Lead' or role == 'CountryDirector' or role == 'Admin' %}
     <form method="post" class="mt-3">{% csrf_token %}
-      <button name="action" value="generate" class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold">Generate Draft Report</button>
+      <button type="submit" name="action" value="generate" class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold">Generate Draft Report</button>
     </form>
     {% endif %}
   </section>
@@ -138,10 +138,10 @@
        class="h-10 px-4 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[13px] font-bold edify-primary-text">Download PDF</a>
     {% if is_owner and not is_final %}
     <form method="post" class="inline-flex items-center gap-2 flex-wrap">{% csrf_token %}
-      <button name="action" value="generate" class="h-10 px-4 rounded-control border border-slate-200 edify-surface text-[13px] font-bold">Regenerate Draft</button>
+      <button type="submit" name="action" value="generate" class="h-10 px-4 rounded-control border border-slate-200 edify-surface text-[13px] font-bold">Regenerate Draft</button>
       <input type="text" name="commentary" aria-label="Sign-off commentary" placeholder="Optional commentary…"
              class="h-10 px-3 rounded-control border border-slate-200 text-[13px] min-w-[220px]">
-      <button name="action" value="sign" class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold">Sign &amp; Finalize</button>
+      <button type="submit" name="action" value="sign" class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold">Sign &amp; Finalize</button>
     </form>
     {% endif %}
     {% if is_final %}
@@ -151,7 +151,7 @@
         <input type="hidden" name="action" value="email">
         <input type="text" name="to" aria-label="Recipients (comma-separated emails)" placeholder="Recipients, comma-separated" required class="h-10 px-3 rounded-control border border-slate-200 text-[13px] sm:col-span-2">
         <input type="text" name="subject" aria-label="Email subject" placeholder="Subject (optional)" class="h-10 px-3 rounded-control border border-slate-200 text-[13px] sm:col-span-2">
-        <button class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold sm:col-span-2">Send PDF</button>
+        <button type="submit" class="btn-primary edify-action-button primary h-10 px-5 rounded-control text-[13px] font-bold sm:col-span-2">Send PDF</button>
       </form>
     </details>
     {% endif %}
