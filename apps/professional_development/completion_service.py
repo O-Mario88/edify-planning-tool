@@ -20,6 +20,7 @@ from apps.core.exceptions import BadRequest, Forbidden
 
 from apps.professional_development.models import (
     FUNDED_TYPES,
+    PDCompletionDocumentType,
     PDStatus,
     ProfessionalDevelopmentCertificate,
     ProfessionalDevelopmentEvidence,
@@ -229,11 +230,16 @@ class PDCourseTrackingService:
         issue_date=None,
         expiry_date=None,
         verification_link="",
+        document_type="certificate",
     ) -> ProfessionalDevelopmentCertificate:
         req = ProfessionalDevelopmentRequest.objects.get(id=req_id)
         _assert_owner(req, principal)
         if req.status not in (PDStatus.MARKED_COMPLETE, PDStatus.CERTIFICATE_UPLOADED):
-            raise BadRequest("Mark the course complete before uploading a certificate.")
+            raise BadRequest(
+                "Mark the course complete before uploading proof of completion."
+            )
+        if document_type not in PDCompletionDocumentType.values:
+            raise BadRequest("Unknown document type.")
         stored = store_pd_file(file_obj)
         stored.pop(
             "file_extension", None
@@ -247,6 +253,7 @@ class PDCourseTrackingService:
             issue_date=issue_date,
             expiry_date=expiry_date,
             verification_link=verification_link,
+            document_type=document_type,
             **stored,
         )
         req.status = PDStatus.CERTIFICATE_UPLOADED

@@ -345,8 +345,9 @@ def pd_certificate_upload_view(request, request_id):
             issue_date=request.POST.get("issue_date") or None,
             expiry_date=request.POST.get("expiry_date") or None,
             verification_link=request.POST.get("verification_link", ""),
+            document_type=request.POST.get("document_type") or "certificate",
         )
-        messages.success(request, "Certificate uploaded.")
+        messages.success(request, "Proof of completion uploaded.")
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
     return redirect("/my-professional-development")

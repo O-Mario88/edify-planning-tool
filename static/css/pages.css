@@ -4141,3 +4141,97 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .cal-item__meta { font-size: 10.5px; font-weight: 600; color: var(--edify-text-subtle); }
 
 .cal-panel__empty { margin: 0; padding: 24px 16px; text-align: center; font-size: 12px; font-weight: 600; color: var(--edify-text-muted); }
+
+/* ─── PD PROOF OF COMPLETION ─────────────────────────────────────────────────
+   The certificate/transcript upload on the current-course card. */
+.pd-proof {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+.pd-proof__head { display: flex; align-items: flex-start; gap: 9px; }
+
+.pd-proof__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.pd-proof__icon svg { inline-size: 15px; block-size: 15px; }
+.pd-proof__title { margin: 0; font-size: 12px; font-weight: 700; color: var(--edify-text); }
+.pd-proof__hint { margin: 1px 0 0; font-size: 11px; font-weight: 500; color: var(--edify-text-muted); }
+
+.pd-proof__list { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+
+.pd-proof__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface);
+  font-size: 11px;
+}
+
+.pd-proof__name { font-weight: 600; color: var(--edify-text); overflow-wrap: anywhere; }
+.pd-proof__meta { color: var(--edify-text-subtle); font-weight: 500; margin-inline-start: auto; white-space: nowrap; }
+
+.pd-proof__badge {
+  padding: 1px 7px;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pd-proof__badge--verified { background: var(--edify-success-light, #dcfce7); color: var(--edify-success); }
+.pd-proof__badge--returned { background: var(--edify-danger-light, #ffe4e6); color: var(--edify-danger); }
+
+.pd-proof__form { display: grid; gap: 8px; }
+.pd-proof__field { display: grid; gap: 3px; }
+.pd-proof__label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--edify-text-muted); }
+
+.pd-proof__select,
+.pd-proof__file {
+  inline-size: 100%;
+  min-block-size: 2rem;
+  padding: 0 8px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pd-proof__file { padding-block: 5px; }
+
+.pd-proof__submit {
+  justify-self: start;
+  min-block-size: 2rem;
+  padding-inline: 0.875rem;
+  border: 1px solid var(--edify-accent);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pd-proof__submit:hover { background: var(--edify-accent-hover); border-color: var(--edify-accent-hover); }
+
+@media (max-width: 48rem), (pointer: coarse) {
+  .pd-proof__select, .pd-proof__file, .pd-proof__submit { min-block-size: 2.75rem; }
+}

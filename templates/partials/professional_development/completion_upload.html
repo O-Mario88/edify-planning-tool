@@ -1,0 +1,65 @@
+{% comment %}
+Proof of completion — a certificate or a transcript — for the course the user
+has just finished.
+
+The route and the storage have existed since the PD app was built; nothing in
+the interface ever called them, so the page told people a certificate was
+required and gave them no way to provide one. This is that missing control.
+
+Shown only once the course is marked complete, which is the same condition
+PDCourseTrackingService.upload_certificate enforces server-side — the form is
+never the authority, it just avoids offering an action that would be refused.
+{% endcomment %}
+{% if course.status_key == 'marked_complete' or course.status_key == 'certificate_uploaded' %}
+<div class="pd-proof">
+  <div class="pd-proof__head">
+    <span class="pd-proof__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    </span>
+    <div>
+      <p class="pd-proof__title">Proof of completion</p>
+      <p class="pd-proof__hint">Upload your certificate or transcript for this course.</p>
+    </div>
+  </div>
+
+  {% if course.completion_documents %}
+  <ul class="pd-proof__list">
+    {% for doc in course.completion_documents %}
+    <li class="pd-proof__item">
+      <span class="pd-proof__name">{{ doc.name }}</span>
+      <span class="pd-proof__meta">{{ doc.kind }} · {{ doc.uploaded_at|date:"d M Y" }}</span>
+      {% if doc.status == 'returned' %}
+      <span class="pd-proof__badge pd-proof__badge--returned">Returned</span>
+      {% elif doc.status == 'verified' %}
+      <span class="pd-proof__badge pd-proof__badge--verified">Verified</span>
+      {% else %}
+      <span class="pd-proof__badge">Uploaded</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <form method="post" action="/my-professional-development/request/{{ course.id }}/certificate"
+        enctype="multipart/form-data" class="pd-proof__form">
+    {% csrf_token %}
+    <label class="pd-proof__field">
+      <span class="pd-proof__label">Document type</span>
+      <select name="document_type" class="pd-proof__select">
+        <option value="certificate">Certificate</option>
+        <option value="transcript">Transcript</option>
+      </select>
+    </label>
+    <label class="pd-proof__field">
+      <span class="pd-proof__label">File</span>
+      {% comment %}Extensions mirror the platform's upload validation, which
+      also checks MIME type and magic bytes server-side.{% endcomment %}
+      <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+             class="pd-proof__file">
+    </label>
+    <button type="submit" class="pd-proof__submit">
+      {% if course.completion_documents %}Upload another{% else %}Upload proof{% endif %}
+    </button>
+  </form>
+</div>
+{% endif %}

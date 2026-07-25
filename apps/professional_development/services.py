@@ -565,6 +565,18 @@ class StaffPDService:
             "category": r.course_category,
             "status": r.get_status_display(),
             "status_key": r.status,
+            # Proof of completion already on file, so the card can list what
+            # was uploaded instead of asking for it again.
+            "completion_documents": [
+                {
+                    "id": c.id,
+                    "name": c.original_name,
+                    "kind": c.get_document_type_display(),
+                    "status": c.status,
+                    "uploaded_at": c.created_at,
+                }
+                for c in r.certificates.all().order_by("-created_at")
+            ],
             "pct": pct,
             "next_action_label": label,
             "next_action": action,

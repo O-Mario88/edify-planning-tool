@@ -341,11 +341,27 @@ class ProfessionalDevelopmentEvidence(TimeStampedModel):
         indexes = [models.Index(fields=["request"])]
 
 
+class PDCompletionDocumentType(models.TextChoices):
+    """What a completion upload actually is. Some providers issue a
+    certificate, some a transcript or statement of results, and a few issue
+    both — recording which one arrived means HR is not left inferring it from
+    a filename."""
+
+    CERTIFICATE = "certificate", "Certificate"
+    TRANSCRIPT = "transcript", "Transcript"
+
+
 class ProfessionalDevelopmentCertificate(TimeStampedModel):
-    """Completion certificate, uploaded as a protected PDF (§21). Visible only
-    to the employee, their supervisor and authorized HR/leadership."""
+    """Proof of completion — a certificate or a transcript — uploaded as a
+    protected file (§21). Visible only to the employee, their supervisor and
+    authorized HR/leadership."""
 
     id = CuidField()
+    document_type = models.CharField(
+        max_length=16,
+        choices=PDCompletionDocumentType.choices,
+        default=PDCompletionDocumentType.CERTIFICATE,
+    )
     request = models.ForeignKey(
         ProfessionalDevelopmentRequest,
         on_delete=models.CASCADE,

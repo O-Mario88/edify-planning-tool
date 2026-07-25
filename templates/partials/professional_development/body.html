@@ -56,6 +56,8 @@
         </div>
       </div>
 
+      {% include "partials/professional_development/completion_upload.html" with course=current_course %}
+
       {% if current_course.next_action_label %}
       <div class="rounded-surface edify-primary-soft-alpha-60 border edify-primary-border p-3 flex items-start gap-2">
         <svg class="h-4 w-4 edify-primary-text shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
