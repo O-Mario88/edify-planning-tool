@@ -117,45 +117,40 @@ Hardened:
 | Dependabot alerts | 0 open (feature enabled during this audit) |
 | zizmor | no findings |
 
-### Alerts that remain open, and why
+### The last eight alerts
 
-Three `py/log-injection` alerts stay open, at
-`apps/audit/services.py`, and two in `apps/core_schools/core_planning_services.py`.
+**Log injection (3) — fixed.** All three now escape their untrusted values as
+they enter the record, alongside the `SingleLineFilter` that also catches them
+on the way out. These three are precisely the calls where a value's path from
+outside the system is traceable, so putting the reason next to the value is
+worth the redundancy.
 
-They are controlled, and the control is the reason CodeQL cannot see it. All
-three already use lazy `%`-arguments, and a `SingleLineFilter` on the console
-handler escapes line breaks in a record's message and arguments on the way out
-— so a value carrying `\n` cannot end the line or begin a fabricated one. That
-filter is a runtime logging configuration, not a data-flow barrier in the
-source, so the taint path still reads as open to a static analyser.
+**Stack-trace exposure (7) — one real fix, then dismissed with evidence.**
 
-The alternative would be escaping at each of these three call sites, which
-would clear the alerts and leave the several hundred other logging calls
-depending on the filter regardless. A filter that covers every call site,
-including ones written next month, is the better control; three hand-escaped
-call sites would be scanner appeasement.
+The real fix was in `apps/core/exceptions.py`. `edify_exception_handler` read
+`getattr(exc, "detail", str(exc))`, so any exception arriving without a
+`detail` had its raw text rendered into the response envelope. Every exception
+DRF's own handler answers does carry one — which is exactly why the fallback
+should not have quietly published the alternative. It now logs and returns the
+same fixed sentence the HTML fragments use.
 
-`apps/core/tests/test_logging_filter.py` pins it: the escaping, the record's
-message and both argument forms, and — separately — that the filter is actually
-attached to the handler the root logger and `django.request` use. A filter
-configured but not attached is no control at all.
+After that, the only exception-derived text that can reach a response is
+authored: a DRF `APIException` detail, or `str(e)` guarded by `is_user_facing`.
+Both are sentences domain code raises deliberately to be read — "Pick a date
+first", "Partner payment requires a NetSuite Expense ID". The rule flags the
+data flow, which is real; the exposure is not, because there is nothing
+unauthored left in it. Removing those messages would leave a user with no
+explanation for a refused action.
 
-Seven `py/stack-trace-exposure` alerts also remain — one in
-`leave_views.py` and six in the DRF upload and health endpoints. Every one of
-them is a domain exception being rendered: `raise BadRequest("...")` with an
-authored sentence, or DRF's own error contract turning that into a response
-body. Showing those is the point of having them.
+So the seven are **dismissed in GitHub as "won't fix", each carrying the
+reasoning and a pointer to this document**, rather than left open to be
+rediscovered or silently ignored. `apps/core/tests/test_htmx_errors.py` pins
+both halves — the authored message is shown, the unauthored one is not — so
+the dismissal stops being valid the moment the handler or `is_user_facing`
+changes and a test fails.
 
-Every case where an *arbitrary* exception's text escaped has been fixed: the
-thirty-one HTML fragments, the four services that wrapped `str(exc)` into a
-BadRequest, the JSON error field, the cluster drawer, the catch-up plan
-handler. What is left is a domain error surface behaving as designed, with
-escaped bodies.
-
-**Final alert state on `main`: 0 Critical, 0 High, 11 Medium** — the three
-log-injection and seven stack-trace-exposure described above, and one
-url-redirection whose guard is Django's own `url_has_allowed_host_and_scheme`.
-Down from 100 open alerts, 17 of them High, when CodeQL first ran.
+**Open alerts on `main`: 0.** Down from 100, 17 of them High, when CodeQL
+first ran.
 
 ### Suppressions
 
