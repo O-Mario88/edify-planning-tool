@@ -110,12 +110,12 @@
         <div class="pt-2.5 mt-2.5 sr-tip__rule space-y-1" x-show="tip.d.best">
           <div class="flex items-baseline justify-between gap-2">
             <span class="edify-text-caption font-semibold sr-tip__good">▲ Strongest</span>
-            <span class="text-[11px] font-bold text-right"
+            <span class="edify-text-caption font-bold text-right"
                   x-text="tip.d.best ? `${tip.d.best.name} · ${tip.d.best.score}` : ''"></span>
           </div>
           <div class="flex items-baseline justify-between gap-2">
             <span class="edify-text-caption font-semibold sr-tip__bad">▼ Weakest</span>
-            <span class="text-[11px] font-bold text-right"
+            <span class="edify-text-caption font-bold text-right"
                   x-text="tip.d.worst ? `${tip.d.worst.name} · ${tip.d.worst.score}` : ''"></span>
           </div>
         </div>
@@ -520,7 +520,10 @@ function subregionMap(){
      classes follows the user's real choice rather than the OS preference,
      which the in-app theme toggle can override. */
   .sr-tip{
-    width:300px;
+    /* min() rather than a flat 300px: on a 320px phone a fixed-width tooltip
+       runs off the side of the screen. Same idiom as .edify-calendar-popover
+       and .edify-toast-card. */
+    width:min(300px, calc(100vw - 2rem));
     background:linear-gradient(160deg,#1d4d74 0%,#153b5c 100%);
     color:#f2f7fb;
     border:1px solid rgba(255,255,255,.16);

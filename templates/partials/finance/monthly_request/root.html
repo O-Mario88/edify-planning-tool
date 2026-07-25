@@ -39,22 +39,22 @@
     <div class="rounded-surface border p-4 {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
       <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">Team budget</p>
       <p class="mt-1 text-[20px] font-bold tabular-nums">{{ shown_total_fmt }}</p>
-      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'not_fetched' %}Ready to review{% elif request_state == 'returned_by_cd' %}Update needed{% else %}Review and submit{% endif %}</p>
+      <p class="mt-1 edify-text-caption font-semibold {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'not_fetched' %}Ready to review{% elif request_state == 'returned_by_cd' %}Update needed{% else %}Review and submit{% endif %}</p>
     </div>
     <div class="rounded-surface border p-4 {% if request_state == 'submitted_to_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
       <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">CD review</p>
       <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Approved{% elif request_state == 'submitted_to_cd' %}In review{% else %}Next{% endif %}</p>
-      <p class="mt-1 text-[11px] font-semibold {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'approved_by_cd' %}Included in country budget{% elif request_state == 'submitted_to_cd' %}Waiting for decision{% else %}Country Director checks it{% endif %}</p>
+      <p class="mt-1 edify-text-caption font-semibold {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'approved_by_cd' %}Included in country budget{% elif request_state == 'submitted_to_cd' %}Waiting for decision{% else %}Country Director checks it{% endif %}</p>
     </div>
     <div class="rounded-surface border border-slate-200 edify-surface p-4 text-slate-800">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country budget</p>
       <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Building{% else %}Later{% endif %}</p>
-      <p class="mt-1 text-[11px] font-semibold text-slate-500">CD adds admin costs</p>
+      <p class="mt-1 edify-text-caption font-semibold text-slate-500">CD adds admin costs</p>
     </div>
     <div class="rounded-surface border border-slate-200 edify-surface p-4 text-slate-800">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">RVP approval</p>
       <p class="mt-1 text-[20px] font-bold">Later</p>
-      <p class="mt-1 text-[11px] font-semibold text-slate-500">Funds become approved</p>
+      <p class="mt-1 edify-text-caption font-semibold text-slate-500">Funds become approved</p>
     </div>
   </section>
 
@@ -71,7 +71,7 @@
       {% for member in staff_rows %}
       <div class="rounded-control border border-slate-200 bg-slate-50 px-3 py-3">
         <p class="truncate text-[13px] font-bold text-slate-800">{{ member.name }}</p>
-        <p class="mt-1 text-[11px] font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
+        <p class="mt-1 edify-text-caption font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
         <p class="mt-2 text-[17px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total_fmt }}</p>
       </div>
       {% endfor %}
@@ -84,7 +84,7 @@
       <div class="min-w-0">
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="text-[15px] font-bold text-slate-800">Activity cost plan</h2>
-          <span class="inline-flex items-center rounded-pill px-2.5 py-1 text-[11px] font-bold {% if status_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif status_tone == 'warning' %}bg-amber-50 text-amber-700{% elif status_tone == 'danger' %}bg-rose-50 text-rose-700{% elif status_tone == 'info' %}edify-primary-soft edify-primary-text{% else %}bg-slate-100 text-slate-600{% endif %}">{{ status_label }}</span>
+          <span class="inline-flex items-center rounded-pill px-2.5 py-1 edify-text-caption font-bold {% if status_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif status_tone == 'warning' %}bg-amber-50 text-amber-700{% elif status_tone == 'danger' %}bg-rose-50 text-rose-700{% elif status_tone == 'info' %}edify-primary-soft edify-primary-text{% else %}bg-slate-100 text-slate-600{% endif %}">{{ status_label }}</span>
         </div>
         <p class="mt-1 text-[12px] font-medium leading-relaxed text-slate-500">{{ source_label }} for {{ month_label }}. Check each activity and cost before you submit.</p>
         <p class="mt-1 text-[12px] font-semibold leading-relaxed text-slate-600">{{ action_hint }}</p>
@@ -122,7 +122,7 @@
           {% for group in cost_groups %}
           <tr>
             <td colspan="5" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
-              <div class="flex items-center gap-2"><span class="budget-category-name">{{ group.label }}</span><span class="text-[11px] font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
+              <div class="flex items-center gap-2"><span class="budget-category-name">{{ group.label }}</span><span class="edify-text-caption font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
             </td>
           </tr>
           <tr class="font-bold">

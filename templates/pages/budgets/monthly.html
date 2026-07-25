@@ -30,7 +30,7 @@
     <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ period.key }}&budget_scope={{ budget_scope }}" class="rounded-surface border p-4 transition-all {% if period.selected %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800 hover:-translate-y-0.5 edify-primary-border-hover hover:shadow-sm{% endif %}">
       <p class="edify-text-caption font-bold uppercase tracking-wider {% if period.selected %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">{% if period.selected %}Grand total{% else %}{{ period.label }}{% endif %}</p>
       <p class="mt-1 text-[20px] font-bold tabular-nums">{{ period.total|ugx }}</p>
-      <p class="mt-1 text-[11px] font-semibold {% if period.selected %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if period.selected %}{{ period.label }} · {% endif %}{{ period.title }}</p>
+      <p class="mt-1 edify-text-caption font-semibold {% if period.selected %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if period.selected %}{{ period.label }} · {% endif %}{{ period.title }}</p>
     </a>
     {% endfor %}
   </div>
@@ -48,7 +48,7 @@
       {% for member in team_summary %}
       <div class="rounded-control border border-slate-200 bg-slate-50 px-3 py-3">
         <p class="truncate text-[13px] font-bold text-slate-800">{{ member.name }}</p>
-        <p class="mt-1 text-[11px] font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
+        <p class="mt-1 edify-text-caption font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
         <p class="mt-2 text-[17px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total|ugx }}</p>
       </div>
       {% endfor %}
@@ -78,7 +78,7 @@
             <td colspan="6" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
               <div class="flex items-center gap-2">
                 <span class="budget-category-name">{{ group.label }}</span>
-                <span class="text-[11px] font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
+                <span class="edify-text-caption font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
               </div>
             </td>
           </tr>
@@ -96,7 +96,7 @@
               <div class="flex min-w-0 items-center gap-3">
                 <p class="min-w-0 font-semibold text-slate-800">{{ row.item }}</p>
                 {% if budget_scope == 'team' %}
-                <span class="ml-auto max-w-[46%] truncate rounded-pill edify-primary-soft px-2 py-0.5 text-[11px] font-bold text-[var(--edify-accent)]" title="Responsible staff: {{ row.owners }}">{{ row.owners }}</span>
+                <span class="ml-auto max-w-[46%] truncate rounded-pill edify-primary-soft px-2 py-0.5 edify-text-caption font-bold text-[var(--edify-accent)]" title="Responsible staff: {{ row.owners }}">{{ row.owners }}</span>
                 {% endif %}
               </div>
             </td>
@@ -128,7 +128,7 @@
   </div>
 
   {% if groups %}
-  <p class="text-[11px] font-medium text-slate-500">Program costs: {{ program_total|ugx }}{% if admin_total %} · Country admin plan: {{ admin_total|ugx }}{% endif %}</p>
+  <p class="edify-text-caption font-medium text-slate-500">Program costs: {{ program_total|ugx }}{% if admin_total %} · Country admin plan: {{ admin_total|ugx }}{% endif %}</p>
   {% else %}
   <div class="rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
     <svg class="mx-auto mb-3 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>

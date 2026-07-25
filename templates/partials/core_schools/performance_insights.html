@@ -28,14 +28,14 @@
       {% for s in perf_insights.staff_insights %}
       <div class="flex items-center gap-3">
         <span class="w-4 text-[12px] font-bold edify-text-muted tabular-nums">{{ forloop.counter }}</span>
-        <span class="h-7 w-7 shrink-0 rounded-pill edify-primary-soft edify-primary-text text-[11px] font-bold flex items-center justify-center">{{ s.initials }}</span>
+        <span class="h-7 w-7 shrink-0 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-bold flex items-center justify-center">{{ s.initials }}</span>
         <div class="flex-1 min-w-0">
           <div class="flex items-baseline justify-between gap-2">
             <span class="text-[13px] font-semibold edify-text truncate">{{ s.name }}</span>
             {% if s.insufficient %}
-            <span class="text-[11px] font-semibold edify-text-muted">Insufficient comparable data</span>
+            <span class="edify-text-caption font-semibold edify-text-muted">Insufficient comparable data</span>
             {% else %}
-            <span class="text-[13px] font-bold edify-text tabular-nums">{{ s.score|floatformat:1 }}<span class="text-[11px] edify-text-muted font-semibold">/10 · {{ s.school_count }} school{{ s.school_count|pluralize }}</span></span>
+            <span class="text-[13px] font-bold edify-text tabular-nums">{{ s.score|floatformat:1 }}<span class="edify-text-caption edify-text-muted font-semibold">/10 · {{ s.school_count }} school{{ s.school_count|pluralize }}</span></span>
             {% endif %}
           </div>
           {% if not s.insufficient %}
@@ -44,7 +44,7 @@
               <div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {% widthratio s.score 10 100 %}%;"></div>
             </div>
             {% if s.vs_avg is not None %}
-            <span class="text-[11px] font-bold tabular-nums shrink-0 {% if s.vs_avg > 0 %}edify-success-text{% elif s.vs_avg < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
+            <span class="edify-text-caption font-bold tabular-nums shrink-0 {% if s.vs_avg > 0 %}edify-success-text{% elif s.vs_avg < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
               {% if s.vs_avg > 0 %}▲ +{{ s.vs_avg }}{% elif s.vs_avg < 0 %}▼ {{ s.vs_avg }}{% else %}— 0.0{% endif %}
             </span>
             {% endif %}
@@ -55,7 +55,7 @@
       {% endfor %}
     </div>
     {% if perf_insights.org_average %}
-    <p class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] font-semibold edify-text-muted">Organization average: <span class="edify-primary-text font-bold">{{ perf_insights.org_average }}/10</span> · ▲▼ vs average, in score points</p>
+    <p class="mt-3 pt-2.5 border-t border-slate-100 edify-text-caption font-semibold edify-text-muted">Organization average: <span class="edify-primary-text font-bold">{{ perf_insights.org_average }}/10</span> · ▲▼ vs average, in score points</p>
     {% endif %}
     {% else %}
     <div class="edify-empty-state !py-8 flex-1">
@@ -85,14 +85,14 @@
       {% for p in perf_insights.partner_insights %}
       <div class="flex items-center gap-3">
         <span class="w-4 text-[12px] font-bold edify-text-muted tabular-nums">{{ forloop.counter }}</span>
-        <span class="h-7 w-7 shrink-0 rounded-pill text-[11px] font-bold flex items-center justify-center" style="background: var(--edify-purple-light); color: var(--edify-purple-text)">{{ p.initials }}</span>
+        <span class="h-7 w-7 shrink-0 rounded-pill edify-text-caption font-bold flex items-center justify-center" style="background: var(--edify-purple-light); color: var(--edify-purple-text)">{{ p.initials }}</span>
         <div class="flex-1 min-w-0">
           <div class="flex items-baseline justify-between gap-2">
             <span class="text-[13px] font-semibold edify-text truncate">{{ p.name }}</span>
             {% if p.insufficient %}
-            <span class="text-[11px] font-semibold edify-text-muted">Not enough comparable SSA data</span>
+            <span class="edify-text-caption font-semibold edify-text-muted">Not enough comparable SSA data</span>
             {% else %}
-            <span class="text-[13px] font-bold edify-text tabular-nums">{{ p.score|floatformat:1 }}<span class="text-[11px] edify-text-muted font-semibold">/10 · {{ p.school_count }} school{{ p.school_count|pluralize }}</span></span>
+            <span class="text-[13px] font-bold edify-text tabular-nums">{{ p.score|floatformat:1 }}<span class="edify-text-caption edify-text-muted font-semibold">/10 · {{ p.school_count }} school{{ p.school_count|pluralize }}</span></span>
             {% endif %}
           </div>
           {% if not p.insufficient %}
@@ -101,7 +101,7 @@
               <div class="h-full rounded-pill" style="width: {% widthratio p.score 10 100 %}%; background: var(--edify-purple)"></div>
             </div>
             {% if p.vs_avg is not None %}
-            <span class="text-[11px] font-bold tabular-nums shrink-0 {% if p.vs_avg > 0 %}edify-success-text{% elif p.vs_avg < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
+            <span class="edify-text-caption font-bold tabular-nums shrink-0 {% if p.vs_avg > 0 %}edify-success-text{% elif p.vs_avg < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
               {% if p.vs_avg > 0 %}▲ +{{ p.vs_avg }}{% elif p.vs_avg < 0 %}▼ {{ p.vs_avg }}{% else %}— 0.0{% endif %}
             </span>
             {% endif %}
@@ -112,7 +112,7 @@
       {% endfor %}
     </div>
     {% if perf_insights.org_average %}
-    <p class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] font-semibold edify-text-muted">Organization average: <span class="edify-primary-text font-bold">{{ perf_insights.org_average }}/10</span></p>
+    <p class="mt-3 pt-2.5 border-t border-slate-100 edify-text-caption font-semibold edify-text-muted">Organization average: <span class="edify-primary-text font-bold">{{ perf_insights.org_average }}/10</span></p>
     {% endif %}
     {% else %}
     <div class="edify-empty-state !py-8 flex-1">
@@ -144,7 +144,7 @@
         <div class="flex items-center gap-2">
           <span class="w-20 shrink-0 text-[12px] font-semibold edify-text truncate" title="{{ r.name }}">{{ r.name }}</span>
           {% if r.insufficient %}
-          <span class="text-[11px] font-semibold edify-text-muted">No verified assessments yet</span>
+          <span class="edify-text-caption font-semibold edify-text-muted">No verified assessments yet</span>
           {% else %}
           <div class="flex-1 bg-slate-100 h-2 rounded-pill overflow-hidden relative" role="img" aria-label="{{ r.name }}: {{ r.score }} out of 10">
             <div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {% widthratio r.score 10 100 %}%;"></div>
@@ -157,18 +157,18 @@
         </div>
         {% endfor %}
         {% if perf_insights.org_average %}
-        <p class="text-[11px] font-semibold edify-text-muted pt-1">Org average: <span class="edify-primary-text font-bold">{{ perf_insights.org_average }}/10</span> (marker line)</p>
+        <p class="edify-text-caption font-semibold edify-text-muted pt-1">Org average: <span class="edify-primary-text font-bold">{{ perf_insights.org_average }}/10</span> (marker line)</p>
         {% endif %}
       </div>
       {% if perf_insights.top_region %}
       <div class="sm:w-44 shrink-0 rounded-control border border-slate-200 bg-slate-50/70 p-3 self-start">
-        <p class="text-[11px] font-bold uppercase tracking-wide edify-text-muted">Top performing region</p>
+        <p class="edify-text-caption font-bold uppercase tracking-wide edify-text-muted">Top performing region</p>
         <p class="text-[15px] font-bold edify-text mt-1">{{ perf_insights.top_region.name }}</p>
         <p class="text-[20px] font-bold edify-primary-text tabular-nums">{{ perf_insights.top_region.score|floatformat:1 }}/10</p>
         {% if perf_insights.top_region.vs_avg is not None %}
-        <p class="text-[11px] font-semibold {% if perf_insights.top_region.vs_avg >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">{% if perf_insights.top_region.vs_avg >= 0 %}+{% endif %}{{ perf_insights.top_region.vs_avg }} vs org average</p>
+        <p class="edify-text-caption font-semibold {% if perf_insights.top_region.vs_avg >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">{% if perf_insights.top_region.vs_avg >= 0 %}+{% endif %}{{ perf_insights.top_region.vs_avg }} vs org average</p>
         {% endif %}
-        <p class="text-[11px] edify-text-muted mt-0.5">{{ perf_insights.top_region.school_count }} core school{{ perf_insights.top_region.school_count|pluralize }}</p>
+        <p class="edify-text-caption edify-text-muted mt-0.5">{{ perf_insights.top_region.school_count }} core school{{ perf_insights.top_region.school_count|pluralize }}</p>
       </div>
       {% endif %}
     </div>
@@ -196,7 +196,7 @@
     </div>
 
     {% if perf_insights.intervention_comparison %}
-    <div class="flex items-center gap-4 text-[11px] font-semibold edify-text-muted mb-2">
+    <div class="flex items-center gap-4 edify-text-caption font-semibold edify-text-muted mb-2">
       <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-[var(--edify-primary)]"></span> Staff</span>
       <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill" style="background: var(--edify-purple)"></span> Partner</span>
     </div>
@@ -206,19 +206,19 @@
         <span class="text-[12px] font-semibold edify-text truncate" title="{{ row.label }}">{{ row.label }}</span>
         <div class="flex items-center gap-1.5">
           <div class="flex-1 bg-slate-100 h-1.5 rounded-pill overflow-hidden"><div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {% widthratio row.staff_pct 10 100 %}%;"></div></div>
-          <span class="w-7 text-right text-[11px] font-bold tabular-nums edify-text">{{ row.staff_pct|floatformat:1 }}</span>
+          <span class="w-7 text-right edify-text-caption font-bold tabular-nums edify-text">{{ row.staff_pct|floatformat:1 }}</span>
         </div>
         <div class="flex items-center gap-1.5">
           <div class="flex-1 bg-slate-100 h-1.5 rounded-pill overflow-hidden"><div class="h-full rounded-pill" style="width: {% widthratio row.partner_pct 10 100 %}%; background: var(--edify-purple)"></div></div>
-          <span class="w-7 text-right text-[11px] font-bold tabular-nums edify-text">{{ row.partner_pct|floatformat:1 }}</span>
+          <span class="w-7 text-right edify-text-caption font-bold tabular-nums edify-text">{{ row.partner_pct|floatformat:1 }}</span>
         </div>
-        <span class="w-12 text-right text-[11px] font-bold tabular-nums {% if row.gap > 0 %}edify-success-text{% elif row.gap < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
+        <span class="w-12 text-right edify-text-caption font-bold tabular-nums {% if row.gap > 0 %}edify-success-text{% elif row.gap < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %}">
           {% if row.gap > 0 %}+{% endif %}{{ row.gap }}
         </span>
       </div>
       {% endfor %}
     </div>
-    <p class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] font-semibold edify-text-muted">Gap = staff score − partner score, in score points on the 0–10 scale.</p>
+    <p class="mt-3 pt-2.5 border-t border-slate-100 edify-text-caption font-semibold edify-text-muted">Gap = staff score − partner score, in score points on the 0–10 scale.</p>
     {% else %}
     <div class="edify-empty-state !py-8 flex-1">
       <p class="text-[13px] font-semibold edify-text">Not enough comparable data</p>
@@ -258,20 +258,20 @@
             <path d="{{ perf_insights.overall_trend_path }} L 100 50 L 0 50 Z" fill="url(#core-trend-fill)"/>
             <path d="{{ perf_insights.overall_trend_path }}" fill="none" stroke="var(--edify-primary)" stroke-width="1.2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
           </svg>
-          <span class="absolute left-2 top-1 text-[10px] font-semibold edify-text-muted">10</span>
-          <span class="absolute left-2 bottom-1 text-[10px] font-semibold edify-text-muted">0</span>
+          <span class="absolute left-2 top-1 edify-text-caption font-semibold edify-text-muted">10</span>
+          <span class="absolute left-2 bottom-1 edify-text-caption font-semibold edify-text-muted">0</span>
         </div>
         <div class="flex justify-between mt-1.5 px-1">
           {% for t in perf_insights.overall_trend %}
           {% if forloop.first or forloop.last or perf_insights.overall_trend|length <= 6 %}
-          <span class="text-[10px] font-semibold edify-text-muted">{{ t.label }}</span>
+          <span class="edify-text-caption font-semibold edify-text-muted">{{ t.label }}</span>
           {% endif %}
           {% endfor %}
         </div>
       </div>
       {% if perf_insights.trend_summary %}
       <div class="lg:w-64 shrink-0 rounded-control border border-slate-200 bg-slate-50/70 p-4 space-y-2 self-start">
-        <p class="text-[11px] font-bold uppercase tracking-wide edify-text-muted">Latest verified period</p>
+        <p class="edify-text-caption font-bold uppercase tracking-wide edify-text-muted">Latest verified period</p>
         <p class="text-[14px] font-bold edify-text">{{ perf_insights.trend_summary.latest_label }}</p>
         <p class="text-[24px] font-bold edify-primary-text tabular-nums">{{ perf_insights.trend_summary.latest_avg }}<span class="text-[13px] edify-text-muted font-semibold">/10</span></p>
         <div class="flex items-center justify-between text-[12px] font-semibold">
@@ -288,7 +288,7 @@
           <span class="edify-text-muted">Verified periods</span>
           <span class="edify-text tabular-nums">{{ perf_insights.trend_summary.periods }}</span>
         </div>
-        <p class="text-[11px] edify-text-muted pt-1 border-t border-slate-200">Built from verified assessments only; periods without data are never interpolated.</p>
+        <p class="edify-text-caption edify-text-muted pt-1 border-t border-slate-200">Built from verified assessments only; periods without data are never interpolated.</p>
       </div>
       {% endif %}
     </div>

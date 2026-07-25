@@ -58,10 +58,10 @@
               <div class="flex flex-wrap gap-1 max-w-[180px]">
                 {% if row.interventions %}
                   {% for iv in row.interventions|slice:":3" %}
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-primary-soft edify-primary-text text-[10px] font-semibold leading-none">{{ iv }}</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-semibold leading-none">{{ iv }}</span>
                   {% endfor %}
                   {% if row.interventions|length > 3 %}
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-500 text-[10px] font-semibold leading-none">+{{ row.interventions|length|add:"-3" }}</span>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-500 edify-text-caption font-semibold leading-none">+{{ row.interventions|length|add:"-3" }}</span>
                   {% endif %}
                 {% else %}
                   <span class="edify-text-caption text-slate-300 font-medium">—</span>

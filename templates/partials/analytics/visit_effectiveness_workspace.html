@@ -25,38 +25,38 @@
 <!-- ── KPI strip: role-appropriate emphasis, one data source ─────────────── -->
 <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
   <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Comparable schools</p>
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Comparable schools</p>
     <p class="text-[20px] font-bold edify-text">{{ d.cohort.comparable_schools }}</p>
-    <p class="text-[11px] edify-text-muted">{{ d.cohort.core }} core · {{ d.cohort.client }} client</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.cohort.core }} core · {{ d.cohort.client }} client</p>
   </div>
   <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Avg SSA change</p>
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Avg SSA change</p>
     <p class="text-[20px] font-bold {% if d.ssa_change.avg_overall_delta >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">
       {{ d.ssa_change.avg_overall_delta|floatformat:2 }}</p>
-    <p class="text-[11px] edify-text-muted">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</p>
   </div>
   <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Schools visited</p>
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Schools visited</p>
     <p class="text-[20px] font-bold edify-text">{{ d.coverage.schools_visited }}</p>
-    <p class="text-[11px] edify-text-muted">{{ d.coverage.schools_not_visited }} not visited</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.coverage.schools_not_visited }} not visited</p>
   </div>
   <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Delivered visits</p>
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Delivered visits</p>
     <p class="text-[20px] font-bold edify-text">{{ d.coverage.delivered_visits }}</p>
-    <p class="text-[11px] edify-text-muted">{{ d.coverage.scheduled_only_visits }} scheduled-only excluded</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.coverage.scheduled_only_visits }} scheduled-only excluded</p>
   </div>
   <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">Alignment rate</p>
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Alignment rate</p>
     <p class="text-[20px] font-bold edify-text">{% if d.quality.recommendation_alignment_rate is not None %}{% widthratio d.quality.recommendation_alignment_rate 1 100 %}%{% else %}—{% endif %}</p>
-    <p class="text-[11px] edify-text-muted">of focused visits hit a weakest intervention</p>
+    <p class="edify-text-caption edify-text-muted">of focused visits hit a weakest intervention</p>
   </div>
   <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="text-[11px] font-semibold edify-text-muted uppercase tracking-wide">
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">
       {% if is_strategic %}Partner data-collection{% else %}IA clearance{% endif %}</p>
     <p class="text-[20px] font-bold edify-text">
       {% if is_strategic %}{% if d.coverage.partner_data_collection_share is not None %}{% widthratio d.coverage.partner_data_collection_share 1 100 %}%{% else %}—{% endif %}
       {% else %}{% widthratio d.quality.ia_clearance_rate 1 100 %}%{% endif %}</p>
-    <p class="text-[11px] edify-text-muted">
+    <p class="edify-text-caption edify-text-muted">
       {% if is_strategic %}share of partner visits{% else %}of delivered visits{% endif %}</p>
   </div>
 </section>
@@ -115,32 +115,32 @@
     <div class="rounded-control border border-slate-200 p-3">
       <p class="text-[12px] font-bold edify-success-text">Practice worth replicating</p>
       <p class="text-[18px] font-bold edify-text">{{ d.quadrants.replicate.count }}</p>
-      <p class="text-[11px] edify-text-muted mb-1">improving with typical visit volume</p>
+      <p class="edify-text-caption edify-text-muted mb-1">improving with typical visit volume</p>
       {% for s in d.quadrants.replicate.schools|slice:":4" %}
-      <p class="text-[11px] edify-text-muted truncate">{{ s.name }} · Δ{{ s.overall_delta }}</p>{% endfor %}
+      <p class="edify-text-caption edify-text-muted truncate">{{ s.name }} · Δ{{ s.overall_delta }}</p>{% endfor %}
     </div>
     <div class="rounded-control border border-slate-200 p-3">
       <p class="text-[12px] font-bold" style="color: var(--edify-warning-text)">Review purpose &amp; execution</p>
       <p class="text-[18px] font-bold edify-text">{{ d.quadrants.review_purpose.count }}</p>
-      <p class="text-[11px] edify-text-muted mb-1">high volume, weak change</p>
+      <p class="edify-text-caption edify-text-muted mb-1">high volume, weak change</p>
       {% for s in d.quadrants.review_purpose.schools|slice:":4" %}
-      <p class="text-[11px] edify-text-muted truncate">{{ s.name }} · {{ s.visit_count }} visits · Δ{{ s.overall_delta }}</p>{% endfor %}
+      <p class="edify-text-caption edify-text-muted truncate">{{ s.name }} · {{ s.visit_count }} visits · Δ{{ s.overall_delta }}</p>{% endfor %}
     </div>
     <div class="rounded-control border border-slate-200 p-3">
       <p class="text-[12px] font-bold edify-primary-text">Efficient practice</p>
       <p class="text-[18px] font-bold edify-text">{{ d.quadrants.efficient.count }}</p>
-      <p class="text-[11px] edify-text-muted mb-1">strong change, low volume — investigate</p>
+      <p class="edify-text-caption edify-text-muted mb-1">strong change, low volume — investigate</p>
     </div>
     <div class="rounded-control border border-slate-200 p-3">
       <p class="text-[12px] font-bold edify-danger-text">Immediate intervention</p>
       <p class="text-[18px] font-bold edify-text">{{ d.quadrants.intervene.count }}</p>
-      <p class="text-[11px] edify-text-muted mb-1">high volume, declining</p>
+      <p class="edify-text-caption edify-text-muted mb-1">high volume, declining</p>
       {% for s in d.quadrants.intervene.schools|slice:":4" %}
-      <p class="text-[11px] edify-text-muted truncate">{{ s.name }} · Δ{{ s.overall_delta }}</p>{% endfor %}
+      <p class="edify-text-caption edify-text-muted truncate">{{ s.name }} · Δ{{ s.overall_delta }}</p>{% endfor %}
     </div>
   </div>
   {% if not d.scope.can_view_school_details %}
-  <p class="text-[11px] edify-text-muted mt-2">School identities are withheld at this scope — counts only.</p>
+  <p class="edify-text-caption edify-text-muted mt-2">School identities are withheld at this scope — counts only.</p>
   {% endif %}
 </section>
 
@@ -158,7 +158,7 @@
       <tbody class="divide-y divide-slate-100">
         {% for r in d.regions %}
         <tr>
-          <td class="py-1.5 pr-2 font-semibold edify-text">{{ r.region }}{% if r.low_sample %} <span class="text-[10px] font-bold" style="color: var(--edify-warning-text)">small n</span>{% endif %}</td>
+          <td class="py-1.5 pr-2 font-semibold edify-text">{{ r.region }}{% if r.low_sample %} <span class="edify-text-caption font-bold" style="color: var(--edify-warning-text)">small n</span>{% endif %}</td>
           <td class="py-1.5 px-2 text-right tabular-nums">{{ r.n }}</td>
           <td class="py-1.5 px-2 text-right tabular-nums font-bold {% if r.avg_delta >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">{{ r.avg_delta|floatformat:2 }}</td>
           <td class="py-1.5 px-2 text-right tabular-nums">{{ r.avg_visits }}</td>
@@ -198,7 +198,7 @@
     {% for c in debrief_context %}
     <div class="rounded-control border border-slate-200 p-2.5">
       <p class="text-[12px] font-bold edify-text">{{ c.label }}</p>
-      <p class="text-[11px] edify-text-muted">{{ c.mentions }} mention{{ c.mentions|pluralize }} · {{ c.unique_staff }} staff{% if c.districts_affected %} · {{ c.districts_affected|join:", " }}{% endif %}</p>
+      <p class="edify-text-caption edify-text-muted">{{ c.mentions }} mention{{ c.mentions|pluralize }} · {{ c.unique_staff }} staff{% if c.districts_affected %} · {{ c.districts_affected|join:", " }}{% endif %}</p>
     </div>
     {% endfor %}
   </div>

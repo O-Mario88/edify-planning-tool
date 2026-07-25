@@ -50,18 +50,18 @@
 <td class="px-3 py-2.5" style="min-width:124px">
 <div class="space-y-1.5" role="img" aria-label="Visits {{ q.visits_done }} of 4 complete, trainings {{ q.trainings_done }} of 4 complete">
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-semibold text-slate-500" style="width:42px; display:inline-block">Visits</span>
+<span class="edify-text-caption font-semibold text-slate-500" style="width:42px; display:inline-block">Visits</span>
 <span class="flex items-center gap-[3px]" aria-hidden="true">
 {% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.visits_done %}bg-[var(--edify-primary)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
 </span>
-<span class="text-[11px] font-bold tabular-nums {% if q.visits_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.visits_done }}/4</span>
+<span class="edify-text-caption font-bold tabular-nums {% if q.visits_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.visits_done }}/4</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-semibold text-slate-500" style="width:42px; display:inline-block">Trainings</span>
+<span class="edify-text-caption font-semibold text-slate-500" style="width:42px; display:inline-block">Trainings</span>
 <span class="flex items-center gap-[3px]" aria-hidden="true">
 {% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.trainings_done %}bg-[var(--edify-teal)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
 </span>
-<span class="text-[11px] font-bold tabular-nums {% if q.trainings_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.trainings_done }}/4</span>
+<span class="edify-text-caption font-bold tabular-nums {% if q.trainings_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.trainings_done }}/4</span>
 </div>
 </div>
 </td>

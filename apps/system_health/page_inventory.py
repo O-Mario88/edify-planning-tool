@@ -323,8 +323,12 @@ def _template_findings(source: str) -> list[Finding]:
         (
             "fixed-pixel-width",
             "medium",
-            re.search(r"(?<![-\w])w-\[(?:2[4-9]\d|[3-9]\d{2,})px\]", source),
-            "A fixed pixel width may create narrow-screen overflow or dead space.",
+            # Only an *unconditional* fixed width. `sm:w-[260px]` and
+            # `lg:w-[286px]` are the responsive pattern — full width on a
+            # phone, fixed once there is room — and flagging those taught
+            # readers to skim past the ones that matter.
+            re.search(r"(?<![-\w:])w-\[(?:2[4-9]\d|[3-9]\d{2,})px\]", source),
+            "An unconditional fixed pixel width may overflow a narrow screen.",
             "Use minmax, fluid sizing, or a size-aware container rule.",
         ),
     ]

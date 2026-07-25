@@ -97,7 +97,7 @@
     <section class="edify-surface rounded-surface border border-slate-200 p-4 sm:p-5" aria-labelledby="dd-q1">
       <div class="flex items-center justify-between gap-3 mb-1">
         <h2 id="dd-q1" class="text-[14px] font-semibold edify-text">1 · What did you work on today?</h2>
-        <span id="autosave-chip" class="text-[11px] edify-text-muted" aria-live="polite"></span>
+        <span id="autosave-chip" class="edify-text-caption edify-text-muted" aria-live="polite"></span>
       </div>
       <p class="text-[12px] edify-text-muted mb-3">Your scheduled activities from My Plan. Tick the ones you worked on — this never starts, completes or credits an activity.</p>
 
@@ -113,11 +113,11 @@
                  class="mt-0.5 h-5 w-5 shrink-0">
           <span class="min-w-0">
             <span class="block text-[13px] font-semibold edify-text">{{ row.activity.get_activity_type_display }}{% if row.is_focus %}
-              <span class="ml-1.5 inline-flex items-center rounded-pill px-1.5 py-0.5 text-[10px] font-bold edify-primary-solid edify-primary-on-solid align-[0.05em]">Discussing</span>{% endif %}</span>
+              <span class="ml-1.5 inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold edify-primary-solid edify-primary-on-solid align-[0.05em]">Discussing</span>{% endif %}</span>
             <span class="block text-[12px] edify-text-muted truncate">
               {% if row.activity.school %}{{ row.activity.school.name }}{% elif row.activity.cluster %}{{ row.activity.cluster.name }}{% else %}—{% endif %}
             </span>
-            <span class="block text-[11px] edify-text-muted mt-0.5">
+            <span class="block edify-text-caption edify-text-muted mt-0.5">
               {% if row.activity.focus_intervention %}{{ row.activity.get_focus_intervention_display }} · {% endif %}
               {% if row.activity.scheduled_date %}{{ row.activity.scheduled_date|date:"g:i A" }} · {% endif %}
               {{ row.activity.get_status_display }}{% if row.is_focus and row.activity.planned_date and row.activity.planned_date != today %} · carried in from {{ row.activity.planned_date|date:"j M" }}{% endif %}
@@ -144,7 +144,7 @@
           <textarea id="dd-other" name="other_work_description" rows="2" maxlength="1000"
                     class="w-full rounded-control border border-slate-200 text-[13px] p-3"
                     placeholder="e.g. Covered a colleague's school visit at St. Jude Primary">{{ existing.other_work_description|default:"" }}</textarea>
-          <p class="text-[11px] edify-text-muted mt-1">Repeated or material unplanned work is routed to your manager for future planning.</p>
+          <p class="edify-text-caption edify-text-muted mt-1">Repeated or material unplanned work is routed to your manager for future planning.</p>
         </div>
       </details>
     </section>

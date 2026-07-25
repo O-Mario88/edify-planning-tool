@@ -38,7 +38,7 @@
         {% for v in budget_finance.quarter_vals %}
         <div class="flex-1 flex flex-col items-center gap-0.5">
           <div class="w-full edify-primary-soft rounded-small" style="height: {% widthratio v budget_finance.requested 24 %}px; min-height:2px;"></div>
-          <span class="text-[7px] font-bold text-slate-400">Q{{ forloop.counter }}</span>
+          <span class="edify-text-caption font-bold text-slate-400">Q{{ forloop.counter }}</span>
         </div>
         {% endfor %}
       </div>

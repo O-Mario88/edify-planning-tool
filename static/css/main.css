@@ -3074,9 +3074,6 @@
   .bg-violet-600 {
     background-color: var(--color-violet-600);
   }
-  .bg-white {
-    background-color: var(--color-white);
-  }
   .bg-white\/5 {
     background-color: color-mix(in srgb, #fff 5%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -3435,17 +3432,8 @@
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
-  .text-\[7px\] {
-    font-size: 7px;
-  }
-  .text-\[10px\] {
-    font-size: 10px;
-  }
   .text-\[11\.5px\] {
     font-size: 11.5px;
-  }
-  .text-\[11px\] {
-    font-size: 11px;
   }
   .text-\[12\.5px\] {
     font-size: 12.5px;
@@ -3626,6 +3614,9 @@
   }
   .\!text-white {
     color: var(--color-white) !important;
+  }
+  .text-\[Npx\] {
+    color: Npx;
   }
   .text-\[color\:var\(--edify-text\)\] {
     color: var(--edify-text);
@@ -4833,13 +4824,6 @@
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-violet-700);
-      }
-    }
-  }
-  .hover\:bg-white {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-white);
       }
     }
   }
@@ -6476,7 +6460,7 @@ html.dark body, html.dark {
 .premium-button-sm {
   height: 28px;
   padding: 0 10px;
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   border-radius: 8px;
 }
 .premium-button-lg {
@@ -6529,7 +6513,7 @@ html.dark body, html.dark {
 .premium-table th {
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .06em;
@@ -6564,7 +6548,7 @@ html.dark body, html.dark {
   height: 22px;
   padding: 0 9px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .02em;
   white-space: nowrap;
@@ -7100,7 +7084,7 @@ html.theme-fade, html.theme-fade body, html.theme-fade .card, html.theme-fade .c
 }
 .dark .dtable th, .dark .premium-table th, .glass .dtable th, .glass .premium-table th {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -7697,7 +7681,7 @@ html, body {
   letter-spacing: -0.005em;
 }
 .text-nav-section {
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 500;
   line-height: 1.4;
   letter-spacing: 0.05em;
@@ -7709,7 +7693,7 @@ html, body {
     font-variant-numeric: tabular-nums;
   }
   .label-up {
-    font-size: 10.5px;
+    font-size: var(--edify-text-micro-size);
     letter-spacing: .05em;
     text-transform: uppercase;
     color: var(--color-edify-muted);
@@ -7824,7 +7808,7 @@ html, body {
     letter-spacing: -0.02em;
   }
   .eyebrow {
-    font-size: 10.5px;
+    font-size: var(--edify-text-micro-size);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -7846,7 +7830,7 @@ html, body {
     color: var(--text-primary);
   }
   .section-h-micro {
-    font-size: 11px;
+    font-size: var(--edify-text-micro-size);
     font-weight: 700;
     letter-spacing: 0.02em;
     color: var(--text-secondary);
@@ -8307,7 +8291,7 @@ html, body {
   height: 20px;
   padding: 0 8px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .01em;
   white-space: nowrap;
@@ -8366,7 +8350,7 @@ html, body {
   gap: 6px;
   padding: 3px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   white-space: nowrap;
   max-width: 180px;
@@ -8489,7 +8473,7 @@ html, body {
   border-radius: 999px;
 }
 .dtable th {
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   text-transform: uppercase;
   color: var(--color-edify-muted);
@@ -8579,7 +8563,7 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
 }
 .scrollbar::-webkit-scrollbar {
@@ -8645,7 +8629,7 @@ html, body {
   border-collapse: separate;
   border-spacing: 0;
   font-variant-numeric: tabular-nums lining-nums;
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   color: var(--text-primary);
 }
 .mfr-band th {
@@ -8653,7 +8637,7 @@ html, body {
   top: 0;
   z-index: 4;
   font-weight: 800;
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   letter-spacing: .04em;
   text-transform: uppercase;
   padding: 8px 6px;
@@ -8740,7 +8724,7 @@ html, body {
   z-index: 3;
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: 9.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -8761,7 +8745,7 @@ html, body {
 }
 .mfr-team-meta {
   margin-left: 10px;
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -8803,12 +8787,12 @@ html, body {
   line-height: 1.2;
 }
 .mfr-staff-role {
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   color: var(--text-muted);
   margin-top: 2px;
 }
 .mfr-particulars {
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   color: var(--text-secondary);
   padding-left: 8px !important;
   padding-right: 8px !important;
@@ -8823,7 +8807,7 @@ html, body {
   padding-right: 8px;
   font-variant-numeric: tabular-nums lining-nums;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   color: var(--text-secondary);
 }
 .mfr-num-muted {
@@ -8876,7 +8860,7 @@ html, body {
 }
 .mfr-subtotal-label {
   text-align: left;
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -.005em;
@@ -8939,7 +8923,7 @@ html, body {
   z-index: 2;
   text-align: right;
   padding: 10px 12px;
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -9127,7 +9111,7 @@ html, body {
   font-variant-numeric: tabular-nums lining-nums;
 }
 .currency-display .currency-unit {
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -9177,7 +9161,7 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 700;
   letter-spacing: -0.005em;
   white-space: nowrap;
@@ -9280,7 +9264,7 @@ html, body {
   }
 }
 .workflow-step-label {
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -9671,7 +9655,7 @@ html, body {
 .partner-workspace__eyebrow {
   margin: 0 0 5px;
   color: var(--brand-primary);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -9702,7 +9686,7 @@ html, body {
 }
 .partner-workspace__filters label > span:not(.sr-only) {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
 .partner-workspace__filters select, .partner-workspace__filters input {
@@ -9802,7 +9786,7 @@ html, body {
   display: block;
   overflow: hidden;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -9820,7 +9804,7 @@ html, body {
   display: block;
   margin-top: 6px;
   color: var(--text-secondary);
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
 }
 .partner-kpi-card--violet .partner-kpi-card__icon {
@@ -9902,7 +9886,7 @@ html, body {
   border-radius: 11px;
   background: var(--surface-1);
   color: var(--brand-primary);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
 }
 .partner-identity h2 {
@@ -9918,7 +9902,7 @@ html, body {
   gap: 4px;
   margin: 5px 0 0;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
 }
 .partner-identity p svg {
@@ -9940,7 +9924,7 @@ html, body {
 .partner-activity-card__summary dt {
   margin-bottom: 5px;
   color: var(--text-muted);
-  font-size: 9.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
 .partner-activity-card__summary dd {
@@ -9955,7 +9939,7 @@ html, body {
   overflow: hidden;
   margin-top: 3px;
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -9973,7 +9957,7 @@ html, body {
   width: 100%;
   min-width: 880px;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
 }
 .partner-activity-table th {
   padding: 10px 13px;
@@ -9983,7 +9967,7 @@ html, body {
     background: color-mix(in srgb, var(--brand-primary) 4%, var(--surface-2));
   }
   color: var(--text-secondary);
-  font-size: 9.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   text-align: left;
   text-transform: uppercase;
@@ -10016,7 +10000,7 @@ html, body {
   padding: 4px 7px;
   border: 1px solid transparent;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 760;
 }
 .partner-status--success {
@@ -10065,7 +10049,7 @@ html, body {
 }
 .partner-cost-pending {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-style: italic;
 }
 .partner-activity-table__action {
@@ -10080,7 +10064,7 @@ html, body {
   }
   border-radius: 6px;
   color: var(--brand-primary);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
   text-decoration: none;
 }
@@ -10137,7 +10121,7 @@ html, body {
   z-index: 1;
   grid-area: 1 / 1;
   color: var(--text-secondary);
-  font-size: 9px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
   text-align: center;
 }
@@ -10158,13 +10142,13 @@ html, body {
 }
 .partner-status-breakdown dt {
   color: var(--text-secondary);
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
 }
 .partner-status-breakdown dd {
   margin: 0;
   color: var(--text-primary);
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
 .partner-dot {
@@ -10200,7 +10184,7 @@ html, body {
     background: color-mix(in srgb, var(--brand-danger) 11%, transparent);
   }
   color: var(--brand-danger);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
 }
 .partner-aside-card__heading svg {
@@ -10232,14 +10216,14 @@ html, body {
     background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
   }
   color: var(--brand-primary);
-  font-size: 8px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
 }
 .partner-reminder-list strong, .partner-upcoming-list strong {
   display: block;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 740;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -10248,14 +10232,14 @@ html, body {
   overflow: hidden;
   margin: 2px 0 0;
   color: var(--text-secondary);
-  font-size: 9.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 580;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .partner-reminder-list time {
   color: var(--text-muted);
-  font-size: 9px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
   white-space: nowrap;
 }
@@ -10276,7 +10260,7 @@ html, body {
   }
   border-radius: 6px;
   color: var(--brand-primary);
-  font-size: 8px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   text-align: center;
 }
@@ -10285,12 +10269,12 @@ html, body {
   place-items: center;
   background: var(--brand-primary);
   color: var(--text-on-brand);
-  font-size: 7px;
+  font-size: var(--edify-text-micro-size);
 }
 .partner-upcoming-list time strong {
   padding-top: 1px;
   color: var(--text-primary);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
 }
 .partner-aside-card__link {
   display: flex;
@@ -10299,7 +10283,7 @@ html, body {
   padding-top: 10px;
   border-top: 1px solid var(--border-subtle);
   color: var(--brand-primary);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
   text-decoration: none;
 }
@@ -10309,7 +10293,7 @@ html, body {
 .partner-aside-card__blank {
   display: block !important;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   line-height: 1.45;
 }
@@ -10327,7 +10311,7 @@ html, body {
   gap: 7px;
   min-height: 36px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
   text-decoration: none;
 }

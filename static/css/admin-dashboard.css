@@ -269,7 +269,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-line-figure { padding: 0.2rem 0.8rem 0; }
 .admin-line-chart { width: 100%; height: 8rem; overflow: visible; }
 .admin-line-chart__grid line { stroke: var(--edify-border); stroke-width: 1; }
-.admin-line-chart__grid text { fill: var(--edify-text-subtle); font-size: 9px; font-weight: 500; }
+.admin-line-chart__grid text { fill: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 500; }
 .admin-line-chart__area { fill: url(#admin-progress-fill); }
 .admin-line-chart__series { fill: none; stroke: var(--edify-accent); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .admin-line-chart [data-admin-progress-points] circle { fill: var(--edify-accent); stroke: var(--edify-surface); stroke-width: 2; }

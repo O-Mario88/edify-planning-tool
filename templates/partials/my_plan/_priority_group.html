@@ -31,7 +31,7 @@ entries, three of which used to open the same drawer.
       {% if row.next_action.url %}
       <a href="{{ row.next_action.url }}"
          class="shrink-0 px-3.5 py-1.5 rounded-control text-[12px] font-bold transition-colors
-         {% if row.next_action.action == 'view' %}border border-[var(--edify-border)] text-slate-600 hover:bg-white{% else %}bg-[var(--edify-primary)] text-white hover:opacity-90{% endif %}">
+         {% if row.next_action.action == 'view' %}border border-[var(--edify-border)] text-slate-600 edify-hover-raised{% else %}bg-[var(--edify-primary)] text-white hover:opacity-90{% endif %}">
         {{ row.next_action.text }}
       </a>
       {% else %}

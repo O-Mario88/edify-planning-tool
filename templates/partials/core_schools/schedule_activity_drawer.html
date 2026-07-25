@@ -24,7 +24,7 @@
           hx-get="/core-schools/schedule-visit?school_id={{ school.school_id }}"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
-          class="rounded-control border edify-primary-border bg-white p-3 text-left transition-colors hover:edify-primary-soft"
+          class="rounded-control border edify-primary-border edify-surface-raised p-3 text-left transition-colors hover:edify-primary-soft"
         >
           <span class="block text-[13px] font-bold edify-primary-text">Schedule</span>
           <span class="mt-0.5 block edify-text-caption text-slate-500">Core visit · {{ visits_remaining }} remaining</span>
@@ -42,7 +42,7 @@
           hx-get="/core-schools/schedule-training?school_id={{ school.school_id }}"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
-          class="rounded-control border edify-primary-border bg-white p-3 text-left transition-colors hover:edify-primary-soft"
+          class="rounded-control border edify-primary-border edify-surface-raised p-3 text-left transition-colors hover:edify-primary-soft"
         >
           <span class="block text-[13px] font-bold edify-primary-text">Schedule</span>
           <span class="mt-0.5 block edify-text-caption text-slate-500">Core training · {{ trainings_remaining }} remaining</span>
@@ -56,7 +56,7 @@
     </div>
   </section>
 
-  <section class="rounded-surface border border-slate-200 bg-white p-4">
+  <section class="rounded-surface border border-slate-200 edify-surface-raised p-4">
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-500">Other school activities</p>
     <h3 class="mt-1 text-[15px] font-semibold text-slate-800">Schedule an additional visit or training</h3>
     <p class="mt-1 text-[12px] leading-relaxed text-slate-500">Use this for Donor Visits, Gathering Story, School Invitation, Social Visits, Training Follow-up Visits, In-school Coaching Visits, and In-school Training. These activities do not use a Core package slot.</p>

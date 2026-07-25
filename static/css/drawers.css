@@ -204,7 +204,7 @@
 /* Table styling inside drawers */
 .drawer-body table { width: 100%; border-collapse: collapse; }
 .drawer-body table thead th {
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  font-size: var(--edify-text-micro-size); font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
   color: var(--edify-text-subtle) !important;
   background: var(--edify-surface-muted) !important;
   border-bottom: 2px solid var(--edify-border) !important;
@@ -237,7 +237,7 @@
 
 /* Labels inside drawers */
 .drawer-body label {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  font-size: var(--edify-text-micro-size); font-weight: 700; text-transform: uppercase;
   letter-spacing: .05em; color: var(--edify-text-muted);
   display: block; margin-bottom: 6px;
 }
@@ -248,7 +248,7 @@
   background: var(--edify-surface-muted);
   color: var(--edify-text-muted);
   border: 1px solid var(--edify-border);
-  font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+  font-size: var(--edify-text-micro-size); font-weight: 600; padding: 2px 8px; border-radius: 4px;
 }
 .drawer-body .text-emerald-600, .drawer-body .text-emerald-700 { color: var(--edify-success) !important; }
 .drawer-body .text-rose-600, .drawer-body .text-rose-700 { color: var(--edify-danger) !important; }
@@ -344,7 +344,7 @@
   box-shadow: var(--edify-focus-ring);
 }
 .drawer-body label {
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;

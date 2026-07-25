@@ -777,3 +777,50 @@ class SolidControlInkTest(SimpleTestCase):
             components,
         )
         self.assertEqual(offenders, [], f"hardcoded ink on a danger fill: {offenders}")
+
+
+class TypeScaleFloorTest(SimpleTestCase):
+    """Two named tiers, and nothing smaller than the smaller of them.
+
+    The stylesheets had 169 sub-12px font-size declarations across eight
+    different values — 7, 8, 9, 9.5, 10, 10.5, 11 and 11.5px. That is drift,
+    not a scale: the Partner dashboard was styled at 7–9.5px while the token
+    layer had already defined the two tiers everyone meant, --edify-text-micro
+    for uppercase eyebrows and labels and --edify-text-label for readable
+    metadata. Templates had drifted the same way, with nine one-off
+    text-[Npx] utilities below the caption token.
+    """
+
+    MICRO_PX = 11
+
+    def _source_stylesheets(self):
+        # main.css is generated from assets/css/tailwind.source.css and will
+        # always contain the literal values its inputs produce.
+        return [
+            path
+            for path in (ROOT / "static" / "css").glob("*.css")
+            if path.name != "main.css"
+        ]
+
+    def test_no_stylesheet_hardcodes_a_size_below_the_micro_tier(self):
+        pattern = re.compile(r"font-size:\s*(\d{1,2}(?:\.\d)?)px")
+        offenders = []
+        for path in self._source_stylesheets():
+            for value in pattern.findall(path.read_text()):
+                if float(value) < self.MICRO_PX:
+                    offenders.append(f"{path.name}: {value}px")
+        self.assertEqual(offenders, [], f"below the micro tier: {offenders}")
+
+    def test_no_template_uses_a_one_off_tiny_utility(self):
+        offenders = []
+        pattern = re.compile(r"text-\[(\d{1,2}(?:\.\d)?)px\]")
+        for path in (ROOT / "templates").rglob("*.html"):
+            for value in pattern.findall(path.read_text()):
+                if float(value) < 12:
+                    offenders.append(f"{path.name}: text-[{value}px]")
+        self.assertEqual(offenders, [], f"tiny text utilities: {offenders}")
+
+    def test_both_tiers_are_defined(self):
+        tokens = _read("static/css/design-system.css")
+        self.assertIn("--edify-text-micro-size:", tokens)
+        self.assertIn("--edify-text-label-size:", tokens)

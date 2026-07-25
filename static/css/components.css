@@ -22,6 +22,12 @@
   background-color: var(--edify-surface) !important;
 }
 
+/* Lifting a control on hover. `hover:bg-white` was doing this by hand, which
+   flashes a white panel into the dark themes on every pointer pass. */
+.edify-hover-raised:hover {
+  background-color: var(--edify-surface-raised) !important;
+}
+
 .edify-calendar-popover {
   width: min(17.5rem, calc(100vw - 2rem));
   max-width: calc(100vw - 2rem);
@@ -667,7 +673,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-sm);
   padding: 0.4rem 0.75rem;
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--edify-text-muted);
   transition: var(--edify-transition-fast);
@@ -703,7 +709,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   letter-spacing: 0.05em;
   padding: 0.875rem 1rem;
   text-align: left;
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
 }
 .edify-data-table td, .data-table td {
   padding: 0.875rem 1rem;
@@ -721,7 +727,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   align-items: center;
   border-radius: var(--edify-radius-sm);
   padding: 0.25rem 0.6rem;
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   letter-spacing: 0.03em;
   border: 1px solid transparent;
@@ -771,7 +777,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   border-radius: var(--edify-radius-pill);
   background-color: var(--edify-notification);
   color: var(--edify-notification-text);
-  font-size: 9px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 900;
   display: flex;
   align-items: center;
@@ -800,7 +806,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   background: var(--edify-notification);
   color: var(--edify-notification-text);
   box-shadow: 0 3px 10px var(--edify-notification-glow);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   line-height: 1;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -833,7 +839,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   padding-bottom: 0 !important;
   padding-left: 0.625rem !important;
   padding-right: 0.625rem !important;
-  font-size: 10.5px !important;
+  font-size: var(--edify-text-micro-size) !important;
   line-height: 1.75rem !important;
 }
 
@@ -843,7 +849,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   padding-bottom: 0 !important;
   padding-left: 0.75rem !important;
   padding-right: 0.75rem !important;
-  font-size: 11px !important;
+  font-size: var(--edify-text-micro-size) !important;
   line-height: 2rem !important;
 }
 
@@ -1602,7 +1608,7 @@ select:not([multiple]):not(.select-native) {
 .edify-page-eyebrow {
   margin: 0 0 5px;
   color: var(--brand-primary-text);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -1635,7 +1641,7 @@ select:not([multiple]):not(.select-native) {
 .edify-section-nav__eyebrow {
   flex: 0 0 auto;
   color: var(--brand-primary-text);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -1714,7 +1720,7 @@ select:not([multiple]):not(.select-native) {
   gap: 5px;
   margin: 0 0 5px;
   color: var(--brand-primary-text);
-  font-size: 11px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -1757,7 +1763,7 @@ select:not([multiple]):not(.select-native) {
 .edify-header-filters label { display: grid; gap: 4px; min-width: 8.25rem; }
 .edify-header-filters label > span:not(.sr-only) {
   color: var(--edify-text-muted);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
 .edify-header-filters select,
@@ -1811,7 +1817,7 @@ select:not([multiple]):not(.select-native) {
 :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
   :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
   color: var(--edify-text-muted) !important;
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
   text-transform: none;
   letter-spacing: 0;
@@ -1932,7 +1938,7 @@ select:not([multiple]):not(.select-native) {
 
 .edify-donut--gauge .edify-donut__subline {
   margin-block-start: 2px;
-  font-size: 9.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -1958,7 +1964,7 @@ select:not([multiple]):not(.select-native) {
   border-radius: var(--edify-radius-pill);
   background: transparent;
   color: var(--edify-text-muted);
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -1988,7 +1994,7 @@ select:not([multiple]):not(.select-native) {
   min-block-size: 2rem;
   padding-inline: 0.75rem;
   border-radius: var(--edify-radius-sm);
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
@@ -2022,7 +2028,7 @@ select:not([multiple]):not(.select-native) {
   display: block;
   margin-block-end: 4px;
   color: var(--edify-text-muted);
-  font-size: 10.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
@@ -2169,7 +2175,7 @@ select:not([multiple]):not(.select-native) {
   border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-raised);
   color: var(--edify-text);
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   cursor: pointer;
 }
