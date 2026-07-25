@@ -1,0 +1,56 @@
+# Dependency updates.
+#
+# This file configures what Dependabot watches and how it groups the pull
+# requests it opens. It does NOT switch on Dependabot alerts — that is a
+# repository setting (Settings → Code security → Dependabot alerts), and this
+# repository currently has them off, so nothing is being told about a published
+# advisory against a pinned version between one pip-audit run and the next.
+#
+# Updates are grouped and monthly rather than per-package and weekly: a queue
+# of thirty single-package pull requests is a queue nobody reads, and an
+# unread queue is indistinguishable from no scanning at all. Security updates
+# are exempt from the grouping and arrive as soon as an advisory lands.
+version: 2
+
+updates:
+  - package-ecosystem: pip
+    directory: /requirements
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    # A week before adopting a brand-new release. The supply-chain attack
+    # this defends against is a maintainer account compromise: the malicious
+    # version is published, pulled in by automation within the hour, and
+    # yanked once someone notices. Waiting a week costs nothing here and puts
+    # this repository behind that window rather than inside it. Security
+    # updates are not version updates and are unaffected.
+    cooldown:
+      default-days: 7
+    groups:
+      python-minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, python]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, javascript]
+
+  # The workflows pin every action to a commit SHA, which is what keeps a
+  # moved tag from becoming a code-execution path — and also what stops those
+  # pins from ever being updated by hand. Dependabot moves the SHA and says
+  # which release it now points at.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [dependencies, github-actions]
+    cooldown:
+      default-days: 7

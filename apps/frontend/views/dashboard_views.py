@@ -100,7 +100,7 @@ def _agenda_icon(activity_type):
         # reaches this string — `activity_type` is only ever compared, never
         # interpolated. Suppressed unqualified because B308 is a blacklist
         # check and ignores a test-id list.
-        return mark_safe(  # nosec
+        return mark_safe(  # nosec B308 B703
             '<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" '
             'viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" '
             f'aria-hidden="true">{path}</svg>'
