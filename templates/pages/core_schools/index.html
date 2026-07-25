@@ -28,36 +28,32 @@
 <div class="lg:col-span-3 space-y-6">
 
 <!-- Tab Headers -->
-<div class="flex items-center gap-1 bg-slate-100/70 border border-slate-200/70 rounded-surface p-1 overflow-x-auto" role="tablist" aria-label="Core Schools views">
+<div role="tablist" aria-label="Core Schools views">
 <button
 id="core-tab-matrix" type="button" role="tab" aria-controls="core-schools-table-container" :aria-selected="activeTab === 'matrix'" :tabindex="activeTab === 'matrix' ? 0 : -1"
 @click="setTab('matrix')"
-:class="activeTab === 'matrix' ? 'edify-surface edify-primary-text shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-class="min-h-10 px-4 rounded-control text-[12.5px] font-semibold whitespace-nowrap transition-all focus:outline-none edify-primary-focus"
+class="edify-primary-focus"
 >
 Core Service Package Matrix
 </button>
 <button
 id="core-tab-queue" type="button" role="tab" aria-controls="core-panel-queue" :aria-selected="activeTab === 'queue'" :tabindex="activeTab === 'queue' ? 0 : -1"
 @click="setTab('queue')"
-:class="activeTab === 'queue' ? 'edify-surface edify-primary-text shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-class="min-h-10 px-4 rounded-control text-[12.5px] font-semibold whitespace-nowrap transition-all focus:outline-none edify-primary-focus"
+class="edify-primary-focus"
 >
 Core Planning Queue
 </button>
 <button
 id="core-tab-impact" type="button" role="tab" aria-controls="core-panel-impact" :aria-selected="activeTab === 'impact'" :tabindex="activeTab === 'impact' ? 0 : -1"
 @click="setTab('impact')"
-:class="activeTab === 'impact' ? 'edify-surface edify-primary-text shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-class="min-h-10 px-4 rounded-control text-[12.5px] font-semibold whitespace-nowrap transition-all focus:outline-none edify-primary-focus"
+class="edify-primary-focus"
 >
 Intervention Impact Tracker
 </button>
 <button
 id="core-tab-performance" type="button" role="tab" aria-controls="core-panel-performance" :aria-selected="activeTab === 'performance'" :tabindex="activeTab === 'performance' ? 0 : -1"
 @click="setTab('performance')"
-:class="activeTab === 'performance' ? 'edify-surface edify-primary-text shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-class="min-h-10 px-4 rounded-control text-[12.5px] font-semibold whitespace-nowrap transition-all focus:outline-none edify-primary-focus"
+class="edify-primary-focus"
 >
 Staff vs Partner Performance
 </button>

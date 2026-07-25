@@ -26,6 +26,8 @@
 </div>
 </div>
 
+{% include "partials/analytics/section_nav.html" %}
+
 {% if messages %}
 {% for message in messages %}
 <div class="rounded-surface border px-4 py-3 text-[12.5px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %}">{{ message }}</div>

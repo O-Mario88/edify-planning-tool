@@ -16,6 +16,9 @@
       <div class="spa-actions"><a id="spa-export" class="spa-button spa-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a><a id="spa-snapshot" class="spa-button spa-button--secondary" href="{{ snapshot_url }}">{% include "partials/projects/planning_icon.html" with name="document" %} Download Snapshot</a><a class="spa-button spa-button--primary" href="#spa-insights">{% include "partials/projects/planning_icon.html" with name="chart" %} Review Recommendations</a></div>
     </div>
   </header>
+
+  {% include "partials/analytics/section_nav.html" %}
+
   <div id="spa-workspace" aria-live="polite">{% include "partials/projects/analytics_workspace.html" %}</div>
 </section>
 {% endblock %}

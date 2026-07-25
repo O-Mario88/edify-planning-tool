@@ -21,6 +21,8 @@ Confirmed SSA movement, FY {{ d.prevFy }} → FY {{ d.fy }} · ranked by drop, n
 </form>
 </div>
 
+{% include "partials/analytics/section_nav.html" %}
+
 {% if d.empty %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-12 text-center">
 {% if d.noPairedCycles %}

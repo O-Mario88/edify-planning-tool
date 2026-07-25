@@ -690,25 +690,51 @@ main :where(.card, .panel, .bg-white[class*="rounded"]):has(> .overflow-x-auto >
 }
 
 /* ── Tabs, pills and workflow state. ───────────────────────────────────── */
+/* One tab design for the whole platform: a quiet underlined rail, matching the
+   Analytics workspace's section navigation. This replaced a segmented-pill
+   treatment that several pages were already overriding by hand — the app had
+   pill tabs, underline tabs and bare flex rows depending on the page.
+
+   The !important flags carry the contract over page-level Tailwind utilities
+   (a `bg-slate-100 p-1 rounded-surface` container class outranks these low
+   specificity selectors otherwise), which is the same reason the filter-bar
+   contract above uses them. */
 main :where([role="tablist"], .edify-tab-container) {
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem;
-  border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-md);
-  background: var(--edify-surface-muted);
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-block-end: 1px solid var(--edify-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
 }
 
 main :where([role="tab"], .edify-tab-btn) {
-  min-block-size: 2.125rem;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 42px;
   flex: 0 0 auto;
-  border-radius: var(--edify-radius-sm) !important;
+  padding-inline: 10px;
+  border: 0 !important;
+  border-block-end: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--edify-text-muted) !important;
-  font-weight: 500 !important;
+  font-size: 12.5px;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+main :where([role="tab"], .edify-tab-btn):hover {
+  color: var(--edify-text) !important;
+  border-block-end-color: var(--edify-border) !important;
 }
 
 main [role="tabpanel"]:focus-visible {
@@ -716,10 +742,16 @@ main [role="tabpanel"]:focus-visible {
   outline-offset: 3px;
 }
 
+main :where([role="tab"], .edify-tab-btn):focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: -3px;
+}
+
 main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
-  background: var(--edify-surface-raised) !important;
+  background: transparent !important;
   color: var(--edify-accent) !important;
-  box-shadow: var(--edify-shadow-sm);
+  border-block-end-color: var(--edify-accent) !important;
+  box-shadow: none !important;
 }
 
 main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notification-badge) {
@@ -1065,15 +1097,19 @@ main .platform-responsive-table [data-priority="low"] {
 }
 
 .theme-dark main :where([role="tablist"], .edify-tab-container) {
-  background: var(--edify-surface-muted);
-  border-color: var(--edify-border);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,.22);
+  background: transparent !important;
+  border-block-end-color: var(--edify-border) !important;
+  box-shadow: none !important;
 }
 
+/* --edify-accent is a brand blue built for fills; as text on the night surface
+   it measures under AA. The underline keeps the accent, the label takes the
+   theme's blue-on-dark text tone — same rule as the section navigation. */
 .theme-dark main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
-  background: var(--edify-surface-raised) !important;
-  color: var(--edify-accent) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.045), var(--edify-shadow-sm);
+  background: transparent !important;
+  color: var(--edify-info) !important;
+  border-block-end-color: var(--edify-accent) !important;
+  box-shadow: none !important;
 }
 
 .theme-dark .drawer-surface {

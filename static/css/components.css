@@ -1616,28 +1616,20 @@ select:not([multiple]):not(.select-native) {
    These are navigation links, not tabs: no [role="tab"], so they keep the
    underline treatment rather than inheriting the segmented pill styling
    platform.css applies to in-page tab strips. */
+/* Sits inside the page, under the filters — not as a bar floating above the
+   page header — so the page container supplies the width and gutters. */
 .edify-section-nav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
   border-block-end: 1px solid var(--edify-border);
-  background: var(--edify-surface);
+  background: transparent;
 }
 
 .edify-section-nav__inner {
   display: flex;
   align-items: center;
   gap: 2px;
-  max-inline-size: 1500px;
-  margin-inline: auto;
-  padding-inline: 16px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
-}
-
-@media (min-width: 640px) {
-  .edify-section-nav__inner { padding-inline: 24px; }
 }
 
 .edify-section-nav__eyebrow {

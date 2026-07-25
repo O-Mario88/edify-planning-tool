@@ -25,6 +25,8 @@
     </div>
   </header>
 
+  {% include "partials/analytics/section_nav.html" %}
+
   <section class="hcos-metrics" aria-label="{{ title }} summary">
     {% for metric in metrics %}
     <article class="hcos-metric" data-tone="{{ metric.tone }}">
