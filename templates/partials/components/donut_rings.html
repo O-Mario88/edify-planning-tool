@@ -43,7 +43,9 @@ as a sliver of progress that is not there.
     </div>
   </div>
 
-  {% if donut.rings %}
+  {% comment %}A single-series gauge needs no legend: the centre already names
+  the one number, and a lone chip repeating it is furniture.{% endcomment %}
+  {% if donut.rings|length > 1 %}
   <ul class="edify-donut__legend">
     {% for ring in donut.rings %}
     <li class="edify-donut__chip" style="border-color: {{ ring.color }}">

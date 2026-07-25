@@ -138,6 +138,55 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 
+  // Row actions menu.
+  //
+  // The list is position:fixed rather than absolute, because an absolutely
+  // positioned menu is clipped by the first ancestor that scrolls or hides its
+  // overflow — and every table here sits inside a card with overflow hidden and
+  // a horizontally scrolling wrapper. Fixed coordinates escape both, so the
+  // menu opens whole instead of losing its lower half inside the card.
+  //
+  // The cost of fixed positioning is that the coordinates go stale the moment
+  // anything scrolls or resizes, so the menu re-measures on both. Closing
+  // instead would be simpler, but a menu that vanishes because a mobile
+  // browser collapsed its toolbar is a menu the user has to open twice.
+  Alpine.data('rowMenu', () => ({
+    open: false,
+    x: 0,
+    y: 0,
+    toggle() {
+      this.open = !this.open;
+      if (this.open) { this.place(); }
+    },
+    close() {
+      this.open = false;
+    },
+    reposition() {
+      if (this.open) { this.place(); }
+    },
+    place() {
+      // After the tick, x-show has applied display, so the list can be
+      // measured — which is what decides whether it fits below the row.
+      this.$nextTick(() => {
+        const trigger = this.$refs.trigger;
+        const list = this.$refs.list;
+        if (!trigger || !list) { return; }
+        const rect = trigger.getBoundingClientRect();
+        const height = list.offsetHeight;
+        // Right-aligned on the trigger by arithmetic rather than by a CSS
+        // translate: x-transition writes its own inline `transform`, which
+        // wins over the stylesheet and left the menu hanging off the row.
+        this.x = Math.max(8, rect.right - list.offsetWidth);
+        // Flip above the trigger when the menu would run past the foot of the
+        // viewport, which is what the last row of a long table does.
+        const below = rect.bottom + 4;
+        this.y = (below + height > window.innerHeight && rect.top - 4 - height > 0)
+          ? rect.top - 4 - height
+          : below;
+      });
+    }
+  }));
+
   // URL-addressable local dataset tabs. The backend still supplies every
   // authorized dataset and count; this controller preserves the selected view
   // across refresh/back/forward without turning Alpine into the data source.

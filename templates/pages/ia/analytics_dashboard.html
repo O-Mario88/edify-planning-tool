@@ -340,18 +340,7 @@ border-radius: 4px;
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 <!-- Donut 1: school SSA coverage (current FY) -->
 <div class="flex flex-col items-center justify-center p-3 rounded-surface bg-slate-50/50 border border-slate-100 text-center space-y-2">
-<!-- circular svg representation -->
-<div class="relative h-20 w-20 flex items-center justify-center">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-emerald-500" stroke-dasharray="{{ ssa_overview.done_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-amber-500" stroke-dasharray="{{ ssa_overview.scheduled_pct }}, 100" stroke-dashoffset="{{ ssa_overview.scheduled_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-<span class="text-[15px] font-semibold text-slate-800 leading-none">{{ ssa_overview.total }}</span>
-<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-0.5">Schools</span>
-</div>
-</div>
+{% include "partials/components/donut_rings.html" with donut=ssa_overview.rings donut_label="School SSA coverage" headline=ssa_overview.total subline="schools in scope" %}
 <div class="edify-text-caption space-y-1 font-bold w-full">
 <div class="flex items-center justify-between text-emerald-600"><span>● SSA Done</span> <span>{{ ssa_overview.done }} ({{ ssa_overview.done_pct }}%)</span></div>
 <div class="flex items-center justify-between text-amber-600"><span>● Scheduled</span> <span>{{ ssa_overview.scheduled }} ({{ ssa_overview.scheduled_pct }}%)</span></div>

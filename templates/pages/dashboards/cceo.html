@@ -76,22 +76,25 @@
               their drawers in place; Discuss opens the daily debrief with this
               activity carried in as its subject.{% endcomment %}
               <td class="px-3 py-3 text-right">
-                <div class="row-menu" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
-                  <button type="button" class="row-menu__trigger"
-                          @click="open = !open"
+                <div class="row-menu" x-data="rowMenu"
+                     @keydown.escape.window="close()" @click.outside="close()"
+                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                  <button type="button" class="row-menu__trigger" x-ref="trigger"
+                          @click="toggle()"
                           :aria-expanded="open ? 'true' : 'false'"
                           aria-haspopup="true"
                           aria-label="Actions for {{ r.activity }} at {{ r.where }}">
                     Actions
                     <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                   </button>
-                  <div class="row-menu__list" x-show="open" x-cloak x-transition.opacity.duration.120ms role="menu">
+                  <div class="row-menu__list" x-ref="list" x-show="open"
+                         :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
                     <button type="button" class="row-menu__item" role="menuitem"
                             hx-get="{{ r.complete_url }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                            @click="open = false">Complete</button>
+                            @click="close()">Complete</button>
                     <button type="button" class="row-menu__item" role="menuitem"
                             hx-get="{{ r.reschedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                            @click="open = false">Reschedule</button>
+                            @click="close()">Reschedule</button>
                     <a class="row-menu__item" role="menuitem" href="{{ r.discuss_url }}">Discuss this activity</a>
                   </div>
                 </div>

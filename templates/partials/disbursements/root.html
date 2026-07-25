@@ -122,26 +122,8 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
 
       <div class="card p-5">
         <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-3">Disbursement Status</h3>
-        <div class="flex items-center gap-4">
-          <div class="relative h-24 w-24 shrink-0">
-            <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-              <path class="text-slate-100" stroke-width="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              <path class="text-emerald-500" stroke-dasharray="{{ donut.approved }}, 100" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              <path class="text-amber-400" stroke-dasharray="{{ donut.pending }}, 100" stroke-dashoffset="-{{ donut.approved }}" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              <path class="edify-primary-text" stroke-dasharray="{{ donut.disbursed }}, 100" stroke-dashoffset="-{{ donut.approved|add:donut.pending }}" stroke-width="4" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-[12px] font-bold text-slate-800 leading-none">{{ donut.total_fmt }}</span>
-              <span class="edify-text-caption font-semibold text-slate-400 mt-0.5">Total</span>
-            </div>
-          </div>
-          <div class="edify-text-caption space-y-1.5 flex-1">
-            <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500"></span>Approved</span><span class="font-bold tabular-nums">{{ donut.approved }}%</span></div>
-            <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-400"></span>Pending</span><span class="font-bold tabular-nums">{{ donut.pending }}%</span></div>
-            <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill edify-primary-solid"></span>Disbursed</span><span class="font-bold tabular-nums">{{ donut.disbursed }}%</span></div>
-            <div class="flex justify-between"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-500"></span>Returned</span><span class="font-bold tabular-nums">{{ donut.returned }}%</span></div>
-          </div>
-        </div>
+        {% include "partials/components/donut_rings.html" with donut=donut_rings donut_label="Disbursement status by value" headline=donut.total_fmt subline="total this month" %}
+
         <p class="edify-text-caption font-semibold text-slate-400 mt-2.5">Reconciliation rate: <span class="text-slate-700 font-bold">{{ recon_rate }}%</span> of disbursed items closed</p>
       </div>
 

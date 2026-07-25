@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from django.db.models import Avg, DurationField, ExpressionWrapper, F, Q
 
+from apps.core.donut import build_rings
 from apps.core.permissions import require_page_permission, RolePermissionService
 from apps.audit.services import log as audit_log
 from apps.activities.models import (
@@ -915,6 +916,31 @@ def ia_dashboard_view(request):
     ssa_overview["scheduled_offset"] = -ssa_overview["done_pct"]
     ssa_overview["not_done_offset"] = -(
         ssa_overview["done_pct"] + ssa_overview["scheduled_pct"]
+    )
+    # Concentric rings: each state a share of the schools in scope, with "not
+    # done" carried too — the gap is the point of this chart.
+    ssa_overview["rings"] = build_rings(
+        [
+            {
+                "key": "done",
+                "label": "SSA done",
+                "value": ssa_done_cnt,
+                "color": "var(--edify-success)",
+            },
+            {
+                "key": "scheduled",
+                "label": "Scheduled",
+                "value": ssa_scheduled_cnt,
+                "color": "var(--edify-warning)",
+            },
+            {
+                "key": "not_done",
+                "label": "Not done",
+                "value": ssa_not_done_cnt,
+                "color": "var(--edify-danger)",
+            },
+        ],
+        share_of=school_total or None,
     )
 
     ssa_records = SsaRecord.objects.filter(deleted_at__isnull=True)

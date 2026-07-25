@@ -865,7 +865,11 @@ def get_frontend_context(principal, query: dict) -> dict:
             if wfr_line:
                 wfr = wfr_line.weekly_fund_request
                 if wfr.status == "pending_responsible_confirmation":
-                    badges.append(("Included in Weekly Request", "amber"))
+                    # "In Weekly Request" rather than "Included in Weekly
+                    # Request": the row carries three chips on one line, and
+                    # the longer wording alone pushed the table past its
+                    # column and into a horizontal scroller.
+                    badges.append(("In Weekly Request", "amber"))
                 elif wfr.status == "submitted_to_pl":
                     badges.append(("Awaiting PL Approval", "amber"))
                 elif wfr.status == "submitted_to_cd":

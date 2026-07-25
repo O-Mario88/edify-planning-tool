@@ -3903,11 +3903,13 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 .row-menu__caret.is-open { transform: rotate(180deg); }
 
+/* Fixed, not absolute: an absolute menu is clipped by the card's hidden
+   overflow and by the table's horizontal scroller, so half of it disappeared
+   inside the card. The controller supplies left/top from the trigger's rect
+   and right-aligns it on the trigger's right edge. */
 .row-menu__list {
-  position: absolute;
-  inset-inline-end: 0;
-  inset-block-start: calc(100% + 4px);
-  z-index: 40;
+  position: fixed;
+  z-index: 60;
   min-inline-size: 11rem;
   padding: 4px;
   border: 1px solid var(--edify-border);
@@ -4237,33 +4239,17 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 }
 
 /* ─── MY PLAN ────────────────────────────────────────────────────────────────
-   Planning Insights reads full width above the tables rather than in a narrow
-   rail beside them, so its three sections sit side by side. */
-.mp-insights {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-}
-
-.mp-insights__head { grid-column: 1 / -1; }
-
-@media (min-width: 64rem) {
-  .mp-insights { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
-}
-
-/* Status badges on one line. Stacked, a four-badge row stood three times the
+   Status badges on one line. Stacked, a four-badge row stood three times the
    height of a two-badge row and the table could not be scanned; the strip
    scrolls instead of wrapping, and nothing in the row changes height. */
+/* The strip is not a scroller. It was capped at 10rem and scrolled inside the
+   cell, which hid stages behind an invisible scrollbar on a row that had the
+   width to show them. The row is wide enough; the strip takes what it needs. */
 .mp-badges {
   display: flex;
   align-items: center;
   gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  max-inline-size: 10rem;
 }
-
-.mp-badges::-webkit-scrollbar { display: none; }
 
 /* No outline: eight bordered pills across a row read as a fence. Colour alone
    carries the state, and a finished stage takes the light green. */
@@ -4293,19 +4279,24 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
    another. Each cell caps its own width instead and truncates past it. */
 .mp-table { inline-size: 100%; }
 
+/* Column caps, not cell padding: `main table td` sets its gutters with
+   !important as the one platform table contract, so the width a nowrap table
+   has to give back can only come out of the columns. These caps are what keep
+   the four My Plan tables inside the content column rather than behind a
+   horizontal scroller. */
 .mp-table :is(td, th) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-inline-size: 7.5rem;
+  max-inline-size: 7rem;
 }
 
 /* The name is the row's identity — it gets the most room before truncating,
    and the middle columns give up theirs so it can. */
-.mp-table :is(td, th):first-child { max-inline-size: 14rem; }
+.mp-table :is(td, th):first-child { max-inline-size: 10rem; }
 
-/* The badge strip scrolls rather than truncating: a clipped status reads as a
-   different status. Actions are never clipped at all. */
+/* Status and actions opt out of the cell truncation the other columns use: a
+   clipped status reads as a different status. */
 .mp-table td:has(.mp-badges),
 .mp-table td:has(.row-menu) { max-inline-size: none; overflow: visible; }
 .mp-table .mp-cell-wrap { white-space: normal; }

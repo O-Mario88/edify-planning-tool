@@ -8,11 +8,11 @@
 {% include "partials/my_plan/kpi_cards.html" %}
 
 {% comment %}
-Planning Insights used to sit in a narrow right-hand column, which squeezed
-every activity table into three quarters of the width and wrapped their cells.
-It reads above the tables now, full width, and the tables get the whole row.
+Planning Insights is gone from here: the Dashboard already carries the same
+upcoming/alerts/next-action rail, and repeating it on My Plan meant two places
+to read the same thing and two places to keep it true. My Plan is the list of
+work; the Dashboard is where the day is summarised.
 {% endcomment %}
-{% include "partials/my_plan/planning_insights.html" %}
 
 <!-- Period Segmented Tabs row -->
 {% include "partials/my_plan/period_tabs.html" %}

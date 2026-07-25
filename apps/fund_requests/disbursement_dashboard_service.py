@@ -22,6 +22,7 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
+from apps.core.donut import build_rings
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 
@@ -1042,6 +1043,42 @@ def get_disbursement_dashboard(principal, filters=None):
     donut = {k: round(v / donut_total * 100) for k, v in donut_amounts.items()}
     donut["total_fmt"] = _ugx(sum(donut_amounts.values()))
 
+    # Concentric rings for the shared donut component: each stage a share of
+    # the month's money, the centre reading the total.
+    donut_rings = build_rings(
+        [
+            {
+                "key": "disbursed",
+                "label": "Disbursed",
+                "value": disbursed_month,
+                "display": _ugx(disbursed_month),
+                "color": "var(--edify-success)",
+            },
+            {
+                "key": "approved",
+                "label": "Approved",
+                "value": pending_disb + held_amt,
+                "display": _ugx(pending_disb + held_amt),
+                "color": "var(--edify-accent)",
+            },
+            {
+                "key": "pending",
+                "label": "Pending",
+                "value": awaiting_appr,
+                "display": _ugx(awaiting_appr),
+                "color": "var(--edify-warning)",
+            },
+            {
+                "key": "returned",
+                "label": "Returned",
+                "value": returned_amt,
+                "display": _ugx(returned_amt),
+                "color": "var(--edify-danger)",
+            },
+        ],
+        share_of=sum(donut_amounts.values()) or None,
+    )
+
     # ── Allocation & utilization (planned budget lines vs money out) ──────────
     from apps.activities.models import ActivityScheduleCostLine
 
@@ -1151,6 +1188,7 @@ def get_disbursement_dashboard(principal, filters=None):
         "kpis": kpis,
         "overview": overview,
         "donut": donut,
+        "donut_rings": donut_rings,
         "utilization": utilization,
         "mix": mix,
         "cash": cash,
