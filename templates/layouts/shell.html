@@ -296,6 +296,7 @@ class="edify-workspace flex-1 overflow-y-auto focus:outline-none relative bg-[va
 data-density="compact"
 data-analytics-engine="edify-python-1.0"
 >
+{% if in_analytics_workspace %}{% include "partials/analytics/section_nav.html" %}{% endif %}
 {% block shell_content %}{% endblock %}
 </main>
 </div>

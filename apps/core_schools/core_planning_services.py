@@ -1170,11 +1170,13 @@ class CoreStaffPartnerPerformanceService:
             else:
                 staff_deltas.append(delta)
 
-        # Honest 0 when there simply isn't any baseline/follow-up delta data yet
-        # (e.g. no follow-up SSA has been collected for any plan in scope).
+        # With no paired SSA cycles anywhere in scope there is no comparison to
+        # report. A zero here would read as "staff and partners performed
+        # identically" — a finding — when the truth is that nothing has been
+        # measured yet, so the delta stays None and the KPI says so.
         avg_staff = sum(staff_deltas) / len(staff_deltas) if staff_deltas else 0
         avg_partner = sum(partner_deltas) / len(partner_deltas) if partner_deltas else 0
-        delta = avg_staff - avg_partner
+        delta = (avg_staff - avg_partner) if (staff_deltas or partner_deltas) else None
 
         # Organization benchmark: the average verified core score across the
         # whole scoped cohort — every row compares against this one number.
@@ -1272,7 +1274,9 @@ class CoreStaffPartnerPerformanceService:
         top_region = scored_regions[0] if scored_regions else None
 
         return {
-            "delta_pp": round(delta, 1),
+            # Score points, not percentage points: this is the gap between two
+            # averages of SSA score movement, both measured on the 0–10 scale.
+            "delta_points": round(delta, 1) if delta is not None else None,
             "org_average": org_average,
             "staff_insights": staff_insights,
             "partner_insights": partner_insights,

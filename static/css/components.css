@@ -1608,6 +1608,106 @@ select:not([multiple]):not(.select-native) {
   text-transform: uppercase;
 }
 
+/* ─── ANALYTICS SECTION SUB-NAVIGATION ──────────────────────────────────────
+   One workspace, many pages. The shell renders this strip above the page
+   header on every Analytics section so the whole analysis surface is one
+   place you move around inside, instead of a dozen sidebar links.
+
+   These are navigation links, not tabs: no [role="tab"], so they keep the
+   underline treatment rather than inheriting the segmented pill styling
+   platform.css applies to in-page tab strips. */
+.edify-section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface);
+}
+
+.edify-section-nav__inner {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-inline-size: 1500px;
+  margin-inline: auto;
+  padding-inline: 16px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+@media (min-width: 640px) {
+  .edify-section-nav__inner { padding-inline: 24px; }
+}
+
+.edify-section-nav__eyebrow {
+  flex: 0 0 auto;
+  color: var(--brand-primary-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.edify-section-nav__rule {
+  flex: 0 0 auto;
+  inline-size: 1px;
+  block-size: 16px;
+  margin-inline: 12px 6px;
+  background: var(--edify-border);
+}
+
+/* Divider between clusters of related sections. */
+.edify-section-nav__divider {
+  flex: 0 0 auto;
+  inline-size: 1px;
+  block-size: 14px;
+  margin-inline: 8px;
+  background: var(--edify-border);
+}
+
+.edify-section-nav__link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 42px;
+  padding-inline: 10px;
+  border-block-end: 2px solid transparent;
+  color: var(--edify-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+/* Touch targets follow the platform's 44px floor. */
+@media (max-width: 48rem), (pointer: coarse) {
+  .edify-section-nav__link { min-block-size: 44px; }
+}
+
+.edify-section-nav__link:hover {
+  color: var(--edify-text);
+  border-block-end-color: var(--edify-border);
+}
+
+.edify-section-nav__link.is-active {
+  color: var(--edify-accent);
+  border-block-end-color: var(--edify-accent);
+}
+
+/* --edify-accent is a solid brand blue built for fills and borders. As text on
+   the night surface it measures 3.87:1, under AA — and this is the one label
+   that says which page you are on. The underline keeps the accent; the label
+   takes the theme's blue-on-dark text tone. */
+.theme-dark .edify-section-nav__link.is-active {
+  color: var(--edify-info);
+}
+
+.edify-section-nav__link:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: -3px;
+}
+
 .edify-header-filters {
   display: flex;
   flex-wrap: wrap;
@@ -1636,7 +1736,13 @@ select:not([multiple]):not(.select-native) {
   box-shadow: none !important;
   padding: 0 !important;
   border-radius: 0 !important;
-  justify-content: flex-end;
+  /* Filters start at the left edge, so every wrapped row lines up under the
+     one above it. flex-end here right-aligned each line independently: a bar
+     that wrapped put its first row against the right margin and its second
+     against the left, and the two rows shared no edge at all. Trailing
+     actions still sit right — they carry their own ml-auto, which is what
+     "actions aligned at the end" actually needs. */
+  justify-content: flex-start;
 }
 
 /* ─── CANONICAL FILTER-CONTROL DESIGN (all widths) ──────────────────────────
@@ -1654,7 +1760,13 @@ select:not([multiple]):not(.select-native) {
   border: 0 !important;
   box-shadow: none !important;
   padding: 0 !important;
+  /* A shared width band. A select sizes itself to its longest option, so one
+     filter listing full district or sub-county names grew to more than twice
+     its neighbours and made an otherwise even row look ragged. The dropdown
+     still shows every option in full; only the closed control is bounded. */
   min-width: 8.25rem;
+  max-width: 13rem;
+  flex: 0 1 8.25rem;
 }
 :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
   :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
@@ -1667,10 +1779,14 @@ select:not([multiple]):not(.select-native) {
 :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
   div:not(:has(div)) :is(select, input:not([type="hidden"]):not([type="checkbox"])) {
   width: 100% !important;
+  /* Without this a select still reports its longest option as its min-content
+     width and refuses to shrink inside the band above. */
+  min-width: 0 !important;
   height: 39px !important;
   background: var(--edify-surface) !important;
   border: 1px solid var(--edify-border) !important;
   border-radius: var(--radius-control, 8px);
   font-size: 12px;
   font-weight: 600;
+  text-overflow: ellipsis;
 }

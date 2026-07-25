@@ -163,6 +163,23 @@ def _trend(school_ids: list[str], selected_fy: str) -> dict:
             by_year[row["fy"]].append(avg)
 
     values = [_average(by_year[year]) for year in years]
+
+    # Start the trend where the record does. The window is a fixed seven years,
+    # but a deployment that only has three years of confirmed SSA was drawing
+    # its line in the right-hand quarter of the chart behind four empty
+    # columns — which reads as a gap in performance rather than what it is,
+    # years before anyone was collecting. Leading empty years are dropped so
+    # the line begins at the axis; interior gaps and the current year stay,
+    # because those are real absences worth seeing.
+    first_measured = next(
+        (index for index, value in enumerate(values) if value is not None), None
+    )
+    if first_measured:
+        # Never trim below three columns — one confirmed year should still read
+        # as a chart, not a dot in the corner.
+        start = min(first_measured, max(0, len(years) - 3))
+        years, values = years[start:], values[start:]
+
     plot_left, plot_right, plot_top, plot_bottom = 48, 852, 20, 176
     points = []
     for index, (year, value) in enumerate(zip(years, values)):

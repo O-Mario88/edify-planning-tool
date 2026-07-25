@@ -10,7 +10,7 @@ import datetime as dt
 from pathlib import Path
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile
@@ -67,6 +67,26 @@ class PerformanceInsightsServiceTests(TestCase):
         self.assertAlmostEqual(
             row["vs_avg"], round(row["score"] - perf["org_average"], 1), places=1
         )
+
+    def test_staff_partner_delta_is_absent_not_zero_without_paired_cycles(self):
+        """Zero is a finding — "staff and partners performed identically". With
+        no paired SSA cycles in scope nothing has been measured, and the KPI
+        has to say that rather than invent a tie."""
+        self.assertIsNone(self._perf()["delta_points"])
+
+        client = Client()
+        client.force_login(self.owner)
+        response = client.get("/core-schools")
+        self.assertEqual(response.status_code, 200)
+        kpi = next(
+            item
+            for item in response.context["kpi_strip_items"]
+            if item["label"] == "Staff vs Partner Performance Delta"
+        )
+        self.assertEqual(kpi["value"], "—")
+        self.assertEqual(kpi["helper"], "No paired SSA cycles yet")
+        # SSA movement is measured in score points, never percentage points.
+        self.assertNotIn("pp", kpi["value"])
 
     def test_missing_data_is_insufficient_never_zero(self):
         owner2 = User.objects.create_user(

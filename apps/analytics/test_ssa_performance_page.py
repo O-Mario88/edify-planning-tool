@@ -13,7 +13,7 @@ from apps.accounts.models import (
 )
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
-from apps.core.navigation import build_sidebar_for_user
+from apps.core.navigation import build_analytics_sections, build_sidebar_for_user
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -125,19 +125,83 @@ class SsaPerformancePageTest(TestCase):
         self.assertNotContains(response, "Outside Scope P/S")
 
     def test_every_role_has_ssa_performance_navigation(self):
+        """Every role can still reach SSA Performance.
+
+        It is no longer its own sidebar link — it is a section of the Analytics
+        workspace — so the guarantee is that every role is offered the section,
+        that the page opens, and that the sidebar marks the workspace as where
+        the user currently is.
+        """
         client = Client()
         for role in EdifyRole:
             user = self._user(f"{role.name.lower()}@ssa-nav.test", role.value)
-            urls = {
-                item["url"]
+            sections = build_analytics_sections(user, "/ssa")
+            active_sidebar = {
+                item["label"]
                 for section in build_sidebar_for_user(user, "/ssa")
                 for item in section["items"]
+                if item["active"]
             }
             with self.subTest(role=role.value):
-                self.assertIn("/ssa", urls)
+                self.assertIn("/ssa", {s["url"] for s in sections})
+                self.assertEqual(
+                    [s["label"] for s in sections if s["active"]],
+                    ["SSA Performance"],
+                )
+                # Whatever the workspace entry is called for this role, it is
+                # the thing highlighted while the user is on /ssa.
+                self.assertTrue(active_sidebar)
                 client.force_login(user)
                 self.assertEqual(client.get("/ssa").status_code, 200)
                 client.logout()
+
+    def test_trend_starts_at_the_axis_not_part_way_across(self):
+        """The window is seven years; a deployment with three years of
+        confirmed SSA was drawing its line in the right-hand quarter behind
+        four empty columns, which reads as a performance gap rather than years
+        before anyone was collecting."""
+        current = int(self.fy)
+        for offset in (0, 1, 2):
+            SsaRecord.objects.create(
+                school=self.own_school,
+                fy=str(current - offset),
+                quarter=self.quarter,
+                date_of_ssa=timezone.now() - timedelta(days=offset * 365),
+                average_score=6.0,
+                verification_status="confirmed",
+            )
+
+        client = Client()
+        client.force_login(self.cceo)
+        trend = client.get(f"/ssa?fy={self.fy}").context["dashboard"]["trend"]
+
+        self.assertTrue(trend["has_data"])
+        # No empty columns before the first measured year.
+        self.assertIsNotNone(trend["points"][0]["value"])
+        # And that first point sits on the left edge of the plot area.
+        self.assertEqual(trend["points"][0]["x"], 48)
+        self.assertTrue(trend["polyline"].startswith("48"))
+
+    def test_trend_keeps_leading_years_once_they_are_measured(self):
+        """Trimming is only for years that were never collected. A real gap at
+        the start of the window is a finding and stays visible."""
+        oldest = str(int(self.fy) - 6)
+        SsaRecord.objects.create(
+            school=self.own_school,
+            fy=oldest,
+            quarter=self.quarter,
+            date_of_ssa=timezone.now() - timedelta(days=6 * 365),
+            average_score=4.0,
+            verification_status="confirmed",
+        )
+        self._ssa(self.own_school, 7.0)
+
+        client = Client()
+        client.force_login(self.cceo)
+        trend = client.get(f"/ssa?fy={self.fy}").context["dashboard"]["trend"]
+
+        self.assertEqual(len(trend["points"]), 7)
+        self.assertEqual(trend["points"][0]["fy"], oldest)
 
     def test_export_obeys_role_capability(self):
         self._ssa(self.own_school, 7.0)

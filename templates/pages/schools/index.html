@@ -89,7 +89,7 @@ class="school-filters-form space-y-3"
 <div>
 <span class="edify-filter-label">Region</span>
 <select aria-label="Region" name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">All regions</option>
+<option value="">All</option>
 {% for r in regions %}
 <option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
 {% endfor %}
@@ -99,7 +99,7 @@ class="school-filters-form space-y-3"
 <div>
 <span class="edify-filter-label">District</span>
 <select aria-label="District" name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">All districts</option>
+<option value="">All</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
 {% endfor %}
@@ -109,7 +109,7 @@ class="school-filters-form space-y-3"
 <div>
 <span class="edify-filter-label">Sub-county</span>
 <select aria-label="Sub-county" name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">Sub-county: All</option>
+<option value="">All</option>
 {% for sc in sub_counties %}
 <option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
 {% endfor %}
@@ -119,7 +119,7 @@ class="school-filters-form space-y-3"
 <div>
 <span class="edify-filter-label">School type</span>
 <select aria-label="School type" name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">School Type: All</option>
+<option value="">All</option>
 {% for val, label in school_types %}
 <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
 {% endfor %}
@@ -129,7 +129,7 @@ class="school-filters-form space-y-3"
 <div>
 <span class="edify-filter-label">Cluster status</span>
 <select aria-label="Cluster status" name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">Cluster Status: All</option>
+<option value="">All</option>
 <option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
 <option value="unclustered" {% if selected_cluster_status == 'unclustered' %}selected{% endif %}>Unclustered</option>
 </select>
@@ -138,7 +138,7 @@ class="school-filters-form space-y-3"
 <div>
 <span class="edify-filter-label">Project status</span>
 <select aria-label="Project status" name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">Project Status: All</option>
+<option value="">All</option>
 <option value="assigned" {% if selected_project_status == 'assigned' %}selected{% endif %}>Assigned</option>
 <option value="unassigned" {% if selected_project_status == 'unassigned' %}selected{% endif %}>Not Assigned</option>
 </select>

@@ -1,0 +1,30 @@
+{% comment %}
+Analytics workspace sub-navigation.
+
+Rendered by layouts/shell.html on every page that is an Analytics section, from
+`analytics_sections` (apps/core/navigation.build_analytics_sections). Real links
+to real routes, so deep links, permissions and the browser's back button all
+keep working — these are not tabs and deliberately carry no tab roles, which
+would both misdescribe cross-route links to a screen reader and inherit
+platform.css's segmented-tab styling.
+{% endcomment %}
+<nav class="edify-section-nav" aria-label="Analytics sections">
+{% comment %}
+With ten or more sections the strip scrolls, so a user landing directly on a
+late section (Publishing, Reports) would otherwise arrive with the page they
+are on scrolled out of sight. Only the strip's own scrollLeft is touched —
+scrollIntoView would move the workspace behind it.
+{% endcomment %}
+<div class="edify-section-nav__inner" x-data
+x-init="$nextTick(() => { const active = $el.querySelector('.is-active'); if (active) $el.scrollLeft = Math.max(0, active.offsetLeft - 120) })">
+<span class="edify-section-nav__eyebrow">Analytics</span>
+<span class="edify-section-nav__rule" aria-hidden="true"></span>
+{% for section in analytics_sections %}
+{% if section.starts_cluster %}<span class="edify-section-nav__divider" aria-hidden="true"></span>{% endif %}
+<a href="{{ section.url }}"
+class="edify-section-nav__link{% if section.active %} is-active{% endif %}"
+title="{{ section.description }}"
+{% if section.active %}aria-current="page"{% endif %}>{{ section.label }}</a>
+{% endfor %}
+</div>
+</nav>

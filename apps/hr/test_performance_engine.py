@@ -194,6 +194,59 @@ class MyPerformancePageTests(EngineFixture):
         self.assertIn("4", body)  # the real denominator, not a typed one
 
 
+class OpenConversationControlTests(EngineFixture):
+    """HR alone opens and closes the conversation window, and the staff
+    member's control has to say so rather than disappearing."""
+
+    #: The sidebar also links to /performance-conversation, so the assertions
+    #: below pin the header control itself rather than the bare URL.
+    ENABLED = '<a data-control="open-conversation" href="/performance-conversation"'
+    DISABLED = '<span data-control="open-conversation" role="button" aria-disabled="true"'
+
+    def _body(self):
+        self.client.force_login(self.cceo)
+        body = self.client.get("/my-performance").content.decode()
+        self.assertIn("Open conversation", body)
+        return body
+
+    def test_the_control_is_inert_until_hr_opens_a_window(self):
+        build_draft_agreement(self.sp, self.cycle, self.hr)
+        body = self._body()
+        # Present, so the staff member can see the control exists at all...
+        self.assertIn(self.DISABLED, body)
+        # ...but not a live link into a conversation that is not open.
+        self.assertNotIn(self.ENABLED, body)
+
+    def test_hr_opening_a_window_activates_it(self):
+        from apps.hr.performance_engine import activate_window
+
+        build_draft_agreement(self.sp, self.cycle, self.hr)
+        activate_window(self.cycle, "q1", self.hr)
+        body = self._body()
+        self.assertIn(self.ENABLED, body)
+        self.assertNotIn(self.DISABLED, body)
+
+    def test_hr_closing_the_window_disables_it_again(self):
+        from apps.hr.performance_engine import activate_window, close_window
+
+        build_draft_agreement(self.sp, self.cycle, self.hr)
+        activate_window(self.cycle, "q1", self.hr)
+        close_window(self.cycle, self.hr)
+        body = self._body()
+        self.assertIn(self.DISABLED, body)
+        self.assertNotIn(self.ENABLED, body)
+
+    def test_a_non_hr_role_cannot_activate_it(self):
+        from apps.hr.performance_engine import activate_window, close_window
+
+        build_draft_agreement(self.sp, self.cycle, self.hr)
+        with self.assertRaises(Forbidden):
+            activate_window(self.cycle, "q1", self.cceo)
+        activate_window(self.cycle, "q1", self.hr)
+        with self.assertRaises(Forbidden):
+            close_window(self.cycle, self.cceo)
+
+
 class NoProfileBranchTests(TestCase):
     """The guard branch must RUN — the third F821 this audit caught lived in
     an untested branch while 1896 tests stayed green."""

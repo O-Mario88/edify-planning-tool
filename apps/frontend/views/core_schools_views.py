@@ -116,6 +116,8 @@ def core_schools_view(request):
     else:
         perf_insights["trend_summary"] = None
 
+    delta_points = perf_insights["delta_points"]
+
     visits_scheduled = (
         Activity.objects.filter(
             school__in=core_schools_qs,
@@ -178,10 +180,19 @@ def core_schools_view(request):
         },
         {
             "label": "Staff vs Partner Performance Delta",
-            "value": f"{'+' if perf_insights['delta_pp'] >= 0 else ''}{perf_insights['delta_pp']}pp",
-            "helper": "Staff ahead"
-            if perf_insights["delta_pp"] >= 0
-            else "Partner ahead",
+            # SSA movement is measured in score points on the 0–10 scale. The
+            # KPI used to suffix "pp", which reads as percentage points and
+            # describes a different quantity entirely.
+            "value": (
+                f"{'+' if delta_points >= 0 else ''}{delta_points}"
+                if delta_points is not None
+                else "—"
+            ),
+            "helper": (
+                f"score points · {'Staff' if delta_points >= 0 else 'Partner'} ahead"
+                if delta_points is not None
+                else "No paired SSA cycles yet"
+            ),
             "icon": "chart",
             "variant": "primary",
         },

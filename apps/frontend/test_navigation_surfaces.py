@@ -1,7 +1,7 @@
 from django.test import Client, TestCase
 
 from apps.accounts.models import StaffProfile, User
-from apps.core.navigation import build_sidebar_for_user
+from apps.core.navigation import build_analytics_sections, build_sidebar_for_user
 
 
 class AdminNavigationSurfaceSmokeTest(TestCase):
@@ -30,6 +30,12 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
             item["url"]
             for section in build_sidebar_for_user(self.user, "/")
             for item in section["items"]
+        }
+        # Analysis pages are reached from the Analytics workspace's
+        # sub-navigation rather than from their own sidebar links, so they are
+        # smoke-tested through the same door a user walks through.
+        urls |= {
+            section["url"] for section in build_analytics_sections(self.user, "/")
         }
         self.assertGreaterEqual(len(urls), 40)
 
@@ -142,7 +148,7 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
             item["url"]
             for section in build_sidebar_for_user(self.user, "/")
             for item in section["items"]
-        }
+        } | {section["url"] for section in build_analytics_sections(self.user, "/")}
 
         offenders = []
         for url in sorted(urls):

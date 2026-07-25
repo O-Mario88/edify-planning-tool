@@ -23,7 +23,7 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.analytics import impact_engine
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
-from apps.core.navigation import build_sidebar_for_user
+from apps.core.navigation import build_analytics_sections
 from apps.core.rbac import EdifyRole
 from apps.debriefs.models import DailyDebrief, DailyDebriefChallenge
 from apps.fund_requests.finance_models import PartnerPayment
@@ -362,20 +362,25 @@ class ImpactPageTest(TestCase):
         res = client.get("/impact")
         self.assertEqual(res.status_code, 302)
 
-    def test_sidebar_visibility_follows_permissions(self):
-        cd_labels = [
-            item["label"]
-            for group in build_sidebar_for_user(self.cd, "/impact")
-            for item in group["items"]
-        ]
-        self.assertIn("Impact Analytics", cd_labels)
+    def test_analytics_section_visibility_follows_permissions(self):
+        """Impact Analytics is a section of the Analytics workspace now.
+
+        The sidebar shows one Analytics entry for everyone who has any analysis
+        access, so permission is expressed in the sections a role is offered —
+        not in whether a link with this label exists.
+        """
+        cd_sections = build_analytics_sections(self.cd, "/impact")
+        self.assertIn("Impact Analytics", [s["label"] for s in cd_sections])
+        self.assertEqual(
+            [s["label"] for s in cd_sections if s["active"]], ["Impact Analytics"]
+        )
         for excluded in (self.cceo, self.accountant):
             labels = [
-                item["label"]
-                for group in build_sidebar_for_user(excluded, "/dashboard")
-                for item in group["items"]
+                s["label"] for s in build_analytics_sections(excluded, "/dashboard")
             ]
             self.assertNotIn("Impact Analytics", labels)
+            # They keep the workspace itself — just not this section.
+            self.assertTrue(labels)
 
     def test_empty_state_is_honest_without_paired_cycles(self):
         client = Client()

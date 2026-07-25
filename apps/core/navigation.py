@@ -253,6 +253,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # School Visit Effectiveness: the shared visit↔SSA-change module — field
     # roles see their own delivery, leadership sees team/country strategy.
     "visit_effectiveness": {CCEO, PL, IA, CD, RVP, PROJECT_COORDINATOR, ADMIN},
+    # IA Quality Analytics (/ia/dashboard/). The route resolved through the
+    # `ia_` prefix fallback in permissions.py and the page was reachable only
+    # by typing the URL — it had no key and no navigation. Named explicitly now
+    # that it is an Analytics section.
+    "ia_dashboard": {IA, ADMIN},
     # Partner sub-routes
     "partner_today": {PARTNER, ADMIN},
     "partner_schools": {PARTNER, ADMIN},
@@ -392,6 +397,196 @@ ICONS = {
     "performance_values": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>',
     "performance_documents": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>',
 }
+
+# ── The Analytics workspace ───────────────────────────────────────────────────
+# Every analysis surface in the platform, in one place. These used to be
+# eleven separate sidebar links plus two pages that had no link at all; they
+# are now sections of a single workspace, reached from one "Analytics" entry
+# and switched between with the sub-navigation the shell renders on each of
+# them. Each section keeps its own route, view, permission key and tests —
+# only the way you get there changed.
+#
+#   page_key   gates the section exactly as it gates the route.
+#   role_urls  per-role destination (same contract as SIDEBAR_ITEMS).
+#   match      "exact" where a sibling route lives underneath the URL:
+#              /ssa would otherwise swallow the IA upload centre at
+#              /ssa/upload/, and /analytics would swallow every other
+#              /analytics/* section.
+#   cluster    groups related sections; the sub-navigation draws a divider
+#              between clusters rather than labelling them.
+ANALYTICS_SECTIONS = [
+    {
+        "key": "overview",
+        "label": "Overview",
+        "url": "/analytics",
+        "page_key": "analytics",
+        "match": "exact",
+        "cluster": "programme",
+        "description": "Programme performance, field execution and delivery.",
+        # Coordinators get Special Project Impact Intelligence; Program Leads
+        # their supervised-team cockpit; the Country Director the national one.
+        "role_urls": {
+            PROJECT_COORDINATOR: "/projects/analytics",
+            PL: "/analytics/program-lead",
+            CD: "/analytics/country-director",
+        },
+    },
+    {
+        "key": "ssa",
+        "label": "SSA Performance",
+        "url": "/ssa",
+        "page_key": "ssa_performance",
+        "match": "exact",
+        "cluster": "programme",
+        "description": "Verified school self-assessment scores and movement.",
+    },
+    {
+        "key": "visit_effectiveness",
+        "label": "Visit Effectiveness",
+        "url": "/analytics/visit-effectiveness",
+        "page_key": "visit_effectiveness",
+        "cluster": "programme",
+        "description": "How school visits relate to verified SSA change.",
+    },
+    {
+        "key": "impact",
+        "label": "Impact Analytics",
+        "url": "/impact",
+        "page_key": "impact_analytics",
+        "cluster": "programme",
+        "description": "Did visits, trainings and money move the scores?",
+    },
+    {
+        "key": "declining_schools",
+        "label": "Declining Schools",
+        "url": "/declining-schools",
+        "page_key": "declining_schools",
+        "cluster": "programme",
+        "description": "Schools losing ground, ranked by drop.",
+    },
+    {
+        "key": "core_school_health",
+        "label": "Core School Health",
+        "url": "/core-school-health",
+        "page_key": "core_school_health",
+        "cluster": "programme",
+        "description": "Core service package delivery, read-only.",
+    },
+    {
+        "key": "decision_intelligence",
+        "label": "Decision Intelligence",
+        "url": "/decisions",
+        "page_key": "decision_intelligence",
+        "cluster": "decisions",
+        "description": "What leadership is being asked to decide, and why.",
+    },
+    {
+        "key": "decision_log",
+        "label": "Decision Log",
+        "url": "/decision-log",
+        "page_key": "decision_log",
+        "cluster": "decisions",
+        "description": "What was decided, by whom, on what evidence.",
+    },
+    {
+        "key": "people",
+        "label": "People Analytics",
+        "url": "/hr-analytics",
+        "page_key": "hr_analytics",
+        "cluster": "delivery",
+        "description": "Workforce, capacity and people investment.",
+    },
+    {
+        "key": "verification_quality",
+        "label": "Verification Quality",
+        "url": "/ia/dashboard/",
+        "page_key": "ia_dashboard",
+        "cluster": "delivery",
+        "description": "Evidence quality and verification throughput.",
+    },
+    {
+        "key": "completed_work",
+        # Sidebar visibility used to be gated on `completed_archive` ({IA,
+        # ADMIN}) while the route gates on `completed_activities` ({CCEO, PL,
+        # PROJECT_COORDINATOR, IA, ADMIN}) — four roles could open the page but
+        # never saw a link to it. The section uses the key the route enforces.
+        "label": "Completed Work",
+        "url": "/completed-activities",
+        "page_key": "completed_activities",
+        "cluster": "delivery",
+        "description": "The ledger of activities that finished and cleared.",
+    },
+    {
+        "key": "reports",
+        "label": "Reports",
+        "url": "/reports",
+        "page_key": "reports",
+        "cluster": "reporting",
+        "description": "Standing and scheduled reporting.",
+    },
+    {
+        "key": "publishing",
+        # Registered as "/analytics/publishing/" before; the canonical route has
+        # no trailing slash, so prefix matching never marked it active.
+        "label": "Publishing",
+        "url": "/analytics/publishing",
+        "page_key": "analytics_publishing",
+        "cluster": "reporting",
+        "description": "What has been published to the wider organisation.",
+    },
+]
+
+
+def _path_matches(url: str, path: str, match: str = "prefix") -> bool:
+    """True when `path` is inside `url`, ignoring trailing slashes."""
+    url = url.rstrip("/") or "/"
+    path = (path or "").rstrip("/") or "/"
+    if match == "exact":
+        return path == url
+    return path == url or path.startswith(url + "/")
+
+
+def build_analytics_sections(user, current_path: str = "") -> list[dict]:
+    """The Analytics sections this user may open, in workspace order.
+
+    Returns [] for a role with no analysis access at all, so the shell knows
+    not to render the sub-navigation.
+    """
+    role = get_user_role_slug(user)
+    if not role:
+        return []
+
+    sections = []
+    previous_cluster = None
+    for section in ANALYTICS_SECTIONS:
+        if role not in PAGE_PERMISSIONS.get(section["page_key"], set()):
+            continue
+        url = section.get("role_urls", {}).get(role, section["url"])
+        match = section.get("match", "prefix")
+        # A role_urls override adds a destination, it does not close the
+        # generic one: /analytics stays a real page for a Program Lead whose
+        # Overview points at /analytics/program-lead. Without this the section
+        # bar vanished on exactly the page the workspace is named after.
+        active = _path_matches(url, current_path, match) or (
+            url != section["url"]
+            and _path_matches(section["url"], current_path, match)
+        )
+        sections.append(
+            {
+                "key": section["key"],
+                "label": section["label"],
+                "url": url,
+                "description": section["description"],
+                "active": active,
+                # First item of a new cluster gets the divider before it.
+                "starts_cluster": previous_cluster is not None
+                and section["cluster"] != previous_cluster,
+            }
+        )
+        previous_cluster = section["cluster"]
+
+    return sections
+
 
 # Grouped list of all sidebar links in their categories
 SIDEBAR_ITEMS = [
@@ -661,68 +856,17 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "QUALITY & INSIGHTS",
         "items": [
-            {
-                "label": "Decision Intelligence",
-                "url": "/decisions",
-                "page_key": "decision_intelligence",
-            },
-            {
-                "label": "SSA Performance",
-                "url": "/ssa",
-                "page_key": "ssa_performance",
-            },
-            {
-                "label": "Declining Schools",
-                "url": "/declining-schools",
-                "page_key": "declining_schools",
-            },
-            {
-                "label": "Core School Health",
-                "url": "/core-school-health",
-                "page_key": "core_school_health",
-            },
-            {
-                "label": "Impact Analytics",
-                "url": "/impact",
-                "page_key": "impact_analytics",
-            },
-            {
-                "label": "Visit Effectiveness",
-                "url": "/analytics/visit-effectiveness",
-                "page_key": "visit_effectiveness",
-            },
+            # One door to every analysis surface. The individual pages used to
+            # be eleven sidebar links; they are now sections of the Analytics
+            # workspace (ANALYTICS_SECTIONS) reached by the sub-navigation the
+            # shell renders on each of them. `analytics_hub` tells
+            # build_sidebar_for_user to resolve this item from the sections the
+            # role can actually open rather than from a single page_key.
             {
                 "label": "Analytics",
                 "url": "/analytics",
                 "page_key": "analytics",
-                # Coordinators get the Special Project Impact Intelligence page;
-                # Program Leads get their supervised-team analytics cockpit;
-                # the Country Director gets the national leadership cockpit.
-                "role_urls": {
-                    PROJECT_COORDINATOR: "/projects/analytics",
-                    PL: "/analytics/program-lead",
-                    CD: "/analytics/country-director",
-                },
-            },
-            {
-                "label": "Analytics Publishing",
-                "url": "/analytics/publishing/",
-                "page_key": "analytics_publishing",
-            },
-            {
-                "label": "Reports",
-                "url": "/reports",
-                "page_key": "reports",
-            },
-            {
-                "label": "Decision Log",
-                "url": "/decision-log",
-                "page_key": "decision_log",
-            },
-            {
-                "label": "Completed Archive",
-                "url": "/completed-activities",
-                "page_key": "completed_archive",
+                "analytics_hub": True,
             },
         ],
     },
@@ -915,13 +1059,13 @@ SIDEBAR_ITEMS = [
         ],
     },
     {
-        "group_label": "INSIGHTS",
+        # Named INSIGHTS when it held HR Analytics. That page is now the
+        # Analytics workspace's "People Analytics" section, and what remains
+        # here is a log.
+        "group_label": "HR AUDIT",
         "items": [
-            {
-                "label": "HR Analytics",
-                "url": "/hr-analytics",
-                "page_key": "hr_analytics",
-            },
+            # HR Analytics moved into the Analytics workspace as "People
+            # Analytics" — same page, same audience, one fewer sidebar link.
             {
                 "label": "HR Audit Log",
                 "url": "/hr-audit-log",
@@ -938,10 +1082,38 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     if not role:
         return []
 
+    analytics_sections = build_analytics_sections(user, current_path)
+
     sections = []
     for sec in SIDEBAR_ITEMS:
         visible_items = []
         for item in sec["items"]:
+            # The Analytics hub stands for a whole workspace, so it is resolved
+            # from the sections the role can open rather than from one key: it
+            # disappears when none are available, and it borrows the section's
+            # own name when there is only one — a Partner keeps the "Decision
+            # Log" link they have always had rather than an "Analytics" link
+            # that opens a single page.
+            #
+            # It always points at the first section the role can reach, never
+            # at the section they happen to be viewing: a sidebar link whose
+            # destination moves under you is one that reloads the current page
+            # as often as it navigates anywhere.
+            if item.get("analytics_hub"):
+                if not analytics_sections:
+                    continue
+                home = analytics_sections[0]
+                only_one = len(analytics_sections) == 1
+                visible_items.append(
+                    {
+                        "label": home["label"] if only_one else item["label"],
+                        "url": home["url"],
+                        "icon": ICONS.get(item["page_key"], ""),
+                        "active": any(s["active"] for s in analytics_sections),
+                    }
+                )
+                continue
+
             allowed = PAGE_PERMISSIONS.get(item["page_key"], set())
             if role in allowed:
                 # Per-role URL override (e.g. a Project Coordinator's "Planning"
@@ -972,14 +1144,25 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
         # Only show the section if it has at least one visible item inside it
         if visible_items:
             has_active_item = any(item["active"] for item in visible_items)
+            # A collapsed heading hiding a single link is a click that buys the
+            # user nothing — it is spent revealing what the heading already
+            # said. Those sections render as the link itself. This is what the
+            # Analytics workspace looks like in the sidebar, and it applies to
+            # any group a given role happens to see only one item in.
+            standalone = len(visible_items) == 1
             sections.append(
                 {
                     "label": sec["group_label"],
                     "items": visible_items,
                     "active": has_active_item,
+                    "standalone": standalone,
                     # Keep the personal workspace available on first load;
                     # every other group opens only when it contains the page.
-                    "expanded": has_active_item or sec["group_label"] == "MY WORK",
+                    "expanded": (
+                        has_active_item
+                        or standalone
+                        or sec["group_label"] == "MY WORK"
+                    ),
                 }
             )
 
