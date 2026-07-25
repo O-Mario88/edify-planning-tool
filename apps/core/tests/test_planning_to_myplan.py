@@ -135,7 +135,11 @@ class PlanningToMyPlanFlowTest(TestCase):
             region=self.region,
             district=self.district,
         )
-        scheduled_for = timezone.localdate()
+        # _schedulable_date(), not localdate(): this test is about how the
+        # period fields are derived, not about the calendar, and localdate()
+        # made it fail every Sunday. The helper directly above exists for
+        # exactly this and two other tests already use it.
+        scheduled_for = _schedulable_date()
         scheduled_at = timezone.make_aware(
             datetime.combine(scheduled_for, time(9)), timezone.get_current_timezone()
         )

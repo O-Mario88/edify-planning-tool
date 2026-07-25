@@ -31,6 +31,21 @@ def _user(email, role):
     )
 
 
+def _schedulable_date():
+    """A weekday at least a week out.
+
+    `date.today() + 7` keeps the same weekday, so on a Sunday it lands on a
+    Sunday — which the scheduling policy blocks. Tests asserting an entitlement
+    refusal then failed with a message about weekends, and the one asserting
+    that raw core types are refused *passed* on Sundays for entirely the wrong
+    reason, which is worse.
+    """
+    candidate = date.today() + timedelta(days=7)
+    while candidate.weekday() >= 5:  # Saturday or Sunday
+        candidate += timedelta(days=1)
+    return candidate
+
+
 class Fixture(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -160,7 +175,7 @@ class ClientEntitlementTests(Fixture):
         return {
             "schoolId": self.school.school_id,
             "activityType": activity_type,
-            "scheduledDate": (date.today() + timedelta(days=7)).isoformat(),
+            "scheduledDate": _schedulable_date().isoformat(),
             "deliveryType": "staff",
         }
 
@@ -203,7 +218,7 @@ class CoreBypassTests(Fixture):
         payload = {
             "schoolId": self.school.school_id,
             "activityType": "core_visit",
-            "scheduledDate": (date.today() + timedelta(days=7)).isoformat(),
+            "scheduledDate": _schedulable_date().isoformat(),
             "deliveryType": "staff",
         }
         with self.assertRaises(BadRequest):

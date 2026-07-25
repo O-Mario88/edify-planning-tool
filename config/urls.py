@@ -16,8 +16,27 @@ from django.http import HttpRequest, JsonResponse
 from django.urls import include, path
 
 
-def _health(request: HttpRequest) -> JsonResponse:
-    """Public liveness probe: `{status:"ok", db:"up|down"}`."""
+def _liveness(request: HttpRequest) -> JsonResponse:
+    """Is this process alive? Nothing else.
+
+    Deliberately touches no dependency. A liveness probe answers one question,
+    and the orchestrator's response to a failure is to KILL AND RESTART the
+    container — so a probe that checks the database turns a database blip into
+    a restart of every instance, destroying the capacity that would otherwise
+    have served traffic the moment the database came back. Readiness is the
+    probe that is allowed to care about dependencies, because its failure only
+    takes an instance out of rotation.
+    """
+    return JsonResponse({"status": "ok"}, status=200)
+
+
+def _readiness(request: HttpRequest) -> JsonResponse:
+    """Can this process safely serve traffic right now?
+
+    Cheap by design: `SELECT 1`, not a survey of the schema. A readiness probe
+    runs every few seconds on every instance, so anything expensive here is a
+    load generator pointed at the dependency it is meant to be protecting.
+    """
     from django.db import connections
     from django.db.utils import OperationalError
 
@@ -48,9 +67,14 @@ def api(prefix: str, url_module: str) -> list:
 # API namespace wiring is added incrementally as each module lands.
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # Health probe — public, DB ping. Matches NestJS GET /api/health.
-    path("api/health", _health, name="health"),
-    path("api/health/", _health),
+    # Health probes, split by what a failure should make an orchestrator do.
+    # /api/health keeps its existing dependency-checking behaviour because
+    # deploy gates already point at it; /api/health/live is the one a container
+    # HEALTHCHECK should use, since that failure means "restart me".
+    path("api/health", _readiness, name="health"),
+    path("api/health/", _readiness),
+    path("api/health/live", _liveness, name="health_live"),
+    path("api/health/ready", _readiness, name="health_ready"),
     # Auth — public login/refresh/reset + JWT-gated /me.
     *api("auth", "apps.accounts.urls"),
     # Geography — cascading admin-boundary reads.

@@ -64,8 +64,13 @@ ENV PORT=4000
 EXPOSE 4000
 # Apply migrations, optionally seed, then start the ASGI server (daphne for
 # realtime SSE + the scheduler). Health probe hits GET /api/health.
+# Liveness, not readiness. Docker marks the container unhealthy on failure and
+# orchestrators restart it — so pointing this at a probe that checks the
+# database means a database blip restarts every instance, which fixes nothing
+# and removes the capacity that would have recovered. /api/health/ready is the
+# one a load balancer should poll.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
-  CMD curl -fsS "http://localhost:${PORT:-4000}/api/health" || exit 1
+  CMD curl -fsS "http://localhost:${PORT:-4000}/api/health/live" || exit 1
 ENTRYPOINT ["./docker-entrypoint.sh"]
 # Use a shell form so $PORT expands at runtime (Railway injects its own PORT).
 CMD daphne -b 0.0.0.0 -p ${PORT:-4000} config.asgi:application
