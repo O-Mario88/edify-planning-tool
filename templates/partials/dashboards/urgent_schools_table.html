@@ -1,49 +1,66 @@
+{% comment %}
+Columns: School, District, Priority issue, Shipping address, Recommended
+response, Action.
+
+The scheduling state ("scheduled for 9 Jul") sat next to the recommended
+response ("School Visit: 9 Jul") and repeated its date, so the column carries
+the school's shipping address instead. District has its own column rather than
+sitting as a caption under the school name, and the gap ("No SSA") is plain red
+text rather than an outlined pill — eight identical red badges down a column
+read as decoration rather than emphasis.
+{% endcomment %}
 <div class="pl-urgent-table-scroll overflow-x-auto">
-  <table class="pl-urgent-table w-full border-collapse text-left text-[12px]">
-    <caption class="sr-only">Schools needing urgent attention and the next available workflow action</caption>
+  <table class="pl-urgent-table w-full border-collapse text-left text-[11.5px]">
+    <caption class="sr-only">Schools needing urgent attention, what is already scheduled, and the next available workflow action</caption>
     <thead>
       <tr class="font-semibold uppercase tracking-[0.05em]">
-        <th scope="col" class="px-3 py-2.5">School</th>
-        <th scope="col" class="px-3 py-2.5">Priority issue</th>
-        <th scope="col" class="px-3 py-2.5">Recommended response</th>
-        <th scope="col" class="px-3 py-2.5 text-right">Action</th>
+        <th scope="col" class="px-2.5 py-2">School</th>
+        <th scope="col" class="px-2.5 py-2">District</th>
+        <th scope="col" class="px-2.5 py-2">Priority issue</th>
+        <th scope="col" class="px-2.5 py-2">Shipping address</th>
+        <th scope="col" class="px-2.5 py-2">Recommended response</th>
+        <th scope="col" class="px-2.5 py-2 text-right">Action</th>
       </tr>
     </thead>
     <tbody>
       {% for row in urgent_schools %}
       <tr>
-        <th scope="row" class="px-3 py-3 align-top">
+        <th scope="row" class="px-2.5 py-2.5 align-top">
           <a href="/schools/{{ row.school_id }}" class="font-semibold no-underline edify-text">{{ row.school }}</a>
-          <span class="mt-0.5 block font-normal edify-text-muted">{{ row.district }}</span>
           {% if urgent_action_mode == "pl" %}
-          <span class="mt-1 inline-flex items-center rounded-pill px-2 py-0.5 font-semibold"
-                style="font-size: 12px;color:{% if row.owner_kind == 'pl' %}var(--edify-info){% else %}var(--edify-purple){% endif %};background:{% if row.owner_kind == 'pl' %}var(--edify-info-light){% else %}var(--edify-purple-light){% endif %};">
+          <span class="mt-1 inline-flex items-center rounded-pill px-1.5 py-0.5 font-semibold"
+                style="font-size: 10.5px;color:{% if row.owner_kind == 'pl' %}var(--edify-info){% else %}var(--edify-purple){% endif %};background:{% if row.owner_kind == 'pl' %}var(--edify-info-light){% else %}var(--edify-purple-light){% endif %};">
             {% if row.owner_kind == "pl" %}My portfolio{% else %}{{ row.owner_name }} · supervised{% endif %}
           </span>
           {% endif %}
         </th>
-        <td class="px-3 py-3 align-top">
-          {% comment %}flex-col: the context line is a block child, but an
-          inline-flex row parent turns it into a side-by-side flex item and
-          glues it to the issue label ("No SSAscheduled for 9 Jul").
-          {% endcomment %}
-          <span class="inline-flex flex-col items-start rounded-pill px-2 py-0.5 font-semibold edify-danger-soft edify-danger-text border edify-danger-border"
-                style="font-size: 12px">
-            {{ row.issue }}{% if row.issue_context %}
-            <span class="mt-0.5 block edify-text-caption edify-text-muted font-normal">{{ row.issue_context }}</span>{% endif %}
-          </span>
+
+        <td class="px-2.5 py-2.5 align-top edify-text-muted">{{ row.district }}</td>
+
+        <td class="px-2.5 py-2.5 align-top">
+          <span class="font-bold edify-danger-text">{{ row.issue }}</span>
           {% if row.weakest_intervention %}
-          <span class="mt-1 block edify-text-muted">Weakest: {{ row.weakest_intervention }}</span>
+          <span class="mt-0.5 block edify-text-muted font-normal">Weakest: {{ row.weakest_intervention }}</span>
           {% endif %}
         </td>
-        <td class="px-3 py-3 align-top font-medium edify-text">
+
+        <td class="px-2.5 py-2.5 align-top edify-text-muted">
+          {% if row.shipping_address %}{{ row.shipping_address }}{% else %}
+          {% comment %}Blank means the address was never captured for this
+          school — say so rather than leaving an ambiguous empty cell.
+          {% endcomment %}
+          <span class="edify-text-subtle">Not recorded</span>{% endif %}
+        </td>
+
+        <td class="px-2.5 py-2.5 align-top font-medium edify-text">
           {{ row.recommended_activity_label }}
         </td>
-        <td class="px-3 py-3 align-top text-right">
+
+        <td class="px-2.5 py-2.5 align-top text-right">
           {% if urgent_action_mode == "pl" and row.owner_kind == "cceo" %}
           <span id="urgent-action-{{ row.id }}">
             <button type="button"
-                    class="edify-action-button primary"
+                    class="urgent-action urgent-action--primary"
                     hx-post="/dashboard/pl-send-urgent-action?school_id={{ row.id }}&fy={{ fy }}"
                     hx-target="#urgent-action-{{ row.id }}"
                     hx-swap="innerHTML"
@@ -52,21 +69,34 @@
             </button>
           </span>
           {% else %}
-          {% comment %}ONE action per school — the resolver names it
-          (Schedule SSA / Complete SSA / Open Planning / Plan Training /
-          Plan Visit / View Recommendation); the card never offers a menu.
-          {% endcomment %}
-          <a href="{{ row.action_url }}"
-             class="edify-action-button primary"
-             aria-label="{{ row.action_label }} for {{ row.school }}">
-            {{ row.action_label }}
-          </a>
+          <div class="inline-flex items-center justify-end gap-1.5">
+            {% comment %}The primary action is the one the resolver named
+            (Schedule SSA / Complete SSA / Plan Visit …). Assign sits beside it
+            as the alternative when the owner has no capacity to do it
+            themselves — same permission that governs scheduling it.
+            {% endcomment %}
+            <a href="{{ row.action_url }}"
+               class="urgent-action urgent-action--primary"
+               aria-label="{{ row.action_label }} for {{ row.school }}">
+              {{ row.action_label }}
+            </a>
+            {% if can_assign_partner and row.partner_url %}
+            <button type="button"
+                    class="urgent-action"
+                    hx-get="{{ row.partner_url }}"
+                    hx-target="#drawer-container"
+                    hx-swap="innerHTML"
+                    aria-label="Assign {{ row.school }} to a partner">
+              Assign
+            </button>
+            {% endif %}
+          </div>
           {% endif %}
         </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="4" class="px-4 py-8 text-center font-semibold edify-text-muted">
+        <td colspan="6" class="px-4 py-8 text-center font-semibold edify-text-muted">
           No schools require urgent action in your portfolio.
         </td>
       </tr>

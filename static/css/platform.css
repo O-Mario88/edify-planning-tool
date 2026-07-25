@@ -593,6 +593,18 @@ main table {
   font-variant-numeric: tabular-nums;
 }
 
+/* A row header is not a column header. This banding is for the header row;
+   applied to a <th scope="row"> it painted the whole first column grey, which
+   reads as a permanently highlighted column. */
+main table tbody th {
+  background: transparent !important;
+  color: var(--edify-text) !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
 main table th {
   padding: 0.5625rem 0.6875rem !important;
   border-block-end: 1px solid var(--edify-border) !important;

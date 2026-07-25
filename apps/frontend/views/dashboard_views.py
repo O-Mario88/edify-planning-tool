@@ -11,7 +11,7 @@ from datetime import timedelta
 from apps.activities.models import Activity
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.command_center import services as cc_services
-from apps.core.permissions import require_page_permission
+from apps.core.permissions import RolePermissionService, require_page_permission
 from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
 from apps.core.activity_types import VISIT_TYPES
@@ -455,6 +455,7 @@ def dashboard_view(request):
                 "issue": r["label"],
                 "severity": r["severity"],
                 "issue_context": r.get("context") or "",
+                "shipping_address": r.get("shipping_address") or "",
                 "weakest_intervention": "",
                 "weakest_intervention_code": "",
                 "recommended_activity_label": r.get("planned") or "",
@@ -771,6 +772,12 @@ def dashboard_view(request):
             "todo_counts": todo_data["counts"],
             "todo_total": todo_data["total"],
             "urgent_schools": urgent_schools,
+            # Whether to offer "Assign" on each urgent row — handing the visit
+            # to a partner is the alternative to doing it yourself, and the
+            # same permission governs both.
+            "can_assign_partner": RolePermissionService.can_assign_to_partner(
+                request.user
+            ),
         }
         return render(request, "pages/dashboards/cceo.html", context)
 
@@ -950,6 +957,9 @@ def pl_urgent_schools_page_view(request):
             "urgent_schools": urgent_pagination["rows"],
             "urgent_pagination": urgent_pagination,
             "urgent_pagination_query": urlencode(pagination_query),
+            "can_assign_partner": RolePermissionService.can_assign_to_partner(
+                request.user
+            ),
         },
     )
 

@@ -213,6 +213,9 @@ def monthly_urgent_schools(
                 "school_id": school.id,
                 "name": school.name,
                 "where": getattr(getattr(school, "district", None), "name", "") or "",
+                # Real column on School; blank for schools whose address was
+                # never captured, and shown as such rather than invented.
+                "shipping_address": school.shipping_address or "",
                 "planned": (
                     f"{first.activity_type.replace('_', ' ').title()}: "
                     f"{first.planned_date.strftime('%-d %b')}"

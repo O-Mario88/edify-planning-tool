@@ -1732,6 +1732,9 @@ class PLAnalyticsService:
                 "district_id",
                 "district__name",
                 "current_fy_ssa_status",
+                # Read per row by the urgent table; deferring it would restore
+                # the per-row query this .only() list exists to prevent.
+                "shipping_address",
             )
         )
         today = date.today()
@@ -1809,6 +1812,8 @@ class PLAnalyticsService:
                     "school_id": s.school_id,
                     "school": s.name,
                     "district": s.district.name if s.district_id else "—",
+                    # Real column on School; blank where it was never captured.
+                    "shipping_address": s.shipping_address or "",
                     "issue": " + ".join(issues[:2]),
                     "last_visit": f"{(today - lv).days} days ago" if lv else "—",
                     "last_training": f"{(today - lt).days} days ago" if lt else "—",

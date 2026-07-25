@@ -22,6 +22,7 @@ from django.utils import timezone
 from apps.accounts.models import StaffProfile, StaffTargetProfile
 from apps.activities.models import Activity
 from apps.core.fy import get_operational_fy
+from apps.core.permissions import RolePermissionService
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 
@@ -104,6 +105,9 @@ class ProgramLeadDashboardService:
             "ssa_matrix": ProgramLeadDashboardService.ssa_cluster_matrix(pls, fy),
             "urgent_schools": urgent_pagination["rows"],
             "urgent_pagination": urgent_pagination,
+            # Whether each urgent row offers "Assign" — the same permission
+            # that governs scheduling the work yourself.
+            "can_assign_partner": RolePermissionService.can_assign_to_partner(user),
             "route_capacity": ProgramLeadDashboardService.route_capacity(
                 pls, fy, filters, acts
             ),
@@ -191,6 +195,14 @@ class ProgramLeadDashboardService:
             if row["weakest_intervention_code"]:
                 query["focus_intervention"] = row["weakest_intervention_code"]
             row["schedule_url"] = f"/planning/schedule-modal?{urlencode(query)}"
+            # Handing the work to a partner is the alternative to scheduling it
+            # yourself, so the row offers both.
+            partner_query = {"school_id": row["id"]}
+            if row["weakest_intervention_code"]:
+                partner_query["focus_intervention"] = row["weakest_intervention_code"]
+            row["partner_url"] = (
+                f"/planning/assign-partner-modal?{urlencode(partner_query)}"
+            )
         first_row = (page - 1) * page_size + 1 if total else 0
         return {
             "rows": rows,
