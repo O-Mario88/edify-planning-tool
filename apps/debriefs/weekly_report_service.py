@@ -17,6 +17,8 @@ report — regeneration creates a new version and supersedes the old one.
 
 from __future__ import annotations
 
+import logging
+
 import hashlib
 import re
 from datetime import date, timedelta
@@ -38,6 +40,8 @@ from .models import (
     WeeklyReportScope,
     WeeklyReportStatus,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── Theme registry ───────────────────────────────────────────────────────────
 # key, label, kind, keyword patterns (case-insensitive, word-ish matching).
@@ -1006,5 +1010,12 @@ class WeeklyDebriefReportService:
         except Exception as exc:  # record, surface, allow safe retry
             dist.error = str(exc)[:500]
             dist.save(update_fields=["error", "updated_at"])
-            raise BadRequest(f"Email failed to send: {exc}") from exc
+            # An SMTP failure names the host, and sometimes the
+            # credential path it tried. Recorded on the distribution row for
+            # an operator; not repeated to the person who pressed send.
+            logger.error("Weekly report email failed", exc_info=exc)
+            raise BadRequest(
+                "The report could not be emailed. The failure has been "
+                "recorded and sending can be retried."
+            ) from exc
         return dist

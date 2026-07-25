@@ -11,6 +11,8 @@ Reporting reuses UploadBatch + UploadBatchRowResult with upload_type="ssa".
 
 from __future__ import annotations
 
+import logging
+
 from datetime import datetime
 
 from django.db import transaction
@@ -20,6 +22,8 @@ from apps.schools import upload_mapping as M
 from apps.schools.upload_service import _parse_date, _read_rows, _value
 
 from . import services
+
+logger = logging.getLogger(__name__)
 
 
 def upload_ssa_file(file, principal) -> dict:
@@ -301,7 +305,11 @@ def upload_ssa_file(file, principal) -> dict:
             legacy_batch.status = "failed"
             legacy_batch.error_summary = str(exc)
             legacy_batch.save(update_fields=["status", "error_summary", "updated_at"])
-            raise BadRequest(f"SSA import failed: {exc}") from exc
+            logger.error("SSA import failed", exc_info=exc)
+            raise BadRequest(
+                "SSA import failed. The batch is marked failed and the reason "
+                "has been recorded for support."
+            ) from exc
         legacy_batch.status = "imported"
         legacy_batch.save(update_fields=["status", "updated_at"])
 

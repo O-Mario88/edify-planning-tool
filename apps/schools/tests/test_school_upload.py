@@ -280,7 +280,9 @@ class SchoolUploadTest(APITestCase):
         status="imported" (set before the import even ran) and the raw
         exception propagated uncaught to the caller. Now: the batch is
         marked "failed" with the real error recorded, and the caller gets a
-        normal, handleable 400 instead of a bare 500."""
+        normal, handleable 400 instead of a bare 500. The recorded error stays
+        on the batch for an operator; the response says what failed without
+        repeating an internal exception back to the person uploading."""
         from unittest.mock import patch
 
         from apps.schools.models import UploadBatch
@@ -293,9 +295,19 @@ class SchoolUploadTest(APITestCase):
             res = self._post(self._csv(body))
 
         self.assertEqual(res.status_code, 400, res.content)
-        self.assertIn("simulated import crash", res.json()["message"])
         self.assertFalse(School.objects.filter(school_id="SCH-BOOM").exists())
 
+        # The caller is told the import failed, not what crashed. An arbitrary
+        # exception's text can carry a constraint name, a query fragment or a
+        # path, and the person uploading a spreadsheet can do nothing with any
+        # of it.
+        message = res.json()["message"]
+        self.assertIn("School import failed", message)
+        self.assertNotIn("simulated import crash", message)
+        self.assertNotIn("RuntimeError", message)
+
+        # Nothing is swallowed, though: the batch carries the real reason for
+        # whoever has to work out what happened.
         batch = UploadBatch.objects.get(file_name="schools.csv")
         self.assertEqual(batch.status, "failed")
         self.assertIn("simulated import crash", batch.error_summary)

@@ -36,5 +36,21 @@ def is_local_path(target: str) -> bool:
 
 
 def local_redirect(target: str, *, fallback: str = DEFAULT_FALLBACK):
-    """Redirect to `target` when it is a local path, else to `fallback`."""
-    return redirect(target if is_local_path(target) else fallback)
+    """Redirect to `target` when it is a local path, else to `fallback`.
+
+    The condition is spelled out here rather than delegated to
+    `is_local_path`, even though the two agree. A guard that sits in another
+    function is invisible to static analysis at the point of the redirect, and
+    the whole reason this helper exists is so that the decision is legible —
+    to the next reader and to the next scanner — right where it is made.
+    """
+    if (
+        target
+        and target.startswith("/")
+        and not target.startswith("//")
+        and url_has_allowed_host_and_scheme(
+            target, allowed_hosts=None, require_https=False
+        )
+    ):
+        return redirect(target)
+    return redirect(fallback)

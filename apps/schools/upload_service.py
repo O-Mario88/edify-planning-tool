@@ -11,6 +11,8 @@ written); row-level errors never block the valid rows.
 
 from __future__ import annotations
 
+import logging
+
 import csv
 import io
 from datetime import date, datetime
@@ -20,6 +22,8 @@ from django.db import transaction
 from apps.core.exceptions import BadRequest
 
 from . import upload_mapping as M
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_geography(district_name: str, sub_county_name: str):
@@ -132,7 +136,14 @@ def _read_xlsx(raw: bytes) -> tuple[list[str], list[tuple[int, list[str]]]]:
     try:
         wb = openpyxl.load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
     except Exception as exc:  # noqa: BLE001
-        raise BadRequest(f"Could not read the XLSX file: {exc}") from exc
+        # The parser's own message can name a temporary path or a library
+        # internal. What the person uploading needs is that the file could not
+        # be read; the detail belongs in the log.
+        logger.warning("XLSX parse failed", exc_info=exc)
+        raise BadRequest(
+            "Could not read the XLSX file. Check it opens in a spreadsheet "
+            "application and is not password-protected."
+        ) from exc
     ws = wb.worksheets[0]
     rows_iter = ws.iter_rows(values_only=True)
     try:
@@ -531,7 +542,11 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
             legacy_batch.status = "failed"
             legacy_batch.error_summary = str(exc)
             legacy_batch.save(update_fields=["status", "error_summary", "updated_at"])
-            raise BadRequest(f"School import failed: {exc}") from exc
+            logger.error("School import failed", exc_info=exc)
+            raise BadRequest(
+                "School import failed. The batch is marked failed and the "
+                "reason has been recorded for support."
+            ) from exc
         legacy_batch.status = "imported"
         legacy_batch.save(update_fields=["status", "updated_at"])
 
