@@ -133,7 +133,14 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
 
         self.assertEqual(response.context["verification_sla"]["pct"], 50.0)
         self.assertEqual(response.context["verification_sla"]["sample_size"], 2)
-        self.assertContains(response, "50.0%")
+        # The figure and its unit are separate elements in the donut's centre
+        # — the "%" is set as a superscript — so the page is checked for the
+        # measured value and the drawn ring rather than for one glued string.
+        self.assertContains(response, "50.0")
+        self.assertContains(response, "edify-donut--gauge")
+        self.assertEqual(
+            response.context["verification_sla"]["gauge"]["rings"][0].percent, 50.0
+        )
         self.assertContains(response, "n=2")
 
     # ── 1. /ia/dashboard/ documented, bounded, not O(rows) ───────────────────

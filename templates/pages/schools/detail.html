@@ -185,13 +185,8 @@ Improved: {{ impact_data.improvedCount }}
 </div>
 <div class="flex items-center gap-4">
 <!-- Circular Progress Indicator -->
-<div class="relative h-16 w-16 shrink-0 flex items-center justify-center">
-<svg class="w-full h-full transform -rotate-90">
-<circle cx="32" cy="32" r="28" stroke="var(--edify-surface-muted)" stroke-width="2" fill="transparent"></circle>
-<circle cx="32" cy="32" r="28" stroke="{% if school.data_quality_status == 'Clean' %}var(--edify-chart-green){% elif school.data_quality_status == 'Needs Review' %}var(--edify-chart-blue){% elif school.data_quality_status == 'Needs Cleanup' %}var(--edify-chart-amber){% else %}var(--edify-chart-red){% endif %}" stroke-width="2" fill="transparent"
-stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
-</svg>
-<span class="absolute text-[15px] font-semibold">{{ school.data_quality_score }}%</span>
+<div class="shrink-0" style="--edify-donut-gauge-size: 4rem; --edify-donut-gauge-headline: 0.9375rem">
+{% include "partials/components/donut_rings.html" with donut=quality_gauge donut_class="edify-donut--gauge" donut_label="Data quality score" headline=school.data_quality_score headline_unit="%" %}
 </div>
 <div class="space-y-1">
 <p class="text-[12px] text-slate-500 font-semibold leading-snug">Score is updated automatically. Keep fields complete and verified to improve it.</p>

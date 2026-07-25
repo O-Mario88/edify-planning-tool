@@ -15,7 +15,7 @@ them for elegance would be a prettier chart telling you less.
 A ring with no value draws no arc: a rounded cap at twelve o'clock would read
 as a sliver of progress that is not there.
 {% endcomment %}
-<div class="edify-donut">
+<div class="edify-donut{% if donut_class %} {{ donut_class }}{% endif %}">
   <div class="edify-donut__figure">
     <svg viewBox="0 0 {{ donut.size }} {{ donut.size }}" class="edify-donut__svg" role="img"
          aria-label="{{ donut_label|default:'Breakdown' }}">
@@ -31,10 +31,12 @@ as a sliver of progress that is not there.
                 class="edify-donut__arc"/>
         {% endif %}{% endfor %}
       </g>
-      {% for ring in donut.rings %}{% if ring.has_arc %}
+      {% comment %}A lone ring gets no value label: it would print the same
+      number the centre already carries, twice, an inch apart.{% endcomment %}
+      {% if donut.rings|length > 1 %}{% for ring in donut.rings %}{% if ring.has_arc %}
       <text x="{{ ring.label_x }}" y="{{ ring.label_y }}" fill="{{ ring.color }}"
             text-anchor="end" dominant-baseline="middle" class="edify-donut__value">{{ ring.display }}</text>
-      {% endif %}{% endfor %}
+      {% endif %}{% endfor %}{% endif %}
     </svg>
 
     <div class="edify-donut__centre">

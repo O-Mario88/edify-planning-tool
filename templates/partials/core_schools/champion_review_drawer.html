@@ -49,12 +49,8 @@ class="rounded-control p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 
 </span>
 </div>
 
-<div class="relative w-20 h-20 flex items-center justify-center shrink-0">
-<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-<circle cx="18" cy="18" r="16" fill="none" stroke="var(--edify-surface-muted)" stroke-width="2"></circle>
-<circle cx="18" cy="18" r="16" fill="none" stroke="var(--edify-chart-blue)" stroke-width="2" stroke-dasharray="{{ metrics.score }}, 100" stroke-linecap="round"></circle>
-</svg>
-<span class="absolute text-[14px] font-semibold text-slate-800">{{ metrics.score }}%</span>
+<div class="shrink-0" style="--edify-donut-gauge-size: 5rem; --edify-donut-gauge-headline: 0.875rem">
+{% include "partials/components/donut_rings.html" with donut=metrics.gauge donut_class="edify-donut--gauge" donut_label="Graduation formula score" headline=metrics.score headline_unit="%" %}
 </div>
 </div>
 

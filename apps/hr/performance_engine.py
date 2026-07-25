@@ -1077,6 +1077,16 @@ def sync_targets_from_agreement(review, principal=None) -> int:
     if not user_id:
         return 0
     areas = {a.key: a for a in TargetArea.objects.filter(active=True)}
+    if not areas:
+        # Every priority resolves through TargetArea.key, so an empty table
+        # does not fail — it writes nothing and reports success, and the
+        # employee's My Targets stays blank after an approval that said it
+        # had been populated. Reference data missing is a broken install.
+        raise RuntimeError(
+            "No active TargetArea rows: personal targets cannot be written "
+            "from an approved agreement. Run migrate to restore the official "
+            "target areas (apps.targets.reference.ensure_target_areas)."
+        )
     written = 0
     with transaction.atomic():
         for p in review.priorities.all():

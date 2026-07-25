@@ -1,5 +1,11 @@
 """Seed the five official personal target areas with default weights
-(configurable afterwards; weights must total 100 across active areas)."""
+(configurable afterwards; weights must total 100 across active areas).
+
+The list itself lives in apps.targets.reference, which also restores these rows
+on post_migrate — a data migration alone cannot, because a flushed database
+never replays it. Kept as a literal copy here so this migration stays frozen in
+time the way a migration must; `test_reference.py` fails if the two drift.
+"""
 
 from django.db import migrations
 

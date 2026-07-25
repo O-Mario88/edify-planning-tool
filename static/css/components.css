@@ -1916,6 +1916,28 @@ select:not([multiple]):not(.select-native) {
   font-weight: 500;
 }
 
+/* A gauge is the same ring drawn at list scale — inside a table cell, a card
+   corner, a drawer header. Only the sizing changes; the ring, the cap and the
+   centred headline stay the language the hero donuts established. */
+.edify-donut--gauge { gap: 0; }
+
+.edify-donut--gauge .edify-donut__figure {
+  max-inline-size: var(--edify-donut-gauge-size, 5.5rem);
+}
+
+.edify-donut--gauge .edify-donut__headline {
+  font-size: var(--edify-donut-gauge-headline, 1.125rem);
+  font-weight: 600;
+}
+
+.edify-donut--gauge .edify-donut__subline {
+  margin-block-start: 2px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
 .edify-donut__legend {
   display: flex;
   flex-wrap: wrap;

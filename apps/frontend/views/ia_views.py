@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from django.db.models import Avg, DurationField, ExpressionWrapper, F, Q
 
-from apps.core.donut import build_rings
+from apps.core.donut import build_gauge, build_rings
 from apps.core.permissions import require_page_permission, RolePermissionService
 from apps.audit.services import log as audit_log
 from apps.activities.models import (
@@ -638,6 +638,15 @@ def ia_dashboard_view(request):
         "previous_pct": previous_sla_pct,
         "delta": sla_delta,
     }
+    verification_sla["gauge"] = (
+        build_gauge(
+            current_sla_pct,
+            label="Within SLA",
+            color="var(--edify-success)",
+        )
+        if current_sla_pct is not None
+        else None
+    )
     returned_today = VerificationDecision.objects.filter(
         decision="RETURN", decided_at__gte=today_start
     ).count()
@@ -957,6 +966,29 @@ def ia_dashboard_view(request):
         "other": ssa_rec_other,
         "other_pct": _pct(ssa_rec_other, ssa_rec_total),
     }
+    ssa_review["rings"] = build_rings(
+        [
+            {
+                "key": "confirmed",
+                "label": "Confirmed",
+                "value": ssa_rec_confirmed,
+                "color": "var(--edify-chart-teal)",
+            },
+            {
+                "key": "pending",
+                "label": "Pending",
+                "value": ssa_rec_pending,
+                "color": "var(--edify-warning)",
+            },
+            {
+                "key": "other",
+                "label": "Returned / flagged",
+                "value": ssa_rec_other,
+                "color": "var(--edify-danger)",
+            },
+        ],
+        share_of=ssa_rec_total or None,
+    )
 
     # ── Evidence review panel (grouped by kind, split by review status) ─────
     kind_labels = dict(EvidenceKind.choices)

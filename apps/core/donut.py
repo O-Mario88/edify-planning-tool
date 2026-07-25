@@ -122,3 +122,35 @@ def build_rings(
         "stroke": stroke,
         "rings": rings,
     }
+
+
+# A gauge is one ring at list scale: no legend, no value label outside the
+# arc — the centre already carries the number — so it needs no room for one.
+GAUGE_SIZE = 100
+GAUGE_STROKE = 9
+GAUGE_MARGIN = 6
+
+
+def build_gauge(
+    value,
+    *,
+    label: str,
+    color: str,
+    share_of: float | None = 100,
+    display: str | None = None,
+) -> dict:
+    """One-series ring, sized for a table cell or a card corner.
+
+    Returns the same shape as `build_rings`, so the same template renders it;
+    `share_of` defaults to 100 because the usual caller already holds a
+    percentage. Pass `None` for a value with no known denominator and the ring
+    reads full — which is why every caller here passes one.
+    """
+    return build_rings(
+        [{"key": "gauge", "label": label, "value": value, "color": color,
+          "display": display}],
+        share_of=share_of,
+        size=GAUGE_SIZE,
+        stroke=GAUGE_STROKE,
+        margin=GAUGE_MARGIN,
+    )

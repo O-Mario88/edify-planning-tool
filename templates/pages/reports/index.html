@@ -53,21 +53,15 @@
 {% endif %}
 </div>
 <!-- Progress circle -->
-<div class="relative h-14 w-14 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-{% if period.has_target %}
-<path class="{{ period.pct_class }}" stroke-dasharray="{{ period.pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-{% endif %}
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-{% if period.has_target %}
-<span class="edify-text-caption font-semibold text-slate-800 leading-none">{{ period.pct }}%</span>
+<div class="shrink-0" style="--edify-donut-gauge-size: 3.75rem; --edify-donut-gauge-headline: 0.8125rem">
+{% if period.gauge %}
+{% include "partials/components/donut_rings.html" with donut=period.gauge donut_class="edify-donut--gauge" donut_label="Share of the period target achieved" headline=period.pct headline_unit="%" subline=period.dimmed|yesno:"Not started,On track" %}
 {% else %}
-<span class="edify-text-caption font-semibold text-slate-400 leading-none">—</span>
-{% endif %}
-<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-0.5">{% if not period.has_target %}No Target{% elif period.dimmed %}Not Started{% else %}On Track{% endif %}</span>
+<div class="h-14 w-14 flex flex-col items-center justify-center rounded-full border-2 border-dashed border-slate-200">
+<span class="edify-text-caption font-semibold text-slate-400 leading-none">&mdash;</span>
+<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-0.5">No target</span>
 </div>
+{% endif %}
 </div>
 </div>
 

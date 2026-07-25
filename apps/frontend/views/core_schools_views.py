@@ -6,6 +6,7 @@ from django.db import transaction
 from django.views.decorators.http import require_POST
 from datetime import date
 
+from apps.core.donut import build_gauge
 from apps.core.permissions import require_page_permission, get_scoped_object_or_404
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
@@ -818,6 +819,9 @@ def champion_review_drawer(request, school_id):
     """Drawer to review details of a Potential Champion candidate."""
     school = get_scoped_object_or_404(School, request.user, school_id=school_id)
     metrics = ChampionEligibilityService.calculate_score(school)
+    metrics["gauge"] = build_gauge(
+        metrics["score"], label="Graduation score", color="var(--edify-chart-blue)"
+    )
 
     # Fetch recent SSA record
     latest_ssa = (

@@ -15,8 +15,20 @@ class TargetsConfig(AppConfig):
         store is thread-local, so concurrent requests never share one.
         """
         from django.core.signals import request_finished, request_started
+        from django.db.models.signals import post_migrate
 
         from apps.core import request_cache
+
+        # Reference data, restored on post_migrate. Django emits that signal
+        # after `flush` as well as after `migrate`, which is the only reason
+        # the official target areas survive a TransactionTestCase — without it
+        # the table stays empty for the rest of that database's life and HR
+        # approval silently writes no targets.
+        post_migrate.connect(
+            _ensure_reference_data,
+            sender=self,
+            dispatch_uid="edify_targets_reference_data",
+        )
 
         request_started.connect(
             lambda sender, **kw: request_cache.begin(),
@@ -28,3 +40,9 @@ class TargetsConfig(AppConfig):
             dispatch_uid="edify_request_cache_end",
             weak=False,
         )
+
+
+def _ensure_reference_data(sender, **kwargs):
+    from apps.targets.reference import ensure_target_areas
+
+    ensure_target_areas()

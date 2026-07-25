@@ -2,6 +2,7 @@
 GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
 
+from apps.core.donut import build_gauge
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import calendar
 import re
@@ -547,6 +548,21 @@ def _reports_pct_class(pct):
     return "text-rose-600"
 
 
+def _reports_pct_colour(pct):
+    """The same thresholds as `_reports_pct_class`, as a stroke value.
+
+    An SVG stroke cannot take a Tailwind text class, and the two must not be
+    allowed to drift into disagreeing about what 69% looks like.
+    """
+    if pct is None:
+        return "var(--edify-text-subtle)"
+    if pct >= 70:
+        return "var(--edify-success)"
+    if pct >= 50:
+        return "var(--edify-accent)"
+    return "var(--edify-danger)"
+
+
 # Areas of work with a defensible activity_type mapping — every bucket below
 # corresponds to activity_type values that actually exist on the Activity
 # model (apps.core.enums.ActivityType), and (where one exists) a real
@@ -732,6 +748,15 @@ def reports_view(request):
                 "pct": pct,
                 "has_target": target is not None,
                 "pct_class": _reports_pct_class(pct),
+                # A period with no target has nothing to be a percentage of,
+                # so it gets no ring rather than an empty one.
+                "gauge": (
+                    build_gauge(
+                        pct, label="Achieved", color=_reports_pct_colour(pct)
+                    )
+                    if target is not None
+                    else None
+                ),
             }
         )
 

@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from apps.core.donut import build_gauge
 from apps.core.permissions import (
     RolePermissionService,
     get_scoped_object_or_404,
@@ -1145,7 +1146,16 @@ def school_detail_view(request, school_id):
 
     ssa_progress_history = get_ssa_progress_by_fy(School.objects.filter(id=school.id))
 
-    stroke_dashoffset = 175.9 * (100 - school.data_quality_score) / 100
+    # The ring carries the same four states the status pill does, so the two
+    # cannot disagree about what "Needs Cleanup" looks like.
+    quality_colour = {
+        "Clean": "var(--edify-chart-green)",
+        "Needs Review": "var(--edify-chart-blue)",
+        "Needs Cleanup": "var(--edify-chart-amber)",
+    }.get(school.data_quality_status, "var(--edify-chart-red)")
+    quality_gauge = build_gauge(
+        school.data_quality_score, label="Data quality", color=quality_colour
+    )
 
     from apps.core.navigation import get_user_role_slug
 
@@ -1157,7 +1167,7 @@ def school_detail_view(request, school_id):
         "ssa_progress_history": ssa_progress_history,
         "activities": activities,
         "impact_data": impact_data,
-        "stroke_dashoffset": stroke_dashoffset,
+        "quality_gauge": quality_gauge,
         # Deletion is Admin-only (enforced server-side by delete_school; this
         # flag only controls whether the Danger Zone renders).
         "can_delete_school": get_user_role_slug(request.user) == "ADMIN",

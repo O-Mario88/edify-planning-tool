@@ -12,6 +12,7 @@ from django.http import (
 from django.shortcuts import redirect, render
 
 from apps.accounts.models import Leave, StaffProfile
+from apps.core.donut import build_gauge
 from apps.core.permissions import render_access_denied, require_page_permission
 from apps.hr.models import (
     Application,
@@ -1618,6 +1619,23 @@ def my_performance_view(request, tab=None):
 
     # KPI strip — every figure derived, never typed.
     overall_pct = round(weighted_num / weighted_den) if weighted_den else None
+    # Same three bands the figure beside it is coloured by, so the ring and
+    # the number can never disagree about whether this is on track.
+    overall_gauge = (
+        build_gauge(
+            overall_pct,
+            label="Overall progress",
+            color=(
+                "var(--edify-success)"
+                if overall_pct >= 70
+                else "var(--edify-warning)"
+                if overall_pct >= 40
+                else "var(--edify-danger)"
+            ),
+        )
+        if overall_pct is not None
+        else None
+    )
     allocation = {"total": 0, "core": 0, "client": 0, "champion": 0}
     if sp is not None:
         from apps.hr.performance_engine import _assigned_school_ids
@@ -1670,6 +1688,7 @@ def my_performance_view(request, tab=None):
         "amendments": amendments,
         "snapshots": snapshots,
         "overall_pct": overall_pct,
+        "overall_gauge": overall_gauge,
         "allocation": allocation,
         "layers": layers,
         "active_window_label": (
