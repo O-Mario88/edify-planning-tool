@@ -1,5 +1,4 @@
-from django.utils.html import format_html, format_html_join
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
     require_export_permission,
@@ -841,25 +840,25 @@ def eligible_staff_options_view(request):
     # format_html rather than an f-string: these values reach the browser as
     # markup, and a staff name is free text. One apostrophe or angle bracket
     # in a name broke out of the attribute it was written into.
-    options_html = format_html(
-        '<option value="">-- No Assigned Staff --</option>{}',
-        format_html_join(
-            "",
-            '<option value="{}"{}>{} ({})</option>',
-            (
-                (
-                    sp.user.user_id,
-                    mark_safe(" selected")  # noqa: S308 - a literal, not input
-                    if str(sp.user.user_id) == selected_staff_id
-                    or str(sp.id) == selected_staff_id
-                    else "",
-                    sp.user.name,
-                    sp.user.active_role,
-                )
-                for sp in staff
-            ),
-        ),
-    )
+    #
+    # Two whole templates rather than one with a `selected` fragment spliced
+    # in: injecting an attribute means marking it safe, and a mark_safe() in
+    # the middle of a loop over user data is the shape that makes the next
+    # reader — and the next scanner — stop and check.
+    SELECTED = '<option value="{}" selected>{} ({})</option>'
+    UNSELECTED = '<option value="{}">{} ({})</option>'
+
+    options_html = format_html('<option value="">-- No Assigned Staff --</option>')
+    for sp in staff:
+        chosen = (
+            str(sp.user.user_id) == selected_staff_id or str(sp.id) == selected_staff_id
+        )
+        options_html += format_html(
+            SELECTED if chosen else UNSELECTED,
+            sp.user.user_id,
+            sp.user.name,
+            sp.user.active_role,
+        )
 
     from django.http import HttpResponse
 

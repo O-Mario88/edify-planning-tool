@@ -59,14 +59,24 @@ _INLINE_EVENT_RE = re.compile(
 )
 _RAW_HEX_RE = re.compile(r"(?<!&)#[0-9a-fA-F]{3,8}\b")
 _INLINE_STYLE_RE = re.compile(r"\bstyle=[\"']([^\"']*)[\"']", re.I)
-_EMOJI_RE = re.compile(
-    "["
-    "\U0001f300-\U0001f5ff"
-    "\U0001f600-\U0001f64f"
-    "\U0001f680-\U0001f6ff"
-    "\U0001f900-\U0001f9ff"
-    "]"
+# Code-point ranges rather than a regex character class. Astral escapes inside
+# a class are read differently depending on how the pattern string was built —
+# CodeQL reads these three as overlapping U+FFFD — and a membership test says
+# exactly what is meant with nothing to misread.
+EMOJI_RANGES = (
+    (0x1F300, 0x1F5FF),  # symbols and pictographs
+    (0x1F600, 0x1F64F),  # emoticons
+    (0x1F680, 0x1F6FF),  # transport and map
+    (0x1F900, 0x1F9FF),  # supplemental symbols and pictographs
 )
+
+
+def contains_emoji(text: str) -> bool:
+    return any(
+        any(low <= code <= high for low, high in EMOJI_RANGES)
+        for code in map(ord, text)
+    )
+
 
 CANONICAL_OPERATIONAL_WORKFLOW = [
     "School Upload",
@@ -275,7 +285,7 @@ def _template_findings(source: str) -> list[Finding]:
         (
             "emoji-icon",
             "high",
-            _EMOJI_RE.search(source),
+            contains_emoji(source),
             "Emoji is used in product UI and will render inconsistently across platforms.",
             "Replace it with the normalized Edify SVG icon primitive.",
         ),

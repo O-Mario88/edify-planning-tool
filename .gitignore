@@ -32,9 +32,11 @@ htmlcov/
 # Local ZCode agent config (skills, etc.)
 .agents/
 
-# Node (CSS build pipeline)
+# Node (CSS build pipeline). The lockfile IS committed: it is what makes
+# `npm ci` possible and the CSS build reproducible, and without it every
+# install resolves the tree afresh — so the bundle CI verifies is not
+# necessarily the bundle anyone else would produce.
 node_modules/
-package-lock.json
 
 # Agent/tooling debris that should never reach the repo.
 # _to_delete_git_locks holds empty git .lock files left behind by a crashed

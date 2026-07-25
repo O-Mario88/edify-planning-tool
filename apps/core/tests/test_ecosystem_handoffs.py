@@ -365,7 +365,7 @@ class PartnerDoublePayTest(TestCase):
         from apps.fund_requests.finance_services import PartnerPaymentService
 
         activity = self._paid_world()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             PartnerPaymentService.pay_partner(
                 activity,
                 "Partner Eco",

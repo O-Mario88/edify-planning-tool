@@ -23,8 +23,9 @@ found everywhere else.
 from __future__ import annotations
 
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 
+from apps.core.redirects import local_redirect
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.permissions import has_permission, require_page_permission
@@ -104,7 +105,7 @@ def decision_intelligence_view(request):
                 messages.error(request, "Unknown action.")
         except (BadRequest, Forbidden, NotFoundError) as exc:
             messages.error(request, str(exc))
-        return redirect(f"/decisions?fy={fy}")
+        return local_redirect(f"/decisions?fy={fy}")
 
     leadership = leadership_engine.boards(request.user, {"fy": fy})
     leadership_snapshot = leadership_engine.snapshot(request.user, {"fy": fy})

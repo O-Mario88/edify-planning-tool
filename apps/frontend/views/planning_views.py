@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from apps.core.htmx_errors import error_fragment
 from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
@@ -136,9 +137,8 @@ def special_projects_bulk_schedule_view(request):
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as exc:
-        return HttpResponse(
-            f'<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Could not schedule the selection: {exc}</div>',
-            status=400,
+        return error_fragment(
+            exc, action="Could not schedule the selection", status=400
         )
 
 
@@ -192,10 +192,7 @@ def special_projects_bulk_partner_view(request):
             fallback_activity_type=activity_type,
         )
     except Exception as exc:
-        return HttpResponse(
-            f'<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">{exc}</div>',
-            status=400,
-        )
+        return error_fragment(exc, status=400)
     activity_type = purpose_activity_type(purpose_of_visit, activity_type)
     if not scheduled_date:
         return HttpResponse(
@@ -267,10 +264,7 @@ def special_projects_bulk_partner_view(request):
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as exc:
-        return HttpResponse(
-            f'<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Could not assign the selection: {exc}</div>',
-            status=400,
-        )
+        return error_fragment(exc, action="Could not assign the selection", status=400)
 
 
 @require_page_permission("planning")
@@ -645,10 +639,7 @@ def schedule_action_view(request):
                 fallback_activity_type=activity_type,
             )
         except Exception as exc:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">{exc}</div>',
-                status=400,
-            )
+            return error_fragment(exc, status=400)
         activity_type = purpose_activity_type(purpose_of_visit, activity_type)
 
     # Build payload
@@ -722,10 +713,7 @@ def schedule_action_view(request):
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
-        return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-            status=400,
-        )
+        return error_fragment(e, status=400)
 
 
 @require_page_permission("planning")
@@ -988,10 +976,7 @@ def assign_partner_action_view(request):
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
-        return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-            status=400,
-        )
+        return error_fragment(e, status=400)
 
 
 @require_page_permission("planning")
@@ -1142,10 +1127,7 @@ def bulk_action_view(request):
                 fallback_activity_type="school_visit",
             )
         except Exception as exc:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">{exc}</div>',
-                status=400,
-            )
+            return error_fragment(exc, status=400)
         # Preserve the legacy bulk submission contract until this compact
         # toolbar receives its own purpose picker. New callers that do send a
         # purpose receive its exact operational type; older callers stay on
@@ -1286,10 +1268,7 @@ def bulk_action_view(request):
             response["HX-Trigger"] = "close-drawer"
             return response
         except BadRequest as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {e}</div>',
-                status=400,
-            )
+            return error_fragment(e, status=400)
 
     return HttpResponse("Action processed", status=200)
 

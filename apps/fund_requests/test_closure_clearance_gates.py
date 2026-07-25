@@ -11,6 +11,7 @@ from datetime import date
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from apps.core.exceptions import BadRequest
 from apps.activities.models import (
     Activity,
     ActivityScheduleCostLine,
@@ -130,7 +131,7 @@ class SystemAClearanceGateTest(TestCase):
 
     def test_blank_netsuite_id_rejected(self):
         self._disburse_and_submit()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             NetSuiteExpenseService.enter_netsuite_id(
                 activity=self.activity,
                 netsuite_id="   ",
@@ -170,7 +171,7 @@ class SystemAClearanceGateTest(TestCase):
             user_id="acct",
         )
         # Re-entering after the activity is closed must be refused.
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             NetSuiteExpenseService.enter_netsuite_id(
                 activity=self.activity,
                 netsuite_id="EXP-IMM-2",

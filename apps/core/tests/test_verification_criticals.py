@@ -293,7 +293,7 @@ class ReimbursementIdempotencyTests(Fixture):
         ReimbursementService.disburse_reimbursement(
             claim, "bank", "REF-1", self.cceo.id
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             ReimbursementService.disburse_reimbursement(
                 claim, "bank", "REF-2", self.cceo.id
             )

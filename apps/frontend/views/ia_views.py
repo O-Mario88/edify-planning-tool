@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from django.db.models import Avg, DurationField, ExpressionWrapper, F, Q
 
+from apps.core.redirects import local_redirect
 from apps.core.donut import build_gauge, build_rings
 from apps.core.permissions import require_page_permission, RolePermissionService
 from apps.audit.services import log as audit_log
@@ -443,7 +444,7 @@ def ia_return_action(request, activity_id):
 
         if not reasons:
             messages.error(request, "Please select at least one return reason.")
-            return redirect(f"/ia/verification/{activity_id}/")
+            return local_redirect(f"/ia/verification/{activity_id}/")
 
         try:
             ActivityReturnService.return_activity(

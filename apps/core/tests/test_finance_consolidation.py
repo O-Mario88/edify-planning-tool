@@ -13,6 +13,7 @@ from __future__ import annotations
 from django.test import TestCase
 from django.utils import timezone
 
+from apps.core.exceptions import BadRequest
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.rbac import EdifyRole
@@ -107,7 +108,7 @@ class PartnerPaymentGuardTests(TestCase):
 
     def test_a_second_payout_is_refused(self):
         self._pay()
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(BadRequest) as ctx:
             self._pay()
         self.assertIn("already recorded", str(ctx.exception).lower())
 
@@ -125,7 +126,7 @@ class PartnerPaymentGuardTests(TestCase):
             status="disbursed",
             disbursed_amount=35_000,
         )
-        with self.assertRaises(ValueError) as ctx:
+        with self.assertRaises(BadRequest) as ctx:
             self._pay()
         self.assertIn("advance channel", str(ctx.exception).lower())
 

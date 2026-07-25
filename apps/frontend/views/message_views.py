@@ -11,6 +11,7 @@ from django.db import transaction
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import redirect, render
 
+from apps.core.redirects import local_redirect
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.permissions import require_page_permission
 from apps.evidence.validation import assert_safe_upload
@@ -200,7 +201,7 @@ def message_drawer_view(request):
 def thread_view(request, thread_id):
     """Conversation partial (HTMX) or the full page focused on the thread."""
     if request.headers.get("HX-Request") != "true":
-        return redirect(f"/messages?thread={thread_id}")
+        return local_redirect(f"/messages?thread={thread_id}")
     selected = _thread_context(request, thread_id)
     if not selected:
         return HttpResponse(
@@ -227,7 +228,7 @@ def thread_view(request, thread_id):
 @require_page_permission("messages")
 def thread_reply_action(request, thread_id):
     if request.method != "POST":
-        return redirect(f"/messages?thread={thread_id}")
+        return local_redirect(f"/messages?thread={thread_id}")
     body = request.POST.get("body", "").strip()
     reply_error = ""
     try:
@@ -252,7 +253,7 @@ def thread_reply_action(request, thread_id):
                 "oob_message_badge": True,
             },
         )
-    return redirect(f"/messages?thread={thread_id}")
+    return local_redirect(f"/messages?thread={thread_id}")
 
 
 @require_page_permission("messages")
@@ -299,9 +300,9 @@ def message_deep_link_view(request, message_id):
     """Legacy deep link (/messages/<message_id>) used by notifications."""
     msg = Message.objects.filter(id=message_id).first()
     if msg:
-        return redirect(f"/messages?thread={msg.thread_id}")
+        return local_redirect(f"/messages?thread={msg.thread_id}")
     if MessageThread.objects.filter(id=message_id).exists():
-        return redirect(f"/messages?thread={message_id}")
+        return local_redirect(f"/messages?thread={message_id}")
     django_messages.error(request, "That conversation could not be found.")
     return redirect("/messages")
 
@@ -447,7 +448,7 @@ def message_compose_view(request):
                     id=request.POST["draft_id"], user_id=request.user.id
                 ).delete()
             django_messages.success(request, "Message sent.")
-            return redirect(f"/messages?thread={msg['threadId']}")
+            return local_redirect(f"/messages?thread={msg['threadId']}")
         except (BadRequest, Forbidden, NotFoundError) as e:
             django_messages.error(request, f"Could not send message: {e}")
 

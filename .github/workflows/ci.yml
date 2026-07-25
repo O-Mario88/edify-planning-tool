@@ -144,3 +144,26 @@ jobs:
         run: |
           python -m pip install zizmor
           zizmor --persona=regular .github/workflows/
+
+      # The image is built on every push, not only on the nightly scan: a
+      # Dockerfile change that breaks the build or ships a Critical CVE should
+      # fail on the commit that made it, not the next morning.
+      - name: Build the production image
+        run: docker build -t edify-ci:${{ github.sha }} .
+
+      - name: The image does not run as root
+        run: |
+          user=$(docker image inspect --format '{{.Config.User}}' \
+            edify-ci:${{ github.sha }})
+          test -n "$user" && test "$user" != "root" && test "$user" != "0" \
+            || { echo "::error::the runtime image runs as root"; exit 1; }
+          echo "runtime user: $user"
+
+      - name: Scan the image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: edify-ci:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH

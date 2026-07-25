@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden
+from apps.core.redirects import local_redirect
 from apps.audit.services import log as audit_log
 from apps.core.permissions import (
     has_permission,
@@ -147,7 +148,7 @@ def ssa_upload_center_view(request):
                 .first()
             )
             if batch:
-                return redirect(f"/ssa/upload/{batch.id}/preview/")
+                return local_redirect(f"/ssa/upload/{batch.id}/preview/")
             else:
                 messages.error(request, result.get("message", "Error uploading file."))
         except Exception as e:
@@ -179,7 +180,7 @@ def ssa_upload_preview_view(request, batch_id):
             request,
             f"Import finalized: {result['created']} records verified, {result['unmatched']} unmatched rows queued.",
         )
-        return redirect(f"/ssa/upload/{batch.id}/result/")
+        return local_redirect(f"/ssa/upload/{batch.id}/result/")
 
     ready_rows = rows.filter(status="ready")
     unmatched_rows = rows.filter(status="unmatched")

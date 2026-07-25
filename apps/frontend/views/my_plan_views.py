@@ -1,3 +1,5 @@
+from apps.core.htmx_errors import error_fragment, notice_fragment
+from apps.core.redirects import local_redirect
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission, RolePermissionService
@@ -241,10 +243,7 @@ def complete_drawer_view(request, activity_id):
             start_completion(activity_id, principal=request.user)
             act = get_activity(activity_id, request.user)
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-4 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error starting completion: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, action="Error starting completion", status=400)
 
     evidence_list = evidence_records_for_activity(activity_id, request.user)
 
@@ -352,10 +351,7 @@ def accountability_action(request, activity_id):
                 file_obj=receipt,
             )
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Receipt upload error: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, action="Receipt upload error", status=400)
 
     # One declared total, allocated per advance proportionally to what each
     # advance actually disbursed (remainder to the last so sums reconcile).
@@ -383,10 +379,7 @@ def accountability_action(request, activity_id):
                 request.user,
             )
     except Exception as e:
-        return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-            status=400,
-        )
+        return error_fragment(e, status=400)
 
     audit_log(
         action="accountability_submitted",
@@ -450,10 +443,7 @@ def confirm_reimbursement_receipt_action(request, activity_id):
             request.user,
         )
     except (BadRequest, Forbidden) as e:
-        return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-            status=400,
-        )
+        return error_fragment(e, status=400)
 
     audit_log(
         action="reimbursement_receipt_confirmed",
@@ -588,13 +578,10 @@ def reschedule_activity_action(request, activity_id):
             messages.success(request, "Activity rescheduled successfully.")
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
-                return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                    status=400,
-                )
+                return error_fragment(e, status=400)
             messages.error(request, f"Error: {e}")
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("my_plan")
@@ -634,12 +621,11 @@ def complete_activity_action(request, activity_id):
                 start_completion(activity_id, principal=request.user)
             except Exception as e:
                 if request.headers.get("HX-Request") == "true":
-                    return HttpResponse(
-                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error starting completion: {str(e)}</div>',
-                        status=400,
+                    return error_fragment(
+                        e, action="Error starting completion", status=400
                     )
                 messages.error(request, f"Error starting completion: {e}")
-                return redirect(f"/my-plan/{activity_id}")
+                return local_redirect(f"/my-plan/{activity_id}")
 
         evidence_file = request.FILES.get("evidence_file")
         if evidence_file:
@@ -652,12 +638,9 @@ def complete_activity_action(request, activity_id):
                 )
             except Exception as e:
                 if request.headers.get("HX-Request") == "true":
-                    return HttpResponse(
-                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Upload Error: {str(e)}</div>',
-                        status=400,
-                    )
+                    return error_fragment(e, action="Upload Error", status=400)
                 messages.error(request, f"Upload error: {e}")
-                return redirect(f"/my-plan/{activity_id}")
+                return local_redirect(f"/my-plan/{activity_id}")
 
         salesforce_id = request.POST.get("salesforce_id", "").strip()
         teachers = request.POST.get("teachers_attended", 0)
@@ -694,12 +677,9 @@ def complete_activity_action(request, activity_id):
                         )
                     except Exception as e:
                         if request.headers.get("HX-Request") == "true":
-                            return HttpResponse(
-                                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                                status=400,
-                            )
+                            return error_fragment(e, status=400)
                         messages.error(request, f"Error: {e}")
-                        return redirect(f"/my-plan/{activity_id}")
+                        return local_redirect(f"/my-plan/{activity_id}")
 
         # Handle SSA collection expectations
         if a.ssa_collection_expected:
@@ -709,25 +689,23 @@ def complete_activity_action(request, activity_id):
                     code: f"score_{code}" for code, _label in SsaIntervention.choices
                 }
 
+                def _label(code: str) -> str:
+                    return code.replace("_", " ").title()
+
                 scores_list = []
                 for enum_val, field_name in interventions_map.items():
                     val = request.POST.get(field_name, "").strip()
                     if not val:
-                        return HttpResponse(
-                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Missing score for {enum_val.replace("_", " ").title()}</div>',
-                            status=400,
-                        )
+                        return notice_fragment(f"Missing score for {_label(enum_val)}")
                     try:
                         f_val = float(val)
                     except ValueError:
-                        return HttpResponse(
-                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Score for {enum_val.replace("_", " ").title()} must be numeric</div>',
-                            status=400,
+                        return notice_fragment(
+                            f"Score for {_label(enum_val)} must be numeric"
                         )
                     if f_val < 0 or f_val > 10:
-                        return HttpResponse(
-                            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Score for {enum_val.replace("_", " ").title()} must be between 0 and 10</div>',
-                            status=400,
+                        return notice_fragment(
+                            f"Score for {_label(enum_val)} must be between 0 and 10"
                         )
                     scores_list.append({"intervention": enum_val, "score": f_val})
 
@@ -782,13 +760,10 @@ def complete_activity_action(request, activity_id):
             messages.success(request, "Activity completion submitted successfully.")
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
-                return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Submission Error: {str(e)}</div>',
-                    status=400,
-                )
+                return error_fragment(e, action="Submission Error", status=400)
             messages.error(request, f"Submission error: {e}")
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("planning")
@@ -996,10 +971,7 @@ def start_activity_action(request, activity_id):
         try:
             start_completion(activity_id, {"notes": notes}, request.user)
         except Exception as exc:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Start Error: {str(exc)}</div>',
-                status=400,
-            )
+            return error_fragment(exc, action="Start Error", status=400)
 
         audit_log(
             action="start_activity",
@@ -1017,7 +989,7 @@ def start_activity_action(request, activity_id):
             response["HX-Trigger"] = "close-drawer"
             return response
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("my_plan")
@@ -1071,17 +1043,14 @@ def evidence_upload_action(request, activity_id):
                     reason="Evidence file uploaded",
                 )
             except Exception as e:
-                return HttpResponse(
-                    f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                    status=400,
-                )
+                return error_fragment(e, status=400)
 
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse("<script>window.location.reload();</script>")
             response["HX-Trigger"] = "close-drawer"
             return response
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("my_plan")
@@ -1136,22 +1105,16 @@ def salesforce_id_action(request, activity_id):
                 entry_source=entry_source,
             )
         except DuplicateSalesforceId as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">{str(e)}</div>',
-                status=409,
-            )
+            return error_fragment(e, status=409)
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, status=400)
 
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse("<script>window.location.reload();</script>")
             response["HX-Trigger"] = "close-drawer"
             return response
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("my_plan")
@@ -1219,10 +1182,7 @@ def submit_for_review_action(request, activity_id):
         try:
             submit_for_review(activity_id, request.user)
         except Exception as exc:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Submission Error: {str(exc)}</div>',
-                status=400,
-            )
+            return error_fragment(exc, action="Submission Error", status=400)
 
         audit_log(
             action="submit_for_review",
@@ -1239,7 +1199,7 @@ def submit_for_review_action(request, activity_id):
             response["HX-Trigger"] = "close-drawer"
             return response
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("my_plan")
@@ -1328,10 +1288,7 @@ def attendance_upload_action(request, activity_id):
                 request.user,
             )
         except Exception as exc:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Attendance Error: {str(exc)}</div>',
-                status=400,
-            )
+            return error_fragment(exc, action="Attendance Error", status=400)
 
         if attendance_file:
             record_upload(
@@ -1357,7 +1314,7 @@ def attendance_upload_action(request, activity_id):
             response["HX-Trigger"] = "close-drawer"
             return response
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("my_plan")
@@ -1450,7 +1407,7 @@ def ssa_evidence_upload_action(request, activity_id):
             response["HX-Trigger"] = "close-drawer"
             return response
 
-    return redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{activity_id}")
 
 
 @require_page_permission("evidence_center")

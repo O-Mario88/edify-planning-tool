@@ -376,8 +376,11 @@ class CoreSchoolsService:
                             plan, s.school_id, interventions, actor_id, actor_name
                         )
                 except Exception as e:
+                    # Lazy %-args rather than an f-string: the filter that
+                    # escapes line breaks works on the record's arguments, and
+                    # a message already formatted has nothing left to clean.
                     logger.error(
-                        f"Error auto-onboarding core school {s.school_id}: {e}"
+                        "Error auto-onboarding core school %s: %s", s.school_id, e
                     )
 
         # 2. Apply filters

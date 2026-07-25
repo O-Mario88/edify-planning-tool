@@ -4,6 +4,8 @@ Disbursements, Budget Overview, Cost Catalogue, Fund Requests list
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
+from apps.core.htmx_errors import error_fragment, notice_fragment
+from apps.core.redirects import local_redirect
 from apps.core.permissions import (
     require_export_permission,
     render_access_denied,
@@ -162,7 +164,13 @@ def fund_receipt_confirm_action(request):
             messages.success(request, f"Receipt confirmed for {fr.period_key}.")
         except (BadRequest, Forbidden) as e:
             messages.error(request, str(e))
-    return redirect(request.POST.get("next") or "/fund-requests/weekly")
+    # "next" is submitted by the form, so it is attacker-controllable on an
+    # authenticated route: a phishing link that genuinely leaves from the real
+    # Edify domain. Same-site targets only.
+    return local_redirect(
+        request.POST.get("next") or "/fund-requests/weekly",
+        fallback="/fund-requests/weekly",
+    )
 
 
 @require_page_permission("disbursements")
@@ -270,10 +278,7 @@ def disburse_advance_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, status=400)
 
 
 @require_page_permission("disbursements")
@@ -333,10 +338,7 @@ def clear_partner_payment_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, status=400)
 
 
 @require_page_permission("disbursements")
@@ -369,10 +371,7 @@ def process_reimbursement_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, status=400)
 
 
 @require_page_permission("disbursements")
@@ -483,10 +482,7 @@ def confirm_accountability_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, status=400)
 
 
 @require_page_permission("disbursements")
@@ -524,9 +520,10 @@ def finance_return_action(request):
                 # also blocks the request from being un-disbursed/un-accounted
                 # by a stale tab or double-click on this action.
                 if wfr.status != "confirmed_for_advance":
-                    return HttpResponse(
-                        f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Only a confirmed request can be returned by the accountant — this one is already {wfr.get_status_display()}.</div>',
-                        status=400,
+                    return notice_fragment(
+                        "Only a confirmed request can be returned by the "
+                        "accountant — this one is already "
+                        f"{wfr.get_status_display()}."
                     )
 
                 wfr.status = "returned_by_accountant"
@@ -561,10 +558,7 @@ def finance_return_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
         except Exception as e:
-            return HttpResponse(
-                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-                status=400,
-            )
+            return error_fragment(e, status=400)
 
 
 @require_page_permission("consolidated_fund_allocation")

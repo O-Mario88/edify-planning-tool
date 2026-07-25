@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from apps.core.redirects import local_redirect
 from apps.core.donut import build_gauge
 from apps.core.permissions import (
     RolePermissionService,
@@ -1454,7 +1455,7 @@ def school_upload_preview_view(request, batch_id):
 
             import_school_batch(batch, request.user)
             messages.success(request, "Schools successfully imported into directory!")
-            return redirect(f"/schools/uploads/{batch.id}/result")
+            return local_redirect(f"/schools/uploads/{batch.id}/result")
         elif action == "cancel":
             batch.status = "cancelled"
             batch.save()

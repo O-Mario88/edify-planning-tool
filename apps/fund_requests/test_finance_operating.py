@@ -1,5 +1,6 @@
 from django.test import TestCase
 from datetime import date
+from apps.core.exceptions import BadRequest
 from apps.activities.models import (
     Activity,
     ActivityClosure,
@@ -157,7 +158,7 @@ class FinanceOperatingSystemTest(TestCase):
         )
 
         # Still pending responsible-user confirmation -> blocked, no writes.
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             AdvanceDisbursementService.disburse_advance(
                 activity=activity,
                 amount=100000,
@@ -239,7 +240,7 @@ class FinanceOperatingSystemTest(TestCase):
 
     def test_partner_payment_blocked_and_success(self):
         # Partner payment should fail if blockers exist (e.g. IA missing)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             PartnerPaymentService.pay_partner(
                 activity=self.partner_activity,
                 partner_name="Partner ABC",
@@ -268,7 +269,7 @@ class FinanceOperatingSystemTest(TestCase):
 
         # Even with the other 4 checks satisfied, a missing NetSuite Expense
         # ID must still block payment — the HIGH-severity gap this fix closes.
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             PartnerPaymentService.pay_partner(
                 activity=self.partner_activity,
                 partner_name="Partner ABC",

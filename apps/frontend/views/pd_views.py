@@ -19,6 +19,7 @@ from django.http import (
 )
 from django.shortcuts import redirect, render
 
+from apps.core.redirects import local_redirect
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.permissions import require_export_permission, require_page_permission
 
@@ -325,7 +326,7 @@ def pd_evidence_upload_view(request, request_id):
         messages.success(request, "Evidence uploaded.")
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-    return redirect(f"/my-professional-development/request?id={request_id}")
+    return local_redirect(f"/my-professional-development/request?id={request_id}")
 
 
 @require_page_permission("my_professional_development")

@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from apps.core.exceptions import BadRequest
+from apps.core.redirects import local_redirect
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
@@ -33,7 +35,7 @@ def parse_date(d_str: str) -> date:
     try:
         return datetime.strptime(d_str[:10], "%Y-%m-%d").date()
     except Exception as exc:
-        raise ValueError(f"Invalid date format: {d_str}") from exc
+        raise BadRequest(f"Invalid date format: {d_str}") from exc
 
 
 def get_weeks_of_month(year, month):
@@ -1079,7 +1081,7 @@ def generate_request_action(request):
         except Exception as e:
             messages.error(request, f"Error generating request: {e}")
 
-    return redirect(f"/fund-requests/weekly?week={week_start_str}")
+    return local_redirect(f"/fund-requests/weekly?week={week_start_str}")
 
 
 @require_page_permission("weekly_fund_request_disburse")
@@ -1088,7 +1090,7 @@ def weekly_fund_request_disburse_action(request, request_id):
         messages.error(
             request, "Only the Program Accountant can disburse fund requests."
         )
-        return redirect(f"/fund-requests/weekly/{request_id}")
+        return local_redirect(f"/fund-requests/weekly/{request_id}")
 
     if request.method == "POST":
         amount = request.POST.get("amount", "")
@@ -1108,4 +1110,4 @@ def weekly_fund_request_disburse_action(request, request_id):
         except Exception as e:
             messages.error(request, f"Error disbursing funds: {e}")
 
-    return redirect(f"/fund-requests/weekly/{request_id}")
+    return local_redirect(f"/fund-requests/weekly/{request_id}")

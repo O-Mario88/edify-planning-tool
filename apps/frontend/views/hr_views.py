@@ -11,6 +11,7 @@ from django.http import (
 )
 from django.shortcuts import redirect, render
 
+from apps.core.redirects import local_redirect
 from apps.accounts.models import Leave, StaffProfile
 from apps.core.donut import build_gauge
 from apps.core.permissions import render_access_denied, require_page_permission
@@ -567,7 +568,7 @@ def pd_dashboard_adjust_allocation_view(request):
         )
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-    return redirect(f"/cpd-learning?fy={fy}&country={country}")
+    return local_redirect(f"/cpd-learning?fy={fy}&country={country}")
 
 
 @require_page_permission("cpd_learning")
@@ -674,7 +675,7 @@ def pd_dashboard_action_view(request):
         messages.error(request, str(exc))
     fy = request.POST.get("fy") or ""
     country = request.POST.get("country") or ""
-    return redirect(f"/cpd-learning?fy={fy}&country={country}")
+    return local_redirect(f"/cpd-learning?fy={fy}&country={country}")
 
 
 @require_page_permission("succession_planning")
@@ -2190,7 +2191,7 @@ def hr_performance_action_view(request):
         messages.error(request, "That record could not be found.")
     except ObjectDoesNotExist:
         messages.error(request, "That record no longer exists.")
-    return redirect(f"/hr/performance-cycle?fy={fy}")
+    return local_redirect(f"/hr/performance-cycle?fy={fy}")
 
 
 # ── Conversation document (§17) ─────────────────────────────────────────────
@@ -2237,7 +2238,7 @@ def performance_document_view(request, review_id, window):
         doc = conversation_document(review, window, request.user)
     except BadRequest as e:
         messages.error(request, str(e))
-        return redirect(f"/performance-conversation?staff={review.staff_id}")
+        return local_redirect(f"/performance-conversation?staff={review.staff_id}")
 
     WINDOW_LABELS = {
         "priority_setting": "FY Priority Setting",

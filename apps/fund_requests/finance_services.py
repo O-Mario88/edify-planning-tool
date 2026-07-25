@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
+from apps.core.exceptions import BadRequest
 from apps.activities.closure_services import (
     ActivityClosureService,
     ClosureEligibilityService,
@@ -132,7 +133,7 @@ class AdvanceDisbursementService:
                 )
             )
             if not pending:
-                raise ValueError(
+                raise BadRequest(
                     "Cannot disburse — the responsible user has not confirmed "
                     "this advance yet. The Accountant may not disburse before "
                     "responsible-user confirmation."
@@ -240,7 +241,7 @@ class PartnerPaymentService:
         # Enforce blockers
         reasons = FinanceBlockedReasonService.get_blocked_reasons(activity)
         if reasons:
-            raise ValueError(f"Partner payment is blocked: {', '.join(reasons)}")
+            raise BadRequest(f"Partner payment is blocked: {', '.join(reasons)}")
 
         # Cross-channel guard: a partner activity whose staff advance already
         # moved money must not ALSO be partner-paid against the same cost
@@ -250,7 +251,7 @@ class PartnerPaymentService:
         if activity.advance_requests.filter(
             status__in=MONEY_MOVED_ADVANCE_STATUSES
         ).exists():
-            raise ValueError(
+            raise BadRequest(
                 "This activity already has money released through the advance "
                 "channel — settle that accountability instead of issuing a "
                 "partner payment for the same cost lines."
@@ -264,7 +265,7 @@ class PartnerPaymentService:
             activity.payment_status == "paid"
             or PartnerPayment.objects.filter(activity=activity).exists()
         ):
-            raise ValueError(
+            raise BadRequest(
                 "Partner payment already recorded for this activity — a second "
                 "payout would double-count the money."
             )
@@ -278,7 +279,7 @@ class PartnerPaymentService:
         # paid out and no NetSuite record at all — enforce it now.
         netsuite_id = (netsuite_id or "").strip()
         if not netsuite_id:
-            raise ValueError(
+            raise BadRequest(
                 "Partner payment requires a NetSuite Expense ID — proof the "
                 "payment was entered into NetSuite before the activity can close."
             )
@@ -363,7 +364,7 @@ class ReimbursementService:
 
         reimbursement_amount = actual_spend - disbursed
         if reimbursement_amount <= 0:
-            raise ValueError(
+            raise BadRequest(
                 "Actual spend does not exceed advance amount. No reimbursement needed."
             )
 
@@ -398,7 +399,7 @@ class ReimbursementService:
 
         # Reimbursement can only be paid if IA Verified
         if activity.status not in ["ia_verified", "closed", "accountant_confirmed"]:
-            raise ValueError("Reimbursement is blocked: IA Verification Missing")
+            raise BadRequest("Reimbursement is blocked: IA Verification Missing")
 
         with transaction.atomic():
             # Re-read under lock and refuse a repeat. This was the only
@@ -409,7 +410,7 @@ class ReimbursementService:
             # the same money and gets the same guard.
             claim = type(claim).objects.select_for_update().get(id=claim.id)
             if claim.status == "paid":
-                raise ValueError(
+                raise BadRequest(
                     "This reimbursement has already been paid "
                     f"({claim.payment_reference or 'no reference'})."
                 )
@@ -498,7 +499,7 @@ class AccountabilityService:
         )
 
         if disbursed == 0:
-            raise ValueError("No advance disbursement found for this activity.")
+            raise BadRequest("No advance disbursement found for this activity.")
 
         variance = actual_spend - disbursed
         status = "netsuite_id_required"
@@ -581,7 +582,7 @@ class NetSuiteExpenseService:
     ) -> NetSuiteExpenseRecord:
         netsuite_id = (netsuite_id or "").strip()
         if not is_valid_netsuite_id(netsuite_id):
-            raise ValueError(
+            raise BadRequest(
                 "A valid NetSuite Expense ID is required (alphanumeric, 3-64 "
                 "characters). Accountability cannot clear without it."
             )
@@ -591,7 +592,7 @@ class NetSuiteExpenseService:
             # cleared/closed record (double-click / replay immutability).
             locked = Activity.objects.select_for_update().filter(id=activity.id).first()
             if locked and locked.status == "closed":
-                raise ValueError(
+                raise BadRequest(
                     "This activity is already closed — its accountability "
                     "record is immutable. Reopen it through the formal "
                     "reopen workflow to amend."

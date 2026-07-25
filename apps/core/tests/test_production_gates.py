@@ -451,7 +451,7 @@ class FinanceSeamVerificationTest(TestCase):
         EvidenceRecord.objects.create(
             activity=activity, kind="visit_form", uri="x.pdf", status="accepted"
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             PartnerPaymentService.pay_partner(
                 activity,
                 "Seam Partner",

@@ -468,3 +468,48 @@ SESSION_COOKIE_SAMESITE = "Lax"
 CORS_ALLOWED_ORIGINS = CORS_ORIGINS
 CORS_ALLOW_CREDENTIALS = True
 CORS_EXPOSE_HEADERS = ["x-correlation-id"]
+
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+# There was no LOGGING block at all, so the project ran on Django's defaults
+# and every logged value went out exactly as supplied. Records here routinely
+# carry outside data — a school id, an activity reference, an exception message
+# quoting whatever tripped it — and a newline in any of those splits one event
+# into two, the second of which can be spelled to look like a genuine entry.
+# The filter escapes line breaks once, on the way out, rather than asking
+# several hundred call sites to remember.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "single_line": {
+            "()": "apps.core.logging_filters.SingleLineFilter",
+        },
+    },
+    "formatters": {
+        "standard": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "filters": ["single_line"],
+            "formatter": "standard",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("LOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        # Django's own request logger is noisy at INFO in development and
+        # carries the same untrusted path data, so it uses the same handler.
+        "django": {
+            "handlers": ["console"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+    },
+}

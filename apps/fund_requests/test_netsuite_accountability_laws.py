@@ -191,7 +191,7 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         self.assertFalse(checklist.netsuite_id_entered)
         self.assertFalse(ClosureEligibilityService.is_eligible(self.activity))
         self.assertIn("NetSuite ID missing", [b.blocking_reason for b in blockers])
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             ActivityClosureService.close(self.activity, closed_by=self.accountant.id)
 
         # Accountability submitted with the code satisfies the NetSuite gate,
@@ -210,7 +210,7 @@ class NetSuiteAccountabilityLawsTest(TestCase):
             "accountability_pending must not count as accountant-cleared",
         )
         self.assertFalse(ClosureEligibilityService.is_eligible(self.activity))
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequest):
             ActivityClosureService.close(self.activity, closed_by=self.accountant.id)
 
         # The accountant final-clears (→ ACCOUNTED) → the gate opens.

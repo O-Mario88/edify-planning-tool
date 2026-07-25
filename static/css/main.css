@@ -3457,9 +3457,6 @@
   .pb-6 {
     padding-bottom: calc(var(--spacing) * 6);
   }
-  .pb-px {
-    padding-bottom: 1px;
-  }
   .pl-0\.5 {
     padding-left: calc(var(--spacing) * 0.5);
   }

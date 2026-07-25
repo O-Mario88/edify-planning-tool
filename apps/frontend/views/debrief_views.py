@@ -14,6 +14,7 @@ from django.http import (
 from django.shortcuts import redirect, render
 from django.utils.html import escape
 
+from apps.core.redirects import local_redirect
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.permissions import require_page_permission
 
@@ -373,13 +374,17 @@ def field_debrief_action_view(request):
         # envelope for a blank 404, silently swallowing the flash message.
         # Send the user to the dashboard instead, where they'll see it.
         messages.error(request, str(exc))
-        return redirect(request.POST.get("redirect_to") or "/debriefs")
+        return local_redirect(
+            request.POST.get("redirect_to") or "/debriefs", fallback="/debriefs"
+        )
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
+    # redirect_to arrives in the form body, so it is whatever the page that
+    # posted said it was — including another origin. Same-site only.
     redirect_to = request.POST.get("redirect_to") or (
         f"/debriefs/{debrief_id}" if debrief_id else "/debriefs"
     )
-    return redirect(redirect_to)
+    return local_redirect(redirect_to, fallback="/debriefs")
 
 
 @require_page_permission("debriefs_list")
@@ -472,7 +477,7 @@ def weekly_debrief_report_view(request):
                 messages.success(request, "Report emailed with the PDF attached.")
         except (BadRequest, Forbidden) as exc:
             messages.error(request, str(exc))
-        return redirect(f"/debriefs/weekly-report?week={start.isoformat()}")
+        return local_redirect(f"/debriefs/weekly-report?week={start.isoformat()}")
 
     report = WRS.visible_report(request.user, start)
     # First visit auto-generates the owner's draft so Monday reviews start

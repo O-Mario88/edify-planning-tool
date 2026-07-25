@@ -6,6 +6,7 @@ from django.db import transaction
 from django.views.decorators.http import require_POST
 from datetime import date
 
+from apps.core.htmx_errors import error_fragment
 from apps.core.donut import build_gauge
 from apps.core.permissions import require_page_permission, get_scoped_object_or_404
 from apps.core.exceptions import BadRequest
@@ -405,10 +406,7 @@ def core_schedule_visit_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
     except Exception as e:
-        return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-            status=400,
-        )
+        return error_fragment(e, status=400)
 
 
 @require_page_permission("core_schools")
@@ -566,10 +564,7 @@ def core_schedule_training_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
     except Exception as e:
-        return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-            status=400,
-        )
+        return error_fragment(e, status=400)
 
 
 @require_page_permission("core_schools")
@@ -739,10 +734,7 @@ def core_assign_partner_action(request):
             response["HX-Trigger"] = "close-drawer"
             return response
     except Exception as e:
-        return HttpResponse(
-            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: {str(e)}</div>',
-            status=400,
-        )
+        return error_fragment(e, status=400)
 
 
 @require_page_permission("core_schools")

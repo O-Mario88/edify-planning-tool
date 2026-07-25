@@ -1,8 +1,9 @@
 from django.db.models import Q
 from django.http import Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib import messages
 
+from apps.core.redirects import local_redirect
 from apps.core.permissions import require_page_permission
 from apps.core.scoping import resolve_user_scope
 from apps.activities.models import Activity, ClosureBlocker, AnalyticsPublishRecord
@@ -172,7 +173,7 @@ def close_activity_action(request, activity_id):
         except Exception as e:
             messages.error(request, f"Closure failed: {e}")
 
-    return redirect(f"/activities/{a.id}/closure/")
+    return local_redirect(f"/activities/{a.id}/closure/")
 
 
 @require_page_permission("completed_activities")
@@ -238,7 +239,7 @@ def reopen_activity_action(request, activity_id):
         except Exception as e:
             messages.error(request, f"Reopen failed: {e}")
 
-    return redirect(f"/activities/{a.id}/closure/")
+    return local_redirect(f"/activities/{a.id}/closure/")
 
 
 @require_page_permission("planning")

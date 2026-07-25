@@ -17,6 +17,7 @@ from datetime import date, timedelta
 
 from django.utils import timezone
 
+from apps.core.exceptions import BadRequest
 from apps.accounts.models import StaffSchoolAssignment, StaffSupervisorAssignment, User
 from apps.activities.models import Activity
 from apps.core.fy import get_month_date_range
@@ -1600,7 +1601,7 @@ class PLCatchUpPlanService:
             (item for item in active_target_areas() if item.key == area_key), None
         )
         if area is None:
-            raise ValueError("Unknown active target area.")
+            raise BadRequest("Unknown active target area.")
         plan = CatchUpPlan.objects.create(
             pl_user_id=pl_user.id,
             staff_user_id=staff_user_id,

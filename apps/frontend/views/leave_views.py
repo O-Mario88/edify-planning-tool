@@ -9,6 +9,8 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from apps.core.exceptions import BadRequest
+from apps.core.redirects import local_redirect
 from apps.core.permissions import render_access_denied, require_page_permission
 from apps.accounts.models import (
     Leave,
@@ -1472,7 +1474,7 @@ def leave_policies_view(request):
         try:
             entitlement = int(request.POST.get("entitlement", 21))
             if entitlement < 0 or entitlement > 365:
-                raise ValueError("Entitlement must be between 0 and 365 days.")
+                raise BadRequest("Entitlement must be between 0 and 365 days.")
             before = {
                 "annual_entitlement": policy.annual_entitlement,
                 "requires_attachment": policy.requires_attachment,
@@ -1745,7 +1747,7 @@ def leave_reassign_coverage_action(request, leave_id):
     except Exception as e:
         messages.error(request, f"Failed to reassign coverage: {e}")
 
-    return redirect(f"/leave/approvals?id={leave_id}")
+    return local_redirect(f"/leave/approvals?id={leave_id}")
 
 
 @require_POST

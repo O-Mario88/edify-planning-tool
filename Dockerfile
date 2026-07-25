@@ -40,6 +40,17 @@ RUN JWT_SECRET=build-time-collectstatic-placeholder-0123456789 \
     ALLOWED_HOSTS=build-placeholder.invalid \
     python manage.py collectstatic --noinput
 
+# Run as a non-root user. Nothing this process does needs root, and a
+# container that starts as root turns any remote-code path into host-adjacent
+# access instead of an application-level one. Created after collectstatic so
+# the collected tree is owned by whoever will serve it, and the writable
+# directories (evidence uploads, media, generated reports) are handed over
+# explicitly — the rest of /app stays read-only to the runtime user.
+RUN useradd --system --create-home --uid 10001 edify \
+    && mkdir -p /app/uploads /app/media \
+    && chown -R edify:edify /app/staticfiles /app/uploads /app/media
+USER edify
+
 # Railway injects $PORT at runtime. Default to 4000 for local/docker-compose.
 ENV PORT=4000
 EXPOSE 4000

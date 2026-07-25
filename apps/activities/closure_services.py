@@ -243,7 +243,7 @@ class ActivityClosureService:
     ) -> ActivityClosure:
         # Check eligibility first
         if not bypass_checks and not ClosureEligibilityService.is_eligible(activity):
-            raise ValueError(
+            raise BadRequest(
                 "Activity does not meet final closure checklist requirements."
             )
 
