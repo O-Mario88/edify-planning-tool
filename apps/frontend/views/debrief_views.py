@@ -107,7 +107,12 @@ def field_debrief_submit_view(request):
     today = _tz.localdate()
 
     if request.method == "GET":
-        state = DailyDebriefFlowService.get_state(request.user, today)
+        # "Discuss this activity" links here with the activity it came from.
+        # The service re-checks ownership, so an id from anywhere else simply
+        # does not appear.
+        state = DailyDebriefFlowService.get_state(
+            request.user, today, focus_activity_id=request.GET.get("activity") or None
+        )
         return render(
             request,
             "pages/debriefs/submit.html",

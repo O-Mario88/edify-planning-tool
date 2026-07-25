@@ -947,11 +947,18 @@ class DailyDebriefFlowService:
     """The simplified Daily Debrief: auto-fetched work + five questions."""
 
     @staticmethod
-    def activities_for(principal, on_date) -> list:
+    def activities_for(principal, on_date, focus_activity_id=None) -> list:
         """The submitter's own activities planned for `on_date` — ONE bounded,
         role-scoped query (mandate §30). Mirrors My Plan's ownership rule:
         partner users see their partner-assigned work, staff see work they are
-        responsible for (or monitor as partner-delivery)."""
+        responsible for (or monitor as partner-delivery).
+
+        `focus_activity_id` carries in one activity the user arrived to discuss
+        (from "Discuss this activity" on an overdue row). It is fetched through
+        the SAME ownership filter — arriving with someone else's activity id
+        must not pull it into your debrief — and appended only when it is not
+        already in the day's list, because an overdue activity is by definition
+        not planned for today."""
         from apps.activities.models import Activity
         from apps.core.scoping import owner_ids, resolve_user_scope
 
@@ -965,7 +972,7 @@ class DailyDebriefFlowService:
                 monitored_by_staff_id__in=ids, delivery_type="partner"
             )
 
-        return list(
+        rows = list(
             Activity.objects.filter(ownership)
             .filter(
                 Q(planned_date=on_date) | Q(scheduled_date__date=on_date),
@@ -975,11 +982,26 @@ class DailyDebriefFlowService:
             .select_related("school", "cluster")
             .order_by("scheduled_date", "id")
         )
+        if focus_activity_id and not any(a.id == focus_activity_id for a in rows):
+            carried = (
+                Activity.objects.filter(ownership)
+                .filter(id=focus_activity_id, deleted_at__isnull=True)
+                .exclude(status__in=DAILY_HIDDEN_STATUSES)
+                .select_related("school", "cluster")
+                .first()
+            )
+            if carried:
+                rows.append(carried)
+        return rows
 
     @staticmethod
-    def get_state(principal, on_date) -> dict:
+    def get_state(principal, on_date, focus_activity_id=None) -> dict:
         """Everything the daily form needs: today's activities (with
-        preselection), any existing row for the day, and its editability."""
+        preselection), any existing row for the day, and its editability.
+
+        `focus_activity_id` is the activity the user came to discuss; it is
+        carried into the list, ticked, and flagged so the form can say where it
+        came from."""
         existing = (
             DailyDebrief.objects.filter(
                 submitted_by_user_id=principal.user_id,
@@ -995,13 +1017,20 @@ class DailyDebriefFlowService:
             if existing
             else None
         )
-        activities = DailyDebriefFlowService.activities_for(principal, on_date)
+        activities = DailyDebriefFlowService.activities_for(
+            principal, on_date, focus_activity_id=focus_activity_id
+        )
         rows = []
         for a in activities:
+            is_focus = bool(focus_activity_id) and a.id == focus_activity_id
             rows.append(
                 {
                     "activity": a,
-                    "checked": (
+                    "is_focus": is_focus,
+                    # An activity you navigated here to discuss starts ticked,
+                    # whatever its status would otherwise imply.
+                    "checked": is_focus
+                    or (
                         a.id in selected_ids
                         if selected_ids is not None
                         else a.status in DAILY_PRESELECT_STATUSES
@@ -1012,6 +1041,7 @@ class DailyDebriefFlowService:
         return {
             "existing": existing,
             "rows": rows,
+            "focus_activity_id": focus_activity_id or "",
             "editable": editable,
             "submitted": existing is not None
             and existing.status not in (DebriefStatus.DRAFT,),

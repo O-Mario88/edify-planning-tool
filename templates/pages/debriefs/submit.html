@@ -104,19 +104,23 @@
       {% if rows %}
       <div class="space-y-2">
         {% for row in rows %}
-        <label class="flex items-start gap-3 p-3 rounded-control border border-slate-200 bg-slate-50 hover:bg-slate-100/60 transition-colors cursor-pointer">
+        {% comment %}The activity a user arrived to discuss is ticked and
+        marked, because an overdue one is not in today's plan and would
+        otherwise look like it wandered in by mistake.{% endcomment %}
+        <label class="flex items-start gap-3 p-3 rounded-control border transition-colors cursor-pointer {% if row.is_focus %}edify-primary-border edify-primary-soft{% else %}border-slate-200 bg-slate-50 hover:bg-slate-100/60{% endif %}">
           <input type="checkbox" name="activity_ids" value="{{ row.activity.id }}"
                  {% if row.checked %}checked{% endif %}
                  class="mt-0.5 h-5 w-5 shrink-0">
           <span class="min-w-0">
-            <span class="block text-[13px] font-semibold edify-text">{{ row.activity.get_activity_type_display }}</span>
+            <span class="block text-[13px] font-semibold edify-text">{{ row.activity.get_activity_type_display }}{% if row.is_focus %}
+              <span class="ml-1.5 inline-flex items-center rounded-pill px-1.5 py-0.5 text-[10px] font-bold edify-primary-solid edify-primary-on-solid align-[0.05em]">Discussing</span>{% endif %}</span>
             <span class="block text-[12px] edify-text-muted truncate">
               {% if row.activity.school %}{{ row.activity.school.name }}{% elif row.activity.cluster %}{{ row.activity.cluster.name }}{% else %}—{% endif %}
             </span>
             <span class="block text-[11px] edify-text-muted mt-0.5">
               {% if row.activity.focus_intervention %}{{ row.activity.get_focus_intervention_display }} · {% endif %}
               {% if row.activity.scheduled_date %}{{ row.activity.scheduled_date|date:"g:i A" }} · {% endif %}
-              {{ row.activity.get_status_display }}
+              {{ row.activity.get_status_display }}{% if row.is_focus and row.activity.planned_date and row.activity.planned_date != today %} · carried in from {{ row.activity.planned_date|date:"j M" }}{% endif %}
             </span>
           </span>
         </label>

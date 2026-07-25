@@ -561,6 +561,14 @@ def dashboard_view(request):
                 )
             overdue_last_week.append(
                 {
+                    "id": a.id,
+                    # The row offers all three routes out of an overdue
+                    # activity: finish it, move it, or talk about it. Complete
+                    # and Reschedule are drawers; Discuss is the daily debrief
+                    # carrying this activity in as its subject.
+                    "complete_url": f"/activities/{a.id}/complete",
+                    "reschedule_url": f"/my-plan/{a.id}/reschedule-drawer",
+                    "discuss_url": f"/debriefs/submit?activity={a.id}",
                     "icon": _agenda_icon(a.activity_type),
                     "activity": a.get_activity_type_display(),
                     "where": a.school.name

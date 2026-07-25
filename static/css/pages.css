@@ -3868,3 +3868,83 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   .tt-panel,
   .tt-progress { border: 1px solid CanvasText; }
 }
+
+/* ─── ROW ACTIONS MENU ───────────────────────────────────────────────────────
+   A table row often has more than one honest next step. This is the shared
+   trigger + drop-down for those, sized to match the compact row controls
+   rather than the platform's full-size action button. */
+.row-menu { position: relative; display: inline-block; text-align: left; }
+
+.row-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-block-size: 2rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--edify-accent-border, var(--edify-border));
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface);
+  color: var(--edify-accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+.row-menu__trigger:hover,
+.row-menu__trigger[aria-expanded="true"] {
+  background: var(--edify-accent-light);
+  border-color: var(--edify-accent);
+}
+
+.row-menu__trigger:focus-visible,
+.row-menu__item:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+}
+
+.row-menu__caret {
+  inline-size: 12px;
+  block-size: 12px;
+  transition: transform .15s ease;
+}
+
+.row-menu__caret.is-open { transform: rotate(180deg); }
+
+.row-menu__list {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + 4px);
+  z-index: 40;
+  min-inline-size: 11rem;
+  padding: 4px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg, 0 16px 32px -12px rgba(0, 0, 0, .28));
+}
+
+.row-menu__item {
+  display: block;
+  inline-size: 100%;
+  min-block-size: 2.125rem;
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: var(--edify-radius-sm);
+  background: transparent;
+  color: var(--edify-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: start;
+  line-height: 2.125rem;
+  cursor: pointer;
+}
+
+.row-menu__item:hover { background: var(--edify-surface-muted); }
+
+/* The 44px floor still applies where a finger is the pointer. */
+@media (max-width: 48rem), (pointer: coarse) {
+  .row-menu__trigger { min-block-size: 2.75rem; }
+  .row-menu__item { min-block-size: 2.75rem; line-height: 2.75rem; }
+}
