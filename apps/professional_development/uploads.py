@@ -9,6 +9,7 @@ files (which have no Activity) cannot go through `evidence.services.record_uploa
 from __future__ import annotations
 
 import os
+import re
 import uuid
 
 from django.conf import settings
@@ -26,20 +27,23 @@ def pd_storage_dir() -> str:
     return d
 
 
+_STORED_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+
+
 def pd_storage_path(stored_name: str) -> str:
     """Resolve a stored file name inside the PD upload directory.
 
-    Mirrors apps.evidence.services.evidence_path. Names here are generated —
-    uuid4 plus an allowlisted extension — but they are read back out of a
-    database column, and a path built by joining a column onto a directory is
-    only as safe as every row that column will ever hold.
+    Mirrors apps.evidence.services.evidence_path, including its allowlist:
+    the names are generated, but they are read back out of a database column,
+    and a path built by joining a column onto a directory is only as safe as
+    every row that column will ever hold.
     """
     from apps.core.exceptions import BadRequest
 
-    if not stored_name or os.path.basename(stored_name) != stored_name:
+    if not stored_name or not _STORED_NAME_RE.fullmatch(stored_name):
         raise BadRequest("Invalid document file name.")
     base_dir = os.path.realpath(pd_storage_dir())
-    resolved = os.path.realpath(os.path.join(base_dir, os.path.basename(stored_name)))
+    resolved = os.path.realpath(os.path.join(base_dir, stored_name))
     if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
         raise BadRequest("Invalid document file name.")
     return resolved

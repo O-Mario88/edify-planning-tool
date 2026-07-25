@@ -848,7 +848,12 @@ def eligible_staff_options_view(request):
     SELECTED = '<option value="{}" selected>{} ({})</option>'
     UNSELECTED = '<option value="{}">{} ({})</option>'
 
-    options_html = format_html('<option value="">-- No Assigned Staff --</option>')
+    # The label goes through as an argument rather than being baked into the
+    # format string: format_html() with no args is deprecated in Django 6, and
+    # the escaping is identical either way.
+    options_html = format_html(
+        '<option value="">{}</option>', "-- No Assigned Staff --"
+    )
     for sp in staff:
         chosen = (
             str(sp.user.user_id) == selected_staff_id or str(sp.id) == selected_staff_id

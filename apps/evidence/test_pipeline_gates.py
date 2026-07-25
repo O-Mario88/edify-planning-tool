@@ -109,7 +109,7 @@ class RenditionTest(_EvidenceTestBase):
     def test_image_gets_pdf_rendition_and_original_preserved(self):
         result = self._upload("photo.jpg", _tiny_jpeg_bytes(), "image/jpeg")
         record = EvidenceRecord.objects.get(id=result["id"])
-        original_path = os.path.join(services.evidence_dir(), record.uri)
+        original_path = services.evidence_path(record.uri)
         original_bytes = open(original_path, "rb").read()
 
         out = services.prepare_inline_view(record.id, self.cceo)
@@ -117,9 +117,7 @@ class RenditionTest(_EvidenceTestBase):
         self.assertEqual(out["previewStatus"], "ready")
         self.assertEqual(out["viewKind"], "pdf_rendition")
         self.assertTrue(record.pdf_rendition_storage_key)
-        rendition_path = os.path.join(
-            services.evidence_dir(), record.pdf_rendition_storage_key
-        )
+        rendition_path = services.evidence_path(record.pdf_rendition_storage_key)
         self.assertTrue(os.path.exists(rendition_path))
         self.assertTrue(open(rendition_path, "rb").read().startswith(b"%PDF"))
         # The original is untouched — same path, same bytes.

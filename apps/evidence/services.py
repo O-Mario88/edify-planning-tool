@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import uuid
 
 from django.conf import settings
@@ -69,6 +70,9 @@ def evidence_dir() -> str:
     return d
 
 
+_STORED_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+
+
 def evidence_path(stored_name: str) -> str:
     """Resolve a stored file name to an absolute path inside the store.
 
@@ -77,18 +81,19 @@ def evidence_path(stored_name: str) -> str:
     this should never reject anything in practice. But the name round-trips
     through a database column, and a path assembled by joining a column onto a
     directory is one bad row or one careless migration away from reading
-    anything the process can reach. Two independent checks:
+    anything the process can reach.
 
-    - the name must be a bare file name, so no separator and no "..";
-    - the resolved path must still be inside the store after symlinks.
-
-    Cheap, and it turns "the values happen to be safe today" into something
-    the code enforces.
+    The name is validated against an allowlist rather than screened for the
+    characters that would be dangerous: a deny-list has to anticipate every
+    encoding of "..", and an allow-list has to anticipate nothing. Separators,
+    parent references and a leading dot are all absent from the pattern, so
+    none of them can appear. The containment re-check after symlink resolution
+    stays as a second, independent barrier.
     """
-    if not stored_name or os.path.basename(stored_name) != stored_name:
+    if not stored_name or not _STORED_NAME_RE.fullmatch(stored_name):
         raise BadRequest("Invalid evidence file name.")
     base = os.path.realpath(evidence_dir())
-    resolved = os.path.realpath(os.path.join(base, os.path.basename(stored_name)))
+    resolved = os.path.realpath(os.path.join(base, stored_name))
     if resolved != base and not resolved.startswith(base + os.sep):
         raise BadRequest("Invalid evidence file name.")
     return resolved
