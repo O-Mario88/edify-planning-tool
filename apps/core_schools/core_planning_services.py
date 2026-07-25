@@ -896,6 +896,11 @@ class CorePlanningService:
                     "assessment_progress": f"{assessment_done} / 1",
                     "visits_progress": f"{visits_done} / 4",
                     "trainings_progress": f"{trainings_done} / 4",
+                    # Raw counts drive the segmented progress display; the
+                    # formatted strings above stay for any legacy consumer.
+                    "visits_done": visits_done,
+                    "trainings_done": trainings_done,
+                    "assessment_done": assessment_done,
                     "progress_pct": int((total_done / EXPECTED_CORE_SLOTS) * 100),
                 }
             )

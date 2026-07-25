@@ -3,99 +3,92 @@
 <table class="edify-data-table w-full">
 <thead>
 <tr class="bg-slate-50/50 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider text-left">
-<th class="px-4 py-3 font-semibold">School</th>
-<th class="px-4 py-3 font-semibold">Region</th>
-<th class="px-4 py-3 font-semibold">Assigned Staff</th>
-<th class="px-4 py-3 font-semibold">Assigned Partner</th>
-<th class="px-4 py-3 font-semibold">Weakest Intervention</th>
-<th class="px-4 py-3 font-semibold">Next Recommended Support</th>
-<th class="px-4 py-3 font-semibold text-center">Progress</th>
+<th class="px-3 py-3 font-semibold">School</th>
+<th class="px-3 py-3 font-semibold">Ownership</th>
+<th class="px-3 py-3 font-semibold">Weakest Intervention</th>
+<th class="px-3 py-3 font-semibold text-center">Progress</th>
 <th class="px-4 py-3 text-right font-semibold">Actions</th>
 </tr>
 </thead>
 <tbody class="text-slate-700">
 {% for q in planning_queue %}
 <tr class="hover:bg-slate-50/40 transition-colors">
-<!-- School Name -->
-<td class="px-4 py-2.5 font-semibold text-slate-800">{{ q.name }}</td>
-
-<!-- Region -->
-<td class="px-4 py-2.5 font-semibold text-slate-500">{{ q.region }}</td>
-
-<!-- Assigned Staff -->
-<td class="px-4 py-2.5 font-semibold text-slate-600">
-<div class="flex items-center gap-1.5">
-<span class="h-5 w-5 rounded-pill bg-slate-200 text-slate-700 flex items-center justify-center edify-text-caption font-semibold">
-{{ q.assigned_staff|slice:":2" }}
-</span>
-<span class="truncate max-w-[100px]">{{ q.assigned_staff }}</span>
-</div>
+<!-- School (region stacked as metadata to keep the table in frame) -->
+<td class="px-3 py-2.5">
+<p class="font-semibold text-slate-800" style="max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.name }}">{{ q.name }}</p>
+<p class="edify-text-caption font-semibold text-slate-400">{{ q.region }}</p>
 </td>
 
-<!-- Assigned Partner -->
-<td class="px-4 py-2.5 font-semibold text-slate-600">
-<div class="flex items-center gap-1.5">
+<!-- Ownership: staff + partner stacked, one column -->
+<td class="px-3 py-2.5 font-semibold text-slate-600">
+<p class="flex items-center gap-1.5">
+<span class="edify-text-caption font-bold text-slate-400 w-3">S</span>
+<span style="max-width:108px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.assigned_staff }}">{{ q.assigned_staff }}</span>
+</p>
+<p class="flex items-center gap-1.5 mt-0.5">
+<span class="edify-text-caption font-bold text-slate-400 w-3">P</span>
 {% if q.assigned_partner != "Unassigned" %}
-<span class="h-5 w-5 rounded-pill edify-primary-soft border edify-primary-border edify-primary-text flex items-center justify-center edify-text-caption font-semibold">
-P
-</span>
-<span class="truncate max-w-[120px]">{{ q.assigned_partner }}</span>
+<span class="edify-primary-text" style="max-width:108px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.assigned_partner }}">{{ q.assigned_partner }}</span>
 {% else %}
-<span class="text-slate-400 font-semibold">{{ q.assigned_partner }}</span>
+<span class="text-slate-400">Unassigned</span>
 {% endif %}
-</div>
+</p>
 </td>
 
 <!-- Weakest Intervention -->
-<td class="px-4 py-2.5 font-semibold text-slate-600">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-150/60">
+<td class="px-3 py-2.5 font-semibold text-slate-600">
+{% if q.weakest_interventions == "Requires Cluster" or q.weakest_interventions == "Assessment Required" %}
+<span class="text-slate-400 font-semibold">—</span>
+{% else %}
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-150/60" style="max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.weakest_interventions }}">
 {{ q.weakest_interventions }}
 </span>
+{% endif %}
 </td>
 
-<!-- Next Recommended Support -->
-<td class="px-4 py-2.5 font-semibold text-[var(--edify-primary)]">
-{{ q.next_recommended }}
+<!-- Progress — the 4+4 core package as discrete, labelled segments -->
+<td class="px-3 py-2.5" style="min-width:124px">
+<div class="space-y-1.5" role="img" aria-label="Visits {{ q.visits_done }} of 4 complete, trainings {{ q.trainings_done }} of 4 complete">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-semibold text-slate-500" style="width:42px; display:inline-block">Visits</span>
+<span class="flex items-center gap-[3px]" aria-hidden="true">
+{% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.visits_done %}bg-[var(--edify-primary)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+</span>
+<span class="text-[11px] font-bold tabular-nums {% if q.visits_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.visits_done }}/4</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-semibold text-slate-500" style="width:42px; display:inline-block">Trainings</span>
+<span class="flex items-center gap-[3px]" aria-hidden="true">
+{% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.trainings_done %}bg-[var(--edify-teal)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+</span>
+<span class="text-[11px] font-bold tabular-nums {% if q.trainings_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.trainings_done }}/4</span>
+</div>
+</div>
 </td>
 
-<!-- Progress (Visits & Trainings bars) -->
-<td class="px-4 py-2.5 text-center min-w-[130px]">
-<div class="flex flex-col gap-1 items-center">
-<div class="w-full bg-slate-100 rounded-pill h-1.5 overflow-hidden border border-slate-200/50">
-<div class="bg-[var(--edify-primary)] h-full rounded-pill" style="width: {{ q.progress_pct }}%;"></div>
-</div>
-<div class="flex items-center justify-between w-full edify-text-caption font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
-<span class="text-slate-600">{{ q.visits_progress }} V</span>
-<span class="text-slate-600">{{ q.trainings_progress }} T</span>
-</div>
-</div>
-</td>
-
-<!-- Actions -->
-<td class="px-4 py-2.5 text-right" @click.stop>
-<div class="flex items-center justify-end gap-1.5">
+<!-- Actions — one control per row: a status pill when blocked, else the
+     single canonical next step at a consistent size -->
+<td class="px-3 py-2.5 text-right" @click.stop>
 {% if q.next_recommended == "Requires Cluster" %}
-<button
-disabled
-title="Add this school to a cluster before core planning can begin."
-class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed uppercase tracking-wider flex items-center justify-center shrink-0"
->
-Blocked: Cluster Required
-</button>
+<span class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-control bg-slate-50 border border-slate-200 text-[12px] font-semibold text-slate-500"
+      title="Add this school to a cluster before core planning can begin.">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+Cluster required
+</span>
 {% elif q.next_recommended == "Assessment Required" %}
 <button
 hx-get="/core-schools/assessment?school_id={{ q.school_id }}"
 hx-target="#drawer-container"
-class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 uppercase tracking-wider flex items-center justify-center shrink-0"
->
+class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-control edify-surface border border-slate-200 text-[12px] font-bold edify-primary-text hover:bg-slate-50 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
 Upload Assessment
 </button>
 {% elif q.next_recommended == "Graduation Review" or q.next_recommended == "Core Assessment" %}
 <button
 hx-get="/core-schools/assessment?school_id={{ q.school_id }}"
 hx-target="#drawer-container"
-class="px-3 h-7 edify-text-caption font-semibold rounded-control bg-slate-100 hover:bg-slate-200 text-slate-700 uppercase tracking-wider flex items-center justify-center shrink-0"
->
+class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-control edify-surface border border-slate-200 text-[12px] font-bold edify-primary-text hover:bg-slate-50 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
 Review SSA
 </button>
 {% else %}
@@ -106,12 +99,11 @@ hx-get="/core-schools/schedule-visit?school_id={{ q.school_id }}"
 hx-get="/core-schools/schedule-training?school_id={{ q.school_id }}"
 {% endif %}
 hx-target="#drawer-container"
-class="px-3 h-7 edify-text-caption font-semibold rounded-control edify-primary-solid edify-primary-hover text-white shadow-sm flex items-center justify-center shrink-0 uppercase tracking-wider transition-all"
->
-Plan Now
+class="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-control btn-primary edify-action-button primary text-[12px] font-bold transition-all">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+{% if "Visit" in q.next_recommended %}Schedule Visit ({{ q.next_recommended|slice:":2" }}){% else %}Schedule Training ({{ q.next_recommended|slice:":2" }}){% endif %}
 </button>
 {% endif %}
-</div>
 </td>
 </tr>
 {% endfor %}
