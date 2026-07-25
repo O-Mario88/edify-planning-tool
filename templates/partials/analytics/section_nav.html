@@ -1,37 +1,5 @@
 {% comment %}
-Analytics workspace sub-navigation.
-
-Included by each Analytics section page BELOW its filter bar, so the strip
-belongs to the page rather than floating above its header, and guarded with
-`in_analytics_workspace` so it appears only where there is somewhere to switch
-to. Built from `analytics_sections`
-(apps/core/navigation.build_analytics_sections).
-
-Real links to real routes, so deep links, permissions and the browser's back
-button all keep working. They deliberately carry no tab roles: cross-route
-links are not tabs, and describing them as such would mislead a screen reader.
-They share the platform's tab look because that look is now one design, not
-because they are tabs.
+The Analytics workspace now uses the shared workspace strip, so this file only
+forwards to it. Kept because 16 section templates include it by this path.
 {% endcomment %}
-{% if in_analytics_workspace %}
-<nav class="edify-section-nav" aria-label="Analytics sections">
-{% comment %}
-With ten or more sections the strip scrolls, so a user landing directly on a
-late section (Publishing, Reports) would otherwise arrive with the page they
-are on scrolled out of sight. Only the strip's own scrollLeft is touched —
-scrollIntoView would move the workspace behind it.
-{% endcomment %}
-<div class="edify-section-nav__inner" x-data
-x-init="$nextTick(() => { const active = $el.querySelector('.is-active'); if (active) $el.scrollLeft = Math.max(0, active.offsetLeft - 120) })">
-<span class="edify-section-nav__eyebrow">Analytics</span>
-<span class="edify-section-nav__rule" aria-hidden="true"></span>
-{% for section in analytics_sections %}
-{% if section.starts_cluster %}<span class="edify-section-nav__divider" aria-hidden="true"></span>{% endif %}
-<a href="{{ section.url }}"
-class="edify-section-nav__link{% if section.active %} is-active{% endif %}"
-title="{{ section.description }}"
-{% if section.active %}aria-current="page"{% endif %}>{{ section.label }}</a>
-{% endfor %}
-</div>
-</nav>
-{% endif %}
+{% include "partials/_section_nav.html" %}

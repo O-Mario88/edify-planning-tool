@@ -1,7 +1,11 @@
 from datetime import date
 
 from apps.notifications.models import Notification
-from apps.core.navigation import build_analytics_sections, build_sidebar_for_user
+from apps.core.navigation import (
+    build_analytics_sections,
+    build_sidebar_for_user,
+    build_workspace,
+)
 
 
 def sidebar_counts(request):
@@ -59,12 +63,15 @@ def sidebar_context(request):
         }
 
     analytics_sections = build_analytics_sections(request.user, request.path)
+    workspace = build_workspace(request.user, request.path)
     return {
         "sidebar_sections": build_sidebar_for_user(request.user, request.path),
         "analytics_sections": analytics_sections,
-        # The shell renders the section sub-navigation only on a page that is
-        # itself an Analytics section, and only when there is somewhere else to
-        # switch to — a one-section bar is decoration, not navigation.
-        "in_analytics_workspace": len(analytics_sections) > 1
-        and any(s["active"] for s in analytics_sections),
+        # The workspace this page belongs to, if any — build_workspace already
+        # withholds it when there is nowhere else to switch to, since a
+        # one-section strip is decoration rather than navigation.
+        "workspace": workspace,
+        "in_analytics_workspace": bool(
+            workspace and workspace["key"] == "analytics"
+        ),
     }

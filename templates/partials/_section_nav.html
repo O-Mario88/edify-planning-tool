@@ -1,0 +1,41 @@
+{% comment %}
+Workspace sub-navigation, shared by every multi-page workspace
+(apps/core/navigation.WORKSPACES — Analytics and Leave today).
+
+Include it on a section page BELOW that page's filters, so the strip belongs to
+the page rather than floating above its header:
+
+  {% include "partials/_section_nav.html" %}
+
+It renders nothing unless the current page is a section of a workspace the user
+can reach more than one page of — `workspace` is withheld otherwise, so a
+one-item strip never appears.
+
+Real links to real routes, so deep links, permissions and the browser's back
+button all keep working. They deliberately carry no tab roles: cross-route
+links are not tabs, and describing them as such would mislead a screen reader.
+They share the platform's tab look because that look is one design now, not
+because they are tabs.
+{% endcomment %}
+{% if workspace %}
+<nav class="edify-section-nav" aria-label="{{ workspace.label }} sections">
+{% comment %}
+With ten or more sections the strip scrolls, so a user landing directly on a
+late section would otherwise arrive with the page they are on scrolled out of
+sight. Only the strip's own scrollLeft is touched — scrollIntoView would move
+the workspace behind it.
+{% endcomment %}
+<div class="edify-section-nav__inner" x-data
+x-init="$nextTick(() => { const active = $el.querySelector('.is-active'); if (active) $el.scrollLeft = Math.max(0, active.offsetLeft - 120) })">
+<span class="edify-section-nav__eyebrow">{{ workspace.label }}</span>
+<span class="edify-section-nav__rule" aria-hidden="true"></span>
+{% for section in workspace.sections %}
+{% if section.starts_cluster %}<span class="edify-section-nav__divider" aria-hidden="true"></span>{% endif %}
+<a href="{{ section.url }}"
+class="edify-section-nav__link{% if section.active %} is-active{% endif %}"
+title="{{ section.description }}"
+{% if section.active %}aria-current="page"{% endif %}>{{ section.label }}</a>
+{% endfor %}
+</div>
+</nav>
+{% endif %}

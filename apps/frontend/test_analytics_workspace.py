@@ -37,6 +37,9 @@ MERGED_AWAY_LABELS = {
     "Decision Log",
     "Completed Archive",
     "HR Analytics",
+    # Merged into the Leave workspace.
+    "Leave & Coverage",
+    "Holidays & Blackouts",
 }
 
 
@@ -257,3 +260,39 @@ class AnalyticsWorkspaceRenderTest(TestCase):
         nav = body[body.index("edify-section-nav") : body.index("</nav>")]
         self.assertNotIn('role="tab"', nav)
         self.assertNotIn('role="tablist"', nav)
+
+
+class LeaveWorkspaceTest(TestCase):
+    """Your own leave, who covers it, and the calendar it is booked against
+    were three sidebar links for one question. They are one workspace now."""
+
+    def test_the_leave_sections_are_offered_together(self):
+        from apps.core.navigation import LEAVE_SECTIONS, build_sections
+
+        user = _user("leave@workspace.test", EdifyRole.COUNTRY_DIRECTOR.value)
+        keys = [s["key"] for s in build_sections(LEAVE_SECTIONS, user, "/personal-time-off/")]
+        self.assertEqual(keys, ["my_leave", "coverage", "holidays"])
+
+    def test_each_leave_page_carries_the_strip(self):
+        from apps.core.navigation import build_workspace
+
+        user = _user("leave2@workspace.test", EdifyRole.COUNTRY_DIRECTOR.value)
+        for path, expected in [
+            ("/personal-time-off/", "my_leave"),
+            ("/leave/coverage", "coverage"),
+            ("/public-holidays", "holidays"),
+        ]:
+            with self.subTest(path=path):
+                workspace = build_workspace(user, path)
+                self.assertIsNotNone(workspace)
+                self.assertEqual(workspace["key"], "leave")
+                active = [s["key"] for s in workspace["sections"] if s["active"]]
+                self.assertEqual(active, [expected])
+
+    def test_a_role_without_coverage_access_is_not_offered_it(self):
+        from apps.core.navigation import build_workspace
+
+        partner = _user("leave3@workspace.test", EdifyRole.PARTNER_FIELD_OFFICER.value)
+        workspace = build_workspace(partner, "/personal-time-off/")
+        self.assertIsNotNone(workspace)
+        self.assertNotIn("coverage", [s["key"] for s in workspace["sections"]])

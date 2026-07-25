@@ -48,17 +48,72 @@
 <script>
   (function () {
     var points = {{ points_json|safe }};
-    var map = L.map('school-map');
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    var bounds = [];
-    points.forEach(function (p) {
-      var m = L.circleMarker([p.lat, p.lng], {radius: 6, color: 'var(--edify-chart-blue)', weight: 1.5, fillColor: 'var(--edify-chart-blue)', fillOpacity: 0.75}).addTo(map);
-      m.bindPopup('<b>' + p.name + '</b><br>' + [p.sub_county, p.district].filter(Boolean).join(', '));
-      bounds.push([p.lat, p.lng]);
-    });
-    if (bounds.length) { map.fitBounds(bounds, {padding: [30, 30]}); } else { map.setView([1.3733, 32.2903], 7); }
+    var el = document.getElementById('school-map');
+    if (!el) { return; }
+
+    function fail(message) {
+      el.className = 'h-[560px] flex flex-col items-center justify-center text-center gap-2 px-6';
+      el.innerHTML =
+        '<p class="text-[13px] font-bold text-slate-600">Map could not be loaded</p>' +
+        '<p class="edify-text-caption text-slate-400 max-w-md">' + message + '</p>';
+    }
+
+    function start() {
+      // The map library is fetched from a public CDN. If it did not arrive,
+      // say so — a silent empty grey box reads as "no schools", which is a
+      // different and untrue statement.
+      if (typeof L === 'undefined') {
+        fail('The map library did not load. Check the connection and reload — the ' +
+             '{{ with_coords }} school coordinates themselves are unaffected.');
+        return;
+      }
+
+      var accent = getComputedStyle(document.documentElement)
+        .getPropertyValue('--edify-chart-blue').trim() || '#1872bd';
+
+      var map = L.map(el);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      var bounds = [];
+      points.forEach(function (p) {
+        // Leaflet writes these onto SVG presentation attributes, where a
+        // CSS var() never resolves — the colour has to be a real value.
+        var m = L.circleMarker([p.lat, p.lng], {
+          radius: 6, color: accent, weight: 1.5,
+          fillColor: accent, fillOpacity: 0.75
+        }).addTo(map);
+        m.bindPopup('<b>' + p.name + '</b><br>' +
+                    [p.sub_county, p.district].filter(Boolean).join(', '));
+        bounds.push([p.lat, p.lng]);
+      });
+
+      function frame() {
+        if (bounds.length) { map.fitBounds(bounds, {padding: [30, 30]}); }
+        else { map.setView([1.3733, 32.2903], 7); }
+      }
+      frame();
+
+      // Leaflet measures the container once, at init, and only requests the
+      // tiles that measurement calls for. This script used to run the moment
+      // it was parsed — before the stylesheets had applied — so on a cold load
+      // it measured a zero-width box, fetched three tiles for it and left the
+      // map looking broken until a hard refresh happened to warm the assets
+      // and change the timing. Re-measuring after layout is what actually
+      // fixes it; the observer keeps it right when the sidebar collapses or
+      // the window resizes.
+      requestAnimationFrame(function () { map.invalidateSize(); frame(); });
+      if (window.ResizeObserver) {
+        new ResizeObserver(function () { map.invalidateSize(); }).observe(el);
+      }
+      window.addEventListener('resize', function () { map.invalidateSize(); });
+    }
+
+    // 'load', not DOMContentLoaded: the container's real size depends on
+    // leaflet.css and the app stylesheets having been applied.
+    if (document.readyState === 'complete') { start(); }
+    else { window.addEventListener('load', start); }
   })();
 </script>
 {% endif %}

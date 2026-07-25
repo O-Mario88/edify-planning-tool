@@ -537,6 +537,44 @@ ANALYTICS_SECTIONS = [
 ]
 
 
+# ── The Leave workspace ───────────────────────────────────────────────────────
+# Your own leave, who is covering, and the calendar those two are decided
+# against — three sidebar links for one question ("who is off, and does that
+# matter?"). They are sections of the page you already open to book leave.
+LEAVE_SECTIONS = [
+    {
+        "key": "my_leave",
+        "label": "My Leave",
+        "url": "/personal-time-off/",
+        "page_key": "personal_time_off",
+        "cluster": "leave",
+        "description": "Your balance, requests and time off.",
+    },
+    {
+        "key": "coverage",
+        "label": "Coverage",
+        "url": "/leave/coverage",
+        "page_key": "leave_coverage",
+        "cluster": "leave",
+        "description": "Who covers whose work while they are away.",
+    },
+    {
+        "key": "holidays",
+        "label": "Holidays & Blackouts",
+        "url": "/public-holidays",
+        "page_key": "public_holidays",
+        "cluster": "leave",
+        "description": "Public holidays and periods leave cannot be taken.",
+    },
+]
+
+# Every multi-page workspace, keyed by the eyebrow its section strip shows.
+WORKSPACES = {
+    "analytics": {"label": "Analytics", "sections": ANALYTICS_SECTIONS},
+    "leave": {"label": "Leave", "sections": LEAVE_SECTIONS},
+}
+
+
 def _path_matches(url: str, path: str, match: str = "prefix") -> bool:
     """True when `path` is inside `url`, ignoring trailing slashes."""
     url = url.rstrip("/") or "/"
@@ -546,11 +584,11 @@ def _path_matches(url: str, path: str, match: str = "prefix") -> bool:
     return path == url or path.startswith(url + "/")
 
 
-def build_analytics_sections(user, current_path: str = "") -> list[dict]:
-    """The Analytics sections this user may open, in workspace order.
+def build_sections(registry, user, current_path: str = "") -> list[dict]:
+    """The sections of one workspace this user may open, in workspace order.
 
-    Returns [] for a role with no analysis access at all, so the shell knows
-    not to render the sub-navigation.
+    Returns [] for a role with no access to any of them, so the caller knows
+    not to render a sub-navigation at all.
     """
     role = get_user_role_slug(user)
     if not role:
@@ -558,7 +596,7 @@ def build_analytics_sections(user, current_path: str = "") -> list[dict]:
 
     sections = []
     previous_cluster = None
-    for section in ANALYTICS_SECTIONS:
+    for section in registry:
         if role not in PAGE_PERMISSIONS.get(section["page_key"], set()):
             continue
         url = section.get("role_urls", {}).get(role, section["url"])
@@ -586,6 +624,26 @@ def build_analytics_sections(user, current_path: str = "") -> list[dict]:
         previous_cluster = section["cluster"]
 
     return sections
+
+
+def build_analytics_sections(user, current_path: str = "") -> list[dict]:
+    """The Analytics workspace's sections. Kept as its own name because the
+    sidebar's Analytics hub and its tests speak in these terms."""
+    return build_sections(ANALYTICS_SECTIONS, user, current_path)
+
+
+def build_workspace(user, current_path: str = "") -> dict | None:
+    """The workspace `current_path` belongs to, with its sections resolved.
+
+    None when the path is not a section of any workspace, or when the user can
+    reach fewer than two of its sections — a one-item strip is decoration, not
+    navigation.
+    """
+    for key, workspace in WORKSPACES.items():
+        sections = build_sections(workspace["sections"], user, current_path)
+        if len(sections) > 1 and any(s["active"] for s in sections):
+            return {"key": key, "label": workspace["label"], "sections": sections}
+    return None
 
 
 # Grouped list of all sidebar links in their categories
@@ -973,21 +1031,10 @@ SIDEBAR_ITEMS = [
             },
         ],
     },
-    {
-        "group_label": "TIME & AVAILABILITY",
-        "items": [
-            {
-                "label": "Leave & Coverage",
-                "url": "/leave/coverage",
-                "page_key": "leave_coverage",
-            },
-            {
-                "label": "Holidays & Blackouts",
-                "url": "/public-holidays",
-                "page_key": "public_holidays",
-            },
-        ],
-    },
+    # Leave & Coverage and Holidays & Blackouts moved into the Leave workspace
+    # (LEAVE_SECTIONS), reached from "Leave & Personal Time Off" in MY WORK —
+    # the same page a user goes to for their own leave. The group held nothing
+    # else, so it is gone.
     {
         "group_label": "EMPLOYEE EXPERIENCE",
         "items": [
