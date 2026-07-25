@@ -1,0 +1,72 @@
+name: Scheduled Security Scan
+
+# The CI security job only runs when someone pushes. Advisories are published
+# on their own schedule, so a repository that has been quiet for a fortnight
+# can be sitting on a critical CVE with a green tick against its last commit.
+# This re-runs the same scans against main daily so the answer stays current.
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-security
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: Dependency and static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # persist-credentials: false — checkout otherwise leaves the job's
+      # token in .git/config, where anything that uploads the workspace
+      # as an artifact carries it out with them. Nothing here pushes.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - name: Dependency CVE scan
+        run: pip-audit --strict --progress-spinner off
+
+      - name: Static security analysis
+        run: bandit -r apps config -ll -ii
+
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: JavaScript dependency audit
+        run: npm audit --audit-level=high
+
+      # The production image ships operating-system and Python packages that
+      # the source-tree scans never see.
+      - name: Build the production image
+        run: docker build -t edify-audit:${{ github.sha }} .
+
+      - name: Scan the image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: edify-audit:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH

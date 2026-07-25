@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
 
+# Least privilege by default. No job here writes to the repository, opens a
+# pull request or publishes a package, so nothing needs more than read.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -14,7 +19,7 @@ jobs:
   django-tests:
     name: Django Lint & Test Suite
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -31,11 +36,23 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edify_ci
+      JWT_SECRET: dev-secret-key-1234567890
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+
     steps:
-      - uses: actions/checkout@v4
+      # Third-party actions are pinned to a full commit SHA. A moving tag is
+      # a write-access grant to whoever can move it.
+      # persist-credentials: false — checkout otherwise leaves the job's
+      # token in .git/config, where anything that uploads the workspace
+      # as an artifact carries it out with them. Nothing here pushes.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
           cache: "pip"
@@ -53,29 +70,41 @@ jobs:
         run: ruff format --check .
 
       - name: Check for missing migrations
-        run: |
-          python manage.py makemigrations --check --dry-run
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edify_ci
-          JWT_SECRET: dev-secret-key-1234567890
+        run: python manage.py makemigrations --check --dry-run
 
       - name: Run Tests
         run: python manage.py test --parallel 4
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edify_ci
-          JWT_SECRET: dev-secret-key-1234567890
-          DJANGO_SETTINGS_MODULE: config.settings.dev
+
+      # The rendered CSS bundle is committed, so it can silently fall behind
+      # the templates that generate it: a class added to a template renders as
+      # nothing until someone rebuilds. This is the gate that catches it.
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: CSS bundle matches its source
+        run: |
+          npm run build:css
+          git diff --exit-code static/css/main.css \
+            || { echo "::error::static/css/main.css is out of date — run 'npm run build:css' and commit the result"; exit 1; }
 
   security:
     name: Security Scans
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
           cache: "pip"
@@ -98,3 +127,20 @@ jobs:
       # real finding in those is how a real finding gets ignored.
       - name: Static security analysis
         run: bandit -r apps config -ll -ii
+
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: JavaScript dependency audit
+        run: npm audit --audit-level=high
+
+      # Workflow-level security: unpinned actions, injectable expressions,
+      # over-broad permissions, secrets reachable from fork code. The
+      # workflows are as much a supply chain as the dependencies are.
+      - name: Lint the workflows themselves
+        run: |
+          python -m pip install zizmor
+          zizmor --persona=regular .github/workflows/

@@ -1,0 +1,62 @@
+name: CodeQL
+
+# Three triggers, because each catches something the others cannot: pull
+# requests stop a finding from landing, pushes to main keep the branch's alert
+# set honest after a merge, and the schedule re-runs the analysis against
+# newly published queries without needing a commit to do it.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Mondays, 04:17 UTC. Off the hour so it does not queue behind everyone
+    # else's midnight cron.
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      # Only what uploading a SARIF result requires, and only on this job.
+      security-events: write
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Both languages the application is actually written in. Analysing
+        # one and calling the repository scanned is how the other's findings
+        # stay invisible.
+        language: [python, javascript-typescript]
+
+    steps:
+      # persist-credentials: false — checkout otherwise leaves the job's
+      # token in .git/config, where anything that uploads the workspace
+      # as an artifact carries it out with them. Nothing here pushes.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4
+        with:
+          languages: ${{ matrix.language }}
+          # security-extended adds the lower-precision security queries. The
+          # default pack alone leaves whole classes of finding unreported.
+          queries: security-extended
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4
+        with:
+          category: /language:${{ matrix.language }}
