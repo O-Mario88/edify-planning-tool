@@ -179,6 +179,12 @@ Beyond the scanner findings, the pipeline work surfaced these:
   — were absent from the bundle, so those templates rendered them as nothing.
   CI now fails if the bundle drifts.
 
+  One wrinkle worth knowing: the Tailwind CLI's first build after a source
+  change can lag by a pass — it dropped the `.text-red-500` utility but kept
+  the `--color-red-500` theme variable, and a second build removed that too.
+  So `npm run build:css` should be run until it produces no diff, which is
+  exactly what the gate enforces.
+
 - **`package-lock.json` was gitignored.** Without it `npm ci` cannot run and
   every install resolves the tree afresh, so the bundle CI verifies was not
   necessarily the one anyone else would produce.
