@@ -1,3 +1,5 @@
+from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
     require_export_permission,
@@ -836,15 +838,28 @@ def eligible_staff_options_view(request):
 
     staff = get_eligible_staff(district_id)
 
-    options_html = '<option value="">-- No Assigned Staff --</option>'
-    for sp in staff:
-        val = sp.user.user_id
-        selected = (
-            "selected"
-            if str(val) == selected_staff_id or str(sp.id) == selected_staff_id
-            else ""
-        )
-        options_html += f'<option value="{val}" {selected}>{sp.user.name} ({sp.user.active_role})</option>'
+    # format_html rather than an f-string: these values reach the browser as
+    # markup, and a staff name is free text. One apostrophe or angle bracket
+    # in a name broke out of the attribute it was written into.
+    options_html = format_html(
+        '<option value="">-- No Assigned Staff --</option>{}',
+        format_html_join(
+            "",
+            '<option value="{}"{}>{} ({})</option>',
+            (
+                (
+                    sp.user.user_id,
+                    mark_safe(" selected")  # noqa: S308 - a literal, not input
+                    if str(sp.user.user_id) == selected_staff_id
+                    or str(sp.id) == selected_staff_id
+                    else "",
+                    sp.user.name,
+                    sp.user.active_role,
+                )
+                for sp in staff
+            ),
+        ),
+    )
 
     from django.http import HttpResponse
 

@@ -26,6 +26,25 @@ def pd_storage_dir() -> str:
     return d
 
 
+def pd_storage_path(stored_name: str) -> str:
+    """Resolve a stored file name inside the PD upload directory.
+
+    Mirrors apps.evidence.services.evidence_path. Names here are generated —
+    uuid4 plus an allowlisted extension — but they are read back out of a
+    database column, and a path built by joining a column onto a directory is
+    only as safe as every row that column will ever hold.
+    """
+    from apps.core.exceptions import BadRequest
+
+    if not stored_name or os.path.basename(stored_name) != stored_name:
+        raise BadRequest("Invalid document file name.")
+    base_dir = os.path.realpath(pd_storage_dir())
+    resolved = os.path.realpath(os.path.join(base_dir, os.path.basename(stored_name)))
+    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
+        raise BadRequest("Invalid document file name.")
+    return resolved
+
+
 def _chunks(file_obj, size=1024 * 1024):
     while True:
         chunk = file_obj.read(size)
@@ -49,7 +68,7 @@ def store_pd_file(file_obj) -> dict:
         original_name=original_name, mime_type=mime_type, head=head, size=size
     )
     stored_name = f"{uuid.uuid4().hex}{ext}"
-    dest = os.path.join(pd_storage_dir(), stored_name)
+    dest = pd_storage_path(stored_name)
     with open(dest, "wb") as out:
         for chunk in _chunks(file_obj):
             out.write(chunk)

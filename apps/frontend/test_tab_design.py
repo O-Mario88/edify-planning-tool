@@ -19,13 +19,31 @@ TEMPLATES = ROOT / "templates"
 
 # Container backgrounds/padding and button-ish classes on a tab are the marks
 # of a page painting its own tab strip.
+#
+# Matched in two passes — find the tag, then read its class list — rather than
+# with one pattern spanning both. Written as a single expression it nests
+# `[^>]*` inside `class="[^"]*`, and a template with a long tag can then make
+# the engine backtrack exponentially; CodeQL flags exactly that shape.
 CONTAINER_PAINT = re.compile(
-    r'role="tablist"[^>]*class="[^"]*'
-    r"(bg-slate-\d|bg-white|rounded-surface|rounded-control|\bp-1\b|border\b)"
+    r"bg-slate-\d|bg-white|rounded-surface|rounded-control|\bp-1\b|border\b"
 )
-TAB_PAINT = re.compile(
-    r'role="tab"(?:[^>]|\n)*?class="[^"]*(btn-premium|edify-primary-solid|shadow-sm)'
-)
+TAB_PAINT = re.compile(r"btn-premium|edify-primary-solid|shadow-sm")
+
+# One tag, non-greedy to its own closing bracket. No nested quantifier.
+TAG = re.compile(r"<[^<>]*>", re.S)
+CLASS_ATTR = re.compile(r'class="([^"]*)"')
+
+
+def _painted(src: str, role: str, paint: re.Pattern) -> bool:
+    """True when any tag carrying `role` has a painting class."""
+    marker = f'role="{role}"'
+    for tag in TAG.findall(src):
+        if marker not in tag:
+            continue
+        classes = CLASS_ATTR.search(tag)
+        if classes and paint.search(classes.group(1)):
+            return True
+    return False
 
 
 class TabContractTest(TestCase):
@@ -62,9 +80,9 @@ class NoPageStylesItsOwnTabsTest(TestCase):
             if 'role="tablist"' not in src:
                 continue
             rel = str(path.relative_to(ROOT))
-            if CONTAINER_PAINT.search(src):
+            if _painted(src, "tablist", CONTAINER_PAINT):
                 offenders.append(f"{rel} (tablist container)")
-            if TAB_PAINT.search(src):
+            if _painted(src, "tab", TAB_PAINT):
                 offenders.append(f"{rel} (tab button)")
         self.assertEqual(
             offenders,

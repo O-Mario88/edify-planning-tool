@@ -50,6 +50,10 @@ ENTRY_SOURCE_MANAGING_STAFF = "managing_staff_for_partner"
 ENTRY_SOURCE_LEGACY_IMPORT = "legacy_import"
 ENTRY_SOURCE_ADMIN_EXCEPTION = "admin_exception"
 
+# Longest raw value normalisation will look at. The canonical ids are
+# under 30 characters; anything longer is not a near-miss to be repaired.
+MAX_RAW_ID_LENGTH = 256
+
 
 def normalize_salesforce_id(raw: str) -> str:
     """Trim, uppercase, drop invisible/control Unicode characters, and
@@ -57,11 +61,15 @@ def normalize_salesforce_id(raw: str) -> str:
     "SVE-ABC123" are recognized as the same value for duplicate detection."""
     if not raw:
         return ""
+    # Bounded before any per-character work: a Salesforce id is a couple of
+    # dozen characters, and this runs on whatever a form posted.
+    raw = raw[:MAX_RAW_ID_LENGTH]
     cleaned = "".join(ch for ch in raw if unicodedata.category(ch) not in ("Cc", "Cf"))
-    cleaned = cleaned.strip().upper()
-    cleaned = re.sub(r"\s*-\s*", "-", cleaned)
-    cleaned = re.sub(r"\s+", "", cleaned)
-    return cleaned
+    # str.split() with no argument drops every run of whitespace, which is
+    # both of the substitutions this used to make — the hyphen survives on its
+    # own. The `\s*-\s*` pass it replaces was quadratic on a long run of
+    # spaces, on a value that arrives straight from a form field.
+    return "".join(cleaned.upper().split())
 
 
 def is_valid_salesforce_id(id_value: str, kind: str) -> bool:

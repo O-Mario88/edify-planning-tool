@@ -5,6 +5,7 @@ context-first compose flow. All partial updates go through HTMX; Alpine
 only handles local UI state.
 """
 
+from django.utils.html import format_html
 from django.contrib import messages as django_messages
 from django.db import transaction
 from django.http import FileResponse, HttpResponse
@@ -277,10 +278,19 @@ def thread_star_action(request, thread_id):
             pass
     icon = "★" if starred else "☆"
     tone = "text-amber-400" if starred else "text-slate-300"
+    # thread_id arrives from the URL and is written into an attribute, so it
+    # is escaped rather than interpolated. `tone` and `icon` are literals
+    # chosen above, but they go through the same call so the next person to
+    # edit this string does not have to work out which parts are safe.
     return HttpResponse(
-        f'<button hx-post="/messages/thread/{thread_id}/star" hx-swap="outerHTML" '
-        f'class="text-[18px] {tone} hover:text-amber-400 transition-colors" '
-        f'aria-label="Star conversation">{icon}</button>'
+        format_html(
+            '<button hx-post="/messages/thread/{}/star" hx-swap="outerHTML" '
+            'class="text-[18px] {} hover:text-amber-400 transition-colors" '
+            'aria-label="Star conversation">{}</button>',
+            thread_id,
+            tone,
+            icon,
+        )
     )
 
 

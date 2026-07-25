@@ -67,12 +67,12 @@ def _serve_pd_file(model_cls, file_id: str, user, download: bool):
 
     from django.http import FileResponse
 
-    from apps.professional_development.uploads import pd_storage_dir
+    from apps.professional_development.uploads import pd_storage_path
 
     rec = model_cls.objects.select_related("request").filter(id=file_id).first()
     if not rec or not _authorized_for_pd_file(rec.request, user):
         return HttpResponseNotFound("File not found.")
-    path = os.path.join(pd_storage_dir(), rec.uri)
+    path = pd_storage_path(rec.uri)
     if not os.path.exists(path):
         return HttpResponseNotFound("File not found on disk.")
     response = FileResponse(

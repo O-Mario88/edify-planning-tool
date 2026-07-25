@@ -1,8 +1,10 @@
 import json
+import os
 from pathlib import Path
+from unittest import mock
 
 from django.conf import settings
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 ICON_DIR = Path(settings.STATICFILES_DIRS[0]) / "icons"
 
@@ -66,10 +68,52 @@ class ServiceWorkerTest(TestCase):
         carry a stale CSRF token. The worker must bail out of anything that is
         not a same-origin GET under /static/.
         """
-        body = self.client.get("/sw.js").content.decode()
+        with override_settings(
+            STORAGES={
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {
+                    "BACKEND": (
+                        "whitenoise.storage.CompressedManifestStaticFilesStorage"
+                    )
+                },
+            }
+        ):
+            body = self.client.get("/sw.js").content.decode()
         self.assertIn("req.method !== 'GET'", body)
         self.assertIn("url.origin !== self.location.origin", body)
         self.assertIn("startsWith('/static/')", body)
+
+    def test_nothing_is_cached_when_asset_names_are_not_content_hashed(self):
+        """Cache-first is a promise that a URL identifies its bytes.
+
+        Without a hashing storage the names are stable, so the first copy the
+        worker sees is the copy it serves past every later edit — which is
+        exactly what happened while verifying a stylesheet change: the browser
+        kept handing back a pages.css from a previous build.
+        """
+        with override_settings(
+            STORAGES={
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {
+                    "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+                },
+            }
+        ):
+            body = self.client.get("/sw.js").content.decode()
+        self.assertNotIn("addEventListener('fetch'", body)
+        self.assertNotIn("caches.match", body)
+
+    def test_the_cache_name_moves_with_the_assets(self):
+        """`activate` deletes every cache that is not the current one, so a
+        cache name that never changes is a cache that is never cleared. It was
+        pinned to "edify-static-1" by a setting that was never defined."""
+        from apps.frontend.views.pwa_views import static_version
+
+        with override_settings(STATIC_ROOT="/nonexistent-for-this-test"):
+            self.assertNotEqual(static_version(), "1")
+
+        with mock.patch.dict(os.environ, {"RELEASE_SHA": "abcdef1234567890"}):
+            self.assertEqual(static_version(), "abcdef123456")
 
 
 class PwaHeadTest(SimpleTestCase):

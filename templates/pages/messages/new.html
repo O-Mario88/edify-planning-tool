@@ -187,7 +187,7 @@
 
         <!-- Context tabs + linked items picker -->
         <div class="rounded-surface border border-slate-150 overflow-hidden">
-          <div class="flex items-center gap-0.5 px-2 pt-2 bg-slate-50/60 border-b border-slate-100 overflow-x-auto scrollbar-none" role="tablist" aria-label="Linked record type">
+          <div class="flex items-center gap-0.5 px-2 pt-2 overflow-x-auto scrollbar-none" role="tablist" aria-label="Linked record type">
             {% for key, label in context_tabs %}
             <button id="message-context-tab-{{ key }}" type="button" role="tab" aria-controls="context-records"
                     :aria-selected="activeTab === '{{ key }}'" :tabindex="activeTab === '{{ key }}' ? 0 : -1"

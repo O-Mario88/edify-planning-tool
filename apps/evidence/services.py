@@ -69,6 +69,31 @@ def evidence_dir() -> str:
     return d
 
 
+def evidence_path(stored_name: str) -> str:
+    """Resolve a stored file name to an absolute path inside the store.
+
+    Every read and write of an evidence file goes through here. Stored names
+    are generated — a uuid4 hex plus an extension taken from an allowlist — so
+    this should never reject anything in practice. But the name round-trips
+    through a database column, and a path assembled by joining a column onto a
+    directory is one bad row or one careless migration away from reading
+    anything the process can reach. Two independent checks:
+
+    - the name must be a bare file name, so no separator and no "..";
+    - the resolved path must still be inside the store after symlinks.
+
+    Cheap, and it turns "the values happen to be safe today" into something
+    the code enforces.
+    """
+    if not stored_name or os.path.basename(stored_name) != stored_name:
+        raise BadRequest("Invalid evidence file name.")
+    base = os.path.realpath(evidence_dir())
+    resolved = os.path.realpath(os.path.join(base, os.path.basename(stored_name)))
+    if resolved != base and not resolved.startswith(base + os.sep):
+        raise BadRequest("Invalid evidence file name.")
+    return resolved
+
+
 def infer_kind_from_upload(file_obj, default: str = EvidenceKind.PHOTO) -> str:
     """Best-effort EvidenceKind from a just-uploaded file's name/content-type.
 
@@ -150,7 +175,7 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
 
     # Persist to disk under a unique filename.
     stored_name = f"{uuid.uuid4().hex}{ext}"
-    dest = os.path.join(evidence_dir(), stored_name)
+    dest = evidence_path(stored_name)
     with open(dest, "wb") as out:
         for chunk in _chunks(file_obj):
             out.write(chunk)
@@ -255,7 +280,7 @@ def file_for(record_id: str, principal, *, download: bool = False):
     _assert_activity_in_scope(record.activity, principal)
     if record.quarantined:
         raise BadRequest("This file has been quarantined and cannot be viewed.")
-    path = os.path.join(evidence_dir(), record.uri)
+    path = evidence_path(record.uri)
     if not os.path.exists(path):
         raise NotFoundError("File not found on disk.")
     record.view_count += 1
@@ -363,7 +388,7 @@ def _try_office_to_pdf(record: EvidenceRecord) -> bool:
     if not soffice:
         _fail_rendition(record, "LibreOffice not installed")
         return False
-    src = os.path.join(evidence_dir(), record.uri)
+    src = evidence_path(record.uri)
     out_dir = evidence_dir()
     try:
         subprocess.run(
@@ -373,7 +398,7 @@ def _try_office_to_pdf(record: EvidenceRecord) -> bool:
             timeout=60,
         )
         pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
-        if os.path.exists(os.path.join(out_dir, pdf_name)):
+        if os.path.exists(evidence_path(pdf_name)):
             _save_rendition(record, pdf_name)
             return True
     except Exception as exc:  # noqa: BLE001
@@ -392,9 +417,9 @@ def _try_image_to_pdf(record: EvidenceRecord) -> bool:
     try:
         from PIL import Image
 
-        src = os.path.join(evidence_dir(), record.uri)
+        src = evidence_path(record.uri)
         pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
-        dest = os.path.join(evidence_dir(), pdf_name)
+        dest = evidence_path(pdf_name)
         with Image.open(src) as img:
             img.convert("RGB").save(dest, "PDF")
         _save_rendition(record, pdf_name)
@@ -410,7 +435,7 @@ def rendition_for(record_id: str, principal):
     if not record or not record.pdf_rendition_storage_key:
         raise NotFoundError("PDF rendition not available.")
     _assert_activity_in_scope(record.activity, principal)
-    path = os.path.join(evidence_dir(), record.pdf_rendition_storage_key)
+    path = evidence_path(record.pdf_rendition_storage_key)
     if not os.path.exists(path):
         raise NotFoundError("Rendition file not found.")
     response = FileResponse(open(path, "rb"), content_type="application/pdf")
