@@ -150,15 +150,6 @@
    at 44px made every row of an eight-row table feel like a form. Assign takes
    that control's exact bordered-surface look; the named action keeps the
    accent fill so the recommended step still leads. */
-/* No rules between rows. The global table contract draws a hairline under
-   every cell; across eight short rows of an at-a-glance card that reads as
-   ledger ruling rather than structure. Scoped to this table — every other
-   table keeps the contract. The selector carries one more element than the
-   platform rule it overrides, which is what lets it win. */
-main table.pl-urgent-table tbody tr :is(td, th) {
-  border-block-end: 0 !important;
-}
-
 .urgent-action {
   display: inline-flex;
   align-items: center;

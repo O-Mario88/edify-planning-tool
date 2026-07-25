@@ -182,32 +182,7 @@
         <a href="/analytics" class="edify-text-caption font-medium edify-primary-text hover:underline">View full analytics</a>
       </div>
 
-      <div class="flex items-center justify-center gap-6">
-        <div class="relative h-28 w-28 flex items-center justify-center shrink-0">
-          <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-            <path class="text-slate-100" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- Completed -->
-            <path class="text-emerald-500" stroke-dasharray="{{ kpis.completed_pct }}, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- In Progress -->
-            <path class="edify-primary-text" stroke-dasharray="{{ kpis.in_progress_pct }}, 100" stroke-dashoffset="{{ kpis.in_progress_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- Planned -->
-            <path class="text-amber-500" stroke-dasharray="{{ kpis.planned_pct }}, 100" stroke-dashoffset="{{ kpis.planned_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- Overdue -->
-            <path class="text-rose-500" stroke-dasharray="{{ kpis.overdue_pct }}, 100" stroke-dashoffset="{{ kpis.overdue_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-          </svg>
-          <div class="absolute flex flex-col justify-center items-center text-center">
-            <span class="text-[24px] font-semibold text-slate-800 leading-none tabular-nums">{{ kpis.total }}</span>
-            <span class="edify-text-caption font-medium text-slate-400 uppercase tracking-wide mt-1">Total Tasks</span>
-          </div>
-        </div>
-
-        <div class="text-[12px] space-y-2 text-slate-500 flex-1">
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-emerald-500 shrink-0"></span> Completed</span> <span class="font-medium tabular-nums">{{ kpis.completed }} ({{ kpis.completed_pct }}%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill edify-primary-solid shrink-0"></span> In Progress</span> <span class="font-medium tabular-nums">{{ kpis.in_progress }} ({{ kpis.in_progress_pct }}%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-amber-500 shrink-0"></span> Planned</span> <span class="font-medium tabular-nums">{{ kpis.planned }} ({{ kpis.planned_pct }}%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-rose-500 shrink-0"></span> Overdue</span> <span class="font-medium tabular-nums">{{ kpis.overdue }} ({{ kpis.overdue_pct }}%)</span></div>
-        </div>
-      </div>
+      {% include "partials/components/donut_rings.html" with donut=at_a_glance_donut donut_label="Activity status breakdown" headline=kpis.completed_pct headline_unit="%" subline=at_a_glance_subline %}
     </div>
 
     <!-- Upcoming This Week list -->

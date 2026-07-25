@@ -1,0 +1,57 @@
+{% comment %}
+Concentric-ring donut.
+
+  {% include "partials/components/donut_rings.html" with donut=donut headline="48" headline_unit="%" subline="283 activities" %}
+
+`donut` comes from apps.core.donut.build_rings — one ring per series, each on
+its own radius, drawn clockwise from twelve o'clock with a rounded cap, its
+value set just outside the ring's start. The legend is a row of pills whose
+outline matches the ring they name.
+
+Colours stay whatever the caller passed, because in this platform they carry
+meaning — completed is green, overdue is red — and a chart that recoloured
+them for elegance would be a prettier chart telling you less.
+
+A ring with no value draws no arc: a rounded cap at twelve o'clock would read
+as a sliver of progress that is not there.
+{% endcomment %}
+<div class="edify-donut">
+  <div class="edify-donut__figure">
+    <svg viewBox="0 0 {{ donut.size }} {{ donut.size }}" class="edify-donut__svg" role="img"
+         aria-label="{{ donut_label|default:'Breakdown' }}">
+      <g transform="rotate(-90 {{ donut.centre }} {{ donut.centre }})">
+        {% for ring in donut.rings %}{% if ring.has_arc %}
+        <circle cx="{{ donut.centre }}" cy="{{ donut.centre }}" r="{{ ring.radius }}"
+                fill="none" stroke="{{ ring.color }}" stroke-width="{{ donut.stroke }}"
+                stroke-linecap="round" stroke-dasharray="{{ ring.dash }}"
+                {% comment %}Each arc draws from its own circumference, so
+                every ring sweeps out at the same rate regardless of radius.
+                {% endcomment %}
+                style="--edify-donut-draw-from: {{ ring.circumference }}"
+                class="edify-donut__arc"/>
+        {% endif %}{% endfor %}
+      </g>
+      {% for ring in donut.rings %}{% if ring.has_arc %}
+      <text x="{{ ring.label_x }}" y="{{ ring.label_y }}" fill="{{ ring.color }}"
+            text-anchor="end" dominant-baseline="middle" class="edify-donut__value">{{ ring.value|floatformat:"-1" }}</text>
+      {% endif %}{% endfor %}
+    </svg>
+
+    <div class="edify-donut__centre">
+      <p class="edify-donut__headline">{{ headline }}{% if headline_unit %}<span class="edify-donut__unit">{{ headline_unit }}</span>{% endif %}</p>
+      {% if subline %}<p class="edify-donut__subline">{{ subline }}</p>{% endif %}
+    </div>
+  </div>
+
+  {% if donut.rings %}
+  <ul class="edify-donut__legend">
+    {% for ring in donut.rings %}
+    <li class="edify-donut__chip" style="border-color: {{ ring.color }}">
+      <span class="edify-donut__dot" style="background: {{ ring.color }}" aria-hidden="true"></span>
+      <span class="edify-donut__chip-label">{{ ring.label }}</span>
+      <span class="edify-donut__chip-value">{{ ring.value|floatformat:"-1" }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>

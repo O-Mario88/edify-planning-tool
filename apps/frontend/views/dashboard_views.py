@@ -15,6 +15,7 @@ from apps.core.permissions import RolePermissionService, require_page_permission
 from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
 from apps.core.activity_types import VISIT_TYPES
+from apps.core.donut import build_rings
 
 
 def _format_ugx_compact(val):
@@ -767,6 +768,41 @@ def dashboard_view(request):
                 "planned_offset": -(completed_pct + in_progress_pct),
                 "overdue_offset": -(completed_pct + in_progress_pct + planned_pct),
             },
+            # Concentric rings, largest state outermost. Each ring is a share
+            # of the total, so the ring lengths are comparable to each other
+            # and the centre reads the completion rate.
+            "at_a_glance_donut": build_rings(
+                [
+                    {
+                        "key": "completed",
+                        "label": "Completed",
+                        "value": completed_cnt,
+                        "color": "var(--edify-success)",
+                    },
+                    {
+                        "key": "in_progress",
+                        "label": "In Progress",
+                        "value": in_progress_cnt,
+                        "color": "var(--edify-accent)",
+                    },
+                    {
+                        "key": "planned",
+                        "label": "Planned",
+                        "value": planned_cnt,
+                        "color": "var(--edify-warning)",
+                    },
+                    {
+                        "key": "overdue",
+                        "label": "Overdue",
+                        "value": overdue_cnt,
+                        "color": "var(--edify-danger)",
+                    },
+                ],
+                share_of=total_tasks or None,
+            ),
+            "at_a_glance_subline": (
+                f"{total_tasks} activities" if total_tasks else "No activities yet"
+            ),
             "overdue_last_week": overdue_last_week,
             "school_visits_week": school_visits_week,
             "cluster_activities_week": cluster_activities_week,

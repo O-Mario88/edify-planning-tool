@@ -678,10 +678,53 @@ main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-mat
   border-block: 0 !important;
 }
 
+/* No rules between rows. A hairline under every cell reads as ledger ruling
+   rather than structure; row separation comes from spacing and the header's
+   own bottom border. Matrix tables keep their grid — there the lines ARE the
+   structure. */
 main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody td,
 .drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody td {
   border-block-start: 0 !important;
-  border-block-end: 1px solid color-mix(in oklab, var(--edify-border) 38%, transparent) !important;
+  border-block-end: 0 !important;
+}
+
+/* ─── ROW ACTION CONTROLS ────────────────────────────────────────────────────
+   One size for every control that sits in a table cell: 32px rather than the
+   44px page-level action button, which made an eight-row table read like a
+   form. Geometry and type only — colour stays as each table authored it, so a
+   destructive action still looks destructive.
+
+   Matched by the action classes this codebase already uses (btn*, *action*,
+   rounded-control) rather than by element, so a plain text link in a cell —
+   a school name, a record id — is untouched. */
+main table tbody td :is(a, button):is(
+  [class*="btn"], [class*="action"], [class*="rounded-control"], .row-menu__trigger
+),
+.drawer-body table tbody td :is(a, button):is(
+  [class*="btn"], [class*="action"], [class*="rounded-control"], .row-menu__trigger
+) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-block-size: 2rem !important;
+  block-size: auto !important;
+  padding-inline: 0.75rem !important;
+  border-radius: var(--edify-radius-sm) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+/* The 44px floor still applies where a finger is the pointer. */
+@media (max-width: 48rem), (pointer: coarse) {
+  main table tbody td :is(a, button):is(
+    [class*="btn"], [class*="action"], [class*="rounded-control"], .row-menu__trigger
+  ) {
+    min-block-size: 2.75rem !important;
+  }
 }
 
 main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:last-child > td,

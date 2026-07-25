@@ -1830,3 +1830,125 @@ select:not([multiple]):not(.select-native) {
   font-weight: 600;
   text-overflow: ellipsis;
 }
+
+/* ─── CONCENTRIC-RING DONUT ──────────────────────────────────────────────────
+   One ring per series rather than one ring cut into segments: each sits on its
+   own radius with a rounded cap and its value set just outside its start, the
+   headline reads from the middle, and the legend is a row of pills outlined in
+   the colour of the ring each one names. */
+.edify-donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.edify-donut__figure {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 260px;
+  aspect-ratio: 1;
+}
+
+.edify-donut__svg {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.edify-donut__arc {
+  /* Grows from nothing on first paint rather than snapping in. */
+  animation: edify-donut-draw .7s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+@keyframes edify-donut-draw {
+  from { stroke-dashoffset: var(--edify-donut-draw-from, 0); opacity: .35; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edify-donut__arc { animation: none; }
+}
+
+.edify-donut__value {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.edify-donut__centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.edify-donut__headline {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  color: var(--edify-text);
+  font-family: var(--edify-font-display-family, inherit);
+  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.25rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.edify-donut__unit {
+  font-size: 0.42em;
+  font-weight: 500;
+  line-height: 1;
+  margin-block-start: 0.25em;
+}
+
+.edify-donut__subline {
+  margin: 8px 0 0;
+  color: var(--edify-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.edify-donut__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edify-donut__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 28px;
+  padding-inline: 10px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-pill);
+  background: transparent;
+  color: var(--edify-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.edify-donut__dot {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: var(--edify-radius-pill);
+  flex: 0 0 auto;
+}
+
+.edify-donut__chip-value {
+  color: var(--edify-text);
+  font-variant-numeric: tabular-nums;
+}
