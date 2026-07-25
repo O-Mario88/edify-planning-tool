@@ -1,0 +1,36 @@
+{% comment %}
+Back to the list a drill-down page was opened from.
+
+Usage — in the eyebrow slot of the page header, INSTEAD of the eyebrow:
+
+  {% include "partials/_back_link.html" with back_href="/schools" back_label="Schools" %}
+  <h1 class="edify-page-title">…</h1>
+
+`back_href` is the parent list page; `back_label` names it. A real link, not
+history.back(): anyone arriving from a notification, a deep link or a redirect
+has no history to go back to, and a browser's back button cannot say where it
+leads.
+
+If the visitor genuinely did come from that list, the link is upgraded to the
+exact URL they left — query string and all — so filters, tab and page number
+survive the round trip. Same-origin and same-path are both checked, so a hop
+between two sibling detail pages is not mistaken for the list.
+{% endcomment %}
+<a class="edify-back-link"
+   href="{{ back_href }}"
+   data-parent="{{ back_href }}"
+   x-data
+   x-init="
+     try {
+       const from = document.referrer;
+       if (from && from.startsWith(window.location.origin)) {
+         const url = new URL(from);
+         if (url.pathname.replace(/\/$/, '') === $el.dataset.parent.replace(/\/$/, '')) {
+           $el.href = url.pathname + url.search;
+         }
+       }
+     } catch (e) { /* keep the plain parent link */ }
+   ">
+  <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  Back to {{ back_label }}
+</a>

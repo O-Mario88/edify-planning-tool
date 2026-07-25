@@ -7,10 +7,9 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Back navigation and Header -->
 <div>
-<a href="/schools" class="edify-text-caption font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
+{% include "partials/_back_link.html" with back_href="/schools" back_label="School Directory" %}
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<p class="edify-page-eyebrow">Schools & Field</p>
 <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">{{ school.name }}</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">School ID: <span class="font-mono text-slate-600 font-bold">{{ school.school_id }}</span></p>
 </div>

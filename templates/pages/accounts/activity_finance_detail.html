@@ -7,9 +7,7 @@
 
 <!-- Back navigation -->
 <div class="flex items-center justify-between">
-<a href="/accounts/" class="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
-&larr; Back to Finance Command Center
-</a>
+{% include "partials/_back_link.html" with back_href="/accounts/" back_label="Finance Command Center" %}
 
 <!-- Status Badge -->
 <div class="flex items-center gap-2">

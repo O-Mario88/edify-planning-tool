@@ -9,24 +9,11 @@
 <!-- Breadcrumb & Header -->
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
 <div>
-<div class="flex items-center gap-1.5 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
-<a href="{% url 'frontend:core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
-<span>&bull;</span>
-<span class="text-slate-500">Graduates Directory</span>
-</div>
-<p class="edify-page-eyebrow">Schools & Field</p>
+{% include "partials/_back_link.html" with back_href="/core-schools/champion-candidates" back_label="Candidates Queue" %}
 <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Graduated Champion Schools</h1>
 <p class="text-[14px] text-slate-500 font-medium mt-1">Directory of schools that completed their core service package and achieved long-term independent high-performance ratings.</p>
 </div>
 
-<div>
-<a
-href="{% url 'frontend:champion_candidates' %}"
-class="edify-surface border border-slate-200 hover:bg-slate-50 rounded-surface px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
->
-<span>&larr; Back to Candidates Queue</span>
-</a>
-</div>
 </div>
 
 <!-- Champions Grid / List -->

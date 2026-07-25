@@ -13,7 +13,7 @@
     <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">SSA Upload Center</h1>
     <p class="text-[12px] text-slate-500 font-normal mt-0.5">Upload a sheet of SSA baseline/monitoring scores to map directly to school records.</p>
   </div>
-  <a href="/ssa" class="text-[12px] text-slate-500 hover:underline">&larr; Back to SSA Scores</a>
+  {% include "partials/_back_link.html" with back_href="/ssa" back_label="SSA Performance" %}
 </div>
 
 {% if messages %}

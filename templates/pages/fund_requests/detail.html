@@ -7,10 +7,9 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto">
 <!-- Back Nav & Header -->
 <div>
-<a href="/fund-requests/weekly" class="edify-text-caption font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to Weekly Requests</a>
+{% include "partials/_back_link.html" with back_href="/fund-requests/weekly" back_label="Weekly Requests" %}
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<p class="edify-page-eyebrow">Finance</p>
 <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Request Details</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">
 Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-semibold">{{ req.responsibleUser }}</span>

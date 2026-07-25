@@ -7,7 +7,7 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[900px] mx-auto">
 
   <div class="flex items-center justify-between">
-    <a href="/debriefs" class="text-[12px] font-bold text-slate-400 hover:text-slate-200">&larr; Back to Dashboard</a>
+    {% include "partials/_back_link.html" with back_href="/debriefs" back_label="Field Debrief" %}
     {% if debrief.is_restricted_incident %}
     <span class="px-2 py-1 rounded-pill edify-text-caption font-extrabold bg-rose-500/10 text-rose-400 border border-rose-500/20">Restricted Incident</span>
     {% endif %}

@@ -1708,6 +1708,54 @@ select:not([multiple]):not(.select-native) {
   outline-offset: -3px;
 }
 
+/* ─── BACK TO THE LIST YOU CAME FROM ────────────────────────────────────────
+   Drill-down pages put this in the eyebrow slot of the canonical page header,
+   in place of the category label. On a detail page the line that says "where
+   am I" is better spent saying "where I came from", and reusing it costs no
+   extra vertical space — the header keeps its exact rhythm. It matches the
+   eyebrow's metrics for that reason, and it is a real link to the parent
+   rather than history.back(), which strands anyone who arrived from a deep
+   link, a notification or a redirect. */
+.edify-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 5px;
+  color: var(--brand-primary-text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: color .15s ease;
+}
+
+.edify-back-link svg {
+  inline-size: 13px;
+  block-size: 13px;
+  flex: 0 0 auto;
+}
+
+.edify-back-link:hover {
+  color: var(--brand-primary-text-hover);
+  text-decoration: underline;
+  text-underline-offset: .2rem;
+}
+
+.edify-back-link:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-sm);
+}
+
+/* Touch gets a 44px target; the symmetric negative margin keeps the header
+   looking identical to the pointer layout. */
+@media (max-width: 48rem), (pointer: coarse) {
+  .edify-back-link {
+    padding-block: 11px;
+    margin-block: -11px 0;
+  }
+}
+
 .edify-header-filters {
   display: flex;
   flex-wrap: wrap;

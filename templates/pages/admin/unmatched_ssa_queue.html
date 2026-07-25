@@ -14,7 +14,7 @@
 <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Unmatched SSA Queue</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manually link SSA records that were uploaded with unknown School IDs — {{ records_page.paginator.count }} matching this filter.</p>
 </div>
-<a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
+{% include "partials/_back_link.html" with back_href="/admin-panel/data-quality-center" back_label="Quality Center" %}
 </div>
 
 <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
