@@ -14,6 +14,7 @@ from typing import Any
 
 from django.db import transaction
 
+from apps.core.logging_filters import escape_control_characters
 from apps.core.audit_hash import CanonicalAuditFields, canonical_audit, chain_hash
 from apps.core.request_context import get_request_context
 
@@ -151,7 +152,16 @@ def log(
 
             transaction.on_commit(_project_committed_audit)
     except Exception as exc:  # noqa: BLE001 — audit must never break the workflow
-        logger.error("Failed to write audit (%s): %s", action, exc)
+        # `action` is whatever the caller passed and the exception text is
+        # whatever the database said, so both are escaped as they enter the
+        # record. The SingleLineFilter would catch them on the way out too —
+        # this is the belt to its braces, and it puts the reason next to the
+        # values rather than in a settings module.
+        logger.error(
+            "Failed to write audit (%s): %s",
+            escape_control_characters(str(action)),
+            escape_control_characters(str(exc)),
+        )
 
 
 def verify_chain() -> dict:

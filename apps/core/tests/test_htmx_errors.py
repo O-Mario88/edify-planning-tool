@@ -11,8 +11,10 @@ error carrying part of the query went to whoever tripped it.
 from __future__ import annotations
 
 import logging
+from unittest import mock
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import HttpResponse
 from django.test import TestCase
 
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -105,3 +107,38 @@ class NoticeFragmentTest(TestCase):
         body = notice_fragment("Missing score for <b>Leadership</b>").content.decode()
         self.assertNotIn("<b>", body)
         self.assertIn("&lt;b&gt;", body)
+
+
+class DrfEnvelopeTest(TestCase):
+    """The API envelope makes the same distinction the HTML fragment does.
+
+    `edify_exception_handler` used to fall back to `str(exc)` for anything
+    without a `detail`, so an exception arriving without one had its raw text
+    rendered into the response. In practice every exception DRF's own handler
+    answers carries a detail — which is precisely why the alternative should
+    not have been published quietly.
+    """
+
+    def _render(self, exc):
+        from apps.core.exceptions import edify_exception_handler
+
+        with mock.patch(
+            "rest_framework.views.exception_handler",
+            return_value=HttpResponse(status=400),
+        ):
+            return edify_exception_handler(exc, {})
+
+    def test_a_domain_message_is_carried_through(self):
+        response = self._render(BadRequest("Pick a date first."))
+        self.assertEqual(response.data["message"], "Pick a date first.")
+
+    def test_an_exception_without_a_detail_says_nothing_about_itself(self):
+        with self.assertLogs("apps.core.exceptions", level=logging.ERROR):
+            response = self._render(ValueError('relation "activity" violates x'))
+        self.assertEqual(response.data["message"], UNEXPECTED_MESSAGE)
+        self.assertNotIn("relation", response.data["message"])
+
+    def test_a_field_error_dict_survives_as_a_dict(self):
+        """DRF validation errors are per-field and the client needs the shape."""
+        response = self._render(DjangoValidationError("x"))
+        self.assertIsNotNone(response.data["message"])

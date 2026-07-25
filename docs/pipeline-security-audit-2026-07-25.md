@@ -242,17 +242,29 @@ one.
 
 ---
 
-## 7. Not fixed — repository settings, which are the owner's call
+## 7. Repository settings
 
-These are governance settings rather than code, and two of them would change
-how the owner works day to day. They are listed so the decision is explicit.
+1. **Branch protection on `main`** — now applied. Four required status checks
+   (`Django Lint & Test Suite`, `Security Scans`, and both CodeQL languages), a
+   branch that must be up to date before merging, conversation resolution
+   required, and no force-pushes or branch deletion. `enforce_admins` is
+   deliberately **off**: the owner can still push to `main` directly, which is
+   how this repository is actually worked on. The protection is there to stop
+   an accident and to hold anyone else to the checks, not to impose a review
+   process on a solo maintainer. Turn `enforce_admins` on when there is a
+   second contributor.
 
-1. **No branch protection on `main`.** Anyone with write access can push
-   directly and no status check is required to merge. §16 of the audit brief
-   asks for required pull requests, required checks, and no force-push.
-   Applying it would immediately stop direct pushes to `main` — including the
-   ones this audit has been making — so it is left to the owner.
-2. **The repository is public.** Worth a deliberate decision for an internal
-   planning tool holding school and staff data.
-3. **Secret scanning non-provider patterns and validity checks are off.** Both
-   are additive and cheap to enable.
+2. **The repository stays public**, decided rather than defaulted. On a free
+   account, CodeQL code scanning, secret scanning and push protection are free
+   *only* on public repositories; making this one private would switch all
+   three off unless GitHub Code Security and Secret Protection are bought. What
+   is exposed is source code — `.env`, database dumps, `media/` and `uploads/`
+   are gitignored and separately excluded from the image by `.dockerignore` —
+   so the trade would have cost the entire scanning pipeline to hide code that
+   holds no school or staff data.
+
+3. **Secret-scanning non-provider patterns and validity checks cannot be
+   enabled.** The API accepts the PATCH and returns 200, and the settings stay
+   `disabled`: both are GitHub Secret Protection features and this account has
+   no entitlement. Partner-pattern secret scanning and push protection — the
+   two that catch a real leaked credential — are on.

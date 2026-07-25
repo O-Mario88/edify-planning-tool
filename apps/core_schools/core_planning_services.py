@@ -3,6 +3,7 @@ from datetime import date
 
 from django.db.models import Avg, Count, Q
 from django.db.models.functions import TruncMonth
+from apps.core.logging_filters import escape_control_characters
 from apps.core.exceptions import BadRequest
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
@@ -340,7 +341,7 @@ class CoreSchoolsService:
                     logger.warning(
                         "Skipping self-heal for core school %s: no SSA record "
                         "on file to gate onboarding against.",
-                        s.school_id,
+                        escape_control_characters(str(s.school_id)),
                     )
                     continue
                 baseline_avg = latest.average_score
@@ -380,7 +381,9 @@ class CoreSchoolsService:
                     # escapes line breaks works on the record's arguments, and
                     # a message already formatted has nothing left to clean.
                     logger.error(
-                        "Error auto-onboarding core school %s: %s", s.school_id, e
+                        "Error auto-onboarding core school %s: %s",
+                        escape_control_characters(str(s.school_id)),
+                        escape_control_characters(str(e)),
                     )
 
         # 2. Apply filters

@@ -27,13 +27,14 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from django.utils.html import format_html
 
-from apps.core.exceptions import EdifyAPIException
+from apps.core.exceptions import UNEXPECTED_MESSAGE, EdifyAPIException
 
 logger = logging.getLogger(__name__)
 
-# Shown when the exception was not one the domain raised on purpose. It says
-# what failed and that it was recorded, and nothing about how.
-UNEXPECTED_MESSAGE = "Something went wrong. The error has been logged."
+# UNEXPECTED_MESSAGE is defined next to the DRF handler and re-exported here:
+# the API envelope and an inline HTML fragment are two renderings of the same
+# decision, and two copies of the sentence would eventually disagree.
+__all__ = ["UNEXPECTED_MESSAGE", "error_fragment", "error_message", "is_user_facing"]
 
 FRAGMENT = (
     '<div class="p-3 rounded-surface bg-rose-50 text-rose-700 '

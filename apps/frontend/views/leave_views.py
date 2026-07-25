@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from datetime import datetime, date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -9,7 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from apps.core.htmx_errors import error_message
+from apps.core.htmx_errors import UNEXPECTED_MESSAGE, is_user_facing
 from apps.core.exceptions import BadRequest
 from apps.core.redirects import local_redirect
 from apps.core.permissions import render_access_denied, require_page_permission
@@ -39,6 +41,8 @@ from apps.hr.leave_services import (
     LeaveNotificationService,
 )
 from apps.core.navigation import get_user_role_slug
+
+logger = logging.getLogger(__name__)
 
 
 @require_page_permission("personal_time_off")
@@ -482,9 +486,14 @@ def eligible_cover_api(request):
             }
         )
     except Exception as e:
-        # Only a message written for a user goes back. Anything else is a bug,
-        # and its text can carry a constraint name or a query fragment.
-        return JsonResponse({"error": error_message(e)}, status=400)
+        # The branch is written out here rather than hidden behind a call, so
+        # that the two outcomes are visible at the point the response is
+        # built: a domain exception's own sentence, or a generic one. Anything
+        # else can carry a constraint name or a fragment of a query.
+        if is_user_facing(e):
+            return JsonResponse({"error": str(e)}, status=400)
+        logger.error("Leave availability check failed", exc_info=e)
+        return JsonResponse({"error": UNEXPECTED_MESSAGE}, status=400)
 
 
 @require_page_permission("leave_tracker")
