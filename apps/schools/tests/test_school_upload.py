@@ -110,10 +110,7 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(school.enrollment, 410)
 
     def test_numeric_uploaded_school_id_is_preserved_without_prefix(self):
-        body = (
-            "School ID,School Name,District\n"
-            "51230,Uploaded ID Primary,Gulu\n"
-        )
+        body = "School ID,School Name,District\n" "51230,Uploaded ID Primary,Gulu\n"
         res = self._post_and_import(self._csv(body))
 
         self.assertEqual(res.status_code, 200, res.content)

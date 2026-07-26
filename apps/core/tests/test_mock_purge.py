@@ -151,7 +151,8 @@ class UploadWiringTest(TestCase):
         region = Region.objects.first()
         district = District.objects.first()
         with self.assertRaisesMessage(
-            BadRequest, "School ID is required. Use the ID supplied in the school upload."
+            BadRequest,
+            "School ID is required. Use the ID supplied in the school upload.",
         ):
             create_one(
                 {
