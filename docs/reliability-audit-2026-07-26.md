@@ -234,6 +234,62 @@ the local one: 106 accounts tests pass at 10/min.
 Worth generalising: a local `.env` that loosens a production control makes
 every test of that control vacuous, and nothing says so.
 
+### R-08 — Country Director dashboard is 1.4s at p95  ·  HIGH  ·  OPEN
+
+**Measured, for the first time.** `scripts/latency_budget.py` reports
+p50/p95/p99 per page per role against declared budgets. On its first run:
+
+| page | role | p95 | queries | budget |
+|---|---|---|---|---|
+| /dashboard | Country Director | 1401ms | 648 | 800ms |
+| /my-plan | Country Director | 1422ms | 657 | 800ms |
+
+Every other page/role combination — 22 of 24 — is inside budget, and the
+numbers are worth reading next to the dataset they were taken against: 702
+schools, 711 activities. Production scale is larger, so these are a floor.
+
+Of the 648 queries, 123 are `COUNT(*)` on activity and 110 are activity
+selects. The cause is `CDDashboardService` walking Programme Leads and issuing
+four aggregates per PL.
+
+**Partially fixed.** `_pl_cceos` was recomputed per PL on three separate
+surfaces of the same page — 62 `StaffProfile` lookups in one render. Now
+memoised through `apps.core.request_cache`, with the scope in the key, because
+the same PL under a different scope yields a different school set and returning
+one for the other would be a scope leak rather than a slow page. Worth 24
+queries; 246 analytics and view tests confirm no figure moved.
+
+**Not fixed:** the per-PL aggregation loop. Converting it to one grouped pass
+means reproducing `_requires_sf_id()`'s predicate in Python, and that is where
+a correctness mistake would hide. A wrong number on a Country Director
+dashboard is worse than a slow one, so this is specified rather than attempted.
+
+### R-09 — Restore and rollback rehearsed  ·  CLOSED
+
+Both were listed as unverified, and I had wrongly filed restore under "needs
+infrastructure I do not have". A restore into an isolated database is a local
+operation.
+
+The rehearsal script already existed and had never been run — which is the
+condition it exists to detect. It verified 215 tables, 197 migrations and 232
+validated foreign keys, and none of that answers whether the product works. A
+sequence left behind its table hands out a primary key that already exists on
+the first insert; a missing extension; a view restored before its table. None
+move a row count. So step 7 now signs in and serves eight pages from the
+restored copy, and verifies the hash-linked audit chain, which is where a
+dropped or reordered row would show.
+
+`rollback_rehearsal.sh` asks the narrower question that actually decides
+whether a rollback exists: does the PREVIOUS release run against the CURRENT
+schema? Nobody un-migrates a production database under pressure — reversing a
+migration that dropped a column does not bring the data back. `30abe7ce` serves
+`3660c17e`'s schema, so rollback here is a deploy of the older image.
+
+Two harness mistakes, both now commented so they are not repeated:
+`CREATE DATABASE ... TEMPLATE` needs exclusive access and fails against
+anything running, and reading the smoke script out of the old checkout tested
+whether the harness existed yet rather than whether the rollback worked.
+
 ### R-07 — Two false positives I raised and withdrew
 
 Recorded because a ledger that only lists confirmed findings hides the cost of
@@ -273,12 +329,12 @@ so none of it can be reported as passing:
 | 13 | Query-budget gate across all critical pages (exists for IA dashboard and the scale-invariance set only) |
 | 15–17 | Idempotency, concurrency and deadlock tests across the full critical-mutation list |
 | 27–30 | Load, stress and soak testing at production scale; safe-capacity documentation |
+| 57 | Disaster recovery (needs infrastructure) |
 | 31–33 | File-upload, PDF-conversion and SSE failure matrices |
 | 37–39 | Metrics endpoint, distributed tracing, alert definitions |
 | 62 | The remaining System Health conditions: connection exhaustion, slow-query threshold, duplicate financial record, backup failure, security-scan failure, dependency vulnerability, performance SLO breach |
 | 41 | Written threat model |
 | 54 | Failure injection across dependencies |
-| 55–59 | Backup restore rehearsal, disaster recovery, rollback rehearsal |
 | 60 | Two consecutive full green CI runs, one without caches |
 
 Three of these cannot be completed from this environment at all and need
@@ -313,8 +369,18 @@ Not because of a known defect — R-01 and R-02 are closed with evidence, and
 every gate that was run is green. It is a No-Go because section 63 makes
 several conditions disqualifying on their own, and these currently hold:
 
-- Restore is unverified (§56).
-- Rollback is unverified (§59).
+- ~~Restore is unverified (§56).~~ **Closed.** `backup_restore_rehearsal.sh`
+  now verifies structure *and* drives the application: 215 tables, 197
+  migrations, 232 validated foreign keys, then eight pages served and an intact
+  audit chain from the restored copy.
+- ~~Rollback is unverified (§59).~~ **Closed.** `rollback_rehearsal.sh` puts
+  the previous release against the current schema and asks it to serve pages.
+  `30abe7ce` serves `3660c17e`'s schema, so rollback is a deploy of the older
+  image and the database stays put.
+- **A critical endpoint exceeds its latency budget (§63).** R-06 — the Country
+  Director dashboard and My Plan, both ~1.4s at p95 against 800ms. This one is
+  now measured rather than unknown, which is progress, but it is a no-go
+  condition in its own right.
 - Two consecutive full green CI runs have not been demonstrated for a release
   commit (§60).
 - Load and soak results do not exist, so no critical endpoint has a measured
