@@ -186,7 +186,27 @@ flush. It is slower, and it is the price of using a real transaction at all.
 The structural fix — a reference-data restore that covers every app rather than
 the ones that have already bitten someone — is not done.
 
-### R-06 — Two false positives I raised and withdrew
+### R-06 — MFA API tests were passing for the throttle's reasons  ·  MEDIUM  ·  CLOSED
+
+CI caught what local could not. `TokenApiTest` failed with `KeyError: 'mfaToken'`
+because the login response was a throttle rejection, not a challenge: the token
+API allows ten sign-in attempts a minute per IP, the window is process-global,
+and every test in the class spends several.
+
+Two of those tests were therefore passing for entirely the wrong reason. A test
+asserting that a stolen password gets no token cannot tell a working second
+factor from a rate limiter — it would have kept passing with the factor
+removed.
+
+Invisible locally because `.env` raises `RATE_LIMIT_LOGIN_PER_MIN` to 1000. The
+class now clears the window in `setUp` and on cleanup, matching
+`test_lockout_unification`. Verified by running with the CI value rather than
+the local one: 106 accounts tests pass at 10/min.
+
+Worth generalising: a local `.env` that loosens a production control makes
+every test of that control vacuous, and nothing says so.
+
+### R-07 — Two false positives I raised and withdrew
 
 Recorded because a ledger that only lists confirmed findings hides the cost of
 the method.
@@ -237,6 +257,23 @@ Three of these cannot be completed from this environment at all and need
 infrastructure access: restore rehearsal into an isolated environment (§56),
 disaster recovery (§57), and load/soak against a production-like deployment
 (§28–29). The rest are executable here and are simply not yet done.
+
+---
+
+## Final verification
+
+| Gate | Result |
+|---|---|
+| Full suite, cumulative order | 2072 passed, 0 failed |
+| Full suite under the CI throttle value | accounts 106 passed |
+| CI — Django Lint & Test Suite | pass |
+| CI — Security Scans | pass |
+| CI — CodeQL (python + javascript) | pass |
+| `ruff check` / `ruff format --check` | pass |
+| bandit / pip-audit / npm audit | 0 findings |
+
+PR: https://github.com/O-Mario88/edify-planning-tool/pull/14 — all five required
+checks green on `4fb63c02`.
 
 ---
 
