@@ -93,20 +93,50 @@ def create_one(data: dict, principal) -> School:
     (enforced by the view); geography is resolved from the provided ids."""
     school_id = str(data.get("schoolId") or data.get("school_id") or "").strip()
     if not school_id:
+        raise BadRequest("School ID is required. Use the official assigned ID.")
+    name = str(data.get("name") or "").strip()
+    if not name:
+        raise BadRequest("School name is required.")
+    if School.all_objects.filter(school_id=school_id).exists():
         raise BadRequest(
-            "School ID is required. Use the ID supplied in the school upload."
+            f"School ID {school_id} already exists. Open the existing directory record instead."
         )
+
     region = Region.objects.filter(id=data.get("regionId")).first()
     district = District.objects.filter(id=data.get("districtId")).first()
     if not region or not district:
         raise BadRequest("A valid regionId and districtId are required.")
+    if district.region_id != region.id:
+        raise BadRequest(
+            "The selected district does not belong to the selected region."
+        )
+
     sub_county = None
     if data.get("subCountyId"):
         sub_county = SubCounty.objects.filter(id=data["subCountyId"]).first()
+        if not sub_county or sub_county.district_id != district.id:
+            raise BadRequest(
+                "The selected sub-county does not belong to the selected district."
+            )
+
+    school_type = data.get("schoolType", SchoolType.CLIENT)
+    if school_type not in {value for value, _label in SchoolType.choices}:
+        raise BadRequest("Select a valid school classification.")
+
+    enrollment = data.get("enrollment")
+    if enrollment in ("", None):
+        enrollment = None
+    else:
+        try:
+            enrollment = int(enrollment)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest("Enrollment must be a whole number.") from exc
+        if enrollment < 0:
+            raise BadRequest("Enrollment cannot be negative.")
 
     school = School.objects.create(
         school_id=school_id,
-        name=data["name"],
+        name=name,
         region=region,
         district=district,
         sub_county=sub_county,
@@ -120,9 +150,10 @@ def create_one(data: dict, principal) -> School:
         school_phone=data.get("schoolPhone"),
         primary_contact_name=data.get("primaryContactName"),
         primary_contact_phone=data.get("primaryContactPhone"),
-        enrollment=data.get("enrollment"),
-        school_type=data.get("schoolType", SchoolType.CLIENT),
+        enrollment=enrollment,
+        school_type=school_type,
         account_owner_name_raw=data.get("accountOwnerName"),
+        created_by_ia=getattr(principal, "active_role", None) == "ImpactAssessment",
     )
     return school
 

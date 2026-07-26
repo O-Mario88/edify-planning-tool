@@ -29,7 +29,14 @@ def _login_stats():
 
     fy = get_operational_fy()
     cache_key = f"frontend:login-stats:{fy}"
-    cached = cache.get(cache_key)
+    # The cache is an optimisation here, never a dependency. This is the login
+    # page — the one page that must stand when everything optional is down —
+    # and failure injection found a cache outage turning it into a 500. A
+    # raising cache degrades to computing the figures fresh.
+    try:
+        cached = cache.get(cache_key)
+    except Exception:  # noqa: BLE001 — any cache failure means "no cache"
+        cached = None
     if cached is not None:
         return cached
 
@@ -70,7 +77,10 @@ def _login_stats():
         "stat_tasks_completed": f"{task_completion_pct}%",
         "stat_target_progress": f"{target_progress_pct}%",
     }
-    cache.set(cache_key, stats, timeout=300)
+    try:
+        cache.set(cache_key, stats, timeout=300)
+    except Exception:  # noqa: BLE001 — losing the memo costs a recompute, nothing more
+        pass
     return stats
 
 

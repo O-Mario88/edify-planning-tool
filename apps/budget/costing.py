@@ -13,6 +13,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
+from apps.budget.reference import (
+    LEGACY_CLUSTER_ACTIVITY_COST_KEYS,
+    RETIRED_COST_SETTING_KEYS,
+)
 
 
 RateCard = dict  # CostSetting.key -> unitCost
@@ -55,19 +59,6 @@ GROUP_TRAINING_RATE_KEYS = (
 )
 CLUSTER_MEETING_SNACK_RATE_KEY = "cluster_meeting_participant_meal_cost_per_head"
 
-# Retained only so historical schedule snapshots can still be read.  New
-# schedules must never fall back to these broad, old cost rows.
-LEGACY_CLUSTER_ACTIVITY_COST_KEYS = frozenset(
-    {
-        "cluster_meeting_cost",
-        "meals_per_participant",
-        "mobilisation_per_participant",
-        "training_session_fee",
-        "venue",
-    }
-)
-
-
 def _participants_of(a: dict, default_n: int) -> int:
     counted = (
         (a.get("teachersAttended") or 0)
@@ -102,6 +93,15 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                 missing=missing,
             )
         )
+
+    def current_or_legacy(canonical_key: str, legacy_key: str) -> str:
+        """Prefer the unified catalogue key, with upgrade-only compatibility.
+
+        The fallback lets historical/test databases that have not restored the
+        canonical registry remain costable.  Normal application databases
+        always contain the canonical key via ``ensure_cost_reference``.
+        """
+        return canonical_key if canonical_key in rates else legacy_key
 
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
@@ -178,13 +178,38 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                 )
                 add("School visit (secondary)", key)
             else:
-                add("Transport (secondary)", "staff_visit_transport_secondary")
-                add("Breakfast", "breakfast")
-                add("Lunch", "lunch")
-                add("Dinner", "dinner")
+                add(
+                    "Transport (secondary)",
+                    current_or_legacy(
+                        "secondary_transport_per_day",
+                        "staff_visit_transport_secondary",
+                    ),
+                )
+                add(
+                    "Breakfast",
+                    current_or_legacy("secondary_breakfast_per_day", "breakfast"),
+                )
+                add(
+                    "Lunch",
+                    current_or_legacy("secondary_lunch_per_day", "lunch"),
+                )
+                add(
+                    "Dinner",
+                    current_or_legacy(
+                        "secondary_overnight_dinner_per_day",
+                        "dinner",
+                    ),
+                )
                 nights = max(0, a.get("nights") or 0)
                 if nights > 0:
-                    add("Accommodation", "accommodation", nights)
+                    add(
+                        "Accommodation",
+                        current_or_legacy(
+                            "secondary_accommodation_per_night",
+                            "accommodation",
+                        ),
+                        nights,
+                    )
         else:
             if (
                 "school_visit_cost_per_school_primary" in rates
@@ -197,8 +222,17 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                 )
                 add("School visit (primary)", key)
             else:
-                add("Transport (primary)", "staff_visit_transport_primary")
-                add("Lunch", "lunch")
+                add(
+                    "Transport (primary)",
+                    current_or_legacy(
+                        "primary_transport_per_day",
+                        "staff_visit_transport_primary",
+                    ),
+                )
+                add(
+                    "Lunch",
+                    current_or_legacy("primary_lunch_per_day", "lunch"),
+                )
     elif activity_type in TRAINING_TYPES:
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
         add("Participant meals", "group_training_participant_meal_cost_per_head", n)
@@ -214,8 +248,17 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add("Partner/project lump sum", key)
     else:
         # ssa_activity and anything else default to a staff visit cost.
-        add("Transport", "staff_visit_transport_primary")
-        add("Lunch", "lunch")
+        add(
+            "Transport",
+            current_or_legacy(
+                "primary_transport_per_day",
+                "staff_visit_transport_primary",
+            ),
+        )
+        add(
+            "Lunch",
+            current_or_legacy("primary_lunch_per_day", "lunch"),
+        )
 
     cost_missing = any(line.missing for line in lines)
     amount = sum(line.amount for line in lines)
@@ -285,6 +328,7 @@ __all__ = [
     "CLUSTER_TRAINING_TYPES",
     "GROUP_TRAINING_RATE_KEYS",
     "LEGACY_CLUSTER_ACTIVITY_COST_KEYS",
+    "RETIRED_COST_SETTING_KEYS",
     "cost_for_activity",
     "resolve_activity_cost",
 ]

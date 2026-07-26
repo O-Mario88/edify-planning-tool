@@ -48,7 +48,56 @@ CLUSTER_ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
     ("group_training_venue_cost", "Venue fee", 30000),
 )
 
-CANONICAL_RATES = DAILY_BATCH_RATES + CLUSTER_ACTIVITY_RATES
+# Activity-specific rates that do not overlap the visit-day pools or the
+# cluster/training recipe.  Keeping these in the same registry means the
+# catalogue initializer, post-migrate restore, API and management page all
+# agree on the exact editable surface.
+DIRECT_ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
+    (
+        "partner_training_lump_sum",
+        "Partner training/facilitation rate",
+        16000,
+    ),
+    ("partner_visit_lump_sum", "Partner visit rate", 40000),
+    ("core_school_visit", "Core school visit cost", 50000),
+    ("core_school_training", "Core school training cost", 250000),
+    ("ssa_visit_rate", "SSA visit cost", 50000),
+    (
+        "project_partner_lump_sum",
+        "Special project partner activity rate",
+        40000,
+    ),
+)
+
+CANONICAL_RATES = DAILY_BATCH_RATES + CLUSTER_ACTIVITY_RATES + DIRECT_ACTIVITY_RATES
+CANONICAL_RATE_KEYS = frozenset(key for key, _label, _cost in CANONICAL_RATES)
+
+# These keys remain in old schedule snapshots and, on upgraded installations,
+# may remain as CostSetting rows for audit.  They are not editable or used for
+# new costing.  Each visit allowance now has one source of truth in the
+# district-specific Daily Visit Batch rates above.
+LEGACY_VISIT_COST_KEYS = frozenset(
+    {
+        "staff_visit_transport_primary",
+        "staff_visit_transport_secondary",
+        "breakfast",
+        "lunch",
+        "dinner",
+        "accommodation",
+    }
+)
+LEGACY_CLUSTER_ACTIVITY_COST_KEYS = frozenset(
+    {
+        "cluster_meeting_cost",
+        "meals_per_participant",
+        "mobilisation_per_participant",
+        "training_session_fee",
+        "venue",
+    }
+)
+RETIRED_COST_SETTING_KEYS = (
+    LEGACY_VISIT_COST_KEYS | LEGACY_CLUSTER_ACTIVITY_COST_KEYS
+)
 
 
 def ensure_active_catalogue():
@@ -82,14 +131,14 @@ def ensure_active_catalogue():
     )
 
 
-def ensure_cost_reference() -> int:
+def ensure_cost_reference(catalogue=None) -> int:
     """Create any missing canonical rate. Returns how many were created."""
     from apps.budget.models import CostSetting
 
-    catalogue = ensure_active_catalogue()
+    catalogue = catalogue or ensure_active_catalogue()
     created = 0
     for key, label, default_cost in CANONICAL_RATES:
-        _, was_created = CostSetting.objects.get_or_create(
+        rate, was_created = CostSetting.objects.get_or_create(
             key=key,
             defaults={
                 "label": label,
@@ -99,5 +148,9 @@ def ensure_cost_reference() -> int:
                 "catalogue": catalogue,
             },
         )
+        if not was_created and rate.catalogue_id is None:
+            rate.catalogue = catalogue
+            rate.fy = rate.fy or catalogue.fy
+            rate.save(update_fields=["catalogue", "fy", "updated_at"])
         created += int(was_created)
     return created

@@ -13,7 +13,14 @@
     <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">SSA Upload Center</h1>
     <p class="text-[12px] text-slate-500 font-normal mt-0.5">Upload a sheet of initial and monitoring SSA scores to map directly to school records.</p>
   </div>
-  {% include "partials/_back_link.html" with back_href="/ssa" back_label="SSA Performance" %}
+  <div class="flex flex-wrap items-center justify-end gap-2">
+    {% if can_add_ssa %}
+    <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
+      Add SSA Score
+    </a>
+    {% endif %}
+    {% include "partials/_back_link.html" with back_href="/ssa" back_label="SSA Performance" %}
+  </div>
 </div>
 
 {% if messages %}

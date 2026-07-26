@@ -83,6 +83,13 @@ class RaceTestCase(TransactionTestCase):
             t.start()
         for t in threads:
             t.join(timeout=30)
+        # A thread still alive here is holding a database connection — and
+        # possibly row locks — that the teardown flush will then deadlock
+        # against, taking the rest of the suite down with it. Fail loudly now
+        # rather than mysteriously three files later.
+        alive = [t.name for t in threads if t.is_alive()]
+        if alive:
+            raise AssertionError(f"race threads never finished: {alive}")
         return results
 
     def _awaiting_activity(self):

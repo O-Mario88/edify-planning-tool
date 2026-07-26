@@ -1261,6 +1261,11 @@ urlpatterns = [
         extended_views.data_quality_issue_action_view,
         name="data_quality_issue_action",
     ),
+    path(
+        "ssa/manual/",
+        ssa_views.ssa_manual_entry_view,
+        name="ssa_manual_entry",
+    ),
     path("ssa/upload/", ssa_views.ssa_upload_center_view, name="ssa_upload_center"),
     path(
         "ssa/upload/template",

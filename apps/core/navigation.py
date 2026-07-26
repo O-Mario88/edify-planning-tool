@@ -18,6 +18,12 @@ PROJECT_COORDINATOR = "PROJECT_COORDINATOR"
 
 ALL_ROLES = {ADMIN, CCEO, PL, CD, IA, RVP, HR, ACCOUNTANT, PARTNER, PROJECT_COORDINATOR}
 
+# Sidebar information architecture is narrower than route authorization. These
+# are the roles whose day-to-day work belongs in the field operations group;
+# leadership and support roles may retain scoped read access through their own
+# intelligence, verification, finance, or people workspaces.
+FIELD_NAV_ROLES = {ADMIN, CCEO, PL, PARTNER, PROJECT_COORDINATOR}
+
 
 def get_user_role_slug(user) -> str:
     """Normalize user active role to a standard role constant."""
@@ -730,6 +736,7 @@ SIDEBAR_ITEMS = [
     },
     {
         "group_label": "SCHOOLS & FIELD",
+        "visible_to": FIELD_NAV_ROLES,
         "items": [
             {
                 "label": "Schools",
@@ -868,6 +875,16 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "VERIFICATION",
         "items": [
+            {
+                # IA creates and validates authoritative school records, but is
+                # not a field-delivery role. Keep that workflow discoverable in
+                # Verification instead of presenting IA with Schools & Field.
+                "label": "School Directory",
+                "url": "/schools",
+                "page_key": "school_directory",
+                "visible_to": {IA},
+                "icon_key": "schools",
+            },
             {
                 "label": "Verification Queue",
                 "url": "/ia/verification/",
@@ -1122,6 +1139,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
 
     sections = []
     for sec in SIDEBAR_ITEMS:
+        section_audience = sec.get("visible_to")
+        if section_audience is not None and role not in section_audience:
+            continue
+
         visible_items = []
         for item in sec["items"]:
             # The Analytics hub stands for a whole workspace, so it is resolved
@@ -1150,7 +1171,14 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 )
                 continue
 
-            allowed = PAGE_PERMISSIONS.get(item["page_key"], set())
+            # A navigation audience may intentionally be narrower than route
+            # authorization. This lets a page remain reachable from the right
+            # workspace or a deep link without advertising it in an unrelated
+            # role's sidebar.
+            allowed = item.get(
+                "visible_to",
+                PAGE_PERMISSIONS.get(item["page_key"], set()),
+            )
             if role in allowed:
                 # Per-role URL override (e.g. a Project Coordinator's "Planning"
                 # points to the project-scoped planning page).
@@ -1173,7 +1201,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                     {
                         "label": item["label"],
                         "url": url,
-                        "icon": ICONS.get(item["page_key"], ""),
+                        "icon": ICONS.get(
+                            item.get("icon_key", item["page_key"]),
+                            "",
+                        ),
                         "active": is_active,
                     }
                 )
