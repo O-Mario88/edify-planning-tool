@@ -795,7 +795,7 @@ urlpatterns = [
         name="team_availability",
     ),
     path("leave/team-availability/", leave_views.team_availability_view),
-    # Country Budget
+    # General Budget
     path(
         "rvp/annual/<str:budget_id>/action",
         rvp_views.rvp_annual_action_view,
@@ -1260,11 +1260,6 @@ urlpatterns = [
         "data-quality/issue/<str:issue_id>/action",
         extended_views.data_quality_issue_action_view,
         name="data_quality_issue_action",
-    ),
-    path(
-        "ssa/manual/",
-        ssa_views.ssa_manual_entry_view,
-        name="ssa_manual_entry",
     ),
     path("ssa/upload/", ssa_views.ssa_upload_center_view, name="ssa_upload_center"),
     path(
