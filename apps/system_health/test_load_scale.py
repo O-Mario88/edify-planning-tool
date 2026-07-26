@@ -474,8 +474,12 @@ class ScaleGateTest(TestCase):
     def test_cd_dashboard_is_scale_invariant_over_schools(self):
         self._assert_scale_invariant("/dashboard", client=self._cd_client())
 
-    def test_cd_my_plan_is_scale_invariant_over_schools(self):
-        self._assert_scale_invariant("/my-plan", client=self._cd_client())
+    # No /my-plan gate for the CD: that role is redirected off the page (a
+    # CD is not field staff, so there is no plan to show), and the dashboard
+    # gate above already covers the page the redirect lands on. Discovered by
+    # this gate 302ing — and worth recording that the latency harness, which
+    # follows redirects, had been printing a "/my-plan CountryDirector" row
+    # that was really the dashboard measured twice.
 
     def test_cd_dashboard_roster_growth_costs_only_the_rebuild(self):
         """Add CCEOs; the dashboard may pay the per-person rebuild for each,
@@ -500,14 +504,21 @@ class ScaleGateTest(TestCase):
         after = self._measure("/dashboard", client=client)
 
         per_person = (after["queries"] - before["queries"]) / added
+        # The designed per-person cost, measured rather than guessed (a first
+        # version of this gate guessed 4 and was wrong): the ledger rebuild is
+        # ~5-6 queries per CCEO and the primed series fetch ~3 more, both of
+        # which are the freshness mandate itself. Measured at 9.6 with the
+        # fix in place; the ceiling holds the slope near that. Before the
+        # fix, the same growth cost ~15 per person — three surfaces each
+        # re-deriving every person's numbers.
         self.assertLessEqual(
             per_person,
-            4,
+            12,
             f"each added CCEO costs {per_person:.1f} queries on the CD "
             f"dashboard ({before['queries']} -> {after['queries']} for "
-            f"{added} people). The priced cost is the ledger rebuild (~2-3 "
-            "each); anything above that is per-person recomputation coming "
-            "back. Pool from cd.per_user_series instead.",
+            f"{added} people). The priced cost is the per-person rebuild plus "
+            "series fetch (~9 together); above ~12 the per-person "
+            "recomputation is back. Pool from cd.per_user_series instead.",
         )
 
 
