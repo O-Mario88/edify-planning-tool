@@ -23,6 +23,7 @@ from apps.accounts import mfa_service
 from apps.accounts.models import MfaChallenge
 from apps.core.rbac import EdifyRole
 from apps.core.sms import SmsService
+from apps.core.throttling import _window as _rate_window
 
 PASSWORD = "correct-horse-battery-1"
 
@@ -522,6 +523,14 @@ class TokenApiTest(MfaTestCase):
         super().setUp()
         self.user = _user("api@edify.test")
         self.client = Client()
+        # The token API is throttled at 10 sign-in attempts a minute, per IP,
+        # and every test in this class spends several. The window is process-
+        # global, so without clearing it the later tests in the class get a
+        # throttle rejection and read it as the factor working. It passes
+        # locally only because the local .env raises the limit to 1000 — CI
+        # runs the real one.
+        _rate_window._hits.clear()
+        self.addCleanup(_rate_window._hits.clear)
 
     def _login(self, password=PASSWORD):
         return self.client.post(

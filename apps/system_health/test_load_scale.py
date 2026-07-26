@@ -437,6 +437,90 @@ class ScaleGateTest(TestCase):
             "/activities/closure/"
         )
 
+    # ── Country Director surfaces ─────────────────────────────────────────
+    #
+    # The CD dashboard is where the audit's one measured latency breach lived:
+    # 648 queries at 1.4s p95, from a per-person target recomputation that the
+    # series cache existed to prevent and the dashboard never used. These
+    # gates are what keep that from creeping back.
+    #
+    # School growth must leave the query count flat — the fix's claim.
+    # Roster growth is deliberately NOT asserted flat: the per-CCEO ledger
+    # rebuild is the freshness mandate itself (every CCEO's ledger is rebuilt
+    # once per dashboard load, ~2 queries each), so CD queries grow with the
+    # roster BY DESIGN, linearly and priced. The ceiling asserts the slope
+    # stays that slope: if roster growth ever costs more than a few queries
+    # per added person, the per-person recomputation is back.
+
+    def _cd_client(self):
+        User = get_user_model()
+        cd = User.objects.filter(email="scale-cd@edify.org").first()
+        if cd is None:
+            cd = User.objects.create(
+                id="scale-cd",
+                email="scale-cd@edify.org",
+                name="Scale CD",
+                roles=["CountryDirector"],
+                active_role="CountryDirector",
+                is_active=True,
+            )
+            cd.set_password("pass123")
+            cd.save()
+            StaffProfile.objects.create(id="scale-staff-cd", user=cd, title="CD")
+        client = self.client_class()
+        client.force_login(cd)
+        return client
+
+    def test_cd_dashboard_is_scale_invariant_over_schools(self):
+        self._assert_scale_invariant("/dashboard", client=self._cd_client())
+
+    # No /my-plan gate for the CD: that role is redirected off the page (a
+    # CD is not field staff, so there is no plan to show), and the dashboard
+    # gate above already covers the page the redirect lands on. Discovered by
+    # this gate 302ing — and worth recording that the latency harness, which
+    # follows redirects, had been printing a "/my-plan CountryDirector" row
+    # that was really the dashboard measured twice.
+
+    def test_cd_dashboard_roster_growth_costs_only_the_rebuild(self):
+        """Add CCEOs; the dashboard may pay the per-person rebuild for each,
+        and nothing else. The regression this catches is exact: before the
+        fix, each person cost ~5 further queries across three surfaces on the
+        same page."""
+        User = get_user_model()
+        client = self._cd_client()
+        before = self._measure("/dashboard", client=client)
+
+        added = 8
+        for i in range(added):
+            u = User.objects.create(
+                id=f"scale-roster-{i}",
+                email=f"scale-roster-{i}@edify.org",
+                name=f"Roster Growth {i}",
+                roles=["CCEO"],
+                active_role="CCEO",
+                is_active=True,
+            )
+            StaffProfile.objects.create(id=f"scale-roster-sp-{i}", user=u, title="CCEO")
+        after = self._measure("/dashboard", client=client)
+
+        per_person = (after["queries"] - before["queries"]) / added
+        # The designed per-person cost, measured rather than guessed (a first
+        # version of this gate guessed 4 and was wrong): the ledger rebuild is
+        # ~5-6 queries per CCEO and the primed series fetch ~3 more, both of
+        # which are the freshness mandate itself. Measured at 9.6 with the
+        # fix in place; the ceiling holds the slope near that. Before the
+        # fix, the same growth cost ~15 per person — three surfaces each
+        # re-deriving every person's numbers.
+        self.assertLessEqual(
+            per_person,
+            12,
+            f"each added CCEO costs {per_person:.1f} queries on the CD "
+            f"dashboard ({before['queries']} -> {after['queries']} for "
+            f"{added} people). The priced cost is the per-person rebuild plus "
+            "series fetch (~9 together); above ~12 the per-person "
+            "recomputation is back. Pool from cd.per_user_series instead.",
+        )
+
 
 def _analyze():
     """Refresh planner statistics.

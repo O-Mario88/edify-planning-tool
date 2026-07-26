@@ -313,7 +313,33 @@ class CDAnalyticsService:
         """Supervised CCEOs of a PL → list of {staff_id, user_id, name, school_ids}.
 
         School ids are intersected with the active, in-scope school set (`cd`) so
-        stale/deleted/duplicate assignment rows never inflate counts."""
+        stale/deleted/duplicate assignment rows never inflate counts.
+
+        Memoised per request. Three separate surfaces on the Country Director
+        dashboard walk the same list of Programme Leads and ask this for each of
+        them, so the answer for one PL was being recomputed several times inside
+        a single page — a StaffProfile lookup plus the assignment reads behind
+        it, every time. Measured at 62 StaffProfile queries on one render.
+
+        Safe to memoise because supervision cannot change while a request is
+        being handled, and apps.core.request_cache is scoped to exactly that:
+        outside a request it falls through to the live query, so management
+        commands and jobs behave as if the cache were not there.
+        """
+        from apps.core.request_cache import memoize
+
+        # cd participates in the key: the same PL yields a different school set
+        # under a different scope, and returning one for the other would be a
+        # scope leak rather than a slow page.
+        key = (
+            "cd_analytics:_pl_cceos",
+            getattr(pl_user, "id", None),
+            tuple(sorted(cd.school_ids)) if cd is not None else None,
+        )
+        return memoize(key, lambda: CDAnalyticsService._pl_cceos_uncached(pl_user, cd))
+
+    @staticmethod
+    def _pl_cceos_uncached(pl_user, cd=None):
         sp = StaffProfile.objects.filter(user=pl_user).first()
         if not sp:
             return []
@@ -786,17 +812,40 @@ class CDAnalyticsService:
         target_types = (
             VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES + SSA_COLLECTION_TYPES
         )
-        for m in range(1, 13):
-            start, end = get_month_date_range(cd.fy, m)
-            labels.append(MONTHS_SHORT[start.month])
-            mq = acts.filter(
-                planned_date__gte=start.date(), planned_date__lt=end.date()
+        # One grouped pass instead of 36 per-month counts — the same
+        # equivalence as country_performance: get_month_date_range() yields
+        # contiguous first-of-month boundaries, so TruncMonth partitions the
+        # FY into exactly the twelve sets the per-month filters selected.
+        from django.db.models import Count
+        from django.db.models.functions import TruncMonth
+
+        fy_start, _ = get_month_date_range(cd.fy, 1)
+        _, fy_end = get_month_date_range(cd.fy, 12)
+        buckets = {
+            row["month_bucket"]: row
+            for row in acts.filter(
+                planned_date__gte=fy_start.date(), planned_date__lt=fy_end.date()
             )
-            planned.append(mq.filter(status__in=PLANNED_STATUSES).count())
-            completed.append(mq.filter(status__in=COMPLETED_STATUSES).count())
-            cum += mq.filter(
-                status__in=COMPLETED_STATUSES, activity_type__in=target_types
-            ).count()
+            .annotate(month_bucket=TruncMonth("planned_date"))
+            .values("month_bucket")
+            .annotate(
+                planned_n=Count("id", filter=Q(status__in=PLANNED_STATUSES)),
+                completed_n=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                credited_n=Count(
+                    "id",
+                    filter=Q(
+                        status__in=COMPLETED_STATUSES, activity_type__in=target_types
+                    ),
+                ),
+            )
+        }
+        for m in range(1, 13):
+            start, _end = get_month_date_range(cd.fy, m)
+            labels.append(MONTHS_SHORT[start.month])
+            row = buckets.get(start.date()) or {}
+            planned.append(row.get("planned_n", 0))
+            completed.append(row.get("completed_n", 0))
+            cum += row.get("credited_n", 0)
             pct.append(round(cum / total_target * 100) if total_target else 0)
         return {
             "labels": labels,

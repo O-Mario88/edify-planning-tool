@@ -142,6 +142,24 @@ else
   printf '  WARN  %-42s no stamp table in this database\n' "environment stamp"
 fi
 
+step "7. Drive the application against the restored copy"
+# Structure restoring correctly is necessary and is not the question anyone
+# cares about after an incident, which is whether the product works. A sequence
+# left behind its table, a missing extension, a view restored before its table
+# -- none of those move a row count, and all of them show up on the first page
+# somebody opens. So open some pages.
+PYTHON_BIN="${PYTHON_BIN:-.venv/bin/python}"
+if [[ -x "$PYTHON_BIN" ]]; then
+  if RESTORE_SMOKE_DB="$SCRATCH_DB" "$PYTHON_BIN" scripts/restore_smoke.py; then
+    :
+  else
+    echo "  FAIL  application smoke test against the restored copy" >&2
+    fail=1
+  fi
+else
+  printf '  WARN  %-42s no interpreter at %s\n' "application smoke test skipped" "$PYTHON_BIN"
+fi
+
 step "Result"
 if [[ "$fail" -eq 0 ]]; then
   echo "  RESTORE REHEARSAL PASSED -- ${table_count} tables, ${src_migrations} migrations verified."

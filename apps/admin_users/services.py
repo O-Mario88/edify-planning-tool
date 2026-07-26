@@ -7,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.models import User, UserInvitation
+from apps.core.blocking_io_guard import send_after_commit
 from apps.core.email import mailer
 from apps.core.exceptions import BadRequest, ConflictError, NotFoundError
 from apps.core.security import expiry_from_now_days, generate_token, hash_token
@@ -182,14 +183,34 @@ def create(data: dict, principal) -> dict:
         for d_id in selected_districts:
             StaffGeographyAssignment.objects.create(staff=sp, district_id=d_id)
 
-    if password:
-        mail = mailer.send_temporary_password_notification(
-            to=email, name=user.name, invited_by_name=principal.name
-        )
-    else:
-        mail = mailer.send_invitation(
-            to=email, name=user.name, invited_by_name=principal.name, token=invite_token
-        )
+    # Sent after the surrounding transaction commits, not inside it.
+    #
+    # This function is also called from hr.recruitment_service.hire(), which is
+    # @transaction.atomic and holds a select_for_update on the Application row
+    # so a candidate cannot be provisioned twice. Sending from in there held
+    # that lock across the provider round-trip — up to the mailer's fifteen
+    # second timeout — and held a connection out of the pool with it.
+    #
+    # It is also the more correct order. An invitation for an account whose
+    # creation then rolled back is a link that cannot work, sent to someone
+    # with no way to know why.
+    #
+    # With no transaction open, send_after_commit sends immediately, so the
+    # ordinary admin-creates-a-user path is unchanged.
+    def _notify() -> None:
+        if password:
+            mailer.send_temporary_password_notification(
+                to=email, name=user.name, invited_by_name=principal.name
+            )
+        else:
+            mailer.send_invitation(
+                to=email,
+                name=user.name,
+                invited_by_name=principal.name,
+                token=invite_token,
+            )
+
+    send_after_commit(_notify)
 
     from apps.audit.services import log as audit_log
 
@@ -209,7 +230,13 @@ def create(data: dict, principal) -> dict:
             "name": user.name,
             "status": user.status,
         },
-        "inviteToken": None if (password or mail.get("delivered")) else invite_token,
+        # Whether the admin needs the link handed back depends on whether
+        # email can reach the person at all, which is knowable now — the
+        # delivery result is not, since the send may not have happened yet.
+        # The console provider never delivers, so the token is the only way
+        # in; a configured provider that later fails is a logged failure with
+        # resend_invite as the remedy.
+        "inviteToken": None if (password or mailer.is_configured) else invite_token,
     }
 
 

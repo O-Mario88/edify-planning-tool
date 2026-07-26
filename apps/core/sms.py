@@ -30,6 +30,8 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
+from .blocking_io_guard import refuse_inside_transaction
+
 logger = logging.getLogger("edify.sms")
 
 # The provider round-trip sits inside a login request, so it is bounded well
@@ -71,6 +73,7 @@ class SmsService:
         return self.provider == "africastalking"
 
     def send(self, msg: SmsMessage) -> dict:
+        refuse_inside_transaction(f"SMS to {msg.to}")
         if self.provider == "africastalking":
             return self._send_via_africastalking(msg)
 

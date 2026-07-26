@@ -8,27 +8,23 @@ class TargetsConfig(AppConfig):
     verbose_name = "Edify Targets"
 
     def ready(self):
-        """Open and close the per-request memo store (apps.core.request_cache).
+        """Register reference data, and open/close the per-request memo store.
 
-        Bound to the request signals rather than middleware so it also covers
-        requests that short-circuit before the middleware chain completes; the
-        store is thread-local, so concurrent requests never share one.
+        The memo store (apps.core.request_cache) is bound to the request
+        signals rather than middleware so it also covers requests that
+        short-circuit before the middleware chain completes; the store is
+        thread-local, so concurrent requests never share one.
         """
         from django.core.signals import request_finished, request_started
-        from django.db.models.signals import post_migrate
 
-        from apps.core import request_cache
+        from apps.core import reference_data, request_cache
+        from apps.targets.reference import ensure_target_areas
 
-        # Reference data, restored on post_migrate. Django emits that signal
-        # after `flush` as well as after `migrate`, which is the only reason
-        # the official target areas survive a TransactionTestCase — without it
-        # the table stays empty for the rest of that database's life and HR
-        # approval silently writes no targets.
-        post_migrate.connect(
-            _ensure_reference_data,
-            sender=self,
-            dispatch_uid="edify_targets_reference_data",
-        )
+        # The official target areas. Every personal target, the weighted
+        # Overall Progress, and the targets HR writes on approval all resolve
+        # through TargetArea.key — an empty table does not raise, it silently
+        # produces no targets at all.
+        reference_data.register("targets", ensure_target_areas)
 
         request_started.connect(
             lambda sender, **kw: request_cache.begin(),
@@ -40,9 +36,3 @@ class TargetsConfig(AppConfig):
             dispatch_uid="edify_request_cache_end",
             weak=False,
         )
-
-
-def _ensure_reference_data(sender, **kwargs):
-    from apps.targets.reference import ensure_target_areas
-
-    ensure_target_areas()

@@ -182,6 +182,11 @@ _db_url = os.environ.get(
 import sys
 
 _is_testing = "test" in sys.argv or "pytest" in sys.modules
+# Exposed as a setting so code outside this module can ask. Used by
+# apps.core.blocking_io_guard, which raises under test and only logs in
+# production -- a lock-hygiene problem must fail the build, but it must not
+# turn a slow provider into a lost sign-in code for a real person.
+IS_TESTING = _is_testing
 
 # Parse database URL including query parameters (like sslmode=require) using django-environ
 _db_config = environ.Env.db_url_config(_db_url)
@@ -198,6 +203,56 @@ DATABASES = {"default": _db_config}
 # Apply default config parameters
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 DATABASES["default"]["CONN_MAX_AGE"] = 0 if _is_testing else 60
+
+# ── Database timeouts ────────────────────────────────────────────────────────
+# Postgres defaults all three of these to "wait forever", which is the wrong
+# answer for every one of them:
+#
+#   statement_timeout   A query with a bad plan runs until someone notices.
+#                       Meanwhile it holds a connection out of a small pool, so
+#                       one runaway query on one page degrades every page.
+#
+#   lock_timeout        A request waiting on a row someone else has locked
+#                       waits indefinitely. Two of those pointing at each other
+#                       is a deadlock, which Postgres does detect and break —
+#                       but plain contention is not a deadlock, and nothing
+#                       breaks it. The request just never answers.
+#
+#   idle_in_transaction A worker that wedges between two statements holds its
+#                       locks and its snapshot until the process dies. Autovacuum
+#                       stops being able to clean up behind it, so the cost keeps
+#                       growing for as long as it sits there.
+#
+# The numbers are ceilings on pathology, not budgets for normal work: nothing a
+# person waits on should come close. Anything legitimately longer — an import,
+# an annual reconciliation, the analytics build — belongs in a background job,
+# which raises its own limits per session via DB_STATEMENT_TIMEOUT_MS rather
+# than forcing the web tier to accommodate it.
+#
+# Under test the statement limit is loosened and the idle limit switched off:
+# the scale harness builds fifteen thousand schools inside one transaction, and
+# `TestCase` holds a transaction open across the whole of a slow test. Neither
+# is the condition these are looking for.
+_statement_timeout_ms = _as_int(
+    os.environ.get("DB_STATEMENT_TIMEOUT_MS"), 300_000 if _is_testing else 30_000
+)
+_lock_timeout_ms = _as_int(os.environ.get("DB_LOCK_TIMEOUT_MS"), 10_000)
+_idle_tx_timeout_ms = _as_int(
+    os.environ.get("DB_IDLE_IN_TRANSACTION_TIMEOUT_MS"), 0 if _is_testing else 60_000
+)
+
+_pg_options = [
+    f"-c statement_timeout={_statement_timeout_ms}",
+    f"-c lock_timeout={_lock_timeout_ms}",
+    f"-c idle_in_transaction_session_timeout={_idle_tx_timeout_ms}",
+]
+_existing_options = DATABASES["default"].setdefault("OPTIONS", {}).get("options", "")
+# Appended, never assigned: a DATABASE_URL carrying ?schema= already put a
+# search_path in here, and overwriting it would silently point the whole
+# application at the wrong schema.
+DATABASES["default"]["OPTIONS"]["options"] = " ".join(
+    filter(None, [_existing_options, *_pg_options])
+)
 
 # ── Caching (Redis-backed with dynamic fallback to LocMemCache) ──────────────
 _redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")

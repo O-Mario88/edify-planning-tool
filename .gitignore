@@ -44,3 +44,4 @@ node_modules/
 _to_delete_git_locks/
 .zcode/
 referential-integrity-backup*.json
+.backup-rehearsal/

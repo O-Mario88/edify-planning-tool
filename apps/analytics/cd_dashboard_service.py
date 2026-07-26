@@ -27,7 +27,7 @@ from apps.analytics.cd_analytics_service import (
     CDAnalyticsService,
     _country_activities,
     _cycle_fys,
-    _refresh_target_ledger,
+    _prime_target_series,
     resolve_cd_scope,
 )
 from apps.analytics.pl_analytics_service import (
@@ -71,7 +71,19 @@ class CDDashboardService:
         # because one side was staler than the other (mandate: never
         # invoked proactively for CD/RVP rollups otherwise, unlike My/Team
         # Targets which rebuild on every page load).
-        _refresh_target_ledger(cd)
+        #
+        # _prime_target_series, not _refresh_target_ledger: it performs the
+        # exact same per-CCEO rebuild and ALSO caches each person's monthly
+        # series on `cd`, so every _weighted_achievement() below pools from
+        # that in pure Python instead of re-fetching per PL and again per
+        # CCEO. This is the substitution _refresh_target_ledger's own
+        # docstring prescribes for callers that read PL/CCEO rollups next —
+        # the analytics page has done it since the series cache was built;
+        # this dashboard was the caller that never got the memo. Measured
+        # here at 282 queries from _weighted_achievement alone on one
+        # render, most of the gap that put this page at 1.4s against an
+        # 800ms budget.
+        _prime_target_series(cd)
 
         pl_rows = CDDashboardService.pl_performance(cd, acts)
         regional = CDDashboardService.regional_performance(cd, acts)
@@ -335,15 +347,37 @@ class CDDashboardService:
 
         base = CDAnalyticsService.performance_vs_target(cd)  # labels + pct line
         full = _country_activities(resolve_cd_scope(cd.fy))
+        # One grouped pass instead of 36 per-month counts. Exactly equivalent
+        # to the per-month loop it replaces: get_month_date_range() yields
+        # contiguous first-of-month boundaries (verified: m and m+1 share an
+        # edge), so bucketing by TruncMonth over the whole FY partitions the
+        # rows into the same twelve sets the individual >= start / < end
+        # filters selected.
+        from django.db.models import Count
+        from django.db.models.functions import TruncMonth
+
+        fy_start, _ = get_month_date_range(cd.fy, 1)
+        _, fy_end = get_month_date_range(cd.fy, 12)
+        buckets = {
+            row["month_bucket"]: row
+            for row in full.filter(
+                planned_date__gte=fy_start.date(), planned_date__lt=fy_end.date()
+            )
+            .annotate(month_bucket=TruncMonth("planned_date"))
+            .values("month_bucket")
+            .annotate(
+                planned=Count("id"),
+                completed=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                verified=Count("id", filter=Q(status__in=VERIFIED_STATUSES)),
+            )
+        }
         planned, completed, verified = [], [], []
         for m in range(1, 13):
-            start, end = get_month_date_range(cd.fy, m)
-            mq = full.filter(
-                planned_date__gte=start.date(), planned_date__lt=end.date()
-            )
-            planned.append(mq.count())
-            completed.append(mq.filter(status__in=COMPLETED_STATUSES).count())
-            verified.append(mq.filter(status__in=VERIFIED_STATUSES).count())
+            start, _end = get_month_date_range(cd.fy, m)
+            row = buckets.get(start.date()) or {}
+            planned.append(row.get("planned", 0))
+            completed.append(row.get("completed", 0))
+            verified.append(row.get("verified", 0))
         return {
             "labels": base["labels"],
             "pct": base["pct"],

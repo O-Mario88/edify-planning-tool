@@ -795,7 +795,7 @@ urlpatterns = [
         name="team_availability",
     ),
     path("leave/team-availability/", leave_views.team_availability_view),
-    # Country Budget
+    # General Budget
     path(
         "rvp/annual/<str:budget_id>/action",
         rvp_views.rvp_annual_action_view,
