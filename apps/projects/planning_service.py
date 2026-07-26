@@ -503,25 +503,11 @@ def get_planning(principal, filters=None) -> dict:
             "icon": "warning",
         },
         {
-            "label": "Assigned to Partner",
-            "value": partner_count,
-            "helper": "awaiting or partner-led",
-            "tone": "purple",
-            "icon": "partner",
-        },
-        {
             "label": "Scheduled This Week",
             "value": scheduled_week,
             "helper": "project activities",
             "tone": "green",
             "icon": "calendar",
-        },
-        {
-            "label": "Schools in Active Projects",
-            "value": len({a.school_id for a in assignments}),
-            "helper": f"across {len({a.project_id for a in assignments})} projects",
-            "tone": "teal",
-            "icon": "folder",
         },
         {
             "label": "Planning Completion",

@@ -51,6 +51,7 @@ def report() -> dict:
         "unclustered": agg["unclustered"],
         "planningReady": agg["planning_ready"],
     }
+    data["platform"] = _platform()
     data["mockDataLeakage"] = _mock_leakage()
     data["workflowIssues"] = _workflow_issues()
     data["permissionAudit"] = _permission_guards_audit()
@@ -65,6 +66,18 @@ def report() -> dict:
     data["documentationCoverage"] = _documentation_coverage()
     data["referentialIntegrity"] = _referential_integrity()
     return data
+
+
+def _platform() -> dict:
+    """Infrastructure conditions that fail without erroring: migration drift,
+    a delivery channel that silently fell back to the console, a cache that
+    degraded to per-process."""
+    try:
+        from apps.core.health import platform_health
+
+        return platform_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
 
 
 def _referential_integrity() -> dict:
