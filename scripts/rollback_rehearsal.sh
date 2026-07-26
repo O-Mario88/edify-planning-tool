@@ -119,9 +119,9 @@ step "4. Serve pages from the previous release against the current schema"
 # it, so reading it from there tests whether the harness existed yet instead of
 # whether the rollback works. That is exactly the false negative this produced
 # the first time it ran.
-cp scripts/restore_smoke_test.py "$WORKTREE/scripts/restore_smoke_test.py"
+cp scripts/restore_smoke.py "$WORKTREE/scripts/restore_smoke.py"
 if (cd "$WORKTREE" && RESTORE_SMOKE_DB="$SCRATCH_DB" PGPASSWORD="$PGPASSWORD" \
-      "$PYTHON_BIN" scripts/restore_smoke_test.py); then
+      "$PYTHON_BIN" scripts/restore_smoke.py); then
   check "previous release serves the current schema" "0" "0"
 else
   check "previous release serves the current schema" "0" "1"

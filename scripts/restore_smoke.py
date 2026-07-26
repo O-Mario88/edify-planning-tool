@@ -18,6 +18,10 @@ passes the scratch database name in.
 Deliberately read-only. The restored copy is evidence; writing to it would
 change the thing being measured, and a smoke test that mutates is one nobody
 runs twice.
+
+Named restore_smoke.py, not restore_smoke_test.py: the _test suffix matches
+pytest's collection pattern, and the module-level refusal to run without
+RESTORE_SMOKE_DB then aborts the entire suite at collection time. It did.
 """
 
 from __future__ import annotations

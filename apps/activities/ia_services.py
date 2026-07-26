@@ -213,13 +213,24 @@ class ActivityReturnService:
         activity: Activity, reasons: list[str], comment: str, actor_id: str
     ) -> dict:
         # Guard against a stale tab, a replayed POST, or a second IA staffer
-        # racing the same queue: only an activity actually awaiting IA
-        # verification may be returned. Without this, an already-closed,
-        # cancelled, or otherwise-progressed activity could be silently
-        # knocked back to "returned_by_ia".
+        # racing the same queue. The check outside the transaction is the
+        # cheap early exit; the one that decides anything is the re-check
+        # below, on a row re-fetched under select_for_update. A status read
+        # from the instance the caller happened to be holding is a comment,
+        # not a guard — two staffers who both loaded the queue see AWAITING
+        # in memory simultaneously, and the race test proved both were then
+        # told their action succeeded.
         if activity.status != ActivityStatus.AWAITING_IA_VERIFICATION:
             raise BadRequest("Activity is not awaiting IA verification")
         with transaction.atomic():
+            activity = (
+                Activity.objects.select_for_update().filter(id=activity.id).first()
+            )
+            if (
+                activity is None
+                or activity.status != ActivityStatus.AWAITING_IA_VERIFICATION
+            ):
+                raise BadRequest("Activity is not awaiting IA verification")
             activity.status = ActivityStatus.RETURNED_BY_IA
             activity.ia_verification_status = VerificationStatus.RETURNED
             activity.save(
@@ -281,13 +292,23 @@ class ActivityCertificationService:
     def certify_activity(
         activity: Activity, checklist_data: dict, actor_id: str
     ) -> dict:
-        # Same race/replay guard as ActivityReturnService.return_activity:
-        # only an activity actually awaiting IA verification may be
-        # certified, so a stale tab or two IA staffers on the same queue
-        # cannot double-certify or certify a closed/cancelled activity.
+        # Same race/replay guard as ActivityReturnService.return_activity,
+        # and the same two-layer shape: the early check is a courtesy, the
+        # re-check under select_for_update is the guard. Without it, two IA
+        # staffers racing the same queue were BOTH told their certification
+        # succeeded, and the second write overwrote ia_confirmed_by — the
+        # verifier's identity on an audit-relevant field.
         if activity.status != ActivityStatus.AWAITING_IA_VERIFICATION:
             raise BadRequest("Activity is not awaiting IA verification")
         with transaction.atomic():
+            activity = (
+                Activity.objects.select_for_update().filter(id=activity.id).first()
+            )
+            if (
+                activity is None
+                or activity.status != ActivityStatus.AWAITING_IA_VERIFICATION
+            ):
+                raise BadRequest("Activity is not awaiting IA verification")
             activity.status = ActivityStatus.IA_VERIFIED
             activity.ia_verification_status = VerificationStatus.CONFIRMED
             activity.ia_confirmed_at = timezone.now()

@@ -150,7 +150,7 @@ step "7. Drive the application against the restored copy"
 # somebody opens. So open some pages.
 PYTHON_BIN="${PYTHON_BIN:-.venv/bin/python}"
 if [[ -x "$PYTHON_BIN" ]]; then
-  if RESTORE_SMOKE_DB="$SCRATCH_DB" "$PYTHON_BIN" scripts/restore_smoke_test.py; then
+  if RESTORE_SMOKE_DB="$SCRATCH_DB" "$PYTHON_BIN" scripts/restore_smoke.py; then
     :
   else
     echo "  FAIL  application smoke test against the restored copy" >&2
