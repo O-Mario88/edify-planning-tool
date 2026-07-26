@@ -20,6 +20,8 @@ import os
 import urllib.request
 from dataclasses import dataclass, field
 
+from .blocking_io_guard import refuse_inside_transaction
+
 logger = logging.getLogger("edify.mailer")
 
 
@@ -60,6 +62,7 @@ class MailerService:
         return self.provider == "resend"
 
     def send(self, msg: MailMessage) -> dict:
+        refuse_inside_transaction(f"Email to {msg.to}")
         if self.provider == "resend":
             return self._send_via_resend(msg)
         # Console / dev — the body carries password-reset and invitation
