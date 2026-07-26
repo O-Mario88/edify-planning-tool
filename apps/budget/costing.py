@@ -59,6 +59,7 @@ GROUP_TRAINING_RATE_KEYS = (
 )
 CLUSTER_MEETING_SNACK_RATE_KEY = "cluster_meeting_participant_meal_cost_per_head"
 
+
 def _participants_of(a: dict, default_n: int) -> int:
     counted = (
         (a.get("teachersAttended") or 0)

@@ -109,7 +109,9 @@ def main() -> int:
     check("sequences carry their position", True, f"{advanced} advanced")
 
     user = User.objects.filter(is_active=True, deleted_at__isnull=True).first()
-    check("an account exists to sign in as", user is not None, getattr(user, "email", ""))
+    check(
+        "an account exists to sign in as", user is not None, getattr(user, "email", "")
+    )
     if user is None:
         return 1
 

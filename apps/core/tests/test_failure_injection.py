@@ -144,12 +144,8 @@ class CacheOutageTest(TestCase):
 
         backend = type(caches["default"])
         with (
-            mock.patch.object(
-                backend, "get", side_effect=ConnectionError("refused")
-            ),
-            mock.patch.object(
-                backend, "set", side_effect=ConnectionError("refused")
-            ),
+            mock.patch.object(backend, "get", side_effect=ConnectionError("refused")),
+            mock.patch.object(backend, "set", side_effect=ConnectionError("refused")),
         ):
             for path in ("/settings", "/notifications"):
                 with self.subTest(path=path):
@@ -167,12 +163,8 @@ class CacheOutageTest(TestCase):
 
         backend = type(caches["default"])
         with (
-            mock.patch.object(
-                backend, "get", side_effect=ConnectionError("refused")
-            ),
-            mock.patch.object(
-                backend, "set", side_effect=ConnectionError("refused")
-            ),
+            mock.patch.object(backend, "get", side_effect=ConnectionError("refused")),
+            mock.patch.object(backend, "set", side_effect=ConnectionError("refused")),
         ):
             response = Client().get("/login")
         self.assertEqual(response.status_code, 200)
