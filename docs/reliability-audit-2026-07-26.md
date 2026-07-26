@@ -430,7 +430,7 @@ in the working tree, none to audit work.
 
 | Gate | Result |
 |---|---|
-| CI on the audit branch (PR #14) | **5/5 checks green** — suite, CodeQL ×2, Security Scans, CodeQL gate |
+| CI on the audit branch (PR #14) | **5/5 checks green** — run 30206220299 (dd12865f): suite, security scans, CodeQL ×2 + gate |
 | Local cumulative suite | 2119 passed; 6 failures, all traced to concurrent WIP on disk |
 | Latency budgets | 24/24 measured page-role combinations inside budget (702-school dataset — a floor, not a ceiling) |
 | Restore rehearsal (§56) | 215 tables, 197 migrations, 232 FKs; 8 pages + audit chain served from the restored copy |
