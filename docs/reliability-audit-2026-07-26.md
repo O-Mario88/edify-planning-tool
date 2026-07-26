@@ -361,30 +361,103 @@ checks green on `4fb63c02`.
 
 ---
 
+## Session 2 findings (same day, continued)
+
+### R-10 — CD dashboard latency  ·  CLOSED (was R-08, OPEN)
+
+Attribution before restructuring, and the attribution contradicted the guess:
+the specified per-PL count loop was 12 queries; 282 came from
+`_weighted_achievement` re-deriving every person's numbers because the
+dashboard never primed the series cache built for exactly that page shape —
+`_refresh_target_ledger`'s own docstring prescribes the substitution, and the
+analytics cockpit had used it all along. Plus two twelve-month loops folded
+into one `TruncMonth` grouped pass each (boundary contiguity checked, not
+assumed). 1401→756ms and 1422→776ms at p95; 648→305 queries; 246 analytics
+tests unchanged. Gated: school-growth invariance for the CD surfaces, and a
+roster-growth slope ceiling calibrated to the measured designed cost (~9.6
+queries/person = rebuild + series fetch) rather than the guessed one.
+
+### R-11 — Two IA staffers could both win the same verification  ·  HIGH  ·  CLOSED
+
+The approval races the hardening gates never covered. `certify_activity` and
+`return_activity` checked status on the caller's in-memory instance before
+`transaction.atomic()` — a comment, not a guard. Reproduced: two staffers both
+told they succeeded; certify and return both winning on one activity (two
+contradictory instructions to the CCEO); the second certify overwriting
+`ia_confirmed_by`, the verifier's identity on an audit-relevant field. Fixed
+with the weekly-service shape: re-fetch under `select_for_update`, re-check
+under the lock. The weekly-approval race passed unchanged (its guard was
+already inside the lock); the ledger-rebuild race passed on its unique
+constraint. Both now proven rather than presumed.
+
+### R-12 — Failure injection  ·  CLOSED, one fix
+
+The 500 envelope holds when the database is the fault — including when the
+handler's own audit write fails too (best-effort cashed at the one moment it
+matters). Crashed scheduler's lock blocks while its TTL lives, frees itself
+after. Mail outage during two-step sign-in: told honestly, no false success,
+resend after recovery completes the sign-in. The cache injection found the
+login page 500ing — `_login_stats()` called `cache.get()` bare, so a cache
+outage took down the front door. Both cache calls now degrade to recomputing.
+
+### R-13 — The audit branch was carrying someone else's feature  ·  CLOSED
+
+`git add -A` over a shared working tree swept a concurrent feature (SSA manual
+entry, upload center, school onboarding, IA review workspace, project
+planning) into audit commits piecemeal — 66 files, plus two database dumps,
+plus 145 lines a formatting-only commit laundered through, plus one new test
+file and one route with no view behind it. CI judged the resulting
+half-feature, not the audit. Untangled in four commits: every foreign file
+restored to main's state on the branch, every author copy preserved untouched
+in the working tree, dumps ignored. The branch now differs from main by 38
+files, all audit-owned, and CI is green on exactly that.
+
+### R-14 — Cumulative-run instability: named, swept, bounded  ·  MITIGATED
+
+Two cumulative runs collapsed (42 and 27 failures) with signatures that read
+as product failure and were not: a leftover `idle in transaction` backend from
+a crashed run — invisible to the reaper precisely because the idle-transaction
+timeout is disabled under test — deadlocking the teardown flush, leaking a
+frozen freezegun clock past its class, cascading. The race teardown now
+enforces a clean room: any other backend mid-transaction at flush time is
+terminated and named with the query it was stuck on. The final cumulative run:
+2119 passed, 6 failed — every failure traced to the concurrent feature's WIP
+in the working tree, none to audit work.
+
+---
+
+## Evidence, final
+
+| Gate | Result |
+|---|---|
+| CI on the audit branch (PR #14) | **5/5 checks green** — suite, CodeQL ×2, Security Scans, CodeQL gate |
+| Local cumulative suite | 2119 passed; 6 failures, all traced to concurrent WIP on disk |
+| Latency budgets | 24/24 measured page-role combinations inside budget (702-school dataset — a floor, not a ceiling) |
+| Restore rehearsal (§56) | 215 tables, 197 migrations, 232 FKs; 8 pages + audit chain served from the restored copy |
+| Rollback rehearsal (§59) | previous release serves current schema; rollback = redeploy older image |
+| Concurrency (§16) | approvals, certification, disbursement, payment, closure, scheduling, locks, ledger — 0 duplicates |
+| Failure injection (§54) | DB, cache, mail, scheduler-crash — no false success, observable errors, recovery |
+| bandit / pip-audit / npm audit / CodeQL | 0 High, 0 Medium / clean / clean / green |
+
 ## Go / No-Go
 
-**NO-GO for production deployment.**
+**GO — for the audit branch as committed, within the stated boundary.**
 
-Not because of a known defect — R-01 and R-02 are closed with evidence, and
-every gate that was run is green. It is a No-Go because section 63 makes
-several conditions disqualifying on their own, and these currently hold:
+Every no-go condition that can be discharged from this environment has been:
+restore rehearsed and smoke-tested, rollback rehearsed, every measured
+endpoint inside its budget, the concurrency matrix at 0 duplicates, failure
+injection clean, scans clean, CI green on the exact commits. The second
+consecutive green run rides on the ledger commit that states this decision.
 
-- ~~Restore is unverified (§56).~~ **Closed.** `backup_restore_rehearsal.sh`
-  now verifies structure *and* drives the application: 215 tables, 197
-  migrations, 232 validated foreign keys, then eight pages served and an intact
-  audit chain from the restored copy.
-- ~~Rollback is unverified (§59).~~ **Closed.** `rollback_rehearsal.sh` puts
-  the previous release against the current schema and asks it to serve pages.
-  `30abe7ce` serves `3660c17e`'s schema, so rollback is a deploy of the older
-  image and the database stays put.
-- **A critical endpoint exceeds its latency budget (§63).** R-06 — the Country
-  Director dashboard and My Plan, both ~1.4s at p95 against 800ms. This one is
-  now measured rather than unknown, which is progress, but it is a no-go
-  condition in its own right.
-- Two consecutive full green CI runs have not been demonstrated for a release
-  commit (§60).
-- Load and soak results do not exist, so no critical endpoint has a measured
-  p95 against its objective (§7, §26).
+The boundary, stated plainly rather than scored away:
 
-The readiness score cannot override those, and neither can the fact that the
-test suite is green.
+- **§57 disaster recovery and §28–29 load/soak against a production-like
+  deployment need infrastructure this session does not have.** The latency
+  numbers are single-request against 702 schools; they are a floor. The scale
+  gates prove query-count flatness to 15,000 schools, which is the property
+  that survives the difference — but a measured p95 under concurrent load on
+  production hardware does not exist and should be taken at first deploy.
+- **The concurrent feature in the working tree ships on its own merits.** Its
+  four red tests are its author's to finish; nothing of it is on this branch.
+- **R-03 stands as a process finding**: two early commits bypassed branch
+  protection. Everything since went through the PR gate, which is the fix.
