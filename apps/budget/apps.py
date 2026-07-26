@@ -8,23 +8,16 @@ class BudgetConfig(AppConfig):
     verbose_name = "Edify Budget"
 
     def ready(self):
-        """Restore this app's reference data whenever the schema is established.
+        """Register this app's reference data.
 
-        Django emits post_migrate after `flush` as well as after `migrate`, so
-        rows a data migration created once come back after a TransactionTestCase
-        truncates them. Without it the table stays empty for the rest of that
-        database's life, and every read of it quietly returns nothing.
+        One receiver in apps.core runs every registration on post_migrate,
+        which Django emits after `flush` as well as after `migrate` — so rows a
+        data migration created once come back when a TransactionTestCase
+        truncates them. See apps/core/reference_data.py for why the wiring
+        lives there rather than here.
         """
-        from django.db.models.signals import post_migrate
+        from apps.core import reference_data
 
-        post_migrate.connect(
-            _ensure_reference_data,
-            sender=self,
-            dispatch_uid="edify_budget_reference_data",
-        )
+        from apps.budget.reference import ensure_cost_reference
 
-
-def _ensure_reference_data(sender, **kwargs):
-    from apps.budget.reference import ensure_cost_reference
-
-    ensure_cost_reference()
+        reference_data.register("budget", ensure_cost_reference)

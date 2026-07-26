@@ -7,4 +7,16 @@ class HelpCenterConfig(AppConfig):
     verbose_name = "Edify Knowledge Center"
 
     def ready(self):
-        from . import signals  # noqa: F401
+        """Register this app's reference data.
+
+        One receiver in apps.core runs every registration on post_migrate,
+        which Django emits after `flush` as well as after `migrate` — so rows a
+        data migration created once come back when a TransactionTestCase
+        truncates them. See apps/core/reference_data.py for why the wiring
+        lives there rather than here.
+        """
+        from apps.core import reference_data
+
+        from .services import ensure_canonical_content
+
+        reference_data.register("help_center", ensure_canonical_content)

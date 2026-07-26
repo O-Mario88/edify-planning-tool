@@ -179,12 +179,40 @@ failure somewhere else, with nothing in the failure pointing back at the
 cause.** That is a latent defect in the suite, not in the product, but it taxes
 every future change that needs a real transaction.
 
-Mitigated here with `serialized_rollback = True` on the three affected classes,
-which is Django's documented remedy — the initial data is restored after the
-flush. It is slower, and it is the price of using a real transaction at all.
+**Now fixed structurally.** `apps/core/reference_data.py` is a registry; apps
+register an idempotent ensure function and one `post_migrate` receiver runs
+them all. What that buys is not the wiring — that was never hard — but that
+`apps/core/tests/test_reference_data.py` can hold the convention to account:
 
-The structural fix — a reference-data restore that covers every app rather than
-the ones that have already bitten someone — is not done.
+- **Completeness.** Any app whose migrations create rows must either register
+  or appear in `ONE_OFF_DATA_MIGRATIONS` with a written reason. A new feature
+  cannot forget, because forgetting fails the build rather than a stranger's
+  test next quarter. Proved able to go red by a test that injects a fictional
+  unregistered app.
+- **Idempotency.** Row counts before and after a second `restore_all()`, so an
+  ensure function that duplicates on every flush is caught. Counted from the
+  database rather than trusted from a return value — a function that
+  under-reports would otherwise be indistinguishable from one with nothing to
+  do, which is this whole failure moved one level up.
+- **Restoration.** One `TransactionTestCase` whose entire job is to flush and
+  confirm the rows came back.
+- **No `serialized_rollback`.** Parsed with `ast`, so prose about it does not
+  trip the check.
+
+The investigation also found the problem in a **third** form. There was already
+an `apps/core/test_seed_utils.py` with `reseed_migration_data()`, called
+manually from `_post_teardown` by three `TransactionTestCase` classes — and it
+held its *own copy* of the seed rows, with a comment noting they were
+"duplicated (not imported)". So the five official target areas were defined in
+three places: the migration, `apps/targets/reference.py`, and there. A weight
+edited in two of the three would have produced a different Overall Progress
+depending on whether the database had been flushed. It is now a shim
+delegating to the registry; the three callers are untouched and still pass.
+
+Its premise was also out of date: it reasoned that nothing restores data after
+the *final* flush, which was true before those apps grew `post_migrate`
+receivers. Django emits `post_migrate` after the teardown flush, so the
+receiver covers it — and unlike the shim, it is not opt-in.
 
 ### R-06 — MFA API tests were passing for the throttle's reasons  ·  MEDIUM  ·  CLOSED
 
