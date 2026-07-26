@@ -437,6 +437,79 @@ class ScaleGateTest(TestCase):
             "/activities/closure/"
         )
 
+    # ── Country Director surfaces ─────────────────────────────────────────
+    #
+    # The CD dashboard is where the audit's one measured latency breach lived:
+    # 648 queries at 1.4s p95, from a per-person target recomputation that the
+    # series cache existed to prevent and the dashboard never used. These
+    # gates are what keep that from creeping back.
+    #
+    # School growth must leave the query count flat — the fix's claim.
+    # Roster growth is deliberately NOT asserted flat: the per-CCEO ledger
+    # rebuild is the freshness mandate itself (every CCEO's ledger is rebuilt
+    # once per dashboard load, ~2 queries each), so CD queries grow with the
+    # roster BY DESIGN, linearly and priced. The ceiling asserts the slope
+    # stays that slope: if roster growth ever costs more than a few queries
+    # per added person, the per-person recomputation is back.
+
+    def _cd_client(self):
+        User = get_user_model()
+        cd = User.objects.filter(email="scale-cd@edify.org").first()
+        if cd is None:
+            cd = User.objects.create(
+                id="scale-cd",
+                email="scale-cd@edify.org",
+                name="Scale CD",
+                roles=["CountryDirector"],
+                active_role="CountryDirector",
+                is_active=True,
+            )
+            cd.set_password("pass123")
+            cd.save()
+            StaffProfile.objects.create(id="scale-staff-cd", user=cd, title="CD")
+        client = self.client_class()
+        client.force_login(cd)
+        return client
+
+    def test_cd_dashboard_is_scale_invariant_over_schools(self):
+        self._assert_scale_invariant("/dashboard", client=self._cd_client())
+
+    def test_cd_my_plan_is_scale_invariant_over_schools(self):
+        self._assert_scale_invariant("/my-plan", client=self._cd_client())
+
+    def test_cd_dashboard_roster_growth_costs_only_the_rebuild(self):
+        """Add CCEOs; the dashboard may pay the per-person rebuild for each,
+        and nothing else. The regression this catches is exact: before the
+        fix, each person cost ~5 further queries across three surfaces on the
+        same page."""
+        User = get_user_model()
+        client = self._cd_client()
+        before = self._measure("/dashboard", client=client)
+
+        added = 8
+        for i in range(added):
+            u = User.objects.create(
+                id=f"scale-roster-{i}",
+                email=f"scale-roster-{i}@edify.org",
+                name=f"Roster Growth {i}",
+                roles=["CCEO"],
+                active_role="CCEO",
+                is_active=True,
+            )
+            StaffProfile.objects.create(id=f"scale-roster-sp-{i}", user=u, title="CCEO")
+        after = self._measure("/dashboard", client=client)
+
+        per_person = (after["queries"] - before["queries"]) / added
+        self.assertLessEqual(
+            per_person,
+            4,
+            f"each added CCEO costs {per_person:.1f} queries on the CD "
+            f"dashboard ({before['queries']} -> {after['queries']} for "
+            f"{added} people). The priced cost is the ledger rebuild (~2-3 "
+            "each); anything above that is per-person recomputation coming "
+            "back. Pool from cd.per_user_series instead.",
+        )
+
 
 def _analyze():
     """Refresh planner statistics.

@@ -92,6 +92,46 @@ class RaceTestCase(TransactionTestCase):
             raise AssertionError(f"race threads never finished: {alive}")
         return results
 
+    def tearDown(self):
+        """No backend but ours may be inside a transaction when the flush runs.
+
+        The teardown flush TRUNCATEs every table under AccessExclusive locks.
+        Any other backend still holding so much as a row lock deadlocks it —
+        and a deadlocked teardown does not stay local: it aborts mid-flush,
+        skips the class's clock cleanup, and the cumulative run then fails in
+        files that have nothing to do with this one. Twice, before this
+        existed, with nothing in either failure pointing here.
+
+        So the flush gets a clean room. Anything else found mid-transaction is
+        terminated and NAMED, with the query it was stuck on — turning the
+        next occurrence from thirty minutes of forensics into one line.
+        """
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT pid, state, COALESCE(query, '')
+                FROM pg_stat_activity
+                WHERE datname = current_database()
+                  AND pid <> pg_backend_pid()
+                  AND state LIKE '%transaction%'
+                """
+            )
+            stragglers = cursor.fetchall()
+            for pid, _state, _query in stragglers:
+                cursor.execute("SELECT pg_terminate_backend(%s)", [pid])
+        super().tearDown()
+        if stragglers:
+            detail = "; ".join(
+                f"pid={pid} state={state} query={query[:120]!r}"
+                for pid, state, query in stragglers
+            )
+            raise AssertionError(
+                f"a race left {len(stragglers)} backend(s) mid-transaction at "
+                f"teardown — the flush would have deadlocked on them: {detail}"
+            )
+
     def _awaiting_activity(self):
         return Activity.objects.create(
             school=self.school,
