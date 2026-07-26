@@ -13,6 +13,14 @@ class LoginSerializer(LenientSerializer):
     activeRole = serializers.CharField(required=False, allow_blank=True)
 
 
+class MfaVerifySerializer(LenientSerializer):
+    """Finishing a sign-in that stopped at the second factor."""
+
+    mfaToken = serializers.CharField(trim_whitespace=False)
+    code = serializers.CharField(trim_whitespace=True)
+    activeRole = serializers.CharField(required=False, allow_blank=True)
+
+
 class RefreshSerializer(LenientSerializer):
     refreshToken = serializers.CharField(trim_whitespace=False)
 

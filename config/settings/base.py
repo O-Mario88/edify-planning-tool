@@ -130,6 +130,10 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",  # before CommonMiddleware
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Directly after SessionMiddleware so its response phase runs directly
+    # before it: the session is touched, and SessionMiddleware then saves the
+    # row and re-sends the cookie. This is what slides the idle window.
+    "apps.core.middleware.SlidingSessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -404,6 +408,28 @@ EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT_SECONDS", "10"))
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY") or ""
 EMAIL_FROM = os.environ.get("EMAIL_FROM", "noreply@edify.org")
 
+# Whether the console mailer may log the message body. apps.core.email has read
+# this since the log-leak fix but nothing ever defined it, so the opt-in was
+# unreachable and a developer had no way to see an invitation link or a sign-in
+# code locally. Off by default, and apps.core.email refuses it in production
+# regardless — the body carries live tokens, which outlive the email in a log.
+EMAIL_LOG_BODIES = _truthy(os.environ.get("EMAIL_LOG_BODIES"), fallback=False)
+
+# SMS (two-mode sender: dev console vs Africa's Talking). One of the two
+# channels a two-factor code can arrive on; apps.core.sms reads the environment
+# directly so tests can swap the provider, and these are mirrored here so the
+# posture report and the enrolment page can see what is configured.
+SMS_PROVIDER = os.environ.get("SMS_PROVIDER", "console")  # console|africastalking
+SMS_SENDER_ID = os.environ.get("SMS_SENDER_ID", "")
+# Whether the dev sender may log the message body. Off by default: the body
+# carries a live sign-in code, which outlives the SMS in a log stream.
+SMS_LOG_BODIES = _truthy(os.environ.get("SMS_LOG_BODIES"), fallback=False)
+
+# Two-factor authentication. Enrolment is per user (User.mfa_enabled, set from
+# the settings page); this turns it on for every account at once, for an
+# organisation that wants it mandatory rather than optional.
+MFA_REQUIRED_FOR_ALL = _truthy(os.environ.get("MFA_REQUIRED_FOR_ALL"), fallback=False)
+
 # Audit hash-chain seed for the genesis row. Override in deployments for a
 # trusted anchor.
 AUDIT_GENESIS_HASH = os.environ.get("AUDIT_GENESIS_HASH", "0" * 64)
@@ -465,6 +491,38 @@ APSCHEDULER_RUN_NOW_TIMEOUT = 25  # seconds
 # Most tables use CUID string PKs (see apps.core.models). AuditLog uses a
 # BigAutoField seq for hash-chain ordering. Models opt in via their Meta.
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# ── Session lifetime ─────────────────────────────────────────────────────────
+# Thirty minutes of INACTIVITY, not thirty minutes total. The window slides
+# forward while someone is working and only starts counting down when they
+# stop: a user is never signed out mid-task, and a laptop left open in a shared
+# office stops being a way in after half an hour.
+#
+# SESSION_SAVE_EVERY_REQUEST stays False on purpose. It is the obvious way to
+# get the sliding window and it costs an UPDATE on one hot session row for
+# every authenticated request in the product. apps.core.middleware.
+# SlidingSessionMiddleware does the same job on a throttle — see its docstring
+# for the bounded precision that buys.
+SESSION_COOKIE_AGE = _as_int(os.environ.get("SESSION_IDLE_TIMEOUT_SECONDS"), 30 * 60)
+SESSION_SAVE_EVERY_REQUEST = False
+
+# Sessions ride on the cache when it is Redis, and on the database otherwise.
+# `cached_db` rather than plain `cache`: a cache eviction or a Redis restart
+# would otherwise sign every user out at once, and the database copy makes that
+# a slow read rather than a mass logout.
+#
+# The condition is _use_redis — whether a Redis connection actually answered —
+# and not _redis_url, which has a default and is therefore always truthy. With
+# the URL as the test this read `cached_db` even when the cache had fallen back
+# to LocMemCache, which is per-process: each worker would have kept its own
+# copy of every session, and a session ended or changed on one worker would
+# have stayed live in the others' caches until their entries lapsed.
+SESSION_ENGINE = (
+    "django.contrib.sessions.backends.cached_db"
+    if _use_redis
+    else "django.contrib.sessions.backends.db"
+)
 
 
 # ── Security defaults (overridden/tightened in prod.py) ──────────────────────

@@ -18,6 +18,8 @@ being reimplemented per job.
                                       a page recently to see a fresh number).
   • pd_reminders                   — daily 06:30 — apps.professional_development.reminders.
   • field_debrief_recurring_issues — daily 05:30 — apps.debriefs.insight_service.
+  • mfa_challenge_purge            — daily 03:20 — deletes spent second-factor
+                                      challenges past MFA_CHALLENGE_RETENTION.
 
 Each PUBLIC job function early-returns unless ENABLE_BACKGROUND_JOBS is
 true, matching the gate every one of these had before this fix — turning
@@ -38,6 +40,12 @@ from django.utils import timezone
 from .execution import run_tracked_job
 
 logger = logging.getLogger("edify.jobs")
+
+# How long a dead second-factor challenge is kept before being deleted. Long
+# enough that an incident review the next day can still see the shape of a
+# sign-in attempt, short enough that the table does not become a permanent
+# archive of credential hashes.
+MFA_CHALLENGE_RETENTION = timedelta(days=7)
 
 
 def _enabled() -> bool:
@@ -373,3 +381,33 @@ def performance_readiness_job():
     if not _enabled():
         return
     run_tracked_job("performance_readiness", _do_performance_readiness)
+
+
+# ── 13. Spent second-factor challenges ───────────────────────────────────────
+def _do_mfa_challenge_purge() -> int:
+    """Delete second-factor challenges that can no longer do anything.
+
+    A row is written for every sign-in by every enrolled account, so without
+    this the table only grows. Each spent row also holds the hash of what was
+    briefly a credential, and keeping those long after they stopped working is
+    keeping a liability with no matching use.
+
+    Only rows that are already dead are touched — consumed, or expired past the
+    retention window. A challenge someone is part-way through answering is
+    never in scope, whatever the window is set to.
+    """
+    from apps.accounts.models import MfaChallenge
+
+    cutoff = timezone.now() - MFA_CHALLENGE_RETENTION
+    deleted, _ = MfaChallenge.objects.filter(
+        expires_at__lt=cutoff, created_at__lt=cutoff
+    ).delete()
+    if deleted:
+        logger.info("Purged %s spent MFA challenges older than %s", deleted, cutoff)
+    return deleted
+
+
+def mfa_challenge_purge_job():
+    if not _enabled():
+        return
+    run_tracked_job("mfa_challenge_purge", _do_mfa_challenge_purge)

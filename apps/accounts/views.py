@@ -23,6 +23,7 @@ from .serializers import (
     ForgotPasswordSerializer,
     LoginSerializer,
     LogoutSerializer,
+    MfaVerifySerializer,
     RefreshSerializer,
     ResetPasswordSerializer,
     SetPasswordSerializer,
@@ -41,6 +42,31 @@ class LoginView(APIView):
         result = auth_services.login(
             email=data["email"],
             password=data["password"],
+            requested_active_role=data.get("activeRole"),
+        )
+        return Response(result)
+
+
+class MfaVerifyView(APIView):
+    """Answer the code a stopped sign-in is waiting on, and get the tokens.
+
+    Same throttle as the password endpoint. The challenge already counts
+    attempts and dies after MAX_ATTEMPTS, but that is a per-challenge limit —
+    the throttle is what stops someone burning through a fresh challenge per
+    guess from the same address.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+    rate_name = "auth.login"
+
+    def post(self, request: Request) -> Response:
+        s = MfaVerifySerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        data = s.validated_data
+        result = auth_services.verify_mfa(
+            mfa_token=data["mfaToken"],
+            code=data["code"],
             requested_active_role=data.get("activeRole"),
         )
         return Response(result)

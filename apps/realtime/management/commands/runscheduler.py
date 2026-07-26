@@ -66,6 +66,7 @@ class Command(BaseCommand):
             "analytics_report_delivery": jobs.analytics_report_delivery_job,
             "escalation_sla_sweep": jobs.escalation_sla_sweep_job,
             "performance_readiness": jobs.performance_readiness_job,
+            "mfa_challenge_purge": jobs.mfa_challenge_purge_job,
         }
 
         scheduler = BackgroundScheduler(timezone="Africa/Kampala")

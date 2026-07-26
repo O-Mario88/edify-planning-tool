@@ -138,8 +138,20 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     # AUTH_LOCKOUT_ESCALATION_COUNT -- the account stays locked regardless
     # of locked_until until an admin explicitly unlocks it.
     lockout_escalated = models.BooleanField(default=False)
-    # MFA seam (Phase 8 design): secret stored encrypted when enrolment ships.
+    # Second factor. `mfa_channel` says where the one-time code is sent; see
+    # apps.accounts.mfa_service, which is the only writer of these two.
+    #
+    # `mfa_secret` predates that and is unused: it was reserved for a TOTP
+    # shared secret, which this does not implement. It stays because dropping a
+    # column is a migration against the user table for no gain, and it is left
+    # explicitly documented as empty rather than looking like a stored secret
+    # nobody can account for.
     mfa_enabled = models.BooleanField(default=False)
+    mfa_channel = models.CharField(
+        max_length=16,
+        choices=[("email", "Email"), ("sms", "SMS")],
+        default="email",
+    )
     mfa_secret = models.CharField(max_length=512, null=True, blank=True)
     # Password-reset seam: store only a HASH of the reset token + its expiry.
     password_reset_token_hash = models.CharField(max_length=255, null=True, blank=True)
@@ -258,6 +270,67 @@ class RefreshToken(TimeStampedModel):
             models.Index(fields=["user"]),
             models.Index(fields=["family_id"]),
         ]
+
+
+class MfaChallenge(TimeStampedModel):
+    """One pending second factor: a short-lived, single-use code.
+
+    The raw code is never stored, only its SHA-256 hash — the same rule
+    UserInvitation and RefreshToken follow, and for the same reason: a database
+    copy, a backup, or a stray log must not contain anything that can be
+    presented as the factor itself.
+
+    Three separate limits, because they close three different doors:
+
+      `expires_at`  bounds how long a code intercepted on its way to a phone or
+                    an inbox is worth anything.
+      `attempts`    bounds guessing. A six-digit code is one in a million per
+                    try, which is only a wall while the number of tries is
+                    small.
+      `consumed_at` makes it single-use, so a code read over someone's shoulder
+                    cannot be replayed after they have signed in with it.
+
+    `deliveries` counts how many times a code was sent for this challenge —
+    resending is how someone recovers from a message that never arrived, and
+    also how an attacker would turn the login form into a way to bombard a
+    phone number at the organisation's expense.
+    """
+
+    CHANNELS = (("email", "Email"), ("sms", "SMS"))
+
+    id = CuidField()
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="mfa_challenges"
+    )
+    channel = models.CharField(max_length=16, choices=CHANNELS)
+    # What the code was sent to, masked at the point of writing — enough for
+    # the person to recognise ("we texted •••• 4821") and for an audit trail to
+    # be readable, without putting a second copy of the address or number into
+    # another table.
+    destination_hint = models.CharField(max_length=64, default="")
+    code_hash = models.CharField(max_length=255)
+    # Only set for challenges raised through the token API, which has no
+    # session to hold the pending state in. The client is handed the raw token
+    # and presents it back with the code; a hash is stored for the same reason
+    # the code is. Null on the web path, where the session does this job.
+    client_token_hash = models.CharField(
+        max_length=255, null=True, blank=True, db_index=True
+    )
+    expires_at = models.DateTimeField()
+    consumed_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.IntegerField(default=0)
+    deliveries = models.IntegerField(default=1)
+    last_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "mfa_challenge"
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["expires_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"MFA {self.channel} for {self.user_id}"
 
 
 class Permission(TimeStampedModel):
@@ -731,6 +804,7 @@ __all__ = [
     "UserManager",
     "UserInvitation",
     "RefreshToken",
+    "MfaChallenge",
     "Permission",
     "RolePermission",
     "StaffOnboardingState",

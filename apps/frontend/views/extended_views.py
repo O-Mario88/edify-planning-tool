@@ -1324,7 +1324,17 @@ def audit_log_view(request):
 @require_page_permission("settings")
 def settings_view(request):
     """General settings."""
-    context = {"user": request.user}
+    from django.conf import settings as django_settings
+
+    from apps.accounts.mfa_service import enrolment_state
+
+    context = {
+        "user": request.user,
+        # Stated on the page rather than left as folklore: people notice being
+        # signed out and should be able to find out why without asking.
+        "session_idle_minutes": django_settings.SESSION_COOKIE_AGE // 60,
+        **enrolment_state(request.user),
+    }
     return render(request, "pages/settings/index.html", context)
 
 

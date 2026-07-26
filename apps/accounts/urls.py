@@ -6,6 +6,7 @@ from . import views
 
 urlpatterns = [
     path("login", views.LoginView.as_view(), name="login"),
+    path("login/verify", views.MfaVerifyView.as_view(), name="login-verify"),
     path("me", views.MeView.as_view(), name="me"),
     path("refresh", views.RefreshView.as_view(), name="refresh"),
     path("logout", views.LogoutView.as_view(), name="logout"),

@@ -183,6 +183,18 @@ JOB_REGISTRY: list[JobSpec] = [
         retryable=True,
         max_retries=2,
     ),
+    JobSpec(
+        name="mfa_challenge_purge",
+        description="Deletes spent second-factor challenges past their retention window.",
+        cron="daily 03:20 Africa/Kampala",
+        cron_kwargs={"hour": 3, "minute": 20},
+        expected_runtime_seconds=10,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note="A delete of already-dead rows; re-running finds nothing left to do.",
+        retryable=True,
+        max_retries=2,
+    ),
 ]
 
 JOB_NAMES = {spec.name for spec in JOB_REGISTRY}

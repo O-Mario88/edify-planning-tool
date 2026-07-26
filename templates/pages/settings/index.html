@@ -35,6 +35,74 @@
     </div>
   </section>
 
+  {# ── Two-step verification ─────────────────────────────────────────────── #}
+  <section class="card p-5 space-y-3" aria-labelledby="settings-2sv-title">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h2 id="settings-2sv-title" class="text-sm font-semibold">Two-step verification</h2>
+        <p class="text-sm text-[var(--edify-text-muted)] mt-1">
+          After your password, we send a single-use code to confirm it is you. It means a
+          stolen password on its own is not enough to reach your workspace.
+        </p>
+      </div>
+      <span class="pill {% if mfa_in_force %}pill-success{% else %}pill-neutral{% endif %} shrink-0">
+        {% if mfa_in_force %}On{% else %}Off{% endif %}
+      </span>
+    </div>
+
+    <form method="post" action="{% url 'frontend:mfa_settings' %}" class="space-y-3"
+          x-data="{ enabled: {{ mfa_in_force|yesno:'true,false' }} }">
+      {% csrf_token %}
+
+      <label class="flex items-center gap-2.5">
+        <input type="checkbox" name="mfa_enabled" x-model="enabled"
+               {% if mfa_required_by_policy %}disabled{% endif %}
+               {% if mfa_in_force %}checked{% endif %}>
+        <span class="text-sm">Ask for a code when I sign in</span>
+      </label>
+
+      {% if mfa_required_by_policy %}
+        {% comment %}
+          The checkbox above is disabled, so the browser will not submit it —
+          this keeps the posted state honest rather than silently turning the
+          factor off for anyone who saves this form.
+        {% endcomment %}
+        <input type="hidden" name="mfa_enabled" value="on">
+        <p class="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
+          Your organisation requires two-step verification, so this cannot be turned off.
+          You can still choose where the code is sent.
+        </p>
+      {% endif %}
+
+      <fieldset class="space-y-2" x-show="enabled" x-cloak>
+        <legend class="text-[length:var(--edify-text-label-size)] font-semibold">Send my code by</legend>
+
+        <label class="flex items-start gap-2.5">
+          <input type="radio" name="mfa_channel" value="email" class="mt-0.5"
+                 {% if mfa_channel != 'sms' %}checked{% endif %}>
+          <span class="text-sm">
+            Email
+            <span class="block text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">{{ mfa_email_hint }}</span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2.5 {% if not mfa_sms_available %}opacity-60{% endif %}">
+          <input type="radio" name="mfa_channel" value="sms" class="mt-0.5"
+                 {% if not mfa_sms_available %}disabled{% endif %}
+                 {% if mfa_channel == 'sms' %}checked{% endif %}>
+          <span class="text-sm">
+            Text message
+            <span class="block text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
+              {% if mfa_sms_available %}{{ mfa_phone_hint }}{% else %}{{ mfa_sms_blocked_reason }}{% endif %}
+            </span>
+          </span>
+        </label>
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary h-9 inline-flex items-center">Save</button>
+    </form>
+  </section>
+
   {# ── Appearance (drives the real edify_theme preference in base.html) ──── #}
   <section class="card p-5 space-y-3" aria-labelledby="settings-appearance-title">
     <h2 id="settings-appearance-title" class="text-sm font-semibold">Appearance</h2>
@@ -85,6 +153,7 @@
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Session</h2>
       <p class="edify-text-caption text-slate-500">Signed in as {{ user.email }}.</p>
+      <p class="edify-text-caption text-slate-500">You stay signed in while you are working. After {{ session_idle_minutes }} minutes without activity you will be signed out.</p>
       <form method="post" action="/logout">{% csrf_token %}
         <button type="submit" class="h-8 px-3 rounded-control border border-rose-200 text-rose-600 edify-text-caption font-bold hover:bg-rose-50 transition-colors">Sign Out</button>
       </form>

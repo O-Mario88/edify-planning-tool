@@ -161,8 +161,47 @@ class SecurityPostureHonestyTest(TestCase):
         )
         self.assertTrue(hasattr(crypto, "encrypt_field"))
 
-    def test_mfa_is_reported_as_unimplemented(self):
-        """mfaEnabledUsers: 0 reads as poor adoption. It is absence."""
+    def test_the_mfa_claim_matches_a_working_flow(self):
+        """`mfaImplemented` was False while there was nothing behind it, because
+        `mfaEnabledUsers: 0` on its own reads as poor adoption rather than
+        absence. It now says True, so this checks the claim against behaviour
+        rather than against the constant: an enrolled account must actually be
+        stopped at a code prompt."""
+        from django.contrib.auth import get_user_model
+        from django.test import Client
+
         from apps.security.services import summary
 
-        self.assertIs(summary()["mfaImplemented"], False)
+        self.assertIs(summary()["mfaImplemented"], True)
+
+        user = get_user_model().objects.create_user(
+            email="posture-mfa@edify.test",
+            password="posture-password-1",
+            name="Posture",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
+        )
+        user.mfa_enabled = True
+        user.save(update_fields=["mfa_enabled"])
+
+        client = Client()
+        client.post(
+            "/login",
+            {"email": user.email, "password": "posture-password-1"},
+        )
+        self.assertNotIn(
+            "_auth_user_id",
+            client.session,
+            "the posture report claims MFA is implemented but a password "
+            "alone still signs someone in",
+        )
+
+    def test_enrolment_is_reported_separately_from_implementation(self):
+        """"Implemented" says nothing about how many accounts are behind it,
+        and reading one as the other is how a posture report overstates."""
+        from apps.security.services import summary
+
+        report = summary()
+        self.assertIn("mfaEnabledUsers", report)
+        self.assertIn("mfaRequiredForAll", report)

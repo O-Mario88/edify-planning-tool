@@ -41,6 +41,12 @@ urlpatterns = [
     path("sw.js", pwa_views.service_worker, name="service_worker"),
     # Auth
     path("login", auth_views.login_view, name="login"),
+    # The second factor. Both are deliberately unauthenticated: the person is
+    # between a correct password and a session, and the only thing admitting
+    # them is the pending state in their own session.
+    path("login/verify", auth_views.mfa_verify_view, name="mfa_verify"),
+    path("login/resend-code", auth_views.mfa_resend_view, name="mfa_resend"),
+    path("settings/two-step", auth_views.mfa_settings_view, name="mfa_settings"),
     path("logout", auth_views.logout_view, name="logout"),
     path("auth/switch-role", auth_views.switch_role_view, name="switch_role"),
     path(

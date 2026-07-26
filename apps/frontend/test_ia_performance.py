@@ -54,6 +54,25 @@ class IAPerformanceTestBase(TestCase):
         )
         self.ia_sp = StaffProfile.objects.create(user=self.ia, title="IA")
         self.client.force_login(self.ia)
+        self._settle_session()
+
+    def _settle_session(self):
+        """Take the once-a-minute session write out of the measurement.
+
+        SlidingSessionMiddleware re-stamps the session expiry at most once per
+        refresh interval, so the first request any client makes carries an
+        UPDATE on django_session and its savepoint pair, and no later request
+        does. Measured, that puts a page's budget three queries higher purely
+        for having been the first request in the test — and makes the
+        scale-invariance comparison compare a cold request against a warm one.
+
+        It is a real cost, and it belongs to the session rather than to the
+        page; it is pinned where it lives, in ThrottleTest
+        (apps/accounts/test_session_idle_timeout.py). The liveness probe is
+        used to absorb it because it touches the session and nothing else, so
+        it warms no cache belonging to the page under test.
+        """
+        self.client.get("/api/health/live")
 
     def _school(self, sid):
         return School.objects.create(

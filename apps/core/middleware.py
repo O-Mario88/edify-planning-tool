@@ -9,8 +9,10 @@ generic error envelope without leaking internals (mirrors `AllExceptionsFilter`)
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Callable
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
 from .request_context import (
@@ -250,3 +252,59 @@ class ContentSecurityPolicyMiddleware:
         # Never overwrite a policy a view set deliberately for itself.
         response.setdefault("Content-Security-Policy", self.POLICY)
         return response
+
+
+class SlidingSessionMiddleware:
+    """Keep a working session alive without writing a row on every request.
+
+    The requirement is that a session ends after thirty minutes of *inactivity*
+    — so someone working through a long planning session is never signed out
+    mid-task, while a laptop left open in a shared office stops being a way in.
+
+    Django's own answer is ``SESSION_SAVE_EVERY_REQUEST``, which re-stamps the
+    expiry on every response. It works, and it costs an UPDATE against
+    ``django_session`` on every authenticated request in the product — every
+    page, every htmx fragment, every background poll. The IA dashboard query
+    budget caught it going from 60 queries to 61, which is the small visible
+    edge of a write amplification that lands on one hot row.
+
+    So the window is slid on a throttle instead. Touching the session marks it
+    modified, which is what makes ``SessionMiddleware`` save the row and re-send
+    the cookie; doing that at most once per ``refresh_interval`` collapses a
+    write-per-request into a write-per-minute-per-active-user.
+
+    The cost is precision, and it is bounded and one-directional: a session can
+    end up to ``refresh_interval`` *early*, never late. At the default that is
+    sixty seconds out of thirty minutes, and the error is always the safe way
+    round — the interval is derived from the window so it stays proportional if
+    the window is ever changed.
+    """
+
+    TOUCHED_AT = "_last_touch"
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+        # A thirtieth of the window: 60s of a 30-minute window, and the same
+        # 3.3% worst-case early expiry whatever the window is set to.
+        self.refresh_interval = max(1, settings.SESSION_COOKIE_AGE // 30)
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        response = self.get_response(request)
+        self._slide(getattr(request, "session", None))
+        return response
+
+    def _slide(self, session) -> None:
+        # An empty session has nothing to keep alive, and creating one here
+        # would hand a session cookie to every anonymous visitor.
+        if session is None or session.is_empty():
+            return
+
+        now = time.time()
+        touched = session.get(self.TOUCHED_AT)
+        if isinstance(touched, (int, float)) and now - touched < self.refresh_interval:
+            return
+
+        # Assigning is the whole mechanism: it sets session.modified, and
+        # SessionMiddleware then saves the row with a fresh expiry and re-sends
+        # the cookie with a fresh max-age.
+        session[self.TOUCHED_AT] = int(now)

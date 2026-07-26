@@ -97,6 +97,77 @@ def login(email: str, password: str, requested_active_role: str | None = None) -
 
     user = User.objects.select_related("staff_profile").get(id=user.id)
 
+    # The second factor holds here too. It has to: this endpoint issues a full
+    # token pair, so enforcing the factor only on the web sign-in would leave
+    # a stolen password worth exactly as much as it was before — the code
+    # prompt would be a door beside an open window.
+    from apps.accounts import mfa_service
+
+    if mfa_service.required_for(user):
+        challenge, mfa_token, _ = mfa_service.start_api_challenge(user)
+        if challenge is None:
+            # Too many codes issued for this account lately. Same generic
+            # rejection as a bad password — the caller has already cleared the
+            # password, so naming the limit would only help them pace it.
+            raise Unauthorized(
+                AuthenticationFailureService.reject(
+                    email=email,
+                    user=user,
+                    reason="mfa_challenge_rate_limited",
+                )
+            )
+        return {
+            "mfaRequired": True,
+            "mfaToken": mfa_token,
+            "channel": challenge.channel,
+            "destinationHint": challenge.destination_hint,
+            "expiresInSeconds": int(mfa_service.CODE_TTL.total_seconds()),
+            # The role the caller asked for is remembered by the client and
+            # sent back with the code; nothing about the session is settled
+            # until the code is right.
+            "requestedActiveRole": requested_active_role,
+        }
+
+    return _issue_session(user, requested_active_role)
+
+
+def verify_mfa(
+    mfa_token: str, code: str, requested_active_role: str | None = None
+) -> dict:
+    """Finish a token-API sign-in by answering the code that was sent.
+
+    Every rejection is the same generic Unauthorized, for the same reason the
+    password path is: an expired challenge, an unknown token and a wrong code
+    must be indistinguishable to whoever is holding a stolen password. The
+    audit log is where the real reason goes.
+    """
+    from apps.accounts import mfa_service
+    from apps.audit.services import log as audit_log
+
+    challenge = mfa_service.open_api_challenge(mfa_token)
+    if challenge is None:
+        raise Unauthorized("Invalid or expired verification code")
+
+    result = mfa_service.verify(challenge, code)
+    user = challenge.user
+    audit_log(
+        action="mfa_verify",
+        subject_kind="User",
+        subject_id=str(user.id),
+        actor_id=str(user.id),
+        actor_role=user.active_role,
+        success=result.ok,
+        reason="" if result.ok else result.reason,
+        payload={"channel": challenge.channel, "surface": "api"},
+    )
+    if not result.ok:
+        raise Unauthorized("Invalid or expired verification code")
+
+    user = User.objects.select_related("staff_profile").get(id=user.id)
+    return _issue_session(user, requested_active_role)
+
+
+def _issue_session(user, requested_active_role: str | None) -> dict:
     active_role = (
         requested_active_role
         if requested_active_role and requested_active_role in (user.roles or [])
