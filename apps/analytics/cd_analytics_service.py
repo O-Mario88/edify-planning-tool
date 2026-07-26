@@ -812,17 +812,40 @@ class CDAnalyticsService:
         target_types = (
             VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES + SSA_COLLECTION_TYPES
         )
-        for m in range(1, 13):
-            start, end = get_month_date_range(cd.fy, m)
-            labels.append(MONTHS_SHORT[start.month])
-            mq = acts.filter(
-                planned_date__gte=start.date(), planned_date__lt=end.date()
+        # One grouped pass instead of 36 per-month counts — the same
+        # equivalence as country_performance: get_month_date_range() yields
+        # contiguous first-of-month boundaries, so TruncMonth partitions the
+        # FY into exactly the twelve sets the per-month filters selected.
+        from django.db.models import Count
+        from django.db.models.functions import TruncMonth
+
+        fy_start, _ = get_month_date_range(cd.fy, 1)
+        _, fy_end = get_month_date_range(cd.fy, 12)
+        buckets = {
+            row["month_bucket"]: row
+            for row in acts.filter(
+                planned_date__gte=fy_start.date(), planned_date__lt=fy_end.date()
             )
-            planned.append(mq.filter(status__in=PLANNED_STATUSES).count())
-            completed.append(mq.filter(status__in=COMPLETED_STATUSES).count())
-            cum += mq.filter(
-                status__in=COMPLETED_STATUSES, activity_type__in=target_types
-            ).count()
+            .annotate(month_bucket=TruncMonth("planned_date"))
+            .values("month_bucket")
+            .annotate(
+                planned_n=Count("id", filter=Q(status__in=PLANNED_STATUSES)),
+                completed_n=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                credited_n=Count(
+                    "id",
+                    filter=Q(
+                        status__in=COMPLETED_STATUSES, activity_type__in=target_types
+                    ),
+                ),
+            )
+        }
+        for m in range(1, 13):
+            start, _end = get_month_date_range(cd.fy, m)
+            labels.append(MONTHS_SHORT[start.month])
+            row = buckets.get(start.date()) or {}
+            planned.append(row.get("planned_n", 0))
+            completed.append(row.get("completed_n", 0))
+            cum += row.get("credited_n", 0)
             pct.append(round(cum / total_target * 100) if total_target else 0)
         return {
             "labels": labels,
