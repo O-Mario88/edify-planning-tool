@@ -115,7 +115,7 @@ class SpecialProjectPlanningPageTests(TestCase):
             labels,
             [
                 "Total Project Schools",
-                "Without Baseline / SSA",
+                "SSA Score Required",
                 "Scheduled This Week",
                 "Planning Completion",
                 "High-Risk Project Schools",

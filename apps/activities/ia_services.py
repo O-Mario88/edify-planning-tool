@@ -95,11 +95,11 @@ class SSAValidationService:
         if not latest_ssa:
             return (
                 False,
-                "SSA missing: No baseline or assessment recorded for this school.",
+                "SSA Required: no assessment score is recorded for this school.",
             )
 
         # Check if it was uploaded/completed
-        return True, f"SSA uploaded: Baseline score is {latest_ssa.average_score}."
+        return True, f"SSA uploaded: average score is {latest_ssa.average_score}."
 
 
 class DuplicateDetectionService:

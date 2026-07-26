@@ -86,7 +86,7 @@ class EngagementLevel(models.TextChoices):
 class RecommendedActivityType(models.TextChoices):
     SCHOOL_VISIT = "school_visit", "School Visit"
     FOLLOW_UP_VISIT = "follow_up_visit", "Follow-Up Visit"
-    BASELINE_SSA = "baseline_ssa", "Baseline SSA"
+    BASELINE_SSA = "baseline_ssa", "SSA Visit"
     SSA_REFRESH = "ssa_refresh", "SSA Refresh"
     CLUSTER_MEETING = "cluster_meeting", "Cluster Meeting"
     CLUSTER_TRAINING = "cluster_training", "Cluster Training"

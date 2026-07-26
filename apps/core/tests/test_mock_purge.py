@@ -139,6 +139,30 @@ class UploadWiringTest(TestCase):
         fetched = get_one("UPL-2", _P())
         self.assertEqual(fetched.name, "Dir School")
 
+    def test_school_creation_requires_uploaded_id_without_fabricating_prefix(self):
+        from apps.core.exceptions import BadRequest
+        from apps.schools.services import create_one
+
+        class _P:
+            user_id = "u"
+            active_role = "ImpactAssessment"
+            staff_profile_id = None
+
+        region = Region.objects.first()
+        district = District.objects.first()
+        with self.assertRaisesMessage(
+            BadRequest, "School ID is required. Use the ID supplied in the school upload."
+        ):
+            create_one(
+                {
+                    "name": "No ID Primary",
+                    "regionId": region.id,
+                    "districtId": district.id,
+                },
+                _P(),
+            )
+        self.assertFalse(School.objects.filter(name="No ID Primary").exists())
+
     def test_ssa_upload_saves_and_updates_readiness(self):
         from apps.schools.services import create_one
         from apps.ssa.services import upload as ssa_upload

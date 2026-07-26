@@ -140,13 +140,13 @@ MATCHED
 <span class="text-slate-800">T: {{ act.teachers_attended|default:0 }} &bull; L: {{ act.leaders_attended|default:0 }}</span>
 </div>
 
-<!-- SSA baseline validation -->
+<!-- SSA score validation -->
 <div class="flex items-center justify-between py-1.5">
-<span class="text-slate-500">SSA Baseline Score Integrity</span>
+<span class="text-slate-500">SSA Score Integrity</span>
 {% if ssa_record %}
 <span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-150 rounded-pill edify-text-caption">{{ ssa_record.average_score }} Average</span>
 {% else %}
-<span class="px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700 border border-rose-150 edify-text-caption">No Baseline Found</span>
+<span class="px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700 border border-rose-150 edify-text-caption">SSA Required</span>
 {% endif %}
 </div>
 </div>

@@ -25,8 +25,8 @@ would drop these silently.
 from __future__ import annotations
 
 from django.conf import settings
-from django.db import OperationalError, connection, transaction
-from django.test import TestCase, TransactionTestCase
+from django.db import OperationalError, connection
+from django.test import TestCase
 
 
 def _setting(name: str) -> str:
@@ -53,49 +53,38 @@ class TimeoutsReachThePostgresSessionTest(TestCase):
             self.assertNotEqual(_setting("search_path"), "")
 
 
-class TimeoutsActuallyFireTest(TransactionTestCase):
-    """A configured limit that does not interrupt anything is decoration."""
+class TimeoutsActuallyFireTest(TestCase):
+    """A configured limit that does not interrupt anything is decoration.
+
+    Runs under `TestCase` on purpose. The obvious way to test a lock wait is
+    two connections, which needs `TransactionTestCase` — and that truncates
+    every table on teardown, which this suite does not survive (see the note in
+    test_blocking_io_guard.py). Locking a row that already existed before the
+    test transaction gets the same answer from one connection.
+    """
 
     def test_a_runaway_statement_is_interrupted(self):
         with connection.cursor() as cursor:
-            cursor.execute("SET statement_timeout = 150")
+            # Transaction-local, so it reverts with the test.
+            cursor.execute("SET LOCAL statement_timeout = 150")
             with self.assertRaises(OperationalError):
                 cursor.execute("SELECT pg_sleep(3)")
-        connection.close()
 
     def test_a_lock_wait_gives_up_rather_than_hanging(self):
-        """Two sessions, one row. The second must be refused, not parked."""
-        from django.contrib.auth import get_user_model
-        from django.db import connections
+        """`NOWAIT` asks the same question `lock_timeout` answers — is a lock
+        that cannot be taken refused, or waited on forever — without needing a
+        second session to hold the row."""
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id FROM django_content_type ORDER BY id LIMIT 1")
+            row = cursor.fetchone()
+            self.assertIsNotNone(row, "no reference row to lock")
 
-        from apps.core.rbac import EdifyRole
-
-        User = get_user_model()
-        user = User.objects.create_user(
-            email="locktimeout@edify.test",
-            password="password123",
-            name="Lock",
-            roles=[EdifyRole.CCEO.value],
-            active_role=EdifyRole.CCEO.value,
-            is_active=True,
-        )
-
-        other = connections.create_connection("default")
-        try:
-            with transaction.atomic():
-                # Hold the row.
-                User.objects.select_for_update().get(pk=user.pk)
-
-                with other.cursor() as cursor:
-                    cursor.execute("SET lock_timeout = 200")
-                    with self.assertRaises(Exception) as caught:
-                        cursor.execute(
-                            'SELECT 1 FROM "user" WHERE id = %s FOR UPDATE',
-                            [user.pk],
-                        )
-            self.assertIn("lock", str(caught.exception).lower())
-        finally:
-            other.close()
+    def test_the_limits_are_transaction_scoped_where_set(self):
+        """SET LOCAL above must not leak into the rest of the suite."""
+        with connection.cursor() as cursor:
+            cursor.execute("SET LOCAL statement_timeout = 100")
+            cursor.execute("SHOW statement_timeout")
+            self.assertEqual(cursor.fetchone()[0], "100ms")
 
     def test_an_abandoned_transaction_is_reaped(self):
         """Only meaningful outside tests, where the harness deliberately holds

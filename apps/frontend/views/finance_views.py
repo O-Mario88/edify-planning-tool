@@ -1059,7 +1059,7 @@ def initialize_default_catalogue_view(request):
         # the engine falls through to the generic visit/training/partner rate.
         ("core_school_visit", "Core school visit cost", 50000, "per visit"),
         ("core_school_training", "Core school training cost", 250000, "per session"),
-        ("ssa_visit_rate", "Baseline SSA visit cost", 50000, "per visit"),
+        ("ssa_visit_rate", "SSA visit cost", 50000, "per visit"),
         (
             "project_partner_lump_sum",
             "Special project partner activity rate",

@@ -9,7 +9,7 @@
 <div>
 <p class="edify-page-eyebrow">Quality & Insights</p>
 <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Core School Health</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Package delivery, baseline movement and completion-gate stalls · FY {{ d.fy }}</p>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Package delivery, SSA score movement and completion-gate stalls · FY {{ d.fy }}</p>
 </div>
 <form method="GET" class="flex items-center gap-2">
 <label class="sr-only" for="fy-select">Financial year</label>
@@ -53,7 +53,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 
 {% if d.measuredCount %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm px-5 py-4">
-<p class="text-[13px] font-extrabold text-slate-800">Baseline → follow-up movement</p>
+<p class="text-[13px] font-extrabold text-slate-800">Initial SSA score → follow-up movement</p>
 <p class="text-[12px] text-slate-600 font-semibold mt-1">
 {{ d.improvedCount }} improved, {{ d.declinedCount }} declined across {{ d.measuredCount }} package(s) with both assessments recorded.
 {% if d.avgMovement is not None %}Average movement <span class="tabular-nums font-extrabold {% if d.avgMovement < 0 %}text-rose-700{% else %}text-emerald-700{% endif %}">{{ d.avgMovement }}</span> points.{% endif %}

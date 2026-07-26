@@ -426,7 +426,7 @@ class Command(BaseCommand):
             d = rnd.choice(districts)
             sc = subs[i % len(subs)] if subs else rnd.choice(subs)
             s = School.objects.create(
-                school_id=f"S-{1000 + i}",
+                school_id=str(1000 + i),
                 name=f"{sc.name} {name_frags[i % len(name_frags)]}",
                 region=d.region,
                 district=d,

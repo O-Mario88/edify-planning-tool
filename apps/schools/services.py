@@ -91,6 +91,11 @@ def get_one(school_id: str, principal):
 def create_one(data: dict, principal) -> School:
     """Single school upload. The actor must have SCHOOL_UPLOAD permission
     (enforced by the view); geography is resolved from the provided ids."""
+    school_id = str(data.get("schoolId") or data.get("school_id") or "").strip()
+    if not school_id:
+        raise BadRequest(
+            "School ID is required. Use the ID supplied in the school upload."
+        )
     region = Region.objects.filter(id=data.get("regionId")).first()
     district = District.objects.filter(id=data.get("districtId")).first()
     if not region or not district:
@@ -100,9 +105,7 @@ def create_one(data: dict, principal) -> School:
         sub_county = SubCounty.objects.filter(id=data["subCountyId"]).first()
 
     school = School.objects.create(
-        school_id=data.get("schoolId")
-        or data.get("school_id")
-        or f"S-{data['name'][:20]}",
+        school_id=school_id,
         name=data["name"],
         region=region,
         district=district,

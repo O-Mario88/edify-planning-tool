@@ -45,7 +45,7 @@ Avg SSA: <span class="font-bold text-slate-800">{{ cluster.avg_ssa|floatformat:1
 <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 edify-text-caption text-slate-500 font-bold border-t border-slate-100/60 pt-2 mt-1">
 <span>SSA Coverage: <span class="text-[var(--edify-primary)] font-semibold">{{ cluster.planning.schoolsWithSsa|default:"0" }}/{{ cluster.schools_count }} ({{ cluster.planning.ssaCoveragePct|default:"0" }}%)</span></span>
 <span>Without SSA: <span class="text-amber-600 font-semibold">{{ cluster.planning.schoolsWithoutSsa|default:"0" }} schools</span></span>
-<span>Needing Baseline: <span class="text-rose-600 font-semibold">{{ cluster.planning.needingBaselineCount|default:"0" }}</span></span>
+<span>SSA Required: <span class="text-rose-600 font-semibold">{{ cluster.planning.needingBaselineCount|default:"0" }}</span></span>
 <span>Needing Cleanup: <span class="text-slate-600 font-semibold">{{ cluster.planning.needingCleanupCount|default:"0" }}</span></span>
 <span>Ready for Planning: <span class="text-emerald-600 font-semibold">{{ cluster.planning.readySchoolsCount|default:"0" }}</span></span>
 </div>

@@ -130,7 +130,63 @@ means `4e353629` reached `main` with CI still running — and CI then failed.
 Remaining audit work is on `audit/reliability-2026-07-26` for a PR, so the
 checks gate rather than being worked around.
 
-### R-04 — Two false positives I raised and withdrew
+### R-04 — Three failure modes invisible to System Health  ·  MEDIUM  ·  CLOSED
+
+**Where** `apps/core/health.py`, wired into the report as `data["platform"]`.
+
+System Health covered twelve areas, none of them infrastructure. Three
+conditions could hold indefinitely with nothing erroring and nothing on the
+page saying so:
+
+- **Migration drift.** A deploy that skipped its migrate step looks healthy on
+  every page that does not touch the new column, then fails one page at a time
+  as people reach the ones that do.
+- **Delivery channel fallback.** A deploy that forgets `RESEND_API_KEY` falls
+  back to the console mailer — by design, silently. Invitations and password
+  resets stop arriving. **Since two-step verification shipped this is a
+  lockout**: the code is only ever sent, never shown, so every enrolled account
+  is shut out. The check names the count. The SMS check is a warning when
+  nobody has enrolled on that channel and critical the moment somebody has.
+- **Cache degradation.** Redis unreachable at boot falls back to `LocMemCache`,
+  which works per-process — so cached figures differ between workers and the
+  same page can show two different numbers depending on which one answers.
+  Checked as a write and a read-back, because a cache that accepts writes and
+  returns nothing is the failure worth catching and it does not announce
+  itself.
+
+**Evidence** `apps/core/tests/test_platform_health.py` — 16 tests, each check
+exercised healthy *and* with the failure induced. A check that is green because
+it cannot go red is worse than no check.
+
+Note this is partly a risk the MFA work in `4e353629` introduced: before it,
+undelivered email was an inconvenience.
+
+### R-05 — The suite cannot tolerate a database flush  ·  MEDIUM  ·  MITIGATED
+
+Adding `TransactionTestCase` classes for the timeout and guard tests broke two
+unrelated tests hundreds of files away, and only in a full cumulative run —
+they pass in every smaller combination I tried.
+
+The mechanism is known in this codebase: a `TransactionTestCase` truncates
+every table on teardown instead of rolling back, and reference data seeded by
+migrations does not come back. A previous pass fixed this for specific apps
+with idempotent `ensure_*()` hooks on `post_migrate`; the gap is that it was
+fixed app by app rather than made structural.
+
+The practical consequence is worth stating plainly: **nobody can add a
+`TransactionTestCase` anywhere in this codebase without risking an unrelated
+failure somewhere else, with nothing in the failure pointing back at the
+cause.** That is a latent defect in the suite, not in the product, but it taxes
+every future change that needs a real transaction.
+
+Mitigated here with `serialized_rollback = True` on the three affected classes,
+which is Django's documented remedy — the initial data is restored after the
+flush. It is slower, and it is the price of using a real transaction at all.
+
+The structural fix — a reference-data restore that covers every app rather than
+the ones that have already bitten someone — is not done.
+
+### R-06 — Two false positives I raised and withdrew
 
 Recorded because a ledger that only lists confirmed findings hides the cost of
 the method.
@@ -154,6 +210,8 @@ the method.
 | Locking primitives (§14/16) | Inventory | 83 `select_for_update` sites, 57 modules using `transaction.atomic`, 96 unique constraints |
 | Dependency security (§51) | pip-audit, npm audit, CodeQL | 0 findings |
 | Static security (§46) | bandit | 0 High, 0 Medium |
+| Secrets in logs (§35) | Scan of every log call for credential-shaped arguments | none found |
+| Runbooks (§40) | Written | `docs/runbooks.md` — 10 scenarios, each with detection, confirmation, containment, recovery, data-integrity check, owner and follow-up |
 
 ---
 
@@ -169,7 +227,7 @@ so none of it can be reported as passing:
 | 27–30 | Load, stress and soak testing at production scale; safe-capacity documentation |
 | 31–33 | File-upload, PDF-conversion and SSE failure matrices |
 | 37–39 | Metrics endpoint, distributed tracing, alert definitions |
-| 40 | Runbooks |
+| 62 | The remaining System Health conditions: connection exhaustion, slow-query threshold, duplicate financial record, backup failure, security-scan failure, dependency vulnerability, performance SLO breach |
 | 41 | Written threat model |
 | 54 | Failure injection across dependencies |
 | 55–59 | Backup restore rehearsal, disaster recovery, rollback rehearsal |

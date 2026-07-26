@@ -1103,11 +1103,11 @@ def _workflow_issues() -> dict:
         )
     if core_impact_without_baseline:
         blockers.append(
-            f"{core_impact_without_baseline} core impact result(s) calculated without an annual baseline."
+            f"{core_impact_without_baseline} core impact result(s) calculated without an initial annual SSA score."
         )
     if core_champion_without_verified_ssa:
         blockers.append(
-            f"{core_champion_without_verified_ssa} champion candidate(s) proposed without a verified SSA baseline."
+            f"{core_champion_without_verified_ssa} champion candidate(s) proposed without a verified SSA score."
         )
 
     # ── Annual-vs-monthly budget reconciliation (§16) ────────────────────────

@@ -1470,7 +1470,7 @@ class CoreInterventionRecommendationService:
         if not ranked:
             return {
                 "available": False,
-                "reason": "Baseline Required",
+                "reason": "SSA Required",
                 "rows": [],
                 "maintenance": False,
             }

@@ -127,7 +127,7 @@ class ClusterRecommendationService:
         if coverage_pct < 50:
             return {
                 "recommendedAction": "Schedule Cluster SSA Collection / Data Review Meeting",
-                "reason": "This cluster has low SSA coverage. Collecting baseline data should happen before intervention impact can be measured.",
+                "reason": "This cluster has low SSA coverage. Collecting SSA scores should happen before intervention impact can be measured.",
                 "availableActions": [
                     "Schedule Cluster Meeting + SSA Review",
                     "Schedule Cluster Training + SSA Collection",

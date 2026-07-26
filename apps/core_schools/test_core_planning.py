@@ -651,7 +651,7 @@ class CoreSchoolsPlanningTest(TestCase):
         bare = self._school("CORE-3", "Gamma Core School", self.cceo_sp)
         reco2 = CoreInterventionRecommendationService.recommend(bare)
         self.assertFalse(reco2["available"])
-        self.assertEqual(reco2["reason"], "Baseline Required")
+        self.assertEqual(reco2["reason"], "SSA Required")
 
     # ── 19–20: annual impact only ────────────────────────────────────────────
     def test_annual_ssa_used_for_core_impact(self):

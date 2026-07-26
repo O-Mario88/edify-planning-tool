@@ -318,8 +318,9 @@ style="display: none;"
 {% csrf_token %}
 
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School ID</label>
-<input type="text" name="school_id" placeholder="e.g. SCH-1011" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+<label for="add-school-id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Uploaded School ID</label>
+<input type="text" id="add-school-id" name="school_id" placeholder="e.g. 1011" aria-describedby="add-school-id-help" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+<p id="add-school-id-help" class="edify-text-caption text-slate-400">Use the exact ID assigned in the school upload; the app will not add an S- prefix.</p>
 </div>
 
 <div class="space-y-1">

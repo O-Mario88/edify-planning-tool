@@ -13,9 +13,9 @@
   <p class="text-[14px] font-semibold edify-text">No comparable schools in this scope yet</p>
   <p class="text-[12px] edify-text-muted mt-1 max-w-xl mx-auto">
     A school enters this analysis only with a verified
-    {{ d.methodology.baseline_fy }} baseline SSA and a verified
+    {{ d.methodology.baseline_fy }} initial SSA score and a verified
     {{ d.methodology.followup_fy }} follow-up SSA.
-    {% if d.cohort.excluded.missing_baseline_ssa %}{{ d.cohort.excluded.missing_baseline_ssa }} school{{ d.cohort.excluded.missing_baseline_ssa|pluralize }} lack a verified baseline.{% endif %}
+    {% if d.cohort.excluded.missing_baseline_ssa %}{{ d.cohort.excluded.missing_baseline_ssa }} school{{ d.cohort.excluded.missing_baseline_ssa|pluralize }} lack a verified initial SSA score.{% endif %}
     {% if d.cohort.excluded.missing_followup_ssa %}{{ d.cohort.excluded.missing_followup_ssa }} lack a verified follow-up (impact not yet measurable).{% endif %}
   </p>
 </section>
@@ -72,7 +72,7 @@
 <section class="grid lg:grid-cols-2 gap-4">
   <div class="edify-surface rounded-surface border border-slate-200 p-4">
     <h2 class="text-[14px] font-semibold edify-text">SSA change by intervention</h2>
-    <p class="text-[12px] edify-text-muted mb-2">Verified baseline vs follow-up averages across the cohort.</p>
+    <p class="text-[12px] edify-text-muted mb-2">Verified initial vs follow-up SSA averages across the cohort.</p>
     <div x-data="visitFxChart('vfx-chart-payload','interventions')" class="min-h-[300px]"><div x-ref="el"></div></div>
   </div>
   <div class="edify-surface rounded-surface border border-slate-200 p-4">
@@ -180,7 +180,7 @@
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[12px]">
     <div><p class="edify-text-muted">Methodology</p><p class="font-bold edify-text">{{ d.methodology.version }}</p></div>
     <div><p class="edify-text-muted">Excluded periods</p><p class="font-bold edify-text">{{ d.methodology.excluded_fys|join:", " }} (cycle change)</p></div>
-    <div><p class="edify-text-muted">Missing baseline</p><p class="font-bold edify-text">{{ d.cohort.excluded.missing_baseline_ssa|default:0 }}</p></div>
+    <div><p class="edify-text-muted">SSA Required</p><p class="font-bold edify-text">{{ d.cohort.excluded.missing_baseline_ssa|default:0 }}</p></div>
     <div><p class="edify-text-muted">Missing follow-up</p><p class="font-bold edify-text">{{ d.cohort.excluded.missing_followup_ssa|default:0 }} <span class="edify-text-muted font-normal">not yet measurable</span></p></div>
     <div><p class="edify-text-muted">Invalid windows</p><p class="font-bold edify-text">{{ d.cohort.excluded.invalid_assessment_window|default:0 }}</p></div>
     <div><p class="edify-text-muted">Sample quality</p><p class="font-bold edify-text">{{ d.cohort.sample_quality|capfirst }}</p></div>

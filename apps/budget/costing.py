@@ -154,8 +154,8 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add(label_with_basis, key)
 
     elif activity_type == "baseline_ssa_visit" and "ssa_visit_rate" in rates:
-        # Baseline SSA Visit uses separate SSA Visit rate if configured
-        add("Baseline SSA Visit", "ssa_visit_rate")
+        # SSA Visit uses a separate rate if configured.
+        add("SSA Visit", "ssa_visit_rate")
 
     elif activity_type == "core_visit" and "core_school_visit" in rates:
         # Core School Visit fetches from Cost Catalogue if defined

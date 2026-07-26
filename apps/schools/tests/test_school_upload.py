@@ -109,6 +109,18 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(school.school_type, "core")
         self.assertEqual(school.enrollment, 410)
 
+    def test_numeric_uploaded_school_id_is_preserved_without_prefix(self):
+        body = (
+            "School ID,School Name,District\n"
+            "51230,Uploaded ID Primary,Gulu\n"
+        )
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(name="Uploaded ID Primary")
+        self.assertEqual(school.school_id, "51230")
+        self.assertFalse(school.school_id.startswith("S-"))
+
     def test_xlsx_saves_rows(self):
         import openpyxl
 
