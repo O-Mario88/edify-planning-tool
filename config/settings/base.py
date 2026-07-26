@@ -123,6 +123,10 @@ MIDDLEWARE = [
     # threading it through every service. Mirrors NestJS requestContextMiddleware.
     "apps.core.middleware.RequestContextMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # Content-Security-Policy. Sits early so every response carries it,
+    # including error pages — the ones most likely to be reached with a
+    # crafted URL.
+    "apps.core.middleware.ContentSecurityPolicyMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",  # before CommonMiddleware
     "django.contrib.sessions.middleware.SessionMiddleware",

@@ -188,3 +188,65 @@ class AllExceptionsMiddleware:
             },
             status=status,
         )
+
+
+class ContentSecurityPolicyMiddleware:
+    """A second line of defence behind output escaping.
+
+    Escaping is the primary control and this does not replace it. What a policy
+    adds is a floor: if an injection does land, it decides what the injected
+    markup is allowed to *do*. Without one, injected script runs with the same
+    authority as the application's own.
+
+    Two things about this policy are worth stating plainly, because both look
+    like weaknesses until you know why:
+
+    `'unsafe-eval'` is required by Alpine.js, which compiles the expressions in
+    `x-data` and `@click` with `new Function()`. Alpine ships a CSP-friendly
+    build, but it accepts a restricted expression syntax that every component
+    here would have to be rewritten into. Dropping it is a real piece of work,
+    not a settings change.
+
+    `'unsafe-inline'` in style-src covers the inline `style="--token: value"`
+    attributes that carry live data into CSS custom properties — a chart's
+    computed width, a gauge's size. Those are values, not code.
+
+    Even with both, the policy still blocks the shapes that matter most: a
+    script element sourced from an attacker's host, a rewritten <base> that
+    silently repoints every relative URL, a form re-posted to another origin,
+    plugin content, and framing by anyone at all.
+    """
+
+    # Every external origin the application actually loads, and nothing else.
+    # Fonts and the two CDN libraries are the whole list; the map tiles are
+    # images. Adding an origin here should be a deliberate, reviewed edit.
+    POLICY = "; ".join(
+        (
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://unpkg.com https://cdn.jsdelivr.net",
+            # unpkg is here for leaflet.css on the school map, not only for
+            # scripts — a stylesheet origin missing from this list fails
+            # silently as an unstyled component rather than a visible error.
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com "
+            "https://cdn.jsdelivr.net https://unpkg.com",
+            "font-src 'self' data: https://fonts.gstatic.com",
+            "img-src 'self' data: blob: https://tile.openstreetmap.org",
+            "connect-src 'self'",
+            # No plugins, no <base> rewriting, no framing, and forms may only
+            # post back to this origin.
+            "object-src 'none'",
+            "base-uri 'self'",
+            "frame-ancestors 'none'",
+            "form-action 'self'",
+        )
+    )
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        response = self.get_response(request)
+        # Never overwrite a policy a view set deliberately for itself.
+        response.setdefault("Content-Security-Policy", self.POLICY)
+        return response
