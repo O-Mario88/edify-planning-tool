@@ -77,7 +77,7 @@ def capture_codes():
 def _form_error(response) -> str:
     """The message the login page actually shows."""
     match = re.search(
-        r'data-form-status-message[^>]*>(.*?)</span>',
+        r"data-form-status-message[^>]*>(.*?)</span>",
         response.content.decode(),
         re.S,
     )
@@ -636,9 +636,7 @@ class TokenApiTest(MfaTestCase):
         self.assertEqual(wrong_code.status_code, unknown_token.status_code)
         # correlationId is per-request by design; what must not differ is
         # anything that describes the cause.
-        self.assertEqual(
-            wrong_code.json()["message"], unknown_token.json()["message"]
-        )
+        self.assertEqual(wrong_code.json()["message"], unknown_token.json()["message"])
 
 
 class ChallengePurgeTest(MfaTestCase):

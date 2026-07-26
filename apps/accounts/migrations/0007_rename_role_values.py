@@ -74,12 +74,18 @@ def _apply(schema_editor, renames):
     with schema_editor.connection.cursor() as cursor:
         for table, column, is_array in _ROLE_COLUMNS:
             for old, new in renames:
+                # nosec B608 - the interpolated names are the table/column
+                # identifiers from _ROLE_COLUMNS, a literal list a few lines
+                # above this function. They never come from a caller, a request
+                # or a row. The only values that vary are the role strings, and
+                # those are bound as parameters below. Identifiers cannot be
+                # parameterised in SQL, so this is the available shape.
                 if is_array:
                     # Postgres ArrayField: swap matching array elements.
-                    sql = f'UPDATE "{table}" SET "{column}" = array_replace("{column}", %s, %s)'
+                    sql = f'UPDATE "{table}" SET "{column}" = array_replace("{column}", %s, %s)'  # nosec B608
                 else:
                     sql = (
-                        f'UPDATE "{table}" SET "{column}" = REPLACE("{column}", %s, %s)'
+                        f'UPDATE "{table}" SET "{column}" = REPLACE("{column}", %s, %s)'  # nosec B608
                     )
                 cursor.execute(sql, [old, new])
 

@@ -8,37 +8,72 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0018_exited_state'),
+        ("accounts", "0018_exited_state"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='mfa_channel',
-            field=models.CharField(choices=[('email', 'Email'), ('sms', 'SMS')], default='email', max_length=16),
+            model_name="user",
+            name="mfa_channel",
+            field=models.CharField(
+                choices=[("email", "Email"), ("sms", "SMS")],
+                default="email",
+                max_length=16,
+            ),
         ),
         migrations.CreateModel(
-            name='MfaChallenge',
+            name="MfaChallenge",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('channel', models.CharField(choices=[('email', 'Email'), ('sms', 'SMS')], max_length=16)),
-                ('destination_hint', models.CharField(default='', max_length=64)),
-                ('code_hash', models.CharField(max_length=255)),
-                ('client_token_hash', models.CharField(blank=True, db_index=True, max_length=255, null=True)),
-                ('expires_at', models.DateTimeField()),
-                ('consumed_at', models.DateTimeField(blank=True, null=True)),
-                ('attempts', models.IntegerField(default=0)),
-                ('deliveries', models.IntegerField(default=1)),
-                ('last_sent_at', models.DateTimeField(blank=True, null=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='mfa_challenges', to=settings.AUTH_USER_MODEL)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "channel",
+                    models.CharField(
+                        choices=[("email", "Email"), ("sms", "SMS")], max_length=16
+                    ),
+                ),
+                ("destination_hint", models.CharField(default="", max_length=64)),
+                ("code_hash", models.CharField(max_length=255)),
+                (
+                    "client_token_hash",
+                    models.CharField(
+                        blank=True, db_index=True, max_length=255, null=True
+                    ),
+                ),
+                ("expires_at", models.DateTimeField()),
+                ("consumed_at", models.DateTimeField(blank=True, null=True)),
+                ("attempts", models.IntegerField(default=0)),
+                ("deliveries", models.IntegerField(default=1)),
+                ("last_sent_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="mfa_challenges",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'mfa_challenge',
-                'indexes': [models.Index(fields=['user'], name='mfa_challen_user_id_626923_idx'), models.Index(fields=['expires_at'], name='mfa_challen_expires_3a6ce6_idx')],
+                "db_table": "mfa_challenge",
+                "indexes": [
+                    models.Index(
+                        fields=["user"], name="mfa_challen_user_id_626923_idx"
+                    ),
+                    models.Index(
+                        fields=["expires_at"], name="mfa_challen_expires_3a6ce6_idx"
+                    ),
+                ],
             },
         ),
     ]

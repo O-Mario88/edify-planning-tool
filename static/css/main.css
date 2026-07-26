@@ -3495,6 +3495,9 @@
   .text-\[44px\] {
     font-size: 44px;
   }
+  .text-\[length\:var\(--edify-text-label-size\)\] {
+    font-size: var(--edify-text-label-size);
+  }
   .leading-5 {
     --tw-leading: calc(var(--spacing) * 5);
     line-height: calc(var(--spacing) * 5);

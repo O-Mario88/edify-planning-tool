@@ -198,7 +198,7 @@ class SecurityPostureHonestyTest(TestCase):
         )
 
     def test_enrolment_is_reported_separately_from_implementation(self):
-        """"Implemented" says nothing about how many accounts are behind it,
+        """ "Implemented" says nothing about how many accounts are behind it,
         and reading one as the other is how a posture report overstates."""
         from apps.security.services import summary
 

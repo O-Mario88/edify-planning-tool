@@ -36,6 +36,7 @@ def summary() -> dict:
     is implemented" says nothing about how many accounts are behind it.
     """
     from apps.core.sms import sms
+
     users = User.objects.filter(deleted_at__isnull=True)
     try:
         load_field_encryption_key(getattr(settings, "FIELD_ENCRYPTION_KEY", ""))
