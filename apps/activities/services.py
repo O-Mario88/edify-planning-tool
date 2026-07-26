@@ -1029,7 +1029,7 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
             )
             if not latest_ssa:
                 raise BadRequest(
-                    "IA Verification failed: no Core Assessment / SSA score exists for this school."
+                    "IA Verification failed: No Core Assessment / SSA baseline exists for this school."
                 )
 
     a.status = "ia_verified"
@@ -1638,7 +1638,7 @@ def calculate_activity_impact(activity: Activity) -> dict:
         if not pre_ssa:
             return {
                 "status": "Not Enough Data",
-                "reason": "Impact cannot be measured yet because the initial SSA score is missing.",
+                "reason": "Impact cannot be measured yet because baseline SSA is missing.",
             }
         if not post_ssa:
             return {

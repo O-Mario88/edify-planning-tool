@@ -288,7 +288,7 @@
             </span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">SSA Score:</span>
+            <span class="text-slate-400">SSA Baseline score:</span>
             <span class="text-slate-800 font-bold">{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}—{% endif %}</span>
           </div>
           {% if school.next_missing_milestone %}

@@ -855,7 +855,7 @@ def build_dashboard(principal, query: dict) -> dict:
         "method_notes": [
             f"Improvement = confirmed SSA score in FY {fy} minus confirmed SSA score in FY {prev_fy}, per school per intervention. Only schools assessed in both cycles are analysed ({paired} of {len(school_ids)} in scope).",
             "Dosage counts only executed activities dated inside each school's own exposure window (between its two assessments).",
-            f"Treated-vs-untreated comparisons are restricted to schools with a weak initial SSA score (below {WEAK_BASELINE}) on that intervention, because activity planning already targets weak interventions — comparing against strong schools would only measure regression to the mean.",
+            f"Treated-vs-untreated comparisons are restricted to schools with a weak baseline (score below {WEAK_BASELINE}) on that intervention, because activity planning already targets weak interventions — comparing against strong schools would only measure regression to the mean.",
             "Spend counts accountant-accepted money only (accounted advances and partner payments, plain UGX). Cluster activities split spend equally across attended schools.",
             f"Rank-based tests (Spearman, Mann-Whitney, Kruskal-Wallis); groups under {MIN_GROUP_N} schools report 'insufficient data' rather than an unreliable number. Correlation is not causation — these results direct attention, they do not close questions.",
         ],

@@ -381,7 +381,7 @@ def _school_quality_todos(scope):
     ]:
         todos.append(
             _q(
-                "Schedule SSA Visit",
+                "Schedule Baseline SSA",
                 s.name,
                 "SSA",
                 "medium",

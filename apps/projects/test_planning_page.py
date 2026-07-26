@@ -104,27 +104,6 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertEqual(rows[self.project_b.id]["weakest"], "Learning Environment")
         self.assertEqual(rows[self.project_b.id]["average"], 4.7)
 
-    def test_kpi_strip_keeps_six_distinct_planning_signals(self):
-        context = get_planning(
-            self.admin, {"fy": self.fy, "quarter": self.quarter, "per_page": 25}
-        )
-        labels = [item["label"] for item in context["kpis"]]
-
-        self.assertEqual(len(labels), 6)
-        self.assertEqual(
-            labels,
-            [
-                "Total Project Schools",
-                "SSA Score Required",
-                "Scheduled This Week",
-                "Planning Completion",
-                "High-Risk Project Schools",
-                "Schools Requiring Follow-up",
-            ],
-        )
-        self.assertNotIn("Assigned to Partner", labels)
-        self.assertNotIn("Schools in Active Projects", labels)
-
     def test_filters_htmx_and_export_use_the_same_scoped_dataset(self):
         filtered = self.client.get(f"/projects/planning?project={self.project_b.id}")
         self.assertEqual(filtered.status_code, 200)

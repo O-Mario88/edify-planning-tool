@@ -618,7 +618,7 @@ def budget_overview_view(request):
 @require_page_permission("cost_settings")
 def cost_settings_view(request):
     """CD Cost Catalogue management."""
-    from apps.budget.reference import CANONICAL_RATE_KEYS
+    from apps.budget.costing import LEGACY_CLUSTER_ACTIVITY_COST_KEYS
 
     fy = get_operational_fy()
 
@@ -628,10 +628,9 @@ def cost_settings_view(request):
     cost_items = []
     if active_catalogue:
         cost_items = list(
-            CostSetting.objects.filter(
-                catalogue=active_catalogue,
-                key__in=CANONICAL_RATE_KEYS,
-            ).order_by("label")
+            CostSetting.objects.filter(catalogue=active_catalogue)
+            .exclude(key__in=LEGACY_CLUSTER_ACTIVITY_COST_KEYS)
+            .order_by("label")
         )
 
     context = {
@@ -963,15 +962,11 @@ def cost_setting_row_view(request, key):
     from django.http import HttpResponse
     from apps.budget.models import CostSetting
     from apps.budget import services as budget_services
-    from apps.budget.reference import CANONICAL_RATE_KEYS
 
     if request.user.active_role not in ("CountryDirector", "Admin"):
         return HttpResponse("Forbidden", status=403)
 
-    setting = get_object_or_404(
-        CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS),
-        key=key,
-    )
+    setting = get_object_or_404(CostSetting, key=key)
     mode = request.GET.get("mode", "view")
 
     if request.method == "POST":
@@ -1005,8 +1000,7 @@ def cost_setting_row_view(request, key):
 def initialize_default_catalogue_view(request):
     from django.shortcuts import redirect
     from django.http import HttpResponse
-    from apps.budget.models import CostCatalogue
-    from apps.budget.reference import ensure_cost_reference
+    from apps.budget.models import CostCatalogue, CostSetting
     from apps.core.fy import get_operational_fy
 
     if request.user.active_role not in ("CountryDirector", "Admin"):
@@ -1022,7 +1016,120 @@ def initialize_default_catalogue_view(request):
             is_active=True,
             label=f"Uganda FY{fy} Country Cost Catalogue",
         )
-    ensure_cost_reference(active)
+    default_settings = [
+        ("accommodation", "Accommodation per night", 40000, "per night"),
+        ("breakfast", "Breakfast", 8000, "per head"),
+        (
+            "cluster_meeting_participant_meal_cost_per_head",
+            "Participant snacks",
+            10000,
+            "per participant",
+        ),
+        ("dinner", "Dinner", 12000, "per head"),
+        ("lunch", "Lunch", 12000, "per head"),
+        (
+            "group_training_participant_meal_cost_per_head",
+            "Participant meals",
+            5000,
+            "per participant",
+        ),
+        ("group_training_facilitation_fee", "Facilitation fee", 50000, "per session"),
+        ("group_training_venue_cost", "Venue fee", 30000, "per session"),
+        (
+            "partner_training_lump_sum",
+            "Partner training/facilitation rate",
+            16000,
+            "per item",
+        ),
+        ("partner_visit_lump_sum", "Partner visit rate", 40000, "per item"),
+        (
+            "staff_visit_transport_primary",
+            "Staff visit transport (primary district)",
+            50000,
+            "per item",
+        ),
+        (
+            "staff_visit_transport_secondary",
+            "Staff visit transport (secondary district)",
+            25000,
+            "per item",
+        ),
+        # Core / SSA / Special Project categories — each key is consumed by
+        # apps.budget.costing.cost_for_activity's dedicated branch; without it
+        # the engine falls through to the generic visit/training/partner rate.
+        ("core_school_visit", "Core school visit cost", 50000, "per visit"),
+        ("core_school_training", "Core school training cost", 250000, "per session"),
+        ("ssa_visit_rate", "Baseline SSA visit cost", 50000, "per visit"),
+        (
+            "project_partner_lump_sum",
+            "Special project partner activity rate",
+            40000,
+            "per item",
+        ),
+        # Daily Visit Batch rates: a staff member's daily transport/lunch(/
+        # accommodation/dinner) cost pool, shared and split across every
+        # school scheduled for that same day (not costed per school alone).
+        (
+            "primary_transport_per_day",
+            "Primary district daily transport pool",
+            50000,
+            "per day",
+        ),
+        (
+            "primary_lunch_per_day",
+            "Primary district daily lunch pool",
+            12000,
+            "per day",
+        ),
+        (
+            "secondary_transport_per_day",
+            "Secondary district daily transport pool",
+            80000,
+            "per day",
+        ),
+        (
+            "secondary_lunch_per_day",
+            "Secondary district daily lunch pool",
+            12000,
+            "per day",
+        ),
+        (
+            "secondary_accommodation_per_night",
+            "Secondary district accommodation per night",
+            40000,
+            "per night",
+        ),
+        (
+            "secondary_overnight_dinner_per_day",
+            "Secondary district overnight dinner",
+            12000,
+            "per day",
+        ),
+        (
+            "secondary_breakfast_per_day",
+            "Secondary district breakfast (optional)",
+            8000,
+            "per day",
+        ),
+        (
+            "secondary_incidentals_per_day",
+            "Secondary district incidentals (optional)",
+            5000,
+            "per day",
+        ),
+    ]
+    for key, label, cost, unit in default_settings:
+        CostSetting.objects.get_or_create(
+            key=key,
+            defaults={
+                "label": label,
+                "unit_cost": cost,
+                "fy": fy,
+                "catalogue": active,
+                "version": 1,
+            },
+        )
+    CostSetting.objects.filter(catalogue__isnull=True).update(catalogue=active)
 
     return redirect("/dashboard")
 

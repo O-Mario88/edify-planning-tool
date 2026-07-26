@@ -469,7 +469,7 @@ def get_dashboard(
                 or 0,
             },
             "next_step": (
-                f"Schedule SSA visits for {no_ssa} school{'s' if no_ssa != 1 else ''} "
+                f"Schedule baseline SSA for {no_ssa} school{'s' if no_ssa != 1 else ''} "
                 "without a current assessment."
                 if no_ssa
                 else "All project schools have a current SSA — schedule support activities."
@@ -488,7 +488,7 @@ def get_dashboard(
         readiness = s.planning_readiness
         if ssa == "not_done":
             state, tone, action, href = (
-                "SSA Required",
+                "Baseline Required",
                 "warning",
                 "Schedule SSA",
                 "/planning",

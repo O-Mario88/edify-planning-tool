@@ -426,7 +426,7 @@ class Command(BaseCommand):
             d = rnd.choice(districts)
             sc = subs[i % len(subs)] if subs else rnd.choice(subs)
             s = School.objects.create(
-                school_id=str(1000 + i),
+                school_id=f"S-{1000 + i}",
                 name=f"{sc.name} {name_frags[i % len(name_frags)]}",
                 region=d.region,
                 district=d,
@@ -511,24 +511,18 @@ class Command(BaseCommand):
         self.stdout.write(f"  sample partners: {Partner.objects.count()} (local only)")
 
         rate_card = {
-            "primary_transport_per_day": 50000,
-            "primary_lunch_per_day": 12000,
-            "secondary_transport_per_day": 80000,
-            "secondary_lunch_per_day": 12000,
-            "secondary_breakfast_per_day": 8000,
-            "secondary_overnight_dinner_per_day": 12000,
-            "secondary_accommodation_per_night": 40000,
-            "secondary_incidentals_per_day": 5000,
+            "staff_visit_transport_primary": 50000,
+            "lunch": 12000,
+            "breakfast": 8000,
+            "dinner": 12000,
+            "accommodation": 40000,
+            "staff_visit_transport_secondary": 25000,
             "group_training_facilitation_fee": 50000,
             "group_training_venue_cost": 30000,
             "group_training_participant_meal_cost_per_head": 5000,
             "cluster_meeting_participant_meal_cost_per_head": 10000,
             "partner_visit_lump_sum": 40000,
             "partner_training_lump_sum": 16000,
-            "core_school_visit": 50000,
-            "core_school_training": 250000,
-            "ssa_visit_rate": 50000,
-            "project_partner_lump_sum": 40000,
         }
         friendly_labels = {
             "cluster_meeting_participant_meal_cost_per_head": "Participant snacks",

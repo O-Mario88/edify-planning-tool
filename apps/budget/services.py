@@ -18,18 +18,19 @@ from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
-from .costing import cost_for_activity
+from .costing import LEGACY_CLUSTER_ACTIVITY_COST_KEYS, cost_for_activity
 from .models import CostSetting, CostSettingHistory
-from .reference import CANONICAL_RATE_KEYS, RETIRED_COST_SETTING_KEYS
 from apps.core.activity_types import TRAINING_TYPES
 
 
 # ── Rate card ────────────────────────────────────────────────────────────────
 def list_cost_settings(principal, query: dict) -> dict:
-    # The registry is an allow-list, rather than merely excluding known old
-    # keys. This prevents an ad-hoc alias from creating another editable source
-    # for an allowance that already exists.
-    qs = CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS).order_by("label")
+    # Old broad training/meeting rates stay in the database so historical
+    # snapshots remain auditable, but they are no longer configurable for new
+    # cluster work.  The four canonical rates are the catalogue surface.
+    qs = CostSetting.objects.exclude(
+        key__in=LEGACY_CLUSTER_ACTIVITY_COST_KEYS
+    ).order_by("label")
     if query.get("fy"):
         qs = qs.filter(Q(fy=query["fy"]) | Q(fy__isnull=True))
     settings_list = [
@@ -54,15 +55,10 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     key = data.get("key")
     if not key:
         raise BadRequest("key is required.")
-    if key in RETIRED_COST_SETTING_KEYS:
+    if key in LEGACY_CLUSTER_ACTIVITY_COST_KEYS:
         raise BadRequest(
-            "This is a retired cost item retained only for historical audit. "
-            "Update its canonical Cost Catalogue item instead."
-        )
-    if key not in CANONICAL_RATE_KEYS:
-        raise BadRequest(
-            "Unknown cost item. Cost settings must be registered in the "
-            "canonical Cost Catalogue before they can be edited."
+            "This is a historic cluster cost item. Use Participant snacks, "
+            "Participant meals, Facilitation fee, or Venue fee instead."
         )
     label = data.get("label") or key.replace("_", " ").title()
     new_cost = data.get("unitCost")

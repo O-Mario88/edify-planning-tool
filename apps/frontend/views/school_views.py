@@ -11,15 +11,12 @@ from django.db import transaction
 from django.db.models import Q, Count
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
-from django.utils.html import escape
-from urllib.parse import urlencode
 
 from apps.schools.models import School
 from apps.geography.models import Region, District, SubCounty
 from apps.core.enums import SchoolType, PlanningReadiness
 from apps.schools.upload_service import upload_school_file
 from apps.ssa.upload_service import upload_ssa_file
-from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
@@ -30,8 +27,6 @@ from apps.clusters.services import (
     set_school_cluster_membership,
 )
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.core.permissions import has_permission, render_access_denied
-from apps.core.rbac import Permission
 from apps.projects.models import (
     OPEN_PROJECT_STATUSES,
     Project,
@@ -39,56 +34,6 @@ from apps.projects.models import (
 )
 from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.frontend.view_models import SchoolDirectoryViewModel
-
-
-def _may_upload_schools(request) -> bool:
-    return has_permission(request.user, Permission.SCHOOL_UPLOAD.value)
-
-
-def _may_upload_ssa(request) -> bool:
-    return has_permission(request.user, Permission.SSA_UPLOAD.value)
-
-
-def _create_manual_school(request) -> School:
-    """Validate and persist one school through the canonical school service."""
-    district_id = request.POST.get("district_id", "").strip()
-    district = (
-        District.objects.select_related("region").filter(id=district_id).first()
-        if district_id
-        else None
-    )
-    if district is None:
-        raise BadRequest("Select a valid district.")
-
-    with transaction.atomic():
-        school = create_school(
-            {
-                "schoolId": request.POST.get("school_id", ""),
-                "name": request.POST.get("name", ""),
-                "regionId": district.region_id,
-                "districtId": district.id,
-                "schoolType": request.POST.get("school_type", SchoolType.CLIENT),
-                "enrollment": request.POST.get("enrollment", ""),
-            },
-            request.user,
-        )
-
-        cluster_id = request.POST.get("cluster_id", "").strip()
-        if cluster_id:
-            cluster = Cluster.objects.filter(
-                id=cluster_id,
-                deleted_at__isnull=True,
-                status="active",
-            ).first()
-            if cluster is None:
-                raise BadRequest("Select a valid active cluster.")
-            set_school_cluster_membership(
-                school,
-                cluster,
-                request.user.user_id,
-            )
-
-    return school
 
 
 def _get_school_intelligence_data(school):
@@ -539,8 +484,6 @@ def school_directory_view(request):
         "can_toggle_core": user.active_role
         in ("Admin", "CountryDirector", "ImpactAssessment"),
         "can_schedule": RolePermissionService.can_schedule_activity(user),
-        "can_upload_schools": _may_upload_schools(request),
-        "can_add_ssa": _may_upload_ssa(request),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -1428,27 +1371,32 @@ def bulk_match_staff_view(request):
 
 @require_page_permission("school_directory")
 def add_school_view(request):
-    if request.method != "POST":
-        return redirect("/schools")
-    if not _may_upload_schools(request):
-        return render_access_denied(
-            request,
-            "Only Impact Assessment and administrators may add schools.",
-        )
+    if request.method == "POST":
+        school_id = request.POST.get("school_id", "").strip()
+        name = request.POST.get("name", "").strip()
+        district_id = request.POST.get("district_id", "").strip()
+        school_type = request.POST.get("school_type", "client").strip()
+        enrollment_str = request.POST.get("enrollment", "").strip()
 
-    try:
-        school = _create_manual_school(request)
-    except BadRequest as exc:
-        messages.error(request, str(exc))
-        return redirect("/schools")
+        if school_id and name and district_id:
+            district = get_object_or_404(District, id=district_id)
+            enrollment = int(enrollment_str) if enrollment_str.isdigit() else 0
 
-    messages.success(
-        request,
-        f"School '{school.name}' ({school.school_id}) was added to the directory.",
-    )
-    if request.POST.get("next") == "ssa" and _may_upload_ssa(request):
-        query = urlencode({"school_id": school.school_id})
-        return local_redirect(f"/ssa/manual/?{query}")
+            school = School.objects.create(
+                school_id=school_id,
+                name=name,
+                district=district,
+                region=district.region,
+                school_type=school_type,
+                enrollment=enrollment,
+            )
+            messages.success(
+                request,
+                f"Successfully created school '{school.name}' ({school.school_id}).",
+            )
+        else:
+            messages.error(request, "Failed to create school: missing required fields.")
+
     return redirect("/schools")
 
 
@@ -1615,11 +1563,12 @@ def school_edit_drawer_view(request, school_id):
 
 @require_page_permission("school_directory")
 def school_onboard_drawer_view(request):
-    if not _may_upload_schools(request):
-        return render_access_denied(
-            request,
-            "Only Impact Assessment and administrators may add schools.",
-        )
+    from apps.geography.models import District
+    from apps.clusters.models import Cluster
+    from django.shortcuts import render, get_object_or_404
+    from django.http import HttpResponse
+    from django.contrib import messages
+    from apps.schools.models import School
 
     districts = District.objects.all().order_by("name")
     clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
@@ -1628,34 +1577,48 @@ def school_onboard_drawer_view(request):
     cluster_id = request.GET.get("cluster_id", "").strip()
 
     if request.method == "POST":
-        try:
-            school = _create_manual_school(request)
-        except BadRequest as exc:
-            return HttpResponse(
-                (
-                    '<div role="alert" class="p-3 bg-rose-50 text-rose-700 '
-                    'rounded-surface text-[12px] font-bold">'
-                    f"{escape(str(exc))}</div>"
-                ),
-                status=400,
+        school_id = request.POST.get("school_id", "").strip()
+        name = request.POST.get("name", "").strip()
+        district_id = request.POST.get("district_id", "").strip()
+        school_type = request.POST.get("school_type", "client").strip()
+        enrollment_str = request.POST.get("enrollment", "").strip()
+        target_cluster_id = request.POST.get("cluster_id", "").strip()
+
+        if school_id and name and district_id:
+            district = get_object_or_404(District, id=district_id)
+            enrollment = int(enrollment_str) if enrollment_str.isdigit() else 0
+
+            # Create school
+            school = School.objects.create(
+                school_id=school_id,
+                name=name,
+                district=district,
+                region=district.region,
+                school_type=school_type,
+                enrollment=enrollment,
             )
 
-        messages.success(
-            request,
-            f"School '{school.name}' ({school.school_id}) was added to the directory.",
-        )
-        if request.POST.get("next") == "ssa" and _may_upload_ssa(request):
-            query = urlencode({"school_id": school.school_id})
-            response = HttpResponse(status=204)
-            response["HX-Redirect"] = f"/ssa/manual/?{query}"
-            return response
+            # If cluster assignment was selected, assign it
+            if target_cluster_id:
+                cluster = get_object_or_404(Cluster, id=target_cluster_id)
+                set_school_cluster_membership(school, cluster, request.user.user_id)
 
-        return HttpResponse("<script>window.location.reload();</script>")
+            messages.success(
+                request,
+                f"Successfully created and onboarded school '{school.name}' ({school.school_id}).",
+            )
+
+            # Reload page to refresh the checklist/directory
+            return HttpResponse("<script>window.location.reload();</script>")
+        else:
+            return HttpResponse(
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Failed to create school: missing required fields.</div>',
+                status=400,
+            )
 
     context = {
         "districts": districts,
         "clusters": clusters,
         "pre_cluster_id": cluster_id,
-        "can_add_ssa": _may_upload_ssa(request),
     }
     return render(request, "partials/schools/onboard_drawer.html", context)

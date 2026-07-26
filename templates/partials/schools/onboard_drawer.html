@@ -19,19 +19,15 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 
 <!-- School ID -->
 <div>
-<label for="school_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Official School ID <span class="text-rose-500">*</span></label>
+<label for="school_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School ID / SF Code <span class="text-rose-500">*</span></label>
 <input
 type="text"
 name="school_id"
 id="school_id"
-maxlength="64"
-autocomplete="off"
 required
-placeholder="e.g. 9999"
-aria-describedby="school-id-help"
-class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+placeholder="e.g. SCH-9999"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
-<p id="school-id-help" class="edify-text-caption text-slate-400 mt-1">Enter the official ID exactly as assigned. The app will not add an S- prefix.</p>
 </div>
 
 <!-- School Name -->
@@ -41,11 +37,9 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 type="text"
 name="name"
 id="name"
-maxlength="255"
-autocomplete="organization"
 required
 placeholder="e.g. Kampala Hope Academy"
-class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -56,7 +50,7 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 name="district_id"
 id="district_id"
 required
-class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="" disabled selected>Select a District</option>
 {% for d in districts %}
@@ -71,10 +65,11 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 <select
 name="school_type"
 id="school_type"
-class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="client" selected>Client School</option>
 <option value="core">Core School</option>
+<option value="project">Project School</option>
 </select>
 </div>
 
@@ -86,9 +81,8 @@ type="number"
 name="enrollment"
 id="enrollment"
 min="0"
-inputmode="numeric"
 placeholder="e.g. 250"
-class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
@@ -103,7 +97,7 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 <select
 name="cluster_id"
 id="cluster_id"
-class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 cursor-pointer"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="">Unassigned (Select later)</option>
 {% for c in clusters %}
@@ -122,19 +116,9 @@ class="edify-action-button secondary h-9 transition-colors"
 >
 Cancel
 </button>
-{% if can_add_ssa %}
 <button
 type="submit"
-name="next"
-value="ssa"
-class="edify-action-button secondary min-h-11 transition-colors"
->
-Save &amp; Add SSA Score
-</button>
-{% endif %}
-<button
-type="submit"
-class="edify-action-button primary min-h-11 transition-colors shadow-sm"
+class="edify-action-button primary h-9 transition-colors shadow-sm"
 >
 Create School
 </button>

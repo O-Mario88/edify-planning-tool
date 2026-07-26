@@ -586,7 +586,7 @@ document.addEventListener('alpine:init', () => {
         opts = {
           chart: { type: 'bar', height: 320 },
           series: [
-            { name: 'Initial SSA Score', data: d.baseline || [] },
+            { name: 'Baseline', data: d.baseline || [] },
             { name: 'Follow-up', data: d.followup || [] },
           ],
           xaxis: { categories: d.labels || [], labels: { rotate: -35, style: { fontSize: '10px' } } },

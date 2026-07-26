@@ -52,7 +52,7 @@ PROJECT_RECOMMENDATION = {
     "Positive Impact": "Continue Project",
     "No Measurable Impact": "Redesign Intervention",
     "Negative Impact": "Pause and Review",
-    "Not Measurable Yet": "Complete initial and post-support SSA scores",
+    "Not Measurable Yet": "Complete baseline and post-support SSA",
     "Insufficient Data": "Collect more verified SSA",
 }
 STATUS_FILTERS = {

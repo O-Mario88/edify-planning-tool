@@ -48,7 +48,7 @@
   <section class="spp-card spp-queue" aria-labelledby="spp-queue-title">
     <nav class="spp-tabs" aria-label="Project school readiness">
       <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='all'" class="{% if selected.tab == 'all' %}is-active{% endif %}">All Project Schools <b>{{ tab_counts.all }}</b></button>
-      <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='baseline'" class="{% if selected.tab == 'baseline' %}is-active{% endif %}">SSA Required <b>{{ tab_counts.baseline }}</b></button>
+      <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='baseline'" class="{% if selected.tab == 'baseline' %}is-active{% endif %}">Baseline Required <b>{{ tab_counts.baseline }}</b></button>
       <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='ready'" class="{% if selected.tab == 'ready' %}is-active{% endif %}">Ready for Support <b>{{ tab_counts.ready }}</b></button>
       <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='partner'" class="{% if selected.tab == 'partner' %}is-active{% endif %}">Assigned to Partner <b>{{ tab_counts.partner }}</b></button>
       <button type="submit" form="spp-filters" @click="document.getElementById('spp-tab').value='scheduled'" class="{% if selected.tab == 'scheduled' %}is-active{% endif %}">Scheduled <b>{{ tab_counts.scheduled }}</b></button>
@@ -63,7 +63,7 @@
         <caption class="sr-only">Schools assigned to special projects and their planning readiness</caption>
         <thead><tr>
           <th scope="col" class="spp-check"><input type="checkbox" aria-label="Select all schools on this page" :checked="selected.length === {{ rows|length }} && {{ rows|length }} > 0" @change="togglePage([{% for row in rows %}'{{ row.assignment_id }}'{% if not forloop.last %},{% endif %}{% endfor %}])"></th>
-          <th scope="col">School</th><th scope="col">Project</th><th scope="col">SSA Score</th><th scope="col">Planning readiness</th><th scope="col">Weakest intervention</th><th scope="col">Recommended action</th><th scope="col">Partner</th><th scope="col">Actions</th>
+          <th scope="col">School</th><th scope="col">Project</th><th scope="col">Baseline / SSA</th><th scope="col">Planning readiness</th><th scope="col">Weakest intervention</th><th scope="col">Recommended action</th><th scope="col">Partner</th><th scope="col">Actions</th>
         </tr></thead>
         <tbody>
           {% for row in rows %}
@@ -122,7 +122,7 @@
 <div class="spp-lower-grid">
   <section class="spp-card spp-summary">
     <div class="spp-card__titlebar"><div><p class="spp-eyebrow">Portfolio</p><h2>Project Planning Summary</h2></div></div>
-    <div class="spp-table-wrap"><table><thead><tr><th>Project</th><th>Schools Assigned</th><th>Ready for Planning</th><th>SSA Required</th><th>Assigned to Partner</th><th>Scheduled</th></tr></thead><tbody>{% for item in summary %}<tr><td><a href="{{ item.url }}">{{ item.name }}</a></td><td>{{ item.assigned }}</td><td>{{ item.ready }} <small>({{ item.ready_pct }}%)</small></td><td>{{ item.baseline }}</td><td>{{ item.partner }}</td><td>{{ item.scheduled }}</td></tr>{% empty %}<tr><td colspan="6">No projects match these filters.</td></tr>{% endfor %}</tbody></table></div>
+    <div class="spp-table-wrap"><table><thead><tr><th>Project</th><th>Schools Assigned</th><th>Ready for Planning</th><th>Baseline Required</th><th>Assigned to Partner</th><th>Scheduled</th></tr></thead><tbody>{% for item in summary %}<tr><td><a href="{{ item.url }}">{{ item.name }}</a></td><td>{{ item.assigned }}</td><td>{{ item.ready }} <small>({{ item.ready_pct }}%)</small></td><td>{{ item.baseline }}</td><td>{{ item.partner }}</td><td>{{ item.scheduled }}</td></tr>{% empty %}<tr><td colspan="6">No projects match these filters.</td></tr>{% endfor %}</tbody></table></div>
   </section>
   <section class="spp-card spp-delivery">
     <div class="spp-card__titlebar"><div><p class="spp-eyebrow">Workflow</p><h2>Project Delivery Readiness</h2></div><span>Budget generated: <strong>{{ budget }}</strong></span></div>

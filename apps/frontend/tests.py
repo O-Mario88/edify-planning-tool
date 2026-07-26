@@ -885,7 +885,7 @@ class FrontendViewsTestCase(TestCase):
 
         # Verify default settings created/attached
         breakfast_setting = CostSetting.objects.get(
-            key="secondary_breakfast_per_day", catalogue=active_cat
+            key="breakfast", catalogue=active_cat
         )
         self.assertEqual(breakfast_setting.unit_cost, 8000)
 

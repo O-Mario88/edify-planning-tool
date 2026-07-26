@@ -9,13 +9,10 @@ from apps.core.permissions import (
     require_page_permission,
 )
 from apps.core.rbac import Permission
-from apps.core.scoping import resolve_user_scope, school_queryset
-from apps.schools.models import SSAImportBatch, School
-from apps.ssa import services as ssa_services
-from apps.ssa.forms import ManualSsaEntryForm
+from apps.core.scoping import resolve_user_scope
+from apps.schools.models import SSAImportBatch
 from apps.ssa.models import SsaRecord
 from apps.ssa.upload_service import upload_ssa_file, import_ssa_batch
-from apps.core.exceptions import BadRequest
 from apps.core.enums import VerificationStatus, SsaIntervention
 from django.utils import timezone
 import csv
@@ -32,14 +29,7 @@ def ssa_performance_view(request):
         if request.headers.get("HX-Request") == "true"
         else "pages/ssa/performance.html"
     )
-    return render(
-        request,
-        template,
-        {
-            "dashboard": dashboard,
-            "can_add_ssa": _may_upload_ssa(request),
-        },
-    )
+    return render(request, template, {"dashboard": dashboard})
 
 
 @require_page_permission("ssa_performance")
@@ -137,68 +127,6 @@ def _may_upload_ssa(request) -> bool:
 
 
 @require_page_permission("ssa")
-def ssa_manual_entry_view(request):
-    """Create one authoritative SSA record without using a spreadsheet."""
-    if not _may_upload_ssa(request):
-        return render_access_denied(
-            request,
-            "Only Impact Assessment and administrators may add official SSA scores.",
-        )
-
-    scope = resolve_user_scope(request.user)
-    scoped_schools = school_queryset(scope)
-    if scoped_schools is None:
-        scoped_schools = School.objects.none()
-    else:
-        scoped_schools = (
-            scoped_schools.filter(deleted_at__isnull=True)
-            .select_related("district")
-            .order_by("school_id")
-        )
-
-    initial = {
-        "school_id": request.GET.get("school_id", "").strip(),
-        "date_of_ssa": timezone.localdate(),
-    }
-    form = ManualSsaEntryForm(
-        request.POST or None,
-        school_queryset=scoped_schools,
-        initial=initial,
-    )
-
-    if request.method == "POST" and form.is_valid():
-        collector_type = (
-            "ia" if request.user.active_role == "ImpactAssessment" else "staff"
-        )
-        try:
-            result = ssa_services.upload(
-                form.to_service_payload(collector_type=collector_type),
-                request.user,
-            )
-        except BadRequest as exc:
-            form.add_error(None, str(exc))
-        else:
-            messages.success(
-                request,
-                (
-                    f"SSA score saved for {form.school.name}. "
-                    f"FY {result['fy']} average: {result['averageScore']:.1f}."
-                ),
-            )
-            return local_redirect(f"/schools/{form.school.id}#ssa-timeline")
-
-    return render(
-        request,
-        "pages/ssa/manual_entry.html",
-        {
-            "form": form,
-            "score_fields": form.score_fields,
-            "schools": scoped_schools,
-        },
-    )
-
-
-@require_page_permission("ssa")
 def ssa_upload_center_view(request):
     if request.method == "POST":
         if not _may_upload_ssa(request):
@@ -231,7 +159,6 @@ def ssa_upload_center_view(request):
         "pages/ssa/upload_center.html",
         {
             "intervention_choices": SsaIntervention.choices,
-            "can_add_ssa": _may_upload_ssa(request),
         },
     )
 

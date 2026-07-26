@@ -632,15 +632,15 @@ class SchoolVisitEffectivenessAnalyticsService:
     @staticmethod
     def _method_notes() -> list[str]:
         return [
-            "Cohort: schools with a VERIFIED SSA score in both the initial and "
+            "Cohort: schools with a VERIFIED SSA in both the baseline and "
             "follow-up FYs; latest confirmed record per FY; FY2025 excluded "
             "(assessment-cycle change broke comparability).",
             "Visits: verified visit-type activities dated after the school's "
-            "initial SSA assessment and on/before its follow-up. Cancelled and "
+            "baseline assessment and on/before its follow-up. Cancelled and "
             "draft work never counts; delivered means the canonical "
             "completion chain, not a schedule entry.",
             "Alignment: a visit's focus interventions intersect the school's "
-            "two weakest verified initial SSA interventions.",
+            "two weakest verified baseline interventions.",
             "All relationships are associations. Correlation is not "
             "causation, and none of these figures is a staff rating.",
             "Small groups are flagged rather than hidden "

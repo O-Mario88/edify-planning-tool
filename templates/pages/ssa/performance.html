@@ -10,19 +10,9 @@
       <h1 id="ssa-performance-title" class="edify-page-title">SSA Performance</h1>
       <p>Track confirmed school self-assessment performance across all eight interventions and act on the highest-priority gaps.</p>
     </div>
-    <div class="flex flex-wrap items-center justify-end gap-2">
-      {% if can_add_ssa %}
-      <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
-        Add SSA Score
-      </a>
-      <a href="/ssa/upload/" class="inline-flex min-h-11 items-center justify-center rounded-control border border-[var(--edify-border)] px-4 text-[12px] font-bold text-[var(--edify-text-muted)] hover:bg-slate-50">
-        Upload SSA
-      </a>
-      {% endif %}
-      <div class="sp-engine-state" aria-label="Decision engine status">
-        <span aria-hidden="true"></span>
-        {{ dashboard.engine.name }} · confirmed records only
-      </div>
+    <div class="sp-engine-state" aria-label="Decision engine status">
+      <span aria-hidden="true"></span>
+      {{ dashboard.engine.name }} · confirmed records only
     </div>
   </header>
 

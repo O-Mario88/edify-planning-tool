@@ -1398,7 +1398,7 @@ def ssa_evidence_upload_action(request, activity_id):
             actor_id=str(request.user.id),
             actor_role=request.user.active_role,
             success=True,
-            reason="SSA scores or form uploaded",
+            reason="SSA baseline scores or form uploaded",
             payload={"notes": notes},
         )
 
