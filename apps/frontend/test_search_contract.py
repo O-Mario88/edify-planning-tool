@@ -412,3 +412,87 @@ class FilterOptionsContractTest(TestCase):
             ).content.decode()
         )
         self.assertGreater(listed, 0)
+
+
+class CountsAgreeWithResultsTest(TestCase):
+    """§: a filter count that does not match the results is a defect.
+
+    The headline number and the list underneath it are two renderings of one
+    queryset. When they disagree, one of them is lying and the user has no way
+    to tell which — so they are asserted equal under filters, under search, and
+    under both at once.
+    """
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Counts Region")
+        self.district = District.objects.create(
+            name="Kiboga", region=self.region
+        )
+        for i in range(6):
+            School.objects.create(
+                school_id=f"SC-COUNT-{i}",
+                name=f"Kiboga Number {i} Primary",
+                region=self.region,
+                district=self.district,
+                school_type="client" if i < 4 else "core",
+            )
+        self.admin = User.objects.create_user(
+            email="counts-contract-admin@example.org",
+            name="Counts Contract Admin",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="test-password",
+        )
+
+    def _both(self, **params):
+        """The list count and the KPI headline, from one response."""
+        self.client.force_login(self.admin)
+        body = self.client.get("/schools", params).content.decode()
+        listed = listed_count(body)
+        flat = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", body))
+        headline = re.search(r"TOTAL SCHOOLS ([\d,]+)", flat, re.IGNORECASE)
+        return listed, (
+            int(headline.group(1).replace(",", "")) if headline else None
+        )
+
+    def test_headline_agrees_with_the_list_under_every_narrowing(self):
+        for label, params in (
+            ("unfiltered", {}),
+            ("filter", {"school_type": "client"}),
+            ("search", {"q": "Kiboga Number 1"}),
+            ("filter and search", {"school_type": "client", "q": "Kiboga"}),
+            ("no match", {"q": "zzz-no-such-school"}),
+        ):
+            with self.subTest(case=label):
+                listed, headline = self._both(**params)
+                if headline is None:
+                    continue
+                self.assertEqual(
+                    listed,
+                    headline,
+                    f"the headline and the list disagree under {label}",
+                )
+
+    def test_a_filter_survives_tabs_and_pagination(self):
+        """Switching tab or page must not quietly drop the active filter."""
+        base, _ = self._both(school_type="client")
+        self.assertEqual(base, 4)
+
+        for tab in ("all", "unclustered", "clustered"):
+            with self.subTest(tab=tab):
+                listed, _ = self._both(school_type="client", tab=tab)
+                self.assertLessEqual(
+                    listed, base, f"tab {tab} widened the filtered set"
+                )
+
+        paged, _ = self._both(school_type="client", page=2)
+        self.assertEqual(
+            paged, base, "paging changed how many records matched"
+        )
+
+    def test_tab_partitions_sum_to_the_filtered_total(self):
+        """Complementary tabs must account for every filtered record, once."""
+        total, _ = self._both(school_type="client")
+        unclustered, _ = self._both(school_type="client", tab="unclustered")
+        clustered, _ = self._both(school_type="client", tab="clustered")
+        self.assertEqual(unclustered + clustered, total)
