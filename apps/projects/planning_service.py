@@ -28,7 +28,12 @@ from apps.core.scoping import resolve_user_scope
 from apps.analytics.platform_engine import planning_health
 
 from .dashboard_service import _fmt_ugx
-from .models import Project, ProjectCategory, ProjectSchoolAssignment
+from .models import (
+    Project,
+    ProjectCategory,
+    ProjectPartnerAssignment,
+    ProjectSchoolAssignment,
+)
 
 
 INTERVENTION_LABELS = dict(SsaIntervention.choices)
@@ -275,11 +280,24 @@ def get_planning(principal, filters=None) -> dict:
             | Q(project__category=selected_project_type)
         )
     if search:
+        # Project code is how these are referred to in writing — on a budget
+        # line, in an approval, in an email — yet it was the one identifier the
+        # search could not match. Partner comes in through the assignment table
+        # rather than a join, so a project stays findable by who delivers it
+        # without fanning the row out per partner.
         assignments_qs = assignments_qs.filter(
             Q(school__name__icontains=search)
             | Q(school__school_id__icontains=search)
             | Q(project__name__icontains=search)
+            | Q(project__code__icontains=search)
             | Q(school__district__name__icontains=search)
+            | Q(school__sub_county__name__icontains=search)
+            | Q(school__account_owner_name_raw__icontains=search)
+            | Q(
+                project_id__in=ProjectPartnerAssignment.objects.filter(
+                    partner__name__icontains=search
+                ).values("project_id")
+            )
         )
     assignments = list(assignments_qs)
 

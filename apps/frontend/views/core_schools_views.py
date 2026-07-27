@@ -49,6 +49,7 @@ def core_schools_view(request):
     # 1. Filters
     filters = {
         "fy": fy,
+        "q": request.GET.get("q", "").strip(),
         "region": request.GET.get("region", "All"),
         "district": request.GET.get("district", "All"),
         "staff": request.GET.get("staff", "All"),
@@ -249,6 +250,20 @@ def core_schools_view(request):
         "base_template": "layouts/blank.html"
         if request.headers.get("HX-Request") == "true"
         else "layouts/shell.html",
+        # The page had no search control of any kind, so the top bar showed the
+        # generic global form that searches somewhere else entirely. It now
+        # drives this matrix, and carries the filter row along so a query
+        # narrows the current view rather than resetting it.
+        "topbar_search": {
+            "placeholder": "Search Core Schools…",
+            "label": "Search Core Schools by name, ID, district or owner",
+            "name": "q",
+            "value": filters["q"],
+            "hx_get": "/core-schools",
+            "hx_target": "#core-schools-table-container",
+            "hx_trigger": "keyup changed delay:250ms, search",
+            "hx_include": "#core-filters-form",
+        },
     }
 
     if request.headers.get("HX-Target") == "core-schools-table-container":
