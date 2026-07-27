@@ -1407,6 +1407,29 @@ class ClusterDashboardService:
             "kpis": kpis,
             "kpi_strip_items": kpi_strip_items,
             "risk_counts": risk_counts,
+            # Filter options built from base_qs — the same scoped, active,
+            # non-deleted set this page lists — rather than from the national
+            # geography tables.
+            #
+            # They are produced here, not in the view, because base_qs carries
+            # the scope predicate above. Rebuilding that predicate beside the
+            # view's dropdowns is how the option list drifts wider than the
+            # list itself, and an option wider than the list is an option that
+            # selects nothing.
+            "district_options": (
+                District.objects.filter(id__in=base_qs.values("district_id"))
+                .distinct()
+                .order_by("name")
+            ),
+            "sub_county_options": (
+                SubCounty.objects.filter(
+                    id__in=base_qs.exclude(sub_county__isnull=True).values(
+                        "sub_county_id"
+                    )
+                )
+                .distinct()
+                .order_by("name")
+            ),
         }
 
 

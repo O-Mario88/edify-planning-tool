@@ -57,9 +57,32 @@ def analytics_dashboard_view(request):
     analytics_layout = preference.layout if preference else "grid"
 
     # 3. Retrieve options list for dropdown filters
+    #
+    # Derived from the schools this user can actually reach, so every option is
+    # a place results can come from. Listing every district in the country put
+    # more than a hundred dead ends in a control whose whole job is to narrow —
+    # and picking one returned an empty page that looked identical to a broken
+    # filter.
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    _scope = resolve_user_scope(request.user)
+    _scoped_schools = school_queryset(_scope).filter(deleted_at__isnull=True)
+
     regions = Region.objects.all().order_by("name")
-    districts = District.objects.all().order_by("name")
-    clusters = Cluster.objects.all().order_by("name")
+    districts = (
+        District.objects.filter(id__in=_scoped_schools.values("district_id"))
+        .distinct()
+        .order_by("name")
+    )
+    # Cluster carries its own district, so it scopes through the same set
+    # rather than through School.cluster_id, which is a CharField.
+    clusters = (
+        Cluster.objects.filter(
+            district_id__in=_scoped_schools.values("district_id")
+        )
+        .distinct()
+        .order_by("name")
+    )
     staff_profiles = (
         StaffProfile.objects.filter(deleted_at__isnull=True)
         .select_related("user")

@@ -211,18 +211,38 @@ def core_schools_view(request):
     ]
 
     # Dropdowns Options
+    #
+    # Scoped to the core schools this page is actually showing. The district
+    # list used to be narrowed by the Region control; with Region gone, the
+    # narrowing comes from the schools themselves, which is stricter — an
+    # option only exists if results can come from it — and needs no second
+    # control to stay correct per role.
+    _core_district_ids = core_schools_qs.values("district_id")
     regions = Region.objects.all().order_by("name")
-    if filters["region"] != "All":
-        districts = District.objects.filter(region_id=filters["region"]).order_by(
-            "name"
-        )
-    else:
-        districts = District.objects.all().order_by("name")
-
-    staff_members = (
-        StaffProfile.objects.all().select_related("user").order_by("user__name")
+    districts = (
+        District.objects.filter(id__in=_core_district_ids)
+        .distinct()
+        .order_by("name")
     )
-    partners = Partner.objects.all().order_by("name")
+    # Owners of the core schools in view, not every staff record in the system.
+    staff_members = (
+        StaffProfile.objects.filter(
+            user_id__in=core_schools_qs.exclude(
+                account_owner_id__isnull=True
+            ).values("account_owner_id")
+        )
+        .select_related("user")
+        .order_by("user__name")
+    )
+    partners = (
+        Partner.objects.filter(
+            id__in=PartnerAssignment.objects.filter(
+                school__school_type="core"
+            ).values("partner_id")
+        )
+        .distinct()
+        .order_by("name")
+    )
 
     context = {
         "fy": fy,
