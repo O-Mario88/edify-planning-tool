@@ -309,3 +309,52 @@ class AnalyticsSearchContractTest(TestCase):
         self.client.force_login(self.cd)
         body = self.client.get("/analytics").content.decode()
         self.assertIn("Search analytics records", body)
+
+
+class NoDuplicatePersistentSearchTest(TestCase):
+    """§3: a page may carry at most one persistent search input.
+
+    Two inputs for one dataset means two ids, two ways to submit, and two
+    places for the query to disagree with itself after a back-navigation —
+    plus a screen reader announcing a search landmark twice.
+    """
+
+    INPUT = re.compile(
+        r'<input[^>]*(?:type="search"|name="q")[^>]*>', re.IGNORECASE
+    )
+
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email="dupe-contract-admin@example.org",
+            name="Dupe Contract Admin",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="test-password",
+        )
+
+    def test_search_first_pages_carry_exactly_one_input(self):
+        self.client.force_login(self.admin)
+        for route, params in (
+            ("/search", {"q": "primary"}),
+            ("/help/glossary", {"q": "netsuite"}),
+            ("/help/search", {"q": "evidence"}),
+            ("/help", {}),
+        ):
+            with self.subTest(route=route):
+                response = self.client.get(route, params)
+                if response.status_code != 200:
+                    continue
+                found = self.INPUT.findall(response.content.decode())
+                self.assertLessEqual(
+                    len(found),
+                    1,
+                    f"{route} renders {len(found)} persistent search inputs",
+                )
+
+    def test_the_surviving_input_carries_the_active_query(self):
+        """Removing the body box must not strand the query in an empty field."""
+        self.client.force_login(self.admin)
+        body = self.client.get("/search", {"q": "primary"}).content.decode()
+        found = self.INPUT.findall(body)
+        self.assertEqual(len(found), 1)
+        self.assertIn('value="primary"', found[0])

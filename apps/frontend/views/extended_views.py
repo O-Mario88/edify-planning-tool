@@ -1389,7 +1389,22 @@ def search_view(request):
             .select_related("school", "cluster")[:10]
         )
 
-    context = {"q": q, "results": results, "has_results": any(results.values())}
+    context = {
+        "q": q,
+        "results": results,
+        "has_results": any(results.values()),
+        # This page used to render its own search box beside the top bar's,
+        # both posting q to /search. The top bar is now the only control, so it
+        # has to carry the active query — otherwise submitting from a results
+        # page would search from an empty field.
+        "topbar_search": {
+            "placeholder": "Search schools, staff, activities…",
+            "label": "Search schools, staff and activities",
+            "name": "q",
+            "value": q,
+            "action": "/search",
+        },
+    }
     return render(request, "pages/search/index.html", context)
 
 
