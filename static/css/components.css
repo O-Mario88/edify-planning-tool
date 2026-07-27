@@ -263,7 +263,7 @@ main .bg-white {
 
 /* Glass has hierarchy: large surfaces establish the workspace, while tiles
    remain darker and quieter so data—not decoration—owns the foreground. */
-.theme-blue main :is(.kpi-strip__item, .pto-balance-tile, .pto-recommendation,
+.theme-blue main :is(.pto-balance-tile, .pto-recommendation,
   .pto-signal, .pto-coverage-card, .pto-constraint, .pto-conflict-card,
   .pto-tracker-card) {
   background-color: rgba(0, 29, 57, 0.26) !important;
@@ -1230,11 +1230,12 @@ select:not([multiple]):not(.select-native) {
 
 .kpi-strip__label {
   font-size: var(--edify-text-micro-size);
-  font-weight: 600;
-  letter-spacing: 0;
+  font-weight: 700;
+  letter-spacing: 0.035em;
   color: var(--edify-text-muted);
-  line-height: 1.25;
-  margin-bottom: 0.125rem;
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
 }
 
 .kpi-strip__value {
@@ -1363,6 +1364,19 @@ select:not([multiple]):not(.select-native) {
 
   .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(13))) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Phones never scroll a KPI strip horizontally. Below the smallest card
+   minimum every strip locks to a 2-column wrapping grid so the tiles fill
+   the viewport instead of overflowing into a swipe carousel. */
+@media (max-width: 36rem) {
+  .kpi-strip__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .kpi-strip__item {
+    min-width: 0;
   }
 }
 
@@ -2278,4 +2292,14 @@ select:not([multiple]):not(.select-native) {
   .confirm-action__trigger,
   .confirm-action__cancel,
   .confirm-action__confirm { min-block-size: 2.75rem; }
+}
+
+/* Linked KPI tiles keep their hover/focus motion off when the user asks for
+   less motion. (The themed card treatment lives at the GLOBAL KPI STRIP
+   COMPONENT block above; this rule travels separately so it can't be lost.) */
+@media (prefers-reduced-motion: reduce) {
+  .kpi-strip__item,
+  .kpi-strip__item-body--link {
+    transition: none;
+  }
 }

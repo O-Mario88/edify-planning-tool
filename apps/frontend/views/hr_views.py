@@ -1681,6 +1681,23 @@ def my_performance_view(request, tab=None):
                 {"snap": snap, "label": WINDOW_LABELS.get(snap.window, snap.window)}
             )
 
+    user_role = getattr(request.user, "active_role", "")
+    MANAGER_ROLES = {
+        "Program Lead",
+        "PL",
+        "CountryDirector",
+        "CD",
+        "RegionalVicePresident",
+        "RVP",
+        "HumanResources",
+        "HR",
+        "Admin",
+    }
+    show_open_conversation = user_role in MANAGER_ROLES
+    show_priority_button = True
+    has_priorities = bool(priorities and len(priorities) > 0)
+    priority_button_label = "Update priorities" if has_priorities else "Create Priority"
+
     context = {
         "cycle": cycle,
         "review": review,
@@ -1693,6 +1710,10 @@ def my_performance_view(request, tab=None):
         "overall_gauge": overall_gauge,
         "allocation": allocation,
         "layers": layers,
+        "show_open_conversation": show_open_conversation,
+        "show_priority_button": show_priority_button,
+        "has_priorities": has_priorities,
+        "priority_button_label": priority_button_label,
         "active_window_label": (
             WINDOW_LABELS.get(cycle.active_window) if cycle else None
         ),

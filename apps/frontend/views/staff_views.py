@@ -792,11 +792,11 @@ def _build_core_tracker(user):
         elif plan.baseline_average is not None:
             status, tone = "Not Started", "neutral"
         else:
-            status, tone = "Needs Baseline", "warning"
+            status, tone = "SSA Required", "warning"
         rows.append(
             {
                 "school": names.get(plan.school_id, plan.school_id),
-                "baseline": plan.baseline_average,
+                "average_ssa_score": plan.baseline_average,
                 "visits_done": v_done,
                 "trainings_done": t_done,
                 "visit_dots": [i < v_done for i in range(4)],

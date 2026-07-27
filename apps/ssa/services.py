@@ -108,17 +108,36 @@ def _recompute_readiness(school: School) -> None:
 def upload(data: dict, principal) -> dict:
     """Upload 8 intervention scores for a school. Collection provenance drives
     QA: staff/IA auto-verified; partner-collected lands pending."""
-    school = School.objects.filter(school_id=data.get("schoolId")).first()
+    school_id = str(data.get("schoolId") or "").strip()
+    school = School.objects.filter(school_id=school_id).first()
     if not school:
-        raise NotFoundError(f"School {data.get('schoolId')} not in directory")
+        raise NotFoundError(f"School {school_id or 'ID'} not in directory")
 
     scores_in: list[dict] = data.get("scores") or []
-    interventions = {s.get("intervention") for s in scores_in}
+    normalized_scores = []
+    interventions = set()
+    for item in scores_in:
+        intervention = item.get("intervention")
+        try:
+            score = float(item.get("score"))
+        except (TypeError, ValueError) as exc:
+            raise BadRequest(
+                f"Score for {intervention or 'intervention'} must be numeric"
+            ) from exc
+        if score < 0 or score > 10:
+            raise BadRequest(
+                f"Score for {intervention or 'intervention'} must be between 0 and 10"
+            )
+        interventions.add(intervention)
+        normalized_scores.append({"intervention": intervention, "score": score})
+
     if len(interventions) != 8 or not all(
         i in ALL_INTERVENTIONS for i in interventions
     ):
         raise BadRequest("All 8 intervention scores are required")
 
+    if not data.get("dateOfSsa"):
+        raise BadRequest("Assessment date is required")
     date = _parse_date(data["dateOfSsa"])
     fy = get_operational_fy(date)
 
@@ -151,21 +170,48 @@ def upload(data: dict, principal) -> dict:
                     f"Cannot upload SSA for the current FY ({fy}) — the previous FY ({prev_fy}) SSA for this school exists but is not verified. Verify it first."
                 )
     quarter = get_quarter_for_date(date)
-    average = round(sum(s["score"] for s in scores_in) / len(scores_in), 1)
+    average = round(
+        sum(s["score"] for s in normalized_scores) / len(normalized_scores), 1
+    )
 
     collector_type = data.get("collectorType", "staff")
     partner_collected = collector_type == "partner"
+    stored_collector_type = (
+        "partner" if partner_collected else "ia" if collector_type == "ia" else "staff"
+    )
+
+    new_enrollment = data.get("newEnrollment")
+    if new_enrollment in ("", None):
+        new_enrollment = None
+    else:
+        try:
+            new_enrollment = int(new_enrollment)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest("Assessment enrollment must be a whole number") from exc
+        if new_enrollment < 0:
+            raise BadRequest("Assessment enrollment cannot be negative")
 
     with transaction.atomic():
+        # Serialize writes for one school so two simultaneous submissions
+        # cannot save the same assessment twice. Multiple assessment dates in
+        # one FY remain valid for before/after and monitoring trends.
+        school = School.objects.select_for_update().get(pk=school.pk)
+        if SsaRecord.objects.filter(school=school, date_of_ssa=date).exists():
+            raise BadRequest(
+                f"SSA score for {date.date().isoformat()} already exists for "
+                f"{school.name}. "
+                "Open the existing record instead of creating a duplicate."
+            )
+
         record = SsaRecord.objects.create(
             school=school,
             date_of_ssa=date,
             fy=fy,
             quarter=quarter,
-            new_enrollment=data.get("newEnrollment"),
+            new_enrollment=new_enrollment,
             average_score=average,
             uploaded_by=principal.user_id,
-            collector_type="partner" if partner_collected else "staff",
+            collector_type=stored_collector_type,
             collected_by_user_id=principal.user_id,
             collected_by_partner_id=data.get("collectedByPartnerId"),
             verification_status="pending" if partner_collected else "confirmed",
@@ -180,7 +226,7 @@ def upload(data: dict, principal) -> dict:
                 SsaScore(
                     ssa_record=record, intervention=s["intervention"], score=s["score"]
                 )
-                for s in scores_in
+                for s in normalized_scores
             ]
         )
 

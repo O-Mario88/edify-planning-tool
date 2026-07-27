@@ -59,21 +59,21 @@
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260725typetiers6">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260725typetiers6">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260727barcharts1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260727kpistripstheme1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260725settingsgear2">
-  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260725typetiers6">
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260726cardrows2">
 <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260725typetiers6">
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260715c">
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260719modalcontract1">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260726clustercreate2">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260725typetiers6">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260727noheaderhover1">
     <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260718supporthub3">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260725typetiers6">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260727kpistripstheme1">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -217,7 +217,7 @@ button, a, select, input, textarea {
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260725typetiers6"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260727barcharts2"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
@@ -225,6 +225,55 @@ button, a, select, input, textarea {
 <!-- ApexCharts & FullCalendar JS -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
+  /* App-wide ordered palette for comparison charts. Semantic status charts
+     (success / warning / danger) intentionally opt out so colour never lies. */
+  window.EdifyChartSystem = Object.freeze({
+    comparisonSeries: Object.freeze([
+      'var(--edify-chart-blue)',
+      'var(--edify-chart-orange)',
+      'var(--edify-chart-green)',
+    ]),
+    mixedSeries: Object.freeze([
+      'var(--edify-chart-blue)',
+      'var(--edify-chart-orange)',
+      'var(--edify-chart-green)',
+      'var(--edify-chart-amber)',
+    ]),
+
+    /* Value labels above grouped bars collide as soon as the slot is narrower
+       than the text — a three-digit label needs roughly 34px. The same chart
+       is wide on an analytics page and cramped in a sidebar column, and the
+       series count changes per role, so no fixed font size or column width
+       fixes it everywhere. Ask about the rendered geometry instead: show the
+       label when its bar has room, and let the axis and tooltip carry the
+       value when it does not. Silence beats two numbers printed on top of
+       each other. */
+    barLabelFits: function (opts, minSlotPx) {
+      var g = opts && opts.w && opts.w.globals;
+      if (!g || !g.gridWidth) return true;
+      var bars = (g.labels.length || 1) * (g.series.length || 1);
+      return g.gridWidth / bars >= (minSlotPx || 34);
+    },
+
+    /* The companion rule for a value printed INSIDE its bar. White-on-blue is
+       only readable while the bar is long enough to hold the text; on a short
+       bar the label spills onto the grey track and vanishes. Measure the bar
+       as drawn — a low count on a wide chart is fine, the same count on a
+       narrow card is not — and stay silent when it will not fit. This also
+       covers zero, which has no bar to write on at all. */
+    barValueFitsInside: function (val, opts, minPx) {
+      var g = opts && opts.w && opts.w.globals;
+      if (!g) return true;
+      var span = g.isBarHorizontal ? g.gridWidth : g.gridHeight;
+      if (!span) return true;
+      var flat = [].concat.apply([], g.series || []).filter(function (n) {
+        return typeof n === 'number' && isFinite(n);
+      });
+      var max = Math.max.apply(null, flat.concat([1]));
+      return (Math.abs(val) / max) * span >= (minPx || 26);
+    },
+  });
+
   /* ApexCharts merges window.Apex into every chart it creates, which makes this
      the only place that can give all of them the same empty state. Charts are
      built inline in a dozen templates, so without it each one would need its
@@ -235,6 +284,7 @@ button, a, select, input, textarea {
      happened in this period". The platform rule is that an empty result states
      itself honestly instead of being dressed up or left ambiguous. */
   window.Apex = {
+    colors: window.EdifyChartSystem.comparisonSeries,
     noData: {
       text: 'No data for this period',
       align: 'center',
@@ -249,8 +299,9 @@ button, a, select, input, textarea {
       },
     },
     /* Platform-wide chart styling. These merge into every chart config, so the
-       reference look (rounded bars, smooth accent line, dotted gridlines, no
-       axis chrome, soft legend) is consistent without editing each template. */
+       reference look (a full-width track behind every bar, pill-rounded caps,
+       smooth accent line, no axis chrome, soft legend) is consistent without
+       editing each template. */
     chart: {
       fontFamily: 'Inter, sans-serif',
       foreColor: 'var(--edify-text-muted)',
@@ -266,10 +317,21 @@ button, a, select, input, textarea {
     },
     plotOptions: {
       bar: {
-        columnWidth: '46%',
-        borderRadius: 8,
+        columnWidth: '58%',
+        barHeight: '62%',
+        /* Reads as a pill at every thickness we render. ApexCharts clamps the
+           radius to half the bar, so an oversized value rounds fully rather
+           than overshooting — one number works for a 12px and a 40px bar. */
+        borderRadius: 14,
         borderRadiusApplication: 'end',
         borderRadiusWhenStacked: 'last',
+        colors: {
+          /* The track is what makes a bar readable without gridlines: it shows
+             the full scale, so every bar states its share of the whole. */
+          backgroundBarColors: ['var(--edify-surface-muted)'],
+          backgroundBarOpacity: 1,
+          backgroundBarRadius: 14,
+        },
       },
     },
     stroke: { curve: 'smooth', width: 2, lineCap: 'round' },

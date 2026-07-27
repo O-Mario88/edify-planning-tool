@@ -133,28 +133,28 @@ def _row_state(latest_ssa, activities):
             label, tone = _activity_state(baseline_activity)
             return {
                 "bucket": "baseline",
-                "baseline": "Baseline scheduled",
+                "baseline": "SSA scheduled",
                 "baseline_tone": "warning",
                 "readiness": label,
                 "readiness_tone": tone,
-                "action": "Monitor baseline SSA visit",
+                "action": "Monitor SSA visit",
                 "next_step": "Complete the planned SSA collection before support activities are scheduled.",
                 "action_kind": "my_plan",
                 "activity": baseline_activity,
             }
         return {
             "bucket": "baseline",
-            "baseline": "No baseline",
+            "baseline": "SSA Required",
             "baseline_tone": "danger",
-            "readiness": "Baseline required",
+            "readiness": "SSA Required",
             "readiness_tone": "danger",
-            "action": "Schedule baseline SSA visit",
+            "action": "Schedule SSA visit",
             "next_step": "Establish the current intervention scores before planning project support.",
             "action_kind": "schedule",
             "activity": None,
         }
 
-    baseline_label = f"Baseline complete · {latest_ssa.date_of_ssa:%d %b %Y}"
+    baseline_label = f"SSA score available · {latest_ssa.date_of_ssa:%d %b %Y}"
     if not latest_activity:
         return {
             "bucket": "ready",
@@ -496,18 +496,11 @@ def get_planning(principal, filters=None) -> dict:
             "icon": "school",
         },
         {
-            "label": "Without Baseline / SSA",
+            "label": "SSA Score Required",
             "value": baseline_count,
             "helper": f"FY {selected_fy}",
             "tone": "orange",
             "icon": "warning",
-        },
-        {
-            "label": "Assigned to Partner",
-            "value": partner_count,
-            "helper": "awaiting or partner-led",
-            "tone": "purple",
-            "icon": "partner",
         },
         {
             "label": "Scheduled This Week",
@@ -515,13 +508,6 @@ def get_planning(principal, filters=None) -> dict:
             "helper": "project activities",
             "tone": "green",
             "icon": "calendar",
-        },
-        {
-            "label": "Schools in Active Projects",
-            "value": len({a.school_id for a in assignments}),
-            "helper": f"across {len({a.project_id for a in assignments})} projects",
-            "tone": "teal",
-            "icon": "folder",
         },
         {
             "label": "Planning Completion",
@@ -548,7 +534,7 @@ def get_planning(principal, filters=None) -> dict:
 
     band_cards = [
         {
-            "label": "Baseline Required",
+            "label": "SSA Required",
             "value": tab_counts["baseline"],
             "pct": round(tab_counts["baseline"] / max(tab_counts["all"], 1) * 100),
             "tone": "red",
@@ -624,7 +610,7 @@ def get_planning(principal, filters=None) -> dict:
     )
     delivery = [
         {
-            "label": "No Baseline",
+            "label": "SSA Required",
             "value": baseline_count,
             "tone": "red",
             "helper": "SSA needed",

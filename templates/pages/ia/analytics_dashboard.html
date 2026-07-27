@@ -47,7 +47,7 @@ border-radius: 4px;
 {% include "partials/analytics/section_nav.html" %}
 
 <!-- ================= TOP KPI ROW ================= -->
-<div class="ia-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-2">
+<div class="legacy-kpi-strip ia-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-2" aria-label="Impact assessment summary">
 <!-- Records Uploaded Today -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
 <div class="p-3 edify-primary-soft edify-primary-text rounded-surface">
@@ -116,7 +116,7 @@ border-radius: 4px;
 </div>
 
 <!-- Pending-queue strip -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+<div class="legacy-kpi-strip grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2" aria-label="Pending verification queues">
 <!-- Salesforce Queue Pending -->
 <div class="bg-slate-50 p-3 rounded-surface border border-slate-100/50 flex flex-col justify-between">
 <div class="flex items-center justify-between">
@@ -159,7 +159,7 @@ border-radius: 4px;
 
 
 <!-- ================= GRID ROW 1: Verification Work Queue (full width) ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- DATA UPLOAD / INTAKE CONTROL PANEL (Col Span 3) -->
 <div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between space-y-4">
@@ -303,7 +303,7 @@ border-radius: 4px;
 
 
 <!-- ================= GRID ROW 2: SSA Analytics + Evidence Review ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- DATA QUALITY & COMPLIANCE PANEL (Col Span 3) -->
 <div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
@@ -453,7 +453,7 @@ border-radius: 4px;
 
 
 <!-- ================= GRID ROW 3: Recent Activity + Quick Actions + SLA gauge ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- RECENT ACTIVITY FEED (Col Span 4) -->
 <div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
@@ -489,7 +489,7 @@ View all activity
 
 
 <!-- ================= GRID ROW 3 ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- FIELD MONITORING / STAFF COMPLIANCE (Col Span 9) -->
 <div class="lg:col-span-9 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
@@ -704,7 +704,7 @@ measure yet.{% endcomment %}
 
 
 <!-- ================= GRID ROW 5: Awaiting Follow-up (full width) ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
 <!-- Awaiting Follow-up (Col Span 12) -->
 <div class="lg:col-span-12 edify-surface p-5 rounded-surface shadow-sm">

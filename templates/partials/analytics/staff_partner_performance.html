@@ -20,8 +20,8 @@
 <span>Staff Activities (CCEOs)</span>
 <span class="font-semibold text-slate-800">{{ staff_partner_performance.chart.staff_pct }}%</span>
 </div>
-<div class="h-2 w-full bg-slate-50  rounded-pill overflow-hidden">
-<div class="h-full edify-primary-solid rounded-pill" style="width: {{ staff_partner_performance.chart.staff_pct }}%"></div>
+<div class="h-2 w-full rounded-pill overflow-hidden" style="background:var(--edify-chart-bar-track)">
+<div class="h-full rounded-pill" style="width: {{ staff_partner_performance.chart.staff_pct }}%; background:var(--edify-chart-series-primary)"></div>
 </div>
 </div>
 <div class="space-y-1">
@@ -29,8 +29,8 @@
 <span>Partner Activities</span>
 <span class="font-semibold text-slate-800">{{ staff_partner_performance.chart.partner_pct }}%</span>
 </div>
-<div class="h-2 w-full bg-slate-50  rounded-pill overflow-hidden">
-<div class="h-full edify-primary-solid rounded-pill" style="width: {{ staff_partner_performance.chart.partner_pct }}%"></div>
+<div class="h-2 w-full rounded-pill overflow-hidden" style="background:var(--edify-chart-bar-track)">
+<div class="h-full rounded-pill" style="width: {{ staff_partner_performance.chart.partner_pct }}%; background:var(--edify-chart-series-secondary)"></div>
 </div>
 </div>
 </div>

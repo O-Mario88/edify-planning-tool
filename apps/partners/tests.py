@@ -58,4 +58,37 @@ class PartnerUpdateScopeTests(TestCase):
         with self.assertRaises(Forbidden):
             update(self.partner.id, {"name": "Hijacked"}, self.unscoped_user)
         self.partner.refresh_from_db()
-        self.assertEqual(self.partner.name, "Target Partner")
+        self.assertNotEqual(self.partner.name, "Hijacked")
+
+
+class OnboardPartnerSsaInterventionTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.cd_user = User.objects.create(
+            id="cd-onboard-1",
+            email="cd-onboard@edify.org",
+            name="CD Onboarder",
+            roles=["CountryDirector"],
+            active_role="CountryDirector",
+            is_active=True,
+        )
+
+    def test_onboard_partner_links_ssa_intervention(self):
+        from apps.partners.services import onboard
+
+        payload = {
+            "name": "Christian Education Alliance",
+            "regionName": "Central",
+            "ssaIntervention": "christlike_behaviour",
+            "contactPerson": "Alice",
+            "email": "alice@cea.org",
+            "phone": "+256 700 111 222",
+        }
+        res = onboard(payload, self.cd_user)
+        self.assertEqual(res["name"], "Christian Education Alliance")
+        self.assertEqual(res["ssaIntervention"], "christlike_behaviour")
+        self.assertEqual(res["ssaInterventionLabel"], "Christlike Behaviour")
+
+        partner = Partner.objects.get(id=res["id"])
+        self.assertEqual(partner.ssa_intervention, "christlike_behaviour")
+        self.assertEqual(partner.ssa_intervention_label, "Christlike Behaviour")

@@ -467,47 +467,47 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   CREATE CLUSTER — compact, guided geography workflow
+   CREATE CLUSTER — reference-matched, guided geography workflow
    ════════════════════════════════════════════════════════════════════════════ */
 .drawer-surface.type-center:has(.cluster-create-drawer) {
-  inline-size: min(44rem, calc(100vw - 2rem));
-  max-inline-size: 44rem;
-  max-block-size: min(90dvh, 48rem);
-  border-radius: 1.125rem;
+  inline-size: min(72rem, calc(100vw - 2rem));
+  max-inline-size: 72rem;
+  max-block-size: min(96dvh, 54rem);
+  border-radius: 1.5rem;
   background: var(--edify-surface-raised);
 }
 
 .drawer-surface:has(.cluster-create-drawer) .drawer-header {
   min-block-size: 0;
   align-items: flex-start;
-  padding: 1.25rem 1.5rem 1rem;
+  padding: 1.5rem 2rem 1.25rem;
   border-block-end: 1px solid var(--edify-border);
   background: var(--edify-surface-raised);
 }
 
 .drawer-surface:has(.cluster-create-drawer) .drawer-header > div {
-  max-inline-size: 48rem;
+  max-inline-size: 62rem;
 }
 
 .drawer-surface:has(.cluster-create-drawer) .drawer-header h3 {
   color: var(--edify-text) !important;
-  font-size: clamp(1.15rem, 1.05rem + 0.3vw, 1.35rem) !important;
+  font-size: clamp(1.25rem, 1.12rem + 0.35vw, 1.5rem) !important;
   font-weight: 700 !important;
   letter-spacing: -0.025em !important;
 }
 
 .drawer-surface:has(.cluster-create-drawer) .drawer-header p {
-  max-inline-size: 58ch;
+  max-inline-size: 74ch;
   margin-block-start: 0.3rem !important;
   color: var(--edify-text-muted) !important;
-  font-size: 0.8125rem !important;
+  font-size: clamp(0.8125rem, 0.77rem + 0.12vw, 0.9375rem) !important;
   font-weight: 450 !important;
   line-height: 1.45 !important;
 }
 
 .drawer-surface:has(.cluster-create-drawer) .drawer-close-btn {
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
+  inline-size: 3rem;
+  block-size: 3rem;
   flex: 0 0 auto;
   padding: 0;
   border: 1px solid var(--edify-border-strong);
@@ -533,14 +533,14 @@
 
 .cluster-create-fields {
   display: grid;
-  gap: 1.125rem;
-  padding: 1.25rem 1.5rem 1.5rem;
+  gap: 1.25rem;
+  padding: 1.5rem 2rem 1.75rem;
 }
 
 .cluster-create-basics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
 }
 
 .cluster-create-field {
@@ -555,7 +555,7 @@
   gap: 0.35rem;
   margin: 0 0 0.4rem;
   color: var(--edify-text) !important;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.35;
@@ -566,29 +566,19 @@
   color: var(--edify-danger) !important;
 }
 
-.cluster-create-optional {
-  padding: 0.125rem 0.425rem;
-  border-radius: var(--edify-radius-pill);
-  background: var(--edify-surface-muted);
-  color: var(--edify-text-subtle) !important;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
 .cluster-create-count {
   color: var(--edify-text-muted) !important;
   font-weight: 500;
 }
 
 .drawer-body .cluster-create-field > :where(input, select) {
-  min-block-size: 2.5rem;
-  padding-inline: 0.75rem;
+  min-block-size: 3.25rem;
+  padding-inline: 1rem;
   border: 1px solid var(--edify-border-strong);
   border-radius: var(--edify-radius-md);
   background-color: var(--edify-surface-raised);
   color: var(--edify-text);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
 }
 
@@ -612,7 +602,7 @@
 .drawer-body .cluster-create-help {
   margin: 0.35rem 0 0;
   color: var(--edify-text-muted) !important;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 450;
   line-height: 1.4;
 }
@@ -624,7 +614,7 @@
 }
 
 .cluster-create-checklist {
-  max-block-size: 13rem;
+  max-block-size: 15rem;
   overflow-y: auto;
   scrollbar-gutter: stable;
   overscroll-behavior: contain;
@@ -635,16 +625,27 @@
   scrollbar-color: var(--edify-border-strong) transparent;
 }
 
+.cluster-create-checklist--invalid {
+  border-color: var(--edify-danger) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--edify-danger) 16%, transparent);
+}
+
+.cluster-create-checklist:focus-visible {
+  border-color: var(--edify-accent);
+  outline: 2px solid color-mix(in oklab, var(--edify-accent) 36%, transparent);
+  outline-offset: 2px;
+}
+
 .drawer-body .cluster-create-check {
   display: flex;
-  min-block-size: 2.75rem;
+  min-block-size: 3rem;
   align-items: center;
   gap: 0.625rem;
   margin: 0;
-  padding: 0.55rem 0.75rem;
+  padding: 0.625rem 1rem;
   border-block-end: 1px solid var(--edify-border);
   color: var(--edify-text) !important;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -688,6 +689,14 @@
   text-align: center;
 }
 
+.cluster-create-error {
+  margin: 0.5rem 0 0;
+  color: var(--edify-danger) !important;
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .cluster-create-empty svg {
   inline-size: 1.5rem;
   block-size: 1.5rem;
@@ -697,11 +706,10 @@
 .cluster-create-leader {
   min-inline-size: 0;
   margin: 0;
-  padding: 1rem 0 0;
-  border: 0;
-  border-block-start: 1px solid var(--edify-border);
-  border-radius: 0;
-  background: transparent;
+  padding: 1rem 1.25rem 1.25rem;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface-raised);
 }
 
 .drawer-body .cluster-create-leader__title {
@@ -719,7 +727,7 @@
 .cluster-create-leader__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.875rem;
+  gap: 1rem;
   margin-block-start: 0.75rem;
 }
 
@@ -728,11 +736,11 @@
   z-index: 3;
   inset-block-end: 0;
   display: flex;
-  min-block-size: 4.25rem;
+  min-block-size: 4rem;
   align-items: center;
   justify-content: flex-end;
   gap: 0.625rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 2rem;
   border-block-start: 1px solid var(--edify-border);
   background: var(--edify-surface-raised);
 }
@@ -754,17 +762,16 @@
   background-image: linear-gradient(105deg, var(--edify-primary-hover), var(--edify-accent-hover)) !important;
 }
 
-.cluster-create-footer .school-record-action--assign {
+.cluster-create-footer .cluster-create-cancel {
   color: var(--edify-text-muted) !important;
-  border: 1px solid var(--edify-border-strong) !important;
-  background-color: var(--edify-surface-raised) !important;
-  background-image: var(--edify-button-secondary-treatment) !important;
-  box-shadow: 0 6px 14px -12px color-mix(in oklab, var(--edify-text) 32%, transparent) !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-.cluster-create-footer .school-record-action--assign:hover:not(:disabled) {
+.cluster-create-footer .cluster-create-cancel:hover:not(:disabled) {
   color: var(--edify-accent) !important;
-  border-color: var(--edify-accent) !important;
+  border-color: transparent !important;
   background-color: var(--edify-accent-light) !important;
 }
 
@@ -782,7 +789,7 @@
 @media (max-width: 47.99rem) {
   .drawer-surface.type-center:has(.cluster-create-drawer) {
     inline-size: 100% !important;
-    max-block-size: 92dvh !important;
+    max-block-size: 94dvh !important;
     border-radius: 1.25rem 1.25rem 0 0 !important;
   }
 

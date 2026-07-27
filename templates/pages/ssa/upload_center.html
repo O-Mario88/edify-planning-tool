@@ -11,9 +11,16 @@
   <div>
     <p class="edify-page-eyebrow">Quality & Insights</p>
     <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">SSA Upload Center</h1>
-    <p class="text-[12px] text-slate-500 font-normal mt-0.5">Upload a sheet of SSA baseline/monitoring scores to map directly to school records.</p>
+    <p class="text-[12px] text-slate-500 font-normal mt-0.5">Upload a sheet of initial and monitoring SSA scores to map directly to school records.</p>
   </div>
-  {% include "partials/_back_link.html" with back_href="/ssa" back_label="SSA Performance" %}
+  <div class="flex flex-wrap items-center justify-end gap-2">
+    {% if can_add_ssa %}
+    <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
+      Add SSA Score
+    </a>
+    {% endif %}
+    {% include "partials/_back_link.html" with back_href="/ssa" back_label="SSA Performance" %}
+  </div>
 </div>
 
 {% if messages %}
@@ -53,7 +60,7 @@
       <tbody class="divide-y divide-slate-50">
         <tr><td class="py-2 font-medium">School ID</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Must match a school in the directory</td><td class="py-2 text-slate-400">SCH-0001</td></tr>
         <tr><td class="py-2 font-medium">Assessment Date</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Date of the SSA assessment (YYYY-MM-DD)</td><td class="py-2 text-slate-400">2026-07-01</td></tr>
-        <tr><td class="py-2 font-medium">SSA Year</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Which FY: "last" (2025 baseline) or "current" (2026). Upload last FY <strong>once</strong>, then current FY only.</td><td class="py-2 text-slate-400">last / current / 2025 / 2026</td></tr>
+        <tr><td class="py-2 font-medium">SSA Year</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Which FY: "last" (2025 initial SSA score) or "current" (2026). Upload last FY <strong>once</strong>, then current FY only.</td><td class="py-2 text-slate-400">last / current / 2025 / 2026</td></tr>
         <tr><td class="py-2 font-medium">New Enrolment</td><td class="py-2">{% include "components/badge.html" with tone="neutral" label="Optional" %}</td><td class="py-2 text-slate-500">Reference-only headcount reported at assessment time — a number, not a score. Never overwrites the School Enrolment Count on the school record; update that through School Directory / School Upload.</td><td class="py-2 text-slate-400">320</td></tr>
         {% for code, label in intervention_choices|default:"" %}
         <tr>
@@ -66,7 +73,7 @@
       </tbody>
     </table>
   </div>
-  <p class="edify-text-caption text-slate-400"><strong>Upload order:</strong> First upload all schools' <strong>last FY</strong> baseline (SSA Year = "last" or "2025"). This can only be done once. Then upload <strong>current FY</strong> (SSA Year = "current" or "2026"). Each school can have only one SSA per FY.</p>
+  <p class="edify-text-caption text-slate-400"><strong>Upload order:</strong> First upload all schools' <strong>last FY SSA scores</strong> (SSA Year = "last" or "2025"). This can only be done once. Then upload <strong>current FY</strong> (SSA Year = "current" or "2026"). Each school can have only one SSA per FY.</p>
 </div>
 
 <!-- Upload Area -->

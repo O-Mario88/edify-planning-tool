@@ -24,24 +24,36 @@ addSchoolOpen: false
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2 ">
+{% if can_upload_schools %}
 <a href="/schools/upload" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
 </svg>
 <span>Upload Schools</span>
 </a>
+{% endif %}
+{% if can_add_ssa %}
 <a href="/ssa/upload/" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
 </svg>
 <span>Upload SSA</span>
 </a>
+<a href="/ssa/manual/" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+</svg>
+<span>Add SSA Score</span>
+</a>
+{% endif %}
+{% if can_upload_schools %}
 <button @click="addSchoolOpen = true" class="h-9 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 </svg>
 <span>Add School</span>
 </button>
+{% endif %}
 <div class="relative" x-data="{ open: false }">
 <button @click="open = !open" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -57,6 +69,16 @@ addSchoolOpen: false
 </div>
 </div>
 </div>
+
+{% if messages %}
+<div class="space-y-2" aria-live="polite">
+{% for message in messages %}
+<div role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}" class="rounded-surface border px-4 py-3 text-[13px] font-bold {% if message.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-800{% else %}border-emerald-200 bg-emerald-50 text-emerald-800{% endif %}">
+{{ message }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
 
 <!-- Filters Bar -->
 <div class="school-filter-canvas">
@@ -303,43 +325,53 @@ style="display: none;"
 </div>
 
 <!-- Modal 3: Add School Modal -->
+{% if can_upload_schools %}
 <div
 x-show="addSchoolOpen"
+@keydown.escape.window="addSchoolOpen = false"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="addSchoolOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div
+@click.outside="addSchoolOpen = false"
+role="dialog"
+aria-modal="true"
+aria-labelledby="add-school-heading"
+class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 "
+>
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<h3 class="text-[15px] font-semibold text-slate-800">Add New School</h3>
-<button @click="addSchoolOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+<div>
+<p class="edify-page-eyebrow">Manual entry</p>
+<h3 id="add-school-heading" class="text-[15px] font-semibold text-slate-800">Add New School</h3>
+</div>
+<button type="button" aria-label="Close Add School form" @click="addSchoolOpen = false" class="min-h-11 min-w-11 text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
 </div>
 
 <form action="/schools/add-school" method="post" class="space-y-4">
 {% csrf_token %}
 
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School ID</label>
-<input type="text" name="school_id" placeholder="e.g. SCH-1011" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+<label for="add-school-id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Official School ID</label>
+<input type="text" id="add-school-id" name="school_id" maxlength="64" autocomplete="off" placeholder="e.g. 1011" aria-describedby="add-school-id-help" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
+<p id="add-school-id-help" class="edify-text-caption text-slate-400">Enter the official ID exactly as assigned. The app will not add an S- prefix.</p>
 </div>
 
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name</label>
-<input type="text" name="name" placeholder="e.g. Hope Academy" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+<label for="add-school-name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name</label>
+<input type="text" id="add-school-name" name="name" maxlength="255" autocomplete="organization" placeholder="e.g. Hope Academy" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
 </div>
 
 <div class="grid grid-cols-2 gap-3">
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Type</label>
-<span class="edify-filter-label">School type</span>
-<select aria-label="School type" name="school_type" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
+<label for="add-school-type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Type</label>
+<select id="add-school-type" name="school_type" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus">
 <option value="client">Client</option>
 <option value="core">Core</option>
 </select>
 </div>
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
-<span class="edify-filter-label">District ID</span>
-<select aria-label="District ID" name="district_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+<label for="add-school-district" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
+<select id="add-school-district" name="district_id" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
 <option value="">-- Choose District --</option>
 {% for d in districts %}
 <option value="{{ d.id }}">{{ d.name }}</option>
@@ -349,17 +381,21 @@ style="display: none;"
 </div>
 
 <div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment</label>
-<input type="number" name="enrollment" placeholder="e.g. 250" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
+<label for="add-school-enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment</label>
+<input type="number" id="add-school-enrollment" name="enrollment" min="0" inputmode="numeric" placeholder="e.g. 250" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus">
 </div>
 
-<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="addSchoolOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Save School</button>
+<div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="addSchoolOpen = false" class="min-h-11 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+{% if can_add_ssa %}
+<button type="submit" name="next" value="ssa" class="min-h-11 px-4 rounded-control border border-[var(--edify-accent)] text-[12px] font-bold text-[var(--edify-accent)] edify-primary-soft-hover">Save &amp; Add SSA Score</button>
+{% endif %}
+<button type="submit" class="min-h-11 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Save School</button>
 </div>
 </form>
 </div>
 </div>
+{% endif %}
 <!-- Drawer Container for HTMX drawer rendering -->
 <div id="drawer-container"></div>
 </div>

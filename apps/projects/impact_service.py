@@ -52,7 +52,7 @@ PROJECT_RECOMMENDATION = {
     "Positive Impact": "Continue Project",
     "No Measurable Impact": "Redesign Intervention",
     "Negative Impact": "Pause and Review",
-    "Not Measurable Yet": "Complete baseline and post-support SSA",
+    "Not Measurable Yet": "Complete initial and post-support SSA scores",
     "Insufficient Data": "Collect more verified SSA",
 }
 STATUS_FILTERS = {
@@ -234,8 +234,14 @@ def _supported_school_ids(activity, assigned_ids):
     return school_ids & set(assigned_ids)
 
 
-def get_analytics(principal, filters=None) -> dict:
+def get_analytics(
+    principal,
+    filters=None,
+    *,
+    include_regional_map: bool = False,
+) -> dict:
     from apps.activities.models import Activity, ActivityScheduleCostLine
+    from apps.analytics.country_map_context import country_map_context
     from apps.geography.models import District, Region
     from apps.partners.models import Partner
     from apps.ssa.models import SsaRecord
@@ -1051,6 +1057,9 @@ def get_analytics(principal, filters=None) -> dict:
         target=0.3,
     )
     trend_signal = trend_analysis([item["delta"] for item in trend], stable_slope=0.02)
+    map_context = {}
+    if include_regional_map:
+        map_context = country_map_context(selected_fy)
     return {
         "has_projects": bool(scoped_project_ids),
         "has_results": bool(project_payloads),
@@ -1092,6 +1101,7 @@ def get_analytics(principal, filters=None) -> dict:
                 confirmed_only=True,
             ),
         },
+        **map_context,
         "donor_snapshot": {
             "teachers": teachers,
             "leaders": leaders,

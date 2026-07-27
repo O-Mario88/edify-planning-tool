@@ -38,14 +38,20 @@
     </div>
   </div>
 
-  <!-- Period tabs: Week / Month / Quarter / FY -->
-  <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="legacy-kpi-strip legacy-kpi-strip--finance grid grid-cols-1 max-w-sm gap-3" aria-label="Budget period summary">
     {% for period in comparison %}
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ period.key }}" class="rounded-surface border p-4 transition-all {% if period.selected %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800 hover:-translate-y-0.5 edify-primary-border-hover hover:shadow-sm{% endif %}">
-      <p class="edify-text-caption font-bold uppercase tracking-wider {% if period.selected %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">{% if period.selected %}Grand total{% else %}{{ period.label }}{% endif %}</p>
-      <p class="mt-1 text-[20px] font-bold tabular-nums">{{ period.total|ugx }}</p>
-      <p class="mt-1 edify-text-caption font-semibold {% if period.selected %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if period.selected %}{{ period.label }} · {% endif %}{{ period.title }}</p>
+    {% if period.key == 'month' %}
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month" class="rounded-surface border p-4 transition-all !bg-[#2563eb] !border-[#2563eb] !text-white shadow-md edify-selected-surface">
+      <span class="legacy-kpi-strip__icon !text-white" aria-hidden="true">
+        {% include "partials/analytics/pl/_icon.html" with name="currency" %}
+      </span>
+      <span class="legacy-kpi-strip__copy">
+        <span class="legacy-kpi-strip__label !edify-primary-on-solid">Monthly Budget</span>
+        <strong class="legacy-kpi-strip__value !text-white" style="color: #ffffff !important;">{{ period.total|ugx }}</strong>
+        <small class="legacy-kpi-strip__helper !edify-primary-on-solid">{{ month_label }} FY {{ fy }} · {{ period.title }}</small>
+      </span>
     </a>
+    {% endif %}
     {% endfor %}
   </div>
 

@@ -1001,9 +1001,24 @@ def admin_users_view(request):
             return redirect("frontend:admin_users")
 
     search = request.GET.get("q", "").strip()
+    selected_role = request.GET.get("role", "").strip()
+    selected_status = request.GET.get("status", "").strip()
+
     users = User.objects.filter(deleted_at__isnull=True).order_by("name")
     if search:
-        users = users.filter(Q(name__icontains=search) | Q(email__icontains=search))
+        users = users.filter(
+            Q(name__icontains=search)
+            | Q(email__icontains=search)
+            | Q(active_role__icontains=search)
+        )
+    if selected_role:
+        users = users.filter(
+            Q(active_role=selected_role) | Q(roles__contains=[selected_role])
+        )
+    if selected_status == "active":
+        users = users.filter(is_active=True, status="active")
+    elif selected_status == "inactive":
+        users = users.filter(Q(is_active=False) | Q(status="inactive"))
 
     districts = District.objects.all().order_by("name")
     roles = [r.value for r in EdifyRole]
@@ -1036,6 +1051,8 @@ def admin_users_view(request):
         "users": users[:100],
         "total": users.count(),
         "search": search,
+        "selected_role": selected_role,
+        "selected_status": selected_status,
         "districts": districts,
         "available_roles": roles,
         "supervisor_options": supervisor_options,
@@ -1545,10 +1562,14 @@ def special_projects_analytics_view(request):
         )
         if request.GET.get(key)
     }
-    context = get_analytics(request.user, query)
+    export_kind = request.GET.get("export")
+    context = get_analytics(
+        request.user,
+        query,
+        include_regional_map=export_kind not in {"csv", "snapshot"},
+    )
     context["is_htmx"] = request.headers.get("HX-Request") == "true"
 
-    export_kind = request.GET.get("export")
     if export_kind in {"csv", "snapshot"}:
         response = HttpResponse(content_type="text/csv")
         filename = (

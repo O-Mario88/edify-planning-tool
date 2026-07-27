@@ -3,7 +3,7 @@
 Scheduled activities create the live monthly budget.  They do *not* send money
 for approval by themselves.  A Program Lead deliberately refreshes a snapshot
 of that budget, checks it, then submits the snapshot to the Country Director.
-That snapshot is the only program amount the Country Budget will consolidate.
+That snapshot is the only program amount the General Budget will consolidate.
 """
 
 from __future__ import annotations
@@ -147,7 +147,15 @@ def _refresh_locked(principal, fy: str, month: int):
 
 
 def refresh_draft(principal, fy: str, month: int):
-    """Explicitly fetch the current Team Budget into an editable request."""
+    """Explicitly fetch the current budget directly into an editable request."""
+    role = getattr(principal, "active_role", None) or ""
+    if role in ("CountryDirector", "Admin", "CD", "ADMIN"):
+        from apps.monthly_work_plan.country_budget_service import (
+            get_country_monthly_budget,
+        )
+
+        return get_country_monthly_budget(principal, {"fy": fy, "month": int(month)})
+
     _require_program_lead(principal)
     with transaction.atomic():
         request = _refresh_locked(principal, fy, month)
@@ -268,7 +276,9 @@ def _status_meta(request):
     )
 
 
-def _display_rows(lines):
+def _display_rows(lines, year=2026, month=1):
+    import calendar
+    from datetime import date
     from apps.accounts.models import User
 
     names = dict(
@@ -282,21 +292,53 @@ def _display_rows(lines):
     )
     category_totals = defaultdict(int)
     cost_groups = {}
+    weekly_map = defaultdict(lambda: {"rows": [], "total": 0, "activities": set()})
+
     for line in lines:
-        activity = line.activity
-        owner = line.responsible_user or "unassigned"
+        activity = getattr(line, "activity", None)
+        owner = getattr(line, "responsible_user", None) or "unassigned"
         staff_totals[owner]["name"] = names.get(owner, "Unassigned")
         staff_totals[owner]["total"] += int(line.amount or 0)
-        staff_totals[owner]["activities"].add(line.activity_id)
-        category = _category(activity.activity_type, activity.delivery_type)
+        if hasattr(line, "activity_id") and line.activity_id:
+            staff_totals[owner]["activities"].add(line.activity_id)
+
+        activity_type = (
+            activity.activity_type
+            if activity
+            else getattr(line, "activity_type", "visit")
+        )
+        delivery_type = activity.delivery_type if activity else "staff"
+        category = _category(activity_type, delivery_type)
         category_totals[category] += int(line.amount or 0)
+
+        planned_d = getattr(line, "planned_date", None) or (
+            activity.scheduled_date if activity else None
+        )
+        if isinstance(planned_d, str):
+            try:
+                planned_d = date.fromisoformat(planned_d[:10])
+            except ValueError:
+                planned_d = None
+
+        if planned_d and hasattr(planned_d, "day"):
+            week_num = min(5, (planned_d.day - 1) // 7 + 1)
+        else:
+            week_num = 1
+
+        week_key = f"Week {week_num}"
+        amount = int(line.amount or 0)
+
         row = {
-            "item": line.label or line.cost_setting_key.replace("_", " ").title(),
-            "activity": activity.get_activity_type_display(),
+            "item": getattr(line, "label", None)
+            or getattr(line, "cost_setting_key", "").replace("_", " ").title(),
+            "activity": activity.get_activity_type_display()
+            if activity
+            else str(activity_type).replace("_", " ").title(),
             "staff": names.get(owner, "Unassigned"),
-            "date": line.planned_date or activity.scheduled_date,
-            "amount": int(line.amount or 0),
-            "amount_fmt": _ugx(line.amount),
+            "date": planned_d,
+            "amount": amount,
+            "amount_fmt": _ugx(amount),
+            "week": week_key,
         }
         rows.append(row)
         group = cost_groups.setdefault(
@@ -305,7 +347,13 @@ def _display_rows(lines):
         )
         group["rows"].append(row)
         group["total"] += row["amount"]
-        group["activity_ids"].add(line.activity_id)
+        if hasattr(line, "activity_id") and line.activity_id:
+            group["activity_ids"].add(line.activity_id)
+
+        weekly_map[week_key]["rows"].append(row)
+        weekly_map[week_key]["total"] += amount
+        if hasattr(line, "activity_id") and line.activity_id:
+            weekly_map[week_key]["activities"].add(line.activity_id)
 
     rendered_groups = []
     for group in sorted(cost_groups.values(), key=lambda value: -value["total"]):
@@ -318,9 +366,33 @@ def _display_rows(lines):
                 "activity_count": len(group["activity_ids"]),
             }
         )
+
+    num_days = calendar.monthrange(
+        int(year) if year else 2026, int(month) if month else 1
+    )[1]
+    num_weeks = 5 if num_days > 28 else 4
+    weekly_groups = []
+    for w in range(1, num_weeks + 1):
+        w_key = f"Week {w}"
+        data = weekly_map[w_key]
+        start_d = (w - 1) * 7 + 1
+        end_d = min(w * 7, num_days) if w < 5 else num_days
+        weekly_groups.append(
+            {
+                "week_number": w,
+                "week_key": w_key,
+                "label": f"Week {w} (Days {start_d}–{end_d})",
+                "total": data["total"],
+                "total_fmt": _ugx(data["total"]),
+                "activity_count": len(data["activities"]),
+                "rows": data["rows"],
+            }
+        )
+
     return {
         "items": rows,
         "cost_groups": rendered_groups,
+        "weekly_groups": weekly_groups,
         "staff_rows": [
             {
                 "name": value["name"],
@@ -340,18 +412,70 @@ def _display_rows(lines):
 
 
 def get_monthly_request(principal, filters=None) -> dict:
-    """The Program Lead Monthly Request page context.
-
-    The live Team Budget is always shown before a request is created.  Once a
-    draft exists, its frozen items are shown, so the PL and CD see the same
-    numbers that will travel through approval.
-    """
-    _require_program_lead(principal)
+    """The Monthly Request page context for Program Lead, CD, Admin, RVP."""
     filters = filters or {}
     fy = str(filters.get("fy") or get_operational_fy())
     month = int(filters.get("month") or timezone.localdate().month)
     if month not in range(1, 13):
         raise BadRequest("Choose a valid month.")
+
+    role = getattr(principal, "active_role", None) or "Program Lead"
+
+    if role in (
+        "CountryDirector",
+        "Admin",
+        "RegionalVicePresident",
+        "CD",
+        "ADMIN",
+        "RVP",
+    ):
+        from apps.monthly_work_plan.country_budget_service import (
+            get_country_monthly_budget,
+            _program_source,
+        )
+
+        c_budget_ctx = get_country_monthly_budget(principal, {"fy": fy, "month": month})
+        source = _program_source(fy, month)
+        display = _display_rows(source["lines"], year=int(fy), month=month)
+
+        status_val = c_budget_ctx.get("status", "draft_generated")
+        can_submit_to_rvp = role in (
+            "CountryDirector",
+            "Admin",
+            "CD",
+            "ADMIN",
+        ) and status_val not in (
+            "submitted_to_rvp",
+            "approved_by_rvp",
+            "sent_to_accountant",
+        )
+
+        return {
+            "fy": fy,
+            "month": month,
+            "month_label": MONTHS[month],
+            "fy_options": [fy, str(int(fy) - 1)],
+            "is_country_request": True,
+            "role": role,
+            "request_id": c_budget_ctx.get("budget_id", ""),
+            "status_label": c_budget_ctx.get("status_label", "Draft"),
+            "status_tone": c_budget_ctx.get("status_tone", "info"),
+            "status_message": "General Country Budget for RVP review and approval.",
+            "request_state": status_val,
+            "can_submit_to_rvp": can_submit_to_rvp,
+            "submit_rvp_label": "Send to RVP for Approval",
+            "shown_total": c_budget_ctx.get("total_amount", 0),
+            "shown_total_fmt": _ugx(c_budget_ctx.get("total_amount", 0)),
+            "activity_count": c_budget_ctx.get("program_total", 0),
+            "source_label": "General Country Budget",
+            "action_title": "General Budget Review & Approval",
+            "action_hint": (
+                "Review the weekly breakdown (Week 1 to Week 5) before sending to RVP for Approval."
+                if can_submit_to_rvp
+                else "Submitted to Regional Vice President for Approval."
+            ),
+            **display,
+        }
 
     request = _team_request(principal, fy, month)
     live_lines = _live_month_lines(principal, fy, month)
@@ -368,7 +492,7 @@ def get_monthly_request(principal, filters=None) -> dict:
         }
         request_lines = [by_id[line_id] for line_id in source_ids if line_id in by_id]
     source_lines = request_lines if request else live_lines
-    display = _display_rows(source_lines)
+    display = _display_rows(source_lines, year=int(fy), month=month)
     status_label, status_tone, status_message = _status_meta(request)
     live_total = sum(int(line.amount or 0) for line in live_lines)
     shown_total = int(request.total_amount) if request else live_total
@@ -397,8 +521,8 @@ def get_monthly_request(principal, filters=None) -> dict:
         action_title = "With the Country Director"
         action_hint = "Your request is safely submitted. The Country Director will now review it with the other Program Lead requests."
     elif request_state == "approved_by_cd":
-        action_title = "Included in the country budget"
-        action_hint = "The Country Director approved your request. It will now move with the country budget to RVP review."
+        action_title = "Included in the General Budget"
+        action_hint = "The Country Director approved your request. It will now move with the General Budget to RVP review."
     elif request_state == "returned_by_cd":
         action_title = "Changes needed before resubmission"
         action_hint = "Read the Country Director's note, update your plan if needed, then prepare a fresh request."
@@ -443,4 +567,18 @@ def get_monthly_request(principal, filters=None) -> dict:
     }
 
 
-__all__ = ["get_monthly_request", "refresh_draft", "submit_to_cd"]
+def submit_to_rvp(principal, fy: str, month: int):
+    """Submits the country monthly budget to the RVP for approval."""
+    from apps.monthly_work_plan.country_budget_service import (
+        get_country_monthly_budget,
+        send_to_rvp as cd_send_to_rvp,
+    )
+
+    country_ctx = get_country_monthly_budget(principal, {"fy": fy, "month": int(month)})
+    budget_id = country_ctx.get("budget_id")
+    if not budget_id:
+        raise BadRequest("Country Monthly Budget has not been created yet.")
+    return cd_send_to_rvp(principal, budget_id)
+
+
+__all__ = ["get_monthly_request", "refresh_draft", "submit_to_cd", "submit_to_rvp"]

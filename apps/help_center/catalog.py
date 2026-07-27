@@ -157,10 +157,10 @@ ROLE_GUIDES = [
         "country-director",
         "Country Director",
         ["CountryDirector"],
-        "Country Directors set the country operating conditions, oversee plans and budgets, and submit the approved country budget to the RVP.",
+        "Country Directors set the country operating conditions, oversee plans and budgets, and submit the General Budget to the RVP.",
         [
             "Maintain the Cost Catalogue and district classifications because scheduling and automatic costing depend on them.",
-            "Review Country Monthly and Annual Budget information, return incomplete work to its owner, and submit the country budget to the RVP.",
+            "Review General and Annual Budget information, return incomplete work to its owner, and submit the General Budget to the RVP.",
             "Use country analytics and Leadership Actions to direct Program Leads; the CD does not use the operational School Directory as a field queue.",
         ],
         [
@@ -192,7 +192,7 @@ ROLE_GUIDES = [
         ["RegionalVicePresident"],
         "The RVP is a regional oversight and approval role, not a routine field execution or disbursement role.",
         [
-            "Review country budget submissions and either approve or return them with a clear correction request.",
+            "Review General Budget submissions and either approve or return them with a clear correction request.",
             "Use regional and country-level SSA, partner and performance summaries to allocate attention and resources.",
             "Escalate strategic risks through the leadership workflow rather than changing operational records directly.",
         ],
@@ -374,10 +374,10 @@ WORKFLOWS = [
     ),
     (
         "monthly-country-budget",
-        "Monthly Country Budget",
+        "General Budget",
         "Finance and Accountability",
         ["CountryDirector", "RegionalVicePresident", "Admin"],
-        "The CD prepares the country monthly budget from operational planning and approved administration lines, then sends it to the RVP for decision. A returned budget must be corrected and resubmitted by its owner.",
+        "The CD prepares the General Budget from operational planning, then sends it to the RVP for decision. A returned budget must be corrected and resubmitted by its owner.",
         ["apps/monthly_work_plan/models.py", "apps/monthly_work_plan/services.py"],
     ),
     (
@@ -409,7 +409,7 @@ WORKFLOWS = [
     ),
     (
         "country-budget-rvp",
-        "Country Budget to RVP Approval",
+        "General Budget to RVP Approval",
         "Finance and Accountability",
         ["CountryDirector", "RegionalVicePresident"],
         "The CD uses the official submit-to-RVP service. The RVP approves or returns with a correction reason; return is a controlled rework state, not a parallel budget.",

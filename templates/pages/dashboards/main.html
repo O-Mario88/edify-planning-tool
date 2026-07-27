@@ -156,7 +156,7 @@
             <table class="admin-table">
               <caption class="sr-only">Cluster performance by average SSA score</caption>
               <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
-              <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{{ cluster.name }}</strong></td><td>{{ cluster.avg_ssa }}</td><td><svg class="admin-spark-line" viewBox="0 0 56 18" fill="none" aria-hidden="true"><path d="M1 12c6-8 9 3 15-2s8-5 13 0 8 4 13-1 8 2 13-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
+              <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{{ cluster.name }}</strong></td><td>{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa }}/10{% else %}—{% endif %}</td><td><svg class="admin-spark-line" viewBox="0 0 56 18" fill="none" aria-hidden="true"><path d="M1 12c6-8 9 3 15-2s8-5 13 0 8 4 13-1 8 2 13-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
             </table>
           </div>
         </section>

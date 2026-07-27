@@ -618,7 +618,7 @@ def budget_overview_view(request):
 @require_page_permission("cost_settings")
 def cost_settings_view(request):
     """CD Cost Catalogue management."""
-    from apps.budget.costing import LEGACY_CLUSTER_ACTIVITY_COST_KEYS
+    from apps.budget.reference import CANONICAL_RATE_KEYS
 
     fy = get_operational_fy()
 
@@ -628,9 +628,10 @@ def cost_settings_view(request):
     cost_items = []
     if active_catalogue:
         cost_items = list(
-            CostSetting.objects.filter(catalogue=active_catalogue)
-            .exclude(key__in=LEGACY_CLUSTER_ACTIVITY_COST_KEYS)
-            .order_by("label")
+            CostSetting.objects.filter(
+                catalogue=active_catalogue,
+                key__in=CANONICAL_RATE_KEYS,
+            ).order_by("label")
         )
 
     context = {
@@ -962,11 +963,15 @@ def cost_setting_row_view(request, key):
     from django.http import HttpResponse
     from apps.budget.models import CostSetting
     from apps.budget import services as budget_services
+    from apps.budget.reference import CANONICAL_RATE_KEYS
 
     if request.user.active_role not in ("CountryDirector", "Admin"):
         return HttpResponse("Forbidden", status=403)
 
-    setting = get_object_or_404(CostSetting, key=key)
+    setting = get_object_or_404(
+        CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS),
+        key=key,
+    )
     mode = request.GET.get("mode", "view")
 
     if request.method == "POST":
@@ -1000,7 +1005,8 @@ def cost_setting_row_view(request, key):
 def initialize_default_catalogue_view(request):
     from django.shortcuts import redirect
     from django.http import HttpResponse
-    from apps.budget.models import CostCatalogue, CostSetting
+    from apps.budget.models import CostCatalogue
+    from apps.budget.reference import ensure_cost_reference
     from apps.core.fy import get_operational_fy
 
     if request.user.active_role not in ("CountryDirector", "Admin"):
@@ -1016,120 +1022,7 @@ def initialize_default_catalogue_view(request):
             is_active=True,
             label=f"Uganda FY{fy} Country Cost Catalogue",
         )
-    default_settings = [
-        ("accommodation", "Accommodation per night", 40000, "per night"),
-        ("breakfast", "Breakfast", 8000, "per head"),
-        (
-            "cluster_meeting_participant_meal_cost_per_head",
-            "Participant snacks",
-            10000,
-            "per participant",
-        ),
-        ("dinner", "Dinner", 12000, "per head"),
-        ("lunch", "Lunch", 12000, "per head"),
-        (
-            "group_training_participant_meal_cost_per_head",
-            "Participant meals",
-            5000,
-            "per participant",
-        ),
-        ("group_training_facilitation_fee", "Facilitation fee", 50000, "per session"),
-        ("group_training_venue_cost", "Venue fee", 30000, "per session"),
-        (
-            "partner_training_lump_sum",
-            "Partner training/facilitation rate",
-            16000,
-            "per item",
-        ),
-        ("partner_visit_lump_sum", "Partner visit rate", 40000, "per item"),
-        (
-            "staff_visit_transport_primary",
-            "Staff visit transport (primary district)",
-            50000,
-            "per item",
-        ),
-        (
-            "staff_visit_transport_secondary",
-            "Staff visit transport (secondary district)",
-            25000,
-            "per item",
-        ),
-        # Core / SSA / Special Project categories — each key is consumed by
-        # apps.budget.costing.cost_for_activity's dedicated branch; without it
-        # the engine falls through to the generic visit/training/partner rate.
-        ("core_school_visit", "Core school visit cost", 50000, "per visit"),
-        ("core_school_training", "Core school training cost", 250000, "per session"),
-        ("ssa_visit_rate", "Baseline SSA visit cost", 50000, "per visit"),
-        (
-            "project_partner_lump_sum",
-            "Special project partner activity rate",
-            40000,
-            "per item",
-        ),
-        # Daily Visit Batch rates: a staff member's daily transport/lunch(/
-        # accommodation/dinner) cost pool, shared and split across every
-        # school scheduled for that same day (not costed per school alone).
-        (
-            "primary_transport_per_day",
-            "Primary district daily transport pool",
-            50000,
-            "per day",
-        ),
-        (
-            "primary_lunch_per_day",
-            "Primary district daily lunch pool",
-            12000,
-            "per day",
-        ),
-        (
-            "secondary_transport_per_day",
-            "Secondary district daily transport pool",
-            80000,
-            "per day",
-        ),
-        (
-            "secondary_lunch_per_day",
-            "Secondary district daily lunch pool",
-            12000,
-            "per day",
-        ),
-        (
-            "secondary_accommodation_per_night",
-            "Secondary district accommodation per night",
-            40000,
-            "per night",
-        ),
-        (
-            "secondary_overnight_dinner_per_day",
-            "Secondary district overnight dinner",
-            12000,
-            "per day",
-        ),
-        (
-            "secondary_breakfast_per_day",
-            "Secondary district breakfast (optional)",
-            8000,
-            "per day",
-        ),
-        (
-            "secondary_incidentals_per_day",
-            "Secondary district incidentals (optional)",
-            5000,
-            "per day",
-        ),
-    ]
-    for key, label, cost, unit in default_settings:
-        CostSetting.objects.get_or_create(
-            key=key,
-            defaults={
-                "label": label,
-                "unit_cost": cost,
-                "fy": fy,
-                "catalogue": active,
-                "version": 1,
-            },
-        )
-    CostSetting.objects.filter(catalogue__isnull=True).update(catalogue=active)
+    ensure_cost_reference(active)
 
     return redirect("/dashboard")
 
@@ -1140,24 +1033,46 @@ def _country_budget_filters(request):
 
 @require_page_permission("country_budget")
 def country_budget_view(request):
-    """Country Monthly Budget — the CD's monthly finance control page.
-    Consolidates only plan-backed, scheduled, costed activity budgets for the
-    month plus the CD Admin Budget from the CD Monthly Admin Plan."""
+    """Monthly Fund Request in the shared planned-activity budget workspace."""
+    from datetime import date
+
+    from apps.budget.services import budget_workspace
     from apps.monthly_work_plan.country_budget_service import (
         get_country_monthly_budget,
     )
 
-    ctx = get_country_monthly_budget(request.user, _country_budget_filters(request))
-    if request.headers.get("HX-Target") == "country-budget-root":
-        return render(request, "partials/finance/country_budget/root.html", ctx)
+    fy = request.GET.get("fy") or get_operational_fy()
+    month = int(request.GET.get("month") or timezone.localdate().month)
+    anchor_raw = request.GET.get("date")
+    if not anchor_raw:
+        calendar_year = int(fy) - 1 if month >= 10 else int(fy)
+        anchor_raw = date(calendar_year, month, 1).isoformat()
+
+    ctx = budget_workspace(
+        request.user,
+        {
+            "fy": fy,
+            "date": anchor_raw,
+            "period": request.GET.get("period") or "month",
+            "budget_scope": "country",
+        },
+    )
+    ctx.update(
+        {
+            "workspace_title": "Monthly Fund Request",
+            "workspace_kind": "country",
+            "workspace_base_url": "/country-budget/",
+            "page_title": "Monthly Fund Request",
+            "country_workflow": get_country_monthly_budget(
+                request.user,
+                {"fy": fy, "month": ctx["anchor"].month},
+            ),
+        }
+    )
     ctx["topbar_search"] = {
-        "placeholder": "Search staff, activity, school…",
-        "name": "q",
-        "value": request.GET.get("q", ""),
-        "attach_to": "cb-filters",
-        "autosubmit": True,
+        "placeholder": "Search planned activities…",
     }
-    return render(request, "pages/finance/country_budget.html", ctx)
+    return render(request, "pages/budgets/monthly.html", ctx)
 
 
 @require_page_permission("country_budget")
@@ -1195,8 +1110,53 @@ def country_budget_return_drawer_view(request):
 
 
 @require_page_permission("country_budget")
+def country_budget_history_view(request):
+    """Submitted Budgets — months that moved out of the active workspace once
+    submitted, shown with their submitted amount, version and RVP status.
+    Reads from the locked budget rows + their immutable snapshots, never from
+    live cost lines."""
+    from apps.monthly_work_plan.country_budget_service import list_submitted_budgets
+
+    ctx = list_submitted_budgets(
+        request.user, {"fy": request.GET.get("fy") or get_operational_fy()}
+    )
+    ctx["workspace_title"] = "Monthly Fund Request"
+    ctx["topbar_search"] = {"placeholder": "Search submitted budgets…"}
+    return render(request, "pages/finance/country_budget_history.html", ctx)
+
+
+@require_page_permission("country_budget")
+def country_budget_submission_detail_view(request, budget_id):
+    """Read-only detail of one submitted month, rendered from its immutable
+    snapshot so it never drifts with later activity/cost changes."""
+    from apps.core.exceptions import BadRequest
+    from apps.monthly_work_plan.country_budget_service import get_submission_detail
+
+    try:
+        ctx = get_submission_detail(request.user, budget_id)
+    except BadRequest as exc:
+        messages.error(request, str(exc))
+        return local_redirect("/country-budget/history")
+    ctx["workspace_title"] = "Monthly Fund Request"
+    return render(request, "pages/finance/country_budget_submission.html", ctx)
+
+
+def _next_month_in_fy(month: int) -> int:
+    """Next calendar month within the same Edify FY (October → September).
+
+    In-FY order: 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9. September (9) is the
+    FY's final month, so it clamps there instead of crossing into a new FY.
+    """
+    if month == 12:
+        return 1
+    if month == 9:
+        return 9
+    return month + 1
+
+
+@require_page_permission("country_budget")
 def country_budget_action_view(request):
-    """Send to RVP / Approve / Return — mutate then re-render the root."""
+    """Mutate a country/admin budget and refresh the appropriate workspace."""
     from apps.core.exceptions import BadRequest, Forbidden
     from apps.monthly_work_plan import country_budget_service as svc
 
@@ -1208,10 +1168,10 @@ def country_budget_action_view(request):
     try:
         if action == "send_to_rvp":
             b = svc.send_to_rvp(request.user, budget_id)
-            ok = f"{b.month_key} Country Monthly Budget sent to the RVP for approval."
+            ok = f"{b.month_key} Monthly Fund Request sent to the RVP for approval."
         elif action == "approve":
             b = svc.approve(request.user, budget_id)
-            ok = f"{b.month_key} Country Monthly Budget approved."
+            ok = f"{b.month_key} Monthly Fund Request approved."
         elif action == "return":
             b = svc.return_budget(
                 request.user,
@@ -1221,10 +1181,10 @@ def country_budget_action_view(request):
                     "comment": request.POST.get("comment"),
                 },
             )
-            ok = f"{b.month_key} Country Monthly Budget returned for correction."
+            ok = f"{b.month_key} Monthly Fund Request returned for correction."
         elif action == "approve_pl_request":
             svc.approve_pl_monthly_request(request.user, request.POST.get("request_id"))
-            ok = "Program Lead request approved and added to the country budget."
+            ok = "Program Lead request approved and added to the Monthly Fund Request."
         elif action == "return_pl_request":
             svc.return_pl_monthly_request(
                 request.user,
@@ -1246,12 +1206,12 @@ def country_budget_action_view(request):
                 },
                 request.user,
             )
-            ok = "Admin budget item added to the country budget."
+            ok = "Admin budget item added."
         elif action == "send_to_accountant":
             from apps.monthly_work_plan import services as monthly_plan_service
 
             monthly_plan_service.mark_sent_to_accountant(budget_id, request.user)
-            ok = "Country budget handed to the Accountant for disbursement."
+            ok = "Monthly Fund Request handed to the Accountant for disbursement."
         elif action == "mark_disbursed":
             # The envelope previously stopped at approved_by_rvp forever — the
             # disbursed/closed statuses existed but nothing ever wrote them.
@@ -1259,7 +1219,7 @@ def country_budget_action_view(request):
 
             result = recon.mark_disbursed(budget_id, request.user)
             ok = (
-                "Country budget marked disbursed — "
+                "Monthly Fund Request marked disbursed — "
                 f"{_ugx(result['reconciliation']['disbursedTotal'])} "
                 "recorded against the approved envelope."
             )
@@ -1279,6 +1239,25 @@ def country_budget_action_view(request):
             error = "Unknown action."
     except (BadRequest, Forbidden) as e:
         error = str(e)
+
+    if not request.headers.get("HX-Request"):
+        if error:
+            messages.error(request, error)
+        elif ok:
+            messages.success(request, ok)
+        fy = request.POST.get("fy") or get_operational_fy()
+        month = int(request.POST.get("month") or timezone.localdate().month)
+        # A successful "Send to RVP" clears this month's view and shows the
+        # following month within the same FY. Edify FY runs October →
+        # September, so the in-FY order is 10, 11, 12, 1 … 9; September (9) is
+        # the FY's last month and clamps there.
+        if action == "send_to_rvp" and ok and not error:
+            month = _next_month_in_fy(month)
+        year = int(fy) - 1 if month >= 10 else int(fy)
+        destination = "/country-budget/"
+        return local_redirect(
+            f"{destination}?fy={fy}&date={year}-{month:02d}-01&period=month"
+        )
 
     ctx = svc.get_country_monthly_budget(
         request.user,

@@ -14,10 +14,10 @@
     {% for r in ssa_interventions.rows %}
     <div class="flex items-center gap-3">
       <span class="w-[150px] shrink-0 edify-text-caption font-semibold text-slate-600 truncate" title="{{ r.label }}">{{ r.label }} <span class="text-slate-400">({{ r.code }})</span></span>
-      <div class="flex-1 h-4 rounded-pill bg-slate-50 overflow-hidden relative">
-        <div class="h-full rounded-small transition-all" style="width: {{ r.pct|default:0 }}%; background: {{ r.color }};"></div>
+      <div class="flex-1 h-4 rounded-pill overflow-hidden relative" style="background:var(--edify-chart-bar-track)">
+        <div class="h-full rounded-small transition-all" style="width: {{ r.bar_pct|default:0 }}%; background:var(--edify-chart-series-primary);"></div>
       </div>
-      <span class="w-9 shrink-0 text-right edify-text-caption font-bold tabular-nums text-slate-700">{% if r.pct is not None %}{{ r.pct|floatformat:0 }}%{% else %}—{% endif %}</span>
+      <span class="w-10 shrink-0 text-right edify-text-caption font-bold tabular-nums text-slate-700">{% if r.score is not None %}{{ r.score|floatformat:1 }}{% else %}—{% endif %}</span>
       <span class="w-10 shrink-0 text-right edify-text-caption font-bold tabular-nums
         {% if r.delta is None %}text-slate-300{% elif r.delta >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
         {% if r.delta is not None %}{% if r.delta >= 0 %}&#9650;{% else %}&#9660;{% endif %}{{ r.delta|floatformat:1 }}{% else %}—{% endif %}
@@ -26,10 +26,8 @@
     {% endfor %}
   </div>
 
-  <div class="flex items-center flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-slate-50">
-    <span class="inline-flex items-center gap-1 edify-text-caption font-semibold text-slate-500"><span class="h-2 w-2 rounded-pill" style="background:var(--edify-chart-green)"></span>Strong (8.0-10)</span>
-    <span class="inline-flex items-center gap-1 edify-text-caption font-semibold text-slate-500"><span class="h-2 w-2 rounded-pill" style="background:var(--edify-chart-lime)"></span>Improving (7.0-7.9)</span>
-    <span class="inline-flex items-center gap-1 edify-text-caption font-semibold text-slate-500"><span class="h-2 w-2 rounded-pill" style="background:var(--edify-chart-amber)"></span>Warning (5.0-6.9)</span>
-    <span class="inline-flex items-center gap-1 edify-text-caption font-semibold text-slate-500"><span class="h-2 w-2 rounded-pill" style="background:var(--edify-chart-red)"></span>Critical (&lt;5.0)</span>
+  <div class="flex items-center flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-slate-50 edify-text-caption font-semibold text-slate-500">
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill" style="background:var(--edify-chart-series-primary)"></span>Average SSA score (0–10)</span>
+    <span>Change is against the previous verified year.</span>
   </div>
 </div>

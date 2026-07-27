@@ -121,7 +121,7 @@
 .spp-bulk svg { width: 16px; }
 .spp-muted { color: var(--edify-text-subtle); font-size: .64rem; }
 
-.spp-lower-grid { display: grid; grid-template-columns: .9fr 1.2fr; gap: 13px; margin-top: 13px; }
+.spp-lower-grid { display: grid; grid-template-columns: .9fr 1.2fr; gap: 13px; align-items: start; margin-top: 13px; }
 .spp-summary table { width: 100%; min-width: 620px; border-collapse: collapse; }
 .spp-summary td { padding: 9px 10px; border-top: 1px solid var(--edify-border); color: var(--edify-text-muted); text-align: center; font-size: .61rem; font-weight: 650; }
 .spp-summary td:first-child, .spp-summary th:first-child { text-align: left; }

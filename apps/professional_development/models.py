@@ -398,7 +398,7 @@ class PDFundRequestStatus(models.TextChoices):
 class ProfessionalDevelopmentFundRequest(TimeStampedModel):
     """A dedicated PD finance queue item (§15) — NEVER routed through the
     school-activity budget workflow (no ActivityBudgetLine, no Weekly Fund
-    Request, no Country Monthly Budget)."""
+    Request, no General Budget)."""
 
     id = CuidField()
     request = models.OneToOneField(

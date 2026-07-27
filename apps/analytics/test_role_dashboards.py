@@ -199,7 +199,7 @@ class RoleDashboardsTest(TestCase):
         d = RVPDashboardService.get_dashboard(self.rvp, fy=FY)
         by = {k["label"]: k for k in d["kpi_strip_items"]}
         # The KPI headline is the pending amount; the count lives in the helper.
-        pending = by["Monthly Budget Pending Approval"]
+        pending = by["General Budget Pending Approval"]
         self.assertIn("5.0M", pending["value"])
         self.assertIn("1 budget", pending["helper"])
         self.assertEqual(len(d["awaiting_rows"]), 1)

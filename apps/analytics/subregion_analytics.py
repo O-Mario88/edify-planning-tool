@@ -71,8 +71,8 @@ def _frame() -> pd.DataFrame:
     )
 
 
-def _counts(model, district_field: str, label: str) -> pd.DataFrame:
-    """Count `model` rows per district id.
+def _counts(queryset, district_field: str, label: str) -> pd.DataFrame:
+    """Count scoped queryset rows per district id.
 
     Counting in the database rather than pulling rows: these tables run to
     thousands of schools, and only the per-district total reaches the frame.
@@ -80,7 +80,7 @@ def _counts(model, district_field: str, label: str) -> pd.DataFrame:
     from django.db.models import Count
 
     rows = list(
-        model.objects.filter(**{f"{district_field}__isnull": False})
+        queryset.filter(**{f"{district_field}__isnull": False})
         .values(district_field)
         .annotate(n=Count("id"))
     )
@@ -90,13 +90,13 @@ def _counts(model, district_field: str, label: str) -> pd.DataFrame:
     return frame.rename(columns={district_field: "district_id", "n": label})
 
 
-def _ssa_frame(fy: str | None) -> pd.DataFrame:
+def _ssa_frame(fy: str | None, ssa_records=None) -> pd.DataFrame:
     """Confirmed SSA scores per district: mean and sample size."""
     from django.db.models import Avg, Count
 
     from apps.ssa.models import SsaRecord
 
-    qs = SsaRecord.objects.filter(
+    qs = (ssa_records if ssa_records is not None else SsaRecord.objects.all()).filter(
         verification_status=SSA_CONFIRMED,
         school__district__sub_region__isnull=False,
         average_score__isnull=False,
@@ -114,12 +114,22 @@ def _ssa_frame(fy: str | None) -> pd.DataFrame:
     return frame.rename(columns={"school__district_id": "district_id"})
 
 
-def district_frame(fy: str | None = None) -> pd.DataFrame:
+def district_frame(
+    fy: str | None = None,
+    *,
+    schools=None,
+    clusters=None,
+    ssa_records=None,
+) -> pd.DataFrame:
     """District-level frame: schools, clusters and SSA, one row per district.
 
     This is the join everything else groups. Counts are filled to 0 because a
     district genuinely has zero schools if none reference it; ``ssa_avg`` is
     left as NaN because "no confirmed assessment" is not a score of zero.
+
+    The optional querysets are the scope boundary. The map always keeps all
+    UBOS district outlines visible, while school, cluster and SSA values are
+    reduced to the current role and active analytics filters.
     """
     from apps.clusters.models import Cluster
     from apps.schools.models import School
@@ -128,11 +138,30 @@ def district_frame(fy: str | None = None) -> pd.DataFrame:
     if base.empty:
         return base
 
-    schools = _counts(School, "district_id", "schools")
-    clusters = _counts(Cluster, "district_id", "clusters")
-    ssa = _ssa_frame(fy)
+    schools_are_scoped = schools is not None
+    school_qs = (
+        schools
+        if schools_are_scoped
+        else School.objects.filter(deleted_at__isnull=True)
+    )
+    if clusters is None:
+        if schools_are_scoped:
+            cluster_ids = (
+                school_qs.exclude(cluster_id__isnull=True)
+                .exclude(cluster_id="")
+                .values("cluster_id")
+            )
+            cluster_qs = Cluster.objects.filter(id__in=cluster_ids)
+        else:
+            cluster_qs = Cluster.objects.all()
+    else:
+        cluster_qs = clusters
 
-    for part in (schools, clusters, ssa):
+    school_counts = _counts(school_qs, "district_id", "schools")
+    cluster_counts = _counts(cluster_qs, "district_id", "clusters")
+    ssa = _ssa_frame(fy, ssa_records)
+
+    for part in (school_counts, cluster_counts, ssa):
         if not part.empty:
             base = base.merge(part, on="district_id", how="left")
 
@@ -191,9 +220,20 @@ def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
     return out
 
 
-def subregion_performance(fy: str | None = None) -> dict[str, Any]:
+def subregion_performance(
+    fy: str | None = None,
+    *,
+    schools=None,
+    clusters=None,
+    ssa_records=None,
+) -> dict[str, Any]:
     """Everything the Performance by Sub-Region card and its map need."""
-    frame = district_frame(fy)
+    frame = district_frame(
+        fy,
+        schools=schools,
+        clusters=clusters,
+        ssa_records=ssa_records,
+    )
 
     districts: list[dict[str, Any]] = []
     if not frame.empty:

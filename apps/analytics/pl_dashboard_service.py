@@ -33,8 +33,8 @@ from apps.analytics.pl_analytics_service import (
     VERIFIED_STATUSES,
     VISIT_TYPES,
     PLAnalyticsService,
-    _norm,
     _pct,
+    _ssa_score,
     resolve_pl_scope,
     ssa_band,
 )
@@ -1005,10 +1005,10 @@ class ProgramLeadDashboardService:
             }
             cells = []
             for v, label, code in cols:
-                pct = _norm(by_int.get(v))
-                band = ssa_band(pct)
-                cells.append({"pct": pct, "tone": band[2]})
-            overall = _norm(
+                score = _ssa_score(by_int.get(v))
+                band = ssa_band(score)
+                cells.append({"score": score, "tone": band[2]})
+            overall = _ssa_score(
                 SsaRecord.objects.filter(id__in=record_ids).aggregate(
                     a=Avg("average_score")
                 )["a"]

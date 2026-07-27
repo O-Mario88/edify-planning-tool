@@ -84,6 +84,19 @@ def partners_list_view(request):
         activities_qs = activities_qs.filter(school__region_id=selected_region)
         assignments_qs = assignments_qs.filter(school__region_id=selected_region)
 
+    if selected_status == "scheduled":
+        activities_qs = activities_qs.filter(scheduled_date__isnull=False)
+        assignments_qs = assignments_qs.filter(scheduled_date__isnull=False)
+    elif selected_status == "yet_to_schedule":
+        activities_qs = activities_qs.filter(scheduled_date__isnull=True)
+        assignments_qs = assignments_qs.filter(scheduled_date__isnull=True)
+    elif selected_status == "overdue":
+        today = date.today()
+        activities_qs = activities_qs.filter(scheduled_date__lt=today).exclude(
+            status__in=COMPLETED_WORK_STATUSES
+        )
+        assignments_qs = assignments_qs.filter(scheduled_date__lt=today)
+
     # A date-less handoff remains visible in the queue because it still needs
     # a partner to set a delivery date. Dated handoffs must lie in the chosen
     # fiscal year unless an associated Activity already supplies the FY.
@@ -370,6 +383,11 @@ def partners_list_view(request):
             [row for row in scheduled_rows if row["date"] and row["date"] >= today],
             key=lambda row: row["date"],
         )[:5],
+        "can_add_partner": (
+            request.user.is_superuser
+            or getattr(request.user, "active_role", None)
+            in ["CountryDirector", "Admin", "ImpactAssessment", "CD", "ADMIN", "IA"]
+        ),
     }
     # One persistent search: the top bar, attached to the page filter form.
     context["topbar_search"] = {
@@ -380,6 +398,74 @@ def partners_list_view(request):
         "autosubmit": True,
     }
     return render(request, "pages/partners/index.html", context)
+
+
+@require_page_permission("partners")
+def create_partner_view(request):
+    """CD, Admin, and IA view to onboard/add a new partner linked to an SSA intervention."""
+    from apps.core.enums import SsaIntervention
+    from apps.partners.services import onboard as onboard_partner_service
+    from django.contrib import messages
+    from django.shortcuts import redirect
+
+    allowed_roles = {
+        "CountryDirector",
+        "Admin",
+        "ImpactAssessment",
+        "CD",
+        "ADMIN",
+        "IA",
+    }
+    user_role = getattr(request.user, "active_role", None)
+    if user_role not in allowed_roles and not request.user.is_superuser:
+        if request.headers.get("HX-Request"):
+            return HttpResponseForbidden(
+                "Only Country Director, Admin, or Impact Assessment users can onboard new partners."
+            )
+        messages.error(
+            request,
+            "Only Country Director, Admin, or Impact Assessment users can onboard new partners.",
+        )
+        return redirect("frontend:partners_list")
+
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        region_name = request.POST.get("region_name", "").strip()
+        contact_person = request.POST.get("contact_person", "").strip()
+        email = request.POST.get("email", "").strip()
+        phone = request.POST.get("phone", "").strip()
+        ssa_intervention = request.POST.get("ssa_intervention", "").strip()
+        notes = request.POST.get("notes", "").strip()
+
+        if not name:
+            messages.error(request, "Partner name is required.")
+            return redirect("frontend:partners_list")
+
+        payload = {
+            "name": name,
+            "regionName": region_name,
+            "contactPerson": contact_person,
+            "email": email,
+            "phone": phone,
+            "ssaIntervention": ssa_intervention,
+            "notes": notes,
+        }
+
+        try:
+            onboard_partner_service(payload, request.user)
+            messages.success(
+                request, f"Partner organisation '{name}' onboarded successfully."
+            )
+        except Exception as exc:
+            messages.error(request, str(getattr(exc, "detail", exc)))
+
+        return redirect("frontend:partners_list")
+
+    context = {
+        "regions": Region.objects.order_by("name"),
+        "interventions": SsaIntervention.choices,
+    }
+    return render(request, "partials/partners/create_partner_drawer.html", context)
 
 
 def _partner_location_label(

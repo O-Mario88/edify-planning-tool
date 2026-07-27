@@ -13,11 +13,11 @@
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
       </div>
       <div>
-        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Return Country Monthly Budget</h2>
+        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Return General Budget</h2>
         <p class="edify-text-caption font-semibold text-slate-400">{{ month_label }} {{ fy }} — the CD is notified and receives a correction To-Do.</p>
       </div>
     </div>
-    <form hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML" class="p-5 space-y-4">
+    <form method="post" action="/country-budget/action" class="p-5 space-y-4">
       {% csrf_token %}
       <input type="hidden" name="action" value="return">
       <input type="hidden" name="budget_id" value="{{ budget_id }}">

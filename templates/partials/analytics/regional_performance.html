@@ -22,7 +22,8 @@
 <div class="edify-surface rounded-surface p-4 shadow-sm space-y-3"
      x-data="subregionMap()" x-init="load()">
 
-  <div class="flex items-start justify-between gap-3 border-b border-slate-50 pb-2">
+  <div class="flex flex-col gap-3 border-b border-slate-50 pb-2
+              sm:flex-row sm:items-start sm:justify-between">
     <div>
       <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
         <span>Performance by Sub-Region</span>
@@ -33,16 +34,48 @@
         {{ subregion_performance.totals.districts }} districts ·
         {{ subregion_performance.totals.subregions }} sub-regions ·
         {{ subregion_performance.totals.schools }} schools · UBOS boundaries
+        · sub-county detail on district zoom ·
+        <span title="This FY-specific system view is identical for every authorized analytics role">
+          {{ map_scope.label|default:"Country-wide system data" }}
+        </span>
       </p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <p class="edify-text-caption font-semibold text-slate-400 hidden sm:block"
-         x-show="!focused" x-transition.opacity>Click a district to zoom</p>
-      <button type="button" x-show="focused" x-transition.opacity @click="reset()"
-              class="rounded-control border border-slate-200 px-2.5 py-1
-                     edify-text-caption font-bold text-slate-600 hover:bg-slate-50">
-        <span x-text="focused && focused.replace('sub:', '')"></span> · Back &middot; Esc
-      </button>
+    <div class="flex w-full flex-col items-start gap-1.5 sm:w-auto sm:items-end sm:shrink-0">
+      <div class="flex items-center gap-2">
+        <p class="edify-text-caption font-semibold text-slate-400 hidden sm:block"
+           x-show="!focused" x-transition.opacity>Click a district to zoom</p>
+        <p class="edify-text-caption font-semibold text-slate-400 hidden sm:block"
+           x-show="focused && !String(focused).startsWith('sub:')"
+           x-transition.opacity>Hover a sub-county for local detail</p>
+        <button type="button" x-ref="mapBack" x-show="focused"
+                x-transition.opacity @click="reset()"
+                class="rounded-control border border-slate-200 px-2.5 py-1
+                       edify-text-caption font-bold text-slate-600 hover:bg-slate-50">
+          <span x-text="focused && focused.replace('sub:', '')"></span> · Back &middot; Esc
+        </button>
+      </div>
+      <div class="flex flex-wrap items-center justify-start gap-0.5 sm:justify-end"
+           role="group" aria-label="Toggle school distribution pins">
+        {# xl:, not 2xl: — the bundle compiles no 2xl variant, so that label never appeared at any width. #}
+        <span class="hidden xl:inline edify-text-caption font-bold text-slate-400 mr-0.5">
+          Schools
+        </span>
+        <template x-for="type in schoolTypes" :key="type.key">
+          <button type="button"
+                  @click.stop="toggleSchoolType(type.key)"
+                  :aria-pressed="type.on.toString()"
+                  :title="`${type.on ? 'Hide' : 'Show'} ${type.label} school pins`"
+                  class="inline-flex h-6 items-center gap-0.5 whitespace-nowrap rounded-pill
+                         border border-slate-200 edify-surface px-1 edify-text-caption
+                         font-bold text-slate-600
+                         transition-opacity hover:border-slate-300"
+                  :class="!type.on && 'opacity-40'">
+            <span class="h-2 w-2 rounded-pill" :style="`background:${type.colour}`"></span>
+            <span x-text="type.label"></span>
+            <span class="tabular-nums text-slate-400" x-text="compact(type.total)"></span>
+          </button>
+        </template>
+      </div>
     </div>
   </div>
 
@@ -66,6 +99,30 @@
           Try again
         </button>
       </div>
+      <div x-show="detailLoading" x-cloak
+           class="absolute left-3 top-3 z-10 inline-flex items-center gap-1.5
+                  rounded-pill border border-slate-200 bg-white/95 px-2.5 py-1
+                  edify-text-caption font-bold text-slate-600 shadow-sm">
+        <span class="h-1.5 w-1.5 animate-pulse rounded-pill edify-primary-solid"></span>
+        Loading sub-county boundaries…
+      </div>
+      <div x-show="detailFailed" x-cloak
+           class="absolute left-3 top-3 z-10 inline-flex items-center gap-2
+                  rounded-pill border border-amber-200 bg-amber-50/95 px-2.5 py-1
+                  edify-text-caption font-bold text-amber-800 shadow-sm">
+        Sub-county detail unavailable
+        <button type="button" @click.stop="retrySubcounties()"
+                class="underline underline-offset-2">Retry</button>
+      </div>
+      <div x-show="focusedDistrict && !detailLoading && unmatchedSchoolCount" x-cloak
+           class="absolute bottom-3 left-3 z-10 inline-flex max-w-[calc(100%-1.5rem)]
+                  items-center gap-1.5 rounded-pill border border-amber-200
+                  bg-amber-50/95 px-2.5 py-1 edify-text-caption font-bold
+                  text-amber-800 shadow-sm"
+           :title="`${unmatchedSchoolCount} schools are still included in district totals but need a current sub-county mapping`">
+        <span class="h-1.5 w-1.5 shrink-0 rounded-pill bg-amber-500"></span>
+        <span x-text="`${unmatchedSchoolCount} ${unmatchedSchoolCount === 1 ? 'school needs' : 'schools need'} sub-county mapping`"></span>
+      </div>
       <svg x-ref="svg" x-show="ready" viewBox="0 0 620 620"
            preserveAspectRatio="xMidYMid meet"
            class="w-full h-full select-none" role="group"
@@ -78,22 +135,40 @@
         than a zero, because "not assessed" and "scored zero" are different
         facts about a school.
       {% endcomment %}
-      <div x-show="tip.show" x-transition.opacity x-cloak
+      <div x-ref="tip" x-show="tip.show" x-transition.opacity x-cloak
            class="sr-tip absolute pointer-events-none z-20 rounded-surface
                   px-3.5 py-3 shadow-2xl"
            :style="`left:${tip.x}px; top:${tip.y}px`">
         <div class="flex items-baseline justify-between gap-3 pb-2 sr-tip__head">
-          <p class="text-[15px] font-extrabold leading-tight" x-text="tip.d.district"></p>
-          <p class="edify-text-caption font-bold uppercase tracking-wider sr-tip__muted"
-             x-text="tip.d.subregion"></p>
+          <div class="min-w-0">
+            <p class="edify-text-caption font-bold uppercase tracking-wider sr-tip__muted"
+               x-text="tip.level"></p>
+            <p class="sr-tip__title truncate text-[15px] font-extrabold leading-tight"
+               x-text="tip.title"></p>
+          </div>
+          <p class="max-w-[45%] text-right edify-text-caption font-bold uppercase
+                    tracking-wider sr-tip__muted"
+             x-text="tip.eyebrow"></p>
         </div>
 
-        <div class="grid grid-cols-3 gap-x-3 gap-y-1.5 pt-2">
+        <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 pt-2">
+          <template x-for="m in tip.mix" :key="m.k">
+            <div class="flex items-center gap-1.5">
+              <span class="h-2 w-2 shrink-0 rounded-pill" :style="`background:${m.colour}`"></span>
+              <span class="edify-text-caption font-semibold sr-tip__muted" x-text="m.k"></span>
+              <span class="sr-tip__number ml-auto text-[12px] font-bold tabular-nums"
+                    x-text="m.v"></span>
+            </div>
+          </template>
+        </div>
+
+        <div class="sr-tip__top grid grid-cols-3 gap-x-3 gap-y-1.5 pt-2">
           <template x-for="m in tip.top" :key="m.k">
             <div>
               <p class="edify-text-caption font-bold uppercase tracking-wider sr-tip__muted"
                  x-text="m.k"></p>
-              <p class="text-[15px] font-bold tabular-nums leading-tight" x-text="m.v"></p>
+              <p class="sr-tip__primary text-[15px] font-bold tabular-nums leading-tight"
+                 x-text="m.v"></p>
             </div>
           </template>
         </div>
@@ -102,7 +177,8 @@
           <template x-for="m in tip.rows" :key="m.k">
             <div class="flex items-baseline justify-between gap-2">
               <span class="edify-text-caption font-semibold sr-tip__muted" x-text="m.k"></span>
-              <span class="text-[12px] font-bold tabular-nums" x-text="m.v"></span>
+              <span class="sr-tip__number text-[12px] font-bold tabular-nums"
+                    x-text="m.v"></span>
             </div>
           </template>
         </div>
@@ -166,7 +242,7 @@
               <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600">{{ s.clusters }}</td>
               <td class="py-1.5 pl-1 text-right font-bold tabular-nums
                          {% if s.ssa_avg == None %}text-slate-300{% else %}text-slate-800{% endif %}">
-                {% if s.ssa_avg == None %}&mdash;{% else %}{{ s.ssa_avg }}{% endif %}
+                {% if s.ssa_avg == None %}&mdash;{% else %}{{ s.ssa_avg }}/10{% endif %}
               </td>
             </tr>
             {% empty %}
@@ -188,17 +264,104 @@
 </div>
 
 {{ district_insight|json_script:"subregion-district-metrics" }}
+{{ subcounty_insight|json_script:"subregion-subcounty-metrics" }}
 {{ subregion_performance.colours|json_script:"subregion-colours" }}
 
 <script>
 function subregionMap(){
   return {
     ready:false, failed:false, attempts:0,
-    focused:null, cam:null, labels:null, subLabels:null,
-    tip:{show:false,x:0,y:0,d:{},top:[],rows:[]},
-    metrics:{}, colours:{}, geo:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
+    detailLoading:false, detailFailed:false, detailRequest:0,
+    focused:null, focusedDistrict:null, cam:null, labels:null, subLabels:null,
+    pinLayer:null, subcountyLayer:null, subcountyPinLayer:null, zoomScale:1,
+    tip:{
+      show:false,x:0,y:0,d:{},mix:[],top:[],rows:[],
+      level:'District',title:'',eyebrow:'',
+    },
+    metrics:{}, subcountyMetrics:[], subcountyUnassigned:{}, colours:{},
+    geo:null, subcountyIndex:null, subcountyCache:{},
+    subcountyLabelLayer:null, unmatchedSchoolCount:0,
+    boundaryExitHandler:null,
+    sx:null, sy:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
+    schoolTypes:[
+      {key:'core', label:'Core', colour:'#f97316', on:true, total:0},
+      {key:'client', label:'Client', colour:'#2563eb', on:true, total:0},
+      {key:'champion', label:'Champion', colour:'#16a34a', on:true, total:0},
+      {key:'core_trained', label:'Core trained', colour:'#c2410c', on:true, total:0, trained:true},
+    ],
 
     colourOf(s){ return this.colours[s] || '#e2e8f0'; },
+    canonical(v){ return String(v || '').toUpperCase().replace(/[^A-Z0-9]+/g, ''); },
+    districtKey(v){
+      const key = this.canonical(v);
+      const overview = {
+        LUWERO:'LUWEERO',
+        ARUACITY:'ARUA',
+        FORTPORTALCITY:'KABAROLE',
+        GULUCITY:'GULU',
+        HOIMACITY:'HOIMA',
+        JINJACITY:'JINJA',
+        LIRACITY:'LIRA',
+        MASAKACITY:'MASAKA',
+        MBALECITY:'MBALE',
+        MBARARACITY:'MBARARA',
+        SOROTICITY:'SOROTI',
+        TEREGO:'ARUA',
+      };
+      return overview[key] || key;
+    },
+    compact(v){
+      return new Intl.NumberFormat('en', {
+        notation:'compact', maximumFractionDigits:1,
+      }).format(v || 0);
+    },
+    schoolMix(district){
+      return this.metrics[district]?.school_distribution
+        || {core:0, client:0, champion:0, core_trained:0};
+    },
+    syncSchoolTotals(){
+      const districts = Object.values(this.metrics);
+      this.schoolTypes.forEach(type => {
+        type.total = districts.reduce(
+          (sum, district) => sum + (district.school_distribution?.[type.key] || 0), 0
+        );
+      });
+    },
+    toggleSchoolType(key){
+      const type = this.schoolTypes.find(item => item.key === key);
+      if(!type) return;
+      type.on = !type.on;
+      this.pinLayer?.querySelectorAll(`[data-school-type="${key}"]`)
+        .forEach(pin => { pin.style.display = type.on ? '' : 'none'; });
+      this.subcountyPinLayer?.querySelectorAll(`[data-school-type="${key}"]`)
+        .forEach(pin => { pin.style.display = type.on ? '' : 'none'; });
+    },
+    appendPinVisual(pin, type, unmatched=false){
+      const shape = document.createElementNS(this.NS, 'path');
+      shape.setAttribute(
+        'd',
+        'M0,0 C-.9,-2.1 -4.5,-4.5 -4.5,-7.5 A4.5,4.5 0 1 1 4.5,-7.5 C4.5,-4.5 .9,-2.1 0,0 Z',
+      );
+      shape.setAttribute('fill', type.colour);
+      shape.setAttribute('stroke', unmatched ? '#fef3c7' : '#fff');
+      shape.setAttribute('stroke-width', unmatched ? '1.25' : '.9');
+      if(unmatched) shape.setAttribute('stroke-dasharray', '2 1');
+      pin.appendChild(shape);
+
+      if(type.trained){
+        const check = document.createElementNS(this.NS, 'path');
+        check.setAttribute('class', 'sr-pin-check');
+        check.setAttribute('d', 'M-1.8,-7.5 L-.5,-6.2 L2,-8.9');
+        pin.appendChild(check);
+        return;
+      }
+      const dot = document.createElementNS(this.NS, 'circle');
+      dot.setAttribute('class', 'sr-pin-dot');
+      dot.setAttribute('cx', '0');
+      dot.setAttribute('cy', '-7.5');
+      dot.setAttribute('r', '1.1');
+      pin.appendChild(dot);
+    },
 
     async load(){
       // district_insight ships an object keyed by district name, already in
@@ -212,10 +375,19 @@ function subregionMap(){
       try {
         this.metrics = JSON.parse(
           document.getElementById('subregion-district-metrics').textContent) || {};
+        const subcountyPayload = JSON.parse(
+          document.getElementById('subregion-subcounty-metrics').textContent) || {};
+        this.subcountyMetrics = subcountyPayload.entries || [];
+        this.subcountyUnassigned = subcountyPayload.unassigned_by_district || {};
         this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
+        this.syncSchoolTotals();
+        const indexRequest = fetch("{% static 'geo/uganda_subcounty_index.json' %}")
+          .then(response => response.ok ? response.json() : null)
+          .catch(() => null);
         const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
         if (!res.ok) throw new Error('boundaries HTTP ' + res.status);
         this.geo = await res.json();
+        this.subcountyIndex = await indexRequest;
         if (this.$refs.svg) this.$refs.svg.replaceChildren();
         this.draw();
         this.ready = true;
@@ -239,6 +411,21 @@ function subregionMap(){
 
     draw(){
       const f = this.geo.features, svg = this.$refs.svg, NS = this.NS;
+      if(!this.boundaryExitHandler){
+        this.boundaryExitHandler = event => {
+          const active = this.cam?.querySelector('.sr-boundary-active');
+          if(!active) return;
+          const target = event.target?.closest?.(
+            '.sr-boundary-layer > path:not(.sr-boundary-lift)',
+          );
+          if(target !== active) this.releaseBoundary(active);
+        };
+        document.addEventListener(
+          'pointermove',
+          this.boundaryExitHandler,
+          {passive:true},
+        );
+      }
       const rings = g => (g.type === 'MultiPolygon' ? g.coordinates.flat() : g.coordinates);
       let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
       f.forEach(ft => rings(ft.geometry).forEach(r => r.forEach(([x,y]) => {
@@ -251,12 +438,14 @@ function subregionMap(){
       const ox = (W - (maxx - minx) * k) / 2, oy = (H - (maxy - miny) * k) / 2;
       const sx = x => ox + (x - minx) * k;
       const sy = y => H - oy - (y - miny) * k;
+      this.sx = sx; this.sy = sy;
 
       const cam = document.createElementNS(NS,'g');
       cam.setAttribute('id','sr-cam');
       cam.style.transition = 'transform 700ms cubic-bezier(.22,.61,.36,1)';
 
       const shapes = document.createElementNS(NS,'g');
+      shapes.setAttribute('class', 'sr-boundary-layer sr-district-layer');
       f.forEach((ft, i) => {
         const p = ft.properties;
         const d = rings(ft.geometry)
@@ -267,19 +456,31 @@ function subregionMap(){
         el.setAttribute('fill', this.colourOf(p.s));
         el.setAttribute('stroke', '#fff');
         el.setAttribute('stroke-width', '0.6');
+        el.setAttribute('vector-effect', 'non-scaling-stroke');
         el.setAttribute('tabindex', '0');
         el.setAttribute('role', 'button');
-        el.setAttribute('aria-label', `${p.d} district, ${p.s} sub-region`);
+        const mix = this.schoolMix(p.d);
+        el.setAttribute(
+          'aria-label',
+          `${p.d} district, ${p.s} sub-region. ` +
+          `${mix.core || 0} Core, ${mix.client || 0} Client, ` +
+          `${mix.champion || 0} Champion, and ` +
+          `${mix.core_trained || 0} trained Core schools`
+        );
         el.dataset.district = p.d; el.dataset.sub = p.s;
         el.style.cssText =
           'cursor:pointer;transform-box:fill-box;transform-origin:center;' +
-          'transition:opacity .35s,filter .2s,transform .2s;' +
+          'transition:opacity 180ms ease,filter 240ms ease,' +
+          'transform 260ms cubic-bezier(.2,.8,.2,1);' +
           `animation:sr-rise 520ms cubic-bezier(.22,.61,.36,1) both ${i*4}ms`;
         el.addEventListener('pointermove', e => this.hover(el, e));
-        el.addEventListener('pointerleave', () => this.tip.show = false);
+        el.addEventListener('pointerleave', () => this.releaseBoundary(el));
         el.addEventListener('click', e => { e.stopPropagation(); this.zoom(el); });
-        el.addEventListener('focus', () => this.hoverAt(el));
-        el.addEventListener('blur', () => this.tip.show = false);
+        el.addEventListener('focus', () => {
+          this.promoteBoundary(el);
+          this.hoverAt(el);
+        });
+        el.addEventListener('blur', () => this.releaseBoundary(el));
         el.addEventListener('keydown', e => {
           if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); this.zoom(el); }
         });
@@ -293,9 +494,17 @@ function subregionMap(){
       f.forEach(ft => {
         const p = ft.properties;
         const t = document.createElementNS(NS,'text');
-        t.setAttribute('transform', `translate(${sx(p.lon).toFixed(1)},${sy(p.lat).toFixed(1)})`);
+        const labelX = sx(p.lon);
+        const labelY = sy(p.lat);
+        t.setAttribute(
+          'transform',
+          `translate(${labelX.toFixed(1)},${labelY.toFixed(1)})`,
+        );
         t.setAttribute('class','sr-dl');
         t.dataset.district = p.d;
+        t.dataset.labelX = labelX.toFixed(2);
+        t.dataset.labelY = labelY.toFixed(2);
+        t.dataset.labelPriority = String(this.metrics[p.d]?.schools || 0);
         t.textContent = p.d.toUpperCase();
         labels.appendChild(t);
       });
@@ -320,63 +529,215 @@ function subregionMap(){
       });
       cam.appendChild(subLabels);
 
+      // School-distribution layer. Each district gets up to four compact
+      // pins, centred as a group on its UBOS centroid. Pins do not intercept
+      // pointer events; the larger district path remains the interaction
+      // target and exposes the same counts to assistive technology.
+      const pinLayer = document.createElementNS(NS,'g');
+      pinLayer.setAttribute('class','sr-school-pins');
+      pinLayer.setAttribute('aria-hidden','true');
+      f.forEach((ft, districtIndex) => {
+        const p = ft.properties, mix = this.schoolMix(p.d);
+        const visible = this.schoolTypes.filter(type => (mix[type.key] || 0) > 0);
+        if(!visible.length) return;
+        const districtPins = document.createElementNS(NS,'g');
+        districtPins.setAttribute(
+          'transform',
+          `translate(${sx(p.lon).toFixed(1)},${sy(p.lat).toFixed(1)})`
+        );
+        districtPins.setAttribute('class','sr-district-pins');
+        districtPins.dataset.district = p.d;
+        districtPins.dataset.sub = p.s;
+        districtPins.dataset.mapAnchorX = sx(p.lon).toFixed(2);
+        districtPins.dataset.mapAnchorY = sy(p.lat).toFixed(2);
+        districtPins.dataset.pinCount = String(visible.length);
+
+        const pinSet = document.createElementNS(NS,'g');
+        pinSet.setAttribute('class','sr-pin-set');
+        visible.forEach((type, typeIndex) => {
+          const offset = (typeIndex - (visible.length - 1) / 2) * 7;
+          const pin = document.createElementNS(NS,'g');
+          pin.setAttribute('class','sr-school-pin');
+          pin.setAttribute(
+            'transform',
+            `translate(${offset.toFixed(1)},${Math.abs(offset) ? 1.5 : -0.5})`
+          );
+          pin.dataset.schoolType = type.key;
+          pin.style.animation =
+            `sr-pin-rise 360ms cubic-bezier(.22,.61,.36,1) both ${districtIndex * 3}ms`;
+
+          const title = document.createElementNS(NS,'title');
+          title.textContent =
+            `${p.d}: ${mix[type.key]} ${type.label} school` +
+            `${mix[type.key] === 1 ? '' : 's'}`;
+          pin.appendChild(title);
+
+          this.appendPinVisual(pin, type);
+          pinSet.appendChild(pin);
+        });
+        districtPins.appendChild(pinSet);
+        pinLayer.appendChild(districtPins);
+      });
+      cam.appendChild(pinLayer);
+
       svg.replaceChildren(cam);
       this.cam = cam; this.labels = labels; this.subLabels = subLabels;
-      // Nudge overlapping district labels apart. Solved here rather than baked
-      // in because the projection depends on the rendered card width, so the
-      // collisions differ from one layout to the next.
-      this.$nextTick(() => this.declash());
-    },
-
-    declash(){
-      const els = [...this.labels.querySelectorAll('text')];
-      const off = new Map(els.map(e => [e, 0]));
-      // getBBox() reports the element's own geometry and ignores its
-      // transform, so reading it alone puts all 135 labels at the origin and
-      // every pair looks like a collision. The translate has to be added back
-      // for the comparison to mean anything.
-      const at = e => {
-        const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(e.getAttribute('transform'));
-        return m ? [parseFloat(m[1]), parseFloat(m[2])] : [0, 0];
-      };
-      const box = e => {
-        const b = e.getBBox(), [px, py] = at(e);
-        return { x: b.x + px, y: b.y + py + off.get(e), w: b.width, h: b.height };
-      };
-      const hit = (a,b) => !(a.x+a.w < b.x || b.x+b.w < a.x || a.y+a.h < b.y || b.y+b.h < a.y);
-      for(let pass = 0; pass < 40; pass++){
-        const B = els.map(box);
-        let moved = 0;
-        for(let i = 0; i < els.length; i++){
-          for(let j = i+1; j < els.length; j++){
-            if(!hit(B[i], B[j])) continue;
-            const dir = (B[i].y + B[i].h/2) <= (B[j].y + B[j].h/2) ? -1 : 1;
-            off.set(els[i], off.get(els[i]) + dir * 0.35);
-            off.set(els[j], off.get(els[j]) - dir * 0.35);
-            moved++;
-          }
-        }
-        if(!moved) break;
-      }
-      els.forEach(e => {
-        const dy = off.get(e);
-        if(!dy) return;
-        const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(e.getAttribute('transform'));
-        if(m) e.setAttribute('transform', `translate(${m[1]},${(+m[2]+dy).toFixed(2)})`);
+      this.pinLayer = pinLayer; this.districtShapes = shapes;
+      this.$nextTick(() => {
+        this.placeDistrictLabels();
+        requestAnimationFrame(() => this.placeDistrictLabels());
       });
     },
 
     /* A dash, not a zero: "no confirmed assessment" and "scored zero" are
        different facts, and only one of them is bad news. */
     _n(v){ return (v === null || v === undefined) ? '—' : v; },
+    metricAliases(value){
+      const upper = String(value || '').toUpperCase();
+      const simplified = upper
+        .replace(/\b(SUB[\s-]?COUNTY|TOWN COUNCIL|MUNICIPALITY|DIVISION|CITY|URBAN COUNCIL)\b/g, ' ');
+      return new Set([
+        this.canonical(upper),
+        this.canonical(simplified),
+        this.canonical(upper.replace(/\bISLANDS\b/g, 'ISLAND')),
+        this.canonical(simplified.replace(/\bCENTRAL\b/g, ' ')),
+      ].filter(Boolean));
+    },
+    metricsForBoundary(properties){
+      const overview = this.districtKey(properties.od || this.focusedDistrict);
+      const aliases = new Set([properties.k, ...(properties.a || [])]);
+      return this.subcountyMetrics.filter(metric => {
+        if(this.districtKey(metric.district) !== overview) return false;
+        if(metric.boundary_code && String(metric.boundary_code) === String(properties.c)){
+          return true;
+        }
+        return [...this.metricAliases(metric.subcounty)]
+          .some(alias => aliases.has(alias));
+      });
+    },
+    matchMetricsToFeatures(features){
+      const districtMetrics = this.subcountyMetrics.filter(
+        metric => this.districtKey(metric.district) ===
+          this.districtKey(this.focusedDistrict)
+      );
+      const byFeature = new Map(features.map(feature => [feature, []]));
+      const byCode = new Map();
+      const byExactName = new Map();
+      const byAlias = new Map();
+      const add = (index, key, feature) => {
+        if(!key) return;
+        const values = index.get(key) || [];
+        values.push(feature);
+        index.set(key, values);
+      };
+      features.forEach(feature => {
+        const properties = feature.properties;
+        add(byCode, String(properties.c || ''), feature);
+        add(byExactName, properties.k, feature);
+        (properties.a || []).forEach(alias => add(byAlias, alias, feature));
+      });
+
+      const unmatched = [];
+      districtMetrics.forEach(metric => {
+        let candidates = [];
+        if(metric.boundary_code){
+          candidates = byCode.get(String(metric.boundary_code)) || [];
+        }
+        if(candidates.length !== 1){
+          const aliases = [...this.metricAliases(metric.subcounty)];
+          const exact = aliases.flatMap(alias => byExactName.get(alias) || []);
+          candidates = [...new Set(exact)];
+          if(candidates.length !== 1){
+            const permissive = aliases.flatMap(alias => byAlias.get(alias) || []);
+            candidates = [...new Set(permissive)];
+          }
+        }
+        // Ambiguous historical names are disclosed as needing mapping. Never
+        // duplicate a school's aggregate across two plausible boundaries.
+        if(candidates.length !== 1){
+          unmatched.push(metric);
+          return;
+        }
+        byFeature.get(candidates[0]).push(metric);
+      });
+      return {byFeature, unmatched};
+    },
+    combineBoundaryMetrics(properties, matchedRows){
+      const matches = matchedRows || this.metricsForBoundary(properties);
+      const base = {
+        district:properties.d || properties.od || this.focusedDistrict,
+        subregion:this.metrics[this.focusedDistrict]?.subregion || '',
+        subcounty:properties.n,
+        schools:0, clusters:0, core_schools:0,
+        school_distribution:{core:0,client:0,champion:0,core_trained:0},
+        ssa_done:0, ssa_total:0, ssa_n:0,
+        ssa_avg:null, ssa_avg_cluster:null, ssa_avg_core:null,
+        best:null, worst:null, trained:0, visited:0,
+        teachers_trained:0, leaders_trained:0,
+        matched_keys:matches.map(metric => metric.key),
+      };
+      if(!matches.length) return base;
+      matches.forEach(metric => {
+        base.schools += metric.schools || 0;
+        base.clusters += metric.clusters || 0;
+        base.core_schools += metric.core_schools || 0;
+        base.ssa_done += metric.ssa_done || 0;
+        base.ssa_total += metric.ssa_total || 0;
+        base.ssa_n += metric.ssa_n || 0;
+        base.trained += metric.trained || 0;
+        base.visited += metric.visited || 0;
+        base.teachers_trained += metric.teachers_trained || 0;
+        base.leaders_trained += metric.leaders_trained || 0;
+        this.schoolTypes.forEach(type => {
+          base.school_distribution[type.key] +=
+            metric.school_distribution?.[type.key] || 0;
+        });
+      });
+      const weightedAverage = key => {
+        const measured = matches.filter(
+          metric => metric[key] !== null && metric[key] !== undefined && metric.ssa_n
+        );
+        const weight = measured.reduce((sum, metric) => sum + metric.ssa_n, 0);
+        if(!weight) return null;
+        return Math.round(
+          measured.reduce((sum, metric) => sum + metric[key] * metric.ssa_n, 0)
+          / weight * 100
+        ) / 100;
+      };
+      base.ssa_avg = weightedAverage('ssa_avg');
+      // Cohort-specific averages do not ship independent sample sizes. When
+      // aliases combine, leave them absent rather than inventing a weighting.
+      if(matches.length === 1){
+        base.ssa_avg_cluster = matches[0].ssa_avg_cluster;
+        base.ssa_avg_core = matches[0].ssa_avg_core;
+        base.best = matches[0].best;
+        base.worst = matches[0].worst;
+      }
+      return base;
+    },
+    unassignedForFocusedDistrict(){
+      const key = Object.keys(this.subcountyUnassigned).find(
+        district => this.districtKey(district) ===
+          this.districtKey(this.focusedDistrict)
+      );
+      return key ? this.subcountyUnassigned[key] : null;
+    },
     _fill(el){
       const d = this.metrics[el.dataset.district]
         || { district: el.dataset.district, subregion: el.dataset.sub };
       this.tip.d = d;
+      this.tip.level = 'District';
+      this.tip.title = d.district;
+      this.tip.eyebrow = d.subregion;
+      const mix = d.school_distribution
+        || {core:0, client:0, champion:0, core_trained:0};
+      this.tip.mix = this.schoolTypes.map(type => ({
+        k:type.label, v:this._n(mix[type.key] || 0), colour:type.colour,
+      }));
       this.tip.top = [
         { k:'Schools',  v: this._n(d.schools) },
-        { k:'Clusters', v: this._n(d.clusters) },
         { k:'Core',     v: this._n(d.core_schools) },
+        { k:'Clusters', v: this._n(d.clusters) },
       ];
       const ratio = (a, b) => (b ? `${a}/${b}` : '—');
       this.tip.rows = [
@@ -390,30 +751,578 @@ function subregionMap(){
         { k:'Leaders',       v: this._n(d.leaders_trained) },
       ];
     },
+    _fillSubcounty(el){
+      const d = this.combineBoundaryMetrics(
+        el.__boundaryProperties,
+        el.__boundaryMetrics,
+      );
+      this.tip.d = d;
+      this.tip.level = 'Sub-county';
+      this.tip.title = d.subcounty;
+      this.tip.eyebrow = `${d.district} · ${d.subregion}`;
+      const mix = d.school_distribution
+        || {core:0, client:0, champion:0, core_trained:0};
+      this.tip.mix = this.schoolTypes.map(type => ({
+        k:type.label, v:this._n(mix[type.key] || 0), colour:type.colour,
+      }));
+      this.tip.top = [
+        { k:'Schools',  v: this._n(d.schools) },
+        { k:'Core',     v: this._n(d.core_schools) },
+        { k:'Clusters', v: this._n(d.clusters) },
+      ];
+      const ratio = (a, b) => (b ? `${a}/${b}` : '—');
+      this.tip.rows = [
+        { k:'SSA done',      v: ratio(d.ssa_done, d.ssa_total) },
+        { k:'SSA avg',       v: this._n(d.ssa_avg) },
+        { k:'Cluster SSA',   v: this._n(d.ssa_avg_cluster) },
+        { k:'Core SSA',      v: this._n(d.ssa_avg_core) },
+        { k:'Visited',       v: ratio(d.visited, d.schools) },
+        { k:'Trained',       v: ratio(d.trained, d.schools) },
+        { k:'Teachers',      v: this._n(d.teachers_trained) },
+        { k:'Leaders',       v: this._n(d.leaders_trained) },
+      ];
+    },
+    _placeTip(clientX, clientY){
+      const frame = this.$refs.svg.getBoundingClientRect();
+      const card = this.$refs.tip?.getBoundingClientRect();
+      const edge = 4, cursorTail = 14;
+      const width = card?.width || Math.min(300, frame.width - edge * 2);
+      const height = card?.height || 240;
+      const px = clientX - frame.left, py = clientY - frame.top;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // The normal position starts the card's upper-left corner at the tail
+      // of the pointer, keeping both the pointer tip and district label clear.
+      // The card may extend beyond the map into the surrounding page; only
+      // the visible screen edge is a reason to flip it.
+      let x = px + cursorTail, y = py + cursorTail;
+      if (clientX + cursorTail + width > viewportWidth - edge) {
+        x = px - width - cursorTail;
+      }
+      if (clientY + cursorTail + height > viewportHeight - edge) {
+        y = py - height - cursorTail;
+      }
+
+      const minX = edge - frame.left;
+      const minY = edge - frame.top;
+      const maxX = viewportWidth - frame.left - width - edge;
+      const maxY = viewportHeight - frame.top - height - edge;
+      this.tip.x = Math.max(minX, Math.min(x, maxX));
+      this.tip.y = Math.max(minY, Math.min(y, maxY));
+    },
+    promoteBoundary(el){
+      const layer = el.parentElement;
+      if(!layer?.classList.contains('sr-boundary-layer')) return;
+      const current = layer.querySelector('.sr-boundary-active');
+      if(current === el) return;
+      if(current){
+        current.classList.remove('sr-boundary-active');
+      }
+      layer.querySelector('.sr-boundary-lift')?.remove();
+      el.classList.add('sr-boundary-active');
+      // SVG has no z-index for paths. A non-interactive duplicate paints last
+      // while the original remains stationary and keeps pointer/focus state.
+      const lift = el.cloneNode(false);
+      lift.removeAttribute('style');
+      lift.removeAttribute('tabindex');
+      lift.removeAttribute('role');
+      lift.removeAttribute('aria-label');
+      lift.setAttribute('aria-hidden', 'true');
+      lift.setAttribute('pointer-events', 'none');
+      lift.setAttribute('class', 'sr-boundary-lift');
+      layer.appendChild(lift);
+    },
+    releaseBoundary(el){
+      this.tip.show = false;
+      if(!el.classList.contains('sr-boundary-active')) return;
+      const layer = el.parentElement;
+      el.classList.remove('sr-boundary-active');
+      layer?.querySelector('.sr-boundary-lift')?.remove();
+    },
     hover(el, e){
-      const box = this.$refs.svg.getBoundingClientRect();
+      const clientX = e.clientX, clientY = e.clientY;
+      this.promoteBoundary(el);
       this._fill(el);
-      // The card is ~300x230, so keep it inside the frame on both axes
-      // instead of letting it run off the right edge or the top.
-      this.tip.x = Math.max(4, Math.min(e.clientX - box.left + 14, box.width - 308));
-      this.tip.y = Math.max(4, Math.min(e.clientY - box.top - 40, box.height - 240));
       this.tip.show = true;
+      this.$nextTick(() => this._placeTip(clientX, clientY));
     },
     hoverAt(el){
-      const b = el.getBoundingClientRect(), box = this.$refs.svg.getBoundingClientRect();
+      const b = el.getBoundingClientRect();
       this._fill(el);
-      this.tip.x = Math.max(4, Math.min(b.left - box.left + b.width/2, box.width - 308));
-      this.tip.y = Math.max(4, Math.min(b.top - box.top - 40, box.height - 240));
       this.tip.show = true;
+      this.$nextTick(() => this._placeTip(b.right, b.bottom));
+    },
+    hoverSubcounty(el, e){
+      const clientX = e.clientX, clientY = e.clientY;
+      this.promoteBoundary(el);
+      this._fillSubcounty(el);
+      this.tip.show = true;
+      this.$nextTick(() => this._placeTip(clientX, clientY));
+    },
+    hoverSubcountyAt(el){
+      const b = el.getBoundingClientRect();
+      this._fillSubcounty(el);
+      this.tip.show = true;
+      this.$nextTick(() => this._placeTip(b.right, b.bottom));
+    },
+
+    geometryPath(geometry){
+      const polygons = geometry.type === 'MultiPolygon'
+        ? geometry.coordinates
+        : [geometry.coordinates];
+      return polygons.flatMap(polygon => polygon).map(ring =>
+        'M' + ring.map(([lon, lat]) =>
+          `${this.sx(lon).toFixed(2)},${this.sy(lat).toFixed(2)}`
+        ).join(' L') + 'Z'
+      ).join('');
+    },
+    labelPlacementCandidates(path, baseX, baseY, scale){
+      const candidates = [[0, 0]];
+      [6, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72].forEach(distance => {
+        for(let step = 0; step < 16; step += 1){
+          const angle = (Math.PI * 2 * step) / 16;
+          candidates.push([
+            Math.cos(angle) * distance,
+            Math.sin(angle) * distance,
+          ]);
+        }
+      });
+
+      // Add points across the actual polygon, not only around the uploaded
+      // centroid. This lets labels find genuine interior whitespace in narrow
+      // or irregular boundaries.
+      const boundary = path?.getBBox();
+      if(boundary){
+        [0.5, 0.35, 0.65, 0.2, 0.8].forEach(yRatio => {
+          [0.5, 0.35, 0.65, 0.2, 0.8].forEach(xRatio => {
+            const x = boundary.x + boundary.width * xRatio;
+            const y = boundary.y + boundary.height * yRatio;
+            candidates.push([(x - baseX) * scale, (y - baseY) * scale]);
+          });
+        });
+      }
+
+      const seen = new Set();
+      return candidates.filter(([x, y]) => {
+        const key = `${x.toFixed(2)},${y.toFixed(2)}`;
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    },
+    markerObstacleRects(layer, scale){
+      return [...(layer?.querySelectorAll('[data-map-anchor-x]') || [])]
+        .map(anchor => {
+          const x = Number(anchor.dataset.mapAnchorX);
+          const y = Number(anchor.dataset.mapAnchorY);
+          const count = Number(anchor.dataset.pinCount || 0);
+          const halfWidth = ((Math.max(0, count - 1) * 7) / 2 + 5.5) / scale;
+          const margin = 2 / scale;
+          return {
+            left:x - halfWidth - margin,
+            right:x + halfWidth + margin,
+            top:y - 13.5 / scale - margin,
+            bottom:y + 2.5 / scale + margin,
+          };
+        });
+    },
+    boundaryContainsLabel(path, rect){
+      if(!path?.isPointInFill) return true;
+      const xs = [rect.left, (rect.left + rect.right) / 2, rect.right];
+      const ys = [rect.top, (rect.top + rect.bottom) / 2, rect.bottom];
+      return xs.every(x => ys.every(y => {
+        const point = this.$refs.svg.createSVGPoint();
+        point.x = x;
+        point.y = y;
+        return path.isPointInFill(point);
+      }));
+    },
+    placeBoundaryLabels({labelLayer, pathLayer, pinLayer, key, scale=1}){
+      const labels = [...(labelLayer?.querySelectorAll('text') || [])];
+      const paths = [...(pathLayer?.querySelectorAll('path:not(.sr-boundary-lift)') || [])];
+      if(!labels.length || !paths.length) return;
+
+      const pathByName = new Map(paths.map(path => [path.dataset[key], path]));
+      const markerRects = this.markerObstacleRects(pinLayer, scale);
+      const placed = [];
+      const overlaps = (a, b) =>
+        a.left < b.right && a.right > b.left &&
+        a.top < b.bottom && a.bottom > b.top;
+
+      // Keep high-value labels closest to their geographic anchor. Only a
+      // lower-priority label moves when two names compete for the same space.
+      labels.sort((a, b) =>
+        Number(b.dataset.labelPriority || 0) -
+          Number(a.dataset.labelPriority || 0) ||
+        b.textContent.length - a.textContent.length
+      );
+
+      labels.forEach(label => {
+        const path = pathByName.get(label.dataset[key]);
+        const baseX = Number(label.dataset.labelX);
+        const baseY = Number(label.dataset.labelY);
+        const box = label.getBBox();
+        const padding = 1.5 / scale;
+        const rectFor = ([dx, dy], labelScale=1) => {
+          const centreX = baseX + dx / scale;
+          const centreY = baseY + dy / scale;
+          const width = (box.width * labelScale) / scale;
+          const height = (box.height * labelScale) / scale;
+          return {
+            left:centreX - width / 2 - padding,
+            right:centreX + width / 2 + padding,
+            top:centreY - height / 2 - padding,
+            bottom:centreY + height / 2 + padding,
+          };
+        };
+        const candidates = this.labelPlacementCandidates(
+          path, baseX, baseY, scale,
+        );
+        const isClear = rect =>
+          markerRects.every(marker => !overlaps(rect, marker)) &&
+          placed.every(existing => !overlaps(rect, existing)) &&
+          this.boundaryContainsLabel(path, rect);
+
+        const labelScales = [1, .9, .8, .7];
+        let labelScale = 1;
+        let offset = null;
+        let placement = 'clear';
+        for(const candidateScale of labelScales){
+          offset = candidates.find(candidate =>
+            isClear(rectFor(candidate, candidateScale))
+          );
+          if(offset){
+            labelScale = candidateScale;
+            break;
+          }
+        }
+
+        if(!offset){
+          // Tiny or irregular areas cannot always contain their full name.
+          // In that case, keep the label readable in the nearest genuinely
+          // empty space. Marker and label clearance remain hard constraints.
+          placement = 'open-space';
+          const openOptions = labelScales.flatMap(candidateScale =>
+            candidates.map(candidate => {
+              const rect = rectFor(candidate, candidateScale);
+              const blocked =
+                markerRects.some(marker => overlaps(rect, marker)) ||
+                placed.some(existing => overlaps(rect, existing));
+              if(blocked) return null;
+              const contained = this.boundaryContainsLabel(path, rect);
+              return {
+                candidate,
+                labelScale:candidateScale,
+                penalty:
+                  (contained ? 0 : 1000) +
+                  (1 - candidateScale) * 120 +
+                  Math.hypot(candidate[0], candidate[1]) / 100,
+              };
+            }).filter(Boolean)
+          );
+          const best = openOptions.reduce(
+            (current, option) =>
+              !current || option.penalty < current.penalty
+                ? option
+                : current,
+            null,
+          );
+          if(best){
+            offset = best.candidate;
+            labelScale = best.labelScale;
+          }else{
+            // This is only reachable on a path too small for the minimum
+            // label size. Keep the deterministic anchor for diagnostics.
+            placement = 'constrained';
+            offset = [0, 0];
+            labelScale = .7;
+          }
+        }
+
+        const rect = rectFor(offset, labelScale);
+        const [dx, dy] = offset;
+        const visualScale = labelScale / scale;
+        label.setAttribute(
+          'transform',
+          `translate(${(baseX + dx / scale).toFixed(2)},` +
+          `${(baseY + dy / scale).toFixed(2)}) ` +
+          (visualScale === 1
+            ? ''
+            : `scale(${visualScale.toFixed(4)})`),
+        );
+        label.dataset.labelOffset = `${dx.toFixed(2)},${dy.toFixed(2)}`;
+        label.dataset.labelScale = labelScale.toFixed(2);
+        label.dataset.labelPlacement = placement;
+        placed.push(rect);
+      });
+    },
+    placeDistrictLabels(){
+      this.placeBoundaryLabels({
+        labelLayer:this.labels,
+        pathLayer:this.districtShapes,
+        pinLayer:this.pinLayer,
+        key:'district',
+        scale:1,
+      });
+    },
+    resolveSubcountyLabelCollisions(){
+      this.placeBoundaryLabels({
+        labelLayer:this.subcountyLabelLayer,
+        pathLayer:this.subcountyLayer,
+        pinLayer:this.subcountyPinLayer,
+        key:'subcounty',
+        scale:this.zoomScale || 1,
+      });
+    },
+    clearSubcounties(){
+      const active = this.subcountyLayer?.querySelector('.sr-boundary-active');
+      if(active) this.releaseBoundary(active);
+      this.subcountyLayer?.remove();
+      this.subcountyLabelLayer?.remove();
+      this.subcountyPinLayer?.remove();
+      this.subcountyLayer = null;
+      this.subcountyLabelLayer = null;
+      this.subcountyPinLayer = null;
+      this.unmatchedSchoolCount = 0;
+    },
+    async loadSubcounties(district, force=false){
+      const request = ++this.detailRequest;
+      this.detailLoading = true;
+      this.detailFailed = false;
+      this.clearSubcounties();
+      try {
+        if(!this.subcountyIndex){
+          const indexResponse = await fetch(
+            "{% static 'geo/uganda_subcounty_index.json' %}",
+          );
+          if(!indexResponse.ok){
+            throw new Error('sub-county index HTTP ' + indexResponse.status);
+          }
+          this.subcountyIndex = await indexResponse.json();
+        }
+        const entry = this.subcountyIndex?.districts?.[this.districtKey(district)];
+        if(!entry) throw new Error('no sub-county asset for ' + district);
+
+        let payload = force ? null : this.subcountyCache[entry.file];
+        if(!payload){
+          const response = await fetch("{% static 'geo/' %}" + entry.file);
+          if(!response.ok){
+            throw new Error('sub-county boundaries HTTP ' + response.status);
+          }
+          payload = await response.json();
+          this.subcountyCache[entry.file] = payload;
+        }
+        if(request !== this.detailRequest || this.focusedDistrict !== district){
+          return;
+        }
+        this.drawSubcounties(payload);
+      } catch (error) {
+        if(request === this.detailRequest && this.focusedDistrict === district){
+          this.detailFailed = true;
+        }
+      } finally {
+        if(request === this.detailRequest) this.detailLoading = false;
+      }
+    },
+    retrySubcounties(){
+      if(this.focusedDistrict){
+        this.loadSubcounties(this.focusedDistrict, true);
+      }
+    },
+    appendSchoolPins(layer, properties, mix, sequence, unmatched=false){
+      const visible = this.schoolTypes.filter(type => (mix[type.key] || 0) > 0);
+      if(!visible.length) return;
+      const anchor = document.createElementNS(this.NS, 'g');
+      anchor.setAttribute(
+        'transform',
+        `translate(${this.sx(properties.lon).toFixed(2)},` +
+        `${this.sy(properties.lat).toFixed(2)})`
+      );
+      anchor.setAttribute(
+        'class',
+        unmatched ? 'sr-subcounty-pins sr-unmatched-pins' : 'sr-subcounty-pins',
+      );
+      anchor.dataset.subcounty = properties.n;
+      anchor.dataset.mapAnchorX = this.sx(properties.lon).toFixed(2);
+      anchor.dataset.mapAnchorY = this.sy(properties.lat).toFixed(2);
+      anchor.dataset.pinCount = String(visible.length);
+
+      const pinSet = document.createElementNS(this.NS, 'g');
+      pinSet.setAttribute(
+        'transform',
+        `scale(${(1 / this.zoomScale).toFixed(4)})`,
+      );
+      visible.forEach((type, typeIndex) => {
+        const offset = (typeIndex - (visible.length - 1) / 2) * 7;
+        const pin = document.createElementNS(this.NS, 'g');
+        pin.setAttribute('class', 'sr-school-pin');
+        pin.setAttribute(
+          'transform',
+          `translate(${offset.toFixed(1)},${Math.abs(offset) ? 1.5 : -0.5})`,
+        );
+        pin.dataset.schoolType = type.key;
+        pin.style.animation =
+          `sr-pin-rise 280ms cubic-bezier(.22,.61,.36,1) both ${sequence * 7}ms`;
+
+        const title = document.createElementNS(this.NS, 'title');
+        title.textContent =
+          `${properties.n}: ${mix[type.key]} ${type.label} school` +
+          `${mix[type.key] === 1 ? '' : 's'}`;
+        pin.appendChild(title);
+
+        this.appendPinVisual(pin, type, unmatched);
+        pinSet.appendChild(pin);
+      });
+      anchor.appendChild(pinSet);
+      layer.appendChild(anchor);
+    },
+    drawSubcounties(payload){
+      this.clearSubcounties();
+      const features = payload.features || [];
+      const matching = this.matchMetricsToFeatures(features);
+      const layer = document.createElementNS(this.NS, 'g');
+      layer.setAttribute('class', 'sr-boundary-layer sr-subcounty-layer');
+      const labelLayer = document.createElementNS(this.NS, 'g');
+      labelLayer.setAttribute('class', 'sr-subcounty-labels');
+      labelLayer.setAttribute('aria-hidden', 'true');
+      const pinLayer = document.createElementNS(this.NS, 'g');
+      pinLayer.setAttribute('class', 'sr-subcounty-pin-layer');
+      pinLayer.setAttribute('aria-hidden', 'true');
+
+      features.forEach((feature, featureIndex) => {
+        const properties = feature.properties;
+        const matchedRows = matching.byFeature.get(feature) || [];
+        const metric = this.combineBoundaryMetrics(properties, matchedRows);
+        const path = document.createElementNS(this.NS, 'path');
+        path.setAttribute('d', this.geometryPath(feature.geometry));
+        path.setAttribute('fill', this.colourOf(metric.subregion));
+        path.setAttribute('fill-opacity', matchedRows.length ? '0.86' : '0.62');
+        path.setAttribute('fill-rule', 'evenodd');
+        path.setAttribute('stroke', '#fff');
+        path.setAttribute('stroke-width', '0.8');
+        path.setAttribute('vector-effect', 'non-scaling-stroke');
+        path.setAttribute('tabindex', '0');
+        path.setAttribute('role', 'button');
+        path.setAttribute(
+          'aria-label',
+          `${properties.n} sub-county, ${properties.d}. ` +
+          `${metric.schools} schools; ` +
+          `${metric.school_distribution.core || 0} Core, ` +
+          `${metric.school_distribution.client || 0} Client, ` +
+          `${metric.school_distribution.champion || 0} Champion, and ` +
+          `${metric.school_distribution.core_trained || 0} trained Core; ` +
+          `SSA average ${this._n(metric.ssa_avg)}`,
+        );
+        path.__boundaryProperties = properties;
+        path.__boundaryMetrics = matchedRows;
+        path.dataset.subcounty = properties.n;
+        path.addEventListener('pointermove', event =>
+          this.hoverSubcounty(path, event)
+        );
+        path.addEventListener('pointerleave', () => this.releaseBoundary(path));
+        path.addEventListener('focus', () => {
+          this.promoteBoundary(path);
+          this.hoverSubcountyAt(path);
+        });
+        path.addEventListener('blur', () => this.releaseBoundary(path));
+        path.addEventListener('click', event => event.stopPropagation());
+        layer.appendChild(path);
+
+        const label = document.createElementNS(this.NS, 'text');
+        label.setAttribute(
+          'transform',
+          `translate(${this.sx(properties.lon).toFixed(2)},` +
+          `${this.sy(properties.lat).toFixed(2)}) ` +
+          `scale(${(1 / this.zoomScale).toFixed(4)})`,
+        );
+        label.setAttribute('class', 'sr-scl');
+        label.dataset.subcounty = properties.n;
+        label.dataset.labelX = this.sx(properties.lon).toFixed(2);
+        label.dataset.labelY = this.sy(properties.lat).toFixed(2);
+        label.dataset.labelPriority = String(metric.schools || 0);
+        label.textContent = properties.n.toUpperCase();
+        labelLayer.appendChild(label);
+
+        this.appendSchoolPins(
+          pinLayer,
+          properties,
+          metric.school_distribution,
+          featureIndex,
+        );
+      });
+
+      const explicitUnassigned = this.unassignedForFocusedDistrict();
+      const unmatchedMix = {core:0, client:0, champion:0, core_trained:0};
+      let unmatchedSchools = explicitUnassigned?.schools || 0;
+      this.schoolTypes.forEach(type => {
+        unmatchedMix[type.key] =
+          explicitUnassigned?.school_distribution?.[type.key] || 0;
+      });
+      matching.unmatched.forEach(metric => {
+        unmatchedSchools += metric.schools || 0;
+        this.schoolTypes.forEach(type => {
+          unmatchedMix[type.key] +=
+            metric.school_distribution?.[type.key] || 0;
+        });
+      });
+      this.unmatchedSchoolCount = unmatchedSchools;
+
+      if(unmatchedSchools){
+        const district = this.geo.features.find(feature =>
+          this.districtKey(feature.properties.d) ===
+            this.districtKey(this.focusedDistrict)
+        );
+        if(district){
+          this.appendSchoolPins(
+            pinLayer,
+            {
+              n:'Needs sub-county mapping',
+              lon:district.properties.lon,
+              lat:district.properties.lat,
+            },
+            unmatchedMix,
+            features.length,
+            true,
+          );
+        }
+      }
+
+      this.cam.insertBefore(layer, this.labels);
+      this.cam.insertBefore(pinLayer, this.labels);
+      // Labels deliberately paint after pins so place names remain readable
+      // without adding a text outline.
+      this.cam.insertBefore(labelLayer, this.labels);
+      this.subcountyLayer = layer;
+      this.subcountyLabelLayer = labelLayer;
+      this.subcountyPinLayer = pinLayer;
+      this.resolveSubcountyLabelCollisions();
+      requestAnimationFrame(() => this.resolveSubcountyLabelCollisions());
+
+      // Replace the district aggregate pin and label with the drill-down
+      // layers only after the selected file has rendered successfully.
+      this.pinLayer?.querySelectorAll('.sr-district-pins').forEach(group => {
+        if(group.dataset.district === this.focusedDistrict){
+          group.style.opacity = 0;
+        }
+      });
+      this.labels?.querySelectorAll('text').forEach(label => {
+        if(label.dataset.district === this.focusedDistrict){
+          label.style.opacity = 0;
+        }
+      });
     },
 
     zoom(el){
+      if(this.focused) this.reset();
+      this.releaseBoundary(el);
       const b = el.getBBox();
       let s = Math.min(this.W/b.width, this.H/b.height) * 0.6;
       s = Math.max(1.4, Math.min(s, 14));
       const tx = this.W/2 - (b.x + b.width/2)*s, ty = this.H/2 - (b.y + b.height/2)*s;
       this.cam.style.transform =
         `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${s.toFixed(3)})`;
+      this.cam.classList.add('sr-zoomed');
       this.cam.querySelectorAll('#sr-cam > g:first-child path').forEach(p => {
         const on = p === el;
         p.style.opacity = on ? 1 : 0.14;
@@ -428,14 +1337,32 @@ function subregionMap(){
         if(on && m) t.setAttribute('transform',
           `translate(${m[1]},${m[2]}) scale(${(1/s).toFixed(4)})`);
       });
+      this.pinLayer?.querySelectorAll('.sr-district-pins').forEach(group => {
+        const on = group.dataset.district === el.dataset.district;
+        group.style.opacity = on ? 1 : 0;
+        const set = group.querySelector('.sr-pin-set');
+        if(set) set.setAttribute('transform', on ? `scale(${(1/s).toFixed(4)})` : '');
+      });
       this.subLabels.style.opacity = 0;
       this.focused = el.dataset.district;
+      this.focusedDistrict = el.dataset.district;
+      this.zoomScale = s;
       this.tip.show = false;
+      this.loadSubcounties(el.dataset.district);
+      // A focused SVG path would otherwise retain its blue keyboard ring and
+      // magnify that ring with the camera. Move focus to the visible escape
+      // control, preserving keyboard navigation without drawing over the map.
+      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
     },
 
     reset(){
       if(!this.focused) return;
+      this.detailRequest += 1;
+      this.detailLoading = false;
+      this.detailFailed = false;
+      this.clearSubcounties();
       // name the identity rather than clearing: gives the transition a target
+      this.cam.classList.remove('sr-zoomed');
       this.cam.style.transform = 'translate(0px,0px) scale(1)';
       this.cam.querySelectorAll('#sr-cam > g:first-child path')
         .forEach(p => { p.style.opacity=''; p.style.filter=''; });
@@ -444,14 +1371,24 @@ function subregionMap(){
         const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(t.getAttribute('transform'));
         if(m) t.setAttribute('transform', `translate(${m[1]},${m[2]})`);
       });
+      this.pinLayer?.querySelectorAll('.sr-district-pins').forEach(group => {
+        group.style.opacity = '';
+        group.querySelector('.sr-pin-set')?.removeAttribute('transform');
+      });
       this.subLabels.style.opacity = '';
       this.focused = null;
+      this.focusedDistrict = null;
+      this.zoomScale = 1;
+      this.tip.show = false;
     },
 
     highlight(sub){
       if(!this.cam || this.focused) return;
       this.cam.querySelectorAll('#sr-cam > g:first-child path').forEach(p => {
         p.style.opacity = sub ? (p.dataset.sub === sub ? 1 : 0.18) : '';
+      });
+      this.pinLayer?.querySelectorAll('.sr-district-pins').forEach(group => {
+        group.style.opacity = sub ? (group.dataset.sub === sub ? 1 : 0.12) : '';
       });
     },
 
@@ -490,6 +1427,12 @@ function subregionMap(){
           ? `translate(${m[1]},${m[2]}) scale(${(1/s).toFixed(4)})`
           : `translate(${m[1]},${m[2]})`);
       });
+      this.pinLayer?.querySelectorAll('.sr-district-pins').forEach(group => {
+        const on = inSub.has(group.dataset.district);
+        group.style.opacity = on ? 1 : 0;
+        const set = group.querySelector('.sr-pin-set');
+        if(set) set.setAttribute('transform', on ? `scale(${(1/s).toFixed(4)})` : '');
+      });
       this.subLabels.style.opacity = 0;
       this.focused = 'sub:' + name;
       this.tip.show = false;
@@ -499,20 +1442,83 @@ function subregionMap(){
 </script>
 <style>
   @keyframes sr-rise{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+  @keyframes sr-pin-rise{
+    from{opacity:0}
+    to{opacity:1}
+  }
   #sr-cam text{text-anchor:middle;dominant-baseline:middle;pointer-events:none;
-               paint-order:stroke fill;stroke:#fff;stroke-linejoin:round;
-               transition:opacity .3s}
+               stroke:none;transition:opacity .3s}
   /* Sized against the 620-unit viewBox, so they scale with the card. */
-  #sr-cam .sr-dl{font-size:5.4px;font-weight:650;fill:#3b4750;stroke-width:1.5px;
+  #sr-cam .sr-dl{font-size:5.4px;font-weight:650;fill:#3b4750;
                  letter-spacing:.02em}
-  #sr-cam .sr-sl{font-size:12px;font-weight:800;fill:#1140a8;stroke-width:3px;
-                 letter-spacing:.04em}
-  #sr-cam > g:first-child path:hover{filter:brightness(1.06) saturate(1.2)
-      drop-shadow(0 2px 5px rgba(17,35,43,.25));transform:scale(1.012)}
+  /* A white halo on each glyph so a sub-region name stays legible wherever it
+     falls — across two district fills, over a boundary, or on a dark choropleth
+     band. paint-order draws the stroke behind the fill; without it the outline
+     eats inward and the text just reads heavier instead of haloed. */
+  #sr-cam .sr-sl{font-size:12px;font-weight:800;fill:#1140a8;
+                 letter-spacing:.04em;
+                 stroke:#fff;stroke-width:2.2px;stroke-linejoin:round;
+                 paint-order:stroke fill}
+  #sr-cam .sr-scl{
+    font-size:5px;font-weight:750;fill:#273540;
+    letter-spacing:.015em;
+  }
+  #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
+  #sr-cam .sr-boundary-layer > path{
+    transform-box:fill-box;
+    transform-origin:center;
+    will-change:filter,transform;
+    transition:filter 240ms ease,
+      transform 260ms cubic-bezier(.2,.8,.2,1);
+  }
+  #sr-cam .sr-subcounty-layer > path{cursor:help}
+  #sr-cam .sr-boundary-layer >
+    path:is(.sr-boundary-active,.sr-boundary-lift){
+    transform:scale(1.05) !important;
+  }
+  #sr-cam .sr-boundary-layer > path.sr-boundary-lift{
+    opacity:1 !important;
+    fill-opacity:1;
+    stroke:none;
+    stroke-width:0;
+    filter:
+      drop-shadow(0 1px 1.5px rgba(15,23,42,.72))
+      drop-shadow(0 5px 3px rgba(15,23,42,.52))
+      drop-shadow(0 9px 6px rgba(15,23,42,.36));
+  }
+  #sr-cam .sr-subcounty-layer >
+    path:is(.sr-boundary-active,.sr-boundary-lift){
+    transform:scale(1.04) !important;
+  }
+  #sr-cam .sr-subcounty-layer path:focus-visible{
+    outline:none;fill-opacity:1;stroke:var(--edify-accent);stroke-width:2;
+  }
+  #sr-cam .sr-unmatched-pins{opacity:.92}
+  #sr-cam .sr-school-pin path{
+    filter:drop-shadow(0 1px 1.2px rgba(15,23,42,.3));
+  }
+  #sr-cam .sr-pin-dot{
+    fill:#fff;stroke:none;
+  }
+  #sr-cam .sr-pin-check{
+    fill:none;stroke:#fff;stroke-width:1.2;stroke-linecap:round;
+    stroke-linejoin:round;filter:none;
+  }
   #sr-cam > g:first-child path:focus-visible{outline:none;stroke:var(--edify-accent);
       stroke-width:2}
+  /* Once zoomed, navigation moves to the Back control. This fallback also
+     guarantees a browser that retains SVG focus cannot paint over geography. */
+  #sr-cam.sr-zoomed > g:first-child path:focus-visible{
+    stroke:#fff;stroke-width:.6
+  }
   @media (prefers-reduced-motion:reduce){
-    #sr-cam,#sr-cam path,#sr-cam text{animation:none !important;transition:none !important}
+    #sr-cam,#sr-cam path,#sr-cam text,#sr-cam .sr-school-pin{
+      animation:none !important;transition:none !important
+    }
+    #sr-cam .sr-boundary-layer >
+      path:is(.sr-boundary-active,.sr-boundary-lift){
+      transform:none !important;
+    }
   }
 
   /* Snapshot card. Blue by default (light mode), near-black under .dark --
@@ -520,14 +1526,19 @@ function subregionMap(){
      classes follows the user's real choice rather than the OS preference,
      which the in-app theme toggle can override. */
   .sr-tip{
-    /* min() rather than a flat 300px: on a 320px phone a fixed-width tooltip
-       runs off the side of the screen. Same idiom as .edify-calendar-popover
-       and .edify-toast-card. */
-    width:min(300px, calc(100vw - 2rem));
+    /* The card follows the map width instead of remaining 300px on nearly
+       every screen. Its measured size feeds _placeTip(), keeping placement
+       and responsive rendering on one source of truth. */
+    width:clamp(204px, 46%, 300px);
+    max-width:min(calc(100% - 8px), calc(100vw - 1rem));
+    padding:clamp(8px, 1.4vw, 14px);
     background:linear-gradient(160deg,#1d4d74 0%,#153b5c 100%);
     color:#f2f7fb;
     border:1px solid rgba(255,255,255,.16);
   }
+  .sr-tip .edify-text-caption{font-size:clamp(9px, 1.05vw, 11px)}
+  .sr-tip__title,.sr-tip__primary{font-size:clamp(12px, 1.15vw, 15px)}
+  .sr-tip__number{font-size:clamp(10px, .95vw, 12px)}
   .sr-tip__head{border-bottom:1px solid rgba(255,255,255,.16)}
   .sr-tip__rule{border-top:1px solid rgba(255,255,255,.16)}
   .sr-tip__muted{color:#a9c6dc}
@@ -541,4 +1552,22 @@ function subregionMap(){
   }
   html.dark .sr-tip__head,html.dark .sr-tip__rule{border-color:rgba(255,255,255,.10)}
   html.dark .sr-tip__muted{color:#93a2ad}
+  @media (max-width:640px){
+    .sr-tip{line-height:1.15}
+    .sr-tip__top{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      column-gap:.35rem;
+      padding-top:.4rem;
+    }
+    .sr-tip__top > div{
+      display:flex;
+      min-width:0;
+      align-items:baseline;
+      gap:.2rem;
+      white-space:nowrap;
+    }
+    .sr-tip .sr-tip__rule{margin-top:.45rem;padding-top:.45rem}
+  }
 </style>

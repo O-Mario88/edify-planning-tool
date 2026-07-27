@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
      x-data="{
        chart: null,
        initChart() {
@@ -16,11 +16,11 @@
            stroke: { width: 2.5, curve: 'smooth' },
            markers: { size: 4, strokeWidth: 0 },
            colors: ['var(--edify-chart-blue)', 'var(--edify-chart-amber)'],
-           dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 }, background: { enabled: false }, formatter: v => Math.round(v) + '%' },
+           dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 }, background: { enabled: false }, formatter: v => Number(v).toFixed(1) },
            labels: labels,
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
                     labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: 600 } } },
-           yaxis: { min: 0, max: 100, labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
+           yaxis: { min: 0, max: 10, tickAmount: 5, labels: { formatter: v => Number(v).toFixed(1), style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
            grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
            legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' }, markers: { radius: 12 } },
            tooltip: { theme: 'dark', shared: true, intersect: false }
@@ -40,5 +40,5 @@
   {% else %}
   <p class="text-[12px] text-slate-400 font-semibold text-center py-12">No core or champion schools in your portfolio yet.</p>
   {% endif %}
-  <p class="edify-text-caption text-slate-400 font-medium">Average verified SSA by annual cycle.</p>
+  <p class="edify-text-caption text-slate-400 font-medium">Average verified SSA by annual cycle · 0–10 scale.</p>
 </div>

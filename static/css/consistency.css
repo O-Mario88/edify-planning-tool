@@ -363,17 +363,39 @@ main :is(input[type="checkbox"], input[type="radio"]) {
   accent-color: var(--brand-primary);
 }
 
-/* Shared selected state for tabs, period cards, pagination and workflow
- * stages.  New template work uses this semantic class directly. */
+/* Shared selected state for period cards (week, month, quarter, annual), tabs, and workflow stages — System Blue (#2563eb). */
+main .edify-selected-surface,
 .edify-selected-surface {
-  border-color: var(--brand-primary) !important;
-  background-color: var(--brand-primary) !important;
-  color: var(--edify-on-accent) !important;
-  box-shadow: var(--edify-shadow-sm) !important;
+  border-color: #2563eb !important;
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
 }
 
-.edify-selected-surface :is(.text-slate-400, .text-slate-500, .text-blue-100) {
-  color: color-mix(in srgb, var(--edify-on-accent) 78%, transparent) !important;
+main .edify-selected-surface *,
+.edify-selected-surface *,
+.edify-selected-surface :is(strong, .legacy-kpi-strip__value, .legacy-kpi-strip__icon, .legacy-kpi-strip__label, .legacy-kpi-strip__helper, h1, h2, h3, p, span, small, svg) {
+  color: #ffffff !important;
+}
+
+main .edify-selected-surface :is(.text-slate-400, .text-slate-500, .text-blue-100, .legacy-kpi-strip__label, .legacy-kpi-strip__helper, small) {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* Primary Action Buttons — System Blue (#2563eb) */
+.edify-action-button.primary,
+button.edify-primary-solid,
+.edify-btn-primary {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.edify-action-button.primary:hover,
+button.edify-primary-solid:hover,
+.edify-btn-primary:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
 }
 
 /* Financial and specialist matrices occasionally use the canonical accent as
@@ -505,7 +527,18 @@ main table tbody tr:hover,
   [class*="border-slate-"][class*="rounded"],
   [class*="border-blue-"][class*="rounded"],
   [class*="border-indigo-"][class*="rounded"]
-):not(.btn-danger):not(.btn-success):not(.btn-warning) {
+):not(.btn-danger):not(.btn-success):not(.btn-warning):not(
+  :where(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ) > *
+) {
   color: var(--brand-primary-text) !important;
   background-color: var(--edify-surface-raised) !important;
   background-image: none !important;
@@ -521,7 +554,18 @@ main table tbody tr:hover,
   [class*="border-slate-"][class*="rounded"],
   [class*="border-blue-"][class*="rounded"],
   [class*="border-indigo-"][class*="rounded"]
-):not(.btn-danger):not(.btn-success):not(.btn-warning):hover:not(:disabled):not([aria-disabled="true"]) {
+):not(.btn-danger):not(.btn-success):not(.btn-warning):not(
+  :where(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ) > *
+):hover:not(:disabled):not([aria-disabled="true"]) {
   color: var(--brand-primary-text-hover) !important;
   background-color: var(--brand-primary-soft) !important;
   border-color: var(--brand-primary) !important;
@@ -809,4 +853,412 @@ main :is(.sp-plan, .spp, .spa) :is(.sp-status, .spp-status, .spa-status,
   .sp-badge, .spa-delta, .sp-readonly) {
   border-radius: var(--edify-radius-pill) !important;
   font-family: var(--edify-font-sans) !important;
+}
+
+/* ═══ LEGACY KPI STRIP ADAPTER ═════════════════════════════════════════════
+   Older role workspaces own specialised markup and interactions. They share
+   the same theme-driven card contract as components/kpi_strip.html so no page
+   falls back to a loose grid of unrelated KPI tiles. The strip container is a
+   transparent grid; each cell reads as its own themed card. */
+main :is(
+  .legacy-kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+) {
+  /* Repointed to design tokens so the strip follows the active theme —
+     white/light cards in Light, dark cards in Dark, blue glass in Blue. */
+  --legacy-kpi-strip-label: var(--edify-text-muted);
+  --legacy-kpi-strip-value: var(--edify-text);
+  --legacy-kpi-strip-helper: var(--edify-text-subtle);
+  --legacy-kpi-strip-icon: var(--edify-accent);
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)) !important;
+  gap: 0.75rem !important;
+  min-inline-size: 0 !important;
+  margin-block-end: clamp(1rem, 0.8rem + 0.6vw, 1.5rem) !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  isolation: isolate;
+}
+
+main :is(
+  .legacy-kpi-strip > *,
+  .admin-kpi,
+  .partner-kpi-card,
+  .tt-kpi,
+  .sp-kpis > .sp-kpi,
+  .sp-kpi-grid > .sp-kpi,
+  .spp-kpi,
+  .spa-kpi
+) {
+  position: relative !important;
+  display: flex !important;
+  grid-column: auto !important;
+  min-inline-size: 0 !important;
+  min-block-size: 8rem !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: clamp(0.8rem, 0.7rem + 0.35vw, 1.15rem) !important;
+  margin: 0 !important;
+  padding: 1.15rem clamp(1rem, 0.8rem + 0.55vw, 1.55rem) !important;
+  overflow: visible !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+  background: var(--edify-surface) !important;
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment)) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+  color: var(--legacy-kpi-strip-value) !important;
+}
+
+/*
+  Beat the platform's intentionally broad rounded-link/card normalization.
+  These descendants are cells inside one strip, never standalone surfaces.
+*/
+main :is(
+  .legacy-kpi-strip.legacy-kpi-strip > *,
+  .admin-kpi-strip.admin-kpi-strip > .admin-kpi,
+  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card,
+  .tt-kpi-strip.tt-kpi-strip > .tt-kpi,
+  .sp-kpis.sp-kpis > .sp-kpi,
+  .sp-kpi-grid.sp-kpi-grid > .sp-kpi,
+  .spp-kpi-grid.spp-kpi-grid > .spp-kpi,
+  .spa-kpi-grid.spa-kpi-grid > .spa-kpi
+) {
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment)) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+main :is(
+  .legacy-kpi-strip.legacy-kpi-strip > :first-child,
+  .admin-kpi-strip.admin-kpi-strip > .admin-kpi:first-child,
+  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card:first-child,
+  .tt-kpi-strip.tt-kpi-strip > .tt-kpi:first-child,
+  .sp-kpis.sp-kpis > .sp-kpi:first-child,
+  .sp-kpi-grid.sp-kpi-grid > .sp-kpi:first-child,
+  .spp-kpi-grid.spp-kpi-grid > .spp-kpi:first-child,
+  .spa-kpi-grid.spa-kpi-grid > .spa-kpi:first-child
+) {
+  border-inline-start: 1px solid var(--edify-border) !important;
+}
+
+main :is(
+  .legacy-kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+):has(> :nth-child(7)):not(:has(> :nth-child(9))) {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+main :is(
+  .legacy-kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+):has(> :nth-child(9)):not(:has(> :nth-child(11))) {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+main :is(
+  .legacy-kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+) > :is(a, button, [role="tab"]) {
+  transition: background-color var(--edify-transition-fast) !important;
+}
+
+main :is(
+  .legacy-kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+) > :is(a, button, [role="tab"]):hover {
+  background: var(--edify-surface-hover) !important;
+  border-color: var(--edify-border-strong) !important;
+  transform: none !important;
+}
+
+main :is(
+  .legacy-kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+) > :is(a, button, [role="tab"]):focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--edify-accent) !important;
+  outline-offset: -3px !important;
+}
+
+/* Direct-template labels, values and helper lines. */
+main .legacy-kpi-strip > * :is(
+  .uppercase,
+  .edify-kpi-label,
+  .card-kpi > div > div > p:first-child
+) {
+  color: var(--legacy-kpi-strip-label) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.035em !important;
+  text-transform: uppercase !important;
+}
+
+main .legacy-kpi-strip > * :is(
+  h3,
+  h4,
+  strong,
+  .tabular-nums,
+  [class*="text-[17px]"],
+  [class*="text-[18px]"],
+  [class*="text-[19px]"],
+  [class*="text-[20px]"],
+  [class*="text-[21px]"],
+  [class*="text-[22px]"],
+  [class*="text-[24px]"],
+  [class*="text-[26px]"],
+  [class*="text-[28px]"]
+) {
+  color: var(--legacy-kpi-strip-value) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+main .legacy-kpi-strip > * :is(
+  .edify-text-caption:not(.uppercase):not(.edify-kpi-label),
+  .card-kpi > div > div > p:last-child
+) {
+  color: var(--legacy-kpi-strip-helper) !important;
+}
+
+main .legacy-kpi-strip--value-first > * > p:first-child {
+  color: var(--legacy-kpi-strip-value) !important;
+  font-size: clamp(1.55rem, 1.25rem + 0.85vw, 2rem) !important;
+  line-height: 1 !important;
+}
+
+main .legacy-kpi-strip--value-first > * > p:last-child {
+  color: var(--legacy-kpi-strip-label) !important;
+}
+
+main .legacy-kpi-strip--tabs > [role="tab"][aria-selected="true"] {
+  background: var(--brand-primary-soft) !important;
+  box-shadow: inset 0 -3px 0 var(--edify-accent) !important;
+}
+
+main .legacy-kpi-strip--timeline {
+  min-inline-size: 0 !important;
+}
+
+main .legacy-kpi-strip--timeline > :is(span, div.hidden, div[class*="hidden"]) {
+  display: none !important;
+}
+
+/* Specialised workspace typography maps to the same strip hierarchy. */
+main :is(
+  .admin-kpi__label,
+  .partner-kpi-card > div > span,
+  .tt-kpi__copy > span,
+  .sp-kpis .sp-kpi > div > span,
+  .sp-kpi__label,
+  .spp-kpi span:not(.spp-kpi__icon),
+  .spa-kpi small
+) {
+  min-block-size: 0 !important;
+  color: var(--legacy-kpi-strip-label) !important;
+  font-size: clamp(0.66rem, 0.62rem + 0.14vw, 0.75rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.035em !important;
+  line-height: 1.2 !important;
+  text-transform: uppercase !important;
+}
+
+main :is(
+  .admin-kpi,
+  .partner-kpi-card,
+  .tt-kpi,
+  .sp-kpis .sp-kpi,
+  .sp-kpi-grid .sp-kpi,
+  .spp-kpi,
+  .spa-kpi
+) strong {
+  color: var(--legacy-kpi-strip-value) !important;
+  font-size: clamp(1.45rem, 1.2rem + 0.75vw, 1.9rem) !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.035em !important;
+  font-variant-numeric: tabular-nums;
+}
+
+main :is(
+  .admin-kpi small,
+  .partner-kpi-card small,
+  .tt-kpi__copy small,
+  .sp-kpis .sp-kpi small,
+  .sp-kpi__helper,
+  .spp-kpi small,
+  .spa-kpi p
+) {
+  min-block-size: 0 !important;
+  margin-block-start: 0.4rem !important;
+  color: var(--legacy-kpi-strip-helper) !important;
+  font-size: clamp(0.63rem, 0.6rem + 0.12vw, 0.72rem) !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+}
+
+main :is(
+  .admin-kpi__icon,
+  .partner-kpi-card__icon,
+  .tt-kpi__icon,
+  .sp-kpi__icon,
+  .spp-kpi__icon,
+  .spa-kpi > span,
+  .legacy-kpi-strip__icon,
+  .legacy-kpi-strip .kpi-icon-circle
+) {
+  width: clamp(2.7rem, 2.2rem + 1.2vw, 3.4rem) !important;
+  height: clamp(2.7rem, 2.2rem + 1.2vw, 3.4rem) !important;
+  flex: 0 0 auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--legacy-kpi-strip-icon) !important;
+}
+
+main :is(
+  .admin-kpi__icon,
+  .partner-kpi-card__icon,
+  .tt-kpi__icon,
+  .sp-kpi__icon,
+  .spp-kpi__icon,
+  .spa-kpi > span,
+  .legacy-kpi-strip__icon,
+  .legacy-kpi-strip .kpi-icon-circle
+) svg {
+  width: 100% !important;
+  height: 100% !important;
+  stroke-width: 1.65;
+}
+
+.legacy-kpi-strip__copy {
+  display: flex;
+  min-inline-size: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.legacy-kpi-strip__label {
+  color: var(--legacy-kpi-strip-label) !important;
+  font-size: clamp(0.66rem, 0.62rem + 0.14vw, 0.75rem);
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.legacy-kpi-strip__value {
+  margin-block-start: 0.2rem;
+  color: var(--legacy-kpi-strip-value) !important;
+  font-size: clamp(1.35rem, 1.12rem + 0.58vw, 1.72rem) !important;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.legacy-kpi-strip__helper {
+  margin-block-start: 0.4rem;
+  color: var(--legacy-kpi-strip-helper) !important;
+  font-size: clamp(0.63rem, 0.6rem + 0.12vw, 0.72rem);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+main .legacy-kpi-strip--finance > * {
+  gap: clamp(0.65rem, 0.55rem + 0.25vw, 0.85rem) !important;
+  padding-inline: clamp(0.8rem, 0.68rem + 0.3vw, 1rem) !important;
+}
+
+main .legacy-kpi-strip--finance .legacy-kpi-strip__icon {
+  width: clamp(2rem, 1.8rem + 0.45vw, 2.3rem) !important;
+  height: clamp(2rem, 1.8rem + 0.45vw, 2.3rem) !important;
+}
+
+main .legacy-kpi-strip--finance .legacy-kpi-strip__value {
+  font-size: clamp(1.06rem, 0.95rem + 0.3vw, 1.28rem) !important;
+}
+
+main .legacy-kpi-strip .card-kpi > .flex {
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+main .legacy-kpi-strip .card-kpi {
+  min-block-size: 8rem !important;
+}
+
+/* Phones never scroll a KPI strip horizontally. Below the smallest card
+   minimum every legacy strip locks to a 2-column wrapping grid so the tiles
+   fill the viewport instead of overflowing into a swipe carousel — matching
+   the shared components/kpi_strip.html contract. */
+@media (max-width: 36rem) {
+  main :is(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  main :is(
+    .legacy-kpi-strip > *,
+    .admin-kpi,
+    .partner-kpi-card,
+    .tt-kpi,
+    .sp-kpis > .sp-kpi,
+    .sp-kpi-grid > .sp-kpi,
+    .spp-kpi,
+    .spa-kpi
+  ) {
+    min-inline-size: 0 !important;
+    min-block-size: 7.5rem !important;
+  }
 }

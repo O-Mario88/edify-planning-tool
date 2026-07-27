@@ -153,9 +153,9 @@ class SsaScoreBandTest(APITestCase):
     def test_pl_analytics_ssa_band_delegates_to_canonical(self):
         from apps.analytics.pl_analytics_service import ssa_band
 
-        # ssa_band takes a 0-100 percentage; 65% == score 6.5 == Warning.
-        self.assertEqual(ssa_band(65.0)[0], "Warning")
-        self.assertEqual(ssa_band(75.0)[0], "Improving")
+        # Analytics consumes the same native 0-10 score as the canonical helper.
+        self.assertEqual(ssa_band(6.5)[0], "Warning")
+        self.assertEqual(ssa_band(7.5)[0], "Improving")
         self.assertEqual(ssa_band(None)[0], "No SSA")
 
 

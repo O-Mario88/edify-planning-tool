@@ -583,7 +583,7 @@ def _detect_regional_investment(fy: str, now) -> list[dict]:
                     + (
                         f" ({delta:+.1f} vs last FY)."
                         if delta is not None
-                        else " (no prior-FY baseline)."
+                        else " (no prior-FY SSA score)."
                     ),
                     "reason": "Weak or declining SSA average signals the region needs targeted support before scaling investment.",
                     "risk_level": DecisionRiskLevel.HIGH.value

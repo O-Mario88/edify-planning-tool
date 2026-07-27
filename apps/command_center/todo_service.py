@@ -381,7 +381,7 @@ def _school_quality_todos(scope):
     ]:
         todos.append(
             _q(
-                "Schedule Baseline SSA",
+                "Schedule SSA Visit",
                 s.name,
                 "SSA",
                 "medium",
@@ -850,7 +850,7 @@ def _accountant_settlement_todos():
 
 
 def _country_budget_todos(principal, role):
-    """Country Monthly Budget lifecycle To-Dos — CD review/fix, RVP review,
+    """General Budget lifecycle To-Dos — CD review/fix, RVP review,
     Accountant prep — derived live from MonthlyWorkPlanBudget status. The CD
     "Review" nudge is scoped to the current operational month only (so old,
     untouched draft months don't pile up forever); a returned budget stays
@@ -879,8 +879,8 @@ def _country_budget_todos(principal, role):
             todos.append(
                 {
                     "id": f"cmb-rvp-{b.id}",
-                    "title": "Review Country Monthly Budget",
-                    "description": f"Uganda {b.month_key} Country Monthly Budget ({_country_budget_ugx(b.total_amount)}) awaits your approval.",
+                    "title": "Review General Budget",
+                    "description": f"Uganda {b.month_key} General Budget ({_country_budget_ugx(b.total_amount)}) awaits your approval.",
                     "category": "Budget Approval",
                     "priority": "high",
                     "status_key": "waiting_me",
@@ -888,7 +888,7 @@ def _country_budget_todos(principal, role):
                     "status_tone": "info",
                     "due_label": "—",
                     "due_tone": "neutral",
-                    "linked": f"Country Monthly Budget · {b.month_key}",
+                    "linked": f"General Budget · {b.month_key}",
                     "action_label": "Review",
                     "action_url": "/country-budget",
                     "actionable": True,
@@ -905,7 +905,7 @@ def _country_budget_todos(principal, role):
                 {
                     "id": f"cmb-acct-{b.id}",
                     "title": "Prepare Monthly Disbursement Queue",
-                    "description": f"{b.month_key} Country Monthly Budget ({_country_budget_ugx(b.total_amount)}) was approved and is ready to prepare for disbursement.",
+                    "description": f"{b.month_key} General Budget ({_country_budget_ugx(b.total_amount)}) was approved and is ready to prepare for disbursement.",
                     "category": "Finance",
                     "priority": "high",
                     "status_key": "waiting_me",
@@ -913,7 +913,7 @@ def _country_budget_todos(principal, role):
                     "status_tone": "info",
                     "due_label": "—",
                     "due_tone": "neutral",
-                    "linked": f"Country Monthly Budget · {b.month_key}",
+                    "linked": f"General Budget · {b.month_key}",
                     "action_label": "Prepare",
                     "action_url": "/disbursements",
                     "actionable": True,
@@ -936,14 +936,11 @@ def _country_budget_ugx(n):
 def _country_budget_todo(b, returned):
     return {
         "id": f"cmb-cd-{b.id}",
-        "title": "Fix Returned Country Monthly Budget"
+        "title": "Fix Returned General Budget"
         if returned
-        else f"Review {b.month_key} Country Monthly Budget",
+        else f"Review {b.month_key} General Budget",
         "description": (
-            (
-                b.rvp_review_note
-                or "Your Country Monthly Budget was returned by the RVP."
-            )
+            (b.rvp_review_note or "Your General Budget was returned by the RVP.")
             if returned
             else f"{_country_budget_ugx(b.total_amount)} across {b.activity_count} activities — ready for your review."
         ),
@@ -954,7 +951,7 @@ def _country_budget_todo(b, returned):
         "status_tone": "danger" if returned else "info",
         "due_label": "Today" if returned else "—",
         "due_tone": "warning" if returned else "neutral",
-        "linked": f"Country Monthly Budget · {b.month_key}",
+        "linked": f"General Budget · {b.month_key}",
         "action_label": "Fix" if returned else "Review",
         "action_url": "/country-budget",
         "actionable": True,
@@ -1065,7 +1062,7 @@ def _rvp_todos(principal, role):
             out.append(
                 {
                     "id": f"rvp-mwpb-{b.id}",
-                    "title": f"Review Country Monthly Budget {b.month_key}",
+                    "title": f"Review General Budget {b.month_key}",
                     "description": f"UGX {b.total_amount:,} across {b.activity_count} "
                     "plan-backed activities awaits your approval.",
                     "category": "Approvals",
@@ -1075,7 +1072,7 @@ def _rvp_todos(principal, role):
                     "status_tone": "warning",
                     "due_label": "—",
                     "due_tone": "neutral",
-                    "linked": f"Country Budget · {b.month_key}",
+                    "linked": f"General Budget · {b.month_key}",
                     "action_label": "Review",
                     "action_url": "/country-budget/",
                     "actionable": True,

@@ -268,14 +268,14 @@ class AnalyticsQueryPerformanceTest(TestCase):
         cd = resolve_cd_scope(FY)
         rows = {r["id"]: r for r in CDAnalyticsService.district_heatmap(cd)["rows"]}
         # D2 has exactly one confirmed FY2026 record (sch_3, avg_score=6.0).
-        expected_avg = round(6.0 * 10, 1)  # _norm scales 0-10 -> 0-100
+        expected_avg = 6.0
         self.assertEqual(rows[self.d2.id]["avg"], expected_avg)
 
         regional_rows = {
             r["id"]: r for r in CDAnalyticsService.regional_summary(cd)["rows"]
         }
         # South region's only confirmed FY2026 record is sch_4, avg_score=8.0.
-        self.assertEqual(regional_rows[self.south.id]["avg_ssa"], round(8.0 * 10, 1))
+        self.assertEqual(regional_rows[self.south.id]["avg_ssa"], 8.0)
 
         # Cross-check against a raw DB aggregate, independent of the service.
         from django.db.models import Avg
@@ -285,7 +285,7 @@ class AnalyticsQueryPerformanceTest(TestCase):
             verification_status="confirmed",
             fy=FY,
         ).aggregate(a=Avg("average_score"))["a"]
-        self.assertEqual(regional_rows[self.south.id]["avg_ssa"], round(raw * 10, 1))
+        self.assertEqual(regional_rows[self.south.id]["avg_ssa"], round(raw, 1))
 
     # ── 8. Scope narrowing survives the batched rewrite ──────────────────────
     def test_analytics_scope_is_preserved_after_optimization(self):

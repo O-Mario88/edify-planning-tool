@@ -43,7 +43,37 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
 </div>
 {% endif %}
 
-<!-- Inline search moved to the context-aware topbar (see admin_users_view). -->
+<!-- User Filters Bar -->
+<form method="get" action="/admin-panel/users" class="flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 p-3 rounded-surface border border-slate-200/80 mb-4 shadow-xs">
+  <div class="flex flex-wrap items-center gap-3">
+    {% if search %}
+    <input type="hidden" name="user_query" value="{{ search }}">
+    {% endif %}
+    <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600">
+      <span>Role:</span>
+      <select name="role" x-data @change="$el.form.requestSubmit()" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] bg-white font-medium shadow-xs focus:ring-1 focus:ring-sky-500 focus:outline-none">
+        <option value="">All Roles</option>
+        {% for r in available_roles %}
+        <option value="{{ r }}" {% if selected_role == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600">
+      <span>Status:</span>
+      <select name="status" x-data @change="$el.form.requestSubmit()" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] bg-white font-medium shadow-xs focus:ring-1 focus:ring-sky-500 focus:outline-none">
+        <option value="">All Statuses</option>
+        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>
+      </select>
+    </label>
+    {% if selected_role or selected_status %}
+    <a href="/admin-panel/users{% if search %}?q={{ search }}{% endif %}" class="text-[12px] font-semibold text-sky-600 hover:text-sky-700 underline">Clear filters</a>
+    {% endif %}
+  </div>
+  <div class="text-[12px] font-semibold text-slate-400">
+    Showing {{ total }} user{% if total != 1 %}s{% endif %}
+  </div>
+</form>
 
 <!-- User Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden animate-fade-in">

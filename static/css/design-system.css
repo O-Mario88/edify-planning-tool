@@ -132,6 +132,12 @@
   --edify-chart-pink: #ec4899;
   --edify-chart-lime: #84cc16;
   --edify-chart-grid: color-mix(in srgb, var(--edify-border) 72%, transparent);
+  /* Ordered comparison-series contract. Bar charts always consume these
+     aliases in order so the same measure does not change colour by page. */
+  --edify-chart-series-primary: var(--edify-chart-blue);
+  --edify-chart-series-secondary: var(--edify-chart-orange);
+  --edify-chart-series-tertiary: var(--edify-chart-green);
+  --edify-chart-bar-track: color-mix(in srgb, var(--edify-chart-blue) 8%, var(--edify-surface-muted));
 
   /* Notifications intentionally use a warm orange so urgency is visible
      without borrowing the red reserved for destructive/error states. */

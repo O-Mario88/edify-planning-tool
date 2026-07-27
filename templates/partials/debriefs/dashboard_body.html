@@ -4,33 +4,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
 <div class="space-y-4">
 
   <!-- KPI Strip -->
-  <div class="debrief-kpi-grid grid grid-cols-2 sm:grid-cols-4 gap-3">
-    {% for k in kpis %}
-    <div class="rounded-surface border shadow-sm p-4 transition-all hover:-translate-y-0.5 hover:shadow-md edify-surface edify-border">
-      <div class="flex items-center justify-between">
-        <span class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ k.label }}</span>
-        <div class="h-7 w-7 rounded-surface flex items-center justify-center shrink-0
-          {% if k.variant == 'primary' %}edify-primary-soft-alpha-10 edify-primary-text border edify-primary-border-alpha-20
-          {% elif k.variant == 'success' %}bg-emerald-50/10 text-emerald-400 border border-emerald-500/20
-          {% elif k.variant == 'warning' %}bg-amber-50/10 text-amber-400 border border-amber-500/20
-          {% elif k.variant == 'danger' %}bg-rose-50/10 text-rose-400 border border-rose-500/20
-          {% else %}bg-slate-50/10 text-slate-400 border border-slate-500/20{% endif %}">
-          {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
-        </div>
-      </div>
-      <div class="flex items-baseline gap-1 mt-2.5">
-        <span class="text-[19px] font-black tracking-tight tabular-nums leading-none edify-text">{{ k.value }}</span>
-      </div>
-      {% if k.trend %}
-      <span class="edify-text-caption font-bold mt-1 block leading-tight {% if k.trend.direction == 'up' %}text-emerald-400{% elif k.trend.direction == 'down' %}text-rose-400{% else %}text-slate-400{% endif %}">
-        {% if k.trend.direction == 'up' %}&uarr;{% elif k.trend.direction == 'down' %}&darr;{% endif %} {{ k.trend.value }} vs prior period
-      </span>
-      {% else %}
-      <span class="edify-text-caption font-semibold mt-1 block leading-tight text-slate-500">No prior-period data</span>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </div>
+  {% include "components/kpi_strip.html" with items=kpis %}
 
   <!-- Row: Trend + Activity Type -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -93,7 +67,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
   </div>
 
   <!-- Row: Top Challenges + Action Center -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-4">
     <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Top Challenges Reported</h2>
       <div class="space-y-2.5">
@@ -137,7 +111,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
   </div>
 
   <!-- Row: Team & Partner Debriefs + Recent Activity -->
-  <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-4 gap-4">
     <div class="lg:col-span-3 rounded-surface border p-5 space-y-1 edify-surface edify-border">
       <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 edify-text">Team &amp; Partner Debriefs</h2>
       <div id="debrief-tracker-wrap">
@@ -162,7 +136,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
   </div>
 
   <!-- Row: Peer Solutions + Risk Donut + Intelligence Highlights -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-3 gap-4">
     <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
       <div class="flex items-center justify-between pb-3 border-b edify-border">
         <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Recent Peer Solutions</h2>

@@ -39,6 +39,7 @@
         window is what activates it and HR closing one is what disables it.
         {% endcomment %}
         {% if review %}
+        {% if show_open_conversation %}
         {% if active_window_label %}
         <a data-control="open-conversation" href="/performance-conversation"
            class="edify-primary-solid edify-primary-on-solid rounded-md px-3.5 py-2 text-[13px] font-bold">Open conversation</a>
@@ -47,6 +48,19 @@
               class="rounded-md px-3.5 py-2 text-[13px] font-bold"
               aria-label="Open conversation — unavailable until HR opens a conversation window"
               title="HR opens and closes the performance conversation window. No window is open right now.">Open conversation</span>
+        {% endif %}
+        {% endif %}
+
+        {% if show_priority_button %}
+        {% if active_window_label %}
+        <a data-control="{% if has_priorities %}update-priority{% else %}create-priority{% endif %}" href="/performance-conversation"
+           class="edify-primary-solid edify-primary-on-solid rounded-md px-3.5 py-2 text-[13px] font-bold">{{ priority_button_label }}</a>
+        {% else %}
+        <span data-control="{% if has_priorities %}update-priority{% else %}create-priority{% endif %}" role="button" aria-disabled="true" tabindex="-1"
+              class="rounded-md px-3.5 py-2 text-[13px] font-bold"
+              aria-label="{{ priority_button_label }} — unavailable until HR opens a conversation window"
+              title="HR opens and closes the performance conversation window. No window is open right now.">{{ priority_button_label }}</span>
+        {% endif %}
         {% endif %}
         {% endif %}
       </div>
@@ -62,7 +76,7 @@
   {# ── KPI strip ─────────────────────────────────────────────────────── #}
   {% comment %} Each card carries an icon badge; the tints use /10 opacity so
   they read correctly in both light and the blue dark theme. {% endcomment %}
-  <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Cycle summary">
+  <section class="legacy-kpi-strip grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Performance cycle summary">
     <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
       <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

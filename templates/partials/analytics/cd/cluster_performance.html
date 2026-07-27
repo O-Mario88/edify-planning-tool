@@ -1,7 +1,7 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
   <div>
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">6. Performance by Cluster</h3>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">8. Performance by Cluster</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Cluster-school SSA average & weakest intervention</p>
   </div>
   <div class="overflow-x-auto -mx-1 max-h-[280px] overflow-y-auto">
@@ -28,10 +28,10 @@
               {% elif r.ssa_tone == 'lime' %}bg-lime-50 text-lime-700
               {% elif r.ssa_tone == 'warning' %}bg-amber-50 text-amber-700
               {% elif r.ssa_tone == 'danger' %}bg-rose-50 text-rose-700
-              {% else %}bg-slate-100 text-slate-400{% endif %}">{{ r.avg_ssa|floatformat:0 }}%</span>
+              {% else %}bg-slate-100 text-slate-400{% endif %}">{{ r.avg_ssa|floatformat:1 }}/10</span>
             {% else %}<span class="text-slate-300 edify-text-caption font-semibold">—</span>{% endif %}
           </td>
-          <td class="text-left text-slate-500 py-1.5 pl-2 max-w-[90px] truncate">{{ r.weakest_label }}{% if r.weakest_pct is not None %} <span class="text-slate-400">({{ r.weakest_pct|floatformat:0 }}%)</span>{% endif %}</td>
+          <td class="text-left text-slate-500 py-1.5 pl-2 max-w-[90px] truncate">{{ r.weakest_label }}{% if r.weakest_score is not None %} <span class="text-slate-400">({{ r.weakest_score|floatformat:1 }})</span>{% endif %}</td>
           <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.trainings }}</td>
           <td class="text-right tabular-nums text-slate-500 py-1.5 pr-1">{{ r.visits }}</td>
         </tr>

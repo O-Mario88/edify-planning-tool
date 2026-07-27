@@ -1,10 +1,10 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <div>
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">13. Operational Risk / Attention Needed</h3>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">14. Operational Risk / Attention Needed</h3>
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Real workflow gaps · route follow-up to responsible PL</p>
   </div>
-  <div class="grid grid-cols-2 gap-2 pt-1">
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 pt-1">
     {% for c in operational_risk %}
     <a href="/analytics/country-director/drilldown{{ c.link }}&fy={{ fy }}"
        hx-get="/analytics/country-director/drilldown{{ c.link }}&fy={{ fy }}"

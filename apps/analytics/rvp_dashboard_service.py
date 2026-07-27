@@ -34,8 +34,8 @@ from apps.analytics.cd_dashboard_service import _ugx_compact
 from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
     TRAINING_TYPES,
-    _norm,
     _pct,
+    _ssa_score,
 )
 
 VERIFIED_STATUSES = ("ia_verified", "verified", "closed")
@@ -165,7 +165,7 @@ class RVPDashboardService:
             ),
             card(
                 "clock",
-                "Monthly Budget Pending Approval",
+                "General Budget Pending Approval",
                 _ugx_compact(awaiting_amt) if awaiting_amt else "0",
                 "warning" if awaiting.count() else "success",
                 f"{awaiting.count()} budget(s) awaiting you",
@@ -231,13 +231,13 @@ class RVPDashboardService:
                 {
                     "key": "budgets",
                     "tone": "warning",
-                    "title": "Country Budget Pending Approval",
+                    "title": "General Budget Pending Approval",
                     "body": (
                         f"{_ugx_compact(awaiting_amt)} across {awaiting.count()} "
-                        f"monthly budget(s) awaiting your approval"
+                        f"General Budget period(s) awaiting your approval"
                         + (f" · oldest {age}d" if age else "")
                     ),
-                    "action": "Review Monthly Budgets",
+                    "action": "Review General Budget",
                     "drill": "approvals",
                 }
             )
@@ -347,7 +347,7 @@ class RVPDashboardService:
             "cd_options": [{"id": c["user_id"], "name": c["name"]} for c in cds],
             "quick_actions": [
                 {
-                    "label": "Review Monthly Budgets",
+                    "label": "Review General Budget",
                     "url": "/country-budget/",
                     "icon": "report",
                 },
@@ -484,12 +484,16 @@ class RVPDashboardService:
             )
             exec_rate = _pct(done, planned)
             verified_rate = _pct(ver, done)
-            ssa = _norm(_mean(region_scores.get(region.name, []))) if latest else None
+            ssa = (
+                _ssa_score(_mean(region_scores.get(region.name, [])))
+                if latest
+                else None
+            )
             sf_rate = _pct(sf_have, done) if done else 100
             score = round(
                 exec_rate * 0.35
                 + verified_rate * 0.2
-                + (ssa or 0) * 0.25
+                + (ssa or 0) * 10 * 0.25
                 + sf_rate * 0.2
             )
             if score >= 80:
@@ -700,8 +704,8 @@ class RVPDashboardService:
                 cur = sum(cur_vals) / len(cur_vals) if cur_vals else None
                 old = sum(old_vals) / len(old_vals) if old_vals else None
                 if cur is not None and old is not None:
-                    delta = round((cur - old) * 10, 1)
-                    if delta >= 8:
+                    delta = round(cur - old, 1)
+                    if delta >= 0.8:
                         impact, impact_tone = "Great Impact", "success"
                     elif delta > 0:
                         impact, impact_tone = "Positive Impact", "success"
@@ -782,7 +786,7 @@ class RVPDashboardService:
                     else "Strategic Partner",
                     "strategic_value": (
                         "Strong"
-                        if (r.get("ssa_improve") or 0) > 5
+                        if (r.get("ssa_improve") or 0) > 0.5
                         else "Moderate"
                         if (r.get("ssa_improve") or 0) > 0
                         else "Watch"
@@ -866,7 +870,7 @@ class RVPDashboardService:
         if stale:
             cards.append(
                 {
-                    "label": "Country Budget Approval Delayed",
+                    "label": "General Budget Approval Delayed",
                     "count": len(stale),
                     "tone": "danger",
                     "aging": "7+ days",

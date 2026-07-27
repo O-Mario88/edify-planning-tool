@@ -16,6 +16,11 @@ tblib==3.2.2
 # Linting / formatting.
 ruff==0.8.4
 
+# Offline compilation and topology validation of district-sized UBOS map
+# assets. This is deliberately a development dependency: request handling
+# serves prebuilt GeoJSON and never imports a GIS runtime.
+shapely==2.1.2
+
 # Debugging.
 django-debug-toolbar==4.4.6
 ipdb==0.13.13

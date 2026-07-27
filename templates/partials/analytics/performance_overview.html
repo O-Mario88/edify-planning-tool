@@ -28,14 +28,14 @@ const options = {
       shade: 'light',
       type: 'vertical',
       shadeIntensity: 0.25,
-      gradientToColors: ['var(--edify-chart-blue-soft)'],
+      gradientToColors: ['var(--edify-chart-blue)'],
       inverseColors: false,
       opacityFrom: 0.95,
       opacityTo: 0.7,
       stops: [0, 100]
     }
   },
-  colors: ['var(--edify-chart-blue-soft)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)'],
+  colors: window.EdifyChartSystem.comparisonSeries,
   plotOptions: {
     bar: {
       columnWidth: '42%',

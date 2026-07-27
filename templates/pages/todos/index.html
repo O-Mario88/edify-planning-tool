@@ -16,7 +16,7 @@
   </div>
 
   <!-- KPI strip -->
-  <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+  <div class="legacy-kpi-strip grid grid-cols-3 sm:grid-cols-6 gap-3" aria-label="To-do summary">
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ counts.total }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Critical</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ counts.critical }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Due Today</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ counts.due_today }}</p></div>

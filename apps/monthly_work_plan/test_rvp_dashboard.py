@@ -289,8 +289,8 @@ class RVPDashboardTest(TestCase):
         )
         d = self._dash()
         row = next(p for p in d["projects"] if p["id"] == self.project.id)
-        self.assertEqual(row["impact"], "Great Impact")  # +2.0 → 20pp annual
-        self.assertEqual(row["delta"], 20.0)
+        self.assertEqual(row["impact"], "Great Impact")  # +2.0 annual points
+        self.assertEqual(row["delta"], 2.0)
 
     def test_rvp_special_projects_direct_activity_relation_counted(self):
         act = self._completed_activity(sf="SF-DIRECT")
@@ -382,7 +382,7 @@ class RVPDashboardTest(TestCase):
         # meant assignments were never read; the fix must pick this up.
         d = self._dash()
         row = next(p for p in d["projects"] if p["id"] == self.project.id)
-        self.assertEqual(row["delta"], 50.0)
+        self.assertEqual(row["delta"], 5.0)
 
     def test_rvp_special_projects_query_count_is_bounded(self):
         from apps.analytics.cd_analytics_service import (
@@ -499,10 +499,10 @@ class RVPDashboardTest(TestCase):
         from apps.command_center.todo_service import get_todos
 
         titles = [t["title"] for t in get_todos(self.rvp)["todos"]]
-        self.assertIn(f"Review Country Monthly Budget {FY}-07", titles)
+        self.assertIn(f"Review General Budget {FY}-07", titles)
         cbs.approve(self.rvp, self.submitted.id)
         titles = [t["title"] for t in get_todos(self.rvp)["todos"]]
-        self.assertNotIn(f"Review Country Monthly Budget {FY}-07", titles)
+        self.assertNotIn(f"Review General Budget {FY}-07", titles)
 
     def test_rvp_htmx_endpoints_enforce_scope(self):
         c = self._client(self.cceo)

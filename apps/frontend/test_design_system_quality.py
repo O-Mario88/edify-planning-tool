@@ -72,7 +72,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotIn('fontFamily: "Outfit', charts)
         self.assertIn("fontFamily: 'Inter", charts)
 
-    def test_shared_cards_stretch_without_an_arbitrary_fixed_height(self):
+    def test_content_cards_use_intrinsic_height_while_kpi_grids_stay_aligned(self):
         # Asserted against platform.css only: it is the stylesheet base.html
         # actually loads. This previously also asserted against
         # edify-components.css, which no template ever referenced — a contract
@@ -81,9 +81,68 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         # "THE SINGLE SOURCE OF TRUTH" while shipping values that contradicted
         # the live tokens).
         platform = _read("static/css/platform.css")
-        self.assertIn("align-self: stretch", platform)
+        content_card_rule = platform.split(
+            "Content cards keep their intrinsic height", 1
+        )[1].split('main :where([class*="kpi-grid"]', 1)[0]
+        self.assertIn("align-self: start", content_card_rule)
+        self.assertIn("block-size: auto", content_card_rule)
+        self.assertIn("align-items: stretch", platform)
         self.assertIn("block-size: 100%", platform)
         self.assertNotIn("height: 108px", platform)
+
+    def test_special_project_plan_sidebar_owns_its_grid_placement_and_height(self):
+        project_plan = _read("static/css/pages/special-project-my-plan.css")
+
+        insights_rule = project_plan.split(".sp-insights {", 1)[1].split("}", 1)[0]
+        self.assertIn("grid-column: auto", insights_rule)
+        self.assertIn("grid-row: auto", insights_rule)
+        self.assertIn("align-content: start", insights_rule)
+        self.assertNotRegex(project_plan, r"(?m)^\.sp-card:nth-of-type\(n \+ 2\)")
+        self.assertIn(".sp-plan-main > .sp-card:nth-of-type(n + 2)", project_plan)
+
+    def test_analytics_dashboard_groups_cards_by_content_scale(self):
+        page = _read("templates/pages/analytics/index.html")
+        cards = _read("templates/partials/analytics/kpi_cards.html")
+        layout = _read("static/css/pages/analytics-dashboard.css")
+
+        self.assertIn("css/pages/analytics-dashboard.css", page)
+        for band in (
+            "analytics-row--overview",
+            "analytics-row--decision",
+            "analytics-impact-band",
+            "analytics-row--compact",
+            "analytics-row--diagnostics",
+        ):
+            self.assertIn(band, cards)
+
+        self.assertLess(
+            cards.index("recommended_insights.html"),
+            cards.index("target_by_district.html"),
+        )
+        self.assertNotIn("lg:col-span-4 space-y-6", cards)
+        self.assertIn("container: analytics-dashboard / inline-size", layout)
+        self.assertIn("container: analytics-impact / inline-size", layout)
+        self.assertIn("align-items: stretch", layout)
+        self.assertNotIn("grid-auto-flow: dense", layout)
+
+    def test_cd_cceo_snapshot_and_leaderboard_share_one_balanced_row(self):
+        body = _read("templates/partials/analytics/cd/body.html")
+        leaderboard = _read("templates/partials/analytics/cd/cceo_leaderboard.html")
+        snapshot = _read("templates/partials/analytics/cd/cceo_snapshot.html")
+
+        performance_row = body.split("data-cd-cceo-performance-row", 1)[1].split(
+            "CCEO performance row end", 1
+        )[0]
+        self.assertIn("cceo_snapshot.html", performance_row)
+        self.assertIn("cceo_leaderboard.html", performance_row)
+        self.assertIn("lg:grid-cols-2", performance_row)
+        self.assertIn("items-stretch", performance_row)
+        self.assertIn("max-h-[280px]", leaderboard)
+        self.assertIn("sticky top-0 edify-surface", leaderboard)
+        self.assertIn("min-w-[520px]", snapshot)
+        self.assertIn("min-w-[560px]", leaderboard)
+        self.assertIn("min-w-0 w-full edify-surface", snapshot)
+        self.assertIn("min-w-0 w-full edify-surface", leaderboard)
 
     def test_shared_responsive_contract_covers_mobile_and_tablet(self):
         platform = _read("static/css/platform.css")
@@ -276,7 +335,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             '[class*="-card"]:not([class*="-card-"])',
             '[class*="-panel"]:not([class*="-panel-"])',
             '[class*="-kpi"]:not([class*="-kpi-"])',
-            ".kpi-strip__item",
             ".spp-empty",
             ".spa-empty",
             ".tt-modal__panel",
@@ -285,44 +343,67 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             ".edify-risk-card, .card-alert",
         ):
             self.assertIn(selector, platform)
+        self.assertIn(".kpi-strip__item", _read("static/css/components.css"))
 
-    def test_kpi_labels_use_the_shared_title_case_contract(self):
+    def test_kpi_labels_use_the_shared_strip_hierarchy(self):
         tokens = _read("static/css/design-system.css")
         platform = _read("static/css/platform.css")
+        components = _read("static/css/components.css")
 
         self.assertIn("--edify-kpi-label-weight: 600", tokens)
         self.assertIn("--edify-kpi-label-tracking:", tokens)
         self.assertIn("KPI label typography", platform)
         self.assertIn("text-transform: none !important", platform)
+        self.assertIn(".kpi-strip__label {", components)
+        self.assertIn("text-transform: uppercase", components)
 
         for template in (
             "templates/partials/professional_development/body.html",
             "templates/partials/hr/pd_dashboard/body.html",
-            "templates/pages/ia/analytics_dashboard.html",
             "templates/partials/dashboards/pl/body.html",
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
             "templates/partials/analytics/cd/body.html",
             "templates/partials/analytics/pl/body.html",
-            "templates/partials/analytics/pl/activity_tracking.html",
             "templates/partials/debriefs/dashboard_body.html",
-            "templates/partials/targets/my_body.html",
-            "templates/partials/finance/country_budget/root.html",
-            "templates/pages/reports/index.html",
             "templates/pages/projects/index.html",
-            # cluster_card.html no longer belongs here: its SSA intervention
-            # scores moved from KPI-style metric cards into the shared
-            # partials/ssa/score_group_columns.html grouped-list presentation
-            # (normal-case <strong> labels, not the uppercase-tracking KPI
-            # label pattern this contract enforces). The KPI-label contract is
-            # still enforced for every surface that actually renders KPI cards.
         ):
-            self.assertIn("edify-kpi-label", _read(template), template)
+            self.assertIn("components/kpi_strip.html", _read(template), template)
 
         program_lead_dashboard = _read("templates/partials/dashboards/pl/body.html")
         self.assertNotIn(
             'class="text-[12px] font-semibold tracking-[0.06em] uppercase"',
             program_lead_dashboard,
+        )
+
+    def test_cd_district_heatmap_keeps_its_intrinsic_height(self):
+        heatmap = _read("templates/partials/analytics/cd/district_heatmap.html")
+
+        self.assertIn('class="edify-surface self-start ', heatmap)
+
+    def test_full_height_surfaces_are_limited_to_viewport_workspaces(self):
+        full_height_surface = re.compile(
+            r'class="[^"]*\bedify-surface\b[^"]*\bh-full\b[^"]*"'
+        )
+        allowed = {
+            "templates/partials/messages/conversation.html",
+            "templates/partials/messages/thread_list.html",
+            "templates/partials/my_plan/activity_detail_drawer.html",
+        }
+        offenders = []
+
+        for path in (ROOT / "templates").rglob("*.html"):
+            relative = str(path.relative_to(ROOT))
+            if relative in allowed:
+                continue
+            if full_height_surface.search(path.read_text(encoding="utf-8")):
+                offenders.append(relative)
+
+        self.assertEqual(
+            offenders,
+            [],
+            "Full-height content cards create dead space; reserve h-full for "
+            f"viewport workspaces and drawers: {offenders}",
         )
 
     def test_program_lead_funding_card_is_separate_from_the_urgent_schools_row(self):
@@ -676,6 +757,56 @@ class ChartEmptyStateGuardTest(SimpleTestCase):
             base,
             "The empty-chart message must take its colour from the muted text "
             "token so it matches other secondary copy.",
+        )
+
+
+class ChartLegendRailGuardTest(SimpleTestCase):
+    """Bar and line legends remain a single readable horizontal rail."""
+
+    def test_bar_and_line_legends_use_the_shared_horizontal_layout(self):
+        css = _read("static/css/platform.css")
+
+        self.assertIn(
+            ".apexcharts-bar-series,\n  .apexcharts-line-series",
+            css,
+            "The shared legend rule must cover both comparison bars and trends.",
+        )
+        self.assertIn(
+            "flex-flow: row nowrap !important;",
+            css,
+            "Chart legends must read left-to-right instead of stacking series.",
+        )
+        self.assertIn(
+            "justify-content: flex-start !important;",
+            css,
+            "Every chart legend must begin from the same predictable edge.",
+        )
+        self.assertIn(
+            "overflow-x: auto !important;",
+            css,
+            "A narrow viewport must scroll a legend rail instead of collapsing "
+            "it into a tall stack.",
+        )
+        self.assertIn(
+            ".apexcharts-legend-group {",
+            css,
+            "Mixed charts group bar and line series separately; both groups "
+            "must still share the same horizontal rail.",
+        )
+        self.assertIn(
+            ".apexcharts-legend-series {",
+            css,
+            "The platform rule must normalize ApexCharts' per-series spacing.",
+        )
+        self.assertIn(
+            "margin: 0 !important;",
+            css,
+            "ApexCharts' wide inline margins must not force premature wrapping.",
+        )
+        self.assertIn(
+            "white-space: nowrap !important;",
+            css,
+            "A legend label must remain one compact, scannable item.",
         )
 
 

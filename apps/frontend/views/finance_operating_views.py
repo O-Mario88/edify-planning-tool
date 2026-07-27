@@ -794,13 +794,20 @@ def audit_log_view(request):
 
 @require_page_permission("monthly_request")
 def monthly_request_view(request):
-    """Program Lead monthly request: fetch Team Budget, then submit to CD."""
+    """Program Lead, CD, and RVP monthly request workspace."""
     from apps.core.exceptions import BadRequest, Forbidden
     from apps.fund_requests.monthly_request_service import get_monthly_request
 
-    if getattr(request.user, "active_role", None) != "Program Lead":
-        context = {"not_program_lead": True}
-        return render(request, "pages/accounts/monthly_request.html", context)
+    role = getattr(request.user, "active_role", None) or ""
+    if (
+        role
+        in ("CountryDirector", "Admin", "RegionalVicePresident", "CD", "ADMIN", "RVP")
+        and request.headers.get("HX-Target") != "monthly-request-root"
+    ):
+        from apps.frontend.views.finance_views import country_budget_view
+
+        return country_budget_view(request)
+
     try:
         context = get_monthly_request(
             request.user,
@@ -819,7 +826,7 @@ def monthly_request_view(request):
 
 @require_page_permission("monthly_request")
 def monthly_request_action_view(request):
-    """Explicit monthly-budget fetch and PL → CD submission actions."""
+    """Explicit monthly-budget fetch, PL → CD, and CD → RVP submission actions."""
     from apps.core.exceptions import BadRequest, Forbidden
     from apps.fund_requests import monthly_request_service as service
 
@@ -840,6 +847,9 @@ def monthly_request_action_view(request):
         elif request.POST.get("action") == "submit_to_cd":
             service.submit_to_cd(request.user, fy, int(month))
             ok = "Monthly request submitted to the Country Director for review."
+        elif request.POST.get("action") == "submit_to_rvp":
+            service.submit_to_rvp(request.user, fy, int(month))
+            ok = "Monthly country budget submitted to the Regional Vice President (RVP) for approval."
         else:
             error = "Unknown monthly request action."
     except (BadRequest, Forbidden, TypeError, ValueError) as exc:

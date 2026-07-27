@@ -44,7 +44,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, Q, Sum
 
 from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
@@ -79,8 +79,20 @@ def _frame(rows, key: str, **rename) -> pd.DataFrame:
     return frame.rename(columns={key: "district_id", **rename})
 
 
-def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
-    """One snapshot per district, keyed by district name."""
+def district_insight(
+    fy: str | None = None,
+    *,
+    schools=None,
+    clusters=None,
+    ssa_records=None,
+    activities=None,
+) -> dict[str, dict[str, Any]]:
+    """One role- and filter-scoped snapshot per district, keyed by name.
+
+    All UBOS districts remain present so the country outline does not collapse
+    when a field role owns only a handful of schools. Optional querysets
+    constrain every value exposed by the hover card.
+    """
     from apps.activities.models import Activity
     from apps.clusters.models import Cluster
     from apps.geography.models import District
@@ -102,21 +114,48 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
         }
     )
 
+    schools_are_scoped = schools is not None
+    school_qs = (
+        schools
+        if schools_are_scoped
+        else School.objects.filter(deleted_at__isnull=True)
+    )
+    if clusters is None:
+        if schools_are_scoped:
+            cluster_ids = (
+                school_qs.exclude(cluster_id__isnull=True)
+                .exclude(cluster_id="")
+                .values("cluster_id")
+            )
+            cluster_qs = Cluster.objects.filter(id__in=cluster_ids)
+        else:
+            cluster_qs = Cluster.objects.all()
+    else:
+        cluster_qs = clusters
+
     core_ids = _active_core_school_ids()
 
     # ── counts ───────────────────────────────────────────────────────────────
     schools = _frame(
-        School.objects.values("district_id").annotate(n=Count("id")),
+        school_qs.values("district_id").annotate(
+            n=Count("id"),
+            type_core=Count("id", filter=Q(school_type="core")),
+            type_client=Count("id", filter=Q(school_type="client")),
+            type_champion=Count("id", filter=Q(school_type="champion")),
+        ),
         "district_id",
         n="schools",
+        type_core="type_core_schools",
+        type_client="type_client_schools",
+        type_champion="type_champion_schools",
     )
     clusters = _frame(
-        Cluster.objects.values("district_id").annotate(n=Count("id")),
+        cluster_qs.values("district_id").annotate(n=Count("id")),
         "district_id",
         n="clusters",
     )
     core = _frame(
-        School.objects.filter(school_id__in=core_ids)
+        school_qs.filter(school_id__in=core_ids)
         .values("district_id")
         .annotate(n=Count("id")),
         "district_id",
@@ -124,7 +163,9 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
     )
 
     # ── SSA, confirmed only ──────────────────────────────────────────────────
-    ssa_qs = SsaRecord.objects.filter(
+    ssa_qs = (
+        ssa_records if ssa_records is not None else SsaRecord.objects.all()
+    ).filter(
         verification_status=SSA_CONFIRMED,
         school__district__sub_region__isnull=False,
         average_score__isnull=False,
@@ -160,9 +201,11 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
     )
 
     # ── activity coverage ────────────────────────────────────────────────────
-    acts = Activity.objects.filter(
-        status__in=COMPLETED_STATUSES, school__district__sub_region__isnull=False
-    )
+    acts = (
+        activities
+        if activities is not None
+        else Activity.objects.filter(deleted_at__isnull=True)
+    ).filter(status__in=COMPLETED_STATUSES, school__district__sub_region__isnull=False)
     if fy:
         acts = acts.filter(fy=fy)
 
@@ -172,6 +215,16 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
         .annotate(n=Count("school", distinct=True)),
         "school__district_id",
         n="schools_trained",
+    )
+    core_trained = _frame(
+        acts.filter(
+            activity_type__in=TRAINING_TYPES,
+            school__school_id__in=core_ids,
+        )
+        .values("school__district_id")
+        .annotate(n=Count("school", distinct=True)),
+        "school__district_id",
+        n="core_schools_trained",
     )
     visited = _frame(
         acts.filter(activity_type__in=VISIT_TYPES)
@@ -197,6 +250,7 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
         ssa_cluster,
         ssa_core,
         trained,
+        core_trained,
         visited,
         people,
     ):
@@ -205,11 +259,15 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
 
     counts = [
         "schools",
+        "type_core_schools",
+        "type_client_schools",
+        "type_champion_schools",
         "clusters",
         "core_schools",
         "ssa_n",
         "ssa_schools",
         "schools_trained",
+        "core_schools_trained",
         "schools_visited",
         "teachers_trained",
         "leaders_trained",
@@ -223,12 +281,7 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
             base[col] = pd.NA
 
     # ── best / worst intervention, per district ──────────────────────────────
-    scores = SsaScore.objects.filter(
-        ssa_record__verification_status=SSA_CONFIRMED,
-        ssa_record__school__district__sub_region__isnull=False,
-    )
-    if fy:
-        scores = scores.filter(ssa_record__fy=fy)
+    scores = SsaScore.objects.filter(ssa_record_id__in=ssa_qs.values("id"))
     iv = pd.DataFrame.from_records(
         list(
             scores.values("ssa_record__school__district_id", "intervention").annotate(
@@ -273,6 +326,12 @@ def district_insight(fy: str | None = None) -> dict[str, dict[str, Any]]:
             "district": r["district"],
             "subregion": r["subregion"],
             "schools": int(r["schools"]),
+            "school_distribution": {
+                "core": int(r["type_core_schools"]),
+                "client": int(r["type_client_schools"]),
+                "champion": int(r["type_champion_schools"]),
+                "core_trained": int(r["core_schools_trained"]),
+            },
             "clusters": int(r["clusters"]),
             "core_schools": int(r["core_schools"]),
             "ssa_done": int(r["ssa_schools"]),

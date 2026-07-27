@@ -1,8 +1,8 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+<div class="edify-surface self-start rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <div>
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">4. District SSA Heatmap <span class="text-slate-400 font-medium edify-text-caption">(Average SSA Score by Intervention)</span></h3>
-    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified annual SSA · click a district for the performance drawer</p>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">5. District SSA Heatmap <span class="text-slate-400 font-medium edify-text-caption">(Average SSA Score by Intervention)</span></h3>
+    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified annual SSA · scores shown on the 0–10 scale · click a district for the performance drawer</p>
   </div>
 
   <div class="overflow-x-auto -mx-1">
@@ -30,7 +30,7 @@
             {% elif cell.tone == 'warning' %}bg-amber-100 text-amber-800
             {% elif cell.tone == 'danger' %}bg-rose-100 text-rose-800
             {% else %}bg-slate-50 text-slate-300{% endif %} px-1 py-1">
-            {% if cell.pct is not None %}{{ cell.pct|floatformat:0 }}%{% else %}—{% endif %}
+            {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}—{% endif %}
           </td>
           {% endfor %}
           <td class="text-center font-extrabold tabular-nums rounded-small
@@ -39,7 +39,7 @@
             {% elif row.avg_tone == 'warning' %}bg-amber-200 text-amber-900
             {% elif row.avg_tone == 'danger' %}bg-rose-200 text-rose-900
             {% else %}bg-slate-100 text-slate-400{% endif %} px-1 py-1">
-            {% if row.avg is not None %}{{ row.avg|floatformat:0 }}%{% else %}—{% endif %}
+            {% if row.avg is not None %}{{ row.avg|floatformat:1 }}{% else %}—{% endif %}
           </td>
         </tr>
         {% empty %}
@@ -49,10 +49,9 @@
     </table>
   </div>
   <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 edify-text-caption font-semibold text-slate-400">
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-emerald-100 border border-emerald-200"></span>Strong</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-lime-100 border border-lime-200"></span>Improving</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-amber-100 border border-amber-200"></span>Weak</span>
-    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-rose-100 border border-rose-200"></span>Critical</span>
-    <span class="ml-auto italic">Darker = lower performance</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-emerald-100 border border-emerald-200"></span>Strong 8.0–10</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-lime-100 border border-lime-200"></span>Improving 7.0–7.9</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-amber-100 border border-amber-200"></span>Warning 5.0–6.9</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-rose-100 border border-rose-200"></span>Critical &lt;5.0</span>
   </div>
 </div>

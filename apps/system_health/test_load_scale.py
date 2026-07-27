@@ -244,7 +244,7 @@ class ScaleGateTest(TestCase):
                     date_of_ssa=timezone.localdate(),
                     # Vary the score so weighted sub-region averages differ per
                     # bucket; a constant would hide an aggregation bug.
-                    average_score=40 + (idx % 55),
+                    average_score=4.0 + (idx % 55) / 10,
                     new_enrollment=100 + (idx % 400),
                     verification_status="confirmed",
                     collector_type="staff",
@@ -262,7 +262,7 @@ class ScaleGateTest(TestCase):
                 SsaScore(
                     ssa_record_id=rid,
                     intervention="Government Requirements",
-                    score=40 + (i % 55),
+                    score=4.0 + (i % 55) / 10,
                 )
                 for i, rid in enumerate(record_ids)
             ],

@@ -53,6 +53,20 @@ class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-h
 <p class="font-semibold text-slate-800 mt-0.5">{{ school.parish.name|default:"Not specified" }}</p>
 </div>
 <div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Pupil Enrolment</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.enrollment|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Coordinates</p>
+<p class="font-semibold text-slate-800 mt-0.5 tabular-nums">
+{% if school.latitude != None and school.longitude != None %}
+{{ school.latitude|floatformat:6 }}, {{ school.longitude|floatformat:6 }}
+{% else %}
+Not specified
+{% endif %}
+</p>
+</div>
+<div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">School Type</p>
 <p class="font-semibold text-slate-800 mt-0.5">{{ school.get_school_type_display }}</p>
 </div>

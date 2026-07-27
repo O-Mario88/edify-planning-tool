@@ -126,20 +126,23 @@ MONTHS_SHORT = {
 
 
 # ── SSA banding — the canonical mandate bands (§5): Critical 0-4.9 /
-# Warning 5-6.9 / Improving 7-7.9 / Strong 8-10 on the 0-10 score. This
-# wrapper takes the normalized 0-100 percentage the analytics layer works in
-# and delegates to the single source of truth in apps.core.enums.
-def ssa_band(pct: float | None):
-    """Classify a normalized SSA percentage into the canonical 4 bands.
-    Returns (label, hex, tone). `None`/no-data → a neutral "No SSA" band."""
+# Warning 5-6.9 / Improving 7-7.9 / Strong 8-10 on the native score. Analytics
+# must never turn an SSA score into a percentage merely for presentation.
+def ssa_band(score: float | None):
+    """Classify a native 0-10 SSA score into the canonical four bands."""
     from apps.core.enums import ssa_score_band
 
-    return ssa_score_band(None if pct is None else pct / 10.0)
+    return ssa_score_band(score)
 
 
-def _norm(score: float | None) -> float | None:
-    """SSA score is out of 10; normalize to a 0-100 percentage."""
-    return round(score * 10, 1) if score is not None else None
+def _ssa_score(score: float | None) -> float | None:
+    """Return a display-safe SSA score on its canonical 0-10 scale."""
+    return round(score, 1) if score is not None else None
+
+
+def _ssa_bar_pct(score: float | None) -> float:
+    """Convert a score to bar width only; this value is never display copy."""
+    return round(max(0.0, min(10.0, score or 0.0)) * 10, 1)
 
 
 def _pct(n: int, d: int) -> int:
@@ -358,11 +361,18 @@ class PLAnalyticsService:
         fy: str | None = None,
         quarter: str | None = None,
         filters: dict | None = None,
+        *,
+        include_regional_map: bool = False,
     ) -> dict:
         fy = fy or get_operational_fy()
         filters = dict(filters or {})
         quarter = (quarter or filters.get("quarter") or "").strip() or None
         pls = resolve_pl_scope(user, filters)
+        map_context = {}
+        if include_regional_map:
+            from apps.analytics.country_map_context import country_map_context
+
+            map_context = country_map_context(fy)
 
         kpis = PLAnalyticsService.kpis(pls, fy, quarter, filters)
         return {
@@ -398,6 +408,7 @@ class PLAnalyticsService:
             "donor_snapshot": PLAnalyticsService.donor_snapshot(
                 pls, fy, quarter, filters
             ),
+            **map_context,
             "filter_options": PLAnalyticsService.filter_options(pls, user),
             "scope_meta": {
                 "cceo_count": len(pls.cceos),
@@ -528,7 +539,7 @@ class PLAnalyticsService:
         partner_pct = _pct(pa_done, pa_planned)
 
         budget_pct = PLAnalyticsService._budget_utilization(pls, fy)
-        avg_ssa_pct = PLAnalyticsService._avg_team_ssa(pls, fy)
+        avg_ssa_score = PLAnalyticsService._avg_team_ssa(pls, fy)
         activities_completed = completed.count()
 
         # Trend vs previous quarter (only when a quarter is selected).
@@ -657,8 +668,8 @@ class PLAnalyticsService:
             card(
                 "chart",
                 "Average Team SSA Score",
-                f"{avg_ssa_pct}%" if avg_ssa_pct is not None else "No SSA",
-                "success" if (avg_ssa_pct or 0) >= 60 else "warning",
+                f"{avg_ssa_score}/10" if avg_ssa_score is not None else "No SSA",
+                "success" if (avg_ssa_score or 0) >= 7 else "warning",
                 "latest verified cycle",
             ),
             card(
@@ -909,7 +920,7 @@ class PLAnalyticsService:
         avg = SsaRecord.objects.filter(
             school_id__in=pls.school_ref, verification_status="confirmed", fy=latest
         ).aggregate(a=Avg("average_score"))["a"]
-        return _norm(avg)
+        return _ssa_score(avg)
 
     @staticmethod
     def ssa_interventions(pls: PLScope, fy: str) -> dict:
@@ -925,7 +936,8 @@ class PLAnalyticsService:
                         "value": v,
                         "label": label,
                         "code": code,
-                        "pct": None,
+                        "score": None,
+                        "bar_pct": 0,
                         "delta": None,
                         "band": band[0],
                         "color": band[1],
@@ -951,27 +963,28 @@ class PLAnalyticsService:
         cur = _by_intervention(latest)
         old = _by_intervention(prev) if prev else {}
         for v, label, code in SSA_INTERVENTIONS:
-            cur_pct = _norm(cur.get(v))
-            prev_pct = _norm(old.get(v)) if prev else None
+            current_score = _ssa_score(cur.get(v))
+            previous_score = _ssa_score(old.get(v)) if prev else None
             delta = (
-                round(cur_pct - prev_pct, 1)
-                if (cur_pct is not None and prev_pct is not None)
+                round(current_score - previous_score, 1)
+                if (current_score is not None and previous_score is not None)
                 else None
             )
-            band = ssa_band(cur_pct)
+            band = ssa_band(current_score)
             rows.append(
                 {
                     "value": v,
                     "label": label,
                     "code": code,
-                    "pct": cur_pct,
+                    "score": current_score,
+                    "bar_pct": _ssa_bar_pct(current_score),
                     "delta": delta,
                     "band": band[0],
                     "color": band[1],
                     "tone": band[2],
                 }
             )
-        rows.sort(key=lambda r: (r["pct"] is None, -(r["pct"] or 0)))
+        rows.sort(key=lambda r: (r["score"] is None, -(r["score"] or 0)))
         return {"rows": rows, "latest_fy": latest, "prev_fy": prev, "has_data": True}
 
     # ── A. Team performance (monthly planned vs completed + achievement line) ─
@@ -1117,7 +1130,9 @@ class PLAnalyticsService:
             completed = district_completed.get(did, 0)
             planned_total = district_planned.get(did, 0)
             pct = _pct(completed, planned_total)
-            avg_ssa = _norm(_mean(district_scores.get(did, []))) if latest_fy else None
+            avg_ssa = (
+                _ssa_score(_mean(district_scores.get(did, []))) if latest_fy else None
+            )
             critical = len(district_critical_schools.get(did, set()))
             band = ssa_band(avg_ssa)
             rows.append(
@@ -1241,7 +1256,7 @@ class PLAnalyticsService:
             avg_ssa = None
             weakest = ("—", None)
             if latest_fy:
-                avg_ssa = _norm(_mean(cluster_scores.get(cid, [])))
+                avg_ssa = _ssa_score(_mean(cluster_scores.get(cid, [])))
                 by_int = sorted(
                     (
                         (k, _mean(v))
@@ -1252,7 +1267,7 @@ class PLAnalyticsService:
                 if by_int:
                     w_key, w_avg = by_int[0]
                     label = _INTERVENTION_LABELS.get(w_key, (w_key, ""))[0]
-                    weakest = (label, _norm(w_avg))
+                    weakest = (label, _ssa_score(w_avg))
             counts = cluster_counts.get(
                 cid,
                 {
@@ -1280,7 +1295,7 @@ class PLAnalyticsService:
                     "ssa_tone": band[2],
                     "ssa_band": band[0],
                     "weakest_label": weakest[0],
-                    "weakest_pct": weakest[1],
+                    "weakest_score": weakest[1],
                     "visits_done": visits_done,
                     "visits_planned": visits_planned,
                     "trainings_done": trainings_done,
@@ -1302,7 +1317,7 @@ class PLAnalyticsService:
     def _cluster_next_action(avg_ssa, vd, vp, td, tp) -> str:
         if avg_ssa is None:
             return "Schedule SSA Collection"
-        if avg_ssa < 50:
+        if avg_ssa < 5:
             return "Review Cluster Support Plan"
         if vp and vd < vp:
             return "Complete Remaining Visits"
@@ -1435,7 +1450,7 @@ class PLAnalyticsService:
                     if part:
                         total += part[0]
                         count += part[1]
-                avg_ssa = _norm(total / count) if count else None
+                avg_ssa = _ssa_score(total / count) if count else None
             evidence_total = c_acts.filter(
                 activity_type__in=VISIT_TYPES + TRAINING_TYPES
             ).count()
@@ -1485,9 +1500,9 @@ class PLAnalyticsService:
             score += 2
         elif backlog >= 4:
             score += 1
-        if avg_ssa is not None and avg_ssa < 40:
+        if avg_ssa is not None and avg_ssa < 4:
             score += 2
-        elif avg_ssa is not None and avg_ssa < 60:
+        elif avg_ssa is not None and avg_ssa < 6:
             score += 1
         if avg_ssa is None and schools:
             score += 1  # no SSA visibility at all
@@ -1524,7 +1539,7 @@ class PLAnalyticsService:
             pls, fy, quarter, filters
         )["rows"]
         weak_clusters = sum(
-            1 for c in cluster_data if c["avg_ssa"] is not None and c["avg_ssa"] < 50
+            1 for c in cluster_data if c["avg_ssa"] is not None and c["avg_ssa"] < 5
         )
 
         items = []
@@ -1658,7 +1673,7 @@ class PLAnalyticsService:
                     school_id__in=ids, verification_status="confirmed", fy=f
                 ).aggregate(a=Avg("average_score"))["a"]
                 labels.append(f"FY{f}")
-                series.append(_norm(avg) or 0)
+                series.append(_ssa_score(avg) or 0)
             return {"count": len(ids), "labels": labels, "series": series}
 
         return {"core": trend(core_ids), "champion": trend(champ_ids)}
@@ -1972,7 +1987,7 @@ class PLAnalyticsService:
         clusters = PLAnalyticsService.cluster_performance(
             pls, fy, quarter, filters or {}
         )["rows"]
-        weak = [c for c in clusters if c["avg_ssa"] is not None and c["avg_ssa"] < 50]
+        weak = [c for c in clusters if c["avg_ssa"] is not None and c["avg_ssa"] < 5]
         cceos = PLAnalyticsService.cceo_performance(pls, fy, quarter, filters or {})[
             "rows"
         ]
@@ -1998,7 +2013,10 @@ class PLAnalyticsService:
                 {
                     "id": f"pl-analytics-cluster-{c['id']}",
                     "title": "Review Cluster Support Plan",
-                    "description": f"{c['name']} is performing below 50% (avg SSA {c['avg_ssa']}%).",
+                    "description": (
+                        f"{c['name']} is performing below 5.0/10 "
+                        f"(average SSA {c['avg_ssa']}/10)."
+                    ),
                     "category": "Analytics",
                     "priority": "high",
                     "action_label": "Review",

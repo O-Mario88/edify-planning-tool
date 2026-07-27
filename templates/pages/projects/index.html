@@ -151,8 +151,8 @@
       <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified delivered activities, split by delivery channel</p>
     </div>
     <div class="flex items-center gap-4 edify-text-caption font-bold">
-      <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-pill edify-primary-solid"></span>Staff-led</span>
-      <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-pill bg-emerald-500"></span>Partner-led</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-pill" style="background:var(--edify-chart-series-primary)"></span>Staff-led</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-pill" style="background:var(--edify-chart-series-secondary)"></span>Partner-led</span>
     </div>
     {% if impact_bars %}
       {% for b in impact_bars %}
@@ -161,10 +161,10 @@
           <span class="text-[12px] font-semibold text-slate-600 truncate">{{ b.label }}</span>
           <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ b.total }}</span>
         </div>
-        <div class="h-2 rounded-pill bg-slate-100 overflow-hidden flex" title="Staff {{ b.staff }} · Partner {{ b.partner }}">
+        <div class="h-2 rounded-pill overflow-hidden flex" style="background:var(--edify-chart-bar-track)" title="Staff {{ b.staff }} · Partner {{ b.partner }}">
           {% if impact_max > 0 %}
-          <div class="h-full edify-primary-solid" style="width: {% widthratio b.staff impact_max 100 %}%"></div>
-          <div class="h-full bg-emerald-500" style="width: {% widthratio b.partner impact_max 100 %}%"></div>
+          <div class="h-full" style="width: {% widthratio b.staff impact_max 100 %}%; background:var(--edify-chart-series-primary)"></div>
+          <div class="h-full" style="width: {% widthratio b.partner impact_max 100 %}%; background:var(--edify-chart-series-secondary)"></div>
           {% endif %}
         </div>
       </div>

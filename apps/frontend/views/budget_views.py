@@ -7,7 +7,6 @@ from django.db.models import Q, Sum, Count
 from datetime import datetime, date, timedelta
 import calendar
 
-from apps.budget.services import budget_workspace
 from apps.fund_requests.weekly_service import (
     get_weekly_request,
     request_advance,
@@ -60,16 +59,17 @@ def get_weeks_of_month(year, month):
 
 @require_page_permission("monthly_budget")
 def monthly_budget_view(request):
-    context = budget_workspace(
-        request.user,
-        {
-            "fy": request.GET.get("fy"),
-            "date": request.GET.get("date"),
-            "period": request.GET.get("period"),
-            "budget_scope": request.GET.get("budget_scope"),
-        },
-    )
-    return render(request, "pages/budgets/monthly.html", context)
+    """Redirect retired monthly-budget bookmarks to the canonical workflow."""
+    if request.user.active_role in (
+        "CountryDirector",
+        "ImpactAssessment",
+        "Accountant",
+        "Admin",
+    ):
+        return redirect("/country-budget/")
+    if request.user.active_role == "Program Lead":
+        return redirect("/accounts/monthly-request/")
+    return redirect("/fund-requests/weekly")
 
 
 def _scoped_base_querysets(request, fy):

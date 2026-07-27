@@ -18,19 +18,18 @@ from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
-from .costing import LEGACY_CLUSTER_ACTIVITY_COST_KEYS, cost_for_activity
+from .costing import cost_for_activity
 from .models import CostSetting, CostSettingHistory
+from .reference import CANONICAL_RATE_KEYS, RETIRED_COST_SETTING_KEYS
 from apps.core.activity_types import TRAINING_TYPES
 
 
 # ── Rate card ────────────────────────────────────────────────────────────────
 def list_cost_settings(principal, query: dict) -> dict:
-    # Old broad training/meeting rates stay in the database so historical
-    # snapshots remain auditable, but they are no longer configurable for new
-    # cluster work.  The four canonical rates are the catalogue surface.
-    qs = CostSetting.objects.exclude(
-        key__in=LEGACY_CLUSTER_ACTIVITY_COST_KEYS
-    ).order_by("label")
+    # The registry is an allow-list, rather than merely excluding known old
+    # keys. This prevents an ad-hoc alias from creating another editable source
+    # for an allowance that already exists.
+    qs = CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS).order_by("label")
     if query.get("fy"):
         qs = qs.filter(Q(fy=query["fy"]) | Q(fy__isnull=True))
     settings_list = [
@@ -55,10 +54,15 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     key = data.get("key")
     if not key:
         raise BadRequest("key is required.")
-    if key in LEGACY_CLUSTER_ACTIVITY_COST_KEYS:
+    if key in RETIRED_COST_SETTING_KEYS:
         raise BadRequest(
-            "This is a historic cluster cost item. Use Participant snacks, "
-            "Participant meals, Facilitation fee, or Venue fee instead."
+            "This is a retired cost item retained only for historical audit. "
+            "Update its canonical Cost Catalogue item instead."
+        )
+    if key not in CANONICAL_RATE_KEYS:
+        raise BadRequest(
+            "Unknown cost item. Cost settings must be registered in the "
+            "canonical Cost Catalogue before they can be edited."
         )
     label = data.get("label") or key.replace("_", " ").title()
     new_cost = data.get("unitCost")
@@ -792,7 +796,7 @@ def _calendar_periods(fy: str, anchor: date) -> dict[str, dict]:
 
 
 def budget_workspace(principal, query: dict) -> dict:
-    """Return the role-scoped, request-backed My Budget ledger.
+    """Return a role-scoped budget ledger backed by authoritative cost rows.
 
     Canonical schedule cost lines supply every amount.  Weekly and monthly
     fund requests are snapshots of those lines, so their counts are surfaced
@@ -834,7 +838,13 @@ def budget_workspace(principal, query: dict) -> dict:
         "RegionalVicePresident",
         "Accountant",
     )
-    if requested_scope == "country" and country_allowed:
+    admin_allowed = getattr(principal, "active_role", "") in (
+        "CountryDirector",
+        "Admin",
+    )
+    if requested_scope == "admin" and admin_allowed:
+        budget_scope = "admin"
+    elif requested_scope == "country" and country_allowed:
         budget_scope = "country"
     elif is_program_lead and requested_scope == "team":
         budget_scope = "team"
@@ -842,18 +852,23 @@ def budget_workspace(principal, query: dict) -> dict:
         budget_scope = "my"
 
     if budget_scope == "country":
-        # No owner filter → every staff member nationally, plus the country
-        # admin budget, in the same activity cost-plan format.
+        # No owner filter → every scheduled, costed activity nationally.
+        # The CD's administrative plan is included as its own "Country Admin
+        # Plan" category so the Monthly Fund Request shows the full monthly
+        # envelope the RVP is approving.
         owner_ids = None
+        include_admin = True
+    elif budget_scope == "admin":
+        # The CD's operating budget is a separate ledger.  It is deliberately
+        # empty of activity cost lines so "Admin Budget" cannot quietly become
+        # another country-programme total.
+        owner_ids = []
         include_admin = True
     else:
         owner_ids = _workspace_owner_ids(
             principal, scope, include_team=budget_scope == "team"
         )
-        include_admin = getattr(principal, "active_role", "") in (
-            "CountryDirector",
-            "Admin",
-        )
+        include_admin = False
 
     base_lines = (
         ActivityScheduleCostLine.objects.filter(
@@ -1137,6 +1152,9 @@ def budget_workspace(principal, query: dict) -> dict:
     if owner_ids is not None:
         weekly_requests = weekly_requests.filter(responsible_user__in=owner_ids)
         monthly_requests = monthly_requests.filter(submitted_by_user_id__in=owner_ids)
+    if budget_scope == "admin":
+        weekly_requests = weekly_requests.none()
+        monthly_requests = monthly_requests.none()
     if selected_period in ("week", "month"):
         monthly_requests = monthly_requests.filter(period_key=f"{fy}-M{anchor.month}")
 
@@ -1157,6 +1175,28 @@ def budget_workspace(principal, query: dict) -> dict:
         for summary in team_summary_by_owner.values()
     ]
     team_summary.sort(key=lambda item: (-item["total"], item["name"]))
+    workspace_title = {
+        "admin": "Admin Budget",
+        "country": "General Budget",
+        "team": "Team Budget",
+        "my": "My Budget",
+    }[budget_scope]
+    source_description = {
+        "admin": "Country Director administrative plan",
+        "country": "Scheduled planned activities",
+        "team": "Team planned activities",
+        "my": "My planned activities",
+    }[budget_scope]
+    empty_title = (
+        "No admin budget items in this period"
+        if budget_scope == "admin"
+        else "No costed planned activities in this period"
+    )
+    empty_help = (
+        "Add an administrative item for the selected month."
+        if budget_scope == "admin"
+        else "Choose another time view or schedule an activity to create its budget automatically."
+    )
     return {
         "fy": fy,
         "anchor": anchor,
@@ -1172,13 +1212,23 @@ def budget_workspace(principal, query: dict) -> dict:
         "weekly_request_count": weekly_requests.count(),
         "monthly_request_count": monthly_requests.count(),
         "role": getattr(principal, "active_role", ""),
-        "scope_label": "Country"
-        if budget_scope == "country" or scope.country_scope
-        else ("Team" if budget_scope == "team" else "My"),
+        "scope_label": {
+            "admin": "Administrative",
+            "country": "Country",
+            "team": "Team",
+            "my": "My",
+        }[budget_scope],
         "budget_scope": budget_scope,
+        "workspace_title": workspace_title,
+        "workspace_kind": budget_scope,
+        "workspace_base_url": "/budgets/monthly",
+        "source_description": source_description,
+        "empty_title": empty_title,
+        "empty_help": empty_help,
         "is_program_lead": is_program_lead,
         "team_summary": team_summary,
         "admin_weekly_note": include_admin and selected_period == "week",
+        "admin_item_count": len(admin_lines),
     }
 
 

@@ -640,11 +640,14 @@ class FrontendViewsTestCase(TestCase):
         self.assertIsNotNone(response.context["selected_school"])
         self.assertEqual(response.context["selected_school"].id, self.school.id)
 
-    def test_monthly_budget_view_renders(self):
+    def test_retired_monthly_budget_redirects_field_roles_to_weekly_request(self):
         self.client.force_login(self.cceo_user)
         response = self.client.get("/budgets/monthly")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/budgets/monthly.html")
+        self.assertRedirects(
+            response,
+            "/fund-requests/weekly",
+            fetch_redirect_response=False,
+        )
 
     def test_weekly_fund_requests_view_renders(self):
         self.client.force_login(self.cceo_user)
@@ -720,14 +723,82 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, 'class="cluster-create-basics"')
         self.assertContains(response, 'name="district_id"')
         self.assertContains(response, 'name="sub_county_ids"')
+        self.assertContains(response, 'aria-required="true"')
+        self.assertContains(response, "Select at least one sub-county")
         self.assertContains(response, 'name="cluster_leader_name"')
         self.assertContains(response, 'name="cluster_leader_phone"')
-        self.assertContains(response, "school-record-action--assign")
+        self.assertContains(response, "cluster-create-cancel")
         self.assertContains(response, "school-record-action--schedule")
+        self.assertContains(
+            response,
+            "Auto-suggested from your selection — edit if you like.",
+        )
+        self.assertContains(
+            response,
+            "No school leaders on file for the selected area yet",
+        )
         self.assertContains(response, "Create cluster")
         self.assertNotContains(response, "Assigned Staff")
+        self.assertNotContains(response, "Optional")
         self.assertNotContains(response, "Outside Drawer District")
         self.assertNotContains(response, "Outside Drawer Subcounty")
+        self.assertEqual(
+            str(response.context["selected_district_id"]),
+            str(self.district.id),
+        )
+
+        source = response.content.decode()
+        self.assertLess(
+            source.index('for="cluster-district"'),
+            source.index("Sub-counties"),
+        )
+        self.assertLess(
+            source.index("Sub-counties"),
+            source.index('for="cluster-name"'),
+        )
+        self.assertLess(
+            source.index('for="cluster-name"'),
+            source.index("Cluster leader"),
+        )
+
+    def test_create_cluster_requires_sub_county_coverage(self):
+        self.client.force_login(self.cceo_user)
+        before = Cluster.objects.count()
+
+        response = self.client.post(
+            "/clusters/create",
+            {
+                "name": "District Only Cluster",
+                "district_id": self.district.id,
+            },
+        )
+
+        self.assertRedirects(response, "/clusters", fetch_redirect_response=False)
+        self.assertEqual(Cluster.objects.count(), before)
+
+    def test_create_cluster_saves_reference_form_fields(self):
+        uncovered = SubCounty.objects.create(
+            name="North Kampola",
+            district=self.district,
+        )
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.post(
+            "/clusters/create",
+            {
+                "name": "North Kampola Cluster",
+                "district_id": self.district.id,
+                "sub_county_ids": [uncovered.id],
+                "cluster_leader_name": "Esther Naluwu",
+                "cluster_leader_phone": "+256 772 000 000",
+            },
+        )
+
+        self.assertRedirects(response, "/clusters", fetch_redirect_response=False)
+        cluster = Cluster.objects.get(name="North Kampola Cluster")
+        self.assertEqual(cluster.sub_county_id, uncovered.id)
+        self.assertEqual(cluster.cluster_leader_name, "Esther Naluwu")
+        self.assertEqual(cluster.cluster_leader_phone, "+256 772 000 000")
 
     def test_cluster_name_must_be_unique_within_district(self):
         from apps.clusters.services import create_cluster
@@ -885,7 +956,7 @@ class FrontendViewsTestCase(TestCase):
 
         # Verify default settings created/attached
         breakfast_setting = CostSetting.objects.get(
-            key="breakfast", catalogue=active_cat
+            key="secondary_breakfast_per_day", catalogue=active_cat
         )
         self.assertEqual(breakfast_setting.unit_cost, 8000)
 
@@ -2326,7 +2397,7 @@ class ChampionsListQueryCountTest(TestCase):
                 fy="2026",
                 quarter="Q1",
                 verification_status="confirmed",
-                average_score=85.0,
+                average_score=8.5,
                 uploaded_by="tester",
             )
 
