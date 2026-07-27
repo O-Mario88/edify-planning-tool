@@ -2332,20 +2332,34 @@ def performance_acknowledge_view(request, review_id):
 _STRATEGY_AUTHORS = ("RegionalVicePresident", "CountryDirector", "Admin")
 _STRATEGY_VIEWERS = _STRATEGY_AUTHORS + ("HumanResources",)
 
+# A plausible financial year. Bounds rather than "any four digits" so a
+# nonsense year cannot become a filter that quietly matches nothing.
+MIN_FY_YEAR = 2000
+MAX_FY_YEAR = 2100
+
 
 def _requested_fy(request, param="fy"):
     """A financial year taken from the request, or the operational one.
 
-    An FY label is four digits and nothing else. Validating here rather than
-    trusting the parameter keeps user input out of two places it should never
-    reach unchecked: the redirect URL these views build, and the query filters
-    they run. Anything that is not a plain year falls back to the operational
-    FY rather than being echoed back.
+    An FY label is a four-digit year and nothing else. Validating here keeps
+    user input out of two places it should never reach unchecked: the redirect
+    URL these views build, and the query filters they run.
+
+    The year is REBUILT from the parsed integer rather than returned as the
+    string that arrived. Checking a string's shape and then handing back the
+    original still passes the caller a value that came from the request — the
+    check constrains what gets through, not what the value *is*. Formatting
+    from the int means the returned string is constructed here, and nothing
+    the client sent can reach a URL however the check is later loosened.
     """
     from apps.core.fy import get_operational_fy
 
     raw = (request.POST.get(param) or request.GET.get(param) or "").strip()
-    return raw if raw.isdigit() and len(raw) == 4 else get_operational_fy()
+    if raw.isdigit() and len(raw) == 4:
+        year = int(raw)
+        if MIN_FY_YEAR <= year <= MAX_FY_YEAR:
+            return f"{year:04d}"
+    return get_operational_fy()
 
 
 @require_page_permission("strategic_priorities")

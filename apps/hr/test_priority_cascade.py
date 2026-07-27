@@ -932,3 +932,26 @@ class RequestedFinancialYearTest(CascadeTestCase):
         from apps.core.fy import get_operational_fy
 
         self.assertEqual(response.context["fy"], get_operational_fy())
+
+    def test_an_implausible_year_falls_back(self):
+        """Four digits is a shape, not a financial year. A nonsense year would
+        otherwise become a filter that silently matches nothing."""
+        from apps.core.fy import get_operational_fy
+
+        for value in ("1000", "9999"):
+            with self.subTest(value=value):
+                self.assertIn(f"fy={get_operational_fy()}", self._location(value))
+
+    def test_the_returned_year_is_rebuilt_not_echoed(self):
+        """The redirect must carry a string this code constructed, not the one
+        the client sent — the property CodeQL is actually checking."""
+        from apps.frontend.views.hr_views import _requested_fy
+
+        request = type("R", (), {"POST": {"fy": "2027"}, "GET": {}})()
+        returned = _requested_fy(request)
+        self.assertEqual(returned, "2027")
+        self.assertIsNot(
+            returned,
+            request.POST["fy"],
+            "the value handed back is the request's own string object",
+        )
