@@ -894,6 +894,16 @@ urlpatterns = [
         hr_views.performance_acknowledge_view,
         name="performance_acknowledge",
     ),
+    path(
+        "strategic-priorities",
+        hr_views.strategic_priorities_view,
+        name="strategic_priorities",
+    ),
+    path(
+        "strategic-priorities/action",
+        hr_views.strategic_priority_action_view,
+        name="strategic_priority_action",
+    ),
     # Notifications
     path(
         "notifications",

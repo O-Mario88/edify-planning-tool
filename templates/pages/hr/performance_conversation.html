@@ -49,6 +49,16 @@
         <div>
           <p class="text-[14px] font-bold text-slate-800">{{ row.p.sequence }}. {{ row.p.outcome_statement }}</p>
           <p class="edify-text-caption text-slate-400">{{ row.p.strategic_alignment }} · weight {{ row.p.weight }}%</p>
+          {% if row.p.is_mandatory %}
+          {# An inherited commitment is enforced on save whether or not the page
+             says so. Saying so is the difference between a boundary and a
+             refusal the employee only meets after typing. #}
+          <p class="edify-text-caption text-slate-500 mt-0.5">
+            Organisation priority{% if row.p.source_rule %} — you carry it as
+            {{ row.p.source_rule.get_accountability_display|lower }}{% endif %}.
+            Milestones and phasing are yours to agree; whether it applies is not.
+          </p>
+          {% endif %}
         </div>
         <div class="text-right shrink-0">
           {% if row.shown_actual is not None %}

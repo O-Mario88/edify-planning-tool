@@ -427,6 +427,29 @@ class ManagerRoutingTest(TestCase):
     def test_an_unknown_role_routes_nowhere_rather_than_guessing(self):
         self.assertIsNone(priority_cascade.manager_role_for("NotARole"))
 
+    def test_every_routed_role_is_a_real_role(self):
+        """A near-miss key ('HR' for 'HumanResources') routes nobody anywhere
+        and looks exactly like a correct table."""
+        from apps.core.rbac import EdifyRole
+
+        known = {r.value for r in EdifyRole}
+        for role, manager in priority_cascade.PRIORITY_SETTING_MANAGER.items():
+            with self.subTest(role=role):
+                self.assertIn(role, known)
+                self.assertIn(manager, known)
+
+    def test_every_internal_role_has_a_priority_conversation(self):
+        """A role missing from the table has no one to set priorities with,
+        and nothing on any screen would say so."""
+        from apps.core.rbac import EdifyRole
+
+        external = {"PartnerAdmin", "PartnerFieldOfficer", "Admin"}
+        for role in EdifyRole:
+            if role.value in external:
+                continue
+            with self.subTest(role=role.value):
+                self.assertIsNotNone(priority_cascade.manager_role_for(role.value))
+
 
 class CoverageReportTest(CascadeTestCase):
     """HR's validation step: was the strategy cascaded, or just published?"""
@@ -593,3 +616,256 @@ class AgreementWritePathTest(CascadeTestCase):
             1,
             "the rewrite duplicated or dropped the inherited row",
         )
+
+
+class StrategicPriorityPageTest(CascadeTestCase):
+    """The authoring surface. Authority is checked at the HTTP boundary too —
+    a service-layer guard is worth nothing if the view never reaches it."""
+
+    def setUp(self):
+        super().setUp()
+        self.hr = _user("hr@cascade.test", "HumanResources")
+
+    def _login(self, user):
+        self.client.force_login(user)
+
+    def test_an_rvp_can_reach_the_page(self):
+        self._login(self.rvp)
+        response = self.client.get("/strategic-priorities")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["can_author"])
+
+    def test_hr_can_validate_coverage_but_not_author(self):
+        self._login(self.hr)
+        response = self.client.get("/strategic-priorities")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["can_author"])
+
+    def test_an_employee_cannot_reach_it_at_all(self):
+        self._login(self.cceo)
+        response = self.client.get("/strategic-priorities")
+        self.assertNotEqual(response.status_code, 200)
+
+    def test_hr_cannot_post_an_authoring_action(self):
+        """Read access to validate coverage is not write access to strategy."""
+        self._login(self.hr)
+        response = self.client.post(
+            "/strategic-priorities/action",
+            {"action": "create_priority", "title": "Mine now", "level": "regional"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(StrategicPriority.objects.filter(title="Mine now").exists())
+
+    def test_a_country_director_cannot_draft_regional_direction(self):
+        self._login(self.cd)
+        response = self.client.post(
+            "/strategic-priorities/action",
+            {
+                "action": "create_priority",
+                "fy": FY,
+                "level": StrategicPriorityLevel.REGIONAL,
+                "title": "Region-wide",
+                "strategic_purpose": "Because I said so",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(StrategicPriority.objects.filter(title="Region-wide").exists())
+
+    def test_drafting_and_translating_and_publishing_end_to_end(self):
+        self._login(self.rvp)
+        self.client.post(
+            "/strategic-priorities/action",
+            {
+                "action": "create_priority",
+                "fy": FY,
+                "level": StrategicPriorityLevel.REGIONAL,
+                "title": "Current-FY SSA Coverage",
+                "strategic_purpose": "Every eligible school verified.",
+                "weight_min": 10,
+                "weight_max": 30,
+                "is_mandatory": "on",
+            },
+        )
+        priority = StrategicPriority.objects.get(title="Current-FY SSA Coverage")
+        self.assertEqual(priority.status, StrategicPriorityStatus.DRAFT)
+
+        for role, metric in (
+            ("CCEO", "ssa_coverage"),
+            ("Program Lead", "team_ssa_coverage"),
+        ):
+            self.client.post(
+                "/strategic-priorities/action",
+                {
+                    "action": "set_role_rule",
+                    "fy": FY,
+                    "priority": priority.id,
+                    "role": role,
+                    "accountability": PriorityAccountability.EXECUTE,
+                    "metric_key": metric,
+                    "outcome_statement": f"{role} commitment",
+                },
+            )
+        self.client.post(
+            "/strategic-priorities/action",
+            {"action": "publish", "fy": FY, "priority": priority.id},
+        )
+        priority.refresh_from_db()
+        self.assertEqual(priority.status, StrategicPriorityStatus.PUBLISHED)
+        self.assertEqual(
+            priority.published_by_id,
+            self.rvp.id,
+            "the audit trail lost who made the priority binding",
+        )
+
+    def test_saving_a_role_twice_replaces_rather_than_duplicates(self):
+        """One rule per (priority, role) — two would make 'which metric does
+        this role carry' ambiguous and the draft builder would pick one."""
+        self._login(self.rvp)
+        priority = self._priority(level=StrategicPriorityLevel.REGIONAL)
+        for metric in ("ssa_coverage", "ssa_coverage_v2"):
+            self.client.post(
+                "/strategic-priorities/action",
+                {
+                    "action": "set_role_rule",
+                    "fy": FY,
+                    "priority": priority.id,
+                    "role": "CCEO",
+                    "accountability": PriorityAccountability.EXECUTE,
+                    "metric_key": metric,
+                    "outcome_statement": "Do it",
+                },
+            )
+        rules = list(priority.role_rules.all())
+        self.assertEqual(len(rules), 1)
+        self.assertEqual(rules[0].metric_key, "ssa_coverage_v2")
+
+    def test_publishing_an_unmeasurable_priority_is_refused_not_silently_done(self):
+        self._login(self.rvp)
+        priority = self._priority(level=StrategicPriorityLevel.REGIONAL)
+        self._rule(priority, "CCEO", PriorityAccountability.EXECUTE, None)
+        self.client.post(
+            "/strategic-priorities/action",
+            {"action": "publish", "fy": FY, "priority": priority.id},
+        )
+        priority.refresh_from_db()
+        self.assertEqual(priority.status, StrategicPriorityStatus.DRAFT)
+
+
+class CanonicalMetricTest(CascadeTestCase):
+    """A named metric and an existing metric are not the same thing.
+
+    ``live_progress`` falls through every branch for an unknown key and
+    returns actual=0. Nothing raises, nothing logs — the commitment simply
+    reads 0% for the whole year and looks like an employee failing.
+    """
+
+    def test_an_unknown_metric_cannot_be_published(self):
+        priority = self._priority(level=StrategicPriorityLevel.REGIONAL)
+        self._rule(priority, "CCEO", PriorityAccountability.EXECUTE, "ssa_covrage")
+        with self.assertRaises(BadRequest) as caught:
+            priority_cascade.publish(priority, self.rvp_p)
+        self.assertIn("ssa_covrage", str(caught.exception))
+        priority.refresh_from_db()
+        self.assertEqual(priority.status, StrategicPriorityStatus.DRAFT)
+
+    def test_the_refusal_names_what_is_available(self):
+        """Refusing without saying what would work leaves the author guessing
+        at exactly the moment the guess is expensive."""
+        priority = self._priority(level=StrategicPriorityLevel.REGIONAL)
+        self._rule(priority, "CCEO", PriorityAccountability.EXECUTE, "invented")
+        with self.assertRaises(BadRequest) as caught:
+            priority_cascade.publish(priority, self.rvp_p)
+        self.assertIn("ssa_coverage", str(caught.exception))
+
+    def test_an_exempt_role_is_still_exempt_from_this_check(self):
+        priority = self._priority(level=StrategicPriorityLevel.REGIONAL)
+        self._rule(priority, "CCEO", PriorityAccountability.EXECUTE, "ssa_coverage")
+        self._rule(priority, "Accountant", PriorityAccountability.NOT_APPLICABLE, None)
+        priority_cascade.publish(priority, self.rvp_p)
+        priority.refresh_from_db()
+        self.assertEqual(priority.status, StrategicPriorityStatus.PUBLISHED)
+
+    def test_the_worked_examples_metrics_all_exist(self):
+        """The specification's own SSA example gives four roles four different
+        measures; if two of them are not real keys the example cannot ship."""
+        from apps.hr.performance_engine import METRIC_KEYS
+
+        priority = self._ssa_priority_with_four_roles()
+        priority_cascade.publish(priority, self.rvp_p)
+        for rule in priority.role_rules.exclude(metric_key__isnull=True):
+            with self.subTest(role=rule.role):
+                self.assertIn(rule.metric_key, METRIC_KEYS)
+
+    def test_a_supervisor_is_measured_on_their_team_not_themselves(self):
+        """The whole point of a separate supervise metric: a PL with an empty
+        personal portfolio and a delivering team must not read as failing."""
+        from apps.accounts.models import (
+            StaffSchoolAssignment,
+            StaffSupervisorAssignment,
+        )
+        from apps.hr.performance_engine import _supervised_school_ids
+        from apps.schools.models import School
+
+        pl_user = _user("pl@cascade.test", "Program Lead")
+        pl = StaffProfile.objects.create(user=pl_user, title="Program Lead")
+        cceo = StaffProfile.objects.create(user=self.cceo, title="CCEO")
+        StaffSupervisorAssignment.objects.create(supervisee=cceo, supervisor=pl)
+
+        school = School.objects.create(name="Northern Primary", school_id="NP-001")
+        StaffSchoolAssignment.objects.create(staff=cceo, school=school)
+
+        self.assertEqual(_supervised_school_ids(pl), [school.id])
+        self.assertEqual(
+            _supervised_school_ids(cceo),
+            [],
+            "a CCEO supervises nobody, so the team measure must be empty "
+            "rather than quietly counting their own schools",
+        )
+
+
+class CoverageQueryBudgetTest(CascadeTestCase):
+    """The coverage report runs on a page load. Its cost must not grow with
+    the number of priorities leadership publishes — that would make the page
+    slowest exactly when the strategy is richest."""
+
+    def test_the_report_costs_the_same_for_one_priority_as_for_six(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        priority = self._ssa_priority_with_four_roles()
+        priority_cascade.publish(priority, self.rvp_p)
+        # Measured rather than asserted against a magic number: the claim is
+        # that the count does not GROW, and pinning it invites a future reader
+        # to update the constant instead of noticing the regression.
+        with CaptureQueriesContext(connection) as first:
+            priority_cascade.coverage_report(FY)
+
+        for i in range(5):
+            extra = self._priority(
+                level=StrategicPriorityLevel.REGIONAL, title=f"Priority {i}"
+            )
+            self._rule(extra, "CCEO", PriorityAccountability.EXECUTE, "new_schools")
+            priority_cascade.publish(extra, self.rvp_p)
+
+        with self.assertNumQueries(len(first.captured_queries)):
+            report = priority_cascade.coverage_report(FY)
+        self.assertEqual(len(report["priorities"]), 6)
+
+    def test_the_counts_are_still_right_after_the_grouping(self):
+        """A grouped query that returns the wrong numbers is worse than the
+        N+1 it replaced."""
+        reached = self._ssa_priority_with_four_roles()
+        priority_cascade.publish(reached, self.rvp_p)
+        unreached = self._priority(
+            level=StrategicPriorityLevel.REGIONAL, title="Nobody carries this yet"
+        )
+        self._rule(unreached, "CCEO", PriorityAccountability.EXECUTE, "new_schools")
+        priority_cascade.publish(unreached, self.rvp_p)
+
+        priority_cascade.apply_to_review(self._review(self.cceo), "CCEO")
+
+        report = priority_cascade.coverage_report(FY)
+        by_id = {r["priority_id"]: r for r in report["priorities"]}
+        self.assertEqual(by_id[reached.id]["staff_reached"], 1)
+        self.assertEqual(by_id[unreached.id]["staff_reached"], 1)
+        self.assertEqual(report["inert_count"], 0)

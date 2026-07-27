@@ -1350,3 +1350,15 @@ class StrategicPriorityRoleRule(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.role} · {self.get_accountability_display()} · {self.priority_id}"
+
+    @property
+    def priority_manager(self) -> str | None:
+        """Who holds this role's priority-setting conversation.
+
+        Read off the cascade's routing table rather than the reporting line, so
+        the strategy screens and the agreement screens can never disagree about
+        who the conversation belongs to.
+        """
+        from apps.hr.priority_cascade import manager_role_for
+
+        return manager_role_for(self.role)

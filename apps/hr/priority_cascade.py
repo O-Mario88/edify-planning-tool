@@ -58,7 +58,7 @@ PRIORITY_SETTING_MANAGER = {
     "ImpactAssessment": "CountryDirector",
     "ProjectCoordinator": "CountryDirector",
     "Accountant": "CountryDirector",
-    "HR": "RegionalVicePresident",
+    "HumanResources": "RegionalVicePresident",
     "CountryDirector": "RegionalVicePresident",
     "RegionalVicePresident": "Admin",
 }
@@ -67,6 +67,17 @@ PRIORITY_SETTING_MANAGER = {
 def manager_role_for(role: str) -> str | None:
     """The role that holds this role's priority-setting conversation."""
     return PRIORITY_SETTING_MANAGER.get(role)
+
+
+def _actor_id(principal) -> str | None:
+    """The acting user's id, whether we were handed a principal or a User.
+
+    Both reach this module — the services pass a principal with ``user_id``,
+    the views pass ``request.user``. Reading only one of the two silently
+    leaves ``published_by`` null, so the audit trail loses the person who made
+    the priority binding while everything else still works.
+    """
+    return getattr(principal, "user_id", None) or getattr(principal, "id", None)
 
 
 def _assert_can_author(principal, level: str) -> None:
@@ -121,13 +132,34 @@ def publish(priority, principal):
             f"their progress could never be derived: {', '.join(sorted(unmeasurable))}"
         )
 
+    # Naming a metric is not the same as naming one that exists. An unknown
+    # key is not an error anywhere downstream — `live_progress` falls through
+    # every branch and returns actual=0 — so the commitment reads as 0%
+    # forever and looks like an employee failing rather than a typo.
+    from apps.hr.performance_engine import METRIC_KEYS
+
+    unknown = sorted(
+        {
+            rule.metric_key
+            for rule in rules
+            if rule.accountability != PriorityAccountability.NOT_APPLICABLE
+            and (rule.metric_key or "").strip()
+            and rule.metric_key not in METRIC_KEYS
+        }
+    )
+    if unknown:
+        raise BadRequest(
+            "These measures are not canonical metrics the platform computes, "
+            f"so they would report 0% forever: {', '.join(unknown)}. "
+            f"Available: {', '.join(sorted(METRIC_KEYS))}."
+        )
+
     if priority.weight_max < priority.weight_min:
         raise BadRequest("The weighting range runs backwards.")
 
     priority.status = StrategicPriorityStatus.PUBLISHED
     priority.published_at = timezone.now()
-    if getattr(principal, "user_id", None):
-        priority.published_by_id = principal.user_id
+    priority.published_by_id = _actor_id(principal)
     priority.save(
         update_fields=["status", "published_at", "published_by", "updated_at"]
     )
@@ -139,7 +171,7 @@ def publish(priority, principal):
             action="hr.strategic_priority_published",
             subject_kind="StrategicPriority",
             subject_id=priority.id,
-            actor_id=getattr(principal, "user_id", None),
+            actor_id=_actor_id(principal),
             actor_role=getattr(principal, "active_role", None),
             payload={
                 "fy": priority.fy,
@@ -327,15 +359,22 @@ def coverage_report(fy: str, country_id: str | None = None) -> dict:
     if country_id:
         published = published.filter(models_q_country_direct(country_id))
 
+    published = list(published)
+
+    # One grouped query for every priority rather than one per priority. This
+    # runs on a page load, and a per-priority count would grow with the very
+    # thing the page exists to encourage — leadership publishing more strategy.
+    from django.db.models import Count
+
+    reach_counts = dict(
+        PerformancePriority.objects.filter(source_rule__priority__in=published)
+        .values_list("source_rule__priority_id")
+        .annotate(staff=Count("review__staff_id", distinct=True))
+    )
+
     rows = []
     for priority in published:
-        rule_ids = [r.id for r in priority.role_rules.all()]
-        reached = (
-            PerformancePriority.objects.filter(source_rule_id__in=rule_ids)
-            .values_list("review__staff_id", flat=True)
-            .distinct()
-            .count()
-        )
+        reached = reach_counts.get(priority.id, 0)
         rows.append(
             {
                 "priority_id": priority.id,

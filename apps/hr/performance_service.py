@@ -198,9 +198,7 @@ def set_priorities(review_id: str, principal, priorities: list[dict]):
     if total_weight != 100:
         raise BadRequest(f"Priority weights must total 100 (currently {total_weight}).")
 
-    protected = {
-        p.id: p for p in review.priorities.filter(is_mandatory=True).select_related()
-    }
+    protected = {p.id: p for p in review.priorities.filter(is_mandatory=True)}
     submitted_ids = {str(p.get("id")) for p in priorities if p.get("id")}
     dropped = [p for pid, p in protected.items() if pid not in submitted_ids]
     if dropped:
@@ -208,7 +206,7 @@ def set_priorities(review_id: str, principal, priorities: list[dict]):
         # one place rather than being restated at every write path.
         priority_cascade.assert_removable(dropped[0])
 
-    review.priorities.exclude(id__in=protected).delete()
+    review.priorities.exclude(id__in=list(protected)).delete()
     for i, p in enumerate(priorities, start=1):
         outcome = (p.get("outcome_statement") or "").strip()
         if not outcome:
