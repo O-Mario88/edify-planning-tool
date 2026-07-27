@@ -180,3 +180,80 @@ class TopbarSearchControlTest(TestCase):
             .read_text(encoding="utf-8")
         )
         self.assertRegex(shell, r"hx-trigger=\"\{\{[^}]+\}\}, submit\"")
+
+
+class VerificationQueueSearchContractTest(TestCase):
+    """The IA queue had twelve dropdowns and nowhere to type."""
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Queue Region")
+        self.district = District.objects.create(
+            name="Nakaseke", region=self.region
+        )
+        self.school = School.objects.create(
+            school_id="SC-QUEUE-1",
+            name="Semuto Parents Primary",
+            region=self.region,
+            district=self.district,
+        )
+        self.other_school = School.objects.create(
+            school_id="SC-QUEUE-2",
+            name="Kapeeka Modern Primary",
+            region=self.region,
+            district=self.district,
+        )
+        self.ia = User.objects.create_user(
+            email="queue-contract-ia@example.org",
+            name="Queue Contract IA",
+            roles=[EdifyRole.IMPACT_ASSESSMENT.value],
+            active_role=EdifyRole.IMPACT_ASSESSMENT.value,
+            password="test-password",
+        )
+
+        from apps.activities.models import Activity
+
+        # Only rows carrying a Salesforce ID ever reach this queue.
+        self.waiting = Activity.objects.create(
+            school=self.school,
+            fy="2026",
+            quarter="Q2",
+            activity_type="school_visit",
+            status="awaiting_ia_verification",
+            salesforce_activity_id="SFA-00099",
+        )
+        self.other = Activity.objects.create(
+            school=self.other_school,
+            fy="2026",
+            quarter="Q2",
+            activity_type="school_visit",
+            status="awaiting_ia_verification",
+            salesforce_activity_id="SFA-00100",
+        )
+
+    def _queue(self, **params):
+        self.client.force_login(self.ia)
+        return self.client.get("/ia/verification/", params).content.decode()
+
+    def test_the_queue_can_be_searched_by_salesforce_id(self):
+        """The one value that always identifies a queue row exactly."""
+        body = self._queue(q="SFA-00099")
+        self.assertIn("Semuto Parents Primary", body)
+        self.assertNotIn("Kapeeka Modern Primary", body)
+
+    def test_the_queue_can_be_searched_by_school_and_district(self):
+        for label, query in (
+            ("school name", "Semuto Parents"),
+            ("school id", "SC-QUEUE-1"),
+        ):
+            with self.subTest(field=label):
+                self.assertIn("Semuto Parents Primary", self._queue(q=query))
+
+        # District holds both schools, so it must narrow to neither.
+        both = self._queue(q="Nakaseke")
+        self.assertIn("Semuto Parents Primary", both)
+        self.assertIn("Kapeeka Modern Primary", both)
+
+    def test_a_query_matching_nothing_empties_the_queue(self):
+        body = self._queue(q="zzz-no-such-record")
+        self.assertNotIn("Semuto Parents Primary", body)
+        self.assertNotIn("Kapeeka Modern Primary", body)

@@ -142,6 +142,40 @@ def ia_verification_queue_view(request):
     if status_filter:
         filtered_qs = filtered_qs.filter(status=status_filter)
 
+    # Free-text search over the queue, applied after every filter above so it
+    # only ever narrows. The queue had twelve dropdowns and no way to type, yet
+    # the thing an IA reviewer is usually handed is a single identifier — a
+    # Salesforce ID from an email, or a school name from a phone call — and
+    # neither could be typed anywhere on the page.
+    #
+    # The Salesforce ID is the reason this matters most: every row in this
+    # queue is guaranteed to have one (see the exclude() above), so it is the
+    # one value that always identifies a record exactly.
+    search_q = (request.GET.get("q") or "").strip()
+    if search_q:
+        # responsible_staff_id is a dual id-space field: it holds a StaffProfile
+        # id on some rows and a User id on others. Resolving names through only
+        # one of those spaces would quietly match half the queue and look like
+        # it worked, so both are resolved and unioned.
+        from apps.accounts.models import StaffProfile, User
+
+        staff_name_ids = set(
+            StaffProfile.objects.filter(
+                user__name__icontains=search_q
+            ).values_list("id", flat=True)
+        ) | set(
+            User.objects.filter(name__icontains=search_q).values_list(
+                "id", flat=True
+            )
+        )
+        filtered_qs = filtered_qs.filter(
+            Q(school__name__icontains=search_q)
+            | Q(school__school_id__icontains=search_q)
+            | Q(salesforce_activity_id__icontains=search_q)
+            | Q(school__district__name__icontains=search_q)
+            | Q(responsible_staff_id__in=staff_name_ids)
+        )
+
     # The queue KPIs, on the population the table below actually shows.
     waiting_count = filtered_qs.count()
     ssa_pending = filtered_qs.filter(ssa_collection_expected=True).count()
@@ -262,6 +296,19 @@ def ia_verification_queue_view(request):
         "queue": serialized_queue,
         "page_obj": page_obj,
         "kpi_strip_items": kpi_items,
+        # The queue offered twelve dropdowns and nowhere to type. A reviewer is
+        # usually handed one identifier — a Salesforce ID, a school name — and
+        # had to translate it into filter selections to find the row.
+        "topbar_search": {
+            "placeholder": "Search verification queue…",
+            "label": "Search the queue by school, School ID, Salesforce ID or owner",
+            "name": "q",
+            "value": search_q,
+            "hx_get": "/ia/verification/",
+            "hx_target": "#queue-table-container",
+            "hx_trigger": "keyup changed delay:250ms, search",
+            "hx_include": "#filters-form",
+        },
         "kpis": {
             "waiting": waiting_count,
             "verified_today": verified_today,
