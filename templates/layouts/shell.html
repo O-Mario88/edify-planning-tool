@@ -229,9 +229,15 @@ aria-label="Messages"
 
 <!-- Contextual Help navigates directly to the full Knowledge Center article for
 the current page. The server resolves the route to a reviewed, role-aware article. -->
+{% comment %}
+Hidden on phones so the search field keeps a usable width. Seven controls
+shared a 375px row and squeezed search to about 100px; contextual help is the
+one of them reachable another way — the Knowledge Center is in the sidebar —
+so it yields its space rather than the control every page depends on.
+{% endcomment %}
 <a
 href="/help/context?for={{ request.path|urlencode }}"
-class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
+class="hidden sm:flex h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] items-center justify-center transition-all"
 title="Help for this page"
 aria-label="Help for this page"
 >
