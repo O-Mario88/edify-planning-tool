@@ -107,16 +107,6 @@ class="school-filters-form space-y-3"
 <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
 </select>
 </div>
-<!-- Region -->
-<div>
-<span class="edify-filter-label">Region</span>
-<select aria-label="Region" name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">All</option>
-{% for r in regions %}
-<option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
-{% endfor %}
-</select>
-</div>
 <!-- District -->
 <div>
 <span class="edify-filter-label">District</span>

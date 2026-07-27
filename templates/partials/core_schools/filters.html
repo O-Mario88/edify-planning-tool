@@ -21,17 +21,6 @@ class="flex flex-wrap items-center justify-between gap-3 edify-surface p-4 round
 </select>
 </div>
 
-<!-- Region -->
-<div class="flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-surface border border-slate-200 shadow-sm">
-<span class="text-slate-400">Region</span>
-<select aria-label="Region" name="region" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
-<option value="All">All Regions</option>
-{% for r in regions %}
-<option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
-{% endfor %}
-</select>
-</div>
-
 <!-- District -->
 <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-2 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">District</span>

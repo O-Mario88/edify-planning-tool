@@ -26,17 +26,6 @@ class="edify-filter-bar flex flex-wrap items-center gap-2.5 text-[12px] font-bol
 </select>
 </div>
 
-<!-- Region / Team Dropdown -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
-<span class="text-[14px] text-slate-400"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
-<span class="edify-filter-label">Region</span>
-<select aria-label="Region" name="region" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
-<option value="">All Regions / Teams</option>
-{% for r in regions %}
-<option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
-{% endfor %}
-</select>
-</div>
 {% comment %}Search moved to the top bar.{% endcomment %}
 
 <!-- Export button opening Export Drawer -->

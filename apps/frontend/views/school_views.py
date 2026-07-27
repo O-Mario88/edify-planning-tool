@@ -206,8 +206,33 @@ def school_directory_view(request):
     # Apply dropdown filters
     filtered_qs = base_qs.order_by("name")
     if q:
+        # The directory's search contract. Name and School ID alone meant a user
+        # who knew a school only by where it sits, who owns it, or which cluster
+        # it belongs to could not find it at all.
+        #
+        # Every term below is either a column on School or a forward FK, so none
+        # of them fan the row out and none of them need distinct() — which
+        # matters here, because distinct() on this queryset would fight the
+        # order_by("name") applied above.
+        #
+        # cluster_id is a CharField rather than a relation, so cluster names are
+        # resolved through a subquery instead of a join.
+        # The uploaded_* text columns are searched alongside the structured ones
+        # so schools whose geography never matched a UBOS record stay findable
+        # by the district and sub-county their upload actually named.
         filtered_qs = filtered_qs.filter(
-            Q(name__icontains=q) | Q(school_id__icontains=q)
+            Q(name__icontains=q)
+            | Q(school_id__icontains=q)
+            | Q(district__name__icontains=q)
+            | Q(sub_county__name__icontains=q)
+            | Q(uploaded_district_text__icontains=q)
+            | Q(uploaded_sub_county_text__icontains=q)
+            | Q(account_owner_name_raw__icontains=q)
+            | Q(
+                cluster_id__in=Cluster.objects.filter(name__icontains=q).values(
+                    "id"
+                )
+            )
         )
     if region_id:
         filtered_qs = filtered_qs.filter(region_id=region_id)

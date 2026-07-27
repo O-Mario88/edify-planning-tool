@@ -21,7 +21,6 @@ def _analytics_filters(request):
     return {
         "fy": request.GET.get("fy"),
         "quarter": request.GET.get("quarter"),
-        "region": request.GET.get("region"),
         "district": request.GET.get("district"),
         "cluster": request.GET.get("cluster"),
         "staff": request.GET.get("staff"),

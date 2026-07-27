@@ -193,10 +193,21 @@ class PlanningDashboardService:
                 activities__deleted_at__isnull=True,
             ).distinct()
         if search_q:
+            # Same field set as the School Directory, so a term that finds a
+            # school in one place finds it in the other. Planning previously
+            # stopped at district, so a lead who navigates by sub-county or by
+            # who owns the school came up empty on a school that was there.
+            #
+            # All forward relations or plain columns: no fan-out, so no
+            # distinct() is needed and the ordering above survives.
             schools_qs = schools_qs.filter(
                 Q(name__icontains=search_q)
                 | Q(school_id__icontains=search_q)
                 | Q(district__name__icontains=search_q)
+                | Q(sub_county__name__icontains=search_q)
+                | Q(uploaded_district_text__icontains=search_q)
+                | Q(uploaded_sub_county_text__icontains=search_q)
+                | Q(account_owner_name_raw__icontains=search_q)
             )
 
         # Get active/scheduled school IDs in this FY
