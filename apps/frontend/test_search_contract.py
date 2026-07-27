@@ -257,3 +257,55 @@ class VerificationQueueSearchContractTest(TestCase):
         body = self._queue(q="zzz-no-such-record")
         self.assertNotIn("Semuto Parents Primary", body)
         self.assertNotIn("Kapeeka Modern Primary", body)
+
+
+class AnalyticsSearchContractTest(TestCase):
+    """Analytics accepted `q` in its query path long before it had a control.
+
+    The traversal it used — responsible_staff__user__name — does not exist on
+    Activity, so every ?q= was a hard 500. Nothing caught it because there was
+    no search box on the page to produce one, which is exactly how a crash this
+    total survives in a query path.
+    """
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Analytics Region")
+        self.district = District.objects.create(
+            name="Wakiso", region=self.region
+        )
+        School.objects.create(
+            school_id="SC-ANALYTICS-1",
+            name="Nansana Progressive Primary",
+            region=self.region,
+            district=self.district,
+        )
+        self.cd = User.objects.create_user(
+            email="analytics-contract-cd@example.org",
+            name="Analytics Contract CD",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="test-password",
+        )
+
+    def test_every_query_shape_renders_instead_of_raising(self):
+        self.client.force_login(self.cd)
+        for label, params in (
+            ("no query", {}),
+            ("empty query", {"q": ""}),
+            ("matching query", {"q": "Nansana"}),
+            ("staff-name query", {"q": "Analytics Contract"}),
+            ("no-match query", {"q": "zzz-no-such-record"}),
+        ):
+            with self.subTest(case=label):
+                response = self.client.get("/analytics", params)
+                self.assertEqual(
+                    response.status_code,
+                    200,
+                    f"/analytics raised on a {label}",
+                )
+
+    def test_the_page_offers_a_search_control_at_all(self):
+        """A backend search with no control is unreachable, not optional."""
+        self.client.force_login(self.cd)
+        body = self.client.get("/analytics").content.decode()
+        self.assertIn("Search analytics records", body)

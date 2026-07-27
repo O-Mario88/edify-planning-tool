@@ -117,13 +117,41 @@ class AnalyticsDashboardService:
             activities_qs = activities_qs.filter(activity_type=activity_type)
         # Search
         if search_q:
+            # Activity has no `responsible_staff` relation — the column is
+            # responsible_staff_id, a CharField holding a StaffProfile id on
+            # some rows and a User id on others. The traversal written here
+            # raised FieldError, so every ?q= on this page was a hard 500. It
+            # never surfaced because the page shipped without a search control
+            # to type into, which is the only reason a crash this total could
+            # sit in the query path unnoticed.
+            #
+            # Both id spaces are resolved and unioned, exactly as the IA queue
+            # does, so a staff name matches whichever space the row was written
+            # in rather than silently matching half of them.
+            # Imported at call time rather than at module scope on purpose:
+            # a `from ... import StaffProfile` inside this branch would make
+            # StaffProfile a local for the whole function, and the untaken
+            # branch would then leave it unbound where the module-level import
+            # is used further down.
+            from apps.accounts.models import User as _User
+
+            staff_name_ids = set(
+                StaffProfile.objects.filter(
+                    user__name__icontains=search_q
+                ).values_list("id", flat=True)
+            ) | set(
+                _User.objects.filter(name__icontains=search_q).values_list(
+                    "id", flat=True
+                )
+            )
+
             schools_qs = schools_qs.filter(
                 Q(name__icontains=search_q) | Q(school_id__icontains=search_q)
             )
             activities_qs = activities_qs.filter(
                 Q(school__name__icontains=search_q)
                 | Q(cluster__name__icontains=search_q)
-                | Q(responsible_staff__user__name__icontains=search_q)
+                | Q(responsible_staff_id__in=staff_name_ids)
             )
             ssa_qs = ssa_qs.filter(school__name__icontains=search_q)
 

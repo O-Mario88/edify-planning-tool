@@ -79,6 +79,21 @@ def analytics_dashboard_view(request):
         "use_dark_sidebar": False,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
         "analytics_layout": analytics_layout,
+        # The service has always narrowed schools, activities and SSA by `q`;
+        # there was simply no control anywhere on the page to type it into, so
+        # the top bar showed the generic global form and a working backend
+        # search sat unreachable. It filters the entity lists behind the
+        # numbers — never the charts' rendered labels.
+        "topbar_search": {
+            "placeholder": "Search analytics records…",
+            "label": "Search analytics by school, School ID, cluster or staff",
+            "name": "q",
+            "value": filters.get("q") or "",
+            "hx_get": "/analytics",
+            "hx_target": "#analytics-kpi-and-content-container",
+            "hx_trigger": "keyup changed delay:300ms, search",
+            "hx_include": "#analytics-filters-form",
+        },
     }
 
     # If HTMX request, render only content cards to swap

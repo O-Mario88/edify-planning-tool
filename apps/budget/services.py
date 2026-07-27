@@ -1197,12 +1197,37 @@ def budget_workspace(principal, query: dict) -> dict:
         if budget_scope == "admin"
         else "Choose another time view or schedule an activity to create its budget automatically."
     )
+    # The budget workspaces carried a box labelled "Search planned activities…"
+    # that was wired to nothing, so it fell through to the platform's global
+    # search and navigated the user off their budget. The rows are already
+    # materialised for the selected period, so the query filters them in place.
+    #
+    # Item and owner are what the table prints, so they are what a typed query
+    # matches. A group that keeps no rows is dropped rather than left as an
+    # empty category heading, and the totals below are deliberately untouched:
+    # they describe the month's budget, not the current search, and a total
+    # that moved with a filter would misreport what was actually committed.
+    search_q = str(query.get("q") or "").strip().casefold()
+    if search_q:
+        narrowed = []
+        for group in formatted_groups:
+            kept = [
+                row
+                for row in group["rows"]
+                if search_q in str(row.get("item", "")).casefold()
+                or search_q in str(row.get("owners", "")).casefold()
+            ]
+            if kept:
+                narrowed.append({**group, "rows": kept})
+        formatted_groups = narrowed
+
     return {
         "fy": fy,
         "anchor": anchor,
         "selected_period": selected_period,
         "selected": selected,
         "comparison": comparison,
+        "q": query.get("q") or "",
         "groups": formatted_groups,
         "program_total": selected_program_total,
         "admin_total": selected_admin_total,

@@ -814,6 +814,7 @@ def fund_allocation_view(request):
             "date": request.GET.get("date"),
             "period": request.GET.get("period"),
             "budget_scope": "country",
+            "q": request.GET.get("q", ""),
         },
     )
     context["use_dark_sidebar"] = True
@@ -1055,6 +1056,7 @@ def country_budget_view(request):
             "date": anchor_raw,
             "period": request.GET.get("period") or "month",
             "budget_scope": "country",
+            "q": request.GET.get("q", ""),
         },
     )
     ctx.update(
@@ -1069,8 +1071,18 @@ def country_budget_view(request):
             ),
         }
     )
+    # Was a bare placeholder, so the shell defaulted to action="/search" and the
+    # box left the budget rather than filtering it.
     ctx["topbar_search"] = {
         "placeholder": "Search planned activities…",
+        "label": "Search planned activities by item or responsible staff",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "action": "/country-budget/",
+        "hidden": [
+            {"name": "fy", "value": fy},
+            {"name": "month", "value": month},
+        ],
     }
     return render(request, "pages/budgets/monthly.html", ctx)
 
