@@ -877,7 +877,6 @@ main :is(
   --legacy-kpi-strip-helper: var(--edify-text-subtle);
   --legacy-kpi-strip-icon: var(--edify-accent);
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)) !important;
   gap: 0.75rem !important;
   min-inline-size: 0 !important;
   margin-block-end: clamp(1rem, 0.8rem + 0.6vw, 1.5rem) !important;
@@ -888,6 +887,53 @@ main :is(
   background: transparent !important;
   box-shadow: none !important;
   isolation: isolate;
+}
+
+/* The auto-fit column count is a FALLBACK, which is what the block above says
+   it is — it exists so a strip that never states a layout still reads as cards
+   rather than a loose pile. It was declared with !important inside that block,
+   so it also overrode the strips that DO state one: the reports page asks for
+   lg:grid-cols-5 and got four columns with the fifth card orphaned on its own
+   row, because 12.5rem minimums only fit four across a 963px container.
+
+   Splitting it out means a page that declares its columns keeps them, and a
+   page that declares nothing still gets the fallback. Stating the counts again
+   here instead would just be the same intent written in two places, waiting to
+   disagree. */
+main :is(
+  .legacy-kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+):not([class*="grid-cols-"]) {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)) !important;
+}
+
+/* The timeline variant opts out of the auto-fit grid above.
+   Those cards are not an unordered set of KPIs — they are one fiscal year read
+   left to right: Jul, Q1, Q2, Mid Year, Q3, Q4, Full Year. An auto-fit grid
+   sized at 12.5rem wrapped the seven of them to four-then-three, which puts
+   Q3 underneath Jul and breaks the only thing the row is for. The template
+   already asks for a single scrollable row; this lets that ask through, and
+   scrolls on narrow screens rather than reflowing the sequence. */
+main .legacy-kpi-strip.legacy-kpi-strip--timeline {
+  display: flex !important;
+  grid-template-columns: none !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+}
+main .legacy-kpi-strip.legacy-kpi-strip--timeline > * {
+  /* Wide enough to hold a period label, its value and the target gauge side by
+     side. Below about this width the gauge and the label fight for the same
+     space: the ring clips at the card edge and "Q1 (Oct - Dec)" breaks across
+     three lines, which is how a row of seven becomes unreadable even when it
+     is correctly in one row. Past seven cards the strip scrolls. */
+  flex: 1 0 12.5rem !important;
+  min-inline-size: 12.5rem !important;
 }
 
 main :is(
