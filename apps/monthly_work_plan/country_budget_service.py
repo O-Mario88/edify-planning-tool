@@ -1051,7 +1051,28 @@ def list_submitted_budgets(principal, filters=None):
                 "version": b.submission_version,
             }
         )
-    return {"fy": fy, "rows": rows}
+
+    # The page carried a box labelled "Search submitted budgets…" that was
+    # wired to nothing, so it fell through to the platform's global search and
+    # navigated the user off the page entirely — a control that named a dataset
+    # it never queried.
+    #
+    # The rows are a small, already-materialised list for one FY, so this
+    # filters them in place rather than adding a second database round trip.
+    # Month label and status label are what the page actually displays, so they
+    # are what a typed query is matched against.
+    search_q = str(filters.get("q") or "").strip().casefold()
+    if search_q:
+        rows = [
+            row
+            for row in rows
+            if search_q in row["month_label"].casefold()
+            or search_q in str(row["fy"]).casefold()
+            or search_q in row["status_label"].casefold()
+            or search_q in row["month_key"].casefold()
+        ]
+
+    return {"fy": fy, "rows": rows, "q": filters.get("q") or ""}
 
 
 def get_submission_detail(principal, budget_id):

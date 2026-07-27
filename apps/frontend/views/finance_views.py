@@ -1118,10 +1118,24 @@ def country_budget_history_view(request):
     from apps.monthly_work_plan.country_budget_service import list_submitted_budgets
 
     ctx = list_submitted_budgets(
-        request.user, {"fy": request.GET.get("fy") or get_operational_fy()}
+        request.user,
+        {
+            "fy": request.GET.get("fy") or get_operational_fy(),
+            "q": request.GET.get("q", ""),
+        },
     )
     ctx["workspace_title"] = "Monthly Fund Request"
-    ctx["topbar_search"] = {"placeholder": "Search submitted budgets…"}
+    # This dict used to carry a placeholder and nothing else, which meant the
+    # shell fell back to action="/search" and the box navigated away to the
+    # global search instead of filtering the list it sat above.
+    ctx["topbar_search"] = {
+        "placeholder": "Search submitted budgets…",
+        "label": "Search submitted budgets by month, FY or status",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "action": "/country-budget/history",
+        "hidden": [{"name": "fy", "value": ctx.get("fy", "")}],
+    }
     return render(request, "pages/finance/country_budget_history.html", ctx)
 
 
