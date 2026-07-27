@@ -30,6 +30,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
+from apps.hr import priority_cascade
 from apps.hr.models import (
     PerformancePriority,
     PerformancePriorityMilestone,
@@ -170,6 +171,15 @@ def set_priorities(review_id: str, principal, priorities: list[dict]):
 
     Weights must total 100 — a weighted assessment whose weights do not sum
     is not a weighted assessment.
+
+    Priorities inherited from a MANDATORY strategic priority are not the
+    employee's to write. They are carried through this call untouched except
+    for the fields the employee genuinely owns — milestones, support needed,
+    measures of success, baseline — because the cascade's whole point is that
+    leadership decides what is carried and the pair decides how. Submitting a
+    list that drops one, or that re-points its metric, is refused rather than
+    silently honoured: a rebuild-from-payload write path is exactly how a
+    mandatory commitment disappears without anyone deciding to remove it.
     """
     review = get_for_actor(review_id, principal)
     if not (_is_owner(review, principal) or _role(principal) in _HR_ROLES):
@@ -188,22 +198,53 @@ def set_priorities(review_id: str, principal, priorities: list[dict]):
     if total_weight != 100:
         raise BadRequest(f"Priority weights must total 100 (currently {total_weight}).")
 
-    review.priorities.all().delete()
+    protected = {
+        p.id: p for p in review.priorities.filter(is_mandatory=True).select_related()
+    }
+    submitted_ids = {str(p.get("id")) for p in priorities if p.get("id")}
+    dropped = [p for pid, p in protected.items() if pid not in submitted_ids]
+    if dropped:
+        # Raised through the cascade so the wording — and the rule — live in
+        # one place rather than being restated at every write path.
+        priority_cascade.assert_removable(dropped[0])
+
+    review.priorities.exclude(id__in=protected).delete()
     for i, p in enumerate(priorities, start=1):
         outcome = (p.get("outcome_statement") or "").strip()
         if not outcome:
             raise BadRequest("Every priority needs an outcome statement.")
-        priority = PerformancePriority.objects.create(
-            review=review,
-            sequence=i,
-            outcome_statement=outcome,
-            strategic_alignment=p.get("strategic_alignment") or "",
-            measures_of_success=p.get("measures_of_success") or "",
-            baseline=p.get("baseline") or "",
-            target=p.get("target") or "",
-            weight=int(p.get("weight") or 0),
-            support_needed=p.get("support_needed") or "",
-        )
+        existing = protected.get(str(p.get("id") or ""))
+        if existing is not None:
+            priority_cascade.assert_metric_unchanged(existing, p.get("metric_key"))
+            existing.sequence = i
+            existing.measures_of_success = p.get("measures_of_success") or ""
+            existing.baseline = p.get("baseline") or ""
+            existing.support_needed = p.get("support_needed") or ""
+            existing.weight = int(p.get("weight") or 0)
+            existing.save(
+                update_fields=[
+                    "sequence",
+                    "measures_of_success",
+                    "baseline",
+                    "support_needed",
+                    "weight",
+                    "updated_at",
+                ]
+            )
+            priority = existing
+            priority.milestones.all().delete()
+        else:
+            priority = PerformancePriority.objects.create(
+                review=review,
+                sequence=i,
+                outcome_statement=outcome,
+                strategic_alignment=p.get("strategic_alignment") or "",
+                measures_of_success=p.get("measures_of_success") or "",
+                baseline=p.get("baseline") or "",
+                target=p.get("target") or "",
+                weight=int(p.get("weight") or 0),
+                support_needed=p.get("support_needed") or "",
+            )
         for m in p.get("milestones") or []:
             PerformancePriorityMilestone.objects.create(
                 priority=priority,

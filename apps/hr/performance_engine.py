@@ -577,6 +577,16 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
                 ),
                 target=f"100% of {denom}" if denom else "As agreed",
             )
+        # Strategy first, role template second. A published RVP/CD priority
+        # is a contract the individual agreement inherits, so it is rendered
+        # before anything else and carries priority_layer="org" — the layer
+        # the employee may not remove. Where no strategy has been published
+        # for the FY the cascade adds nothing and the role template stands
+        # alone, which is exactly the behaviour that existed before it.
+        from apps.hr import priority_cascade
+
+        priority_cascade.apply_to_review(review, role, denominators)
+
         # The six named Edify Values, seeded as MANUAL commitment rows —
         # commitments and reflections only, no counts anywhere near them.
         from apps.hr.models import ValueCommitment
