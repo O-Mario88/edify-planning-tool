@@ -804,6 +804,7 @@ class CanonicalMetricTest(CascadeTestCase):
             StaffSupervisorAssignment,
         )
         from apps.hr.performance_engine import _supervised_school_ids
+        from apps.geography.models import District, Region
         from apps.schools.models import School
 
         pl_user = _user("pl@cascade.test", "Program Lead")
@@ -811,8 +812,16 @@ class CanonicalMetricTest(CascadeTestCase):
         cceo = StaffProfile.objects.create(user=self.cceo, title="CCEO")
         StaffSupervisorAssignment.objects.create(supervisee=cceo, supervisor=pl)
 
-        school = School.objects.create(name="Northern Primary", school_id="NP-001")
-        StaffSchoolAssignment.objects.create(staff=cceo, school=school)
+        region = Region.objects.create(name="Cascade Region")
+        district = District.objects.create(name="Cascade District", region=region)
+        school = School.objects.create(
+            name="Northern Primary",
+            school_id="NP-001",
+            region_id=region.id,
+            district_id=district.id,
+            school_type="client",
+        )
+        StaffSchoolAssignment.objects.create(staff=cceo, school_id=school.id)
 
         self.assertEqual(_supervised_school_ids(pl), [school.id])
         self.assertEqual(
