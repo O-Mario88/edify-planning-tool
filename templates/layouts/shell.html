@@ -85,8 +85,15 @@ class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:
 </svg>
 </button>
 
-<!-- Search bar input from mockup -->
-<search class="max-w-md w-full relative hidden sm:block">
+{% comment %}
+Visible at every width. This was `hidden sm:block`, so the platform's search
+simply did not exist below 640px — and once the top bar became the single
+canonical control and the duplicate page-body forms came out, that left a
+phone with no way to search those pages at all. The date block beside it is
+already `hidden md:flex`, so the room this needs is room the row was giving
+away.
+{% endcomment %}
+<search class="max-w-md w-full relative block">
 {% comment %}
 The magnifier is a submit control, not an ornament. It used to be a
 pointer-events-none div, so the only way to run a search anywhere in the
