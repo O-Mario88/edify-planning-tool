@@ -11,7 +11,7 @@
   <div class="grid grid-cols-2 gap-3">
     <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Completed</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ cceo.completed }}</p></div>
     <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ cceo.schools_managed }}</p></div>
-    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Avg SSA</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if cceo.avg_ssa is not None %}{{ cceo.avg_ssa|floatformat:0 }}%{% else %}—{% endif %}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Avg SSA</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if cceo.avg_ssa is not None %}{{ cceo.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</p></div>
     <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Backlog</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ cceo.backlog }}</p></div>
   </div>
   <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-2">At-risk schools in this CCEO's portfolio</p>
@@ -35,13 +35,13 @@
 
   {% elif kind == 'cluster' and cluster %}
   <div class="grid grid-cols-3 gap-3">
-    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Avg SSA</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:0 }}%{% else %}—{% endif %}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Avg SSA</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</p></div>
     <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Visits</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ cluster.visits_done }}/{{ cluster.visits_planned }}</p></div>
     <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Trainings</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ cluster.trainings_done }}/{{ cluster.trainings_planned }}</p></div>
   </div>
   <div class="rounded-surface edify-primary-soft border edify-primary-border p-3">
     <p class="edify-text-caption font-bold edify-primary-text">Recommended: {{ cluster.next_action }}</p>
-    <p class="edify-text-caption edify-primary-text mt-0.5">Weakest intervention: {{ cluster.weakest_label }}{% if cluster.weakest_pct is not None %} ({{ cluster.weakest_pct|floatformat:0 }}%){% endif %}</p>
+    <p class="edify-text-caption edify-primary-text mt-0.5">Weakest intervention: {{ cluster.weakest_label }}{% if cluster.weakest_score is not None %} ({{ cluster.weakest_score|floatformat:1 }}/10){% endif %}</p>
   </div>
   {% include "partials/analytics/pl/_school_rows.html" with schools=schools %}
 

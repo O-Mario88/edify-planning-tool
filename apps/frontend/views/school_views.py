@@ -11,12 +11,15 @@ from django.db import transaction
 from django.db.models import Q, Count
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
+from django.utils.html import escape
+from urllib.parse import urlencode
 
 from apps.schools.models import School
-from apps.geography.models import Region, District, SubCounty
+from apps.geography.models import Region, District, Parish, SubCounty
 from apps.core.enums import SchoolType, PlanningReadiness
 from apps.schools.upload_service import upload_school_file
 from apps.ssa.upload_service import upload_ssa_file
+from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
@@ -27,6 +30,8 @@ from apps.clusters.services import (
     set_school_cluster_membership,
 )
 from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.permissions import has_permission, render_access_denied
+from apps.core.rbac import Permission
 from apps.projects.models import (
     OPEN_PROJECT_STATUSES,
     Project,
@@ -34,6 +39,56 @@ from apps.projects.models import (
 )
 from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.frontend.view_models import SchoolDirectoryViewModel
+
+
+def _may_upload_schools(request) -> bool:
+    return has_permission(request.user, Permission.SCHOOL_UPLOAD.value)
+
+
+def _may_upload_ssa(request) -> bool:
+    return has_permission(request.user, Permission.SSA_UPLOAD.value)
+
+
+def _create_manual_school(request) -> School:
+    """Validate and persist one school through the canonical school service."""
+    district_id = request.POST.get("district_id", "").strip()
+    district = (
+        District.objects.select_related("region").filter(id=district_id).first()
+        if district_id
+        else None
+    )
+    if district is None:
+        raise BadRequest("Select a valid district.")
+
+    with transaction.atomic():
+        school = create_school(
+            {
+                "schoolId": request.POST.get("school_id", ""),
+                "name": request.POST.get("name", ""),
+                "regionId": district.region_id,
+                "districtId": district.id,
+                "schoolType": request.POST.get("school_type", SchoolType.CLIENT),
+                "enrollment": request.POST.get("enrollment", ""),
+            },
+            request.user,
+        )
+
+        cluster_id = request.POST.get("cluster_id", "").strip()
+        if cluster_id:
+            cluster = Cluster.objects.filter(
+                id=cluster_id,
+                deleted_at__isnull=True,
+                status="active",
+            ).first()
+            if cluster is None:
+                raise BadRequest("Select a valid active cluster.")
+            set_school_cluster_membership(
+                school,
+                cluster,
+                request.user.user_id,
+            )
+
+    return school
 
 
 def _get_school_intelligence_data(school):
@@ -484,6 +539,8 @@ def school_directory_view(request):
         "can_toggle_core": user.active_role
         in ("Admin", "CountryDirector", "ImpactAssessment"),
         "can_schedule": RolePermissionService.can_schedule_activity(user),
+        "can_upload_schools": _may_upload_schools(request),
+        "can_add_ssa": _may_upload_ssa(request),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -1371,32 +1428,27 @@ def bulk_match_staff_view(request):
 
 @require_page_permission("school_directory")
 def add_school_view(request):
-    if request.method == "POST":
-        school_id = request.POST.get("school_id", "").strip()
-        name = request.POST.get("name", "").strip()
-        district_id = request.POST.get("district_id", "").strip()
-        school_type = request.POST.get("school_type", "client").strip()
-        enrollment_str = request.POST.get("enrollment", "").strip()
+    if request.method != "POST":
+        return redirect("/schools")
+    if not _may_upload_schools(request):
+        return render_access_denied(
+            request,
+            "Only Impact Assessment and administrators may add schools.",
+        )
 
-        if school_id and name and district_id:
-            district = get_object_or_404(District, id=district_id)
-            enrollment = int(enrollment_str) if enrollment_str.isdigit() else 0
+    try:
+        school = _create_manual_school(request)
+    except BadRequest as exc:
+        messages.error(request, str(exc))
+        return redirect("/schools")
 
-            school = School.objects.create(
-                school_id=school_id,
-                name=name,
-                district=district,
-                region=district.region,
-                school_type=school_type,
-                enrollment=enrollment,
-            )
-            messages.success(
-                request,
-                f"Successfully created school '{school.name}' ({school.school_id}).",
-            )
-        else:
-            messages.error(request, "Failed to create school: missing required fields.")
-
+    messages.success(
+        request,
+        f"School '{school.name}' ({school.school_id}) was added to the directory.",
+    )
+    if request.POST.get("next") == "ssa" and _may_upload_ssa(request):
+        query = urlencode({"school_id": school.school_id})
+        return local_redirect(f"/ssa/manual/?{query}")
     return redirect("/schools")
 
 
@@ -1487,88 +1539,241 @@ def school_import_result_view(request, batch_id):
 
 @require_page_permission("school_directory")
 def school_edit_drawer_view(request, school_id):
-    from apps.schools.models import School
-    from apps.clusters.models import Cluster
-    from apps.accounts.models import StaffProfile
-    from django.shortcuts import render
-    from django.contrib import messages
-    from django.http import HttpResponse
-
     school = get_scoped_object_or_404(
-        School, request.user, id=school_id, deleted_at__isnull=True
+        School.objects.select_related("district", "sub_county", "parish"),
+        request.user,
+        id=school_id,
+        deleted_at__isnull=True,
     )
-    clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-    staff = StaffProfile.objects.filter(user__is_active=True).select_related("user")
+    clusters = (
+        Cluster.objects.filter(
+            deleted_at__isnull=True,
+            status="active",
+            district_id=school.district_id,
+        )
+        .select_related("district")
+        .order_by("name")
+    )
+    staff = (
+        StaffProfile.objects.filter(user__is_active=True)
+        .select_related("user")
+        .order_by("user__name")
+    )
+    sub_counties = SubCounty.objects.filter(district_id=school.district_id).order_by(
+        "name"
+    )
+    parishes = (
+        Parish.objects.filter(sub_county__district_id=school.district_id)
+        .select_related("sub_county")
+        .order_by("sub_county__name", "name")
+    )
+
+    def drawer_context(validation_error=None):
+        return {
+            "school": school,
+            "clusters": clusters,
+            "staff": staff,
+            "sub_counties": sub_counties,
+            "parishes": parishes,
+            "validation_error": validation_error,
+        }
+
+    def optional_float(field, label, low, high):
+        raw = (request.POST.get(field) or "").strip()
+        if not raw:
+            return None
+        try:
+            value = float(raw)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest(f"{label} must be a valid number.") from exc
+        import math
+
+        if not math.isfinite(value) or not low <= value <= high:
+            raise BadRequest(f"{label} must be between {low} and {high}.")
+        return value
 
     if request.method == "POST":
-        school.name = request.POST.get("name", school.name).strip()
-        school.school_phone = request.POST.get(
-            "school_phone", school.school_phone
-        ).strip()
-        school.primary_contact_name = request.POST.get(
-            "primary_contact_name", school.primary_contact_name
-        ).strip()
-        school.director_name = request.POST.get(
-            "director_name", school.director_name
-        ).strip()
-        school.headteacher_name = request.POST.get(
-            "headteacher_name", school.headteacher_name
-        ).strip()
-        school.shipping_address = request.POST.get(
-            "shipping_address", school.shipping_address
-        ).strip()
+        try:
+            name = (request.POST.get("name") or "").strip()
+            if not name:
+                raise BadRequest("School name is required.")
 
-        enroll_raw = request.POST.get("enrollment")
-        if enroll_raw:
-            try:
-                school.enrollment = int(enroll_raw)
-            except ValueError:
-                pass
+            enroll_raw = (request.POST.get("enrollment") or "").strip()
+            enrollment = None
+            if enroll_raw:
+                try:
+                    enrollment = int(enroll_raw)
+                except (TypeError, ValueError) as exc:
+                    raise BadRequest("Enrolment must be a whole number.") from exc
+                if enrollment <= 0:
+                    raise BadRequest("Enrolment must be greater than zero.")
+                if enrollment > 2_147_483_647:
+                    raise BadRequest("Enrolment is too large.")
 
-        cluster_id = request.POST.get("cluster_id")
-        new_cluster = None
-        if cluster_id:
-            new_cluster = get_object_or_404(
-                Cluster, id=cluster_id, deleted_at__isnull=True
+            latitude = optional_float("latitude", "Latitude", -90, 90)
+            longitude = optional_float("longitude", "Longitude", -180, 180)
+            if (latitude is None) != (longitude is None):
+                raise BadRequest(
+                    "Enter both latitude and longitude, or leave both blank."
+                )
+
+            sub_county_id = (request.POST.get("sub_county_id") or "").strip()
+            sub_county = None
+            if sub_county_id:
+                sub_county = SubCounty.objects.filter(
+                    id=sub_county_id,
+                    district_id=school.district_id,
+                ).first()
+                if sub_county is None:
+                    raise BadRequest(
+                        "Select a sub-county within the school's district."
+                    )
+
+            parish_id = (request.POST.get("parish_id") or "").strip()
+            parish = None
+            if parish_id:
+                if sub_county is None:
+                    raise BadRequest("Select a sub-county before selecting a parish.")
+                parish = Parish.objects.filter(
+                    id=parish_id,
+                    sub_county_id=sub_county.id,
+                ).first()
+                if parish is None:
+                    raise BadRequest("Select a parish within the selected sub-county.")
+
+            cluster_id = (request.POST.get("cluster_id") or "").strip()
+            new_cluster = None
+            if cluster_id:
+                new_cluster = Cluster.objects.filter(
+                    id=cluster_id,
+                    district_id=school.district_id,
+                    deleted_at__isnull=True,
+                    status="active",
+                ).first()
+                if new_cluster is None:
+                    raise BadRequest(
+                        "Select an active cluster within the school's district."
+                    )
+        except BadRequest as exc:
+            return render(
+                request,
+                "partials/schools/edit_drawer.html",
+                drawer_context(str(exc.detail)),
             )
 
-        owner_id = request.POST.get("account_owner_id")
-        if owner_id:
-            school.account_owner_id = owner_id
-            staff_owner = StaffProfile.objects.filter(id=owner_id).first()
-            if staff_owner:
-                school.account_owner_name_raw = staff_owner.user.name
-                school.account_owner_status = "matched"
-                from apps.accounts.models import StaffSchoolAssignment
+        previous = {
+            "enrollment": school.enrollment,
+            "sub_county_id": school.sub_county_id,
+            "parish_id": school.parish_id,
+            "latitude": school.latitude,
+            "longitude": school.longitude,
+        }
 
-                StaffSchoolAssignment.objects.get_or_create(
-                    school_id=school.id, staff_id=owner_id
+        school.name = name
+        school.school_phone = (request.POST.get("school_phone") or "").strip() or None
+        school.primary_contact_name = (
+            request.POST.get("primary_contact_name") or ""
+        ).strip() or None
+        school.director_name = (request.POST.get("director_name") or "").strip() or None
+        school.headteacher_name = (
+            request.POST.get("headteacher_name") or ""
+        ).strip() or None
+        school.shipping_address = (
+            request.POST.get("shipping_address") or ""
+        ).strip() or None
+        if school.enrollment != enrollment:
+            from django.utils import timezone
+
+            school.last_enrollment_date = (
+                timezone.localdate() if enrollment is not None else None
+            )
+        school.enrollment = enrollment
+        school.sub_county = sub_county
+        school.parish = parish
+        school.latitude = latitude
+        school.longitude = longitude
+
+        owner_id = (request.POST.get("account_owner_id") or "").strip()
+        if owner_id:
+            staff_owner = (
+                StaffProfile.objects.filter(
+                    id=owner_id,
+                    user__is_active=True,
                 )
+                .select_related("user")
+                .first()
+            )
+            if staff_owner is None:
+                return render(
+                    request,
+                    "partials/schools/edit_drawer.html",
+                    drawer_context("Select a valid active account owner."),
+                )
+            school.account_owner_id = owner_id
+            school.account_owner_name_raw = staff_owner.user.name
+            school.account_owner_status = "matched"
         else:
             school.account_owner_id = None
+            school.account_owner_name_raw = None
             school.account_owner_status = "pending"
 
         with transaction.atomic():
             school.save()
-            set_school_cluster_membership(school, new_cluster, request.user.user_id)
+            if owner_id:
+                StaffSchoolAssignment.objects.get_or_create(
+                    school_id=school.id,
+                    staff_id=owner_id,
+                )
+            school = set_school_cluster_membership(
+                school,
+                new_cluster,
+                request.user.user_id,
+            )
+
+        current = {
+            "enrollment": school.enrollment,
+            "sub_county_id": school.sub_county_id,
+            "parish_id": school.parish_id,
+            "latitude": school.latitude,
+            "longitude": school.longitude,
+        }
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="school.profile_updated",
+            subject_kind="school",
+            subject_id=school.id,
+            actor_id=request.user.user_id,
+            actor_role=request.user.active_role,
+            payload={
+                "changed_fields": [
+                    field
+                    for field, value in current.items()
+                    if previous[field] != value
+                ]
+            },
+        )
+
         messages.success(
             request,
-            f"School '{school.name}' successfully updated and quality score recalculated!",
+            f"School '{school.name}' updated. Data quality was recalculated.",
         )
         return HttpResponse("<script>window.location.reload();</script>")
 
-    context = {"school": school, "clusters": clusters, "staff": staff}
-    return render(request, "partials/schools/edit_drawer.html", context)
+    return render(
+        request,
+        "partials/schools/edit_drawer.html",
+        drawer_context(),
+    )
 
 
 @require_page_permission("school_directory")
 def school_onboard_drawer_view(request):
-    from apps.geography.models import District
-    from apps.clusters.models import Cluster
-    from django.shortcuts import render, get_object_or_404
-    from django.http import HttpResponse
-    from django.contrib import messages
-    from apps.schools.models import School
+    if not _may_upload_schools(request):
+        return render_access_denied(
+            request,
+            "Only Impact Assessment and administrators may add schools.",
+        )
 
     districts = District.objects.all().order_by("name")
     clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
@@ -1577,48 +1782,34 @@ def school_onboard_drawer_view(request):
     cluster_id = request.GET.get("cluster_id", "").strip()
 
     if request.method == "POST":
-        school_id = request.POST.get("school_id", "").strip()
-        name = request.POST.get("name", "").strip()
-        district_id = request.POST.get("district_id", "").strip()
-        school_type = request.POST.get("school_type", "client").strip()
-        enrollment_str = request.POST.get("enrollment", "").strip()
-        target_cluster_id = request.POST.get("cluster_id", "").strip()
-
-        if school_id and name and district_id:
-            district = get_object_or_404(District, id=district_id)
-            enrollment = int(enrollment_str) if enrollment_str.isdigit() else 0
-
-            # Create school
-            school = School.objects.create(
-                school_id=school_id,
-                name=name,
-                district=district,
-                region=district.region,
-                school_type=school_type,
-                enrollment=enrollment,
-            )
-
-            # If cluster assignment was selected, assign it
-            if target_cluster_id:
-                cluster = get_object_or_404(Cluster, id=target_cluster_id)
-                set_school_cluster_membership(school, cluster, request.user.user_id)
-
-            messages.success(
-                request,
-                f"Successfully created and onboarded school '{school.name}' ({school.school_id}).",
-            )
-
-            # Reload page to refresh the checklist/directory
-            return HttpResponse("<script>window.location.reload();</script>")
-        else:
+        try:
+            school = _create_manual_school(request)
+        except BadRequest as exc:
             return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Failed to create school: missing required fields.</div>',
+                (
+                    '<div role="alert" class="p-3 bg-rose-50 text-rose-700 '
+                    'rounded-surface text-[12px] font-bold">'
+                    f"{escape(str(exc))}</div>"
+                ),
                 status=400,
             )
+
+        messages.success(
+            request,
+            f"School '{school.name}' ({school.school_id}) was added to the directory.",
+        )
+        if request.POST.get("next") == "ssa" and _may_upload_ssa(request):
+            query = urlencode({"school_id": school.school_id})
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = f"/ssa/manual/?{query}"
+            return response
+
+        return HttpResponse("<script>window.location.reload();</script>")
 
     context = {
         "districts": districts,
         "clusters": clusters,
         "pre_cluster_id": cluster_id,
+        "can_add_ssa": _may_upload_ssa(request),
     }
     return render(request, "partials/schools/onboard_drawer.html", context)

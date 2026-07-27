@@ -202,7 +202,7 @@ def upload_ssa_file(file, principal) -> dict:
                         if not has_prev_db and not has_prev_batch:
                             validation_errors.append(
                                 f"Cannot upload current FY ({current_fy}) SSA — "
-                                f"upload the last FY ({prev_fy}) baseline first "
+                                f"upload the last FY ({prev_fy}) SSA score first "
                                 f"(set SSA Year to '{prev_fy}' or 'last')."
                             )
                             status = "blocked"

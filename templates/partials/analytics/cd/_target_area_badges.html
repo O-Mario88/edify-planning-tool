@@ -1,0 +1,18 @@
+<div class="flex min-w-[250px] flex-wrap justify-end gap-1">
+  {% for area in areas %}
+  <span
+    class="inline-flex items-center gap-1 rounded-pill border px-1.5 py-0.5 edify-text-caption font-bold tabular-nums
+      {% if area.tone == 'success' %}border-emerald-100 bg-emerald-50 text-emerald-700
+      {% elif area.tone == 'info' %}border-sky-100 bg-sky-50 text-sky-700
+      {% elif area.tone == 'warning' %}border-amber-100 bg-amber-50 text-amber-700
+      {% elif area.tone == 'danger' %}border-rose-100 bg-rose-50 text-rose-700
+      {% else %}border-slate-100 bg-slate-50 text-slate-400{% endif %}"
+    title="{{ area.label }}: {% if area.pct is not None %}{{ area.pct }}% ({{ area.achieved }}/{{ area.target }}){% else %}target not set{% endif %}"
+    aria-label="{{ area.label }}: {% if area.pct is not None %}{{ area.pct }} percent, {{ area.achieved }} of {{ area.target }}{% else %}target not set{% endif %}">
+    <span class="font-semibold opacity-75">{{ area.short_label }}</span>
+    <span>{% if area.pct is not None %}{{ area.pct }}%{% else %}—{% endif %}</span>
+  </span>
+  {% empty %}
+  <span class="edify-text-caption font-semibold text-slate-400">No target areas configured</span>
+  {% endfor %}
+</div>

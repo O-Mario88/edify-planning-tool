@@ -2,7 +2,7 @@
 <div class="space-y-5">
 
   {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
-  <div class="flex flex-col lg:flex-row items-stretch gap-2">
+  <div class="legacy-kpi-strip legacy-kpi-strip--timeline flex flex-col lg:flex-row items-stretch gap-2" aria-label="Target period progression">
     {% for c in period_cards %}
     <div class="flex-1 edify-surface rounded-surface border {% if c.current %}edify-primary-border ring-2 edify-primary-ring{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
       <div class="flex items-center justify-between">
@@ -36,7 +36,7 @@
   </div>
 
   {# ── Five target-area cards ─────────────────────────────────────────────── #}
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+  <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Target area summary">
     {% for a in area_cards %}
     <div hx-get="/my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}"
          hx-target="#drawer-container" hx-swap="innerHTML"
@@ -110,7 +110,7 @@
   </div>
 
   {# ── Charts + focus row ─────────────────────────────────────────────────── #}
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
     <div class="lg:col-span-5 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2"
          x-data="{
            chart: null,
@@ -194,7 +194,7 @@
     <div class="flex items-center justify-between pb-2 border-b border-slate-50">
       <div>
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Core School Tracker</h2>
-        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">The core package per school — baseline assessment, 4 visits and 4 trainings.</p>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">The core package per school — SSA assessment, 4 visits and 4 trainings.</p>
       </div>
       {% if core_tracker_data.total %}<a href="/core-schools" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">{% if core_tracker_data.total > 12 %}All {{ core_tracker_data.total }} core schools →{% else %}Open Core Schools →{% endif %}</a>{% endif %}
     </div>
@@ -204,7 +204,7 @@
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
             <th class="py-2 px-3">Core School</th>
-            <th class="py-2 px-3 text-center">Baseline</th>
+            <th class="py-2 px-3 text-center">Average SSA Score</th>
             <th class="py-2 px-3">Visits (4)</th>
             <th class="py-2 px-3">Trainings (4)</th>
             <th class="py-2 px-3 text-center">Package</th>
@@ -215,7 +215,7 @@
           {% for c in core_tracker_data.rows %}
           <tr class="hover:bg-slate-50/50">
             <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.school }}</td>
-            <td class="py-2.5 px-3 text-center tabular-nums {% if c.baseline == None %}text-slate-300{% else %}text-slate-700{% endif %}">{% if c.baseline != None %}{{ c.baseline|floatformat:1 }}/10{% else %}—{% endif %}</td>
+            <td class="py-2.5 px-3 text-center tabular-nums {% if c.average_ssa_score == None %}text-slate-300{% else %}text-slate-700{% endif %}">{% if c.average_ssa_score != None %}{{ c.average_ssa_score|floatformat:1 }}/10{% else %}—{% endif %}</td>
             <td class="py-2.5 px-3">
               <span class="inline-flex items-center gap-1">
                 {% for done in c.visit_dots %}<span class="h-2.5 w-2.5 rounded-pill {% if done %}bg-teal-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}

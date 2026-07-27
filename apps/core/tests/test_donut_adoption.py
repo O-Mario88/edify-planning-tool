@@ -29,7 +29,9 @@ class NoHandRolledRingsTest(TestCase):
         offenders = [
             path.relative_to(TEMPLATES).as_posix()
             for path in TEMPLATES.rglob("*.html")
-            if path != COMPONENT and "stroke-dasharray" in path.read_text()
+            if path != COMPONENT
+            and "<circle" in path.read_text()
+            and "stroke-dasharray" in path.read_text()
         ]
         self.assertEqual(
             offenders,

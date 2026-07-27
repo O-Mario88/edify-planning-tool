@@ -1,4 +1,4 @@
-"""Country Monthly Budget — the CD's monthly finance control page.
+"""General Budget — the CD's finance control page for a selected month.
 
 Consolidates only plan-backed, scheduled, costed activity budgets for the
 selected month (`ActivityScheduleCostLine`) plus the CD Admin Budget, which
@@ -35,7 +35,7 @@ from apps.fund_requests.pl_approval_service import (
     _ugx,
 )
 
-from .models import MonthlyWorkPlanBudget
+from .models import MonthlyBudgetSubmissionSnapshot, MonthlyWorkPlanBudget
 from . import services as mwp
 
 CD_ROLES = ("CountryDirector", "Admin")
@@ -48,7 +48,7 @@ READ_ROLES = (
     "Admin",
 )
 
-# Every Country Monthly Budget this module generates is tagged with this
+# Every General Budget period this module generates is tagged with this
 # value (see _get_or_create_budget) — the single-country deployment's home.
 HOME_COUNTRY_ID = "Uganda"
 
@@ -90,7 +90,7 @@ def _require_read(principal):
     role = getattr(principal, "active_role", None)
     if role not in READ_ROLES:
         raise Forbidden(
-            "Only CD, RVP, Accountant, IA, or Admin may view the country monthly budget."
+            "Only CD, RVP, Accountant, IA, or Admin may view the General Budget."
         )
 
 
@@ -142,7 +142,7 @@ def _page_category(activity_type, delivery_type, is_project=False):
     activity's own `project_id` or its cost line's `project_id`, the same two
     authoritative paths RVPDashboardService.special_projects consolidates —
     always shows under Special Projects, regardless of activity type or
-    delivery type: the country budget needs a clean, undiluted view of
+    delivery type: the General Budget needs a clean, undiluted view of
     project-funded spend, not a visit/training figure with project costs
     silently mixed in. Otherwise SSA collection takes priority regardless of
     who runs it; staff-delivered in-school trainings fold into Cluster
@@ -202,7 +202,7 @@ def _team_monthly_requests(fy, month_num):
     """Program Lead team-budget snapshots for the selected month.
 
     The presence of even one of these requests turns on the deliberate monthly
-    submission workflow.  That means the country budget can never quietly fall
+    submission workflow. That means the General Budget can never quietly fall
     back to every raw scheduled cost line after Program Leads have started
     submitting their own monthly requests.
     """
@@ -218,53 +218,21 @@ def _team_monthly_requests(fy, month_num):
 
 
 def _program_source(fy, month_num):
-    """Return the approved Program Lead request source or the historic fallback.
+    """Return every valid scheduled planned-activity cost line for the month.
 
-    Historic data predates the PL monthly-request workflow, so raw plan-backed
-    lines remain a read-only fallback only until the first team request exists
-    for a month.  New months always use CD-approved PL snapshots.
+    Monthly fund requests remain workflow snapshots, but they are not a second
+    budget source and cannot hide planned work from the General Budget. The
+    activity schedule cost line is the authoritative amount everywhere.
     """
-    from apps.fund_requests.models import FundRequestItem, FundRequestStatus
-
-    requests = list(_team_monthly_requests(fy, month_num))
-    if not requests:
-        lines = list(_valid_lines_qs(fy, month_num))
-        return {
-            "uses_pl_request_workflow": False,
-            "requests": [],
-            "approved_requests": [],
-            "lines": lines,
-            "program_total": sum(int(line.amount or 0) for line in lines),
-            "activity_count": len({line.activity_id for line in lines}),
-            "label": "Plan-backed activities (historic workflow)",
-        }
-
-    approved = [
-        request
-        for request in requests
-        if request.status == FundRequestStatus.APPROVED_BY_CD
-    ]
-    line_ids = FundRequestItem.objects.filter(
-        fund_request_id__in=[request.id for request in approved]
-    ).values_list("activity_schedule_cost_line_id", flat=True)
-    lines = list(_valid_lines_qs(fy, month_num).filter(id__in=line_ids))
+    lines = list(_valid_lines_qs(fy, month_num))
     return {
-        "uses_pl_request_workflow": True,
-        "requests": requests,
-        "approved_requests": approved,
+        "uses_pl_request_workflow": False,
+        "requests": [],
+        "approved_requests": [],
         "lines": lines,
-        # The request total is the deliberate finance snapshot.  It is not
-        # recalculated from today's activity rows after CD approval.
-        "program_total": sum(int(request.total_amount or 0) for request in approved),
-        "activity_count": len(
-            {
-                activity_id
-                for activity_id in FundRequestItem.objects.filter(
-                    fund_request_id__in=[request.id for request in approved]
-                ).values_list("activity_id", flat=True)
-            }
-        ),
-        "label": "CD-approved Program Lead monthly requests",
+        "program_total": sum(int(line.amount or 0) for line in lines),
+        "activity_count": len({line.activity_id for line in lines}),
+        "label": "Scheduled planned activities",
     }
 
 
@@ -534,7 +502,7 @@ def get_country_monthly_budget(principal, filters=None):
 
     kpis = [
         _kpi(
-            "Total Monthly Budget",
+            "General Budget Total",
             total_monthly,
             "total_all",
             "primary",
@@ -760,6 +728,11 @@ def get_country_monthly_budget(principal, filters=None):
         ),
         "return_reasons": RETURN_REASONS,
         "category_order": CATEGORY_ORDER,
+        # §10 — an earlier month still awaiting RVP review must NOT freeze the
+        # active month's preparation (periods are independent). Surface it as a
+        # compact warning so the CD knows the prior month is pending, without
+        # disabling the current month's Submit button.
+        "prior_month_pending": _prior_month_pending(fy, budget.month_key),
         # Plan vs actual, and the forecast against the annual ceiling. Both
         # were absent: this page showed plan and commitment only, so the two
         # people approving the country's money could not see how the last
@@ -817,6 +790,28 @@ RETURN_REASONS = [
     "Wrong month",
     "Other",
 ]
+
+
+def _prior_month_pending(fy, current_month_key):
+    """Any earlier submitted-to-RVP month in this FY (§10 warning).
+
+    Periods are independent, so a prior pending month never blocks preparing
+    the current one — but the CD should see it flagged so nothing slips
+    through the cracks. Returns ``None`` or ``{month_label}``.
+    """
+    prior = (
+        MonthlyWorkPlanBudget.objects.filter(
+            fy=fy,
+            status="submitted_to_rvp",
+            month_key__lt=current_month_key,
+        )
+        .order_by("-month_key")
+        .first()
+    )
+    if not prior:
+        return None
+    month_num = int(prior.month_key.split("-")[1])
+    return MONTHS[month_num] if 1 <= month_num <= 12 else prior.month_key
 
 
 def _approval_status_label(status):
@@ -888,7 +883,7 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 {
                     "label": "Program budget comes from CD-approved Program Lead requests",
                     "status": "passed" if approved else "failed",
-                    "detail": "Approve at least one Program Lead request before sending the country budget to the RVP."
+                    "detail": "Approve at least one Program Lead request before sending the General Budget to the RVP."
                     if not approved
                     else "",
                 },
@@ -1021,6 +1016,80 @@ def _bottom_stats(staff_rows, cat_totals, admin_total, total_monthly, staff_incl
     ]
 
 
+def list_submitted_budgets(principal, filters=None):
+    """Submitted/locked country budgets for an FY — the 'Submitted Budgets' list.
+
+    Each submitted month moves out of the active budget-preparation workspace
+    and into this history view, showing Month, FY, submitted amount, submitted
+    by, submitted date, current RVP status, version and a View-Details link.
+    Data comes from the locked MonthlyWorkPlanBudget rows joined to their
+    latest immutable snapshot, never from live cost lines.
+    """
+    _require_read(principal)
+    filters = filters or {}
+    fy = filters.get("fy") or get_operational_fy()
+    budgets = MonthlyWorkPlanBudget.objects.filter(
+        fy=fy, status__in=LOCKED_STATUSES
+    ).order_by("-month_key")
+    rows = []
+    for b in budgets:
+        month_num = int(b.month_key.split("-")[1])
+        rows.append(
+            {
+                "budget_id": b.id,
+                "month_key": b.month_key,
+                "month_label": MONTHS[month_num]
+                if 1 <= month_num <= 12
+                else str(month_num),
+                "fy": b.fy,
+                "total_amount": b.total_amount,
+                "total_amount_fmt": _ugx(b.total_amount),
+                "submitted_at": b.submitted_at,
+                "submitted_by_user_id": b.submitted_by_user_id,
+                "status": b.status,
+                "status_label": b.get_status_display(),
+                "version": b.submission_version,
+            }
+        )
+    return {"fy": fy, "rows": rows}
+
+
+def get_submission_detail(principal, budget_id):
+    """The read-only detail of one submitted month, rendered from its snapshot.
+
+    The submitted month's breakdown must never drift with later activity/cost
+    changes, so this always reads the latest immutable snapshot (staff_rows,
+    line_items, admin_lines, totals) — never the live cost lines.
+    """
+    _require_read(principal)
+    budget = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
+    if not budget:
+        raise BadRequest("Country monthly budget not found.")
+    snapshot = budget.snapshots.first()  # ordering = ["-version"]
+    month_num = int(budget.month_key.split("-")[1])
+    return {
+        "budget_id": budget.id,
+        "month_key": budget.month_key,
+        "month_label": MONTHS[month_num] if 1 <= month_num <= 12 else str(month_num),
+        "fy": budget.fy,
+        "status": budget.status,
+        "status_label": budget.get_status_display(),
+        "submitted_at": budget.submitted_at,
+        "submitted_by_user_id": budget.submitted_by_user_id,
+        "version": budget.submission_version,
+        "total_amount": budget.total_amount,
+        "total_amount_fmt": _ugx(budget.total_amount),
+        "program_total": budget.program_total,
+        "program_total_fmt": _ugx(budget.program_total),
+        "admin_total": budget.admin_total,
+        "admin_total_fmt": _ugx(budget.admin_total),
+        "category_order": CATEGORY_ORDER,
+        "staff_rows": snapshot.staff_rows if snapshot else [],
+        "line_items": snapshot.line_items if snapshot else [],
+        "admin_lines": snapshot.admin_lines if snapshot else [],
+    }
+
+
 def get_plan_sources(principal, filters=None):
     """The activities + cost lines behind the current month's budget — the
     'View Plan Sources' drawer content."""
@@ -1093,7 +1162,7 @@ def approve_pl_monthly_request(principal, request_id):
         month_num = int(request.period_key.rsplit("M", 1)[-1])
         budget = _get_or_create_budget(request.fy, month_num)
         if budget.status in LOCKED_STATUSES:
-            raise BadRequest("The country budget is already locked for RVP review.")
+            raise BadRequest("The General Budget is already locked for RVP review.")
         if budget.status == "draft_generated":
             budget.status = "cd_review"
             budget.save(update_fields=["status", "updated_at"])
@@ -1110,7 +1179,7 @@ def approve_pl_monthly_request(principal, request_id):
         "Monthly request approved by Country Director",
         (
             f"Your {MONTHS[month_num]} {request.fy} Team Budget request "
-            f"({_ugx(request.total_amount)}) is included in the country budget."
+            f"({_ugx(request.total_amount)}) is included in the General Budget."
         ),
         request.id,
     )
@@ -1159,73 +1228,270 @@ def return_pl_monthly_request(principal, request_id, note):
     return request
 
 
+def _create_snapshot(principal, budget, source):
+    """Capture an immutable point-in-time copy of the submitted month.
+
+    The parent row's aggregate totals are frozen by LOCKED_STATUSES, but its
+    staff table / category breakdown / per-line detail would otherwise be
+    recomputed from live cost lines and drift from what the RVP approved. The
+    snapshot stores those structures as JSON at submit time, so history and
+    the read-only submission detail never change. Returns the snapshot and
+    the new version number it was written under.
+    """
+    lines = source["lines"]
+    names = _user_names([li.responsible_user for li in lines])
+
+    # staff_rows — same construction as get_country_monthly_budget.
+    rows_by_user: dict[str, dict] = {}
+    for li in lines:
+        if _validate_line(li) == "Excluded":
+            continue
+        uid = li.responsible_user or "unassigned"
+        row = rows_by_user.setdefault(
+            uid,
+            {
+                "user_id": uid,
+                "name": names.get(uid, "Unassigned"),
+                "cats": {
+                    k: {"qty": 0, "acts": set(), "schools": set(), "total": 0}
+                    for k in CATEGORY_ORDER
+                },
+                "activity_ids": set(),
+            },
+        )
+        cat = _page_category(
+            li.activity.activity_type, li.activity.delivery_type, _is_project_line(li)
+        )
+        c = row["cats"][cat]
+        c["acts"].add(li.activity_id)
+        if li.activity.school_id:
+            c["schools"].add(li.activity.school_id)
+        c["total"] += int(li.amount or 0)
+        row["activity_ids"].add(li.activity_id)
+
+    staff_rows = []
+    for row in rows_by_user.values():
+        row_total = 0
+        cat_cols = {}
+        for cat in CATEGORY_ORDER:
+            c = row["cats"][cat]
+            qty = (
+                len(c["schools"])
+                if cat == "partner_in_school_training"
+                else len(c["acts"])
+            )
+            cat_cols[cat] = {
+                "qty": qty,
+                "unit_cost": _ugx(round(c["total"] / qty)) if qty else "—",
+                "total": _ugx(c["total"]),
+            }
+            row_total += c["total"]
+        staff_rows.append(
+            {
+                "user_id": row["user_id"],
+                "name": row["name"],
+                "cats": cat_cols,
+                "total": row_total,
+                "total_fmt": _ugx(row_total),
+                "activity_count": len(row["activity_ids"]),
+            }
+        )
+    staff_rows.sort(key=lambda r: -r["total"])
+
+    # line_items — the per-line detail behind every cell.
+    line_items = []
+    for li in lines:
+        if _validate_line(li) == "Excluded":
+            continue
+        line_items.append(
+            {
+                "activity_id": li.activity_id,
+                "label": li.label,
+                "category": _page_category(
+                    li.activity.activity_type,
+                    li.activity.delivery_type,
+                    _is_project_line(li),
+                ),
+                "amount": int(li.amount or 0),
+                "amount_fmt": _ugx(int(li.amount or 0)),
+                "staff": names.get(li.responsible_user, "Unassigned"),
+                "planned_date": li.planned_date.isoformat()
+                if li.planned_date
+                else None,
+                "delivery_type": li.activity.delivery_type,
+                "school": li.activity.school.name if li.activity.school_id else None,
+            }
+        )
+
+    admin_lines = [
+        {
+            "description": line.description,
+            "category": line.cost_category,
+            "quantity": str(line.quantity),
+            "unit_cost": line.unit_cost,
+            "total_cost": line.total_cost,
+            "total_cost_fmt": _ugx(line.total_cost),
+        }
+        for line in budget.admin_lines.all()
+    ]
+
+    version = budget.submission_version + 1
+    snapshot = MonthlyBudgetSubmissionSnapshot.objects.create(
+        monthly_budget=budget,
+        version=version,
+        fy=budget.fy,
+        month_key=budget.month_key,
+        country_id=budget.country_id,
+        program_total=budget.program_total,
+        admin_total=budget.admin_total,
+        total_amount=budget.total_amount,
+        activity_count=budget.activity_count,
+        submitted_at=budget.submitted_at,
+        submitted_by_user_id=budget.submitted_by_user_id,
+        staff_rows=staff_rows,
+        line_items=line_items,
+        admin_lines=admin_lines,
+    )
+    return snapshot, version
+
+
 def send_to_rvp(principal, budget_id):
+    """Submit one month's budget to the RVP — atomic, locked, snapshotted.
+
+    The whole transition (status guard → final recompute → integrity check →
+    status flip → immutable snapshot → next-month preparation) runs in one
+    transaction with the budget row locked via select_for_update. A concurrent
+    second click blocks until this commits, then sees ``submitted_to_rvp`` and
+    fails the guard — so there is exactly one submission, one snapshot, one
+    audit row and one notification even under a race.
+    """
+    from django.db import transaction
+
     _require_cd(principal)
-    budget = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
-    if not budget:
-        raise BadRequest("Country monthly budget not found.")
-    if budget.status not in (
-        "draft_generated",
-        "cd_review",
-        "admin_plan_added",
-        "returned_by_rvp",
-    ):
-        raise BadRequest("This budget has already been submitted.")
+    with transaction.atomic():
+        budget = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not budget:
+            raise BadRequest("Country monthly budget not found.")
+        if budget.status not in (
+            "draft_generated",
+            "cd_review",
+            "admin_plan_added",
+            "returned_by_rvp",
+        ):
+            raise BadRequest("This budget has already been submitted.")
 
-    month_num = int(budget.month_key.split("-")[1])
-    source = _program_source(budget.fy, month_num)
-    _recompute_if_live(budget, source)
-    checks = _integrity_checks(
-        source["lines"], list(budget.admin_lines.all()), budget, source
-    )
-    failed = [c for c in checks if c["status"] == "failed"]
-    if failed:
-        raise BadRequest("Cannot submit — validation failed: " + failed[0]["label"])
+        month_num = int(budget.month_key.split("-")[1])
+        source = _program_source(budget.fy, month_num)
+        _recompute_if_live(budget, source)
+        checks = _integrity_checks(
+            source["lines"], list(budget.admin_lines.all()), budget, source
+        )
+        failed = [c for c in checks if c["status"] == "failed"]
+        if failed:
+            raise BadRequest("Cannot submit — validation failed: " + failed[0]["label"])
 
-    budget.status = "submitted_to_rvp"
-    budget.submitted_at = timezone.now()
-    budget.submitted_by_user_id = principal.user_id
-    budget.save(
-        update_fields=["status", "submitted_at", "submitted_by_user_id", "updated_at"]
-    )
+        budget.status = "submitted_to_rvp"
+        budget.submitted_at = timezone.now()
+        budget.submitted_by_user_id = principal.user_id
+        # _create_snapshot bumps submission_version; capture it on the row.
+        snapshot, version = _create_snapshot(principal, budget, source)
+        budget.submission_version = version
+        budget.save(
+            update_fields=[
+                "status",
+                "submitted_at",
+                "submitted_by_user_id",
+                "submission_version",
+                "program_total",
+                "admin_total",
+                "total_amount",
+                "activity_count",
+                "updated_at",
+            ]
+        )
 
     month_label = MONTHS[int(budget.month_key.split("-")[1])]
     _audit(
         principal,
         "country_budget.submit_to_rvp",
         budget,
-        {"total": budget.total_amount},
+        {"total": budget.total_amount, "version": version},
     )
     _notify_role(
         "RegionalVicePresident",
         "country_budget_submitted",
-        "Country Monthly Budget ready for approval",
-        f"Uganda {month_label} {budget.fy} Country Monthly Budget ({_ugx(budget.total_amount)}) is ready for your approval.",
+        "Monthly Fund Request ready for approval",
+        f"Uganda {month_label} {budget.fy} Monthly Fund Request ({_ugx(budget.total_amount)}) is ready for your approval.",
         budget,
     )
+    _emit_country_budget_event(
+        "country_budget.submitted_to_rvp",
+        principal,
+        budget,
+        {"total": budget.total_amount, "version": version},
+    )
+
+    # §5/§17 — atomically prepare the next month so the active workspace can
+    # roll forward. This runs in its OWN transaction: if it fails, the valid
+    # RVP submission above is already committed and must NOT be reversed. The
+    # caller surfaces a recoverable "preparation failed" state and offers a
+    # retry; the retry is idempotent (get_or_create on the unique month key).
+    next_budget = None
+    prep_failed = False
+    try:
+        from django.db import transaction
+
+        with transaction.atomic():
+            next_budget, _created = prepare_next_month(principal, budget)
+        _emit_country_budget_event(
+            "country_budget.next_month_prepared",
+            principal,
+            next_budget,
+            {"previous_month_key": budget.month_key},
+        )
+    except Exception:  # noqa: BLE001 — submission stays committed (§17)
+        prep_failed = True
+        _emit_country_budget_event(
+            "country_budget.preparation_failed",
+            principal,
+            budget,
+            {"previous_month_key": budget.month_key},
+        )
+    budget._next_month_prepared = not prep_failed  # noqa: SLF001 — view signal
     return budget
 
 
 def approve(principal, budget_id):
-    _require_rvp(principal)
-    budget = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
-    if not budget:
-        raise BadRequest("Country monthly budget not found.")
-    _assert_rvp_country_scope(budget)
-    if budget.status != "submitted_to_rvp":
-        raise BadRequest("Only a submitted budget can be approved.")
+    from django.db import transaction
 
-    budget.status = "approved_by_rvp"
-    budget.rvp_reviewed_at = timezone.now()
-    budget.rvp_reviewed_by_user_id = principal.user_id
-    budget.save(
-        update_fields=[
-            "status",
-            "rvp_reviewed_at",
-            "rvp_reviewed_by_user_id",
-            "updated_at",
-        ]
-    )
+    _require_rvp(principal)
+    with transaction.atomic():
+        budget = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not budget:
+            raise BadRequest("Country monthly budget not found.")
+        _assert_rvp_country_scope(budget)
+        if budget.status != "submitted_to_rvp":
+            raise BadRequest("Only a submitted budget can be approved.")
+
+        budget.status = "approved_by_rvp"
+        budget.rvp_reviewed_at = timezone.now()
+        budget.rvp_reviewed_by_user_id = principal.user_id
+        budget.save(
+            update_fields=[
+                "status",
+                "rvp_reviewed_at",
+                "rvp_reviewed_by_user_id",
+                "updated_at",
+            ]
+        )
 
     month_label = MONTHS[int(budget.month_key.split("-")[1])]
     _audit(principal, "country_budget.approve", budget, {"total": budget.total_amount})
@@ -1234,7 +1500,7 @@ def approve(principal, budget_id):
     _rvp_audit(
         "monthly_budget",
         budget.id,
-        f"Country Monthly Budget {budget.month_key}",
+        f"General Budget {budget.month_key}",
         "approve",
         principal,
         amount=budget.total_amount,
@@ -1243,47 +1509,60 @@ def approve(principal, budget_id):
     _notify_role(
         "CountryDirector",
         "country_budget_approved",
-        "Country Monthly Budget approved by RVP",
-        f"{month_label} {budget.fy} Country Monthly Budget was approved by the RVP.",
+        "General Budget approved by RVP",
+        f"{month_label} {budget.fy} General Budget was approved by the RVP.",
         budget,
     )
     _notify_role(
         "Accountant",
         "country_budget_approved",
-        "Country Monthly Budget ready for disbursement",
-        f"{month_label} {budget.fy} Country Monthly Budget ({_ugx(budget.total_amount)}) was approved and is ready to prepare for disbursement.",
+        "General Budget ready for disbursement",
+        f"{month_label} {budget.fy} General Budget ({_ugx(budget.total_amount)}) was approved and is ready to prepare for disbursement.",
         budget,
+    )
+    _emit_country_budget_event(
+        "country_budget.approved_by_rvp",
+        principal,
+        budget,
+        {"total": budget.total_amount},
     )
     return budget
 
 
 def return_budget(principal, budget_id, data):
+    from django.db import transaction
+
     _require_rvp(principal)
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A return reason is required.")
-    budget = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
-    if not budget:
-        raise BadRequest("Country monthly budget not found.")
-    _assert_rvp_country_scope(budget)
-    if budget.status != "submitted_to_rvp":
-        raise BadRequest("Only a submitted budget can be returned.")
+    with transaction.atomic():
+        budget = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not budget:
+            raise BadRequest("Country monthly budget not found.")
+        _assert_rvp_country_scope(budget)
+        if budget.status != "submitted_to_rvp":
+            raise BadRequest("Only a submitted budget can be returned.")
 
-    budget.status = "returned_by_rvp"
-    budget.rvp_reviewed_at = timezone.now()
-    budget.rvp_reviewed_by_user_id = principal.user_id
-    budget.rvp_review_note = (
-        reason + (" — " + data["comment"] if data.get("comment") else "")
-    )[:512]
-    budget.save(
-        update_fields=[
-            "status",
-            "rvp_reviewed_at",
-            "rvp_reviewed_by_user_id",
-            "rvp_review_note",
-            "updated_at",
-        ]
-    )
+        budget.status = "returned_by_rvp"
+        budget.rvp_reviewed_at = timezone.now()
+        budget.rvp_reviewed_by_user_id = principal.user_id
+        budget.rvp_review_note = (
+            reason + (" — " + data["comment"] if data.get("comment") else "")
+        )[:512]
+        budget.save(
+            update_fields=[
+                "status",
+                "rvp_reviewed_at",
+                "rvp_reviewed_by_user_id",
+                "rvp_review_note",
+                "updated_at",
+            ]
+        )
 
     month_label = MONTHS[int(budget.month_key.split("-")[1])]
     _audit(principal, "country_budget.return", budget, {"reason": reason})
@@ -1292,7 +1571,7 @@ def return_budget(principal, budget_id, data):
     _rvp_audit(
         "monthly_budget",
         budget.id,
-        f"Country Monthly Budget {budget.month_key}",
+        f"General Budget {budget.month_key}",
         "return",
         principal,
         reason=reason,
@@ -1302,9 +1581,15 @@ def return_budget(principal, budget_id, data):
     _notify_role(
         "CountryDirector",
         "country_budget_returned",
-        "Country Monthly Budget returned by RVP",
-        f"{month_label} {budget.fy} Country Monthly Budget was returned by the RVP. Reason: {reason}",
+        "General Budget returned by RVP",
+        f"{month_label} {budget.fy} General Budget was returned by the RVP. Reason: {reason}",
         budget,
+    )
+    _emit_country_budget_event(
+        "country_budget.returned_by_rvp",
+        principal,
+        budget,
+        {"reason": reason},
     )
     return budget
 
@@ -1369,3 +1654,72 @@ def _notify_user(recipient_id, title, body, request_id):
         )
     except Exception:  # noqa: BLE001 - notification delivery is non-blocking
         pass
+
+
+def _emit_country_budget_event(event_type, principal, budget, payload):
+    """Push a country-budget lifecycle event through the realtime seam.
+
+    The submit/approve/return actions still write their audit row and
+    notification via the legacy ``_audit`` / ``_notify_role`` helpers (they are
+    tested and dedupe correctly), but the spec wants the canonical
+    ``country_budget.*`` events on the bus too so the live dashboards update in
+    real time. This is best-effort: a bus failure never rolls back the action.
+    """
+    try:
+        from apps.realtime.domain_events import emit, users_with_role
+
+        # The relevant live audience: the actor plus every CD/RVP/Accountant,
+        # since each of those dashboards reflects country-budget state.
+        live = list(
+            {
+                principal.user_id,
+                *users_with_role("CountryDirector"),
+                *users_with_role("RegionalVicePresident"),
+                *users_with_role("Accountant"),
+            }
+        )
+        emit(
+            event_type=event_type,
+            actor_id=principal.user_id,
+            actor_role=getattr(principal, "active_role", ""),
+            subject_kind="MonthlyWorkPlanBudget",
+            subject_id=budget.id,
+            payload={"month_key": budget.month_key, "fy": budget.fy, **payload},
+            live_user_ids=live,
+        )
+    except Exception:  # noqa: BLE001 — best-effort realtime push
+        pass
+
+
+def _next_fy_month(fy, month_num):
+    """The (fy, month) that follows (fy, month) under the Oct→Sep FY rule.
+
+    September (the FY's last month) rolls into October of the NEXT fiscal
+    year — FY2026 Sep → FY2027 Oct — matching the spec's §5 example. Every
+    other month advances one calendar month inside the same FY.
+    """
+    if month_num == 9:
+        return str(int(fy) + 1), 10
+    if month_num == 12:
+        return fy, 1
+    return fy, month_num + 1
+
+
+def prepare_next_month(principal, submitted_budget):
+    """Idempotently create (or fetch) the draft for the month after a submit.
+
+    Called inside the submit transaction so "the next month is prepared" is
+    atomic with the submission itself. Because it routes through a
+    get_or_create on the unique (country, month_key) key, a refresh, a retry,
+    a scheduler tick or a second tab all resolve to the same single next-month
+    row — never a duplicate. Returns ``(next_budget, created)``.
+    """
+    month_num = int(submitted_budget.month_key.split("-")[1])
+    next_fy, next_month = _next_fy_month(submitted_budget.fy, month_num)
+    month_key = _month_key(next_fy, next_month)
+    next_budget, created = MonthlyWorkPlanBudget.objects.get_or_create(
+        country_id=HOME_COUNTRY_ID,
+        month_key=month_key,
+        defaults={"fy": next_fy, "status": "draft_generated"},
+    )
+    return next_budget, created

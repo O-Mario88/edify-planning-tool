@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
      x-data="{
        chart: null,
        initChart() {
@@ -15,8 +15,7 @@
            ],
            chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
            stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
-           colors: ['var(--edify-chart-teal)', 'var(--edify-chart-teal)', 'var(--edify-chart-teal)', 'var(--edify-chart-amber)'],
-           plotOptions: { bar: { columnWidth: '62%', borderRadius: 8, borderRadiusApplication: 'end' } },
+           colors: window.EdifyChartSystem.mixedSeries,
            dataLabels: { enabled: false },
            labels: {{ team_performance.labels|escape }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },

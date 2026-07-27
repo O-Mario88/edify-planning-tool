@@ -160,6 +160,23 @@ class SubRegionAnalyticsTest(TestCase):
         self.assertEqual(northern["schools"], sum(c["schools"] for c in children))
         self.assertEqual(northern["districts"], sum(c["districts"] for c in children))
 
+    def test_optional_school_scope_keeps_boundaries_but_hides_other_counts(self):
+        """Role analytics retain the full map without leaking another portfolio."""
+        from apps.schools.models import School
+        from apps.ssa.models import SsaRecord
+
+        scoped_schools = School.objects.filter(district=self.gulu)
+        scoped_ssa = SsaRecord.objects.filter(school__district=self.gulu)
+        result = subregion_performance(
+            schools=scoped_schools,
+            ssa_records=scoped_ssa,
+        )
+        by_district = {row["district"]: row for row in result["districts"]}
+
+        self.assertEqual(by_district["Gulu"]["schools"], 3)
+        self.assertEqual(by_district["Kitgum"]["schools"], 0)
+        self.assertEqual(result["totals"]["districts"], 3)
+
     def test_engine_metadata_names_the_python_stack(self):
         engine = subregion_performance()["engine"]
         self.assertEqual(engine["domain"], "subregion_distribution")

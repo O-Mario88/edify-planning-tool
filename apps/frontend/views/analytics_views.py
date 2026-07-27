@@ -137,7 +137,11 @@ def pl_analytics_view(request):
     quarter = (request.GET.get("quarter") or "").strip() or None
 
     data = PLAnalyticsService.get_dashboard(
-        request.user, fy=fy, quarter=quarter, filters=filters
+        request.user,
+        fy=fy,
+        quarter=quarter,
+        filters=filters,
+        include_regional_map=True,
     )
     context = {
         **data,
@@ -623,7 +627,12 @@ def cd_analytics_view(request):
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
     data = CDAnalyticsService.get_dashboard(
-        request.user, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
+        request.user,
+        fy=fy,
+        quarter=quarter,
+        month=month,
+        filters=_cd_filters(request),
+        include_regional_map=True,
     )
     # Month-of-FY labels (FY starts in October).
     _fy_months = [
@@ -701,6 +710,11 @@ def cd_analytics_export_view(request):
             "PL",
             "CCEOs Supervised",
             "Target Achievement %",
+            "School Visits %",
+            "Cluster Meetings %",
+            "Cluster Trainings %",
+            "SSA Completed %",
+            "MSCS %",
             "Schools at Risk",
             "Budget Utilization %",
             "Backlog",
@@ -713,6 +727,10 @@ def cd_analytics_export_view(request):
                 r["name"],
                 r["cceos"],
                 r["target_pct"],
+                *[
+                    area["pct"] if area["pct"] is not None else "Not set"
+                    for area in r["areas"]
+                ],
                 r["schools_at_risk"],
                 r["budget_util"],
                 r["backlog"],

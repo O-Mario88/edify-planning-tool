@@ -37,7 +37,7 @@
 
 <!-- ================= KPI TIMELINE ROW (Chevron Sequence) ================= -->
 <div class="overflow-x-auto pb-2">
-<div class="flex items-center gap-2 min-w-[1400px]">
+<div class="legacy-kpi-strip legacy-kpi-strip--timeline flex items-center gap-2 min-w-[1400px]" aria-label="Target progress timeline">
 
 {% for period in periods %}
 <div class="flex-1 edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center justify-between gap-3 {% if period.dimmed %}opacity-60{% endif %}">
@@ -75,7 +75,7 @@
 
 
 <!-- ================= CORE TARGET CARDS ROW ================= -->
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+<div class="legacy-kpi-strip grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" aria-label="Core target summary">
 {% for card in core_cards %}
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-3 flex flex-col justify-between">
 <div>

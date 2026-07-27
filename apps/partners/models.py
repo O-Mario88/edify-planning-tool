@@ -36,6 +36,7 @@ class Partner(SoftDeleteModel):
     expertise_areas = ArrayField(
         base_field=models.CharField(max_length=128), default=list, blank=True
     )
+    ssa_intervention = models.CharField(max_length=64, null=True, blank=True)
     active_status = models.BooleanField(default=True)
     # Backend login link — a partner field officer authenticates as this user.
     user = models.OneToOneField(
@@ -52,6 +53,17 @@ class Partner(SoftDeleteModel):
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def ssa_intervention_label(self) -> str:
+        if not self.ssa_intervention:
+            return "General Support"
+        from apps.core.enums import SsaIntervention
+
+        try:
+            return SsaIntervention(self.ssa_intervention).label
+        except ValueError:
+            return self.ssa_intervention.replace("_", " ").title()
 
 
 class PartnerAssignment(TimeStampedModel):

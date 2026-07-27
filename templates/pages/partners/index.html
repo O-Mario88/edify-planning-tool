@@ -8,7 +8,19 @@
   <header class="partner-workspace__header">
     <div>
       <p class="partner-workspace__eyebrow">Delivery partners</p>
-      <h1 class="edify-page-title">Partner Activities</h1>
+      <div class="flex items-center gap-3">
+        <h1 class="edify-page-title">Partner Activities</h1>
+        {% if can_add_partner %}
+        <button type="button"
+                hx-get="{% url 'frontend:create_partner' %}"
+                hx-target="body"
+                hx-swap="beforeend"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-[12px] font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Add Partner</span>
+        </button>
+        {% endif %}
+      </div>
       <p>See assigned schools, confirm delivery dates, monitor support, and follow up before work falls behind.</p>
     </div>
     <form id="partner-activity-filters" method="get" class="edify-filter-bar partner-workspace__filters">
@@ -86,7 +98,12 @@
             <div class="partner-identity">
               <span class="partner-identity__mark">{{ card.partner.name|avatar_initials }}</span>
               <div>
-                <h2>{{ card.partner.name }}</h2>
+                <div class="flex items-center gap-2">
+                  <h2>{{ card.partner.name }}</h2>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-pill text-[12px] font-semibold bg-sky-50 text-sky-700 border border-sky-100">
+                    {{ card.partner.ssa_intervention_label }}
+                  </span>
+                </div>
                 <p><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></svg>{{ card.partner.region_name|default:"Region not set" }}</p>
               </div>
             </div>
@@ -95,7 +112,7 @@
               <div><dt>Assigned Schools</dt><dd>{{ card.assigned_school_count }}</dd></div>
               <div><dt>Scheduled</dt><dd class="partner-activity-card__positive">{{ card.scheduled_count }}</dd></div>
               <div><dt>Pending</dt><dd class="partner-activity-card__warning">{{ card.pending_count }}</dd></div>
-              <div><dt>Focus</dt><dd>{{ card.focus }}</dd></div>
+              <div><dt>Linked SSA Intervention</dt><dd class="font-semibold text-sky-700">{{ card.partner.ssa_intervention_label }}</dd></div>
             </dl>
           </header>
           {% if card.rows %}

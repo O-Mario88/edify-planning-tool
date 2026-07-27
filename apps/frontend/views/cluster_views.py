@@ -448,7 +448,7 @@ def create_cluster_view(request):
         cluster_leader_name = request.POST.get("cluster_leader_name", "").strip()
         cluster_leader_phone = request.POST.get("cluster_leader_phone", "").strip()
 
-        if name and district_id:
+        if name and district_id and sub_county_ids:
             district = get_object_or_404(District, id=district_id)
             if not region_id:
                 region_id = district.region_id
@@ -494,6 +494,11 @@ def create_cluster_view(request):
                     return redirect("/schools")
             except Exception as e:
                 messages.error(request, f"Failed to create cluster: {e}")
+        elif not sub_county_ids:
+            messages.error(
+                request,
+                "Failed to create cluster: select at least one sub-county.",
+            )
         else:
             messages.error(request, "Failed to create cluster: missing fields.")
 
@@ -533,6 +538,7 @@ def create_cluster_drawer_view(request):
     districts = districts.order_by("name")
 
     district_ids = list(districts.values_list("id", flat=True))
+    district_id_strings = {str(district_id) for district_id in district_ids}
     sub_counties = SubCounty.objects.filter(district_id__in=district_ids).order_by(
         "name"
     )
@@ -542,9 +548,9 @@ def create_cluster_drawer_view(request):
         for sc in sub_counties
     ]
     requested_district_id = request.GET.get("district_id", "").strip()
-    selected_district_id = (
-        requested_district_id if requested_district_id in district_ids else ""
-    )
+    selected_district_id = requested_district_id
+    if selected_district_id not in district_id_strings:
+        selected_district_id = str(district_ids[0]) if district_ids else ""
 
     context = {
         "districts": districts,

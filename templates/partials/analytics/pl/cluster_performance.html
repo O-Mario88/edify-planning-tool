@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">D. Cluster Performance</h3>
   <div class="overflow-x-auto -mx-1">
     <table class="w-full text-left border-collapse min-w-[560px]">
@@ -28,11 +28,11 @@
               {% elif c.ssa_tone == 'warning' %}bg-amber-50 text-amber-700
               {% elif c.ssa_tone == 'danger' %}bg-rose-50 text-rose-700
               {% else %}bg-slate-50 text-slate-400{% endif %}">
-              {% if c.avg_ssa is not None %}{{ c.avg_ssa|floatformat:0 }}%{% else %}—{% endif %}
+              {% if c.avg_ssa is not None %}{{ c.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}
             </span>
           </td>
           <td class="py-2.5 px-2 edify-text-caption font-medium text-slate-500">
-            {{ c.weakest_label }}{% if c.weakest_pct is not None %} <span class="text-slate-400">({{ c.weakest_pct|floatformat:0 }}%)</span>{% endif %}
+            {{ c.weakest_label }}{% if c.weakest_score is not None %} <span class="text-slate-400">({{ c.weakest_score|floatformat:1 }})</span>{% endif %}
           </td>
           <td class="py-2.5 px-2 text-center edify-text-caption font-semibold text-slate-600 tabular-nums">{{ c.visits_done }} / {{ c.visits_planned }}</td>
           <td class="py-2.5 px-2 text-center edify-text-caption font-semibold text-slate-600 tabular-nums">{{ c.trainings_done }} / {{ c.trainings_planned }}</td>

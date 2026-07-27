@@ -245,9 +245,22 @@ class BudgetAggregationTest(TestCase):
         result = board(cd, {"fy": self.fy})
         self.assertEqual(result["summary"]["fiscalYear"], good_amount)
 
-    def test_budget_workspace_groups_costs_by_period_and_includes_cd_admin_plan(self):
-        """My Budget uses actual cost lines, with CD admin costs only at their
-        honest monthly-or-larger planning level (never an invented weekly split)."""
+    def test_cd_country_and_admin_budget_workspaces_are_separate(self):
+        """Admin uses only the CD plan; Country carries both, itemised.
+
+        The direction of separation changed and only one half of it did. The
+        admin workspace still shows the CD plan ALONE — no activity lines — and
+        that is the half that protects the plan from being inflated by
+        programme spend.
+
+        The country workspace no longer excludes admin: the CD's administrative
+        plan now rolls into the Monthly Fund Request as its own "Country Admin
+        Plan" category, because the RVP approves one number and that number has
+        to be the whole ask. It is itemised rather than merged, so the two
+        components stay separable in the submission the RVP sees
+        (apps/frontend/test_cd_budget_workspaces.py pins the same contract from
+        the view side).
+        """
         from apps.core.fy import get_month_date_range
 
         visit = self._schedule_visit(month=10)  # July in FY 2026.
@@ -276,21 +289,41 @@ class BudgetAggregationTest(TestCase):
             created_by_user_id=cd.id,
         )
 
-        month_workspace = budget_workspace(
+        country_workspace = budget_workspace(
             cd,
             {
                 "fy": self.fy,
                 "date": month_start.date().isoformat(),
                 "period": "month",
+                "budget_scope": "country",
             },
         )
-        self.assertEqual(len(month_workspace["comparison"]), 4)
-        self.assertEqual(month_workspace["program_total"], program_amount)
-        self.assertEqual(month_workspace["admin_total"], 80_000)
-        self.assertEqual(month_workspace["total"], program_amount + 80_000)
+        self.assertEqual(len(country_workspace["comparison"]), 4)
+        self.assertEqual(country_workspace["program_total"], program_amount)
+        self.assertEqual(country_workspace["admin_total"], 80_000)
+        self.assertEqual(country_workspace["total"], program_amount + 80_000)
+        # Itemised, not merged: the RVP approves one number and must still be
+        # able to see what the administrative half of it is.
         self.assertIn(
             "Country Admin Plan",
-            [group["label"] for group in month_workspace["groups"]],
+            [group["label"] for group in country_workspace["groups"]],
+        )
+
+        admin_workspace = budget_workspace(
+            cd,
+            {
+                "fy": self.fy,
+                "date": month_start.date().isoformat(),
+                "period": "month",
+                "budget_scope": "admin",
+            },
+        )
+        self.assertEqual(admin_workspace["program_total"], 0)
+        self.assertEqual(admin_workspace["admin_total"], 80_000)
+        self.assertEqual(admin_workspace["total"], 80_000)
+        self.assertIn(
+            "Country Admin Plan",
+            [group["label"] for group in admin_workspace["groups"]],
         )
 
         week_workspace = budget_workspace(
@@ -299,6 +332,7 @@ class BudgetAggregationTest(TestCase):
                 "fy": self.fy,
                 "date": month_start.date().isoformat(),
                 "period": "week",
+                "budget_scope": "admin",
             },
         )
         self.assertEqual(week_workspace["admin_total"], 0)

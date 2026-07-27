@@ -16,8 +16,7 @@ from apps.targets.models import TargetSetting
 from apps.accounts.models import StaffProfile, StaffTargetProfile
 from apps.geography.models import District, Region
 from apps.clusters.models import Cluster
-from apps.analytics.subregion_analytics import subregion_performance
-from apps.analytics.district_insight import district_insight
+from apps.analytics.country_map_context import country_map_context
 from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
 
 ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
@@ -965,13 +964,11 @@ class AnalyticsDashboardService:
             "ssa_performance": ssa_scores_list,
             "target_by_district": districts_perf,
             "regional_performance": regional_perf,
-            # Sub-region roll-up (schools / clusters / confirmed SSA), computed
-            # in pandas so district, sub-region and region all come off one
-            # frame instead of three sets of aggregates that could drift.
-            "subregion_performance": subregion_performance(fy),
-            # Per-district snapshot behind the map's hover card. Aggregated for
-            # all 135 districts in ~13 grouped queries rather than per hover.
-            "district_insight": district_insight(fy),
+            # The geography card is a shared country-level system view for
+            # every authorized analytics role. Dashboard KPIs remain scoped;
+            # map pins and hover facts deliberately do not inherit role or
+            # ad-hoc dashboard filters.
+            **country_map_context(fy),
             "cluster_performance": cluster_perf,
             "impact_summary": impact_summary,
             "activity_tracking": activity_tracking,

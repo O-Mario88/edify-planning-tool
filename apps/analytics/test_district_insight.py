@@ -61,6 +61,26 @@ class DistrictInsightTest(TestCase):
         self.assertEqual(d["clusters"], 1)
         self.assertEqual(district_insight()["Kitgum"]["schools"], 1)
 
+    def test_optional_scope_keeps_district_but_zeroes_outside_portfolio(self):
+        scoped = School.objects.filter(district=self.gulu)
+        data = district_insight(schools=scoped)
+
+        self.assertEqual(data["Gulu"]["schools"], 4)
+        self.assertEqual(data["Kitgum"]["schools"], 0)
+
+    def test_school_distribution_counts_each_supported_classification(self):
+        School.objects.filter(pk=self.schools[0].pk).update(school_type="core")
+        School.objects.filter(pk=self.schools[1].pk).update(school_type="champion")
+
+        self.assertEqual(
+            self._gulu()["school_distribution"],
+            {"core": 1, "client": 2, "champion": 1, "core_trained": 0},
+        )
+        self.assertEqual(
+            district_insight()["Kitgum"]["school_distribution"],
+            {"core": 0, "client": 1, "champion": 0, "core_trained": 0},
+        )
+
     def test_core_school_count_joins_the_business_key_and_ignores_orphans(self):
         """Two failure modes in one join, both silent.
 
@@ -174,6 +194,30 @@ class DistrictInsightTest(TestCase):
         d = self._gulu()
         self.assertEqual(d["visited"], 1)
         self.assertEqual(d["trained"], 1)
+
+    def test_core_trained_pin_counts_distinct_active_core_schools(self):
+        from apps.core_schools.models import CorePlan
+
+        school = self.schools[0]
+        school.school_type = "core"
+        school.save(update_fields=["school_type"])
+        plan = CorePlan.objects.create(
+            id="plan-trained-core",
+            school_id=school.school_id,
+            fy="FY2026",
+        )
+        CoreSchoolProfile.objects.create(
+            id="profile-trained-core",
+            school_id=school.school_id,
+            core_plan=plan,
+            core_start_fy="FY2026",
+        )
+
+        self._activity(school, "training")
+        self._activity(school, "training")
+
+        distribution = self._gulu("FY2026")["school_distribution"]
+        self.assertEqual(distribution["core_trained"], 1)
 
     def test_scheduled_work_does_not_count_as_delivered(self):
         self._activity(self.schools[0], "school_visit", status="scheduled")

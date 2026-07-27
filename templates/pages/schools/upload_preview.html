@@ -33,7 +33,7 @@ Confirm & Import
 </div>
 
 <!-- KPI summary strip -->
-<div class="grid grid-cols-2 sm:grid-cols-5 gap-4" role="tablist" aria-label="Upload validation views">
+<div class="legacy-kpi-strip legacy-kpi-strip--tabs grid grid-cols-2 sm:grid-cols-5 gap-4" role="tablist" aria-label="Upload validation views">
 <a id="upload-tab-ready" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'ready' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'ready' %}0{% else %}-1{% endif %}" href="?tab=ready" class="p-4 rounded-surface border transition-all {% if tab == 'ready' %}bg-emerald-50/50 border-emerald-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Ready to Import</span>
 <span class="text-[21px] font-extrabold tracking-tight text-emerald-600 mt-2">{{ stats.ready }}</span>

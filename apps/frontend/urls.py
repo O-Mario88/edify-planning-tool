@@ -823,6 +823,16 @@ urlpatterns = [
         name="country_budget_return_drawer",
     ),
     path(
+        "country-budget/history",
+        finance_views.country_budget_history_view,
+        name="country_budget_history",
+    ),
+    path(
+        "country-budget/history/<str:budget_id>",
+        finance_views.country_budget_submission_detail_view,
+        name="country_budget_submission_detail",
+    ),
+    path(
         "country-budget/action",
         finance_views.country_budget_action_view,
         name="country_budget_action",
@@ -1189,6 +1199,7 @@ urlpatterns = [
     path("analytics/publishing/", closure_views.analytics_publishing_status_view),
     # ── GROUP 3: Partners ─────────────────────────────────────────────────────
     path("partners", partner_views.partners_list_view, name="partners_list"),
+    path("partners/create", partner_views.create_partner_view, name="create_partner"),
     path(
         "partners/<str:partner_id>",
         partner_views.partner_detail_view,
@@ -1270,6 +1281,11 @@ urlpatterns = [
         "data-quality/issue/<str:issue_id>/action",
         extended_views.data_quality_issue_action_view,
         name="data_quality_issue_action",
+    ),
+    path(
+        "ssa/manual/",
+        ssa_views.ssa_manual_entry_view,
+        name="ssa_manual_entry",
     ),
     path("ssa/upload/", ssa_views.ssa_upload_center_view, name="ssa_upload_center"),
     path(

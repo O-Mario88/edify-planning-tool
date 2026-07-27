@@ -212,6 +212,24 @@ class PLAnalyticsTest(TestCase):
         self.assertEqual(ids, {self.cceo_a1_sp.id})
         self.assertNotIn(self.cceo_b1_sp.id, ids)
 
+    def test_pl_analytics_renders_the_shared_subregion_map(self):
+        data = PLAnalyticsService.get_dashboard(
+            self.pl_a,
+            fy=FY,
+            include_regional_map=True,
+        )
+        self.assertIn("subregion_performance", data)
+        self.assertIn("district_insight", data)
+        self.assertIn("subcounty_insight", data)
+        self.assertEqual(data["map_scope"]["label"], "Country-wide system data")
+
+        self.client.force_login(self.pl_a)
+        response = self.client.get("/analytics/program-lead", {"fy": FY})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Performance by Sub-Region")
+        self.assertContains(response, "Country-wide system data")
+
     # ── 2. cannot see another PL's data ──────────────────────────────────────
     def test_pl_cannot_see_other_pl_data(self):
         scope = resolve_pl_scope(self.pl_a)
@@ -249,12 +267,12 @@ class PLAnalyticsTest(TestCase):
         self.assertTrue(ssa["has_data"])
         self.assertEqual(ssa["latest_fy"], FY)
         self.assertEqual(ssa["prev_fy"], PREV_FY)
-        # Latest cycle avg across A1(7.0)+A3(8.0) = 7.5 → 75%; prev 5.0+6.0=5.5 → 55%; Δ +20.
+        # Latest cycle avg across A1(7.0)+A3(8.0) = 7.5; previous = 5.5.
         row = ssa["rows"][0]
-        self.assertAlmostEqual(row["pct"], 75.0, places=1)
-        self.assertAlmostEqual(row["delta"], 20.0, places=1)
+        self.assertAlmostEqual(row["score"], 7.5, places=1)
+        self.assertAlmostEqual(row["delta"], 2.0, places=1)
         # The unverified A2 SSA (9.9) must NOT inflate the average.
-        self.assertLess(row["pct"], 90)
+        self.assertLess(row["score"], 9.0)
 
     # ── 5. district performance scoped ───────────────────────────────────────
     def test_pl_district_performance_scoped(self):
@@ -303,8 +321,8 @@ class PLAnalyticsTest(TestCase):
         cc = d["core_champion"]
         self.assertEqual(cc["core"]["count"], 1)  # School A1 only (not B1)
         self.assertEqual(cc["champion"]["count"], 1)  # School A3
-        # Champion annual trend rises 6.0→8.0 (60%→80%).
-        self.assertEqual(cc["champion"]["series"], [60.0, 80.0])
+        # Champion annual trend remains on the native 0-10 score.
+        self.assertEqual(cc["champion"]["series"], [6.0, 8.0])
 
     # ── 11. donor snapshot uses verified activity data ───────────────────────
     def test_pl_donor_snapshot_uses_verified_activity_data(self):
@@ -486,8 +504,7 @@ class CceoAverageSsaWeightingTest(PLAnalyticsTest):
         # cceo_a1 owns A1 (already has one FY record at 7.0) and A3 (8.0).
         # Add a second confirmed record on A1 at 1.0. Record-weighted mean is
         # (7.0 + 1.0 + 8.0) / 3 = 5.33; school-weighted would be
-        # ((7.0 + 1.0) / 2 + 8.0) / 2 = 6.0. The reported figure is _norm'd
-        # onto a 0-100 scale, so those are 53.3 and 60.0 respectively — far
+        # ((7.0 + 1.0) / 2 + 8.0) / 2 = 6.0. Those native scores remain far
         # enough apart that this test can tell them apart.
         self._ssa(self.sch_a1, FY, 1.0)
 
@@ -497,7 +514,7 @@ class CceoAverageSsaWeightingTest(PLAnalyticsTest):
 
         self.assertAlmostEqual(
             float(row["avg_ssa"]),
-            53.3,
+            5.3,
             places=1,
             msg="average SSA stopped weighting by record — a school with two "
             "confirmed SSAs is now counted the same as one with a single SSA",

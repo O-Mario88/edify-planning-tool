@@ -18,9 +18,9 @@ class GeographyConfig(AppConfig):
         """
         from apps.core import reference_data
 
-        from apps.geography.subregions import sync
+        from apps.geography.ubos_registry import ensure_geography_reference
 
-        # A no-op until geography is bootstrapped: sync() survives finding zero
-        # districts, which is exactly the state a fresh or flushed database is
-        # in.
-        reference_data.register("geography", sync)
+        # A no-op until geography is bootstrapped. Once districts exist, the
+        # same registered function restores statistical sub-regions and adds
+        # any missing current UBOS sub-county identities.
+        reference_data.register("geography", ensure_geography_reference)

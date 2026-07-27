@@ -79,6 +79,8 @@ def _serialize(p: Partner) -> dict:
         "isCertified": p.is_certified,
         "certificationStatus": p.certification_status,
         "expertiseAreas": p.expertise_areas,
+        "ssaIntervention": p.ssa_intervention,
+        "ssaInterventionLabel": p.ssa_intervention_label,
         "activeStatus": p.active_status,
     }
 
@@ -169,24 +171,42 @@ def onboard(data: dict, principal) -> dict:
             "Only Admin, Country Director, or Impact Assessment users can onboard partners."
         )
 
-    if not data.get("name"):
-        raise BadRequest("name is required.")
     from django.utils import timezone
+
+    email = (data.get("email") or "").strip().lower()
+    partner_user = None
+    if email:
+        from apps.accounts.models import User
+        from apps.core.rbac import EdifyRole
+
+        partner_user = User.objects.filter(email=email, deleted_at__isnull=True).first()
+        if not partner_user:
+            partner_user = User.objects.create(
+                email=email,
+                name=data["name"],
+                roles=[EdifyRole.PARTNER_ADMIN.value],
+                active_role=EdifyRole.PARTNER_ADMIN.value,
+                is_active=True,
+            )
 
     p = Partner.objects.create(
         name=data["name"],
-        region_name=data.get("regionName"),
+        region_name=data.get("regionName") or data.get("region_name"),
         trains_on=data.get("trainsOn", []),
         notes=data.get("notes"),
-        contact_person=data.get("contactPerson"),
-        email=data.get("email"),
+        contact_person=data.get("contactPerson") or data.get("contact_person"),
+        email=email,
         phone=data.get("phone"),
+        ssa_intervention=data.get("ssaIntervention") or data.get("ssa_intervention"),
         coverage_districts=data.get("coverageDistricts", []),
         contract_status=data.get("contractStatus", "pending"),
         is_certified=bool(data.get("isCertified")),
         certification_status=data.get("certificationStatus"),
         expertise_areas=data.get("expertiseAreas", []),
-        onboarded_by_user_id=principal.user_id,
+        user=partner_user,
+        onboarded_by_user_id=getattr(
+            principal, "user_id", str(getattr(principal, "id", ""))
+        ),
         onboarded_at=timezone.now(),
     )
     return _serialize(p)

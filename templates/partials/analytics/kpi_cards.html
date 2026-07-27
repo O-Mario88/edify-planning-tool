@@ -1,6 +1,8 @@
 {% load frontend_filters %}
 
-<div id="analytics-kpi-and-content-container" class="space-y-6" data-analytics-layout="{{ analytics_layout|default:'grid' }}">
+<div id="analytics-kpi-and-content-container"
+     class="analytics-dashboard-stack"
+     data-analytics-layout="{{ analytics_layout|default:'grid' }}">
 
 <!-- KPI Strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items variant=analytics_layout %}
@@ -13,35 +15,34 @@
 {% endcomment %}
 {% include "partials/analytics/regional_performance.html" %}
 
-<!-- Row 1: Performance Overview (wide, chart needs room) + Core & Champion Schools (narrower) -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-  <div class="lg:col-span-8">{% include "partials/analytics/performance_overview.html" %}</div>
-  <div class="lg:col-span-4">{% include "partials/analytics/core_champion_performance.html" %}</div>
+<!-- Large analysis: one chart-led card beside one category scorecard. -->
+<div class="analytics-layout-row analytics-row--overview">
+  <div class="analytics-card-slot">{% include "partials/analytics/performance_overview.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/core_champion_performance.html" %}</div>
 </div>
 
-<!-- Row 2: Cluster Performance (Top 10) takes the majority of the column;
-     the right rail (Recommended Actions tiles incl. Clusters Needing Attention,
-     + Recommended Strategy) sits beside it, with Target Achievement by District
-     stacked directly below that rail. -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-  <div class="lg:col-span-8">{% include "partials/analytics/cluster_performance.html" %}</div>
-  <div class="lg:col-span-4 space-y-6">
-    {% include "partials/analytics/recommended_insights.html" %}
-    {% include "partials/analytics/target_by_district.html" %}
-  </div>
+<!-- Decision row: ranking and recommendations have comparable visual weight. -->
+<div class="analytics-layout-row analytics-row--decision">
+  <div class="analytics-card-slot">{% include "partials/analytics/cluster_performance.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/recommended_insights.html" %}</div>
 </div>
 
-<!-- Row 3: Impact Summary, Activity Tracking & Donor Reporting Snapshot -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-{% include "partials/analytics/impact_summary.html" %}
-{% include "partials/analytics/activity_tracking.html" %}
-{% include "partials/analytics/donor_reporting_snapshot.html" %}
+<!-- Full-width impact band keeps its four summary tiles compact. -->
+<div class="analytics-card-slot analytics-impact-band">
+  {% include "partials/analytics/impact_summary.html" %}
 </div>
 
-<!-- Row 4: Staff & Partner Performance + SSA Performance by Intervention -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-{% include "partials/analytics/staff_partner_performance.html" %}
-{% include "partials/analytics/ssa_performance.html" %}
+<!-- Compact operations: two short, list-based cards. -->
+<div class="analytics-layout-row analytics-row--compact">
+  <div class="analytics-card-slot">{% include "partials/analytics/activity_tracking.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/donor_reporting_snapshot.html" %}</div>
+</div>
+
+<!-- Medium diagnostics: progress and scorecards share one balanced row. -->
+<div class="analytics-layout-row analytics-row--diagnostics">
+  <div class="analytics-card-slot">{% include "partials/analytics/target_by_district.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/staff_partner_performance.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/ssa_performance.html" %}</div>
 </div>
 
 </div>

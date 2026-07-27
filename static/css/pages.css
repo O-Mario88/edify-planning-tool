@@ -81,12 +81,62 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .pl-intelligence-card,
 .pl-funding-card {
   min-inline-size: 0;
+}
+
+.pl-intelligence-card {
+  block-size: 100%;
+}
+
+/*
+ * Dashboard rows share one baseline. Partial wrappers inherit the grid row
+ * height so their card surface fills it without introducing fixed heights.
+ */
+.edify-card-row {
+  align-items: stretch;
+}
+
+.edify-card-row > * {
+  min-inline-size: 0;
+}
+
+.edify-card-row > :is(.edify-surface, .card, article, section, a) {
+  block-size: 100%;
+}
+
+.edify-card-row > :not(.edify-surface, .card, article, section, a) {
+  block-size: 100%;
+}
+
+.edify-card-row > :not(.edify-surface, .card, article, section, a) > :is(.edify-surface, .card, article, section, a):only-child {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+@media (min-width: 64rem) {
+  [data-cd-school-ssa-cards] > [data-cd-risk-priority-row] {
+    display: contents;
+  }
+
+  [data-cd-operational-risk-card] {
+    grid-column: span 2 / span 2;
+    grid-row: 2;
+  }
+
+  [data-cd-ssa-heatmap-card] {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  [data-cd-priority-schools-card] {
+    grid-column: span 3 / span 3;
+    grid-row: 2;
+  }
 }
 
 .pl-funding-card__body {

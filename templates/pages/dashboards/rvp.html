@@ -11,7 +11,7 @@
     <div>
       <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none edify-page-title">Regional Vice President Dashboard</h1>
       <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">
-        Executive oversight of country strategy, country budgets, special-project performance, partner growth, and regional execution.
+        Executive oversight of country strategy, General and Annual Budgets, special-project performance, partner growth, and regional execution.
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
@@ -54,7 +54,7 @@
     <div class="lg:col-span-9 space-y-5 min-w-0">
 
       {# ── 1 + 2: overview chart · region ranking ─────────────────────────── #}
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2"
              x-data="{
                chart: null,
@@ -71,8 +71,7 @@
                    ],
                    chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                    stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
-                   colors: ['var(--edify-border)', 'var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)'],
-                   plotOptions: { bar: { columnWidth: '55%', borderRadius: 8, borderRadiusApplication: 'end' } },
+                   colors: window.EdifyChartSystem.mixedSeries,
                    labels: [{% for l in overview.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                    yaxis: [
                      { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
@@ -107,7 +106,7 @@
               <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
                 <div class="h-full rounded-pill {% if r.tone == 'success' %}bg-emerald-500{% elif r.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {{ r.score }}%"></div>
               </div>
-              <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ r.schools }} schools · exec {{ r.exec_rate }}% · verified {{ r.verified_rate }}% · SSA {% if r.ssa is not None %}{{ r.ssa }}%{% else %}—{% endif %} · SF ID {{ r.sf_rate }}%</p>
+              <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ r.schools }} schools · exec {{ r.exec_rate }}% · verified {{ r.verified_rate }}% · SSA {% if r.ssa is not None %}{{ r.ssa }}/10{% else %}—{% endif %} · SF ID {{ r.sf_rate }}%</p>
             </div>
             {% empty %}
             <p class="edify-text-caption text-slate-400 font-medium py-4">No regions with active schools in scope.</p>
@@ -160,11 +159,11 @@
 
       {# ── 4: Budget & approval snapshot ───────────────────────────────────── #}
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
-        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">4. Country Budget &amp; Approval Snapshot</h2>
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">4. General Budget &amp; Approval Snapshot</h2>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div class="rounded-surface border border-amber-100 bg-amber-50/40 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Monthly Pending</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.monthly_pending_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.monthly_pending }} budget(s)</p></div>
           <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Annual Pending</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.annual_pending_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.annual_pending }} submission(s)</p></div>
-          <div class="rounded-surface border border-emerald-100 bg-emerald-50/40 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-emerald-600">Approved This FY</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.approved_fy_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.approved_fy_count }} monthly budget(s)</p></div>
+          <div class="rounded-surface border border-emerald-100 bg-emerald-50/40 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-emerald-600">Approved This FY</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.approved_fy_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.approved_fy_count }} General Budget period(s)</p></div>
           <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total Regional Budget</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_snapshot.total_amt }}</p><p class="edify-text-caption font-semibold text-slate-400">{{ budget_snapshot.returned_count }} returned</p></div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
@@ -223,7 +222,7 @@
                 <td class="py-2.5 px-2 text-center tabular-nums">{{ p.budget }}</td>
                 <td class="py-2.5 px-2 text-center tabular-nums">{{ p.target_pct }}%</td>
                 <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ p.verified }}</td>
-                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if p.impact_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif p.impact_tone == 'warning' %}bg-amber-50 text-amber-700{% elif p.impact_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ p.impact }}</span>{% if p.delta is not None %} <span class="edify-text-caption text-slate-400 tabular-nums">{{ p.delta }}pp</span>{% endif %}</td>
+                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if p.impact_tone == 'success' %}bg-emerald-50 text-emerald-700{% elif p.impact_tone == 'warning' %}bg-amber-50 text-amber-700{% elif p.impact_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ p.impact }}</span>{% if p.delta is not None %} <span class="edify-text-caption text-slate-400 tabular-nums">{{ p.delta }} pts</span>{% endif %}</td>
                 <td class="py-2.5 px-2 text-slate-600">{{ p.recommendation }}</td>
                 <td class="py-2.5 px-2 text-right">
                   <form method="post" action="/rvp/project/{{ p.id }}/decision" class="inline-flex items-center gap-1">
@@ -251,7 +250,7 @@
       </div>
 
       {# ── 6 + 7: impact distribution · partner growth ─────────────────────── #}
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="edify-card-row grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2.5">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">6. Special Project Impact</h2>
           {% for d in project_impact_dist %}
@@ -260,9 +259,9 @@
             <span class="tabular-nums text-slate-700">{{ d.count }}</span>
           </div>
           {% empty %}
-          <p class="edify-text-caption text-slate-400 font-medium py-3">No project impact measurable yet — verified baseline and follow-up annual SSA required.</p>
+          <p class="edify-text-caption text-slate-400 font-medium py-3">No project impact measurable yet — verified initial and follow-up annual SSA scores required.</p>
           {% endfor %}
-          <p class="edify-text-caption text-slate-400 font-medium pt-1">Official impact requires verified baseline + follow-up annual SSA. No monthly SSA claims.</p>
+          <p class="edify-text-caption text-slate-400 font-medium pt-1">Official impact requires verified initial + follow-up annual SSA scores. No monthly SSA claims.</p>
         </div>
 
         <div id="partner-growth" class="lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
@@ -287,7 +286,7 @@
                   <td class="py-2.5 px-2 text-slate-500">{{ p.type }}</td>
                   <td class="py-2.5 px-2 text-center tabular-nums">{{ p.schools_supported }}</td>
                   <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ p.verified }}</td>
-                  <td class="py-2.5 px-2 text-center tabular-nums">{% if p.ssa_improve is not None %}{{ p.ssa_improve }}pp{% else %}—{% endif %}</td>
+                  <td class="py-2.5 px-2 text-center tabular-nums">{% if p.ssa_improve is not None %}{{ p.ssa_improve }} pts{% else %}—{% endif %}</td>
                   <td class="py-2.5 px-2 text-slate-500">{{ p.strategic_value }}</td>
                   <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if 'More' in p.recommendation or p.recommendation == 'Keep Active' %}bg-emerald-50 text-emerald-700{% elif 'Drop' in p.recommendation %}bg-rose-50 text-rose-700{% elif p.recommendation == 'Insufficient Data' %}bg-slate-50 text-slate-500{% else %}bg-amber-50 text-amber-700{% endif %}">{{ p.recommendation }}</span></td>
                 </tr>
@@ -301,7 +300,7 @@
       </div>
 
       {# ── 8 + 9: resource allocation · risks ─────────────────────────────── #}
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2.5">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">8. Resource Allocation &amp; Scaling</h2>
           {% for f in allocation.funding %}

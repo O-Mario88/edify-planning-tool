@@ -132,7 +132,7 @@ class CentralizedCostingTest(APITestCase):
 
     # ── A. Staff primary visit ───────────────────────────────────────────────
     def test_staff_primary_visit_transport_times_schools_plus_lunch(self):
-        _seed_rates(staff_visit_transport_primary=15000, lunch=8000)
+        _seed_rates(primary_transport_per_day=15000, primary_lunch_per_day=8000)
         # The costing engine prices a visit as transport + lunch per visit; the
         # per-school multiplier is conveyed via the activity (one visit = one
         # school). Verify the exact formula: transport(15000) + lunch(8000).
@@ -168,11 +168,11 @@ class CentralizedCostingTest(APITestCase):
     # ── B. Staff secondary visit ─────────────────────────────────────────────
     def test_staff_secondary_visit_includes_meals_and_accommodation(self):
         _seed_rates(
-            staff_visit_transport_secondary=25000,
-            breakfast=5000,
-            lunch=8000,
-            dinner=12000,
-            accommodation=40000,
+            secondary_transport_per_day=25000,
+            secondary_breakfast_per_day=5000,
+            secondary_lunch_per_day=8000,
+            secondary_overnight_dinner_per_day=12000,
+            secondary_accommodation_per_night=40000,
         )
         prev = self._preview(
             {
@@ -194,10 +194,10 @@ class CentralizedCostingTest(APITestCase):
     def test_staff_primary_visit_excludes_secondary_costs(self):
         """A primary visit must never include breakfast/dinner/accommodation."""
         _seed_rates(
-            staff_visit_transport_primary=15000,
-            lunch=8000,
-            breakfast=5000,
-            accommodation=40000,
+            primary_transport_per_day=15000,
+            primary_lunch_per_day=8000,
+            secondary_breakfast_per_day=5000,
+            secondary_accommodation_per_night=40000,
         )
         prev = self._preview(
             {
@@ -333,8 +333,8 @@ class CentralizedCostingTest(APITestCase):
     def test_partner_visit_uses_partner_lump_sum(self):
         _seed_rates(
             partner_visit_lump_sum=35000,
-            staff_visit_transport_primary=15000,
-            lunch=8000,
+            primary_transport_per_day=15000,
+            primary_lunch_per_day=8000,
         )
         prev = self._preview(
             {"activityType": "school_visit", "deliveryType": "partner"}
@@ -379,7 +379,7 @@ class CentralizedCostingTest(APITestCase):
 
     # ── G. Advance auto-created; Accountant gated on confirmation ────────────
     def test_advance_auto_created_and_accountant_gated_on_confirmation(self):
-        _seed_rates(staff_visit_transport_primary=15000, lunch=8000)
+        _seed_rates(primary_transport_per_day=15000, primary_lunch_per_day=8000)
         scheduled = self._post(
             "/api/planning/schedule-school-visit",
             {
@@ -435,7 +435,7 @@ class CentralizedCostingTest(APITestCase):
 
     # ── H. Self-funded: no advance disbursement; reimbursement opens ──────────
     def test_self_funded_skips_advance_and_opens_reimbursement(self):
-        _seed_rates(staff_visit_transport_primary=15000, lunch=8000)
+        _seed_rates(primary_transport_per_day=15000, primary_lunch_per_day=8000)
         scheduled = self._post(
             "/api/planning/schedule-school-visit",
             {

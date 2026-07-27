@@ -111,15 +111,44 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn(".kpi-strip__icon-container--primary {", components)
         self.assertIn("color: var(--brand-primary);", components)
 
-    def test_kpi_strip_is_a_canvas_grid_not_a_parent_card(self):
-        """KPI tiles keep their own cards; the strip itself stays transparent."""
+    def test_kpi_strip_is_a_unified_executive_summary(self):
+        """KPI strips follow the active theme and wrap on mobile, never scroll.
+
+        Each metric reads as its own themed card (white in Light, dark in Dark,
+        blue glass in Blue) via design tokens — no hardcoded navy panel — and
+        narrow screens collapse to a 2-column grid instead of a swipe carousel.
+        """
 
         components = (ROOT / "static/css/components.css").read_text()
+        template = (ROOT / "templates/components/kpi_strip.html").read_text()
         legacy_css = (ROOT / "static/css/custom.css").read_text()
 
+        # The component and its grid/item anatomy still anchor the contract.
         self.assertIn(".kpi-strip {", components)
-        self.assertIn("background: transparent;", components)
         self.assertIn(".kpi-strip__item {", components)
+        self.assertIn('class="kpi-strip__grid" role="list"', template)
+        self.assertIn('role="listitem"', template)
+
+        # Items render as themed cards driven by design tokens, so the strip
+        # follows the active workspace instead of a fixed navy panel.
+        self.assertIn("background-color: var(--edify-surface)", components)
+        self.assertIn("border: 1px solid var(--edify-border)", components)
+
+        # The hardcoded navy palette is gone entirely.
+        for navy_hex in ("#052d50", "#0a4169", "#07385f"):
+            self.assertNotIn(navy_hex, components)
+        self.assertNotIn("--edify-kpi-strip-background:", components)
+        # No theme may force the strip onto the navy panel. (A scoped blue-theme
+        # enhancement of the icon chips is fine; the combined navy override that
+        # pinned both themes to --edify-kpi-strip-background must not return.)
+        self.assertNotIn("background: var(--edify-kpi-strip-background)", components)
+
+        # Mobile never scrolls a strip sideways: the carousel is replaced by a
+        # 2-column wrapping grid.
+        self.assertNotIn("scroll-snap-type: inline mandatory", components)
+        self.assertIn("repeat(2, minmax(0, 1fr))", components)
+
+        # Legacy overrides must not sneak the navy treatment back in.
         self.assertNotIn(".dark .kpi-strip", legacy_css)
         self.assertNotIn(".glass .kpi-strip", legacy_css)
 

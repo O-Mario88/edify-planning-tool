@@ -41,8 +41,9 @@ from apps.analytics.pl_analytics_service import (
     VERIFIED_STATUSES,
     VISIT_TYPES,
     _INTERVENTION_LABELS,
-    _norm,
     _pct,
+    _ssa_bar_pct,
+    _ssa_score,
     ssa_band,
 )
 
@@ -243,7 +244,15 @@ class CDAnalyticsService:
     month, filters). CD role is enforced at the view layer."""
 
     @staticmethod
-    def get_dashboard(user, fy=None, quarter=None, month=None, filters=None) -> dict:
+    def get_dashboard(
+        user,
+        fy=None,
+        quarter=None,
+        month=None,
+        filters=None,
+        *,
+        include_regional_map=False,
+    ) -> dict:
         fy = fy or get_operational_fy()
         filters = dict(filters or {})
         quarter = (quarter or filters.get("quarter") or "").strip() or None
@@ -254,6 +263,11 @@ class CDAnalyticsService:
         )
         cd = resolve_cd_scope(fy, quarter, month, filters)
         acts = _country_activities(cd)
+        map_context = {}
+        if include_regional_map:
+            from apps.analytics.country_map_context import country_map_context
+
+            map_context = country_map_context(fy)
         _prime_target_series(cd)
 
         # Computed once, reused below AND passed into recommended_actions —
@@ -289,6 +303,7 @@ class CDAnalyticsService:
             "cceo_leaderboard": CDAnalyticsService.cceo_leaderboard(cd),
             "impact_summary": CDAnalyticsService.impact_summary(cd, acts),
             "regional_summary": CDAnalyticsService.regional_summary(cd),
+            **map_context,
             "budget_finance": CDAnalyticsService.budget_finance_health(cd),
             "operational_risk": CDAnalyticsService.operational_risk(cd, acts),
             "filter_options": CDAnalyticsService.filter_options(cd),
@@ -446,7 +461,7 @@ class CDAnalyticsService:
         latest_fy, _ = _cycle_fys(cd.school_ids, cd.fy)
         avg_ssa = None
         if latest_fy:
-            avg_ssa = _norm(
+            avg_ssa = _ssa_score(
                 SsaRecord.objects.filter(
                     school_id__in=cd.school_ids,
                     verification_status="confirmed",
@@ -535,7 +550,7 @@ class CDAnalyticsService:
             card(
                 "chart",
                 "Average SSA Score",
-                (f"{avg_ssa}%" if avg_ssa is not None else "No SSA"),
+                (f"{avg_ssa}/10" if avg_ssa is not None else "No SSA"),
                 "success",
                 "latest verified cycle",
             ),
@@ -733,6 +748,75 @@ class CDAnalyticsService:
         return weighted_period_pct(areas, targets, achieved, months)
 
     @staticmethod
+    def _area_achievement_rows(cd, user_ids):
+        """Validated target performance for each official area.
+
+        This is the unweighted area-level companion to
+        `_weighted_achievement`: it pools the same cached monthly target and
+        achievement series, then exposes each area separately so leadership
+        can see what an overall percentage is hiding.
+        """
+        from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
+        from apps.targets.my_targets import (
+            active_target_areas,
+            pool_series,
+            pooled_monthly_series,
+        )
+
+        areas = cd.areas or active_target_areas()
+        resolved_user_ids = {user_id for user_id in user_ids if user_id}
+        months = (
+            TCal.months_of_quarter(cd.quarter) if cd.quarter else list(range(1, 13))
+        )
+        if cd.per_user_series:
+            targets, achieved = pool_series(
+                resolved_user_ids, cd.per_user_series, areas
+            )
+        else:
+            targets, achieved = pooled_monthly_series(
+                User.objects.filter(id__in=resolved_user_ids),
+                cd.fy,
+                areas=areas,
+            )
+
+        short_labels = {
+            "school_visits": "VIS",
+            "cluster_meetings": "MEET",
+            "cluster_trainings": "TRN",
+            "ssa_completed": "SSA",
+            "mscs": "MSCS",
+        }
+        rows = []
+        for area in areas:
+            target = sum(targets[area.key][month - 1] for month in months)
+            done = sum(achieved[area.key][month - 1] for month in months)
+            pct = round(done / target * 100) if target else None
+            tone = (
+                "neutral"
+                if pct is None
+                else "success"
+                if pct >= 90
+                else "info"
+                if pct >= 75
+                else "warning"
+                if pct >= 50
+                else "danger"
+            )
+            rows.append(
+                {
+                    "key": area.key,
+                    "label": area.label,
+                    "short_label": short_labels.get(area.key, area.label),
+                    "weight": area.weight,
+                    "target": target,
+                    "achieved": done,
+                    "pct": pct,
+                    "tone": tone,
+                }
+            )
+        return rows
+
+    @staticmethod
     def _active_pl_count(cd, acts):
         owners = set(
             acts.exclude(responsible_staff_id__isnull=True).values_list(
@@ -868,7 +952,8 @@ class CDAnalyticsService:
                         "value": v,
                         "label": label,
                         "code": code,
-                        "pct": None,
+                        "score": None,
+                        "bar_pct": 0,
                         "delta": None,
                         "band": b[0],
                         "color": b[1],
@@ -890,23 +975,28 @@ class CDAnalyticsService:
 
         cur, old = by_int(latest), (by_int(prev) if prev else {})
         for v, label, code in SSA_INTERVENTIONS:
-            cp = _norm(cur.get(v))
-            pp = _norm(old.get(v)) if prev else None
-            delta = round(cp - pp, 1) if (cp is not None and pp is not None) else None
-            b = ssa_band(cp)
+            current_score = _ssa_score(cur.get(v))
+            previous_score = _ssa_score(old.get(v)) if prev else None
+            delta = (
+                round(current_score - previous_score, 1)
+                if current_score is not None and previous_score is not None
+                else None
+            )
+            b = ssa_band(current_score)
             rows.append(
                 {
                     "value": v,
                     "label": label,
                     "code": code,
-                    "pct": cp,
+                    "score": current_score,
+                    "bar_pct": _ssa_bar_pct(current_score),
                     "delta": delta,
                     "band": b[0],
                     "color": b[1],
                     "tone": b[2],
                 }
             )
-        rows.sort(key=lambda r: (r["pct"] is None, -(r["pct"] or 0)))
+        rows.sort(key=lambda r: (r["score"] is None, -(r["score"] or 0)))
         return {"rows": rows, "latest_fy": latest, "prev_fy": prev, "has_data": True}
 
     # ── 3. Target achievement by PL & CCEO ───────────────────────────────────
@@ -1019,9 +1109,9 @@ class CDAnalyticsService:
             }
             cells = []
             for v, label, code in cols:
-                pct = _norm(by.get(v))
-                cells.append({"pct": pct, "tone": ssa_band(pct)[2]})
-            avg = _norm(_mean(district_scores.get(did, [])))
+                score = _ssa_score(by.get(v))
+                cells.append({"score": score, "tone": ssa_band(score)[2]})
+            avg = _ssa_score(_mean(district_scores.get(did, [])))
             covered = len(district_covered_schools.get(did, set()))
             n_schools = d["n"]
             rows.append(
@@ -1075,7 +1165,7 @@ class CDAnalyticsService:
                     school_id__in=p_school_ids, verification_status="confirmed", fy=prev
                 ).aggregate(a=Avg("average_score"))["a"]
                 if cur is not None and old is not None:
-                    ssa_improve = round((cur - old) * 10, 1)
+                    ssa_improve = round(cur - old, 1)
             rec = CDAnalyticsService._partner_recommendation(
                 target_pct, ssa_improve, planned
             )
@@ -1106,13 +1196,13 @@ class CDAnalyticsService:
             return ("Insufficient Data", "neutral")
         if ssa_improve < 0:
             return ("Drop / Do Not Renew", "danger")
-        if target_pct >= 70 and ssa_improve >= 5:
+        if target_pct >= 70 and ssa_improve >= 0.5:
             return ("Assign More Schools", "success")
-        if target_pct >= 70 and ssa_improve < 5:
+        if target_pct >= 70 and ssa_improve < 0.5:
             return ("Quality Review", "warning")
-        if target_pct < 55 and ssa_improve >= 5:
+        if target_pct < 55 and ssa_improve >= 0.5:
             return ("Capacity Review", "warning")
-        if target_pct < 55 and ssa_improve < 5:
+        if target_pct < 55 and ssa_improve < 0.5:
             return ("Drop / Replace", "danger")
         return ("Keep Active", "success")
 
@@ -1132,7 +1222,7 @@ class CDAnalyticsService:
                         school_id__in=c_ids, verification_status="confirmed", fy=latest
                     ).values_list("id", flat=True)
                 )
-                avg = _norm(
+                avg = _ssa_score(
                     SsaRecord.objects.filter(id__in=rids).aggregate(
                         a=Avg("average_score")
                     )["a"]
@@ -1148,7 +1238,7 @@ class CDAnalyticsService:
                     weak_label = _INTERVENTION_LABELS.get(
                         bi["intervention"], (bi["intervention"], "")
                     )[0]
-                    weak = _norm(bi["a"])
+                    weak = _ssa_score(bi["a"])
             c_acts = acts.filter(cluster_id=cid)
             trainings = c_acts.filter(
                 activity_type__in=TRAINING_TYPES + CLUSTER_MEETING_TYPES,
@@ -1166,7 +1256,7 @@ class CDAnalyticsService:
                     "avg_ssa": avg,
                     "ssa_tone": b[2],
                     "weakest_label": weak_label,
-                    "weakest_pct": weak,
+                    "weakest_score": weak,
                     "trainings": trainings,
                     "visits": visits,
                     "schools": len(c_ids),
@@ -1270,7 +1360,7 @@ class CDAnalyticsService:
                     district_leadership_scores.setdefault(did, []).append(score)
             for scores in district_leadership_scores.values():
                 vals = [s for s in scores if s is not None]
-                if vals and _norm(sum(vals) / len(vals)) < 50:
+                if vals and _ssa_score(sum(vals) / len(vals)) < 5:
                     low_lship_districts += 1
 
         if partner_rows is None:
@@ -1297,7 +1387,7 @@ class CDAnalyticsService:
                 "link": "?drill=risk&issue=no_ssa",
             },
             {
-                "issue": "Districts with low Leadership scores (<50%)",
+                "issue": "Districts with low Leadership scores (<5.0/10)",
                 "count": low_lship_districts,
                 "severity": "warning",
                 "owner": "PL",
@@ -1348,6 +1438,9 @@ class CDAnalyticsService:
                 areas=cd.areas or None,
                 per_user_series=cd.per_user_series or None,
             )
+            area_rows = CDAnalyticsService._area_achievement_rows(
+                cd, [c["user_id"] for c in cceos if c["user_id"]]
+            )
             schools_at_risk = (
                 School.objects.filter(id__in=all_school_ids)
                 .exclude(current_fy_ssa_status="done")
@@ -1383,6 +1476,7 @@ class CDAnalyticsService:
                     "name": pl.name,
                     "cceos": len(cceos),
                     "target_pct": pl_pct,
+                    "areas": area_rows,
                     "schools_at_risk": schools_at_risk,
                     "budget_util": budget_util,
                     "backlog": backlog,
@@ -1520,7 +1614,7 @@ class CDAnalyticsService:
                     cur = sum(cur_vals) / len(cur_vals) if cur_vals else None
                     old = sum(old_vals) / len(old_vals) if old_vals else None
                     if cur is not None and old is not None:
-                        ssa_improve = round((cur - old) * 10, 1)
+                        ssa_improve = round(cur - old, 1)
                 risk = "danger" if overdue >= 4 else ("amber" if overdue else "success")
                 rows.append(
                     {
@@ -1671,12 +1765,12 @@ class CDAnalyticsService:
         for rid in region_ids:
             avg = trend = None
             if latest:
-                avg = _norm(_mean(region_scores.get((rid, latest), [])))
+                avg = _ssa_score(_mean(region_scores.get((rid, latest), [])))
                 if prev:
                     cur = _mean(region_scores.get((rid, latest), []))
                     old = _mean(region_scores.get((rid, prev), []))
                     if cur is not None and old is not None:
-                        trend = round((cur - old) * 10, 1)
+                        trend = round(cur - old, 1)
             n_districts = len(district_by_region.get(rid, set()))
             rows.append(
                 {
@@ -1841,7 +1935,13 @@ class CDAnalyticsService:
                 "90+ days",
                 "?drill=risk&issue=no_training",
             ),
-            card("Low SSA (<50%)", low_ssa, "warning", "", "?drill=risk&issue=low_ssa"),
+            card(
+                "Low SSA (<5.0/10)",
+                low_ssa,
+                "warning",
+                "",
+                "?drill=risk&issue=low_ssa",
+            ),
             card(
                 "Evidence Pending",
                 evidence_pending,
@@ -2028,7 +2128,7 @@ class CDAnalyticsService:
             {"label": "Request Recovery Plan", "href": "/team-targets/"},
             {"label": "Flag to Program Lead", "href": "/quality-checks"},
             {"label": "Message PL", "href": "/messages"},
-            {"label": "Review Country Budget", "href": "/country-budget/"},
+            {"label": "Review General Budget", "href": "/country-budget/"},
         ],
         "cceo": [
             {"label": "View Performance", "href": "/team-targets/"},
@@ -2060,7 +2160,7 @@ class CDAnalyticsService:
             {"label": "Send Message", "href": "/messages"},
         ],
         "budget": [
-            {"label": "Review Country Monthly Budget", "href": "/country-budget/"},
+            {"label": "Review General Budget", "href": "/country-budget/"},
             {"label": "Update Cost Catalogue", "href": "/cost-settings"},
             {"label": "Escalate to RVP", "href": "/escalations"},
         ],
@@ -2096,7 +2196,7 @@ class CDAnalyticsService:
         if drill == "pl":
             # Target math is read here — refresh so a drilldown opened
             # without a preceding full dashboard load never shows stale credit.
-            _refresh_target_ledger(cd)
+            _prime_target_series(cd)
             return {**base, **CDAnalyticsService._drill_pl(cd, acts, params.get("id"))}
         if drill == "cceo":
             return {
@@ -2168,11 +2268,13 @@ class CDAnalyticsService:
             c_acts = acts.filter(
                 Q(responsible_staff_id__in=ids) | Q(school_id__in=c["school_ids"])
             )
-            pct, a, t = CDAnalyticsService._completion_vs_target(
-                c["staff_id"],
-                c_acts.filter(status__in=COMPLETED_STATUSES),
+            pct, a, t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                user_id=c["user_id"],
+                cd.quarter,
+                [c["user_id"]] if c["user_id"] else [],
+                [c["staff_id"]],
+                areas=cd.areas or None,
+                per_user_series=cd.per_user_series or None,
             )
             rows.append(
                 {
@@ -2182,6 +2284,9 @@ class CDAnalyticsService:
                     "completed": c_acts.filter(status__in=COMPLETED_STATUSES).count(),
                     "verified": c_acts.filter(status__in=VERIFIED_STATUSES).count(),
                     "target_pct": pct,
+                    "areas": CDAnalyticsService._area_achievement_rows(
+                        cd, [c["user_id"]] if c["user_id"] else []
+                    ),
                 }
             )
         at_risk = (
@@ -2198,7 +2303,7 @@ class CDAnalyticsService:
                 school_id__in=all_school_ids, verification_status="confirmed", fy=prev
             ).aggregate(a=Avg("average_score"))["a"]
             if cur is not None and old is not None:
-                ssa_improve = round((cur - old) * 10, 1)
+                ssa_improve = round(cur - old, 1)
         return {
             "title": pl.name,
             "subtitle": "PL performance — oversight view",
@@ -2277,8 +2382,15 @@ class CDAnalyticsService:
                 .annotate(a=Avg("score"))
             }
             for v, label, code in SSA_INTERVENTIONS:
-                pct = _norm(by.get(v))
-                cells.append({"label": label, "pct": pct, "tone": ssa_band(pct)[2]})
+                score = _ssa_score(by.get(v))
+                cells.append(
+                    {
+                        "label": label,
+                        "score": score,
+                        "bar_pct": _ssa_bar_pct(score),
+                        "tone": ssa_band(score)[2],
+                    }
+                )
         at_risk = (
             School.objects.filter(id__in=d_school_ids)
             .exclude(current_fy_ssa_status="done")
@@ -2305,7 +2417,7 @@ class CDAnalyticsService:
         )
         latest, prev = _cycle_fys(cd.school_ids, cd.fy)
         avg = (
-            _norm(
+            _ssa_score(
                 SsaRecord.objects.filter(
                     school_id__in=r_school_ids,
                     verification_status="confirmed",
@@ -2368,8 +2480,15 @@ class CDAnalyticsService:
                 .annotate(a=Avg("score"))
             }
             for v, label, code in SSA_INTERVENTIONS:
-                pct = _norm(by.get(v))
-                cells.append({"label": label, "pct": pct, "tone": ssa_band(pct)[2]})
+                score = _ssa_score(by.get(v))
+                cells.append(
+                    {
+                        "label": label,
+                        "score": score,
+                        "bar_pct": _ssa_bar_pct(score),
+                        "tone": ssa_band(score)[2],
+                    }
+                )
         c = Cluster.objects.filter(id=cluster_id).first()
         c_acts = acts.filter(cluster_id=cluster_id)
         return {
@@ -2413,11 +2532,16 @@ class CDAnalyticsService:
                 a = SsaScore.objects.filter(
                     ssa_record_id__in=rids, intervention=intervention
                 ).aggregate(x=Avg("score"))["x"]
-                pct = _norm(a)
+                score = _ssa_score(a)
                 rows.append(
-                    {"name": d["district__name"], "pct": pct, "tone": ssa_band(pct)[2]}
+                    {
+                        "name": d["district__name"],
+                        "score": score,
+                        "bar_pct": _ssa_bar_pct(score),
+                        "tone": ssa_band(score)[2],
+                    }
                 )
-            rows.sort(key=lambda r: (r["pct"] is None, r["pct"] or 0))
+            rows.sort(key=lambda r: (r["score"] is None, r["score"] or 0))
         return {
             "title": f"SSA — {label}",
             "subtitle": "Intervention weakness by district",
@@ -2434,7 +2558,7 @@ class CDAnalyticsService:
             "no_ssa": "Schools without SSA",
             "no_visit": "Schools with No Visit",
             "no_training": "Schools with No Training",
-            "low_ssa": "Low-SSA Schools (<50%)",
+            "low_ssa": "Low-SSA Schools (<5.0/10)",
             "evidence": "Evidence Pending",
             "ia": "IA Pending",
             "finance": "Finance Pending",
@@ -2468,7 +2592,7 @@ class CDAnalyticsService:
                         "district": (
                             s.district.name if s.district_id and s.district else "—"
                         ),
-                        "detail": "SSA below 50%",
+                        "detail": "SSA below 5.0/10",
                     }
                 )
         elif issue in ("no_visit", "no_training"):

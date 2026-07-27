@@ -41,7 +41,7 @@ def add_admin_line(budget_id: str, data: dict, principal) -> dict:
         MonthlyWorkPlanBudgetStatus.ADMIN_PLAN_ADDED,
         MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP,
     ):
-        raise BadRequest("This country budget is locked and can no longer be changed.")
+        raise BadRequest("This General Budget is locked and can no longer be changed.")
     description = (data.get("description") or "").strip()
     if not description:
         raise BadRequest("Enter a clear description for the admin budget item.")
@@ -228,7 +228,7 @@ def rvp_approve(budget_id: str, data: dict, principal) -> dict:
     _rvp_audit(
         "monthly_budget",
         b.id,
-        f"Country Monthly Budget {b.month_key}",
+        f"General Budget {b.month_key}",
         "approve",
         principal,
         amount=b.total_amount,
@@ -237,8 +237,8 @@ def rvp_approve(budget_id: str, data: dict, principal) -> dict:
     if b.submitted_by_user_id:
         _rvp_notify(
             b.submitted_by_user_id,
-            "Monthly budget approved by RVP",
-            f"The {b.month_key} country budget was approved — the "
+            "General Budget approved by RVP",
+            f"The {b.month_key} General Budget was approved — the "
             "Accountant can now receive the allocation.",
             "/country-budget",
         )
@@ -265,7 +265,7 @@ def rvp_return(budget_id: str, data: dict, principal) -> dict:
     _rvp_audit(
         "monthly_budget",
         b.id,
-        f"Country Monthly Budget {b.month_key}",
+        f"General Budget {b.month_key}",
         "return",
         principal,
         reason=note,

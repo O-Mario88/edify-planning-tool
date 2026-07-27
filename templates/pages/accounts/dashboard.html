@@ -71,7 +71,7 @@ FY {{ fy }} · Live workflow data
 {% include "components/analytics_provenance.html" with engine=analytics.engine %}
 
 <!-- ================= TOP KPI STRIP ================= -->
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+<div class="legacy-kpi-strip grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4" aria-label="Account workflow summary">
 <!-- Total Funds -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Approved Funds</p>
@@ -122,7 +122,7 @@ FY {{ fy }} · Live workflow data
 
 
 <!-- ================= MAIN WORKSPACE GRID ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
 <!-- LEFT PANEL: CONSOLIDATED FUND QUEUE (Col Span 3) -->
 <div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
@@ -411,7 +411,7 @@ Open Canonical Disbursement Queue
 
 
 <!-- ================= BOTTOM ROW GRID ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
 <!-- RECENT DISBURSEMENT ACTIVITY (Col Span 4) -->
 <div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">

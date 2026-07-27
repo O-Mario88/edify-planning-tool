@@ -1,6 +1,6 @@
 """Country-envelope reconciliation — plan vs commitment vs actual.
 
-The country monthly budget dead-ended at `approved_by_rvp`: the `disbursed` and
+The General Budget dead-ended at `approved_by_rvp`: the `disbursed` and
 `closed` statuses existed but nothing ever wrote them, and no surface compared
 the approved envelope against what the Accountant actually disbursed on the
 separate advance ledger. CD and RVP approved money and could never see how the
@@ -286,9 +286,7 @@ def _require_envelope_owner(principal) -> None:
         return
     if getattr(principal, "active_role", None) in ("CountryDirector", "Admin"):
         return
-    raise Forbidden(
-        "Only the Country Director can move the country budget's lifecycle."
-    )
+    raise Forbidden("Only the Country Director can move the General Budget lifecycle.")
 
 
 def mark_disbursed(budget_id: str, principal) -> dict:

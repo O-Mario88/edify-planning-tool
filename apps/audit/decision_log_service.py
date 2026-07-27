@@ -81,12 +81,12 @@ DECISION_ACTIONS = {
 # Human labels. An audit action name is a developer's word; a decision log is
 # read by directors.
 ACTION_LABELS = {
-    "country_budget_approved_by_rvp": "Approved the country monthly budget",
-    "country_budget_returned_by_rvp": "Returned the country monthly budget",
-    "country_budget_submitted_to_rvp": "Submitted the country budget to the RVP",
+    "country_budget_approved_by_rvp": "Approved the General Budget",
+    "country_budget_returned_by_rvp": "Returned the General Budget",
+    "country_budget_submitted_to_rvp": "Submitted the General Budget to the RVP",
     "country_budget_sent_to_accountant": "Handed the budget to the Accountant",
-    "country_budget_disbursed": "Marked the country budget disbursed",
-    "country_budget_closed": "Closed the country budget month",
+    "country_budget_disbursed": "Marked the General Budget disbursed",
+    "country_budget_closed": "Closed the General Budget period",
     "rvp_annual_approve": "Approved and locked the annual baseline",
     "rvp_annual_return": "Returned the annual budget",
     "finance_partner_payment_clear": "Cleared a partner payment",

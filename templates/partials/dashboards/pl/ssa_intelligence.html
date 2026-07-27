@@ -29,7 +29,7 @@
                        {% elif cell.tone == 'warning' %}var(--edify-warning)
                        {% elif cell.tone == 'danger' %}var(--edify-danger)
                        {% else %}var(--edify-text-subtle){% endif %};">
-            {% if cell.pct is not None %}{{ cell.pct|floatformat:1 }}{% else %}—{% endif %}
+            {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}—{% endif %}
           </span>
         </td>
         {% endfor %}

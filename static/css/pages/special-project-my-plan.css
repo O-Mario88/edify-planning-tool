@@ -278,7 +278,13 @@
 .sp-breakdown__grid strong { color: var(--edify-text); font-size: 1.28rem; line-height: 1; }
 .sp-breakdown__grid small { align-self: end; color: var(--edify-text-subtle); font-size: .75rem; }
 
-.sp-insights { position: sticky; top: 12px; }
+.sp-insights {
+  position: sticky;
+  top: 12px;
+  grid-column: auto;
+  grid-row: auto;
+  align-content: start;
+}
 .sp-insights .sp-card { padding-bottom: 12px; }
 .sp-stack { gap: 8px; padding: 12px; }
 .sp-upcoming { gap: 9px; padding: 10px; border: 1px solid var(--edify-border); border-radius: 10px; background: var(--edify-surface-muted); }
@@ -313,7 +319,10 @@
 .sp-empty h2 { margin: 0; font-size: 1.1rem; }
 .sp-empty p { margin: 8px auto 20px; max-width: 52ch; color: var(--edify-text-muted); }
 
-.sp-card:nth-of-type(n + 2) { content-visibility: auto; contain-intrinsic-size: auto 260px; }
+.sp-plan-main > .sp-card:nth-of-type(n + 2) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 260px;
+}
 
 @media (max-width: 1380px) {
   .sp-filter-grid { grid-template-columns: repeat(5, minmax(130px, 1fr)); }

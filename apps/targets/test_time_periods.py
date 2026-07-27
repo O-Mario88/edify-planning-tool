@@ -194,10 +194,12 @@ class TimePeriodTargetsTest(TestCase):
         html = c.get("/my-targets").content.decode()
         self.assertIn("Core School Tracker", html)
         self.assertIn("School One", html)
+        self.assertIn("Average SSA Score", html)
+        self.assertNotIn(">Baseline</th>", html)
         self.assertIn("2/4", html)  # visits progress
         self.assertIn("1/4", html)  # trainings progress
         self.assertIn("On Track", html)  # baseline set + progressing
-        self.assertIn("6.2/10", html)  # baseline shown
+        self.assertIn("6.2/10", html)  # average SSA score shown
 
     def test_core_plan_still_feeds_tracker_not_target_area(self):
         from apps.core_schools.models import CorePlan

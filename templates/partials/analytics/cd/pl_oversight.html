@@ -1,16 +1,17 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
   <div>
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">8. PL Oversight Summary</h3>
-    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Team achievement, risk & backlog · click a PL to review</p>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">9. PL Oversight Summary</h3>
+    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Supervised CCEO performance across all five target areas · click a PL for individual results</p>
   </div>
   <div class="overflow-x-auto -mx-1">
-    <table class="w-full edify-text-caption">
+    <table class="w-full min-w-[760px] edify-text-caption">
       <thead>
         <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
           <th class="text-left font-bold py-1.5 pl-1">PL</th>
           <th class="text-right font-bold py-1.5">CCEOs</th>
           <th class="text-right font-bold py-1.5">Tgt %</th>
+          <th class="text-right font-bold py-1.5">CCEO Area Results</th>
           <th class="text-right font-bold py-1.5">At Risk</th>
           <th class="text-right font-bold py-1.5 pr-1">Risk</th>
         </tr>
@@ -23,6 +24,9 @@
           <td class="text-left font-semibold text-slate-700 py-1.5 pl-1 max-w-[110px] truncate">{{ r.name }}</td>
           <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.cceos }}</td>
           <td class="text-right tabular-nums font-bold text-slate-700 py-1.5">{{ r.target_pct }}%</td>
+          <td class="py-1.5 pl-3">
+            {% include "partials/analytics/cd/_target_area_badges.html" with areas=r.areas %}
+          </td>
           <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.schools_at_risk|intcomma }}</td>
           <td class="text-right py-1.5 pr-1">
             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap
@@ -36,7 +40,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios in scope.</td></tr>
+        <tr><td colspan="6" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios in scope.</td></tr>
         {% endfor %}
       </tbody>
     </table>

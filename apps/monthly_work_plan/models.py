@@ -37,6 +37,11 @@ class MonthlyWorkPlanBudget(TimeStampedModel):
     admin_total = models.BigIntegerField(default=0)  # UGX
     total_amount = models.BigIntegerField(default=0)  # UGX
     activity_count = models.IntegerField(default=0)
+    # submission_version counts the number of immutable snapshots taken for
+    # this month. It increments on every successful submit (and again on each
+    # resubmit after an RVP return), so the spec's "record the submission
+    # version" is explicit and each snapshot is uniquely identifiable.
+    submission_version = models.IntegerField(default=0)
     submitted_at = models.DateTimeField(null=True, blank=True)
     submitted_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     rvp_reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -80,7 +85,65 @@ class AdminBudgetLine(TimeStampedModel):
         indexes = [models.Index(fields=["monthly_budget"])]
 
 
-__all__ = ["MonthlyWorkPlanBudgetStatus", "MonthlyWorkPlanBudget", "AdminBudgetLine"]
+class MonthlyBudgetSubmissionSnapshot(TimeStampedModel):
+    """An immutable point-in-time copy of a monthly budget at submission.
+
+    Created atomically inside the submit transaction. The submitted month's
+    aggregate totals are frozen on the parent row, but its displayed staff
+    table, category breakdown and per-line detail would otherwise be recomputed
+    from live ``ActivityScheduleCostLine`` rows and drift from what was
+    approved. This snapshot captures those structures as JSON so a submitted
+    month never changes — later activity/cost edits, another month's
+    preparation, or a page refresh cannot alter it. Any change to an already
+    submitted month must go through the canonical Budget Return / Amendment
+    workflow, which creates a new versioned snapshot.
+    """
+
+    id = CuidField()
+    monthly_budget = models.ForeignKey(
+        MonthlyWorkPlanBudget,
+        on_delete=models.CASCADE,
+        related_name="snapshots",
+    )
+    version = models.IntegerField()  # mirrors monthly_budget.submission_version
+    fy = models.CharField(max_length=16)
+    month_key = models.CharField(max_length=16)
+    country_id = models.CharField(max_length=64, null=True, blank=True)
+    program_total = models.BigIntegerField(default=0)  # UGX
+    admin_total = models.BigIntegerField(default=0)  # UGX
+    total_amount = models.BigIntegerField(default=0)  # UGX
+    activity_count = models.IntegerField(default=0)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    submitted_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    # Frozen presentation structures — same shape get_country_monthly_budget
+    # builds today, captured at submit time so history never drifts.
+    staff_rows = models.JSONField(default=list, blank=True)
+    line_items = models.JSONField(default=list, blank=True)
+    admin_lines = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        db_table = "monthly_budget_submission_snapshot"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["monthly_budget", "version"],
+                name="uniq_budget_submission_version",
+            )
+        ]
+        indexes = [models.Index(fields=["monthly_budget"])]
+        ordering = ["-version"]
+
+
+__all__ = [
+    "MonthlyWorkPlanBudgetStatus",
+    "MonthlyWorkPlanBudget",
+    "AdminBudgetLine",
+    "MonthlyBudgetSubmissionSnapshot",
+    "CountryAnnualBudgetStatus",
+    "CountryAnnualBudget",
+    "RVPApprovalDecision",
+    "StrategyNoteStatus",
+    "StrategyNote",
+]
 
 
 class CountryAnnualBudgetStatus(models.TextChoices):

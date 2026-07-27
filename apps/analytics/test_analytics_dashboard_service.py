@@ -103,6 +103,7 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
         data = AnalyticsDashboardService.get_analytics_data(self.user, self._filters())
 
         self.assertEqual(data["kpis"]["target_achievement"]["value"], "No Target Set")
+        self.assertEqual(data["map_scope"]["label"], "Country-wide system data")
         strip = {k["label"]: k for k in data["kpi_strip_items"]}
         self.assertEqual(strip["Overall Target Achievement"]["value"], "No Target Set")
         self.assertIsNone(strip["Overall Target Achievement"]["raw_value"])

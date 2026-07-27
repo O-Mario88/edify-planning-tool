@@ -36,8 +36,8 @@ from apps.analytics.pl_analytics_service import (
     TRAINING_TYPES,
     VERIFIED_STATUSES,
     VISIT_TYPES,
-    _norm,
     _pct,
+    _ssa_score,
     ssa_band,
 )
 from apps.analytics.pl_dashboard_service import SF_ID_OVERDUE_DAYS, _requires_sf_id
@@ -244,7 +244,7 @@ class CDDashboardService:
     @staticmethod
     def _pending_cd_items(fy) -> dict:
         """Everything waiting on the CD: escalated weekly fund requests plus
-        the monthly country budget when it sits at a CD stage."""
+        the General Budget when it sits at a CD stage."""
         from apps.fund_requests.models import WeeklyFundRequest
         from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
 
@@ -481,6 +481,7 @@ class CDDashboardService:
                     "name": pl.name,
                     "region": CDDashboardService._pl_region(school_ids),
                     "target_pct": b["target_pct"],
+                    "areas": b["areas"],
                     "staff": len(cceos),
                     "planned": planned,
                     "verified": verified,
@@ -728,9 +729,9 @@ class CDDashboardService:
             }
             cells = []
             for v, _label, _code in SSA_INTERVENTIONS:
-                pct = _norm(by.get(v))
-                cells.append({"pct": pct, "tone": ssa_band(pct)[2]})
-            overall = _norm(
+                score = _ssa_score(by.get(v))
+                cells.append({"score": score, "tone": ssa_band(score)[2]})
+            overall = _ssa_score(
                 SsaRecord.objects.filter(id__in=rids).aggregate(a=Avg("average_score"))[
                     "a"
                 ]

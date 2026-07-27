@@ -18,6 +18,12 @@ PROJECT_COORDINATOR = "PROJECT_COORDINATOR"
 
 ALL_ROLES = {ADMIN, CCEO, PL, CD, IA, RVP, HR, ACCOUNTANT, PARTNER, PROJECT_COORDINATOR}
 
+# Sidebar information architecture is narrower than route authorization. These
+# are the roles whose day-to-day work belongs in the field operations group;
+# leadership and support roles may retain scoped read access through their own
+# intelligence, verification, finance, or people workspaces.
+FIELD_NAV_ROLES = {ADMIN, CCEO, PL, PARTNER, PROJECT_COORDINATOR}
+
 
 def get_user_role_slug(user) -> str:
     """Normalize user active role to a standard role constant."""
@@ -706,36 +712,15 @@ SIDEBAR_ITEMS = [
         ],
     },
     {
-        # The individual's own performance workspace — the agreement drives the
-        # targets, so My Targets belongs here rather than in the general work
-        # list. Each link is a distinct path so exactly one highlights.
-        "group_label": "MY PERFORMANCE",
-        "items": [
-            {
-                "label": "Priority Dashboard",
-                "url": "/my-performance",
-                "page_key": "my_performance",
-            },
-            {
-                "label": "My Targets",
-                "url": "/my-targets",
-                "page_key": "my_target",
-            },
-            # Development Plans, Values and Conversations were sidebar links
-            # into the Priority Dashboard's own tabs — the same page four
-            # times, each entry stealing the highlight from the dashboard it
-            # opened. The tabs are the navigation. Their routes stay, so deep
-            # links and bookmarks still resolve.
-            #
-            # "Documents" went with them: it pointed at
-            # /my-performance/documents, which the URL conf maps to the
-            # CONVERSATIONS tab, and no documents tab exists — a link that has
-            # never shown what it was named for.
-        ],
-    },
-    {
         "group_label": "SCHOOLS & FIELD",
+        "visible_to": FIELD_NAV_ROLES,
         "items": [
+            {
+                "label": "Planning",
+                "url": "/planning",
+                "page_key": "planning",
+                "role_urls": {PROJECT_COORDINATOR: "/projects/planning"},
+            },
             {
                 "label": "Schools",
                 "url": "/schools",
@@ -779,14 +764,26 @@ SIDEBAR_ITEMS = [
         ],
     },
     {
-        "group_label": "PLANNING & FINANCE",
+        # The individual's own performance workspace — the agreement drives the
+        # targets, so My Targets belongs here rather than in the general work
+        # list. Each link is a distinct path so exactly one highlights.
+        "group_label": "MY PERFORMANCE",
         "items": [
             {
-                "label": "Planning",
-                "url": "/planning",
-                "page_key": "planning",
-                "role_urls": {PROJECT_COORDINATOR: "/projects/planning"},
+                "label": "Priority Dashboard",
+                "url": "/my-performance",
+                "page_key": "my_performance",
             },
+            {
+                "label": "My Targets",
+                "url": "/my-targets",
+                "page_key": "my_target",
+            },
+        ],
+    },
+    {
+        "group_label": "FINANCE & BUDGET",
+        "items": [
             {
                 "label": "Weekly Fund Request",
                 "url": "/fund-requests/weekly",
@@ -803,12 +800,7 @@ SIDEBAR_ITEMS = [
                 "page_key": "monthly_request",
             },
             {
-                "label": "My Budget",
-                "url": "/budgets/monthly",
-                "page_key": "my_budget",
-            },
-            {
-                "label": "Country Budget",
+                "label": "Monthly Fund Request",
                 "url": "/country-budget/",
                 "page_key": "country_budget",
             },
@@ -873,6 +865,16 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "VERIFICATION",
         "items": [
+            {
+                # IA creates and validates authoritative school records, but is
+                # not a field-delivery role. Keep that workflow discoverable in
+                # Verification instead of presenting IA with Schools & Field.
+                "label": "School Directory",
+                "url": "/schools",
+                "page_key": "school_directory",
+                "visible_to": {IA},
+                "icon_key": "schools",
+            },
             {
                 "label": "Verification Queue",
                 "url": "/ia/verification/",
@@ -1132,6 +1134,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
 
     sections = []
     for sec in SIDEBAR_ITEMS:
+        section_audience = sec.get("visible_to")
+        if section_audience is not None and role not in section_audience:
+            continue
+
         visible_items = []
         for item in sec["items"]:
             # The Analytics hub stands for a whole workspace, so it is resolved
@@ -1160,7 +1166,14 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 )
                 continue
 
-            allowed = PAGE_PERMISSIONS.get(item["page_key"], set())
+            # A navigation audience may intentionally be narrower than route
+            # authorization. This lets a page remain reachable from the right
+            # workspace or a deep link without advertising it in an unrelated
+            # role's sidebar.
+            allowed = item.get(
+                "visible_to",
+                PAGE_PERMISSIONS.get(item["page_key"], set()),
+            )
             if role in allowed:
                 # Per-role URL override (e.g. a Project Coordinator's "Planning"
                 # points to the project-scoped planning page).
@@ -1181,9 +1194,12 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
 
                 visible_items.append(
                     {
-                        "label": item["label"],
+                        "label": item.get("role_labels", {}).get(role, item["label"]),
                         "url": url,
-                        "icon": ICONS.get(item["page_key"], ""),
+                        "icon": ICONS.get(
+                            item.get("icon_key", item["page_key"]),
+                            "",
+                        ),
                         "active": is_active,
                     }
                 )

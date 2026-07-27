@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}My Budget - Edify{% endblock %}
+{% block title %}{{ page_title|default:workspace_title }} - Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 py-5 space-y-4 sm:px-6 max-w-[1500px] mx-auto">
@@ -10,30 +10,121 @@
       <div>
         <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">{{ scope_label }} funding workspace</p>
         <p class="edify-page-eyebrow">Finance</p>
-        <h1 class="mt-1 text-[24px] font-bold tracking-tight edify-page-title">My Budget</h1>
+        <h1 class="mt-1 text-[24px] font-bold tracking-tight edify-page-title">{{ workspace_title }}</h1>
         <p class="mt-1 text-[13px] font-medium text-slate-300">{{ selected.title }} · FY {{ fy }} · {{ role }}</p>
       </div>
       <div class="rounded-control border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-slate-200">
-        {{ weekly_request_count }} weekly request{{ weekly_request_count|pluralize }} · {{ monthly_request_count }} monthly plan{{ monthly_request_count|pluralize }}
+        {% if workspace_kind == "admin" %}
+        {{ admin_item_count }} administrative item{{ admin_item_count|pluralize }} · {{ source_description }}
+        {% else %}
+        {{ weekly_request_count }} weekly request{{ weekly_request_count|pluralize }} · {{ source_description }}
+        {% endif %}
       </div>
     </div>
     {% if is_program_lead %}
+    {# Selected tab uses the shared edify-selected-surface, not a hand-rolled pill: one selected state across period cards, tabs and workflow stages. #}
     <nav class="mt-5 inline-flex rounded-control border border-white/15 bg-slate-950/25 p-1" aria-label="Budget view">
-      <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=my" class="rounded-control px-3 py-2 text-[12px] font-bold transition-colors {% if budget_scope == 'my' %}edify-surface text-[var(--edify-accent)] shadow-sm{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}" {% if budget_scope == 'my' %}aria-current="page"{% endif %}>My Budget</a>
-      <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=team" class="rounded-control px-3 py-2 text-[12px] font-bold transition-colors {% if budget_scope == 'team' %}edify-surface text-[var(--edify-accent)] shadow-sm{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}" {% if budget_scope == 'team' %}aria-current="page"{% endif %}>Team Budget</a>
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=my" class="rounded-control px-3 py-2 text-[12px] font-bold transition-colors {% if budget_scope == 'my' %}edify-selected-surface{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}" {% if budget_scope == 'my' %}aria-current="page"{% endif %}>My Budget</a>
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=team" class="rounded-control px-3 py-2 text-[12px] font-bold transition-colors {% if budget_scope == 'team' %}edify-selected-surface{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}" {% if budget_scope == 'team' %}aria-current="page"{% endif %}>Team Budget</a>
     </nav>
     {% endif %}
   </div>
 
-  <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-    {% for period in comparison %}
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ period.key }}&budget_scope={{ budget_scope }}" class="rounded-surface border p-4 transition-all {% if period.selected %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800 hover:-translate-y-0.5 edify-primary-border-hover hover:shadow-sm{% endif %}">
-      <p class="edify-text-caption font-bold uppercase tracking-wider {% if period.selected %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">{% if period.selected %}Grand total{% else %}{{ period.label }}{% endif %}</p>
-      <p class="mt-1 text-[20px] font-bold tabular-nums">{{ period.total|ugx }}</p>
-      <p class="mt-1 edify-text-caption font-semibold {% if period.selected %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if period.selected %}{{ period.label }} · {% endif %}{{ period.title }}</p>
-    </a>
-    {% endfor %}
+  {% if country_workflow %}
+  <section class="rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm" aria-labelledby="country-budget-approval-heading">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h2 id="country-budget-approval-heading" class="text-[14px] font-bold text-slate-800">Monthly Budget Approval</h2>
+        <p class="mt-0.5 text-[12px] font-medium text-slate-500">Status: {{ country_workflow.approval_status }} · {{ country_workflow.month_label }} FY {{ country_workflow.fy }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button"
+           hx-get="/country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
+           hx-target="#drawer-container" hx-swap="innerHTML"
+           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
+          View plan sources
+        </button>
+        <a href="/country-budget/history?fy={{ country_workflow.fy }}"
+           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
+          Submitted budgets
+        </a>
+        {% if country_workflow.is_cd %}
+        <form method="post" action="/country-budget/action" class="m-0">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="send_to_rvp">
+          <input type="hidden" name="budget_id" value="{{ country_workflow.budget_id }}">
+          <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
+          <input type="hidden" name="month" value="{{ country_workflow.month }}">
+          <button type="submit" {% if not country_workflow.can_send_to_rvp %}disabled{% endif %}
+                  class="h-9 rounded-control px-4 text-[12px] font-bold text-white {% if country_workflow.can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}cursor-not-allowed bg-slate-300{% endif %}">
+            Submit {{ country_workflow.month_label }} budget to RVP
+          </button>
+        </form>
+        {% elif country_workflow.is_rvp and country_workflow.can_approve_or_return %}
+        <form method="post" action="/country-budget/action" class="m-0">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="approve">
+          <input type="hidden" name="budget_id" value="{{ country_workflow.budget_id }}">
+          <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
+          <input type="hidden" name="month" value="{{ country_workflow.month }}">
+          <button type="submit" class="h-9 rounded-control bg-emerald-600 px-4 text-[12px] font-bold text-white hover:bg-emerald-700">Approve</button>
+        </form>
+        <button type="button"
+                hx-get="/country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
+                hx-target="#drawer-container" hx-swap="innerHTML"
+                class="h-9 rounded-control border border-rose-200 px-4 text-[12px] font-bold text-rose-600 hover:bg-rose-50">
+          Return
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if country_workflow.prior_month_pending %}
+  <div class="rounded-control border border-amber-200 bg-amber-50 px-4 py-2.5 text-[12px] font-semibold text-amber-800">
+    {{ country_workflow.prior_month_pending }} budget is still awaiting RVP review. Preparing the current month is not blocked — periods are independent.
   </div>
+  {% endif %}
+
+  {% if admin_workflow and selected_period == "month" and admin_workflow.can_edit_admin %}
+  <section class="rounded-surface border border-slate-200 edify-surface p-4 shadow-sm" aria-labelledby="admin-budget-add-heading">
+    <div>
+      <h2 id="admin-budget-add-heading" class="text-[14px] font-bold text-slate-800">Add administrative budget item</h2>
+      <p class="mt-0.5 text-[12px] font-medium text-slate-500">Office and operational costs for {{ selected.title }}. These remain separate from planned activity costs.</p>
+    </div>
+    <form method="post" action="/country-budget/action" class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-6">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_admin_line">
+      <input type="hidden" name="budget_id" value="{{ admin_workflow.budget_id }}">
+      <input type="hidden" name="fy" value="{{ fy }}">
+      <input type="hidden" name="month" value="{{ anchor.month }}">
+      <label class="md:col-span-2" for="admin-description">
+        <span class="edify-text-caption font-bold uppercase text-slate-500">Item</span>
+        <input id="admin-description" required name="description" class="mt-1 h-9 w-full rounded-control border border-slate-300 px-3 text-[12px] focus:outline-none focus:ring-2 edify-primary-focus" placeholder="e.g. Office internet">
+      </label>
+      <label for="admin-category">
+        <span class="edify-text-caption font-bold uppercase text-slate-500">Category</span>
+        <input id="admin-category" name="cost_category" class="mt-1 h-9 w-full rounded-control border border-slate-300 px-3 text-[12px] focus:outline-none focus:ring-2 edify-primary-focus" value="operations">
+      </label>
+      <label for="admin-quantity">
+        <span class="edify-text-caption font-bold uppercase text-slate-500">Quantity</span>
+        <input id="admin-quantity" required min="0.01" step="0.01" name="quantity" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-300 px-3 text-[12px] focus:outline-none focus:ring-2 edify-primary-focus" value="1">
+      </label>
+      <label for="admin-unit-cost">
+        <span class="edify-text-caption font-bold uppercase text-slate-500">Unit cost (UGX)</span>
+        <input id="admin-unit-cost" required min="1" name="unit_cost" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-300 px-3 text-[12px] focus:outline-none focus:ring-2 edify-primary-focus" placeholder="0">
+      </label>
+      <div class="flex items-end">
+        <button type="submit" class="h-9 w-full rounded-control edify-primary-solid px-3 text-[12px] font-bold text-white edify-primary-hover">Add item</button>
+      </div>
+      <label class="md:col-span-6" for="admin-justification">
+        <span class="edify-text-caption font-bold uppercase text-slate-500">Justification <span class="normal-case text-slate-400">(optional)</span></span>
+        <input id="admin-justification" name="justification" class="mt-1 h-9 w-full rounded-control border border-slate-300 px-3 text-[12px] focus:outline-none focus:ring-2 edify-primary-focus" placeholder="Short explanation">
+      </label>
+    </form>
+  </section>
+  {% endif %}
 
   {% if team_summary %}
   <section class="rounded-surface border border-slate-200 edify-surface p-4 shadow-sm">
@@ -59,8 +150,8 @@
   <div class="rounded-surface border border-slate-200 edify-surface p-3 shadow-sm sm:p-4">
     <div class="flex flex-col gap-3 rounded-control border border-slate-100 bg-slate-50/70 px-4 py-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <h2 class="text-[15px] font-bold text-slate-800">Activity cost plan</h2>
-        <p class="mt-0.5 text-[12px] font-medium text-slate-500">Costs are grouped by activity and item. Training and meeting tables show sessions and participants; weekly and monthly requests trace these same lines, so amounts are not counted twice.</p>
+        <h2 class="text-[15px] font-bold text-slate-800">{% if workspace_kind == "admin" %}Administrative cost plan{% else %}Activity cost plan{% endif %}</h2>
+        <p class="mt-0.5 text-[12px] font-medium text-slate-500">{% if workspace_kind == "admin" %}Administrative items are grouped by category and come only from the Country Director's monthly admin plan.{% else %}Costs come directly from scheduled planned activities and are grouped by activity and item. Training and meeting tables show sessions and participants.{% endif %}</p>
       </div>
       <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm md:text-right">
         <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
@@ -72,6 +163,7 @@
     {% endif %}
     <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
       <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
+        <caption class="sr-only">{{ workspace_title }} cost breakdown for {{ selected.title }}</caption>
         <tbody class="divide-y divide-slate-200">
           {% for group in groups %}
           <tr>
@@ -88,7 +180,7 @@
             <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}Participants{% elif group.table_kind == 'admin' %}—{% else %}No. of Persons{% endif %}</th>
             <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Rate / Unit</th>
             <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Staff cost</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'admin' %}Total{% else %}Activity{% endif %}</th>
           </tr>
           {% for row in group.rows %}
           <tr class="edify-primary-soft-hover">
@@ -128,12 +220,12 @@
   </div>
 
   {% if groups %}
-  <p class="edify-text-caption font-medium text-slate-500">Program costs: {{ program_total|ugx }}{% if admin_total %} · Country admin plan: {{ admin_total|ugx }}{% endif %}</p>
+  <p class="edify-text-caption font-medium text-slate-500">Source: {{ source_description }} · Total: {{ total|ugx }}</p>
   {% else %}
   <div class="rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
     <svg class="mx-auto mb-3 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-    <p class="text-[15px] font-bold text-slate-800">No costed activities in this period</p>
-    <p class="mt-1 text-[12px] font-semibold text-slate-500">Choose another time view or schedule an activity to create its budget automatically.</p>
+    <p class="text-[15px] font-bold text-slate-800">{{ empty_title }}</p>
+    <p class="mt-1 text-[12px] font-semibold text-slate-500">{{ empty_help }}</p>
   </div>
   {% endif %}
 </div>

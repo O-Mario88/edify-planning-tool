@@ -44,10 +44,10 @@
     <div class="rounded-surface border p-4 {% if request_state == 'submitted_to_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
       <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">CD review</p>
       <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Approved{% elif request_state == 'submitted_to_cd' %}In review{% else %}Next{% endif %}</p>
-      <p class="mt-1 edify-text-caption font-semibold {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'approved_by_cd' %}Included in country budget{% elif request_state == 'submitted_to_cd' %}Waiting for decision{% else %}Country Director checks it{% endif %}</p>
+      <p class="mt-1 edify-text-caption font-semibold {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'approved_by_cd' %}Included in General Budget{% elif request_state == 'submitted_to_cd' %}Waiting for decision{% else %}Country Director checks it{% endif %}</p>
     </div>
     <div class="rounded-surface border border-slate-200 edify-surface p-4 text-slate-800">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country budget</p>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">General Budget</p>
       <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Building{% else %}Later{% endif %}</p>
       <p class="mt-1 edify-text-caption font-semibold text-slate-500">CD adds admin costs</p>
     </div>
@@ -97,6 +97,11 @@
           <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ shown_total_fmt }}</p>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row">
+          {% if can_submit_to_rvp %}
+          <button hx-post="/accounts/monthly-request/action" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-vals='{"action":"submit_to_rvp","fy":"{{ fy }}","month":"{{ month }}"}' class="edify-action-button primary h-10 justify-center gap-2 px-4 text-[12px] shadow-sm">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 12h14"/></svg>{{ submit_rvp_label|default:"Send to RVP for Approval" }}
+          </button>
+          {% endif %}
           {% if can_submit %}
           <button hx-post="/accounts/monthly-request/action" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-vals='{"action":"submit_to_cd","fy":"{{ fy }}","month":"{{ month }}"}' class="edify-action-button primary h-10 justify-center gap-2 px-4 text-[12px] shadow-sm">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 12h14"/></svg>{{ submit_label }}
@@ -111,49 +116,57 @@
       </div>
     </div>
 
+
+
     {% if request and request.updated_at %}
     <p class="mt-3 px-1 edify-text-caption font-semibold text-slate-400">Last saved {{ request.updated_at|date:"j M Y, g:i A" }}</p>
     {% endif %}
 
     {% if cost_groups %}
-    <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
-      <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
-        <tbody class="divide-y divide-slate-200">
-          {% for group in cost_groups %}
-          <tr>
-            <td colspan="5" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
-              <div class="flex items-center gap-2"><span class="budget-category-name">{{ group.label }}</span><span class="edify-text-caption font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
-            </td>
-          </tr>
-          <tr class="font-bold">
-            <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
-            <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Activity</th>
-            <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Responsible staff</th>
-            <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Planned date</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity cost</th>
-          </tr>
-          {% for item in group.rows %}
-          <tr class="edify-primary-soft-hover">
-            <td class="px-4 py-3 font-semibold text-slate-800">{{ item.item }}</td>
-            <td class="px-3 py-3 text-slate-600">{{ item.activity }}</td>
-            <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
-            <td class="px-3 py-3 text-slate-500">{{ item.date|date:"j M Y" }}</td>
-            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.amount_fmt }}</td>
-          </tr>
-          {% endfor %}
-          <tr class="budget-subtotal-row">
-            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
-            <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total_fmt }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-        <tfoot>
-          <tr class="text-[15px] font-extrabold">
-            <td colspan="4" class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Grand total</td>
-            <td class="px-4 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ shown_total_fmt }}</td>
-          </tr>
-        </tfoot>
-      </table>
+    <div class="mt-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <h3 class="text-[14px] font-bold text-slate-800 uppercase tracking-wider">Category Budget Breakdown</h3>
+        <span class="text-[12px] font-semibold text-slate-500">By Program Category</span>
+      </div>
+      <div class="overflow-x-auto rounded-control border border-slate-200">
+        <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
+          <tbody class="divide-y divide-slate-200">
+            {% for group in cost_groups %}
+            <tr>
+              <td colspan="5" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
+                <div class="flex items-center gap-2"><span class="budget-category-name font-bold">{{ group.label }}</span><span class="edify-text-caption font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
+              </td>
+            </tr>
+            <tr class="font-bold">
+              <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
+              <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Activity</th>
+              <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Responsible staff</th>
+              <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Planned date</th>
+              <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity cost</th>
+            </tr>
+            {% for item in group.rows %}
+            <tr class="edify-primary-soft-hover">
+              <td class="px-4 py-3 font-semibold text-slate-800">{{ item.item }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ item.activity }}</td>
+              <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
+              <td class="px-3 py-3 text-slate-500">{{ item.date|date:"j M Y" }}</td>
+              <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.amount_fmt }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="budget-subtotal-row">
+              <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text font-bold">{{ group.label }} Subtotal</td>
+              <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text font-bold">{{ group.total_fmt }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="text-[15px] font-extrabold">
+              <td colspan="4" class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Grand Total</td>
+              <td class="px-4 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ shown_total_fmt }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
     {% else %}
     <div class="mt-3 rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">

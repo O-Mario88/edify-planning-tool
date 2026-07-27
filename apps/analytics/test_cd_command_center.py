@@ -252,6 +252,27 @@ class CDCommandCenterTest(TestCase):
         by = self._kpis(d)
         self.assertGreaterEqual(int(by["High-Risk Teams"]["value"]), 1)
 
+    def test_program_lead_rows_include_all_supervised_cceo_target_areas(self):
+        d = self._dash()
+        ada = next(r for r in d["pl_performance"]["rows"] if r["name"] == "PL Ada")
+        areas = {area["key"]: area for area in ada["areas"]}
+
+        self.assertEqual(
+            list(areas),
+            [
+                "school_visits",
+                "cluster_meetings",
+                "cluster_trainings",
+                "ssa_completed",
+                "mscs",
+            ],
+        )
+        # One validated visit against A1's target of two. The completed
+        # training has no Activity SF ID, so it remains provisional.
+        self.assertEqual(areas["school_visits"]["pct"], 50)
+        self.assertEqual(areas["cluster_trainings"]["pct"], 0)
+        self.assertIsNone(areas["ssa_completed"]["pct"])
+
     # 8 ─ leadership attention from real data
     def test_cd_leadership_attention_cards_generated_from_real_data(self):
         d = self._dash()
@@ -278,7 +299,7 @@ class CDCommandCenterTest(TestCase):
         )
         self.assertEqual(len(central["cells"]), 8)
         lship_idx = d["ssa_matrix"]["codes"].index("Lship")
-        self.assertEqual(central["cells"][lship_idx]["pct"], 70.0)  # 7.0/10 → 70%
+        self.assertEqual(central["cells"][lship_idx]["score"], 7.0)
 
     # 10 ─ priority schools from real workflow gaps
     def test_cd_priority_school_list_generated_from_real_workflow_gaps(self):

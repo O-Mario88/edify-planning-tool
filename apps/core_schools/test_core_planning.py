@@ -218,14 +218,32 @@ class CoreSchoolsPlanningTest(TestCase):
         )
 
     # ── 1–6: sidebar + scope ─────────────────────────────────────────────────
-    def test_core_schools_sidebar_visible_to_authorized_roles(self):
-        for user in (self.cceo, self.pl, self.ia):
+    def test_core_schools_sidebar_visible_to_field_roles(self):
+        for user in (self.cceo, self.pl):
             labels = [
                 i["label"]
                 for sec in build_sidebar_for_user(user, "/")
                 for i in sec["items"]
             ]
             self.assertIn("Core Schools", labels, user.email)
+
+    def test_ia_keeps_core_school_access_without_the_sidebar_entry(self):
+        """Sidebar information architecture is narrower than authorization.
+
+        IA was moved out of the field-operations nav group (navigation.
+        FIELD_NAV_ROLES) because its day-to-day work is verification, not
+        planning. That is a presentation decision and it must stay one — an
+        IA that can no longer REACH core-school data has lost a capability,
+        not a menu item, and the sidebar change would have hidden the
+        regression rather than caused a visible failure.
+        """
+        labels = [
+            i["label"]
+            for sec in build_sidebar_for_user(self.ia, "/")
+            for i in sec["items"]
+        ]
+        self.assertNotIn("Core Schools", labels)
+        self.assertEqual(self._client(self.ia).get("/core-schools").status_code, 200)
 
     def test_core_schools_sidebar_hidden_from_unauthorized_roles(self):
         cd, _ = self._staff("cd@core.org", "Core CD", EdifyRole.COUNTRY_DIRECTOR.value)
@@ -651,7 +669,7 @@ class CoreSchoolsPlanningTest(TestCase):
         bare = self._school("CORE-3", "Gamma Core School", self.cceo_sp)
         reco2 = CoreInterventionRecommendationService.recommend(bare)
         self.assertFalse(reco2["available"])
-        self.assertEqual(reco2["reason"], "Baseline Required")
+        self.assertEqual(reco2["reason"], "SSA Required")
 
     # ── 19–20: annual impact only ────────────────────────────────────────────
     def test_annual_ssa_used_for_core_impact(self):

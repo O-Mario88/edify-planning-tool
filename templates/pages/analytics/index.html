@@ -1,6 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Analytics · Edify{% endblock %}
+
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260726sizebands1">
+{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">

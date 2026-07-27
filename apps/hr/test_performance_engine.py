@@ -195,8 +195,8 @@ class MyPerformancePageTests(EngineFixture):
 
 
 class OpenConversationControlTests(EngineFixture):
-    """HR alone opens and closes the conversation window, and the staff
-    member's control has to say so rather than disappearing."""
+    """HR alone opens and closes the conversation window, and manager roles keep
+    the Open conversation control while CCEO/Accountant/IA get Priority setting controls."""
 
     #: The sidebar also links to /performance-conversation, so the assertions
     #: below pin the header control itself rather than the bare URL.
@@ -205,16 +205,24 @@ class OpenConversationControlTests(EngineFixture):
         '<span data-control="open-conversation" role="button" aria-disabled="true"'
     )
 
-    def _body(self):
-        self.client.force_login(self.cceo)
+    def setUp(self):
+        super().setUp()
+        from apps.accounts.models import StaffProfile
+
+        self.hr_sp, _ = StaffProfile.objects.get_or_create(
+            user=self.hr, defaults={"country": "Uganda"}
+        )
+
+    def _body(self, user=None):
+        u = user or self.hr
+        self.client.force_login(u)
         body = self.client.get("/my-performance").content.decode()
-        self.assertIn("Open conversation", body)
         return body
 
     def test_the_control_is_inert_until_hr_opens_a_window(self):
-        build_draft_agreement(self.sp, self.cycle, self.hr)
-        body = self._body()
-        # Present, so the staff member can see the control exists at all...
+        build_draft_agreement(self.hr_sp, self.cycle, self.hr)
+        body = self._body(self.hr)
+        # Present for manager, so the manager can see the control exists...
         self.assertIn(self.DISABLED, body)
         # ...but not a live link into a conversation that is not open.
         self.assertNotIn(self.ENABLED, body)
@@ -222,31 +230,56 @@ class OpenConversationControlTests(EngineFixture):
     def test_hr_opening_a_window_activates_it(self):
         from apps.hr.performance_engine import activate_window
 
-        build_draft_agreement(self.sp, self.cycle, self.hr)
+        build_draft_agreement(self.hr_sp, self.cycle, self.hr)
         activate_window(self.cycle, "q1", self.hr)
-        body = self._body()
+        body = self._body(self.hr)
         self.assertIn(self.ENABLED, body)
         self.assertNotIn(self.DISABLED, body)
 
     def test_hr_closing_the_window_disables_it_again(self):
         from apps.hr.performance_engine import activate_window, close_window
 
-        build_draft_agreement(self.sp, self.cycle, self.hr)
+        build_draft_agreement(self.hr_sp, self.cycle, self.hr)
         activate_window(self.cycle, "q1", self.hr)
         close_window(self.cycle, self.hr)
-        body = self._body()
+        body = self._body(self.hr)
         self.assertIn(self.DISABLED, body)
         self.assertNotIn(self.ENABLED, body)
 
     def test_a_non_hr_role_cannot_activate_it(self):
         from apps.hr.performance_engine import activate_window, close_window
 
-        build_draft_agreement(self.sp, self.cycle, self.hr)
+        build_draft_agreement(self.hr_sp, self.cycle, self.hr)
         with self.assertRaises(Forbidden):
             activate_window(self.cycle, "q1", self.cceo)
         activate_window(self.cycle, "q1", self.hr)
         with self.assertRaises(Forbidden):
             close_window(self.cycle, self.cceo)
+
+    def test_cceo_role_does_not_see_open_conversation_control(self):
+        build_draft_agreement(self.sp, self.cycle, self.hr)
+        body = self._body(self.cceo)
+        self.assertNotIn('data-control="open-conversation"', body)
+        self.assertIn('data-control="update-priority"', body)
+
+    def test_priority_button_toggles_create_vs_update(self):
+        from apps.hr.models import PerformancePriority
+
+        review = build_draft_agreement(self.sp, self.cycle, self.hr)
+        # Delete priorities to simulate no priorities created yet
+        review.priorities.all().delete()
+        self.client.force_login(self.cceo)
+        body = self.client.get("/my-performance").content.decode()
+        self.assertIn('data-control="create-priority"', body)
+        self.assertIn("Create Priority", body)
+
+        # Create a priority for the review
+        PerformancePriority.objects.create(
+            review=review, sequence=1, outcome_statement="Achieve targets", weight=100
+        )
+        body = self.client.get("/my-performance").content.decode()
+        self.assertIn('data-control="update-priority"', body)
+        self.assertIn("Update priorities", body)
 
 
 class NoProfileBranchTests(TestCase):

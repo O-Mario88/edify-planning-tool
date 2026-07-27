@@ -244,6 +244,23 @@ class CDAnalyticsTest(TestCase):
         self.assertIn("CCEO B1", cceo_names)
         self.assertEqual(d["scope_meta"]["cceo_count"], 2)
 
+    def test_cd_analytics_renders_the_shared_subregion_map(self):
+        data = S.get_dashboard(
+            self.cd,
+            fy=FY,
+            include_regional_map=True,
+        )
+        self.assertIn("subregion_performance", data)
+        self.assertIn("district_insight", data)
+        self.assertIn("subcounty_insight", data)
+        self.assertEqual(data["map_scope"]["label"], "Country-wide system data")
+
+        self.client.force_login(self.cd)
+        response = self.client.get("/analytics/country-director", {"fy": FY})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Performance by Sub-Region")
+
     # ── 2. KPIs use country data ─────────────────────────────────────────────
     def test_cd_kpis_use_country_data(self):
         d = self._dash()
@@ -284,20 +301,20 @@ class CDAnalyticsTest(TestCase):
         self.assertEqual(ssa["latest_fy"], FY)
         self.assertEqual(ssa["prev_fy"], PREV)
         lship = next(r for r in ssa["rows"] if r["code"] == "Lship")
-        # Confirmed FY2026 leadership avg = (7.0 + 5.0)/2 = 6.0 → 60%. The unconfirmed
-        # 1.0 record is excluded (else the avg would drop below 60).
-        self.assertEqual(lship["pct"], 60.0)
-        # Positive annual delta vs FY2025 leadership avg (6.0+5.0)/2 = 5.5 → 55%.
-        self.assertEqual(lship["delta"], 5.0)
+        # Confirmed FY2026 leadership avg = (7.0 + 5.0)/2 = 6.0. The unconfirmed
+        # 1.0 record is excluded.
+        self.assertEqual(lship["score"], 6.0)
+        # Positive annual delta vs FY2025 leadership avg (6.0+5.0)/2 = 5.5.
+        self.assertEqual(lship["delta"], 0.5)
 
     # ── 5. district heatmap uses verified SSA ────────────────────────────────
     def test_cd_district_heatmap_uses_verified_ssa(self):
         d = self._dash()
         rows = {r["name"]: r for r in d["district_heatmap"]["rows"]}
         self.assertIn("District A", rows)
-        # District A avg SSA reflects the confirmed FY2026 record (7.5 → 75%),
+        # District A avg SSA reflects the confirmed FY2026 record (7.5),
         # never the unconfirmed 1.0 record.
-        self.assertEqual(rows["District A"]["avg"], 75.0)
+        self.assertEqual(rows["District A"]["avg"], 7.5)
 
     # ── 6. partner performance uses verified activities + SSA delta ──────────
     def test_cd_partner_performance_uses_verified_activities_and_ssa_delta(self):
@@ -309,8 +326,8 @@ class CDAnalyticsTest(TestCase):
         )
         self.assertGreaterEqual(row["verified"], 1)  # the ia_verified partner activity
         self.assertEqual(row["schools_supported"], 1)  # a1 via PartnerAssignment
-        # a1 annual SSA delta: (7.5 - 6.0) × 10 = 15.0pp.
-        self.assertEqual(row["ssa_improve"], 15.0)
+        # a1 annual SSA delta: 7.5 - 6.0 = 1.5 score points.
+        self.assertEqual(row["ssa_improve"], 1.5)
 
     # ── 7. cluster average uses all cluster-school SSA scores ────────────────
     def test_cd_cluster_average_uses_all_cluster_school_ssa_scores(self):
@@ -325,9 +342,9 @@ class CDAnalyticsTest(TestCase):
         )
         d = self._dash()
         row = next(r for r in d["cluster_performance"]["rows"] if r["id"] == cl.id)
-        # Avg of a1 (7.5) and b1 (5.5) latest confirmed SSA = 6.5 → 65%.
+        # Avg of a1 (7.5) and b1 (5.5) latest confirmed SSA = 6.5.
         self.assertEqual(row["schools"], 2)
-        self.assertEqual(row["avg_ssa"], 65.0)
+        self.assertEqual(row["avg_ssa"], 6.5)
 
     # ── 8. recommended actions generate CD or PL To-Dos ──────────────────────
     def test_cd_recommended_actions_generate_cd_or_pl_todos(self):
@@ -380,6 +397,18 @@ class CDAnalyticsTest(TestCase):
         # Export payload is the country PL roster (both PLs, country-wide).
         rows = S.export_rows(self.cd, fy=FY)
         self.assertEqual({r["name"] for r in rows}, {"PL Ada", "PL Bola"})
+        self.client.force_login(self.cd)
+        response = self.client.get(
+            "/analytics/country-director/export",
+            {"fy": FY},
+        )
+        self.assertEqual(response.status_code, 200)
+        header = response.content.decode().splitlines()[0]
+        self.assertIn("School Visits %", header)
+        self.assertIn("Cluster Meetings %", header)
+        self.assertIn("Cluster Trainings %", header)
+        self.assertIn("SSA Completed %", header)
+        self.assertIn("MSCS %", header)
 
     # ── 12. drill-downs are read/oversight, not field execution ──────────────
     def test_cd_drilldowns_are_read_or_oversight_actions_not_field_execution(self):
@@ -453,9 +482,9 @@ class CDRefinedSpecTest(CDAnalyticsTest):
     def test_cd_ssa_uses_annual_verified_cycle(self):
         d = self._dash()
         by = {k["label"]: k["value"] for k in d["kpi_strip_items"]}
-        # Confirmed FY2026 average = (7.5 + 5.5)/2 = 6.5 → 65%; the pending 1.0
+        # Confirmed FY2026 average = (7.5 + 5.5)/2 = 6.5; the pending 1.0
         # record must not drag it down; no monthly SSA delta exists anywhere.
-        self.assertEqual(by["Average SSA Score"], "65.0%")
+        self.assertEqual(by["Average SSA Score"], "6.5/10")
         self.assertNotIn("monthly_delta", d["ssa_interventions"])
 
     def test_ssa_enrollment_score_separate_from_school_enrollment(self):
@@ -491,10 +520,10 @@ class CDRefinedSpecTest(CDAnalyticsTest):
 
     def test_partner_recommendation_uses_target_and_impact(self):
         rec = S._partner_recommendation
-        self.assertEqual(rec(80, 6, 10)[0], "Assign More Schools")
-        self.assertEqual(rec(80, 1, 10)[0], "Quality Review")
-        self.assertEqual(rec(40, 6, 10)[0], "Capacity Review")
-        self.assertEqual(rec(70, -2, 10)[0], "Drop / Do Not Renew")
+        self.assertEqual(rec(80, 0.6, 10)[0], "Assign More Schools")
+        self.assertEqual(rec(80, 0.1, 10)[0], "Quality Review")
+        self.assertEqual(rec(40, 0.6, 10)[0], "Capacity Review")
+        self.assertEqual(rec(70, -0.2, 10)[0], "Drop / Do Not Renew")
         self.assertEqual(rec(0, None, 0)[0], "Insufficient Data")
         self.assertEqual(rec(80, None, 10)[0], "Insufficient Data")
 
@@ -504,6 +533,32 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         self.assertEqual(rows["PL Ada"]["cceos"], 1)  # her supervised team only
         self.assertEqual(rows["PL Bola"]["cceos"], 1)
         self.assertNotEqual(rows["PL Ada"]["backlog"], rows["PL Bola"].get("_x", None))
+
+    def test_pl_drilldown_shows_every_cceo_across_all_target_areas(self):
+        detail = S.drilldown(
+            self.cd,
+            "pl",
+            {"id": str(self.pl_a.id)},
+            fy=FY,
+        )
+        self.assertEqual(detail["kind"], "pl")
+        self.assertEqual(len(detail["cceos"]), 1)
+        cceo = detail["cceos"][0]
+        self.assertEqual(cceo["name"], "CCEO A1")
+        self.assertEqual(
+            [area["key"] for area in cceo["areas"]],
+            [
+                "school_visits",
+                "cluster_meetings",
+                "cluster_trainings",
+                "ssa_completed",
+                "mscs",
+            ],
+        )
+        by_area = {area["key"]: area for area in cceo["areas"]}
+        self.assertEqual(by_area["school_visits"]["pct"], 100)
+        self.assertEqual(by_area["cluster_trainings"]["pct"], 0)
+        self.assertIsNone(by_area["mscs"]["pct"])
 
     def test_cceo_snapshot_uses_fairness_context(self):
         d = self._dash()
@@ -517,9 +572,9 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         rows = {
             r["name"]: r for r in S.cceo_snapshot(cd, _country_activities(cd))["rows"]
         }
-        # sch_a1: 6.0 -> 7.5 = +1.5 -> 15.0pp; sch_b1: 5.0 -> 5.5 = +0.5 -> 5.0pp.
-        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 15.0)
-        self.assertEqual(rows["CCEO B1"]["ssa_improve"], 5.0)
+        # sch_a1: 6.0 -> 7.5 = +1.5; sch_b1: 5.0 -> 5.5 = +0.5.
+        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 1.5)
+        self.assertEqual(rows["CCEO B1"]["ssa_improve"], 0.5)
 
     def test_cceo_snapshot_excludes_other_cceo_schools(self):
         cd = resolve_cd_scope(FY)
@@ -528,7 +583,7 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         }
         # a1's SSA delta must be driven only by sch_a1/sch_a2 (a2 has no SSA),
         # never diluted or inflated by b1's schools.
-        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 15.0)
+        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 1.5)
 
     def test_cceo_snapshot_handles_missing_ssa(self):
         # a2 has no SSA at all; only assigned to CCEO A1.
@@ -538,7 +593,7 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         }
         # Still computed from a1's measurable school only — never blocked or
         # zeroed out by the sibling school's missing SSA.
-        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 15.0)
+        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 1.5)
 
     def test_cceo_snapshot_uses_verified_ssa_only(self):
         # The unconfirmed FY2026 record on sch_a1 (score 1.0, status=pending)
@@ -547,7 +602,7 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         rows = {
             r["name"]: r for r in S.cceo_snapshot(cd, _country_activities(cd))["rows"]
         }
-        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 15.0)
+        self.assertEqual(rows["CCEO A1"]["ssa_improve"], 1.5)
 
     def test_cceo_snapshot_query_count_is_bounded(self):
         # 2 PLs in the fixture: _pls() (1) + cycle_fys (1) + 3 queries per PL

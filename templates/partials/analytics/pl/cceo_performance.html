@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <div class="flex items-center justify-between">
     <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">F. CCEO Performance</h3>
     <span class="edify-text-caption font-semibold text-slate-400">{{ cceo_performance.rows|length }} supervised</span>
@@ -36,7 +36,7 @@
               {% elif c.ssa_tone == 'lime' %}bg-lime-50 text-lime-700
               {% elif c.ssa_tone == 'warning' %}bg-amber-50 text-amber-700
               {% elif c.ssa_tone == 'danger' %}bg-rose-50 text-rose-700
-              {% else %}bg-slate-50 text-slate-400{% endif %}">{% if c.avg_ssa is not None %}{{ c.avg_ssa|floatformat:0 }}%{% else %}—{% endif %}</span>
+              {% else %}bg-slate-50 text-slate-400{% endif %}">{% if c.avg_ssa is not None %}{{ c.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</span>
           </td>
           <td class="py-2.5 px-2 text-center edify-text-caption font-bold tabular-nums {% if c.backlog >= 4 %}text-rose-500{% else %}text-slate-500{% endif %}">{{ c.backlog }}</td>
           <td class="py-2.5 px-2 text-center edify-text-caption font-semibold tabular-nums {% if c.has_target %}text-slate-700{% else %}text-slate-300{% endif %}">{% if c.has_target %}{{ c.target_pct }}%{% else %}—{% endif %}</td>

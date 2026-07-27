@@ -1,41 +1,8 @@
 {% load frontend_filters %}
 <div class="pl-dashboard-stack space-y-4">
 
-  {# ── KPI strip (8 cards) ────────────────────────────────────────────── #}
-  <!-- 7-8 KPIs render four columns across two rows (spec §15). At
-     lg:grid-cols-8 the eight cards were ~110px wide and every label
-     wrapped to three lines - the "eight KPIs compressed into one
-     unreadable row" §15 forbids. -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
-    {% for k in kpi_strip_items %}
-    {% if k.link %}
-    <a href="/dashboard/pl-drilldown{{ k.link }}&fy={{ fy }}" class="rounded-surface p-3 edify-hover-lift no-underline edify-surface border edify-border edify-shadow-sm">
-    {% else %}
-    <article class="rounded-surface p-3 edify-surface border edify-border edify-shadow-sm">
-    {% endif %}
-      <div class="flex items-center gap-2.5">
-        <div class="h-8 w-8 rounded-surface flex items-center justify-center shrink-0"
-             style="background:
-               {% if k.variant == 'success' %}var(--edify-success-light)
-               {% elif k.variant == 'info' %}var(--edify-info-light)
-               {% elif k.variant == 'warning' %}var(--edify-warning-light)
-               {% elif k.variant == 'danger' %}var(--edify-danger-light)
-               {% elif k.variant == 'finance' %}var(--edify-purple-light)
-               {% else %}var(--edify-surface-muted){% endif %};">
-          {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="edify-kpi-label text-[12px] edify-text-subtle">{{ k.label }}</p>
-          <p class="text-[17px] font-semibold leading-none mt-[3px] tracking-[-0.02em] tabular-nums" style="
-                    color:{% if k.variant == 'danger' %}var(--edify-danger){% elif k.variant == 'warning' %}var(--edify-warning){% else %}var(--edify-text){% endif %};">
-            {{ k.value }}
-          </p>
-          <p class="text-[12px] mt-0.5 edify-text-subtle">{{ k.helper }}</p>
-        </div>
-      </div>
-    {% if k.link %}</a>{% else %}</article>{% endif %}
-    {% endfor %}
-  </div>
+  {# ── KPI strip ──────────────────────────────────────────────────────── #}
+  {% include "components/kpi_strip.html" with items=kpi_strip_items drilldown_mode="program_lead_dashboard" %}
 
   {# ── Leadership Attention ───────────────────────────────────────────── #}
   {% if leadership_attention %}
@@ -80,7 +47,7 @@
   {% endif %}
 
   {# ── Team Performance + Personal Targets ────────────────────────────── #}
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
     <div class="lg:col-span-7 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-[13px] font-semibold edify-text">Team Performance Overview</h2>
@@ -88,7 +55,7 @@
       </div>
       <div id="plDashPerfChart" class="w-full flex-1 min-h-[200px]"></div>
     </div>
-    <div class="lg:col-span-4 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
+    <div class="lg:col-span-5 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
       <h2 class="text-[13px] font-semibold mb-3 edify-text">My Personal Targets</h2>
       <div class="grid grid-cols-2 gap-2.5 flex-1">
         {% for c in personal_targets.cards %}
@@ -121,7 +88,7 @@
   </div>
 
   {# ── CCEO Performance + Approval Queue + Backlog ─────────────────────── #}
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
     <div class="lg:col-span-7 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
       <div class="p-4 pb-2"><h2 class="text-[13px] font-semibold edify-text">CCEO Performance</h2></div>
       <div class="overflow-x-auto flex-1">
@@ -161,7 +128,7 @@
   </div>
 
   {# ── Backlog + Route Capacity ────────────────────────────────────────── #}
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
     <div class="lg:col-span-6 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
       <div class="p-4 pb-2"><h2 class="text-[13px] font-semibold edify-text">Team Backlog</h2></div>
       {% include "partials/dashboards/pl/backlog_snapshot.html" %}
@@ -224,9 +191,8 @@
       ],
       chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
       stroke: { width: [0,0,0,2.5], curve: 'smooth' },
-      colors: ['var(--edify-chart-green)', 'var(--edify-steel-600)', 'var(--edify-chart-orange)', 'var(--edify-chart-amber)'],
-      fill: { opacity: [0.55, .95, .9, 1] },
-      plotOptions: { bar: { columnWidth: '50%', borderRadius: 8, borderRadiusApplication: 'end' } },
+      colors: window.EdifyChartSystem.mixedSeries,
+      fill: { opacity: [1, 1, 1, 1] },
       dataLabels: { enabled: false },
       labels: {{ team_performance.labels|safe }},
       xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: t.text, fontSize: '12px', fontWeight: 600 } } },

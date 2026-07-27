@@ -124,7 +124,11 @@ class SpecialProjectImpactAnalyticsTest(TestCase):
         )
 
     def test_impact_is_exact_to_assigned_schools_and_associated_intervention(self):
-        analytics = get_analytics(self.admin, {"fy": self.fy})
+        analytics = get_analytics(
+            self.admin,
+            {"fy": self.fy},
+            include_regional_map=True,
+        )
 
         self.assertEqual(len(analytics["matrix"]), 1)
         project = analytics["matrix"][0]
@@ -144,6 +148,13 @@ class SpecialProjectImpactAnalyticsTest(TestCase):
         self.assertEqual(analytics["data_quality"]["verified_activities"], 3)
         self.assertEqual(analytics["donor_snapshot"]["teachers"], 30)
         self.assertEqual(analytics["donor_snapshot"]["students"], 300)
+        self.assertIn("subregion_performance", analytics)
+        self.assertIn("district_insight", analytics)
+        self.assertIn("subcounty_insight", analytics)
+        self.assertEqual(
+            analytics["map_scope"]["label"],
+            "Country-wide system data",
+        )
 
     def test_filters_and_downloads_preserve_the_impact_scope(self):
         great = get_analytics(
@@ -169,6 +180,7 @@ class SpecialProjectImpactAnalyticsTest(TestCase):
         self.assertContains(page, "Special Project Analytics")
         self.assertContains(page, "Leadership Lift")
         self.assertContains(page, "Observed association")
+        self.assertContains(page, "Performance by Sub-Region")
 
         partial = self.client.get(
             "/projects/analytics",

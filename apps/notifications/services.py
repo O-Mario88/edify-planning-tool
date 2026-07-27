@@ -254,7 +254,7 @@ class NotificationLinkResolver:
                 label = "Open Project"
             elif ctx == "monthlyworkplanbudget":
                 route = "/country-budget"
-                label = "Open Country Budget"
+                label = "Open General Budget"
 
         return route, label
 

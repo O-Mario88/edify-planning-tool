@@ -12,7 +12,9 @@ from django.test import TestCase, TransactionTestCase
 
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.budget.reference import (
+    CANONICAL_RATE_KEYS,
     CANONICAL_RATES,
+    RETIRED_COST_SETTING_KEYS,
     ensure_active_catalogue,
     ensure_cost_reference,
 )
@@ -53,6 +55,43 @@ class CostReferenceTest(TestCase):
     def test_ensure_active_catalogue_returns_the_existing_one(self):
         existing = CostCatalogue.objects.filter(is_active=True).first()
         self.assertEqual(ensure_active_catalogue().id, existing.id)
+
+    def test_canonical_registry_has_no_duplicate_or_retired_keys(self):
+        keys = [key for key, _label, _cost in CANONICAL_RATES]
+        self.assertEqual(len(keys), len(set(keys)))
+        self.assertTrue(CANONICAL_RATE_KEYS.isdisjoint(RETIRED_COST_SETTING_KEYS))
+
+    def test_cost_settings_api_surface_contains_only_canonical_items(self):
+        from apps.budget.services import list_cost_settings
+
+        result = list_cost_settings(principal=None, query={})
+        visible_keys = {item["key"] for item in result["settings"]}
+
+        self.assertEqual(visible_keys, CANONICAL_RATE_KEYS)
+        self.assertTrue(visible_keys.isdisjoint(RETIRED_COST_SETTING_KEYS))
+
+    def test_visit_costing_prefers_one_canonical_source_per_allowance(self):
+        from apps.budget.costing import cost_for_activity
+
+        result = cost_for_activity(
+            {
+                "activityType": "school_visit",
+                "districtType": "primary",
+                "deliveryType": "staff",
+            },
+            {
+                "primary_transport_per_day": 56000,
+                "primary_lunch_per_day": 30000,
+                "staff_visit_transport_primary": 999999,
+                "lunch": 999999,
+            },
+        )
+
+        self.assertEqual(
+            [line.key for line in result.lines],
+            ["primary_transport_per_day", "primary_lunch_per_day"],
+        )
+        self.assertEqual(result.amount, 86000)
 
 
 class CostReferenceSurvivesAFlushTest(TransactionTestCase):

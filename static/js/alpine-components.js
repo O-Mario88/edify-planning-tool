@@ -292,9 +292,8 @@ document.addEventListener('alpine:init', () => {
             { name: 'Trainings', data: data.training_bucket_medians || [] },
           ],
           chart: { ...shared.chart, height: 260, type: 'bar' },
-          plotOptions: { bar: { columnWidth: '45%', borderRadius: 3 } },
           dataLabels: { enabled: false },
-          colors: ['var(--edify-chart-blue)', 'var(--edify-info-border)'],
+          colors: window.EdifyChartSystem.comparisonSeries.slice(0, 2),
           xaxis: {
             categories: data.bucket_labels || [],
             title: { text: 'Executed activities in exposure window', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
@@ -577,6 +576,7 @@ document.addEventListener('alpine:init', () => {
       const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
       const brand = css('--edify-chart-blue') || '#0d5b9e';
       const muted = '#94a3b8';
+      const orange = css('--edify-chart-orange') || '#ea580c';
       const green = css('--edify-chart-green') || '#10b981';
       const amber = css('--edify-chart-amber') || '#f59e0b';
       const red = css('--edify-chart-red') || '#ef4444';
@@ -586,11 +586,11 @@ document.addEventListener('alpine:init', () => {
         opts = {
           chart: { type: 'bar', height: 320 },
           series: [
-            { name: 'Baseline', data: d.baseline || [] },
+            { name: 'Initial SSA Score', data: d.baseline || [] },
             { name: 'Follow-up', data: d.followup || [] },
           ],
           xaxis: { categories: d.labels || [], labels: { rotate: -35, style: { fontSize: '10px' } } },
-          colors: [muted, brand],
+          colors: [brand, orange],
         };
       } else if (chartType === 'scatter') {
         const d = all.scatter || {};
@@ -619,10 +619,21 @@ document.addEventListener('alpine:init', () => {
         opts = {
           chart: { type: 'bar', height: 280 },
           series: [{ name: 'Schools', data: [d.improved || 0, d.unchanged || 0, d.declined || 0, d.not_yet_measurable || 0] }],
-          xaxis: { categories: ['Improved', 'Unchanged', 'Declined', 'Not yet measurable'] },
+          xaxis: { categories: ['Improved', 'Unchanged', 'Declined', 'Not yet measurable'],
+                   axisBorder: { show: false }, axisTicks: { show: false },
+                   labels: { style: { colors: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: 600 } } },
+          yaxis: { labels: { show: false } },
           colors: [brand],
-          plotOptions: { bar: { distributed: true } },
+          /* Vertical, not horizontal — the reference styling is the track, the
+             pill cap and the inline value, none of which imply an orientation. */
+          plotOptions: { bar: { distributed: true, borderRadiusApplication: 'around',
+                                dataLabels: { position: 'top' } } },
           fill: { colors: [green, muted, red, amber] },
+          dataLabels: { enabled: true, offsetY: 20,
+                        style: { fontSize: '12px', fontWeight: 700, colors: ['#fff'] },
+                        dropShadow: { enabled: false },
+                        formatter: (v, o) => (window.EdifyChartSystem.barValueFitsInside(v, o) ? v : '') },
+          grid: { show: false },
           legend: { show: false },
         };
       } else if (chartType === 'funnel') {
@@ -630,9 +641,19 @@ document.addEventListener('alpine:init', () => {
         opts = {
           chart: { type: 'bar', height: 280 },
           series: [{ name: 'Visits', data: [d.scheduled || 0, d.delivered || 0, d.evidence || 0, d.aligned || 0, d.followup_ssa_available || 0] }],
-          plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
-          xaxis: { categories: ['Scheduled', 'Delivered', 'Evidence', 'Aligned', 'Follow-up SSA'] },
+          /* Single series: the track carries the scale, so the value axis and
+             gridlines are redundant and the count rides inside the bar. */
+          plotOptions: { bar: { horizontal: true, borderRadiusApplication: 'around',
+                                dataLabels: { position: 'top' } } },
+          xaxis: { categories: ['Scheduled', 'Delivered', 'Evidence', 'Aligned', 'Follow-up SSA'],
+                   labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+          yaxis: { labels: { style: { colors: 'var(--edify-text-muted)', fontSize: '12px' } } },
           colors: [brand],
+          dataLabels: { enabled: true, textAnchor: 'end', offsetX: -10,
+                        style: { fontSize: '12px', fontWeight: 700, colors: ['#fff'] },
+                        dropShadow: { enabled: false },
+                        formatter: (v, o) => (window.EdifyChartSystem.barValueFitsInside(v, o) ? v : '') },
+          grid: { show: false },
         };
       }
       if (!opts || !this.$refs.el || typeof ApexCharts === 'undefined') return;
