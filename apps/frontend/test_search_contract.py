@@ -358,3 +358,57 @@ class NoDuplicatePersistentSearchTest(TestCase):
         found = self.INPUT.findall(body)
         self.assertEqual(len(found), 1)
         self.assertIn('value="primary"', found[0])
+
+
+class FilterOptionsContractTest(TestCase):
+    """§7: a filter option that cannot change the dataset is a dead end.
+
+    District listed all 139 UBOS districts while the directory's schools sat in
+    two of them, so picking almost any option produced an empty table with
+    nothing to distinguish "no schools here" from "this filter is broken".
+    """
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Options Region")
+        self.populated = District.objects.create(
+            name="Mityana", region=self.region
+        )
+        # A real district that holds none of this directory's schools.
+        self.empty = District.objects.create(name="Amudat", region=self.region)
+        self.sub_county = SubCounty.objects.create(
+            name="Bulera", district=self.populated
+        )
+        School.objects.create(
+            school_id="SC-OPT-1",
+            name="Bulera Central Primary",
+            region=self.region,
+            district=self.populated,
+            sub_county=self.sub_county,
+        )
+        self.admin = User.objects.create_user(
+            email="options-contract-admin@example.org",
+            name="Options Contract Admin",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="test-password",
+        )
+
+    def test_district_options_are_only_places_that_hold_schools(self):
+        self.client.force_login(self.admin)
+        body = self.client.get("/schools").content.decode()
+        self.assertIn("Mityana", body)
+        self.assertNotIn(
+            "Amudat",
+            body,
+            "a district with no schools in scope is offered as a filter option",
+        )
+
+    def test_every_offered_district_returns_at_least_one_school(self):
+        """The property that matters, stated directly."""
+        self.client.force_login(self.admin)
+        listed = listed_count(
+            self.client.get(
+                "/schools", {"district": str(self.populated.id)}
+            ).content.decode()
+        )
+        self.assertGreater(listed, 0)

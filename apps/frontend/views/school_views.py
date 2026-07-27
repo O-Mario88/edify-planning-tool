@@ -496,9 +496,32 @@ def school_directory_view(request):
         selected_school_data = _get_school_intelligence_data(default_school)
 
     # Populating filter options
+    #
+    # Only places that actually hold schools this user can see. District listed
+    # all 139 UBOS districts while the directory's schools sat in two of them,
+    # so more than 130 options were dead ends: pick one, get an empty table,
+    # with nothing to distinguish "no schools here" from "filter is broken".
+    #
+    # This matters more since Region was removed, because Region was what used
+    # to narrow this list. Deriving the options from the scoped school set
+    # replaces that narrowing with something stricter — the options are the
+    # places the results can actually come from — and it stays correct per role
+    # without a second control to maintain.
+    scoped_district_ids = base_qs.values("district_id")
+    scoped_sub_county_ids = base_qs.exclude(sub_county__isnull=True).values(
+        "sub_county_id"
+    )
     regions = Region.objects.all().order_by("name")
-    districts = District.objects.all().order_by("name")
-    sub_counties = SubCounty.objects.all().order_by("name")
+    districts = (
+        District.objects.filter(id__in=scoped_district_ids)
+        .distinct()
+        .order_by("name")
+    )
+    sub_counties = (
+        SubCounty.objects.filter(id__in=scoped_sub_county_ids)
+        .distinct()
+        .order_by("name")
+    )
     staff_profiles = (
         StaffProfile.objects.filter(deleted_at__isnull=True)
         .select_related("user")
