@@ -878,3 +878,57 @@ class CoverageQueryBudgetTest(CascadeTestCase):
         self.assertEqual(by_id[reached.id]["staff_reached"], 1)
         self.assertEqual(by_id[unreached.id]["staff_reached"], 1)
         self.assertEqual(report["inert_count"], 0)
+
+
+class RequestedFinancialYearTest(CascadeTestCase):
+    """CodeQL py/url-redirection on the cascade's action endpoint.
+
+    `fy` arrived from the request and was interpolated straight into the
+    redirect URL and into the query filters. The fixed `/strategic-priorities?`
+    prefix meant it could never become an absolute URL, so it was not an open
+    redirect — but unvalidated input reflected into a URL is a finding, and a
+    finding is not waved through because today's exploit attempt fails.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.rvp)
+
+    def _location(self, fy_value):
+        response = self.client.post(
+            "/strategic-priorities/action",
+            {"action": "publish", "fy": fy_value, "priority": "nope"},
+        )
+        return response.get("Location", "")
+
+    def test_an_absolute_url_never_reaches_the_redirect(self):
+        location = self._location("//evil.example.com")
+        self.assertNotIn("evil.example.com", location)
+        self.assertTrue(location.startswith("/strategic-priorities?"), location)
+
+    def test_a_scheme_never_reaches_the_redirect(self):
+        self.assertNotIn("https://evil", self._location("https://evil.example.com"))
+
+    def test_a_crlf_injection_never_reaches_the_redirect(self):
+        location = self._location("2026\r\nX-Injected: 1")
+        self.assertNotIn("X-Injected", location)
+
+    def test_a_real_financial_year_is_honoured(self):
+        """Validation that drops legitimate input is a bug, not a fix."""
+        self.assertIn("fy=2027", self._location("2027"))
+
+    def test_a_non_year_falls_back_rather_than_echoing(self):
+        from apps.core.fy import get_operational_fy
+
+        self.assertIn(f"fy={get_operational_fy()}", self._location("../../etc/passwd"))
+
+    def test_the_page_filters_on_the_validated_year_too(self):
+        """The redirect was the sink CodeQL saw; the same value also reaches
+        the query filters, and validating only the sink would leave that."""
+        priority = self._ssa_priority_with_four_roles()
+        priority_cascade.publish(priority, self.rvp_p)
+        response = self.client.get("/strategic-priorities?fy=not-a-year")
+        self.assertEqual(response.status_code, 200)
+        from apps.core.fy import get_operational_fy
+
+        self.assertEqual(response.context["fy"], get_operational_fy())

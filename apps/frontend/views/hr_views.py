@@ -2333,9 +2333,23 @@ _STRATEGY_AUTHORS = ("RegionalVicePresident", "CountryDirector", "Admin")
 _STRATEGY_VIEWERS = _STRATEGY_AUTHORS + ("HumanResources",)
 
 
+def _requested_fy(request, param="fy"):
+    """A financial year taken from the request, or the operational one.
+
+    An FY label is four digits and nothing else. Validating here rather than
+    trusting the parameter keeps user input out of two places it should never
+    reach unchecked: the redirect URL these views build, and the query filters
+    they run. Anything that is not a plain year falls back to the operational
+    FY rather than being echoed back.
+    """
+    from apps.core.fy import get_operational_fy
+
+    raw = (request.POST.get(param) or request.GET.get(param) or "").strip()
+    return raw if raw.isdigit() and len(raw) == 4 else get_operational_fy()
+
+
 @require_page_permission("strategic_priorities")
 def strategic_priorities_view(request):
-    from apps.core.fy import get_operational_fy
     from apps.hr import priority_cascade
     from apps.hr.models import (
         PriorityAccountability,
@@ -2353,7 +2367,7 @@ def strategic_priorities_view(request):
             "validated by HR.",
         )
 
-    fy = request.GET.get("fy") or get_operational_fy()
+    fy = _requested_fy(request)
     priorities = (
         StrategicPriority.objects.filter(fy=fy)
         .select_related("parent")
@@ -2442,7 +2456,6 @@ _CASCADE_ROLES = (
 def strategic_priority_action_view(request):
     """One POST endpoint for the cascade's state changes; `action` selects."""
     from apps.core.exceptions import BadRequest, Forbidden
-    from apps.core.fy import get_operational_fy
     from apps.hr import priority_cascade
     from apps.hr.models import (
         PriorityAccountability,
@@ -2457,7 +2470,7 @@ def strategic_priority_action_view(request):
     if role not in _STRATEGY_AUTHORS:
         return HttpResponseForbidden("Only the RVP or Country Director may author.")
 
-    fy = request.POST.get("fy") or get_operational_fy()
+    fy = _requested_fy(request)
     action = request.POST.get("action", "")
     try:
         if action == "create_priority":
