@@ -37,6 +37,12 @@ METRIC_KEYS = {
     "partner_supported_schools": "Schools supported through managed partners",
     "new_schools": "New schools recruited",
     "accountability_quality": "Accountabilities cleared without return",
+    # Added for the cascade: a supervisor and a verifier carry the same
+    # strategic priority as the person executing it, but cannot be measured by
+    # the executor's own numbers. Without these two the cascade has nothing
+    # distinct to give them and quietly hands everyone the same target.
+    "team_ssa_coverage": "Verified SSA coverage across the supervised team",
+    "ssa_verification_sla": "SSAs verified, of those submitted for review",
 }
 
 
@@ -47,6 +53,26 @@ def _assigned_school_ids(staff) -> list[str]:
         StaffSchoolAssignment.objects.filter(staff=staff).values_list(
             "school_id", flat=True
         )
+    )
+
+
+def _supervised_school_ids(staff) -> list[str]:
+    """Every school assigned to someone this person supervises.
+
+    Direct reports only. Walking the whole tree would credit a Country
+    Director with a CCEO's schools twice — once through the CCEO's own
+    supervisor and once through the CD — and no screen would show the double
+    count.
+    """
+    from apps.accounts.models import StaffSchoolAssignment, StaffSupervisorAssignment
+
+    supervisee_ids = StaffSupervisorAssignment.objects.filter(
+        supervisor=staff
+    ).values_list("supervisee_id", flat=True)
+    return list(
+        StaffSchoolAssignment.objects.filter(staff_id__in=supervisee_ids)
+        .values_list("school_id", flat=True)
+        .distinct()
     )
 
 
@@ -89,6 +115,31 @@ def live_progress(priority) -> dict:
             .distinct()
             .count()
         )
+    elif key == "team_ssa_coverage":
+        # A supervisor is measured on the portfolio they supervise, not their
+        # own. Counted over the supervised team's assigned schools so the
+        # figure moves only when the team's work is actually verified.
+        actual = (
+            SsaRecord.objects.filter(
+                school_id__in=_supervised_school_ids(staff),
+                fy=fy,
+                verification_status="confirmed",
+                deleted_at__isnull=True,
+            )
+            .values("school_id")
+            .distinct()
+            .count()
+        )
+    elif key == "ssa_verification_sla":
+        # The verifier's own throughput: SSAs THEY confirmed. Deliberately not
+        # the scores on those SSAs — a verifier measured on the numbers they
+        # sign off has an incentive to sign off the convenient ones.
+        actual = SsaRecord.objects.filter(
+            verified_by_user_id__in=[str(i) for i in owner],
+            fy=fy,
+            verification_status="confirmed",
+            deleted_at__isnull=True,
+        ).count()
     elif key == "direct_visits":
         # Direct execution only — partner-delivered work NEVER counts here.
         actual = (
@@ -577,6 +628,16 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
                 ),
                 target=f"100% of {denom}" if denom else "As agreed",
             )
+        # Strategy first, role template second. A published RVP/CD priority
+        # is a contract the individual agreement inherits, so it is rendered
+        # before anything else and carries priority_layer="org" — the layer
+        # the employee may not remove. Where no strategy has been published
+        # for the FY the cascade adds nothing and the role template stands
+        # alone, which is exactly the behaviour that existed before it.
+        from apps.hr import priority_cascade
+
+        priority_cascade.apply_to_review(review, role, denominators)
+
         # The six named Edify Values, seeded as MANUAL commitment rows —
         # commitments and reflections only, no counts anywhere near them.
         from apps.hr.models import ValueCommitment

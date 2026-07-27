@@ -430,7 +430,7 @@ in the working tree, none to audit work.
 
 | Gate | Result |
 |---|---|
-| CI, PR #14 head `dd12865f` | **green** — run 30206220299: suite, security scans, CodeQL |
+| CI, PR #14 head `dd12865f` | **green** — run 30206220299 (5/5 checks): suite, security scans, CodeQL ×2 + gate |
 | CI, main `20883bae` post-merge | **green** — the second consecutive full run, on main itself |
 | Local cumulative suite | 2119 passed; 6 failures, all traced to concurrent WIP on disk |
 | Latency budgets | 24/24 measured page-role combinations inside budget (702-school dataset — a floor, not a ceiling) |

@@ -1805,7 +1805,9 @@ def performance_conversation_view(request):
 
     rows = []
     if review:
-        for p in review.priorities.all().order_by("sequence"):
+        # source_rule is read per row to say what an inherited commitment is
+        # inherited AS; without the join that is one extra query per priority.
+        for p in review.priorities.select_related("source_rule").order_by("sequence"):
             live = live_progress(p)
             frozen = snap_by_seq.get(p.sequence)
             rows.append(
@@ -2319,3 +2321,244 @@ def performance_acknowledge_view(request, review_id):
     else:
         messages.success(request, "Final rating acknowledged.")
     return redirect("/my-performance?tab=conversations")
+
+
+# ── Strategic priorities: the top of the cascade ─────────────────────────────
+# Everything below exists so the RVP and CD can author DIRECTION and stop
+# there. They set purpose, expected result and a weighting range; they never
+# write an individual's milestones. Without a page, `StrategicPriority` is a
+# table only a shell can reach, and the cascade starts from nothing.
+
+_STRATEGY_AUTHORS = ("RegionalVicePresident", "CountryDirector", "Admin")
+_STRATEGY_VIEWERS = _STRATEGY_AUTHORS + ("HumanResources",)
+
+# A plausible financial year. Bounds rather than "any four digits" so a
+# nonsense year cannot become a filter that quietly matches nothing.
+MIN_FY_YEAR = 2000
+MAX_FY_YEAR = 2100
+
+
+def _requested_fy(request, param="fy"):
+    """A financial year taken from the request, or the operational one.
+
+    An FY label is a four-digit year and nothing else. Validating here keeps
+    user input out of two places it should never reach unchecked: the redirect
+    URL these views build, and the query filters they run.
+
+    The year is REBUILT from the parsed integer rather than returned as the
+    string that arrived. Checking a string's shape and then handing back the
+    original still passes the caller a value that came from the request — the
+    check constrains what gets through, not what the value *is*. Formatting
+    from the int means the returned string is constructed here, and nothing
+    the client sent can reach a URL however the check is later loosened.
+    """
+    from apps.core.fy import get_operational_fy
+
+    raw = (request.POST.get(param) or request.GET.get(param) or "").strip()
+    if raw.isdigit() and len(raw) == 4:
+        year = int(raw)
+        if MIN_FY_YEAR <= year <= MAX_FY_YEAR:
+            return f"{year:04d}"
+    return get_operational_fy()
+
+
+@require_page_permission("strategic_priorities")
+def strategic_priorities_view(request):
+    from apps.hr import priority_cascade
+    from apps.hr.models import (
+        PriorityAccountability,
+        StrategicPriority,
+        StrategicPriorityLevel,
+        StrategicPriorityStatus,
+    )
+    from apps.hr.performance_engine import METRIC_KEYS
+
+    role = getattr(request.user, "active_role", "")
+    if role not in _STRATEGY_VIEWERS:
+        return render_access_denied(
+            request,
+            "Strategic priorities are set by the RVP and Country Director and "
+            "validated by HR.",
+        )
+
+    fy = _requested_fy(request)
+    priorities = (
+        StrategicPriority.objects.filter(fy=fy)
+        .select_related("parent")
+        .prefetch_related("role_rules")
+        .order_by("level", "title")
+    )
+
+    coverage = priority_cascade.coverage_report(fy)
+    reach = {row["priority_id"]: row for row in coverage["priorities"]}
+
+    # The CD authors country priorities and may translate a published regional
+    # one; the RVP authors regional. Offering a level the actor cannot publish
+    # would produce a draft — or a Publish button — that can only ever be
+    # refused, which reads as a broken page rather than a boundary.
+    authorable = []
+    if role in ("RegionalVicePresident", "Admin"):
+        authorable.append(StrategicPriorityLevel.REGIONAL)
+    if role in ("CountryDirector", "Admin"):
+        authorable.append(StrategicPriorityLevel.COUNTRY)
+
+    rows = []
+    for priority in priorities:
+        rules = sorted(priority.role_rules.all(), key=lambda r: r.role)
+        carried = [
+            r
+            for r in rules
+            if r.accountability != PriorityAccountability.NOT_APPLICABLE
+        ]
+        rows.append(
+            {
+                "priority": priority,
+                "rules": rules,
+                # Surfaced because it is the one thing that cannot be seen by
+                # reading the priority: whether it reached anybody's agreement.
+                "staff_reached": reach.get(priority.id, {}).get("staff_reached", 0),
+                "inert": reach.get(priority.id, {}).get("inert", True),
+                "carried_roles": len(carried),
+                "distinct_metrics": len(
+                    {r.metric_key for r in carried if r.metric_key}
+                ),
+                "publishable": bool(carried)
+                and all((r.metric_key or "").strip() for r in carried),
+                "editable": priority.level in authorable,
+            }
+        )
+
+    context = {
+        "fy": fy,
+        "rows": rows,
+        "can_author": bool(authorable),
+        "authorable_levels": authorable,
+        "roles": [r for r in _CASCADE_ROLES],
+        "accountabilities": PriorityAccountability.choices,
+        # Offered as a list, not a text box: a free-typed key that the engine
+        # does not compute reports 0% forever and reads as an employee
+        # failing. Publication refuses one, but by then it has been written
+        # into a translation the author believed was saved.
+        "metric_choices": sorted(METRIC_KEYS.items()),
+        "statuses": StrategicPriorityStatus,
+        "published_parents": [
+            p
+            for p in priorities
+            if p.level == StrategicPriorityLevel.REGIONAL
+            and p.status == StrategicPriorityStatus.PUBLISHED
+        ],
+        "inert_count": coverage["inert_count"],
+        "manager_routing": sorted(priority_cascade.PRIORITY_SETTING_MANAGER.items()),
+    }
+    return render(request, "pages/hr/strategic_priorities.html", context)
+
+
+#: The roles a strategic priority can be translated for. Partner roles are
+#: excluded: they are external and hold no Edify performance agreement.
+_CASCADE_ROLES = (
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "ProjectCoordinator",
+    "Accountant",
+    "HumanResources",
+)
+
+
+@require_page_permission("strategic_priorities")
+def strategic_priority_action_view(request):
+    """One POST endpoint for the cascade's state changes; `action` selects."""
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.hr import priority_cascade
+    from apps.hr.models import (
+        PriorityAccountability,
+        StrategicPriority,
+        StrategicPriorityLevel,
+        StrategicPriorityRoleRule,
+    )
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    role = getattr(request.user, "active_role", "")
+    if role not in _STRATEGY_AUTHORS:
+        return HttpResponseForbidden("Only the RVP or Country Director may author.")
+
+    fy = _requested_fy(request)
+    action = request.POST.get("action", "")
+    try:
+        if action == "create_priority":
+            level = request.POST.get("level") or StrategicPriorityLevel.REGIONAL
+            # The author check runs here as well as at publish, so a draft the
+            # actor could never publish is refused while it is still empty.
+            priority_cascade._assert_can_author(request.user, level)
+            title = (request.POST.get("title") or "").strip()
+            purpose = (request.POST.get("strategic_purpose") or "").strip()
+            if not title or not purpose:
+                raise BadRequest("A priority needs a title and a strategic purpose.")
+            parent_id = request.POST.get("parent") or None
+            weight_min = int(request.POST.get("weight_min") or 10)
+            weight_max = int(request.POST.get("weight_max") or 30)
+            if weight_max < weight_min:
+                raise BadRequest("The weighting range runs backwards.")
+            StrategicPriority.objects.create(
+                fy=fy,
+                level=level,
+                parent_id=parent_id,
+                title=title[:255],
+                strategic_purpose=purpose,
+                target_guidance=(request.POST.get("target_guidance") or "").strip(),
+                minimum_standard=(request.POST.get("minimum_standard") or "").strip(),
+                weight_min=weight_min,
+                weight_max=weight_max,
+                is_mandatory=request.POST.get("is_mandatory") == "on",
+                author_id=request.user.id,
+            )
+            messages.success(request, "Strategic priority drafted.")
+
+        elif action == "set_role_rule":
+            priority = StrategicPriority.objects.filter(
+                id=request.POST.get("priority"), fy=fy
+            ).first()
+            if priority is None:
+                raise BadRequest("Unknown strategic priority.")
+            priority_cascade._assert_can_author(request.user, priority.level)
+            target_role = request.POST.get("role") or ""
+            if target_role not in _CASCADE_ROLES:
+                raise BadRequest("Unknown role.")
+            accountability = request.POST.get("accountability") or ""
+            if accountability not in dict(PriorityAccountability.choices):
+                raise BadRequest("Unknown accountability.")
+            StrategicPriorityRoleRule.objects.update_or_create(
+                priority=priority,
+                role=target_role,
+                defaults={
+                    "accountability": accountability,
+                    "metric_key": (request.POST.get("metric_key") or "").strip()
+                    or None,
+                    "outcome_statement": (
+                        request.POST.get("outcome_statement") or ""
+                    ).strip(),
+                    "target_guidance": (
+                        request.POST.get("rule_target_guidance") or ""
+                    ).strip(),
+                    "default_weight": int(request.POST.get("default_weight") or 20),
+                },
+            )
+            messages.success(request, f"{target_role} translation saved.")
+
+        elif action == "publish":
+            priority = StrategicPriority.objects.filter(
+                id=request.POST.get("priority"), fy=fy
+            ).first()
+            if priority is None:
+                raise BadRequest("Unknown strategic priority.")
+            priority_cascade.publish(priority, request.user)
+            messages.success(request, f"“{priority.title}” published and now cascades.")
+        else:
+            return HttpResponseBadRequest("Unknown action.")
+    except Forbidden as e:
+        return HttpResponseForbidden(escape(str(e)))
+    except BadRequest as e:
+        messages.error(request, str(e))
+    return redirect(f"/strategic-priorities?fy={fy}")

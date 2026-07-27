@@ -506,6 +506,34 @@ class PerformancePriority(TimeStampedModel):
     target_number = models.IntegerField(null=True, blank=True)
     denominator_note = models.CharField(max_length=255, null=True, blank=True)
 
+    # ── The cascade link (spec §7 PriorityMetricLink) ────────────────────
+    # Which strategic role rule produced this row, if any. Three things hang
+    # off it and none of them work without it:
+    #
+    #   Traceability — an employee's commitment can be walked back to the
+    #   country priority and the regional direction behind it.
+    #
+    #   Enforcement — a row inherited from a MANDATORY priority may not be
+    #   removed or have its metric changed by the employee (§2A). Without the
+    #   link, "mandatory" is a label on a template nobody can check against.
+    #
+    #   Coverage — HR can ask which published priorities failed to reach which
+    #   staff, which is the validation step §3 gives them.
+    #
+    # SET_NULL rather than CASCADE: retiring a strategic priority must never
+    # delete commitments already agreed and signed against it. The row keeps
+    # its own frozen metric_key/target, so it stays measurable afterwards.
+    source_rule = models.ForeignKey(
+        "hr.StrategicPriorityRoleRule",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="derived_priorities",
+    )
+    # Denormalised from the parent at draft time so enforcement survives the
+    # rule being retired — a signed agreement's mandatory rows stay mandatory.
+    is_mandatory = models.BooleanField(default=False)
+
     class Meta:
         db_table = "hr_performance_priority"
         ordering = ["sequence"]
@@ -1152,3 +1180,185 @@ class SeparationConversation(TimeStampedModel):
     class Meta:
         db_table = "hr_separation_conversation"
         ordering = ["-created_at"]
+
+
+# ─── STRATEGY-TO-EXECUTION CASCADE ───────────────────────────────────────────
+#
+# The layer above the individual agreement. Before this, priorities were
+# generated from RolePriorityTemplate, which is keyed BY ROLE — every role
+# carried its own independent list, with no shared parent. That made the one
+# rule this cascade exists to enforce unstateable: "the same strategic
+# priority must not assign the same metric to every role" has no meaning when
+# there is no single priority the roles are translations OF.
+#
+# So a StrategicPriority is authored once, at the top, and fans out through an
+# explicit per-role rule. The fan-out is data, not convention: a role that
+# should not carry a priority at all is recorded as NOT_APPLICABLE rather than
+# omitted, because silence cannot be reviewed and an accountant quietly
+# inheriting a school-visit target is exactly the failure being designed out.
+
+
+class StrategicPriorityLevel(models.TextChoices):
+    """Who authored it. The level also decides who may edit it."""
+
+    REGIONAL = "regional", "Regional (RVP)"
+    COUNTRY = "country", "Country (CD)"
+
+
+class StrategicPriorityStatus(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    PUBLISHED = "published", "Published"
+    ARCHIVED = "archived", "Archived"
+
+
+class PriorityAccountability(models.TextChoices):
+    """How a role carries a priority.
+
+    The distinction is the whole point of the cascade. A CCEO EXECUTES SSA
+    coverage, a PL SUPERVISES their team's, IA VERIFIES quality and turnaround,
+    and the Accountant is NOT_APPLICABLE. Four different measures, one strategy
+    — and each is a different question at the performance conversation.
+    """
+
+    EXECUTE = "execute", "Execute"
+    SUPERVISE = "supervise", "Supervise"
+    VERIFY = "verify", "Verify"
+    FINANCE = "finance", "Finance"
+    NOT_APPLICABLE = "not_applicable", "Not applicable"
+
+
+class StrategicPriority(TimeStampedModel):
+    """One strategic priority, authored by the RVP or the Country Director.
+
+    A country priority may name the regional priority it translates
+    (``parent``), which is what makes the cascade traceable in both
+    directions: an RVP can see how each country rendered their direction, and
+    a CCEO's agreement can be walked back up to the regional intent behind it.
+
+    Published priorities are the contract. Editing one after publication does
+    not silently rewrite agreements already signed against it — those carry
+    their own frozen copy of the metric and target (see PerformancePriority),
+    and changing an approved commitment goes through PriorityAmendment.
+    """
+
+    id = CuidField()
+    fy = models.CharField(max_length=16, db_index=True)
+    level = models.CharField(max_length=16, choices=StrategicPriorityLevel.choices)
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="translations",
+        help_text="The regional priority this country priority translates.",
+    )
+    country_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+
+    # ── The published contract (spec §4) ──────────────────────────────────
+    title = models.CharField(max_length=255)
+    strategic_purpose = models.TextField()
+    expected_result = models.TextField(null=True, blank=True)
+    minimum_standard = models.CharField(max_length=255, null=True, blank=True)
+    target_guidance = models.CharField(max_length=255, null=True, blank=True)
+    quality_standard = models.TextField(null=True, blank=True)
+    evidence_source = models.CharField(max_length=255, null=True, blank=True)
+    policy_notes = models.TextField(null=True, blank=True)
+
+    # A RANGE, not a number: the weighting is a manager conversation inside
+    # bounds the RVP/CD set, not a figure handed down per employee.
+    weight_min = models.PositiveSmallIntegerField(default=5)
+    weight_max = models.PositiveSmallIntegerField(default=40)
+
+    # Mandatory priorities are the ones an employee may not remove (§2A).
+    is_mandatory = models.BooleanField(default=True)
+
+    status = models.CharField(
+        max_length=16,
+        choices=StrategicPriorityStatus.choices,
+        default=StrategicPriorityStatus.DRAFT,
+    )
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    author_id = models.CharField(max_length=30, null=True, blank=True)
+    sequence = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        db_table = "hr_strategic_priority"
+        ordering = ["level", "sequence", "title"]
+        indexes = [
+            models.Index(fields=["fy", "level", "status"]),
+        ]
+        constraints = [
+            # A weighting range that runs backwards would let a manager pick a
+            # weight satisfying neither bound.
+            models.CheckConstraint(
+                condition=models.Q(weight_max__gte=models.F("weight_min")),
+                name="strategic_priority_weight_range_ordered",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_level_display()} · FY{self.fy} · {self.title}"
+
+
+class StrategicPriorityRoleRule(TimeStampedModel):
+    """How ONE role carries ONE strategic priority.
+
+    This is the translation table the cascade turns on. Each row answers: does
+    this role carry the priority at all, in what capacity, and against which
+    canonical metric? A row with accountability NOT_APPLICABLE is a deliberate,
+    reviewable statement that the role is exempt — unlike an absent row, which
+    is indistinguishable from an oversight.
+
+    ``metric_key`` names a canonical metric the platform already computes, so
+    progress is derived from verified data rather than typed by anyone. It is
+    required for every accountability except NOT_APPLICABLE, which by
+    definition has nothing to measure.
+    """
+
+    id = CuidField()
+    priority = models.ForeignKey(
+        StrategicPriority, on_delete=models.CASCADE, related_name="role_rules"
+    )
+    role = models.CharField(max_length=64, db_index=True)
+    accountability = models.CharField(
+        max_length=16,
+        choices=PriorityAccountability.choices,
+        default=PriorityAccountability.EXECUTE,
+    )
+    metric_key = models.CharField(max_length=64, null=True, blank=True)
+    outcome_statement = models.TextField(
+        help_text="Role-appropriate wording — what THIS role commits to."
+    )
+    target_guidance = models.CharField(max_length=255, null=True, blank=True)
+    default_weight = models.PositiveSmallIntegerField(default=20)
+    sequence = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        db_table = "hr_strategic_priority_role_rule"
+        ordering = ["priority", "sequence", "role"]
+        constraints = [
+            # One rule per (priority, role): two rules would make "which metric
+            # does this role carry" ambiguous, and the draft builder would pick
+            # arbitrarily.
+            models.UniqueConstraint(
+                fields=["priority", "role"], name="uniq_priority_role_rule"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.role} · {self.get_accountability_display()} · {self.priority_id}"
+
+    @property
+    def priority_manager(self) -> str | None:
+        """Who holds this role's priority-setting conversation.
+
+        Read off the cascade's routing table rather than the reporting line, so
+        the strategy screens and the agreement screens can never disagree about
+        who the conversation belongs to.
+        """
+        from apps.hr.priority_cascade import manager_role_for
+
+        return manager_role_for(self.role)
