@@ -549,6 +549,24 @@ def get_frontend_context(principal, query: dict) -> dict:
     weeks_list = get_weeks_for_month(year_int, month_int)
 
     # 5. Apply selected filters to the query
+    # My Plan had no search of any kind — not a control, not a query path — so
+    # the only way to find one activity in a week's feed was to read the feed.
+    # It runs after the scope constraint above and before the period slicing
+    # below, so a query narrows the plan the user already owns.
+    #
+    # activity_purpose_text is included because it is what the row actually
+    # shows a user; matching only structural fields would leave them searching
+    # for words they can see on screen and getting nothing back.
+    search_q = str(query.get("q") or "").strip()
+    if search_q:
+        qs = qs.filter(
+            Q(school__name__icontains=search_q)
+            | Q(school__school_id__icontains=search_q)
+            | Q(cluster__name__icontains=search_q)
+            | Q(school__district__name__icontains=search_q)
+            | Q(activity_purpose_text__icontains=search_q)
+        )
+
     if district_id and district_id != "All" and district_id != "all":
         qs = qs.filter(
             Q(school__district_id=district_id) | Q(cluster__district_id=district_id)

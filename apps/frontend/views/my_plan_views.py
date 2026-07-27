@@ -76,9 +76,20 @@ def my_plan_view(request):
         "activity_type": request.GET.get("activity_type"),
         "status": request.GET.get("status"),
         "period": request.GET.get("period", "week"),
+        "q": request.GET.get("q", "").strip(),
     }
 
     context = get_my_plan(request.user, query)
+    context["topbar_search"] = {
+        "placeholder": "Search my plan…",
+        "label": "Search my plan by school, School ID, cluster, district or purpose",
+        "name": "q",
+        "value": query["q"],
+        "hx_get": "/my-plan",
+        "hx_target": "#my-plan-workspace",
+        "hx_trigger": "keyup changed delay:250ms, search",
+        "hx_include": "#filters-form",
+    }
 
     # CSV export of the currently filtered feed (same pattern as /clusters).
     if request.GET.get("export", "").strip() == "csv":
@@ -1592,6 +1603,20 @@ def evidence_center_view(request):
         "rows": rows,
         "page_obj": page_obj,
         "search_query": search_query,
+        # The query above has always been read and applied; the page simply
+        # never rendered a control to produce it, so the top bar showed the
+        # generic global form and this search was unreachable. Carries the tab
+        # so a query narrows the tab in view rather than resetting to pending.
+        "topbar_search": {
+            "placeholder": "Search evidence…",
+            "label": "Search evidence by school, School ID, cluster or Salesforce ID",
+            "name": "q",
+            "value": search_query,
+            "hx_get": "/evidence/",
+            "hx_target": "#evidence-workspace",
+            "hx_trigger": "keyup changed delay:250ms, search",
+            "hidden": [{"name": "tab", "value": active_tab}],
+        },
     }
     template = (
         "partials/evidence/workspace.html"
