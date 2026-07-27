@@ -524,7 +524,15 @@ def school_directory_view(request):
         # Selected states
         "q": q,
         "topbar_search": {
-            "placeholder": "Search schools, staff, districts…",
+            # Names what this page actually searches. It carried the platform's
+            # generic default, which both undersold the field set (School IDs,
+            # sub-counties and clusters are all matched) and implied a staff
+            # directory the page does not offer.
+            "placeholder": "Search schools, School IDs, districts, sub-counties…",
+            "label": (
+                "Search schools by name, School ID, district, sub-county, "
+                "cluster or assigned owner"
+            ),
             "input_id": "topbar-search-input",
             "value": q,
             "hx_get": "/schools",
