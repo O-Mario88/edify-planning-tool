@@ -1247,6 +1247,19 @@ select:not([multiple]):not(.select-native) {
   font-variant-numeric: tabular-nums;
 }
 
+/* A tile with no number to show.
+   The reason ("No data", "Not yet measurable") is prose, not a statistic, so
+   it drops the tabular-figure sizing that makes a value read as a quantity and
+   takes the muted ink instead. Sizing it like a value is how "No data" ends up
+   looking as authoritative as a measurement. */
+.kpi-strip__item--absent .kpi-strip__value {
+  font-size: var(--edify-text-label-size, 0.8rem);
+  font-weight: 650;
+  color: var(--edify-text-subtle);
+  letter-spacing: normal;
+  text-wrap: balance;
+}
+
 .kpi-strip__meta {
   display: flex;
   align-items: center;

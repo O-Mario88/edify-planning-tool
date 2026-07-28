@@ -77,15 +77,11 @@ MONTHS = [
 ]
 
 
-def _ugx(n):
-    n = int(n or 0)
-    if n >= 1_000_000_000:
-        return f"UGX {n / 1_000_000_000:.2f}B"
-    if n >= 1_000_000:
-        return f"UGX {n / 1_000_000:.1f}M"
-    if n >= 1_000:
-        return f"UGX {n / 1_000:.0f}K"
-    return f"UGX {n:,}"
+from apps.core.metrics import format_ugx_compact as _ugx  # noqa: E402
+
+# Was a local copy differing from the other two compact-UGX helpers only at the
+# billion scale (.2f here, .1f in finance operations). One formatter now, so
+# the same amount reads the same on the approval queue and the finance pages.
 
 
 def _category(activity_type, delivery_type):
@@ -413,13 +409,12 @@ def get_pl_fund_approvals(principal, filters=None):
             "variant": "danger",
             "helper": f"{len(returned)} request{'' if len(returned) == 1 else 's'}",
         },
-        {
-            "label": "Planned Activities Funding",
-            "value": _ugx(total_requested),
-            "icon": "briefcase",
-            "variant": "analytics",
-            "helper": "From scheduled work",
-        },
+        # "Planned Activities Funding" was removed here. It rendered
+        # `_ugx(total_requested)` -- the identical expression to "Total
+        # Requested This Month" four tiles above it -- so the strip showed one
+        # number twice under two names, and a reader comparing them learned
+        # nothing. The remaining five tiles each answer a different question:
+        # scale, pending action, progress today, quality/returns, and unit cost.
         {
             "label": "Average Cost per School",
             "value": _ugx(round(total_requested / unique_schools))

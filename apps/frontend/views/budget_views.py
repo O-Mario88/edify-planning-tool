@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest
+from apps.core.metrics import format_ugx_compact
 from apps.core.redirects import local_redirect
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
@@ -360,18 +361,10 @@ def _build_fund_requests_context(request):
         "planned_value": planned_value,
     }
 
-    # Format UGX compact helper
-    def format_ugx_compact(val):
-        if not val:
-            return "UGX 0"
-        if val >= 1_000_000_000:
-            return f"UGX {val / 1_000_000_000:.2f}B"
-        if val >= 1_000_000:
-            return f"UGX {val / 1_000_000:.2f}M"
-        if val >= 1_000:
-            return f"UGX {val / 1_000:.2f}K"
-        return f"UGX {val}"
-
+    # Money formatting comes from apps.core.metrics.money. This function used
+    # to be defined here with two decimals at every scale, so the same UGX
+    # 1,234,567 read as "UGX 1.23M" on this page and "UGX 1.2M" on the finance
+    # and PL approval pages.
     # Construct unified KPI strip items
     kpi_strip_items = [
         {

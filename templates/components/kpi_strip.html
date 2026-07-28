@@ -10,9 +10,22 @@
 
   <div class="kpi-strip__grid" role="list" tabindex="0">
     {% for item in items %}
-    <div class="kpi-strip__item {% if item.variant %}kpi-strip__item--{{ item.variant }}{% endif %}"
+    {% comment %}
+      `metric_key` and friends are present on items built through
+      apps.core.metrics.render_metric and absent on the legacy dicts that still
+      pass a bare label/value. The data-* attributes are what the duplication
+      guard greps for, so they appear only when the item actually carries a
+      registered identity -- stamping a placeholder would make an unregistered
+      tile look audited.
+    {% endcomment %}
+    <div class="kpi-strip__item {% if item.variant %}kpi-strip__item--{{ item.variant }}{% endif %}{% if item.data_state and not item.is_measured %} kpi-strip__item--absent{% endif %}"
          role="listitem"
-         {% if item.tooltip %}title="{{ item.tooltip }}"{% endif %}>
+         data-component="kpi-card"
+         {% if item.metric_key %}data-metric-key="{{ item.metric_key }}"{% endif %}
+         {% if item.period %}data-metric-period="{{ item.period }}"{% endif %}
+         {% if item.scope %}data-metric-scope="{{ item.scope }}"{% endif %}
+         {% if item.data_state %}data-metric-state="{{ item.data_state }}"{% endif %}
+         {% if item.tooltip %}title="{{ item.tooltip }}"{% elif item.definition %}title="{{ item.definition }}"{% endif %}>
       {% if drilldown_mode == "program_lead" and item.link %}
       <button type="button"
               hx-get="/analytics/program-lead/drilldown{{ item.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
@@ -22,6 +35,14 @@
       {% elif drilldown_mode == "program_lead_dashboard" and item.link %}
       <a href="/dashboard/pl-drilldown{{ item.link }}&fy={{ fy }}"
          class="kpi-strip__item-body kpi-strip__item-body--link">
+      {% comment %}
+        Separate branches rather than `default:item.link` -- filter arguments
+        are resolved eagerly, so a registry-built item (which has no `link`
+        key) raised VariableDoesNotExist instead of falling back. `{% if %}`
+        tolerates the missing key; a filter argument does not.
+      {% endcomment %}
+      {% elif item.drilldown_url %}
+      <a href="{{ item.drilldown_url }}" class="kpi-strip__item-body kpi-strip__item-body--link">
       {% elif item.link %}
       <a href="{{ item.link }}" class="kpi-strip__item-body kpi-strip__item-body--link">
       {% else %}
@@ -34,8 +55,20 @@
         </span>
 
         <span class="kpi-strip__item-details">
-          <span class="kpi-strip__label">{{ item.label }}</span>
-          <span class="kpi-strip__value">{{ item.value }}</span>
+          {% if item.accessible_description %}
+            {% comment %}
+              A screen reader hearing only "82%" learns the number and nothing
+              about what it measures. The registry sentence carries label,
+              value and denominator, so it replaces -- rather than repeats --
+              the split label/value pair for assistive tech.
+            {% endcomment %}
+            <span class="sr-only">{{ item.accessible_description }}</span>
+            <span class="kpi-strip__label" aria-hidden="true">{{ item.label }}</span>
+            <span class="kpi-strip__value" aria-hidden="true">{{ item.display_value|default:item.value }}</span>
+          {% else %}
+            <span class="kpi-strip__label">{{ item.label }}</span>
+            <span class="kpi-strip__value">{{ item.display_value|default:item.value }}</span>
+          {% endif %}
           {% if item.trend or item.helper %}
           <span class="kpi-strip__meta">
             {% if item.trend and item.trend.value %}
@@ -52,6 +85,8 @@
       {% if drilldown_mode == "program_lead" and item.link %}
       </button>
       {% elif drilldown_mode == "program_lead_dashboard" and item.link %}
+      </a>
+      {% elif item.drilldown_url %}
       </a>
       {% elif item.link %}
       </a>

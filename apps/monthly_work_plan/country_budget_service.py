@@ -94,6 +94,36 @@ def _require_read(principal):
         )
 
 
+def _submitter_names(user_ids) -> dict[str, str]:
+    """Display names for the people who submitted these budgets.
+
+    ``submitted_by_user_id`` holds a User id, but the same field elsewhere in
+    the platform has been written with a StaffProfile CUID, so both id spaces
+    are resolved and an unmatched id simply falls back to itself rather than
+    disappearing -- an unresolvable submitter is still better evidence than a
+    blank cell on a page someone approves money from.
+    """
+    from apps.accounts.models import StaffProfile, User
+
+    wanted = {uid for uid in user_ids if uid}
+    if not wanted:
+        return {}
+
+    names = {u.id: u.name for u in User.objects.filter(id__in=wanted) if u.name}
+    unresolved = wanted - set(names)
+    if unresolved:
+        names.update(
+            {
+                sp.id: sp.user.name
+                for sp in StaffProfile.objects.filter(id__in=unresolved).select_related(
+                    "user"
+                )
+                if sp.user_id and sp.user.name
+            }
+        )
+    return names
+
+
 def _require_cd(principal):
     """Authority to submit the country envelope upward.
 
@@ -1031,6 +1061,12 @@ def list_submitted_budgets(principal, filters=None):
     budgets = MonthlyWorkPlanBudget.objects.filter(
         fy=fy, status__in=LOCKED_STATUSES
     ).order_by("-month_key")
+
+    # "Submitted by" rendered the raw stored id ("cmrabe4td00k76ukgkdlu"), so
+    # the RVP approving a country budget could not see who sent it. Resolved
+    # once for the whole page rather than per row.
+    submitter_names = _submitter_names([b.submitted_by_user_id for b in budgets])
+
     rows = []
     for b in budgets:
         month_num = int(b.month_key.split("-")[1])
@@ -1046,6 +1082,7 @@ def list_submitted_budgets(principal, filters=None):
                 "total_amount_fmt": _ugx(b.total_amount),
                 "submitted_at": b.submitted_at,
                 "submitted_by_user_id": b.submitted_by_user_id,
+                "submitted_by_name": submitter_names.get(b.submitted_by_user_id),
                 "status": b.status,
                 "status_label": b.get_status_display(),
                 "version": b.submission_version,
@@ -1097,6 +1134,9 @@ def get_submission_detail(principal, budget_id):
         "status_label": budget.get_status_display(),
         "submitted_at": budget.submitted_at,
         "submitted_by_user_id": budget.submitted_by_user_id,
+        "submitted_by_name": _submitter_names([budget.submitted_by_user_id]).get(
+            budget.submitted_by_user_id
+        ),
         "version": budget.submission_version,
         "total_amount": budget.total_amount,
         "total_amount_fmt": _ugx(budget.total_amount),
