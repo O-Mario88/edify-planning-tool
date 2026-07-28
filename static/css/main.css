@@ -1611,6 +1611,9 @@
   .flex-col-reverse {
     flex-direction: column-reverse;
   }
+  .flex-row {
+    flex-direction: row;
+  }
   .flex-nowrap {
     flex-wrap: nowrap;
   }
@@ -3688,6 +3691,9 @@
   }
   .text-\[var\(--edify-text-muted\)\] {
     color: var(--edify-text-muted);
+  }
+  .text-\[var\(--edify-text-subtle\)\] {
+    color: var(--edify-text-subtle);
   }
   .text-amber-300 {
     color: var(--color-amber-300);
