@@ -55,8 +55,21 @@ def partners_list_view(request):
     if request.user.active_role in PARTNER_ROLES:
         partners_qs = partners_qs.filter(id__in=resolve_partner_ids(request.user))
     if search:
+        # Partner Monitor is used to answer "who is working in this school" at
+        # least as often as "where is this partner". Name and region alone
+        # could not answer the first, so the school a partner is assigned to
+        # now reaches the partner, resolved through the assignment table so a
+        # partner with fifty schools still returns one row.
         partners_qs = partners_qs.filter(
-            Q(name__icontains=search) | Q(region_name__icontains=search)
+            Q(name__icontains=search)
+            | Q(region_name__icontains=search)
+            | Q(
+                id__in=PartnerAssignment.objects.filter(
+                    Q(school__name__icontains=search)
+                    | Q(school__school_id__icontains=search)
+                    | Q(school__district__name__icontains=search)
+                ).values("partner_id")
+            )
         )
     if selected_partner:
         partners_qs = partners_qs.filter(id=selected_partner)

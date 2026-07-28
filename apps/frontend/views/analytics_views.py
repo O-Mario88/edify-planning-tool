@@ -21,7 +21,6 @@ def _analytics_filters(request):
     return {
         "fy": request.GET.get("fy"),
         "quarter": request.GET.get("quarter"),
-        "region": request.GET.get("region"),
         "district": request.GET.get("district"),
         "cluster": request.GET.get("cluster"),
         "staff": request.GET.get("staff"),
@@ -58,9 +57,30 @@ def analytics_dashboard_view(request):
     analytics_layout = preference.layout if preference else "grid"
 
     # 3. Retrieve options list for dropdown filters
+    #
+    # Derived from the schools this user can actually reach, so every option is
+    # a place results can come from. Listing every district in the country put
+    # more than a hundred dead ends in a control whose whole job is to narrow —
+    # and picking one returned an empty page that looked identical to a broken
+    # filter.
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    _scope = resolve_user_scope(request.user)
+    _scoped_schools = school_queryset(_scope).filter(deleted_at__isnull=True)
+
     regions = Region.objects.all().order_by("name")
-    districts = District.objects.all().order_by("name")
-    clusters = Cluster.objects.all().order_by("name")
+    districts = (
+        District.objects.filter(id__in=_scoped_schools.values("district_id"))
+        .distinct()
+        .order_by("name")
+    )
+    # Cluster carries its own district, so it scopes through the same set
+    # rather than through School.cluster_id, which is a CharField.
+    clusters = (
+        Cluster.objects.filter(district_id__in=_scoped_schools.values("district_id"))
+        .distinct()
+        .order_by("name")
+    )
     staff_profiles = (
         StaffProfile.objects.filter(deleted_at__isnull=True)
         .select_related("user")
@@ -80,6 +100,21 @@ def analytics_dashboard_view(request):
         "use_dark_sidebar": False,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
         "analytics_layout": analytics_layout,
+        # The service has always narrowed schools, activities and SSA by `q`;
+        # there was simply no control anywhere on the page to type it into, so
+        # the top bar showed the generic global form and a working backend
+        # search sat unreachable. It filters the entity lists behind the
+        # numbers — never the charts' rendered labels.
+        "topbar_search": {
+            "placeholder": "Search analytics records…",
+            "label": "Search analytics by school, School ID, cluster or staff",
+            "name": "q",
+            "value": filters.get("q") or "",
+            "hx_get": "/analytics",
+            "hx_target": "#analytics-kpi-and-content-container",
+            "hx_trigger": "keyup changed delay:300ms, search",
+            "hx_include": "#analytics-filters-form",
+        },
     }
 
     # If HTMX request, render only content cards to swap

@@ -85,13 +85,22 @@ class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:
 </svg>
 </button>
 
-<!-- Search bar input from mockup -->
-<search class="max-w-md w-full relative hidden sm:block">
-<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-</svg>
-</div>
+{% comment %}
+Visible at every width. This was `hidden sm:block`, so the platform's search
+simply did not exist below 640px — and once the top bar became the single
+canonical control and the duplicate page-body forms came out, that left a
+phone with no way to search those pages at all. The date block beside it is
+already `hidden md:flex`, so the room this needs is room the row was giving
+away.
+{% endcomment %}
+<search class="max-w-md w-full relative block">
+{% comment %}
+The magnifier is a submit control, not an ornament. It used to be a
+pointer-events-none div, so the only way to run a search anywhere in the
+platform was to know that Enter was the trigger. It sits outside the form
+elements below and reaches whichever one is rendered through form=, so
+clicking it submits exactly the same form Enter does — one request, not two.
+{% endcomment %}
 {% comment %}Context-aware topbar search. A page opts in by passing a `topbar_search`
 context dict (placeholder, value, name, input_id, action, method, hx_get,
 hx_target, hx_trigger, hx_include, hidden, attach_to, autosubmit). Without it
@@ -111,9 +120,12 @@ name="{{ topbar_search.name|default:'q' }}"
 value="{{ topbar_search.value|default:'' }}"
 placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
 class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
-style="padding-left: 36px"
+style="padding-left: 40px"
 {% if topbar_search.autosubmit %}x-data="{ t: null }" @input.debounce.300ms="$el.form ? $el.form.requestSubmit() : null"{% endif %}
 >
+<button type="submit" form="{{ topbar_search.attach_to }}" aria-label="Search" class="edify-search-submit">
+{% include "partials/_search_icon.html" %}
+</button>
 {% else %}
 <form
   method="{{ topbar_search.method|default:'get' }}"
@@ -121,7 +133,14 @@ style="padding-left: 36px"
   {% if topbar_search.hx_get %}
   hx-get="{{ topbar_search.hx_get }}"
   hx-target="{{ topbar_search.hx_target }}"
-  hx-trigger="{{ topbar_search.hx_trigger|default:'keyup delay:300ms, search' }}"
+  {% comment %}
+  submit is appended to whatever the page asked for, never left to the caller.
+  Every hx_trigger in the codebase listed only keyup and search, so a click on
+  the magnifier fired a native submit that htmx ignored — the browser then did
+  a full-page GET and the partial swap was lost. Enter already worked through
+  the `search` event; this is what makes the icon its equal.
+  {% endcomment %}
+  hx-trigger="{{ topbar_search.hx_trigger|default:'keyup delay:300ms, search' }}, submit"
   hx-push-url="true"
   {% if topbar_search.hx_include %}hx-include="{{ topbar_search.hx_include }}"{% endif %}
   {% endif %}
@@ -135,9 +154,12 @@ name="{{ topbar_search.name|default:'q' }}"
 value="{{ topbar_search.value|default:'' }}"
 placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
 class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
-style="padding-left: 36px"
+style="padding-left: 40px"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
+<button type="submit" aria-label="Search" class="edify-search-submit">
+{% include "partials/_search_icon.html" %}
+</button>
 </form>
 {% endif %}
 {% elif not topbar_search or not topbar_search.hide %}
@@ -150,9 +172,12 @@ name="q"
 value="{{ request.GET.q|default:'' }}"
 placeholder="Search schools, staff, districts..."
 class="h-9 w-full rounded-control pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
-style="padding-left: 36px"
+style="padding-left: 40px"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
+<button type="submit" aria-label="Search" class="edify-search-submit">
+{% include "partials/_search_icon.html" %}
+</button>
 </form>
 {% endif %}
 </search>
@@ -204,9 +229,15 @@ aria-label="Messages"
 
 <!-- Contextual Help navigates directly to the full Knowledge Center article for
 the current page. The server resolves the route to a reviewed, role-aware article. -->
+{% comment %}
+Hidden on phones so the search field keeps a usable width. Seven controls
+shared a 375px row and squeezed search to about 100px; contextual help is the
+one of them reachable another way — the Knowledge Center is in the sidebar —
+so it yields its space rather than the control every page depends on.
+{% endcomment %}
 <a
 href="/help/context?for={{ request.path|urlencode }}"
-class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
+class="hidden sm:flex h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] items-center justify-center transition-all"
 title="Help for this page"
 aria-label="Help for this page"
 >

@@ -1,0 +1,12 @@
+{% comment %}
+  The identity attributes for a registered card, as an attribute-position
+  include:
+
+    <section class="…" {% include "components/registered_card_attrs.html" with card=card %}>
+
+  This exists so the 555 hand-rolled card surfaces can take on a registry
+  identity one at a time, without every one of them first being rewritten to
+  the shared shell. `data-card-key` is what the duplication guard greps for, so
+  a card is only auditable once it carries these.
+{% endcomment %}
+data-component-type="card" data-card-key="{{ card.card_key }}" data-card-type="{{ card.card_type }}" data-card-scope="{{ card.scope }}" data-card-period="{{ card.period }}"

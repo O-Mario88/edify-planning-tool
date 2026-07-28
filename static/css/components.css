@@ -1247,6 +1247,19 @@ select:not([multiple]):not(.select-native) {
   font-variant-numeric: tabular-nums;
 }
 
+/* A tile with no number to show.
+   The reason ("No data", "Not yet measurable") is prose, not a statistic, so
+   it drops the tabular-figure sizing that makes a value read as a quantity and
+   takes the muted ink instead. Sizing it like a value is how "No data" ends up
+   looking as authoritative as a measurement. */
+.kpi-strip__item--absent .kpi-strip__value {
+  font-size: var(--edify-text-label-size, 0.8rem);
+  font-weight: 650;
+  color: var(--edify-text-subtle);
+  letter-spacing: normal;
+  text-wrap: balance;
+}
+
 .kpi-strip__meta {
   display: flex;
   align-items: center;
@@ -1820,13 +1833,19 @@ select:not([multiple]):not(.select-native) {
   border: 0 !important;
   box-shadow: none !important;
   padding: 0 !important;
-  /* A shared width band. A select sizes itself to its longest option, so one
-     filter listing full district or sub-county names grew to more than twice
-     its neighbours and made an otherwise even row look ragged. The dropdown
-     still shows every option in full; only the closed control is bounded. */
-  min-width: 8.25rem;
-  max-width: 13rem;
-  flex: 0 1 8.25rem;
+  /* Each control sizes to what it actually holds, then shares the leftover
+     space on its row. A fixed 8.25rem basis gave a two-character FY the same
+     slab as "Q2 (Jan-Mar)" — one padded with dead space while the other
+     truncated mid-word — and left a gap at the end of every wrapped row
+     because nothing was allowed to grow.
+
+     The bounds still matter: a select reports its longest option as its
+     natural width, so an unbounded district list of 139 names would dominate
+     the row. The cap trims only the closed control — the open dropdown still
+     shows every option in full. */
+  min-width: 7rem;
+  max-width: 14rem;
+  flex: 1 1 auto;
 }
 :is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
   :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
@@ -2302,4 +2321,38 @@ select:not([multiple]):not(.select-native) {
   .kpi-strip__item-body--link {
     transition: none;
   }
+}
+
+/* ─── CANONICAL SEARCH SUBMIT ───────────────────────────────────────────────
+   The magnifier inside the top-bar search is a real submit control. It was a
+   pointer-events-none decoration, which meant the only way to run a search
+   anywhere in the platform was to already know that Enter was the trigger —
+   a control that looks interactive and is not.
+
+   It overlays the input's left padding (40px) rather than sitting in flow, so
+   the input keeps its full width and the glyph stays optically inside the
+   field. The 40px box is the pointer target; the 16px glyph is only what you
+   see. */
+.edify-search-submit {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--edify-text-subtle);
+  background: transparent;
+  border: 0;
+  border-radius: var(--edify-radius-md) 0 0 var(--edify-radius-md);
+  cursor: pointer;
+  transition: color var(--edify-transition-fast);
+  /* Above the input so the click lands on the button, never the field. */
+  z-index: 1;
+}
+.edify-search-submit:hover { color: var(--edify-text); }
+.edify-search-submit:focus-visible {
+  outline: none;
+  box-shadow: var(--edify-focus-ring);
+  color: var(--edify-text);
 }

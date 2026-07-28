@@ -291,8 +291,10 @@ def milestone_metrics(priority) -> list[dict]:
     school_ids = _assigned_school_ids(staff)
     types_of = _school_type_map(school_ids)
 
-    def _pct(num, den):
-        return round(100 * num / den) if den else None
+    # The canonical honest percentage: None when there is nothing to be a
+    # percentage of. Three other modules had their own copy of this that
+    # returned 0 instead -- see apps/core/metrics/ratio.py.
+    from apps.core.metrics import percentage as _pct
 
     rows: list[dict] = []
 

@@ -222,8 +222,17 @@ def cluster_list_view(request):
             )
         return response
 
-    districts = District.objects.all().order_by("name")
-    sub_counties = SubCounty.objects.all().order_by("name")
+    # Only places that hold a cluster. This directory lists clusters, so the
+    # geography filters are derived from the clusters themselves rather than
+    # from the national district table, where all but a handful of options
+    # returned an empty list.
+    # Options come from the service, which builds them from the same scoped
+    # queryset it lists. Two earlier attempts to rebuild that predicate here
+    # both drifted wider than the list — first by including soft-deleted and
+    # non-active clusters, then by dropping the scope filter — and each time
+    # the surplus showed up as an option that selected nothing.
+    districts = data["district_options"]
+    sub_counties = data["sub_county_options"]
     staff_profiles = (
         StaffProfile.objects.filter(deleted_at__isnull=True)
         .select_related("user")

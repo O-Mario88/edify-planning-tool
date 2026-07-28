@@ -39,7 +39,7 @@
             <td class="px-4 py-3 font-bold text-slate-800">{{ row.month_label }} <span class="text-slate-400 font-medium">{{ row.month_key }}</span></td>
             <td class="px-3 py-3 text-slate-600">FY {{ row.fy }}</td>
             <td class="px-3 py-3 text-right font-bold tabular-nums text-slate-800">{{ row.total_amount_fmt }}</td>
-            <td class="px-3 py-3 text-slate-600">{{ row.submitted_by_user_id|default:"—" }}</td>
+            <td class="px-3 py-3 text-slate-600">{% firstof row.submitted_by_name row.submitted_by_user_id "—" %}</td>
             <td class="px-3 py-3 text-slate-500">{{ row.submitted_at|date:"j M Y, g:i A" }}</td>
             <td class="px-3 py-3">
               <span class="inline-flex items-center rounded-pill px-2.5 py-1 edify-text-caption font-bold

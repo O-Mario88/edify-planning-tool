@@ -150,6 +150,11 @@ def home(request):
         "glossary_terms": HelpGlossaryTerm.objects.all()[:8],
         "release_notes": HelpReleaseNote.objects.all()[:3],
         "help_role": role,
+        # The Knowledge Center's hero field is this page's search — it is the
+        # primary thing the page exists to offer. Rather than have it sit under
+        # a second, generic top-bar search aimed at a different dataset, the
+        # top-bar control is hidden here so the page carries exactly one.
+        "topbar_search": {"hide": True},
     }
     return render(request, "pages/help/index.html", context)
 
@@ -169,7 +174,19 @@ def search(request):
         for article in articles
     ]
     return render(
-        request, "pages/help/search.html", {"query": query, "results": results}
+        request,
+        "pages/help/search.html",
+        {
+            "query": query,
+            "results": results,
+            "topbar_search": {
+                "placeholder": "Search verified instructions",
+                "label": "Search help articles",
+                "name": "q",
+                "value": query,
+                "action": "/help/search",
+            },
+        },
     )
 
 
@@ -241,7 +258,23 @@ def glossary(request):
         terms = terms.filter(term__icontains=query) | terms.filter(
             definition__icontains=query
         )
-    return render(request, "pages/help/glossary.html", {"terms": terms, "query": query})
+    return render(
+        request,
+        "pages/help/glossary.html",
+        {
+            "terms": terms,
+            "query": query,
+            # Binds the one persistent control to this page's dataset, in place
+            # of the body form that duplicated it.
+            "topbar_search": {
+                "placeholder": "Search School ID, Returned by IA, NetSuite…",
+                "label": "Search the glossary",
+                "name": "q",
+                "value": query,
+                "action": "/help/glossary",
+            },
+        },
+    )
 
 
 @require_page_permission("help")

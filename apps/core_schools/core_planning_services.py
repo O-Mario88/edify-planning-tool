@@ -387,6 +387,21 @@ class CoreSchoolsService:
                     )
 
         # 2. Apply filters
+        #
+        # Search runs last, over the already-scoped and already-filtered set, so
+        # a query can only ever narrow what the user could reach anyway. Core
+        # Schools shipped with no search at all: the only way to reach one
+        # school in a paginated matrix was to page through it.
+        search_q = str(filters.get("q") or "").strip()
+        if search_q:
+            core_schools_qs = core_schools_qs.filter(
+                Q(name__icontains=search_q)
+                | Q(school_id__icontains=search_q)
+                | Q(district__name__icontains=search_q)
+                | Q(sub_county__name__icontains=search_q)
+                | Q(account_owner_name_raw__icontains=search_q)
+            )
+
         region_id = filters.get("region")
         if region_id and region_id != "All":
             core_schools_qs = core_schools_qs.filter(region_id=region_id)

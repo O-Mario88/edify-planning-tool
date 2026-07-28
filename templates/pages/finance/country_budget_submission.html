@@ -37,7 +37,7 @@
     <div class="rounded-control border border-slate-200 edify-surface px-4 py-3">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Submitted</p>
       <p class="mt-1 text-[13px] font-semibold text-slate-700">{{ submitted_at|date:"j M Y, g:i A" }}</p>
-      <p class="edify-text-caption text-slate-500">by {{ submitted_by_user_id|default:"—" }}</p>
+      <p class="edify-text-caption text-slate-500">by {% firstof submitted_by_name submitted_by_user_id "—" %}</p>
     </div>
   </div>
 

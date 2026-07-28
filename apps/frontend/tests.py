@@ -1392,6 +1392,16 @@ class FrontendViewsTestCase(TestCase):
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity
 
+        # `ensure_cost_reference` seeds the whole canonical catalogue on
+        # post_migrate, including partner_visit_lump_sum, so "no rate is
+        # configured" is no longer reachable by simply not creating one --
+        # which is why this test silently stopped exercising its own
+        # premise. Remove the rate the partner path resolves to, so the
+        # unpriced case is real again.
+        from apps.budget.models import CostSetting
+
+        CostSetting.objects.filter(key="partner_visit_lump_sum").delete()
+
         partner = Partner.objects.create(name="Unpriced Partner", active_status=True)
 
         self.client.force_login(self.cceo_user)
@@ -1615,6 +1625,16 @@ class FrontendViewsTestCase(TestCase):
         """Bulk scheduling also records an unpriced snapshot instead of blocking."""
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity
+
+        # `ensure_cost_reference` seeds the whole canonical catalogue on
+        # post_migrate, including partner_visit_lump_sum, so "no rate is
+        # configured" is no longer reachable by simply not creating one --
+        # which is why this test silently stopped exercising its own
+        # premise. Remove the rate the partner path resolves to, so the
+        # unpriced case is real again.
+        from apps.budget.models import CostSetting
+
+        CostSetting.objects.filter(key="partner_visit_lump_sum").delete()
 
         partner = Partner.objects.create(
             name="Bulk Unpriced Partner", active_status=True

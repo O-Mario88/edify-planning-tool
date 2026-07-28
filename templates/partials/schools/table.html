@@ -20,8 +20,15 @@
     <button type="button" class="is-clear" @click="selectedSchools = []">Clear</button>
   </div>
 
+  {% comment %}
+  The count of what the search and filters actually matched, not the length of
+  the page. view_models holds one page, so this read "15 schools listed" for a
+  702-school directory and reported the same 15 whether a query matched three
+  records or three hundred — the number moved with per_page instead of with the
+  result set. paginator.count is the scoped, filtered, searched total.
+  {% endcomment %}
   <span class="school-directory-listbar__count">
-    {{ view_models|length }} school{{ view_models|length|pluralize }} listed
+    {{ page_obj.paginator.count }} school{{ page_obj.paginator.count|pluralize }} listed
   </span>
 </div>
 

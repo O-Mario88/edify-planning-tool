@@ -814,6 +814,7 @@ def fund_allocation_view(request):
             "date": request.GET.get("date"),
             "period": request.GET.get("period"),
             "budget_scope": "country",
+            "q": request.GET.get("q", ""),
         },
     )
     context["use_dark_sidebar"] = True
@@ -1031,6 +1032,20 @@ def _country_budget_filters(request):
     return {k: request.GET.get(k) for k in ("fy", "month", "q") if request.GET.get(k)}
 
 
+def _country_budget_title(user) -> str:
+    """What to call the country budget workspace, for this reader.
+
+    The Country Director assembles it and submits it *as* a Monthly Fund
+    Request; the RVP is the person it is submitted to, and what they are
+    looking at is the country's budget for the month. Same workspace, two
+    vantage points. CD/Accountant/IA/Admin naming is pinned by
+    apps/frontend/test_cd_budget_workspaces.py.
+    """
+    if getattr(user, "active_role", "") == "RegionalVicePresident":
+        return "Country Budget"
+    return "Monthly Fund Request"
+
+
 @require_page_permission("country_budget")
 def country_budget_view(request):
     """Monthly Fund Request in the shared planned-activity budget workspace."""
@@ -1055,22 +1070,34 @@ def country_budget_view(request):
             "date": anchor_raw,
             "period": request.GET.get("period") or "month",
             "budget_scope": "country",
+            "q": request.GET.get("q", ""),
         },
     )
+    workspace_title = _country_budget_title(request.user)
     ctx.update(
         {
-            "workspace_title": "Monthly Fund Request",
+            "workspace_title": workspace_title,
             "workspace_kind": "country",
             "workspace_base_url": "/country-budget/",
-            "page_title": "Monthly Fund Request",
+            "page_title": workspace_title,
             "country_workflow": get_country_monthly_budget(
                 request.user,
                 {"fy": fy, "month": ctx["anchor"].month},
             ),
         }
     )
+    # Was a bare placeholder, so the shell defaulted to action="/search" and the
+    # box left the budget rather than filtering it.
     ctx["topbar_search"] = {
         "placeholder": "Search planned activities…",
+        "label": "Search planned activities by item or responsible staff",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "action": "/country-budget/",
+        "hidden": [
+            {"name": "fy", "value": fy},
+            {"name": "month", "value": month},
+        ],
     }
     return render(request, "pages/budgets/monthly.html", ctx)
 
@@ -1118,10 +1145,24 @@ def country_budget_history_view(request):
     from apps.monthly_work_plan.country_budget_service import list_submitted_budgets
 
     ctx = list_submitted_budgets(
-        request.user, {"fy": request.GET.get("fy") or get_operational_fy()}
+        request.user,
+        {
+            "fy": request.GET.get("fy") or get_operational_fy(),
+            "q": request.GET.get("q", ""),
+        },
     )
-    ctx["workspace_title"] = "Monthly Fund Request"
-    ctx["topbar_search"] = {"placeholder": "Search submitted budgets…"}
+    ctx["workspace_title"] = _country_budget_title(request.user)
+    # This dict used to carry a placeholder and nothing else, which meant the
+    # shell fell back to action="/search" and the box navigated away to the
+    # global search instead of filtering the list it sat above.
+    ctx["topbar_search"] = {
+        "placeholder": "Search submitted budgets…",
+        "label": "Search submitted budgets by month, FY or status",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "action": "/country-budget/history",
+        "hidden": [{"name": "fy", "value": ctx.get("fy", "")}],
+    }
     return render(request, "pages/finance/country_budget_history.html", ctx)
 
 
@@ -1137,7 +1178,7 @@ def country_budget_submission_detail_view(request, budget_id):
     except BadRequest as exc:
         messages.error(request, str(exc))
         return local_redirect("/country-budget/history")
-    ctx["workspace_title"] = "Monthly Fund Request"
+    ctx["workspace_title"] = _country_budget_title(request.user)
     return render(request, "pages/finance/country_budget_submission.html", ctx)
 
 

@@ -1,0 +1,6407 @@
+{
+ "summary": {
+  "tiles": 272,
+  "modules": 36,
+  "distinct_labels": 225,
+  "distinct_shapes": 25,
+  "with_metric_key": 0,
+  "with_drilldown": 11,
+  "labels_in_several_modules": 16,
+  "breakdown_rows": 62
+ },
+ "duplicated_labels": {
+  "Accountability Pending": [
+   "apps/frontend/views/budget_views.py",
+   "apps/professional_development/services.py"
+  ],
+  "Awaiting Approval": [
+   "apps/frontend/views/budget_views.py",
+   "apps/fund_requests/pl_approval_service.py"
+  ],
+  "Evidence Pending": [
+   "apps/command_center/dashboard_service.py",
+   "apps/projects/dashboard_service.py",
+   "apps/projects/my_plan_service.py"
+  ],
+  "High-Risk Staff": [
+   "apps/accounts/hr_dashboard_service.py",
+   "apps/targets/team_targets.py"
+  ],
+  "Partner Activities": [
+   "apps/projects/dashboard_service.py",
+   "apps/projects/my_plan_service.py"
+  ],
+  "Pending Approvals": [
+   "apps/command_center/dashboard_service.py",
+   "apps/frontend/views/leave_views.py"
+  ],
+  "Planned This Month": [
+   "apps/command_center/dashboard_service.py",
+   "apps/projects/my_plan_service.py"
+  ],
+  "Planned This Week": [
+   "apps/command_center/dashboard_service.py",
+   "apps/projects/my_plan_service.py"
+  ],
+  "Returned": [
+   "apps/frontend/views/ia_views.py",
+   "apps/projects/my_plan_service.py"
+  ],
+  "Returned for Review": [
+   "apps/frontend/views/budget_views.py",
+   "apps/fund_requests/pl_approval_service.py"
+  ],
+  "SSA Required": [
+   "apps/planning/planning_service.py",
+   "apps/projects/planning_service.py"
+  ],
+  "Scheduled This Week": [
+   "apps/command_center/dashboard_service.py",
+   "apps/projects/planning_service.py"
+  ],
+  "Schools Impacted": [
+   "apps/analytics/analytics_dashboard_service.py",
+   "apps/command_center/dashboard_service.py"
+  ],
+  "Teachers Trained": [
+   "apps/analytics/analytics_dashboard_service.py",
+   "apps/projects/dashboard_service.py"
+  ],
+  "Total Projects": [
+   "apps/projects/dashboard_service.py",
+   "apps/projects/impact_service.py"
+  ],
+  "Total Requested This Month": [
+   "apps/frontend/views/budget_views.py",
+   "apps/fund_requests/pl_approval_service.py"
+  ]
+ },
+ "shapes": {
+  "helper, icon, label, value, variant": 69,
+  "helper, icon, label, raw_value, value, variant": 48,
+  "label, value": 39,
+  "helper, icon, label, tone, value": 24,
+  "helper, icon, key, label, value, variant": 17,
+  "helper, icon, label, raw_value, trend, value, variant": 9,
+  "icon, key, label, trend, value, variant": 8,
+  "icon, label, value": 7,
+  "helper, label, tone, value": 6,
+  "helper, icon, label, sub, value": 6,
+  "key, label, meta, tone, value": 6,
+  "helper, icon, label, link, value, variant": 5,
+  "label, tone, value": 5,
+  "band, bar_pct, code, color, delta, label, score, tone, value": 4,
+  "helper, label, sparkline, trend_pct, trend_up, value, variant": 3,
+  "icon, label, pct, tone, trend, value": 3,
+  "href, label, tone, value": 3,
+  "icon, label, value, variant": 2,
+  "delta, delta_unit, drill, key, label, tone, value": 2,
+  "helper, icon, label, link, raw, sparkline, trend, value, variant": 1,
+  "helper, icon, label, link, trend, value, variant": 1,
+  "icon, label, link, tone, value": 1,
+  "helper, icon, label, trend, value, variant": 1,
+  "label, primary, status, tone, value": 1,
+  "label, pct, tone, value": 1
+ },
+ "sites": [
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 182,
+   "label": "Active Employees",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 189,
+   "label": "Open Positions",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 196,
+   "label": "New Hires Onboarding",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 203,
+   "label": "Staff On Track",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 210,
+   "label": "High-Risk Staff",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 217,
+   "label": "On Leave Today",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 224,
+   "label": "Coverage Clashes (7d)",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 231,
+   "label": "Pending Leave Approvals",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 238,
+   "label": "Performance Reviews Due",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 245,
+   "label": "Compliance Completion",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 252,
+   "label": "CPD Completion",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 259,
+   "label": "Payroll Readiness",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 314,
+   "label": "Onboarding Tasks",
+   "keys": [
+    "count",
+    "label",
+    "url"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 319,
+   "label": "Performance Reviews",
+   "keys": [
+    "count",
+    "label",
+    "url"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 324,
+   "label": "CPD Verifications",
+   "keys": [
+    "count",
+    "label",
+    "url"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 329,
+   "label": "Compliance Expiries",
+   "keys": [
+    "count",
+    "label",
+    "url"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 335,
+   "label": "Leave Coverage Conflicts",
+   "keys": [
+    "count",
+    "label",
+    "url"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 340,
+   "label": "Employee Relations Cases",
+   "keys": [
+    "count",
+    "label",
+    "url"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 443,
+   "label": null,
+   "keys": [
+    "count",
+    "label",
+    "role"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/accounts/hr_dashboard_service.py",
+   "line": 450,
+   "label": "CCEOs",
+   "keys": [
+    "count",
+    "label",
+    "role"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 399,
+   "label": "Overall Target Achievement",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 421,
+   "label": "Teachers Trained",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 437,
+   "label": "School Leaders Trained",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 453,
+   "label": "Students Impacted",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 469,
+   "label": "Schools Impacted",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 485,
+   "label": "Districts Covered",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 501,
+   "label": "Clusters Covered",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 517,
+   "label": "Total Activities Completed",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 533,
+   "label": "SSA Average",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 934,
+   "label": "Schools without SSA",
+   "keys": [
+    "color",
+    "count",
+    "description",
+    "icon",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 942,
+   "label": "Schools not visited",
+   "keys": [
+    "color",
+    "count",
+    "description",
+    "icon",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 950,
+   "label": "Schools not trained",
+   "keys": [
+    "color",
+    "count",
+    "description",
+    "icon",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 958,
+   "label": "High-risk districts",
+   "keys": [
+    "color",
+    "count",
+    "description",
+    "icon",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 966,
+   "label": "Clusters needing attention",
+   "keys": [
+    "color",
+    "count",
+    "description",
+    "icon",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/analytics_dashboard_service.py",
+   "line": 602,
+   "label": null,
+   "keys": [
+    "code",
+    "label",
+    "pct",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 504,
+   "label": null,
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1935,
+   "label": null,
+   "keys": [
+    "aging",
+    "count",
+    "label",
+    "link",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 827,
+   "label": null,
+   "keys": [
+    "achieved",
+    "key",
+    "label",
+    "pct",
+    "short_label",
+    "target",
+    "tone",
+    "weight"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1008,
+   "label": null,
+   "keys": [
+    "band",
+    "bar_pct",
+    "code",
+    "color",
+    "delta",
+    "label",
+    "score",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1853,
+   "label": "Requested (pipeline)",
+   "keys": [
+    "amount",
+    "label",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1854,
+   "label": "Pending Confirmation",
+   "keys": [
+    "amount",
+    "label",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1855,
+   "label": "Confirmed for Advance",
+   "keys": [
+    "amount",
+    "label",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1856,
+   "label": "Disbursed",
+   "keys": [
+    "amount",
+    "label",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1857,
+   "label": "Accounted",
+   "keys": [
+    "amount",
+    "label",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 1858,
+   "label": "Returned",
+   "keys": [
+    "amount",
+    "label",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/cd_analytics_service.py",
+   "line": 972,
+   "label": null,
+   "keys": [
+    "band",
+    "bar_pct",
+    "code",
+    "color",
+    "delta",
+    "label",
+    "score",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_dashboard_service.py",
+   "line": 921,
+   "label": null,
+   "keys": [
+    "amount",
+    "helper",
+    "label",
+    "month",
+    "status"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/cd_dashboard_service.py",
+   "line": 156,
+   "label": null,
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_dashboard_service.py",
+   "line": 619,
+   "label": null,
+   "keys": [
+    "count",
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/cd_dashboard_service.py",
+   "line": 913,
+   "label": "Not Started",
+   "keys": [
+    "amount",
+    "helper",
+    "label",
+    "month",
+    "status"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/impact_engine.py",
+   "line": 758,
+   "label": "FY {\u2026}",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/impact_engine.py",
+   "line": 737,
+   "label": null,
+   "keys": [
+    "count",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/pl_analytics_service.py",
+   "line": 579,
+   "label": null,
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "raw",
+    "sparkline",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/pl_analytics_service.py",
+   "line": 1607,
+   "label": null,
+   "keys": [
+    "bar_color",
+    "done",
+    "label",
+    "pct",
+    "planned"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/pl_analytics_service.py",
+   "line": 1944,
+   "label": null,
+   "keys": [
+    "delta_pct",
+    "label",
+    "prev",
+    "prev_label",
+    "up",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/pl_analytics_service.py",
+   "line": 975,
+   "label": null,
+   "keys": [
+    "band",
+    "bar_pct",
+    "code",
+    "color",
+    "delta",
+    "label",
+    "score",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/pl_analytics_service.py",
+   "line": 935,
+   "label": null,
+   "keys": [
+    "band",
+    "bar_pct",
+    "code",
+    "color",
+    "delta",
+    "label",
+    "score",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/pl_dashboard_service.py",
+   "line": 281,
+   "label": null,
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/pl_dashboard_service.py",
+   "line": 685,
+   "label": null,
+   "keys": [
+    "done",
+    "has_target",
+    "icon",
+    "label",
+    "pct",
+    "target"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/pl_dashboard_service.py",
+   "line": 897,
+   "label": null,
+   "keys": [
+    "icon",
+    "label",
+    "link",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/pl_dashboard_service.py",
+   "line": 1191,
+   "label": null,
+   "keys": [
+    "amount",
+    "count",
+    "label",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/platform_engine.py",
+   "line": 327,
+   "label": null,
+   "keys": [
+    "direction",
+    "index",
+    "label",
+    "score",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/rvp_dashboard_service.py",
+   "line": 135,
+   "label": null,
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/rvp_dashboard_service.py",
+   "line": 285,
+   "label": null,
+   "keys": [
+    "action",
+    "amount",
+    "by",
+    "label",
+    "when"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/rvp_dashboard_service.py",
+   "line": 770,
+   "label": null,
+   "keys": [
+    "count",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/rvp_dashboard_service.py",
+   "line": 872,
+   "label": "General Budget Approval Delayed",
+   "keys": [
+    "aging",
+    "count",
+    "label",
+    "link",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/rvp_dashboard_service.py",
+   "line": 887,
+   "label": "Projects Underperforming",
+   "keys": [
+    "aging",
+    "count",
+    "label",
+    "link",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/ssa_performance_service.py",
+   "line": 193,
+   "label": null,
+   "keys": [
+    "fy",
+    "label",
+    "value",
+    "x",
+    "y"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/analytics/ssa_performance_service.py",
+   "line": 374,
+   "label": null,
+   "keys": [
+    "band",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/analytics/ssa_performance_service.py",
+   "line": 589,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/analytics/visit_effectiveness_engine.py",
+   "line": 530,
+   "label": null,
+   "keys": [
+    "count",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/costing_service.py",
+   "line": 197,
+   "label": null,
+   "keys": [
+    "amount",
+    "key",
+    "label",
+    "lineItemType",
+    "missing",
+    "qty",
+    "unit"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/services.py",
+   "line": 270,
+   "label": null,
+   "keys": [
+    "amount",
+    "count",
+    "label",
+    "month",
+    "trainings"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/services.py",
+   "line": 1507,
+   "label": null,
+   "keys": [
+    "amount",
+    "costSettingKey",
+    "costSettingVersion",
+    "label",
+    "quantity",
+    "unitCost"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/services.py",
+   "line": 162,
+   "label": null,
+   "keys": [
+    "amount",
+    "key",
+    "label",
+    "missing",
+    "qty",
+    "unit"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/services.py",
+   "line": 411,
+   "label": null,
+   "keys": [
+    "amount",
+    "key",
+    "label",
+    "missing",
+    "qty",
+    "unit"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/services.py",
+   "line": 602,
+   "label": null,
+   "keys": [
+    "amount",
+    "label",
+    "pct"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/services.py",
+   "line": 614,
+   "label": null,
+   "keys": [
+    "amount",
+    "count",
+    "label",
+    "month"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/budget/services.py",
+   "line": 1022,
+   "label": null,
+   "keys": [
+    "activity_ids",
+    "label",
+    "rows",
+    "staff_total",
+    "table_kind",
+    "total",
+    "vendor_total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/budget/services.py",
+   "line": 1131,
+   "label": null,
+   "keys": [
+    "activity_count",
+    "is_admin",
+    "label",
+    "rows",
+    "staff_total",
+    "table_kind",
+    "total",
+    "vendor_total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/budget/services.py",
+   "line": 1073,
+   "label": "Country Admin Plan",
+   "keys": [
+    "activity_ids",
+    "is_admin",
+    "label",
+    "rows",
+    "staff_total",
+    "table_kind",
+    "total",
+    "vendor_total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/budget/views.py",
+   "line": 145,
+   "label": null,
+   "keys": [
+    "activityId",
+    "activityType",
+    "amount",
+    "fiscalYear",
+    "id",
+    "label",
+    "lineItemType",
+    "month",
+    "plannedDate",
+    "quantity",
+    "quarter",
+    "responsibleUser",
+    "unitCost",
+    "weekEndDate",
+    "weekStartDate"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1329,
+   "label": "Total Clusters",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1337,
+   "label": "Schools in Clusters",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1345,
+   "label": "Without Current SSA",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1353,
+   "label": "Needing Group Training",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1361,
+   "label": "Not Met This Quarter",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1369,
+   "label": "Average Cluster SSA",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1377,
+   "label": "Weakest Intervention",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/clusters/services.py",
+   "line": 1385,
+   "label": "Pending Activities",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 482,
+   "label": "My Target Achievement",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 490,
+   "label": "Planned This Week",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 498,
+   "label": "Schools Visited",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 506,
+   "label": "Evidence Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 530,
+   "label": "Team Execution Progress %",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 538,
+   "label": "CCEOs On Track",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 546,
+   "label": "Pending Reviews",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 554,
+   "label": "Scheduled This Week",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 586,
+   "label": "Country Target Achievement",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 594,
+   "label": "Budget Utilization",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 602,
+   "label": "Schools Impacted",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 610,
+   "label": "Pending Approvals",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 656,
+   "label": "Total Allocation",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 664,
+   "label": "Pending Clearance",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 672,
+   "label": "Cleared Amount",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 680,
+   "label": "Planned Activities",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 691,
+   "label": "Schools Ready for Planning",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 699,
+   "label": "Schools Without SSA",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 707,
+   "label": "Activities This Week",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/command_center/dashboard_service.py",
+   "line": 715,
+   "label": "Planned This Month",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/core/donut.py",
+   "line": 151,
+   "label": null,
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/core/metrics/payload.py",
+   "line": 69,
+   "label": null,
+   "keys": [
+    "accessible_description",
+    "data_state",
+    "definition",
+    "denominator",
+    "display_value",
+    "drilldown_url",
+    "is_measured",
+    "label",
+    "metric_key",
+    "period",
+    "scope",
+    "unit",
+    "value"
+   ],
+   "has_metric_key": true,
+   "has_drilldown": true
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 174,
+   "label": "Debriefs Submitted",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 182,
+   "label": "Activities Completed",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 190,
+   "label": "Partially Completed",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 198,
+   "label": "Unsuccessful / Cancelled",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 206,
+   "label": "Action Required",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 214,
+   "label": "Critical Escalations",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 222,
+   "label": "Open Commitments",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 230,
+   "label": "Peer Solutions",
+   "keys": [
+    "icon",
+    "key",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/debriefs/dashboard_service.py",
+   "line": 297,
+   "label": null,
+   "keys": [
+    "count",
+    "label",
+    "pct"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/debriefs/rollup_service.py",
+   "line": 109,
+   "label": null,
+   "keys": [
+    "challenge_type",
+    "count",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/analytics_views.py",
+   "line": 110,
+   "label": "Search analytics by school, School ID, cluster or staff",
+   "keys": [
+    "hx_get",
+    "hx_include",
+    "hx_target",
+    "hx_trigger",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/budget_views.py",
+   "line": 370,
+   "label": "Total Requested This Month",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "trend",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/budget_views.py",
+   "line": 378,
+   "label": "Awaiting Approval",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/budget_views.py",
+   "line": 385,
+   "label": "Approved",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/budget_views.py",
+   "line": 392,
+   "label": "Ready for Disbursement",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/budget_views.py",
+   "line": 399,
+   "label": "Returned for Review",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/budget_views.py",
+   "line": 406,
+   "label": "Accountability Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/budget_views.py",
+   "line": 590,
+   "label": null,
+   "keys": [
+    "label",
+    "range_str",
+    "total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/cluster_views.py",
+   "line": 620,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/cluster_views.py",
+   "line": 91,
+   "label": null,
+   "keys": [
+    "amount",
+    "formula",
+    "label",
+    "missing"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/cluster_views.py",
+   "line": 395,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 153,
+   "label": "Total Core Schools",
+   "keys": [
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 159,
+   "label": "Core Schools Ready for Planning",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 166,
+   "label": "Avg. Core Assessment Score",
+   "keys": [
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 172,
+   "label": "Visits Scheduled",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 179,
+   "label": "Trainings Scheduled",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 186,
+   "label": "Staff vs Partner Performance Delta",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 204,
+   "label": "Regions Covered",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 277,
+   "label": "Search Core Schools by name, ID, district or owner",
+   "keys": [
+    "hx_get",
+    "hx_include",
+    "hx_target",
+    "hx_trigger",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 712,
+   "label": "Completed Tasks",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 719,
+   "label": "In Progress",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 726,
+   "label": "Planned Tasks",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 733,
+   "label": "Overdue Tasks",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 776,
+   "label": "Completed",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 782,
+   "label": "In Progress",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 788,
+   "label": "Planned",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/dashboard_views.py",
+   "line": 794,
+   "label": "Overdue",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 1400,
+   "label": "Search schools, staff and activities",
+   "keys": [
+    "action",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 1972,
+   "label": "Assigned Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 2135,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 2312,
+   "label": "Clean Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 2319,
+   "label": "Needs Review",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 2326,
+   "label": "Needs Cleanup",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 2333,
+   "label": "Duplicate Risk",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 2340,
+   "label": "Missing Critical Data",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/extended_views.py",
+   "line": 773,
+   "label": null,
+   "keys": [
+    "achieved",
+    "color",
+    "has_target",
+    "label",
+    "pct",
+    "target"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/finance_operating_views.py",
+   "line": 229,
+   "label": "Disbursed",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/finance_operating_views.py",
+   "line": 236,
+   "label": "Approved",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/finance_operating_views.py",
+   "line": 243,
+   "label": "Pending",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/finance_operating_views.py",
+   "line": 250,
+   "label": "Returned",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/finance_views.py",
+   "line": 1091,
+   "label": "Search planned activities by item or responsible staff",
+   "keys": [
+    "action",
+    "hidden",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/finance_views.py",
+   "line": 1158,
+   "label": "Search submitted budgets by month, FY or status",
+   "keys": [
+    "action",
+    "hidden",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/hr_views.py",
+   "line": 79,
+   "label": null,
+   "keys": [
+    "label",
+    "primary",
+    "status",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/hr_views.py",
+   "line": 89,
+   "label": null,
+   "keys": [
+    "helper",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 236,
+   "label": "Awaiting Verification",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 243,
+   "label": "Verified Today",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 254,
+   "label": "Returned Today",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 261,
+   "label": "Avg Process SLA",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 272,
+   "label": "SSA Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 279,
+   "label": "Duplicate Risks",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 286,
+   "label": "High Priority",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 302,
+   "label": "Search the queue by school, School ID, Salesforce ID or owner",
+   "keys": [
+    "hx_get",
+    "hx_include",
+    "hx_target",
+    "hx_trigger",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 772,
+   "label": "Uploaded Today",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 779,
+   "label": "Pending Verification",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 786,
+   "label": "Verified This Week",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 793,
+   "label": "Returned",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 800,
+   "label": "Data Quality Score",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 912,
+   "label": "Schools Missing SSA",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 916,
+   "label": "Duplicate Records Detected",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 920,
+   "label": "Schools with Missing Fields",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 924,
+   "label": "Activities Missing Salesforce IDs",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 981,
+   "label": "SSA done",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 987,
+   "label": "Scheduled",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 993,
+   "label": "Not done",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 1019,
+   "label": "Confirmed",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 1025,
+   "label": "Pending",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 1031,
+   "label": "Returned / flagged",
+   "keys": [
+    "color",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/ia_views.py",
+   "line": 378,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/leave_views.py",
+   "line": 777,
+   "label": "Pending Approvals",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/leave_views.py",
+   "line": 784,
+   "label": "Approved \u00b7 7 Days",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/leave_views.py",
+   "line": 791,
+   "label": "Coverage Ready",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/leave_views.py",
+   "line": 802,
+   "label": "Critical Conflicts",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/leave_views.py",
+   "line": 809,
+   "label": "Away This Week",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/leave_views.py",
+   "line": 816,
+   "label": "Balance Alerts",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/leave_views.py",
+   "line": 1088,
+   "label": "Search coverage by the staff member covered or covering",
+   "keys": [
+    "action",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/my_plan_views.py",
+   "line": 83,
+   "label": "Search my plan by school, School ID, cluster, district or purpose",
+   "keys": [
+    "hx_get",
+    "hx_include",
+    "hx_target",
+    "hx_trigger",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/my_plan_views.py",
+   "line": 1499,
+   "label": null,
+   "keys": [
+    "count",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/my_plan_views.py",
+   "line": 1610,
+   "label": "Search evidence by school, School ID, cluster or Salesforce ID",
+   "keys": [
+    "hidden",
+    "hx_get",
+    "hx_target",
+    "hx_trigger",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 375,
+   "label": "Total Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 383,
+   "label": "Client Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 391,
+   "label": "Core Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 399,
+   "label": "Unclustered",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 407,
+   "label": "No SSA",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 415,
+   "label": "Staff Required",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 423,
+   "label": "Planning Ready",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 431,
+   "label": "Duplicates",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/school_views.py",
+   "line": 549,
+   "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
+   "keys": [
+    "hx_get",
+    "hx_include",
+    "hx_target",
+    "hx_trigger",
+    "input_id",
+    "label",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/staff_views.py",
+   "line": 614,
+   "label": null,
+   "keys": [
+    "achieved",
+    "label",
+    "pct",
+    "status",
+    "status_class",
+    "target"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/staff_views.py",
+   "line": 881,
+   "label": "Total CCEOs",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/staff_views.py",
+   "line": 889,
+   "label": "With Overdue",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/frontend/views/staff_views.py",
+   "line": 897,
+   "label": "All Caught Up",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 953,
+   "label": "Total Funds This Month",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 960,
+   "label": "Pending Disbursement",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 967,
+   "label": "Disbursed Today",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 974,
+   "label": "Awaiting Approval Completion",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 981,
+   "label": "Held",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 988,
+   "label": "Special Projects Funds",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 1050,
+   "label": "Disbursed",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 1057,
+   "label": "Approved",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 1064,
+   "label": "Pending",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 1071,
+   "label": "Returned",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/disbursement_dashboard_service.py",
+   "line": 1129,
+   "label": null,
+   "keys": [
+    "amount",
+    "color",
+    "label",
+    "pct"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/monthly_request_service.py",
+   "line": 346,
+   "label": null,
+   "keys": [
+    "activity_ids",
+    "label",
+    "rows",
+    "total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/monthly_request_service.py",
+   "line": 361,
+   "label": null,
+   "keys": [
+    "activity_count",
+    "label",
+    "rows",
+    "total",
+    "total_fmt"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/monthly_request_service.py",
+   "line": 381,
+   "label": "Week {\u2026} (Days {\u2026}\u2013{\u2026})",
+   "keys": [
+    "activity_count",
+    "label",
+    "rows",
+    "total",
+    "total_fmt",
+    "week_key",
+    "week_number"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/fund_requests/monthly_request_service.py",
+   "line": 408,
+   "label": null,
+   "keys": [
+    "label",
+    "total",
+    "total_fmt"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 384,
+   "label": "Total Requested This Month",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 391,
+   "label": "Awaiting Approval",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 398,
+   "label": "Approved Today",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 405,
+   "label": "Returned for Review",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 418,
+   "label": "Average Cost per School",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 436,
+   "label": null,
+   "keys": [
+    "amount",
+    "color",
+    "label",
+    "pct"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/services.py",
+   "line": 527,
+   "label": null,
+   "keys": [
+    "amount",
+    "costSettingKey",
+    "costSettingVersion",
+    "label",
+    "quantity",
+    "unitCost"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/help_center/services.py",
+   "line": 1046,
+   "label": null,
+   "keys": [
+    "field",
+    "label",
+    "source",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/help_center/views.py",
+   "line": 136,
+   "label": "guides for your role",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/help_center/views.py",
+   "line": 140,
+   "label": "learning topics",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/help_center/views.py",
+   "line": 141,
+   "label": "plain-language lessons",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/help_center/views.py",
+   "line": 182,
+   "label": "Search help articles",
+   "keys": [
+    "action",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/help_center/views.py",
+   "line": 269,
+   "label": "Search the glossary",
+   "keys": [
+    "action",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 309,
+   "label": "New schools recruited",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 316,
+   "label": "New Core Schools recruited",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 338,
+   "label": "Schools activated",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 356,
+   "label": "Schools supported through managed partners",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 380,
+   "label": "Direct Visit target",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 385,
+   "label": "Direct Visits completed",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 386,
+   "label": "Core School Visits",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 387,
+   "label": "Client School Visits",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 388,
+   "label": "Partner Visits supervised",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 393,
+   "label": "Visit completion",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 417,
+   "label": "Trainings planned",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 422,
+   "label": "Trainings completed",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 423,
+   "label": "Core trainings",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 424,
+   "label": "Client trainings",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 425,
+   "label": "Cluster trainings",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 426,
+   "label": "Teachers trained",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 427,
+   "label": "School leaders trained",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 442,
+   "label": "Schools allocated for SSA",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 447,
+   "label": "Verified SSA completed",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 448,
+   "label": "SSA coverage",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 449,
+   "label": "Missing SSA",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 450,
+   "label": "Core Assessments",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_service.py",
+   "line": 299,
+   "label": null,
+   "keys": [
+    "label",
+    "pct"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 523,
+   "label": null,
+   "keys": [
+    "helper",
+    "label",
+    "sparkline",
+    "trend_pct",
+    "trend_up",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 541,
+   "label": "Staff Included",
+   "keys": [
+    "helper",
+    "label",
+    "sparkline",
+    "trend_pct",
+    "trend_up",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 550,
+   "label": "Total Planned Activities",
+   "keys": [
+    "helper",
+    "label",
+    "sparkline",
+    "trend_pct",
+    "trend_up",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 651,
+   "label": "Planned Schools",
+   "keys": [
+    "icon",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 652,
+   "label": "Partner-Planned Schools",
+   "keys": [
+    "icon",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 657,
+   "label": "Cluster Meetings / Sessions",
+   "keys": [
+    "icon",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 662,
+   "label": "Trainings Planned",
+   "keys": [
+    "icon",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 663,
+   "label": "SSA Collection Visits",
+   "keys": [
+    "icon",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 664,
+   "label": "Special Project Activities",
+   "keys": [
+    "icon",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 669,
+   "label": "Admin Plan Items",
+   "keys": [
+    "icon",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 1000,
+   "label": "Highest Planned Cost Staff",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "sub",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 1009,
+   "label": "Largest Cluster Training Budget",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "sub",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 1016,
+   "label": "Partner Cost Share",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "sub",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 1023,
+   "label": "Top Cost Category",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "sub",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 1032,
+   "label": "Admin Budget Share",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "sub",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 1039,
+   "label": "Average Allocation per Staff",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "sub",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/monthly_work_plan/country_budget_service.py",
+   "line": 1368,
+   "label": null,
+   "keys": [
+    "activity_id",
+    "amount",
+    "amount_fmt",
+    "category",
+    "delivery_type",
+    "label",
+    "planned_date",
+    "school",
+    "staff"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 752,
+   "label": "Ready for Support",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 760,
+   "label": "SSA Required",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 768,
+   "label": "Clusters Needing Action",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 776,
+   "label": "Core Package Gaps",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 784,
+   "label": "Partner Pending Schedule",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 792,
+   "label": "In My Plan",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 800,
+   "label": "Cost Blocked",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/planning/planning_service.py",
+   "line": 808,
+   "label": "Data Cleanup Required",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "raw_value",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/planning/services.py",
+   "line": 118,
+   "label": "Not clustered",
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/planning/services.py",
+   "line": 124,
+   "label": "Clustered, SSA required",
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/planning/services.py",
+   "line": 130,
+   "label": "SIT scheduled, SSA missing",
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/planning/services.py",
+   "line": 136,
+   "label": "Ready to plan",
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/planning/services.py",
+   "line": 142,
+   "label": "Plan core package",
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/professional_development/health.py",
+   "line": 16,
+   "label": null,
+   "keys": [
+    "count",
+    "fix",
+    "items",
+    "key",
+    "label",
+    "severity"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 245,
+   "label": "Total Annual PD Allocation",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 253,
+   "label": "Funds Committed",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 261,
+   "label": "Funds Accounted For",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 269,
+   "label": "Staff Enrolled",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 277,
+   "label": "Courses In Progress",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 285,
+   "label": "Pending Certificate Uploads",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 293,
+   "label": "Pending Accountability",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 301,
+   "label": "HR Sign-Off Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 452,
+   "label": null,
+   "keys": [
+    "count",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/professional_development/hr_dashboard_service.py",
+   "line": 413,
+   "label": null,
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 353,
+   "label": "Annual PD Allocation",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 361,
+   "label": "Committed Amount",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 369,
+   "label": "Funds Used (Accounted)",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 377,
+   "label": "Remaining Fund",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 385,
+   "label": "Active Courses",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 393,
+   "label": "Certificates Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 401,
+   "label": "Accountability Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/professional_development/services.py",
+   "line": 411,
+   "label": "Completed Courses",
+   "keys": [
+    "helper",
+    "icon",
+    "key",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 225,
+   "label": "Total Projects",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 232,
+   "label": "Active Projects",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 239,
+   "label": "Project Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 247,
+   "label": "Teachers Trained",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 254,
+   "label": "Leaders Trained",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 261,
+   "label": "Learners Reached",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 268,
+   "label": "Assigned Partners",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 275,
+   "label": "Budget Generated",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 283,
+   "label": "Activities in My Plan",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "link",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 291,
+   "label": "Evidence Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 298,
+   "label": "IA Pending",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 305,
+   "label": "Closed Activities",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "value",
+    "variant"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 620,
+   "label": null,
+   "keys": [
+    "label",
+    "partner",
+    "staff",
+    "total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 599,
+   "label": "Visits",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 600,
+   "label": "Trainings",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 601,
+   "label": "SSA Collection",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/dashboard_service.py",
+   "line": 602,
+   "label": "Partner Activities",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 514,
+   "label": null,
+   "keys": [
+    "label",
+    "pct",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 760,
+   "label": "Total Projects",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 767,
+   "label": "Schools in Projects",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 774,
+   "label": "Great Impact",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 781,
+   "label": "Negative Impact",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 788,
+   "label": "Teachers Impacted",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 795,
+   "label": "School Leaders Impacted",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 802,
+   "label": "Students Reached",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 809,
+   "label": "Avg Annual SSA Delta",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 816,
+   "label": "Delivery Adoption",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 823,
+   "label": "Evidence Completion",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 1015,
+   "label": null,
+   "keys": [
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 1073,
+   "label": "Great Impact",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 1074,
+   "label": "Positive Impact",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 1075,
+   "label": "No Measurable Impact",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 1076,
+   "label": "Negative Impact",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/impact_service.py",
+   "line": 1077,
+   "label": "Not Measurable Yet",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 362,
+   "label": "Planned This Week",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 369,
+   "label": "Planned This Month",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 376,
+   "label": "Planned This Quarter",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 383,
+   "label": "Planned This FY",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 390,
+   "label": "School Visits Scheduled",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 397,
+   "label": "Partner Activities",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 404,
+   "label": "Project Trainings",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 411,
+   "label": "Completion Readiness",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 439,
+   "label": "Budget Created",
+   "keys": [
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 444,
+   "label": "Fund Request Synced",
+   "keys": [
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 451,
+   "label": "Evidence Pending",
+   "keys": [
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 456,
+   "label": "IA Review Pending",
+   "keys": [
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 66,
+   "label": null,
+   "keys": [
+    "label",
+    "value",
+    "year"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 83,
+   "label": "{\u2026} {\u2026} \u2013 {\u2026} {\u2026}",
+   "keys": [
+    "end",
+    "label",
+    "start",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 610,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 619,
+   "label": "Scheduled",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 620,
+   "label": "In progress",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 621,
+   "label": "Returned",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 622,
+   "label": "In review",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 623,
+   "label": "Completed",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/my_plan_service.py",
+   "line": 624,
+   "label": "Rescheduled",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 509,
+   "label": "Total Project Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 516,
+   "label": "SSA Score Required",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 523,
+   "label": "Scheduled This Week",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 530,
+   "label": "Planning Completion",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 537,
+   "label": "High-Risk Project Schools",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 544,
+   "label": "Schools Requiring Follow-up",
+   "keys": [
+    "helper",
+    "icon",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 554,
+   "label": "SSA Required",
+   "keys": [
+    "icon",
+    "label",
+    "pct",
+    "tone",
+    "trend",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 562,
+   "label": "Ready for Scheduling",
+   "keys": [
+    "icon",
+    "label",
+    "pct",
+    "tone",
+    "trend",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 570,
+   "label": "Ready for Partner Assignment",
+   "keys": [
+    "icon",
+    "label",
+    "pct",
+    "tone",
+    "trend",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 630,
+   "label": "SSA Required",
+   "keys": [
+    "helper",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 636,
+   "label": "Visit Pending",
+   "keys": [
+    "helper",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 642,
+   "label": "Training Pending",
+   "keys": [
+    "helper",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 648,
+   "label": "Partner Assignment Pending",
+   "keys": [
+    "helper",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 654,
+   "label": "High-Risk Schools",
+   "keys": [
+    "helper",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 730,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 739,
+   "label": "Staff-led",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 740,
+   "label": "Partner-led",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 741,
+   "label": "Not assigned",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/projects/planning_service.py",
+   "line": 744,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/system_health/page_inventory.py",
+   "line": 672,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/system_health/ui_quality.py",
+   "line": 133,
+   "label": null,
+   "keys": [
+    "count",
+    "fix",
+    "items",
+    "key",
+    "label",
+    "severity"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/my_targets.py",
+   "line": 557,
+   "label": null,
+   "keys": [
+    "achieved",
+    "current",
+    "kind",
+    "label",
+    "pace",
+    "pct",
+    "ring",
+    "status",
+    "sublabel",
+    "target",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/targets/my_targets.py",
+   "line": 710,
+   "label": null,
+   "keys": [
+    "count",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/my_targets.py",
+   "line": 638,
+   "label": null,
+   "keys": [
+    "achieved",
+    "key",
+    "label",
+    "pct",
+    "spark_points",
+    "status",
+    "target",
+    "tone",
+    "weight"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/my_targets.py",
+   "line": 772,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 192,
+   "label": null,
+   "keys": [
+    "achieved",
+    "display_pct",
+    "key",
+    "label",
+    "pct",
+    "status",
+    "target",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 571,
+   "label": "Team Target Achievement",
+   "keys": [
+    "delta",
+    "delta_unit",
+    "drill",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 579,
+   "label": "Monthly Targets Achieved",
+   "keys": [
+    "delta",
+    "delta_unit",
+    "drill",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 587,
+   "label": "Quarterly Targets Achieved",
+   "keys": [
+    "delta",
+    "delta_unit",
+    "drill",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 595,
+   "label": "Staff On Track",
+   "keys": [
+    "delta",
+    "delta_unit",
+    "drill",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 603,
+   "label": "High-Risk Staff",
+   "keys": [
+    "delta",
+    "delta_unit",
+    "drill",
+    "key",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 612,
+   "label": "Core Schools On Track",
+   "keys": [
+    "delta",
+    "delta_unit",
+    "drill",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 622,
+   "label": "Activity SF ID Compliance",
+   "keys": [
+    "delta",
+    "delta_unit",
+    "drill",
+    "key",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/targets/team_targets.py",
+   "line": 668,
+   "label": "Staff Behind Target",
+   "keys": [
+    "action",
+    "count",
+    "drill",
+    "key",
+    "label",
+    "sub",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/targets/team_targets.py",
+   "line": 677,
+   "label": "Staff at Critical Risk",
+   "keys": [
+    "action",
+    "count",
+    "drill",
+    "key",
+    "label",
+    "sub",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/targets/team_targets.py",
+   "line": 686,
+   "label": "SSA Target Gap",
+   "keys": [
+    "action",
+    "count",
+    "drill",
+    "key",
+    "label",
+    "sub",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/targets/team_targets.py",
+   "line": 695,
+   "label": "Valid Visit Gap",
+   "keys": [
+    "action",
+    "count",
+    "drill",
+    "key",
+    "label",
+    "sub",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/targets/team_targets.py",
+   "line": 704,
+   "label": "Core School Target Gap",
+   "keys": [
+    "action",
+    "count",
+    "drill",
+    "key",
+    "label",
+    "sub",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/targets/team_targets.py",
+   "line": 745,
+   "label": null,
+   "keys": [
+    "count",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 893,
+   "label": "Awaiting IA",
+   "keys": [
+    "href",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 899,
+   "label": "Missing SF IDs",
+   "keys": [
+    "href",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 905,
+   "label": "Returned by IA",
+   "keys": [
+    "href",
+    "label",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 993,
+   "label": "Team achievement",
+   "keys": [
+    "key",
+    "label",
+    "meta",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1004,
+   "label": "Monthly on track",
+   "keys": [
+    "key",
+    "label",
+    "meta",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1011,
+   "label": "At-risk staff",
+   "keys": [
+    "key",
+    "label",
+    "meta",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1018,
+   "label": "Current quarter",
+   "keys": [
+    "key",
+    "label",
+    "meta",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1025,
+   "label": "FY achievement",
+   "keys": [
+    "key",
+    "label",
+    "meta",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1032,
+   "label": "Recovery plans",
+   "keys": [
+    "key",
+    "label",
+    "meta",
+    "tone",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 176,
+   "label": null,
+   "keys": [
+    "achieved",
+    "gap",
+    "key",
+    "label",
+    "pct",
+    "target",
+    "weight"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 726,
+   "label": null,
+   "keys": [
+    "achieved",
+    "bar",
+    "key",
+    "label",
+    "pct",
+    "status",
+    "target",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 1070,
+   "label": null,
+   "keys": [
+    "label",
+    "title",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1121,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/targets/team_targets.py",
+   "line": 274,
+   "label": null,
+   "keys": [
+    "achieved",
+    "display_pct",
+    "key",
+    "label",
+    "pct",
+    "status",
+    "sub",
+    "target",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1065,
+   "label": "Overall weighted performance",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "kpi-tile",
+   "module": "apps/targets/team_targets.py",
+   "line": 1067,
+   "label": null,
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  }
+ ]
+}

@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Sum
 
 from apps.core.donut import build_rings
 from apps.core.permissions import require_export_permission, require_page_permission
@@ -20,21 +19,20 @@ from apps.fund_requests.finance_services import (
     FinanceBlockedReasonService,
     PartnerPaymentService,
 )
-from apps.fund_requests.disbursement_dashboard_service import weekly_status_buckets
+from apps.fund_requests.disbursement_dashboard_service import (
+    fy_totals_all_fund_types,
+    month_overview_all_fund_types,
+)
 from apps.analytics.platform_engine import finance_health
 
 
-def format_ugx_compact(val):
-    """Compact UGX formatting helper (same as apps/frontend/views/budget_views.py)."""
-    if not val:
-        return "UGX 0"
-    if val >= 1_000_000_000:
-        return f"UGX {val / 1_000_000_000:.1f}B"
-    if val >= 1_000_000:
-        return f"UGX {val / 1_000_000:.1f}M"
-    if val >= 1_000:
-        return f"UGX {val / 1_000:.0f}K"
-    return f"UGX {val}"
+from apps.core.metrics import format_ugx_compact  # noqa: F401  (re-exported)
+
+# This module previously defined its own `format_ugx_compact` with the
+# docstring "same as apps/frontend/views/budget_views.py". It was not: that
+# copy used two decimals at the million and thousand scales, so UGX 1,234,567
+# read as "UGX 1.2M" here and "UGX 1.23M" there. Both now come from
+# apps.core.metrics.money.
 
 
 @require_page_permission("disbursements")
@@ -49,53 +47,41 @@ def accountant_dashboard_view(request):
     fy = get_operational_fy()
     fy_qs = WeeklyFundRequest.objects.filter(fy=fy)
 
-    # 1. Real database queries for KPIs — bucketed through the same canonical
-    # status classifier the Disbursement Dashboard uses (weekly_status_buckets)
-    # so the two "current budget status" surfaces can never diverge. (The old
-    # version filtered on payment/status literals like "approved_by_cd",
-    # "sent_to_accountant" and "accountability_pending" that WeeklyFundRequest
-    # never actually writes — see weekly_service.py — which silently excluded
-    # "confirmed_for_advance" advances from the approved-funds denominator and
-    # skewed Budget Utilization.)
-    fy_wfrs = list(fy_qs)
-    fy_buckets = weekly_status_buckets(fy_wfrs)
+    # 1. FY KPIs across every fund type with a financial year — monthly fund
+    # plans and weekly advances — through the canonical aggregate the queue
+    # classifiers feed (fy_totals_all_fund_types).
+    #
+    # These tiles are named "Total Approved Funds", "Total Disbursed" and
+    # "Budget Utilization": figures a reader takes as the country's. They were
+    # built from WeeklyFundRequest alone, so monthly fund plans — which carry
+    # most of the value — were missing from every one of them, and Budget
+    # Utilization divided one fund type's disbursement by one fund type's
+    # approvals while presenting itself as the organisation's rate.
+    fy_totals = fy_totals_all_fund_types(fy)
 
-    def _bucket_sum(*labels):
-        return sum(w.total_amount for w in fy_wfrs if fy_buckets[w.id] in labels)
+    total_disbursed_db = fy_totals["disbursed"]
+    total_accounted_db = fy_totals["accounted"]
+    total_returned_db = fy_totals["returned"]
 
-    def _bucket_count(*labels):
-        return sum(1 for w in fy_wfrs if fy_buckets[w.id] in labels)
-
-    total_disbursed_db = (
-        fy_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
-    )
-    total_accounted_db = (
-        fy_qs.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0
-    )
-    total_returned_db = (
-        fy_qs.aggregate(Sum("returned_amount"))["returned_amount__sum"] or 0
-    )
-
-    # Approved but not yet disbursed
-    pending_disb_sum = _bucket_sum("Pending Disbursement")
-    pending_disb_count = _bucket_count("Pending Disbursement")
+    # Approved but not yet disbursed (Held included: a hold pauses approved
+    # money rather than rejecting it).
+    pending_disb_sum = fy_totals["pending_disbursement"]
+    pending_disb_count = fy_totals["pending_disbursement_count"]
 
     # Still travelling up the approval chain
-    awaiting_sum = _bucket_sum("Pending Approval")
-    awaiting_count = _bucket_count("Pending Approval")
+    awaiting_sum = fy_totals["awaiting_approval"]
+    awaiting_count = fy_totals["awaiting_approval_count"]
 
-    returned_sum = _bucket_sum("Returned")
+    returned_sum = fy_totals["returned"]
 
     # Every request that has ever been disbursed (still outstanding
     # reconciliation or already closed) vs. the reconciled subset.
-    disbursed_count = _bucket_count("Disbursed", "Awaiting Reconciliation", "Closed")
-    accounted_count = _bucket_count("Closed")
+    disbursed_count = fy_totals["disbursed_count"]
+    accounted_count = fy_totals["accounted_count"]
 
     # "Approved" = passed approval and disbursable-or-beyond — the
     # denominator for the Budget Utilization ratio.
-    total_approved_db = _bucket_sum(
-        "Pending Disbursement", "Disbursed", "Awaiting Reconciliation", "Closed"
-    )
+    total_approved_db = fy_totals["approved"]
     finance_analytics = finance_health(
         approved=total_approved_db,
         disbursed=total_disbursed_db,
@@ -103,7 +89,7 @@ def accountant_dashboard_view(request):
         returned=total_returned_db,
         reconciled_count=accounted_count,
         disbursed_count=disbursed_count,
-        record_count=len(fy_wfrs),
+        record_count=fy_totals["record_count"],
     )
     recon_rate = round(finance_analytics["reconciliation"]["rate"])
     budget_util = round(finance_analytics["utilization"]["utilization_rate"] or 0)
@@ -184,31 +170,24 @@ def accountant_dashboard_view(request):
 
     all_funds = queue_items
 
-    # This Month Overview (current calendar month, by week start date) — same
-    # bucket classifier as the FY-wide KPIs above, scoped to this month's rows.
+    # This Month Overview — every fund type, through the canonical service the
+    # Disbursement Dashboard uses.
+    #
+    # This card used to sum WeeklyFundRequest alone while carrying the same
+    # five rows and the same title as the Disbursements workspace card, which
+    # sums the consolidated queue: monthly fund plans, weekly advances, partner
+    # payments and reimbursements. On the seed that was UGX 1.25M against UGX
+    # 3.3M+ -- most of the month's money absent from the card an Accountant
+    # lands on. Both now read one implementation, so they cannot diverge.
+    #
+    # Note this is deliberately broader than the FY KPI strip above, which
+    # remains weekly-advance-scoped; the card names its own population.
     today = date.today()
-    month_qs = fy_qs.filter(
-        week_start_date__year=today.year, week_start_date__month=today.month
-    )
-    month_wfrs = list(month_qs)
-    month_buckets = weekly_status_buckets(month_wfrs)
-
-    def _month_sum(*labels):
-        return sum(w.total_amount for w in month_wfrs if month_buckets[w.id] in labels)
-
+    month_overview_raw = month_overview_all_fund_types(fy, today.month)
     month_overview = {
-        "waiting_for_approval": format_ugx_compact(_month_sum("Pending Approval")),
-        "returned": format_ugx_compact(_month_sum("Returned")),
-        "approved_not_disbursed": format_ugx_compact(
-            _month_sum("Pending Disbursement")
-        ),
-        "disbursed": format_ugx_compact(
-            month_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
-        ),
-        "reconciled": format_ugx_compact(
-            month_qs.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0
-        ),
+        key: format_ugx_compact(value) for key, value in month_overview_raw.items()
     }
+    month_overview["held_raw"] = month_overview_raw["held"]
 
     # Disbursement Status donut (share of FY value per stage)
     donut_parts = {

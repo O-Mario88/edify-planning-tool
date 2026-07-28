@@ -121,8 +121,12 @@ class CDDashboardService:
     def kpis(cd, acts, fy, pl_rows) -> list[dict]:
         completed = acts.filter(status__in=COMPLETED_STATUSES)
 
-        analytics = {k["label"]: k for k in CDAnalyticsService.kpis(cd, acts)}
-        target_progress = analytics["Overall Target Achievement"]["value"]
+        # Addressed by stable key, not by display label: the previous lookup
+        # keyed on the string "Overall Target Achievement", so any rewording of
+        # that card raised a KeyError here instead of quietly reading the same
+        # number under a new name.
+        analytics = {k["key"]: k for k in CDAnalyticsService.kpis(cd, acts)}
+        target_progress = analytics["country_overall_target_achievement_pct"]["value"]
 
         active_schools = (
             completed.exclude(school_id__isnull=True)
@@ -208,7 +212,7 @@ class CDDashboardService:
             card(
                 "currency",
                 "Budget Utilization",
-                analytics["Budget Utilization"]["value"],
+                analytics["country_budget_utilisation_pct"]["value"],
                 "finance",
                 "disbursed vs requested pipeline",
             ),

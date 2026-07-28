@@ -1,7 +1,11 @@
 <input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}" hx-swap-oob="true">
 <div class="core-school-matrix__header px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-[12px] font-bold text-slate-500 rounded-t-xl select-none">
   <div class="flex items-center gap-2">
-    <span class="core-school-matrix__title text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">Core Schools Matrix ({{ matrix_rows|length }} Schools)</span>
+    <span class="core-school-matrix__title text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">{% comment %}
+paginator.count, not the length of matrix_rows — the same defect the School
+Directory had. matrix_rows is one page, so this reported the page size rather
+than what the filters and the query actually matched.
+{% endcomment %}Core Schools Matrix ({{ page_obj.paginator.count }} School{{ page_obj.paginator.count|pluralize }})</span>
   </div>
   <div class="core-school-matrix__helper edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
     Click a school to view SSA scores and live support counts

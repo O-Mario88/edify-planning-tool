@@ -11,6 +11,7 @@ from apps.geography.models import District
 from apps.accounts.models import User
 from apps.partners.models import Partner
 from apps.core.fy import get_operational_fy, get_quarter_for_date
+from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import resolve_user_scope
 
 
@@ -549,6 +550,24 @@ def get_frontend_context(principal, query: dict) -> dict:
     weeks_list = get_weeks_for_month(year_int, month_int)
 
     # 5. Apply selected filters to the query
+    # My Plan had no search of any kind — not a control, not a query path — so
+    # the only way to find one activity in a week's feed was to read the feed.
+    # It runs after the scope constraint above and before the period slicing
+    # below, so a query narrows the plan the user already owns.
+    #
+    # activity_purpose_text is included because it is what the row actually
+    # shows a user; matching only structural fields would leave them searching
+    # for words they can see on screen and getting nothing back.
+    search_q = str(query.get("q") or "").strip()
+    if search_q:
+        qs = qs.filter(
+            Q(school__name__icontains=search_q)
+            | Q(school__school_id__icontains=search_q)
+            | Q(cluster__name__icontains=search_q)
+            | Q(school__district__name__icontains=search_q)
+            | Q(activity_purpose_text__icontains=search_q)
+        )
+
     if district_id and district_id != "All" and district_id != "all":
         qs = qs.filter(
             Q(school__district_id=district_id) | Q(cluster__district_id=district_id)
@@ -655,10 +674,12 @@ def get_frontend_context(principal, query: dict) -> dict:
     completed_period_count = qs_period.filter(
         status__in=COMPLETED_WORK_STATUSES
     ).count()
+    # An empty period is "nothing was planned", not "0% of it is done". The
+    # previous expression returned 0 for both, so a person with no plan and a
+    # person who had delivered none of their plan saw the same tile.
+    completion_share = MetricValue.ratio(completed_period_count, total_period_count)
     completion_readiness = (
-        int(completed_period_count / total_period_count * 100)
-        if total_period_count > 0
-        else 0
+        int(completion_share.value) if completion_share.state.is_measured else 0
     )
 
     kpis = {
@@ -672,73 +693,78 @@ def get_frontend_context(principal, query: dict) -> dict:
         "completion_readiness": completion_readiness,
     }
 
-    # Construct unified KPI strip items
-    kpi_strip_items = [
-        {
-            "label": "Planned This Week",
-            "value": str(planned_this_week),
-            "raw_value": planned_this_week,
-            "helper": "activities",
-            "icon": "calendar",
-            "variant": "info",
-        },
-        {
-            "label": "Planned This Month",
-            "value": str(planned_this_month),
-            "raw_value": planned_this_month,
-            "helper": "activities",
-            "icon": "chart",
-            "variant": "blue",
-        },
-        {
-            "label": "Planned This Quarter",
-            "value": str(planned_this_quarter),
-            "raw_value": planned_this_quarter,
-            "helper": "activities",
-            "icon": "calendar",
-            "variant": "purple",
-        },
-        {
-            "label": "Planned This FY",
-            "value": str(planned_this_fy),
-            "raw_value": planned_this_fy,
-            "helper": "activities",
-            "icon": "calendar",
-            "variant": "warning",
-        },
-        {
-            "label": "Visits Scheduled",
-            "value": str(visits_scheduled),
-            "raw_value": visits_scheduled,
-            "helper": "schools",
-            "icon": "school",
-            "variant": "blue",
-        },
-        {
-            "label": "Trainings Scheduled",
-            "value": str(trainings_scheduled),
-            "raw_value": trainings_scheduled,
-            "helper": "clusters",
-            "icon": "target",
-            "variant": "purple",
-        },
-        {
-            "label": "Meetings Scheduled",
-            "value": str(meetings_scheduled),
-            "raw_value": meetings_scheduled,
-            "helper": "clusters",
-            "icon": "users",
-            "variant": "warning",
-        },
-        {
-            "label": "Completion Readiness",
-            "value": f"{completion_readiness}%",
-            "raw_value": completion_readiness,
-            "helper": "on track",
-            "icon": "check",
-            "variant": "success",
-        },
-    ]
+    # Built through the metric registry so each tile carries its own key,
+    # period, scope and drill-down, and so an absent value says why rather than
+    # showing a zero. Labels, units and definitions come from
+    # apps/core/metrics/registry.py -- not from strings retyped here.
+    # (metric key, measured value, icon, variant) -- icon and variant are the
+    # only presentation choices left to the caller; everything else comes from
+    # the registry.
+    my_plan_tiles = (
+        (
+            "my_plan_activities_planned_week",
+            MetricValue.measured(planned_this_week),
+            "calendar",
+            "info",
+        ),
+        (
+            "my_plan_activities_planned_month",
+            MetricValue.measured(planned_this_month),
+            "chart",
+            "blue",
+        ),
+        (
+            "my_plan_activities_planned_quarter",
+            MetricValue.measured(planned_this_quarter),
+            "calendar",
+            "purple",
+        ),
+        (
+            "my_plan_activities_planned_fy",
+            MetricValue.measured(planned_this_fy),
+            "calendar",
+            "warning",
+        ),
+        (
+            "my_plan_visits_scheduled_period",
+            MetricValue.measured(visits_scheduled),
+            "school",
+            "blue",
+        ),
+        (
+            "my_plan_trainings_scheduled_period",
+            MetricValue.measured(trainings_scheduled),
+            "target",
+            "purple",
+        ),
+        (
+            "my_plan_cluster_meetings_scheduled_period",
+            MetricValue.measured(meetings_scheduled),
+            "users",
+            "warning",
+        ),
+        (
+            "my_plan_completion_readiness_pct",
+            completion_share,
+            "check",
+            "success",
+        ),
+    )
+
+    # `render_strip` refuses to emit the same metric twice in one strip. The
+    # old items also carried `raw_value`; nothing reads it -- no template, no
+    # view, no script -- here or on the other 56 tiles that set it, so it is
+    # dropped rather than carried forward. `value` is the unformatted number
+    # and `display_value` the formatted one.
+    kpi_strip_items = render_strip(
+        [
+            render_metric(key, value, drilldown_url="/my-plan")
+            for key, value, _icon, _variant in my_plan_tiles
+        ]
+    )
+    for item, (_key, _value, icon, variant) in zip(kpi_strip_items, my_plan_tiles):
+        item["icon"] = icon
+        item["variant"] = variant
 
     # 8. Main Lists for the three categories and 7 sections by urgency
     partners_map = {p.id: p.name for p in Partner.objects.all()}

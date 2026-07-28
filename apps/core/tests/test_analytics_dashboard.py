@@ -95,8 +95,14 @@ class AnalyticsDashboardTest(TestCase):
         response = self.client.get(reverse("frontend:analytics_dashboard"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Analytics")
+        # District still renders; it is a filter the page offers.
         self.assertContains(response, "Kampala")
-        self.assertContains(response, "Central Region")
+        # "Central Region" is deliberately absent. It only ever appeared here as
+        # an option inside the Region dropdown, and Region was removed from
+        # every filter row: it asked the same question as District on a coarser
+        # grain while a user's region was already fixed by their scope. Asserting
+        # on it now would pin a control the platform no longer has.
+        self.assertNotContains(response, "Central Region")
         self.assertContains(response, "Download CSV")
         self.assertContains(response, "Send to Inbox")
 

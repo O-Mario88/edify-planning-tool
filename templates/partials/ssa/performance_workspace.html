@@ -23,15 +23,6 @@
           {% endfor %}
         </select>
       </label>
-      <label class="sp-field" for="sp-region">
-        <span>Region</span>
-        <select id="sp-region" name="region">
-          <option value="">All regions</option>
-          {% for region in dashboard.filters.regions %}
-          <option value="{{ region.region_id }}"{% if region.region_id == dashboard.filters.region %} selected{% endif %}>{{ region.region__name }}</option>
-          {% endfor %}
-        </select>
-      </label>
       <label class="sp-field" for="sp-district">
         <span>District</span>
         <select id="sp-district" name="district">

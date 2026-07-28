@@ -49,6 +49,7 @@ def core_schools_view(request):
     # 1. Filters
     filters = {
         "fy": fy,
+        "q": request.GET.get("q", "").strip(),
         "region": request.GET.get("region", "All"),
         "district": request.GET.get("district", "All"),
         "staff": request.GET.get("staff", "All"),
@@ -210,18 +211,36 @@ def core_schools_view(request):
     ]
 
     # Dropdowns Options
+    #
+    # Scoped to the core schools this page is actually showing. The district
+    # list used to be narrowed by the Region control; with Region gone, the
+    # narrowing comes from the schools themselves, which is stricter — an
+    # option only exists if results can come from it — and needs no second
+    # control to stay correct per role.
+    _core_district_ids = core_schools_qs.values("district_id")
     regions = Region.objects.all().order_by("name")
-    if filters["region"] != "All":
-        districts = District.objects.filter(region_id=filters["region"]).order_by(
-            "name"
-        )
-    else:
-        districts = District.objects.all().order_by("name")
-
-    staff_members = (
-        StaffProfile.objects.all().select_related("user").order_by("user__name")
+    districts = (
+        District.objects.filter(id__in=_core_district_ids).distinct().order_by("name")
     )
-    partners = Partner.objects.all().order_by("name")
+    # Owners of the core schools in view, not every staff record in the system.
+    staff_members = (
+        StaffProfile.objects.filter(
+            user_id__in=core_schools_qs.exclude(account_owner_id__isnull=True).values(
+                "account_owner_id"
+            )
+        )
+        .select_related("user")
+        .order_by("user__name")
+    )
+    partners = (
+        Partner.objects.filter(
+            id__in=PartnerAssignment.objects.filter(school__school_type="core").values(
+                "partner_id"
+            )
+        )
+        .distinct()
+        .order_by("name")
+    )
 
     context = {
         "fy": fy,
@@ -249,6 +268,20 @@ def core_schools_view(request):
         "base_template": "layouts/blank.html"
         if request.headers.get("HX-Request") == "true"
         else "layouts/shell.html",
+        # The page had no search control of any kind, so the top bar showed the
+        # generic global form that searches somewhere else entirely. It now
+        # drives this matrix, and carries the filter row along so a query
+        # narrows the current view rather than resetting it.
+        "topbar_search": {
+            "placeholder": "Search Core Schools…",
+            "label": "Search Core Schools by name, ID, district or owner",
+            "name": "q",
+            "value": filters["q"],
+            "hx_get": "/core-schools",
+            "hx_target": "#core-schools-table-container",
+            "hx_trigger": "keyup changed delay:250ms, search",
+            "hx_include": "#core-filters-form",
+        },
     }
 
     if request.headers.get("HX-Target") == "core-schools-table-container":

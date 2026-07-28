@@ -253,6 +253,159 @@ def _month_of_period_key(period_key):
 
 
 # ── Queue building ────────────────────────────────────────────────────────────
+def fy_totals_all_fund_types(fy) -> dict:
+    """The financial year's money across monthly plans and weekly advances.
+
+    The Accountant's home KPI strip used to build these from WeeklyFundRequest
+    alone while naming them "Total Approved Funds", "Total Disbursed" and
+    "Budget Utilization" -- figures a reader takes as the country's, not one
+    fund type's. Monthly fund plans, which carry most of the value, were absent
+    from every one of them.
+
+    Both fund types are classified through the same two canonical status
+    functions the queue uses (`_monthly_status`, `_weekly_status`), so a stage
+    means the same thing here as it does on the Disbursement Dashboard.
+
+    Partner payables and reimbursements are deliberately excluded: both are
+    "due now" queues with no financial year of their own (see
+    `_partner_items`), and folding a month-agnostic backlog into an FY total
+    would make the figure mean neither one thing nor the other.
+
+    Returns raw integers; callers format them.
+    """
+    from .models import FundRequest, WeeklyFundRequest
+
+    monthly = list(FundRequest.objects.filter(period="monthly", fy=fy))
+    weekly = list(
+        WeeklyFundRequest.objects.filter(fy=fy).exclude(
+            status__in=["not_requested", "cancelled"]
+        )
+    )
+    weekly_buckets = weekly_status_buckets(weekly)
+
+    staged: list[tuple[str, int, int, int]] = [
+        (
+            _monthly_status(f),
+            f.total_amount or 0,
+            f.disbursed_amount or 0,
+            f.accounted_amount or 0,
+        )
+        for f in monthly
+    ] + [
+        (
+            weekly_buckets[w.id],
+            w.total_amount or 0,
+            w.disbursed_amount or 0,
+            w.accounted_amount or 0,
+        )
+        for w in weekly
+    ]
+
+    def _sum(*labels):
+        return sum(total for status, total, _d, _a in staged if status in labels)
+
+    def _count(*labels):
+        return sum(1 for status, _t, _d, _a in staged if status in labels)
+
+    # "Approved" = cleared approval and disbursable-or-beyond. Held belongs
+    # here for the same reason it belongs in approved-not-disbursed: a hold
+    # pauses approved money rather than rejecting it.
+    approved = _sum(
+        "Pending Disbursement", "Held", "Disbursed", "Awaiting Reconciliation", "Closed"
+    )
+    disbursed = sum(d for _s, _t, d, _a in staged)
+    accounted = sum(a for _s, _t, _d, a in staged)
+
+    return {
+        "approved": approved,
+        "pending_disbursement": _sum("Pending Disbursement", "Held"),
+        "pending_disbursement_count": _count("Pending Disbursement", "Held"),
+        "awaiting_approval": _sum("Pending Approval"),
+        "awaiting_approval_count": _count("Pending Approval"),
+        "disbursed": disbursed,
+        "accounted": accounted,
+        "returned": _sum("Returned"),
+        "disbursed_count": _count("Disbursed", "Awaiting Reconciliation", "Closed"),
+        "accounted_count": _count("Closed"),
+        "record_count": len(staged),
+    }
+
+
+def month_overview_all_fund_types(fy, month) -> dict:
+    """The month's money across every fund type, in raw UGX.
+
+    THE canonical "where is this month's money" answer, shared by the
+    Disbursement Dashboard and the Accountant's home dashboard so the two
+    cannot drift apart again.
+
+    Both surfaces used to carry a card titled "This Month Overview" with the
+    same five rows, but the Accountant's home dashboard summed
+    WeeklyFundRequest alone while this workspace summed the consolidated
+    queue -- monthly fund plans, weekly advances, partner payments and
+    reimbursements. On the seed that was UGX 1.25M against UGX 3.3M+: most of
+    the month's money missing from the card an Accountant lands on.
+
+    `approved_not_disbursed` includes Held, because a hold pauses approved
+    money rather than rejecting it: `hold()` only accepts a request that has
+    finished the approval chain, and `release()` puts it straight back.
+
+    Returns raw integers; callers format them.
+    """
+    # Month-scoped fund types only. `_partner_items` describes itself as
+    # "month-agnostic" and `_reimbursement_items` as "due now": both are
+    # standing payable queues that belong to no particular month. Including
+    # them made rows 1-3 of this card cover any month while rows 4-5 (Disbursed,
+    # Reconciled) covered this one -- one card, two periods. They remain in the
+    # queue list beside it, which is a work list rather than a period total.
+    names: dict[str, str] = {}
+    queue = _monthly_items(fy, month, names) + _weekly_items(fy, month, names)
+
+    def _sum(status):
+        return sum(i["amount"] for i in queue if i["status"] == status)
+
+    from .models import FundRequest, WeeklyFundRequest
+
+    disbursed = sum(
+        f.disbursed_amount or f.total_amount
+        for f in FundRequest.objects.filter(
+            period="monthly",
+            fy=fy,
+            period_key=f"{fy}-M{month}",
+            status__in=["disbursed", "closed"],
+        )
+    ) + sum(
+        w.disbursed_amount or w.total_amount
+        for w in WeeklyFundRequest.objects.filter(
+            fy=fy,
+            week_start_date__month=month,
+            status__in=["disbursed", "accountability_pending", "accounted"],
+        )
+    )
+    reconciled = sum(
+        f.accounted_amount or 0
+        for f in FundRequest.objects.filter(
+            period="monthly",
+            fy=fy,
+            period_key=f"{fy}-M{month}",
+            accountability_reviewed_at__isnull=False,
+        )
+    ) + sum(
+        w.accounted_amount or 0
+        for w in WeeklyFundRequest.objects.filter(
+            fy=fy, week_start_date__month=month, status="accounted"
+        )
+    )
+
+    return {
+        "waiting_for_approval": _sum("Pending Approval"),
+        "returned": _sum("Returned"),
+        "approved_not_disbursed": _sum("Pending Disbursement") + _sum("Held"),
+        "held": _sum("Held"),
+        "disbursed": disbursed,
+        "reconciled": reconciled,
+    }
+
+
 def _monthly_items(fy, month, names_out):
     from .models import FundRequest
 
@@ -995,42 +1148,17 @@ def get_disbursement_dashboard(principal, filters=None):
     ]
 
     # ── Month overview + status donut ─────────────────────────────────────────
-    disbursed_month = sum(
-        f.disbursed_amount or f.total_amount
-        for f in FundRequest.objects.filter(
-            period="monthly",
-            fy=fy,
-            period_key=f"{fy}-M{month}",
-            status__in=["disbursed", "closed"],
-        )
-    ) + sum(
-        w.disbursed_amount or w.total_amount
-        for w in WeeklyFundRequest.objects.filter(
-            fy=fy,
-            week_start_date__month=month,
-            status__in=["disbursed", "accountability_pending", "accounted"],
-        )
-    )
-    reconciled_month = sum(
-        f.accounted_amount or 0
-        for f in FundRequest.objects.filter(
-            period="monthly",
-            fy=fy,
-            period_key=f"{fy}-M{month}",
-            accountability_reviewed_at__isnull=False,
-        )
-    ) + sum(
-        w.accounted_amount or 0
-        for w in WeeklyFundRequest.objects.filter(
-            fy=fy, week_start_date__month=month, status="accounted"
-        )
-    )
+    # One implementation, two surfaces (see month_overview_all_fund_types); the
+    # donut and the disbursed-this-month KPI below read the same figures the
+    # card does, so a page cannot disagree with itself either.
+    _overview_raw = month_overview_all_fund_types(fy, month)
+    disbursed_month = _overview_raw["disbursed"]
     overview = {
-        "waiting": _ugx(awaiting_appr),
-        "returned": _ugx(returned_amt),
-        "approved_not_disbursed": _ugx(pending_disb + held_amt),
-        "disbursed": _ugx(disbursed_month),
-        "reconciled": _ugx(reconciled_month),
+        "waiting": _ugx(_overview_raw["waiting_for_approval"]),
+        "returned": _ugx(_overview_raw["returned"]),
+        "approved_not_disbursed": _ugx(_overview_raw["approved_not_disbursed"]),
+        "disbursed": _ugx(_overview_raw["disbursed"]),
+        "reconciled": _ugx(_overview_raw["reconciled"]),
     }
 
     donut_amounts = {

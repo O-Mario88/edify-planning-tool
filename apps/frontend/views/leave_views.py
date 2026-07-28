@@ -1064,9 +1064,34 @@ def leave_coverage_view(request):
             else coverages.none()
         )
 
+    # Scope first, then search: the PL narrowing above has already run, so a
+    # query can only ever narrow the assignments this user could already see.
+    #
+    # The page had no search of its own, so the top bar fell through to the
+    # platform's global form — a box sitting above a list of coverage
+    # assignments that searched schools and staff somewhere else entirely.
+    # Both sides of an assignment are matched, because "who is covering for
+    # Grace" and "who is Grace covering for" are the same question asked from
+    # opposite ends, and a coverage list is read both ways.
+    search_q = (request.GET.get("q") or "").strip()
+    if search_q:
+        coverages = coverages.filter(
+            Q(original_staff__user__name__icontains=search_q)
+            | Q(covering_staff__user__name__icontains=search_q)
+            | Q(original_staff__user__email__icontains=search_q)
+            | Q(covering_staff__user__email__icontains=search_q)
+        )
+
     context = {
         "coverages": coverages,
         "role": role,
+        "topbar_search": {
+            "placeholder": "Search coverage assignments…",
+            "label": "Search coverage by the staff member covered or covering",
+            "name": "q",
+            "value": search_q,
+            "action": "/leave/coverage",
+        },
     }
     return render(request, "pages/leave/leave_coverage.html", context)
 

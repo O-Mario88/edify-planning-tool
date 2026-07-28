@@ -31,13 +31,6 @@
         </select>
       </label>
       <label>
-        <span>Region</span>
-        <select name="region" aria-label="Region">
-          <option value="">All Regions</option>
-          {% for region in regions %}<option value="{{ region.id }}" {% if region.id == selected_region %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
-        </select>
-      </label>
-      <label>
         <span>Partner</span>
         <select name="partner" aria-label="Partner">
           <option value="">All Partners</option>

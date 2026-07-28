@@ -495,8 +495,14 @@ class CDAnalyticsService:
 
         budget_util = CDAnalyticsService._budget_utilization(cd)
 
-        def card(icon, label, value, variant, helper):
+        def card(key, icon, label, value, variant, helper):
+            # `key` is the stable identifier other services address this card
+            # by. CDDashboardService used to reach in by display label
+            # (`analytics["Overall Target Achievement"]`), so rewording a card
+            # would have broken the Country Director dashboard with a KeyError
+            # that no test covered.
             return {
+                "key": key,
                 "icon": icon,
                 "label": label,
                 "value": value,
@@ -506,6 +512,7 @@ class CDAnalyticsService:
 
         return [
             card(
+                "country_overall_target_achievement_pct",
                 "target",
                 "Overall Target Achievement",
                 f"{overall_target}%",
@@ -513,6 +520,7 @@ class CDAnalyticsService:
                 "weighted across the five target areas · validated only",
             ),
             card(
+                "country_schools_impacted_count",
                 "school",
                 "Schools Impacted",
                 f"{schools_impacted:,}",
@@ -520,6 +528,7 @@ class CDAnalyticsService:
                 "verified activity",
             ),
             card(
+                "country_teachers_trained_count",
                 "users",
                 "Teachers Trained",
                 f"{int(teachers):,}",
@@ -527,6 +536,7 @@ class CDAnalyticsService:
                 "verified attendance",
             ),
             card(
+                "country_school_leaders_trained_count",
                 "users",
                 "School Leaders Trained",
                 f"{int(leaders):,}",
@@ -534,6 +544,7 @@ class CDAnalyticsService:
                 "verified attendance",
             ),
             card(
+                "country_activities_completed_count",
                 "calendar",
                 "Total Activities Completed",
                 f"{activities_completed:,}",
@@ -541,6 +552,7 @@ class CDAnalyticsService:
                 "this period",
             ),
             card(
+                "country_active_pls_and_cceos",
                 "users",
                 "Active PLs / Active CCEOs",
                 f"{active_pls} / {active_cceos}",
@@ -548,6 +560,7 @@ class CDAnalyticsService:
                 f"of {total_pls} PLs · {total_cceos} CCEOs",
             ),
             card(
+                "country_average_verified_ssa_score",
                 "chart",
                 "Average SSA Score",
                 (f"{avg_ssa}/10" if avg_ssa is not None else "No SSA"),
@@ -555,6 +568,7 @@ class CDAnalyticsService:
                 "latest verified cycle",
             ),
             card(
+                "country_districts_covered",
                 "calendar",
                 "Districts Covered",
                 f"{reached_districts} / {total_districts}",
@@ -562,6 +576,7 @@ class CDAnalyticsService:
                 "with verified activity",
             ),
             card(
+                "country_clusters_covered",
                 "shield",
                 "Clusters Covered",
                 f"{active_clusters} / {total_clusters}",
@@ -569,11 +584,17 @@ class CDAnalyticsService:
                 "with activity",
             ),
             card(
+                "country_budget_utilisation_pct",
                 "currency",
                 "Budget Utilization",
                 f"{budget_util}%",
                 "finance",
-                "disbursed / approved",
+                # `_budget_utilization` divides by Sum("amount") -- the
+                # *requested* pipeline, not the approved total. The helper
+                # claimed "disbursed / approved"; since requested >= approved,
+                # a reader taking the figure as approved-basis utilisation
+                # reads it as worse than the approved basis would actually be.
+                "disbursed / requested",
             ),
         ]
 
@@ -679,6 +700,52 @@ class CDAnalyticsService:
         }
 
     @staticmethod
+    def _staff_user_ids(staff_ids) -> frozenset:
+        """StaffProfile ids → the User ids behind them, memoised per staff id.
+
+        `_weighted_achievement` runs 28 times on one CD Analytics render -- once
+        for the country, once per PL team and once per CCEO row -- and each ran
+        its own StaffProfile lookup. Keying the memo on the whole roster barely
+        helped, because those 28 rosters are mostly *different* subsets of the
+        same nine people: eighteen of them are a single CCEO each, so eighteen
+        distinct keys each missed.
+
+        Keying per staff member instead means a person is resolved once however
+        many subsets they appear in, and only genuinely unseen ids reach the
+        database -- in one query, not one each.
+        """
+        from apps.core.request_cache import store
+
+        wanted = {s for s in staff_ids if s}
+        if not wanted:
+            return frozenset()
+
+        bucket = store()
+        if bucket is None:
+            # Outside a request (jobs, commands, direct calls in tests) there is
+            # no store, so behave exactly as the uncached code did.
+            return frozenset(
+                StaffProfile.objects.filter(id__in=wanted)
+                .exclude(user_id__isnull=True)
+                .values_list("user_id", flat=True)
+            )
+
+        known = bucket.setdefault("cd_analytics:_staff_user_ids", {})
+        missing = wanted - known.keys()
+        if missing:
+            found = dict(
+                StaffProfile.objects.filter(id__in=missing).values_list("id", "user_id")
+            )
+            # Record misses too, so a staff member with no user is not looked
+            # up again on every later subset that contains them.
+            for staff_id in missing:
+                known[staff_id] = found.get(staff_id)
+
+        return frozenset(
+            user_id for s in wanted if (user_id := known.get(s)) is not None
+        )
+
+    @staticmethod
     def _weighted_achievement(
         fy, quarter, user_ids, staff_ids, areas=None, per_user_series=None
     ) -> tuple:
@@ -730,11 +797,13 @@ class CDAnalyticsService:
         resolved_user_ids = {u for u in user_ids if u}
         staffs = [s for s in staff_ids if s]
         if staffs:
-            resolved_user_ids |= set(
-                StaffProfile.objects.filter(id__in=staffs)
-                .exclude(user_id__isnull=True)
-                .values_list("user_id", flat=True)
-            )
+            # CD Analytics calls this 28 times per page -- once for the country,
+            # once per PL team and once per CCEO row -- and every call re-ran
+            # this staff-to-user lookup for a roster that cannot change while
+            # the page is being built. Memoised per request; outside a request
+            # (jobs, management commands, direct service calls in tests) the
+            # store is absent and the query runs as before.
+            resolved_user_ids |= CDAnalyticsService._staff_user_ids(staffs)
         if not resolved_user_ids:
             return 0, 0, 0
 
@@ -1211,6 +1280,40 @@ class CDAnalyticsService:
     def cluster_performance(cd, acts):
         latest, prev = _cycle_fys(cd.school_ids, cd.fy)
         names, cluster_school = CDAnalyticsService._cluster_membership(cd, acts)
+
+        # Training and visit counts were two COUNTs per cluster inside the loop
+        # below -- thirty-six queries here on the seed. They key on
+        # `acts.cluster_id`, which is unambiguous, so one grouped read answers
+        # every cluster at once.
+        #
+        # The SSA figures above them are deliberately NOT batched the same way:
+        # `_cluster_membership` unions School.cluster_id with activity-derived
+        # (cluster, school) pairs, so a school can belong to a cluster its own
+        # `cluster_id` column does not name. Grouping the SSA aggregates by
+        # `school__cluster_id` in SQL would quietly use a different membership
+        # and change the numbers.
+        activity_counts = {
+            row["cluster_id"]: row
+            for row in acts.exclude(cluster_id__isnull=True)
+            .exclude(cluster_id="")
+            .values("cluster_id")
+            .annotate(
+                trainings=Count(
+                    "id",
+                    filter=Q(
+                        activity_type__in=TRAINING_TYPES + CLUSTER_MEETING_TYPES,
+                        status__in=COMPLETED_STATUSES,
+                    ),
+                ),
+                visits=Count(
+                    "id",
+                    filter=Q(
+                        activity_type__in=VISIT_TYPES, status__in=COMPLETED_STATUSES
+                    ),
+                ),
+            )
+        }
+
         rows = []
         for idx, cid in enumerate(sorted(cluster_school.keys()), start=1):
             c_ids = list(cluster_school[cid])
@@ -1239,14 +1342,9 @@ class CDAnalyticsService:
                         bi["intervention"], (bi["intervention"], "")
                     )[0]
                     weak = _ssa_score(bi["a"])
-            c_acts = acts.filter(cluster_id=cid)
-            trainings = c_acts.filter(
-                activity_type__in=TRAINING_TYPES + CLUSTER_MEETING_TYPES,
-                status__in=COMPLETED_STATUSES,
-            ).count()
-            visits = c_acts.filter(
-                activity_type__in=VISIT_TYPES, status__in=COMPLETED_STATUSES
-            ).count()
+            counts = activity_counts.get(cid) or {}
+            trainings = counts.get("trainings", 0)
+            visits = counts.get("visits", 0)
             b = ssa_band(avg)
             rows.append(
                 {

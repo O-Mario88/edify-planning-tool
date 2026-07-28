@@ -301,6 +301,39 @@ def latest_applicable_record(school):
     )
 
 
+def latest_applicable_records(schools, *, with_scores: bool = False) -> dict:
+    """The batched twin of :func:`latest_applicable_record`.
+
+    Same rule, same ``(-date_of_ssa, -created_at)`` tiebreak, one query for a
+    whole set of schools instead of one per school. Cluster intelligence called
+    the single-school helper inside a loop and then read ``latest.scores.all()``
+    on each result -- two round trips per school, ninety of them on one load of
+    ``/clusters``.
+
+    Returns ``{school_id: SsaRecord}``, omitting schools with no confirmed
+    record so a caller cannot mistake "no verified SSA" for a zero score.
+
+    ``with_scores=True`` prefetches the intervention scores, which is what the
+    per-school loop was fetching separately.
+    """
+    records = SsaRecord.objects.filter(
+        school__in=schools,
+        deleted_at__isnull=True,
+        verification_status="confirmed",
+    )
+    if with_scores:
+        records = records.prefetch_related("scores")
+    # DISTINCT ON (school_id) keeps the first row per school under this
+    # ordering, so the leading ORDER BY term has to be school_id -- the
+    # remaining terms are the same tiebreak the single-school helper uses.
+    return {
+        record.school_id: record
+        for record in records.order_by(
+            "school_id", "-date_of_ssa", "-created_at"
+        ).distinct("school_id")
+    }
+
+
 def weakest_interventions_for(school, *, n=2):
     """Canonical weakest-intervention ranking. Returns (record, rows) where
     rows is a {"intervention", "score"} list at most n long ([] when no

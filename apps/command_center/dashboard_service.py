@@ -1,11 +1,12 @@
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from collections import defaultdict
 from datetime import date, timedelta
 
-from django.db.models import Avg, Sum
+from django.db.models import Avg, Count, Sum
 from django.utils import timezone
 
 from apps.activities.models import Activity
-from apps.clusters.models import Cluster
+from apps.clusters.models import Cluster, SchoolClusterAssignment
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.fund_requests.models import WeeklyFundRequest
@@ -90,8 +91,13 @@ class DashboardMetricsService:
             status__in=["submitted_to_pl", "submitted_to_cd"]
         ).count()
 
+        # The local ["completed", "ia_verified"] pair silently excluded `closed`
+        # and `accountant_confirmed`. Both sets happen to agree on today's data,
+        # so no number moves -- but the moment work reaches those two statuses
+        # the old filter would have stopped counting finished work, which is the
+        # regression apps/core/activity_types.py exists to prevent.
         completed_this_month = activities_qs.filter(
-            status__in=["completed", "ia_verified"],
+            status__in=COMPLETED_WORK_STATUSES,
             scheduled_date__date__range=[start_month, end_month],
         ).count()
         # No fabricated fallback: nothing planned this month is an honest 0%,
@@ -147,21 +153,42 @@ class DashboardMetricsService:
             )
 
         # 4. Weekly Planning Progress — real completion rate over the last 5 weeks.
+        #
+        # This ran two COUNT queries per week inside the loop: ten round trips
+        # to answer one question about a five-week span. One read of
+        # (planned_date, status) over the whole span answers it, and the
+        # bucketing is cheaper in Python than in five extra queries.
+        #
+        # The done-set is COMPLETED_WORK_STATUSES rather than the local
+        # ["completed", "ia_verified", "closed"] it used to name, which omitted
+        # `accountant_confirmed` -- finished work that stopped counting as
+        # finished once it reached the accountant.
+        span_start = start_week - timedelta(weeks=4)
+        span_end = start_week + timedelta(days=6)
+        rows = activities_qs.filter(
+            planned_date__gte=span_start, planned_date__lte=span_end
+        ).values_list("planned_date", "status")
+
+        totals: dict[int, int] = {i: 0 for i in range(5)}
+        done: dict[int, int] = {i: 0 for i in range(5)}
+        for planned_date, status in rows:
+            index = (planned_date - span_start).days // 7
+            if not 0 <= index < 5:
+                continue
+            totals[index] += 1
+            if status in COMPLETED_WORK_STATUSES:
+                done[index] += 1
+
         weekly_progress = []
-        for i in range(4, -1, -1):
-            wk_start = start_week - timedelta(weeks=i)
-            wk_end = wk_start + timedelta(days=6)
-            wk_qs = activities_qs.filter(
-                planned_date__gte=wk_start, planned_date__lte=wk_end
-            )
-            wk_total = wk_qs.count()
-            wk_done = wk_qs.filter(
-                status__in=["completed", "ia_verified", "closed"]
-            ).count()
+        for index in range(5):
+            wk_start = span_start + timedelta(weeks=index)
+            wk_total = totals[index]
             weekly_progress.append(
                 {
                     "week": f"{wk_start.strftime('%b %-d')} Wk",
-                    "percentage": round(wk_done * 100 / wk_total) if wk_total else 0,
+                    "percentage": (
+                        round(done[index] * 100 / wk_total) if wk_total else 0
+                    ),
                 }
             )
 
@@ -209,7 +236,9 @@ class DashboardMetricsService:
         # 6. Team Target Progress — real completion rate per horizon.
         def _target_row(name, qs):
             total = qs.count()
-            done = qs.filter(status__in=["completed", "ia_verified", "closed"]).count()
+            # Canonical set: the local triple here omitted `accountant_confirmed`,
+            # so work that reached the accountant stopped counting as done.
+            done = qs.filter(status__in=COMPLETED_WORK_STATUSES).count()
             pct = round(done * 100 / total) if total else 0
             if pct >= 60:
                 status, cls, color = "On track", "s-green", "var(--green)"
@@ -279,30 +308,63 @@ class DashboardMetricsService:
         # no clusters exist; the section renders empty rather than invented rows).
         from apps.ssa.models import SsaRecord
 
-        cluster_performance = []
-        for c in Cluster.objects.filter(deleted_at__isnull=True)[:5]:
-            school_ids = list(c.assignments.values_list("school_id", flat=True))
-            avg_ssa = (
-                (
-                    SsaRecord.objects.filter(
-                        school_id__in=school_ids, fy=fy, deleted_at__isnull=True
-                    ).aggregate(a=Avg("average_score"))["a"]
-                )
-                if school_ids
-                else None
+        clusters = list(Cluster.objects.filter(deleted_at__isnull=True)[:5])
+        cluster_ids = [c.id for c in clusters]
+
+        # Five clusters used to mean five school-id reads, five SSA averages and
+        # ten activity COUNTs -- twenty round trips for one five-row table. Each
+        # of those is now a single grouped query over all five clusters.
+        schools_by_cluster: dict[str, list[str]] = defaultdict(list)
+        for cluster_id, school_id in SchoolClusterAssignment.objects.filter(
+            cluster_id__in=cluster_ids
+        ).values_list("cluster_id", "school_id"):
+            schools_by_cluster[cluster_id].append(school_id)
+
+        all_school_ids = [s for ids in schools_by_cluster.values() for s in ids]
+        # Sum and count per school, not the per-school average: the figure this
+        # replaces was AVG over *every* record for the cluster's schools, and a
+        # mean of school means is a different number whenever schools hold
+        # unequal record counts. Carrying sum and count lets the cluster average
+        # be recombined exactly.
+        ssa_totals_by_school = {
+            school_id: (total or 0, count)
+            for school_id, total, count in SsaRecord.objects.filter(
+                school_id__in=all_school_ids, fy=fy, deleted_at__isnull=True
             )
-            mtgs = activities_qs.filter(
-                cluster_id=c.id,
-                activity_type__in=["cluster_meeting", "cluster_meeting_ssa_review"],
-            ).count()
-            trainings = activities_qs.filter(
-                cluster_id=c.id,
-                activity_type__in=[
+            .values_list("school_id")
+            .annotate(total=Sum("average_score"), count=Count("id"))
+        }
+
+        activity_counts: dict[tuple[str, str], int] = {}
+        for cluster_id, activity_type, total in (
+            activities_qs.filter(cluster_id__in=cluster_ids)
+            .values_list("cluster_id", "activity_type")
+            .annotate(n=Count("id"))
+        ):
+            activity_counts[(cluster_id, activity_type)] = total
+
+        cluster_performance = []
+        for c in clusters:
+            school_ids = schools_by_cluster.get(c.id, [])
+            score_total = sum(
+                ssa_totals_by_school.get(s, (0, 0))[0] for s in school_ids
+            )
+            score_count = sum(
+                ssa_totals_by_school.get(s, (0, 0))[1] for s in school_ids
+            )
+            avg_ssa = (score_total / score_count) if score_count else None
+            mtgs = sum(
+                activity_counts.get((c.id, t), 0)
+                for t in ("cluster_meeting", "cluster_meeting_ssa_review")
+            )
+            trainings = sum(
+                activity_counts.get((c.id, t), 0)
+                for t in (
                     "cluster_training",
                     "cluster_training_ssa_collection",
                     "core_training",
-                ],
-            ).count()
+                )
+            )
             good = avg_ssa is not None and avg_ssa >= 5
             cluster_performance.append(
                 {
@@ -582,12 +644,34 @@ class DashboardMetricsService:
                 if country_approved
                 else 0
             )
+            # "Schools Impacted" was bound to `total_schools` -- every school in
+            # scope -- under the helper "total reached". On the seed that read
+            # 702 where 261 schools had any completed work, so a leadership
+            # dashboard overstated reach by the entire un-worked portfolio.
+            # AnalyticsDashboardService already publishes this metric as
+            # distinct reached schools; this now means the same thing, so the
+            # two pages stop disagreeing under one label.
+            schools_impacted = (
+                activities_qs.filter(status__in=COMPLETED_WORK_STATUSES)
+                .exclude(school_id__isnull=True)
+                .values("school_id")
+                .distinct()
+                .count()
+            )
             kpi_items = [
                 {
-                    "label": "Country Target Achievement",
+                    # Was "Country Target Achievement · vs last quarter". It
+                    # compares nothing to last quarter, and it measures no
+                    # target: CDAnalyticsService owns the weighted, validated
+                    # target achievement, so reusing that name here gave one
+                    # phrase two different numbers. This says what it counts.
+                    "label": "Country Activities Completed This Month",
                     "value": f"{target_achievement}%",
                     "raw_value": target_achievement,
-                    "helper": "vs last quarter",
+                    "helper": (
+                        f"{completed_this_month:,} of "
+                        f"{activities_this_month:,} scheduled this month"
+                    ),
                     "icon": "target",
                     "variant": "success",
                 },
@@ -601,9 +685,9 @@ class DashboardMetricsService:
                 },
                 {
                     "label": "Schools Impacted",
-                    "value": str(total_schools),
-                    "raw_value": total_schools,
-                    "helper": "total reached",
+                    "value": str(schools_impacted),
+                    "raw_value": schools_impacted,
+                    "helper": f"reached, of {total_schools:,} in scope",
                     "icon": "school",
                     "variant": "blue",
                 },

@@ -336,16 +336,36 @@ def planning_dashboard_view(request):
     # 2. Query Dashboard data from Service
     data = PlanningDashboardService.get_dashboard_data(request.user, filters)
 
-    # 3. Dropdowns options
-    districts = District.objects.all().order_by("name")
+    # 3. Dropdowns options — only places holding schools this user can plan for.
+    from apps.core.scoping import resolve_user_scope, school_queryset
 
-    # Filter sub-counties by district if a district is selected
+    _planning_schools = school_queryset(resolve_user_scope(request.user)).filter(
+        deleted_at__isnull=True
+    )
+
+    districts = (
+        District.objects.filter(id__in=_planning_schools.values("district_id"))
+        .distinct()
+        .order_by("name")
+    )
+
+    # Sub-counties narrow to the chosen district as before, but the unfiltered
+    # branch no longer offers every sub-county in the country — only those that
+    # hold a school in scope, so no option is a dead end.
     if filters["district"] and filters["district"] != "All":
         sub_counties = SubCounty.objects.filter(
             district_id=filters["district"]
         ).order_by("name")
     else:
-        sub_counties = SubCounty.objects.all().order_by("name")
+        sub_counties = (
+            SubCounty.objects.filter(
+                id__in=_planning_schools.exclude(sub_county__isnull=True).values(
+                    "sub_county_id"
+                )
+            )
+            .distinct()
+            .order_by("name")
+        )
 
     staff_members = (
         StaffProfile.objects.filter(deleted_at__isnull=True)
