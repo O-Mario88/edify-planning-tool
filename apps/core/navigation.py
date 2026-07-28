@@ -798,9 +798,23 @@ SIDEBAR_ITEMS = [
                 "label": "Monthly Request",
                 "url": "/accounts/monthly-request/",
                 "page_key": "monthly_request",
+                # `monthly_request_view` hands CD/RVP/Admin straight to
+                # `country_budget_view`, so for those three this entry opened
+                # the very same page as the one below it -- two sidebar links,
+                # two different names, one destination. The route stays
+                # authorized (PAGE_PERMISSIONS is unchanged, so deep links and
+                # the CD's own redirects still work); it just stops being
+                # advertised twice.
+                "visible_to": {PL, ACCOUNTANT, IA, PROJECT_COORDINATOR},
             },
             {
+                # The CD *submits* a Monthly Fund Request; the RVP *reviews the
+                # country budget* it asks for. Same workspace, two vantage
+                # points, so the label follows the reader rather than the
+                # writer. CD naming is pinned by
+                # apps/frontend/test_cd_budget_workspaces.py.
                 "label": "Monthly Fund Request",
+                "role_labels": {RVP: "Country Budget"},
                 "url": "/country-budget/",
                 "page_key": "country_budget",
             },

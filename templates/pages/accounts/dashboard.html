@@ -373,7 +373,10 @@ Open Canonical Disbursement Queue
 
 <!-- Disbursement Status Chart Visual -->
 <div class="edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between space-y-4">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Disbursement Status</h3>
+{# Titled by period. The Disbursements workspace carries a card with the same
+   name scoped to the month; two identical titles over two different periods
+   left a reader no way to tell which figure they were looking at. #}
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Disbursement Status This Financial Year</h3>
 {% include "partials/components/donut_rings.html" with donut=donut_rings donut_label="Disbursement status by value" headline=donut.total_compact subline="total this FY" %}
 </div>
 </div>

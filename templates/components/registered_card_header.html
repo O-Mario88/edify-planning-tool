@@ -1,0 +1,28 @@
+{% comment %}
+  The header of a registered card: canonical title from the registry, the
+  card's question for assistive tech, and its drill-down.
+
+  Pairs with `registered_card_attrs.html` for cards that keep their own body
+  markup:
+
+    <section class="…" {% include "components/registered_card_attrs.html" with card=card %}>
+      {% include "components/registered_card_header.html" with card=card %}
+      …body…
+    </section>
+
+  The title comes from the registry rather than from a string typed here, so
+  renaming a card is a one-line change that cannot leave two pages disagreeing.
+{% endcomment %}
+<header class="flex items-start justify-between gap-3">
+  <div class="min-w-0">
+    <h3 id="card-{{ card.card_key }}-title"
+        class="text-[15px] font-semibold edify-text tracking-tight leading-tight">{{ card.title }}</h3>
+    {% if card.question %}<p class="sr-only">{{ card.question }}</p>{% endif %}
+  </div>
+  {% if card.drilldown_url and not card.error %}
+    <a href="{{ card.drilldown_url }}"
+       class="shrink-0 edify-text-caption font-semibold edify-primary-text hover:underline">
+      View all<span class="sr-only"> {{ card.title }}</span> &rarr;
+    </a>
+  {% endif %}
+</header>

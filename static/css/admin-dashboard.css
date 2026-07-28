@@ -125,7 +125,12 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-kpi__copy { min-width: 0; display: block; }
 .admin-kpi__label { min-height: 1.8em; display: block; color: var(--edify-text-muted); font-size: 0.64rem; font-weight: 580; line-height: 1.22; }
 .admin-kpi strong { display: block; margin-block-start: 0.1rem; color: var(--edify-text); font-size: 1.34rem; font-weight: 680; line-height: 1; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
-.admin-kpi small { display: block; margin-block-start: 0.26rem; overflow: hidden; color: var(--edify-text-muted); font-size: 0.59rem; font-weight: 470; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+/* The helper carries the denominator ("200 of 221 scheduled this month"), which
+   is the part that makes a percentage auditable. `white-space: nowrap` clipped
+   it to "200 of 221 schedule…" in a seven-column grid, so the one detail worth
+   reading was the one thrown away. Wraps to two lines, then clamps — the card
+   keeps a bounded height without truncating mid-word. */
+.admin-kpi small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; margin-block-start: 0.26rem; overflow: hidden; color: var(--edify-text-muted); font-size: 0.59rem; font-weight: 470; line-height: 1.2; }
 
 /* Workspace composition */
 .admin-workspace {

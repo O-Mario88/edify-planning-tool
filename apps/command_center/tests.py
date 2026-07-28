@@ -164,11 +164,65 @@ class CountryLevelBudgetUtilizationTest(TestCase):
         self.assertEqual(card["value"], "0%")
         self.assertNotEqual(card["value"], "78%")
 
-    def test_country_target_achievement_card_has_no_fabricated_trend(self):
+    def test_monthly_completion_card_has_no_fabricated_trend(self):
+        # Renamed from "Country Target Achievement": the card measures the
+        # share of this month's scheduled activities that are complete, not
+        # achievement against a target, and its helper claimed a comparison
+        # "vs last quarter" that was never computed.
         metrics = DashboardMetricsService.get_dashboard_metrics(self.user)
-        card = _kpi(metrics["kpi_strip_items"], "Country Target Achievement")
+        card = _kpi(
+            metrics["kpi_strip_items"], "Country Activities Completed This Month"
+        )
         self.assertIsNotNone(card)
         self.assertNotIn("trend", card)
+
+    def test_the_monthly_completion_card_states_its_denominator(self):
+        """A bare percentage cannot be audited by the person reading it."""
+        metrics = DashboardMetricsService.get_dashboard_metrics(self.user)
+        card = _kpi(
+            metrics["kpi_strip_items"], "Country Activities Completed This Month"
+        )
+        self.assertIn("scheduled this month", card["helper"])
+
+    def test_schools_impacted_counts_schools_reached_not_the_whole_portfolio(self):
+        """It was bound to every school in scope under the helper "total
+        reached", so the dashboard claimed reach it had not achieved.
+
+        Three schools exist and exactly one has completed work, so the two
+        readings are 1 and 3 -- a fixture where the old and new behaviour
+        cannot both pass.
+        """
+        from apps.activities.models import Activity
+        from apps.geography.models import District, Region
+        from apps.schools.models import School
+
+        region = Region.objects.create(name="Impact Region")
+        district = District.objects.create(name="Impact District", region=region)
+        schools = [
+            School.objects.create(
+                school_id=f"SCH-IMPACT-{i}",
+                name=f"Impact Primary {i}",
+                region=region,
+                district=district,
+            )
+            for i in range(3)
+        ]
+        Activity.objects.create(
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="ia_verified",
+            fy=self.fy,
+            school=schools[0],
+            responsible_staff_id=self.user.id,
+        )
+
+        metrics = DashboardMetricsService.get_dashboard_metrics(self.user)
+        card = _kpi(metrics["kpi_strip_items"], "Schools Impacted")
+        self.assertIsNotNone(card)
+
+        self.assertEqual(School.objects.filter(deleted_at__isnull=True).count(), 3)
+        self.assertEqual(card["raw_value"], 1, "should count only the school reached")
+        self.assertIn("reached", card["helper"])
 
 
 class WeakestInterventionsRankingTest(TestCase):

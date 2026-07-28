@@ -24,17 +24,13 @@ from apps.fund_requests.disbursement_dashboard_service import weekly_status_buck
 from apps.analytics.platform_engine import finance_health
 
 
-def format_ugx_compact(val):
-    """Compact UGX formatting helper (same as apps/frontend/views/budget_views.py)."""
-    if not val:
-        return "UGX 0"
-    if val >= 1_000_000_000:
-        return f"UGX {val / 1_000_000_000:.1f}B"
-    if val >= 1_000_000:
-        return f"UGX {val / 1_000_000:.1f}M"
-    if val >= 1_000:
-        return f"UGX {val / 1_000:.0f}K"
-    return f"UGX {val}"
+from apps.core.metrics import format_ugx_compact  # noqa: F401  (re-exported)
+
+# This module previously defined its own `format_ugx_compact` with the
+# docstring "same as apps/frontend/views/budget_views.py". It was not: that
+# copy used two decimals at the million and thousand scales, so UGX 1,234,567
+# read as "UGX 1.2M" here and "UGX 1.23M" there. Both now come from
+# apps.core.metrics.money.
 
 
 @require_page_permission("disbursements")

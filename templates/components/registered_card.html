@@ -1,0 +1,62 @@
+{% comment %}
+  Edify Registered Card — the shell every registered card renders through.
+
+  Unlike `components/card.html` (a header fragment, included twice in 875
+  templates), this is a whole card: heading, the data-* attributes the
+  duplication guard greps for, and the empty and error states picked from the
+  card's registry entry rather than from template logic.
+
+  Usage:
+    {% include "components/registered_card.html" with card=card %}
+      ...body for the populated case...
+    {% endinclude %}
+
+  `{% include %}` cannot capture a body, so callers that need custom markup
+  wrap this shell's *header* instead:
+
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm"
+             {% include "components/registered_card_attrs.html" with card=card %}>
+      {% include "components/registered_card_header.html" with card=card %}
+      ...body...
+    </section>
+
+  `card` is an apps.core.cards.RenderedCard rendered via `.as_dict()`.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-3"
+         data-component-type="card"
+         data-card-key="{{ card.card_key }}"
+         data-card-type="{{ card.card_type }}"
+         data-card-scope="{{ card.scope }}"
+         data-card-period="{{ card.period }}"
+         aria-labelledby="card-{{ card.card_key }}-title">
+
+  <header class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h3 id="card-{{ card.card_key }}-title"
+          class="text-[15px] font-semibold edify-text tracking-tight leading-tight">{{ card.title }}</h3>
+      {% if card.question %}
+        {# The card's own question, for assistive tech: a heading alone does not
+           say why the reader should care about what follows. #}
+        <p class="sr-only">{{ card.question }}</p>
+      {% endif %}
+    </div>
+    {% if card.drilldown_url and not card.error %}
+      <a href="{{ card.drilldown_url }}"
+         class="shrink-0 edify-text-caption font-semibold edify-primary-text hover:underline">
+        View all<span class="sr-only"> {{ card.title }}</span> &rarr;
+      </a>
+    {% endif %}
+  </header>
+
+  {% if card.error %}
+    {# §34: an error is never dressed as an empty queue. #}
+    <div class="flex flex-col items-start gap-2 py-6" role="alert">
+      <p class="text-[13px] font-semibold edify-text">Unable to load this information.</p>
+      <p class="edify-text-caption text-[var(--edify-text-subtle)]">{{ card.error }}</p>
+    </div>
+  {% elif card.is_empty %}
+    {% include "components/empty_state.html" with title=card.empty_message compact="true" tone="neutral" %}
+  {% else %}
+    {{ card_body }}
+  {% endif %}
+</section>

@@ -11,6 +11,8 @@ from datetime import timedelta
 from apps.activities.models import Activity
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.command_center import services as cc_services
+from apps.core.cards import render_card
+from apps.core.navigation import get_user_role_slug
 from apps.core.permissions import RolePermissionService, require_page_permission
 from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
@@ -226,18 +228,10 @@ def dashboard_view(request):
     user = request.user
     role = user.active_role
 
-    # Fetch common alerts and todays items
-    alerts_list = cc_services.alerts(user)
-    alerts_summary = cc_services.alerts_summary(user)
-    today_context = cc_services.today(user)
-
-    # Fetch unified dashboard metrics from the service
-    metrics = DashboardMetricsService.get_dashboard_metrics(user)
-
-    # Get user avatar initials
-    names = user.name.split()
-    avatar_initials = "".join([n[0].upper() for n in names[:2]]) if names else "US"
-
+    # The three redirects below need none of the page data, so they come first.
+    # They used to sit under it, which meant an Accountant, IA or Partner
+    # loading /dashboard paid for the full alerts + today + metrics build and
+    # then threw all of it away on the way to another URL.
     if role == "Accountant":
         return redirect("/accounts")
 
@@ -251,6 +245,15 @@ def dashboard_view(request):
         # partner-scoped landing page (their org's today/upcoming activities)
         # instead of building a second parallel dashboard.
         return redirect("/partner/today")
+
+    # Fetch common alerts and todays items
+    alerts_list = cc_services.alerts(user)
+    alerts_summary = cc_services.alerts_summary(user)
+    today_context = cc_services.today(user)
+
+    # Get user avatar initials
+    names = user.name.split()
+    avatar_initials = "".join([n[0].upper() for n in names[:2]]) if names else "US"
 
     if role == "CountryDirector":
         # Country Director Command Dashboard — the CD's national operating
@@ -909,6 +912,12 @@ def dashboard_view(request):
         }
         return render(request, "pages/dashboards/special_projects.html", context)
 
+    # Every role above returns from its own branch with its own figures, and
+    # this is the only reader of `metrics`. Built at the top of the view, it
+    # cost 54-62 queries and 73-110 ms that were discarded on every CD, PL,
+    # RVP, HR, CCEO and Project Coordinator dashboard load.
+    metrics = DashboardMetricsService.get_dashboard_metrics(user)
+
     context = {
         "alerts": alerts_list,
         "alerts_summary": alerts_summary,
@@ -934,6 +943,63 @@ def dashboard_view(request):
         "attention_items": metrics.get("attention_items", []),
         "recommended_action": metrics.get("recommended_action"),
         "use_dark_sidebar": False,
+    }
+
+    # Registry identities for this page's cards. The bodies below stay as they
+    # are; each section takes on its `data-card-key` and its canonical title
+    # through `components/registered_card_attrs.html`, so the duplication guard
+    # has something to grep and a rename is a one-line change in the registry.
+    recommended = metrics.get("recommended_action")
+    role_slug = get_user_role_slug(user)
+    context["cards"] = {
+        name: render_card(key, records, role_slug=role_slug).as_dict()
+        for name, key, records in (
+            ("todays_priorities", "admin_todays_priorities", metrics["priorities"]),
+            (
+                "planning_progress",
+                "admin_planning_progress",
+                metrics["weekly_progress"],
+            ),
+            (
+                "ssa_snapshot",
+                "admin_ssa_intervention_extremes",
+                [*metrics["best_interventions"], *metrics["weakest_interventions"]],
+            ),
+            ("team_targets", "admin_team_target_progress", metrics["team_targets"]),
+            ("priority_schools", "admin_priority_schools", metrics["priority_schools"]),
+            (
+                "cluster_performance",
+                "admin_cluster_performance",
+                metrics["cluster_performance"],
+            ),
+            (
+                "partner_support",
+                "admin_partner_support_overview",
+                metrics["support_overview"],
+            ),
+            (
+                "budget_snapshot",
+                "admin_budget_and_fund_request_snapshot",
+                metrics["budget_snapshot"],
+            ),
+            ("upcoming_today", "admin_upcoming_today", metrics["upcoming_today"]),
+            (
+                "attention_needed",
+                "admin_attention_needed",
+                metrics.get("attention_items", []),
+            ),
+            (
+                "recommended_action",
+                "admin_next_recommended_action",
+                [recommended] if recommended else [],
+            ),
+            ("quick_actions", "admin_quick_actions", [1]),
+            (
+                "execution_summary",
+                "admin_execution_summary",
+                metrics["execution_summary"],
+            ),
+        )
     }
 
     return render(request, "pages/dashboards/main.html", context)
