@@ -2356,3 +2356,49 @@ select:not([multiple]):not(.select-native) {
   box-shadow: var(--edify-focus-ring);
   color: var(--edify-text);
 }
+
+/* ── Admin Support View banner ─────────────────────────────────────────────
+   Shown on every business page an Admin is observing. Platform-wide
+   visibility with no business authority is an easy thing to forget when the
+   page looks exactly as it does for the role that owns it, so the page says
+   which mode it is in. The refusal that enforces it lives in
+   apps/admin_ops/middleware.py — a banner is a courtesy, not a control.
+   Uses the warning tone tokens, which carry their own light/dark values. */
+.edify-admin-support-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: var(--edify-warning-text);
+  background: var(--edify-warning-light);
+  border-block-end: 1px solid color-mix(in srgb, var(--edify-warning) 32%, transparent);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+}
+
+.edify-admin-support-banner svg {
+  inline-size: 15px;
+  block-size: 15px;
+  flex: 0 0 auto;
+}
+
+.edify-admin-support-banner strong { font-weight: 800; }
+
+.edify-admin-support-banner a {
+  margin-inline-start: auto;
+  flex: 0 0 auto;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: .2rem;
+}
+
+.edify-admin-support-banner a:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-sm);
+}
+
+@media (max-width: 640px) {
+  .edify-admin-support-banner { flex-wrap: wrap; }
+  .edify-admin-support-banner a { margin-inline-start: 0; }
+}

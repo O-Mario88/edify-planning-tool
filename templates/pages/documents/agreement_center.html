@@ -1,0 +1,105 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Policy Agreement — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
+
+  <div class="min-w-0">
+    <p class="edify-page-eyebrow">Required</p>
+    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Policy Agreement Center</h1>
+    <p class="text-[12px] text-slate-500 font-semibold mt-1">Please read each document and record your response. Until you do, the rest of Edify stays closed.</p>
+  </div>
+
+  {% for ack in pending %}
+  <section class="card p-4 space-y-3" aria-labelledby="policy-{{ ack.id }}-title">
+    <div>
+      <h2 id="policy-{{ ack.id }}-title" class="text-[15px] font-extrabold text-slate-800">{{ ack.document.title }}</h2>
+      <p class="text-[12px] font-semibold text-slate-500 mt-1">{{ ack.document.description }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1">
+        Version {{ ack.version.version_number }}
+        {% if ack.version.effective_date %}· effective {{ ack.version.effective_date|date:"d M Y" }}{% endif %}
+        {% if ack.due_date %}· due {{ ack.due_date|date:"d M Y" }}{% endif %}
+      </p>
+      {% if ack.document.acknowledgement_reason %}
+      <p class="text-[12px] font-semibold text-slate-600 mt-2"><strong>Why this is required:</strong> {{ ack.document.acknowledgement_reason }}</p>
+      {% endif %}
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="/documents/{{ ack.document.slug }}/" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold inline-flex items-center">Read this document</a>
+      {% if ack.document.download_allowed %}<a href="/documents/{{ ack.document.slug }}/download" class="h-9 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600 inline-flex items-center">Download</a>{% endif %}
+    </div>
+
+    <p class="edify-text-caption font-semibold text-slate-400">
+      Active reading time <span class="tabular-nums">{{ ack.active_reading_seconds }}s</span> across {{ ack.session_count }} session{{ ack.session_count|pluralize }}.
+      This records time the document was open and visible — it is not a measure of whether you read or understood it.
+    </p>
+
+    <form method="post" action="/api/documents/acknowledge/{{ ack.id }}" class="space-y-3 pt-3 border-t border-slate-50">
+      {% csrf_token %}
+      <p class="text-[12px] font-semibold text-slate-700">{{ ack.document.agreement_statement }}</p>
+
+      <fieldset class="space-y-2">
+        <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Your response</legend>
+        {% comment %}
+          Explicit radios with no preselected value: a default answer on an
+          agreement is an answer the platform gave on the reader's behalf.
+        {% endcomment %}
+        <label class="flex items-center gap-2 text-[13px] font-semibold text-slate-700">
+          <input type="radio" name="choice" value="agree" required> I Agree
+        </label>
+        <label class="flex items-center gap-2 text-[13px] font-semibold text-slate-700">
+          <input type="radio" name="choice" value="disagree" required> I Disagree
+        </label>
+      </fieldset>
+
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+          Comment{% if ack.document.comment_required %} (required){% endif %}
+        </span>
+        <textarea name="comment" rows="3" {% if ack.document.comment_required %}required{% endif %}
+                  placeholder="Anything you want HR to know. This is private."
+                  class="px-2.5 py-2 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface"></textarea>
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Type your full name</span>
+        <input name="typed_full_name" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      </label>
+
+      <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Submit response</button>
+    </form>
+
+    <form method="post" action="/api/documents/attest/{{ ack.id }}" class="pt-2 border-t border-slate-50 flex flex-col sm:flex-row sm:items-center gap-2">
+      {% csrf_token %}
+      <label class="sr-only" for="attest-{{ ack.id }}">How you reviewed this document</label>
+      <input id="attest-{{ ack.id }}" name="note" placeholder="Reviewed with a screen reader / a printed copy"
+             class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface flex-1">
+      <button type="submit" class="h-8 px-3 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 shrink-0">I reviewed this outside the viewer</button>
+    </form>
+  </section>
+  {% empty %}
+  <div class="card p-16 text-center">
+    <p class="text-[15px] font-semibold text-slate-600">Nothing is waiting for you</p>
+    <p class="text-[12px] font-medium text-slate-400 mt-1.5">You have responded to every policy required of you.</p>
+    <a href="/dashboard" class="inline-flex h-9 px-4 mt-3 rounded-control edify-primary-solid text-white text-[13px] font-bold items-center">Go to Edify</a>
+  </div>
+  {% endfor %}
+
+  {% if completed %}
+  <section class="card p-4" aria-labelledby="completed-title">
+    <h2 id="completed-title" class="text-[14px] font-extrabold text-slate-800 mb-2">Your completed responses</h2>
+    {% for ack in completed %}
+    <div class="py-2 border-b border-slate-50 last:border-0 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-[12px] font-bold text-slate-700">{{ ack.document.title }}</p>
+        <p class="edify-text-caption font-semibold text-slate-400">v{{ ack.version.version_number }} · {{ ack.responded_at|date:"d M Y" }}</p>
+      </div>
+      <span class="px-1.5 rounded-pill edify-text-caption font-bold {% if ack.state == 'agreed' %}bg-emerald-100 text-emerald-700{% else %}bg-rose-100 text-rose-700{% endif %} shrink-0">{{ ack.get_state_display }}</span>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

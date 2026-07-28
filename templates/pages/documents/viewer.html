@@ -1,0 +1,106 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ document.title }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-6xl mx-auto space-y-4"
+     x-data="documentViewer({ versionId: '{{ version.id|default:"" }}', pageCount: {{ version.page_count|default:0 }} })">
+
+  <div class="min-w-0">
+    {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
+    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">{{ document.title }}</h1>
+    <p class="text-[12px] text-slate-500 font-semibold mt-1">{{ document.description }}</p>
+  </div>
+
+  <div class="card p-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-semibold text-slate-600">
+    <span>Version <strong class="tabular-nums">{{ version.version_number }}</strong></span>
+    {% if version.effective_date %}<span>Effective {{ version.effective_date|date:"d M Y" }}</span>{% endif %}
+    <span>{{ document.get_document_type_display }}</span>
+    {% if version.page_count %}<span class="tabular-nums">{{ version.page_count }} pages</span>{% endif %}
+    <span class="ml-auto flex items-center gap-2">
+      {% if can_download %}<a href="/documents/{{ document.slug }}/download" class="h-8 px-3 rounded-control border border-slate-200 font-bold text-slate-600 inline-flex items-center">Download</a>{% endif %}
+      {% if can_print %}<button type="button" @click="recordPrint()" class="h-8 px-3 rounded-control border border-slate-200 font-bold text-slate-600">Print</button>{% endif %}
+      {% if acknowledgement %}<a href="/policy-agreement" class="h-8 px-3 rounded-control edify-primary-solid text-white font-bold inline-flex items-center">Return to Agreement</a>{% endif %}
+    </span>
+  </div>
+
+  {% if acknowledgement %}
+  <div class="card p-3 border-l-4 border-l-amber-400" role="status">
+    <p class="text-[12px] font-semibold text-slate-600">
+      <strong>This document requires your response.</strong>
+      {{ document.acknowledgement_reason }}
+      {% if acknowledgement.due_date %} Due {{ acknowledgement.due_date|date:"d M Y" }}.{% endif %}
+    </p>
+    <p class="edify-text-caption font-semibold text-slate-400 mt-1">
+      Active reading time <span class="tabular-nums" x-text="readingLabel"></span> · this measures time the document was open and visible, not whether it was read or understood.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if preview_ready %}
+  <div class="card overflow-hidden">
+    <iframe src="/documents/{{ document.slug }}/preview" title="{{ document.title }} document preview"
+            class="w-full h-[75vh] border-0"></iframe>
+  </div>
+  {% else %}
+  <div class="card p-16 text-center">
+    <p class="text-[15px] font-semibold text-slate-600">Preview Unavailable</p>
+    <p class="text-[12px] font-medium text-slate-400 mt-1.5">
+      {% if version.preview_error %}This file could not be converted for in-app viewing. The original is unchanged and still available.{% else %}A preview is still being generated.{% endif %}
+    </p>
+    {% if can_download %}<a href="/documents/{{ document.slug }}/download" class="inline-flex h-9 px-4 mt-3 rounded-control edify-primary-solid text-white text-[13px] font-bold items-center">Download the original</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('documentViewer', ({ versionId, pageCount }) => ({
+      activeSeconds: 0,
+      timer: null,
+      get readingLabel() {
+        const m = Math.floor(this.activeSeconds / 60), s = this.activeSeconds % 60;
+        return m ? `${m}m ${s}s` : `${s}s`;
+      },
+      init() {
+        if (!versionId) return;
+        /* Time accrues only while this tab is visible. A document left open on
+           a locked laptop is not being read, and counting it would turn the
+           engagement figure into a number nobody should trust. */
+        this.timer = setInterval(() => {
+          if (document.visibilityState !== 'visible') return;
+          this.beat();
+        }, 15000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') this.beat();
+        });
+        this.beat();
+      },
+      destroy() { if (this.timer) clearInterval(this.timer); },
+      async beat() {
+        try {
+          const body = new URLSearchParams({ page: String(pageCount || 1) });
+          const res = await fetch(`/api/documents/engagement/${versionId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': this.csrf(), 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+          });
+          if (res.ok) { const data = await res.json(); this.activeSeconds = data.active_seconds; }
+        } catch (e) { /* engagement tracking must never break the reader */ }
+      },
+      async recordPrint() {
+        try {
+          await fetch(`/documents/{{ document.slug }}/print`, {
+            method: 'POST', headers: { 'X-CSRFToken': this.csrf() },
+          });
+        } catch (e) { /* ignore */ }
+        window.print();
+      },
+      csrf() {
+        const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+      },
+    }));
+  });
+</script>
+{% endblock %}

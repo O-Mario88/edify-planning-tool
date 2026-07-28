@@ -219,6 +219,11 @@ button, a, select, input, textarea {
 <!-- Alpine.js Components -->
     <script src="{% static 'js/alpine-components.js' %}?v=20260727barcharts2"></script>
 
+<!-- Platform defect beacon: dead buttons, script errors and failed HTMX
+     exchanges are invisible to the server, so the page reports them. Each
+     unique defect becomes one System Incident for the Admin. -->
+<script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260728beacon1"></script>
+
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
 

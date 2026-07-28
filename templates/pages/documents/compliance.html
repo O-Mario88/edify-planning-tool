@@ -1,0 +1,104 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Policy Compliance — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-[1500px] mx-auto space-y-6">
+  <div class="min-w-0">
+    <p class="edify-page-eyebrow">People</p>
+    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Policy and Manual Compliance</h1>
+    <p class="text-[12px] text-slate-500 font-semibold mt-1">{{ scope_note }}</p>
+  </div>
+
+  {% include "components/kpi_strip.html" with items=kpis title="Policy compliance" %}
+
+  <div class="flex flex-wrap items-center gap-4 text-[12px] font-semibold text-slate-500">
+    <span>Required <strong class="tabular-nums text-slate-700">{{ counts.required }}</strong></span>
+    <span>Pending <strong class="tabular-nums text-slate-700">{{ counts.pending }}</strong></span>
+    <span>Declined <strong class="tabular-nums {% if counts.declined %}text-rose-600{% else %}text-slate-700{% endif %}">{{ counts.declined }}</strong></span>
+  </div>
+
+  <form method="get" class="card p-3 flex flex-wrap items-end gap-2.5">
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Policy</span>
+      <select name="document" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+        <option value="">All policies</option>
+        {% for p in policies %}<option value="{{ p.id }}" {% if filters.document == p.id %}selected{% endif %}>{{ p.title }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</span>
+      <select name="state" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+        <option value="">All</option>
+        <option value="pending" {% if filters.state == "pending" %}selected{% endif %}>Pending</option>
+        <option value="agreed" {% if filters.state == "agreed" %}selected{% endif %}>Agreed</option>
+        <option value="disagreed" {% if filters.state == "disagreed" %}selected{% endif %}>Disagreed</option>
+      </select>
+    </label>
+    <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Apply</button>
+  </form>
+
+  <div class="card overflow-x-auto">
+    <table class="w-full text-left">
+      <caption class="sr-only">Policy acknowledgement status within your scope</caption>
+      <thead>
+        <tr class="border-b border-slate-100">
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">User</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Role</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Policy</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Version</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">First Opened</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Active Reading Time</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Viewer Completion</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Acknowledgement</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Comment</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Due</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Next Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for row in rows %}
+        <tr class="text-[12px] font-medium text-slate-600{% if row.overdue %} bg-rose-50/40{% endif %}">
+          <td class="px-3 py-2.5 font-semibold text-slate-700">{{ row.user }}</td>
+          <td class="px-3 py-2.5">{{ row.role }}</td>
+          <td class="px-3 py-2.5">{{ row.policy }}</td>
+          <td class="px-3 py-2.5 tabular-nums">{{ row.version }}</td>
+          <td class="px-3 py-2.5 tabular-nums">{{ row.first_opened|date:"d M" }}</td>
+          <td class="px-3 py-2.5 tabular-nums">{{ row.active_reading_time }}</td>
+          <td class="px-3 py-2.5">{{ row.viewer_completion }}</td>
+          <td class="px-3 py-2.5">{{ row.state }}</td>
+          <td class="px-3 py-2.5">{{ row.comment_status }}</td>
+          <td class="px-3 py-2.5 tabular-nums">{% if row.due_date %}{{ row.due_date|date:"d M" }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2.5">{{ row.next_action }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="11" class="p-12 text-center text-[12px] font-medium text-slate-400">No acknowledgement records in your scope yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if can_read_comments %}
+  <section class="card p-4" aria-labelledby="comment-queue-title">
+    <h2 id="comment-queue-title" class="text-[14px] font-extrabold text-slate-800 mb-1">Policy Comments</h2>
+    <p class="edify-text-caption font-semibold text-slate-400 mb-2">Private to HR and the Country Director. A line manager sees whether their team answered, never what they wrote.</p>
+    {% for comment in comments %}
+    <div class="py-3 border-b border-slate-50 last:border-0 space-y-2">
+      <p class="edify-text-caption font-semibold text-slate-400">{{ comment.document.title }} v{{ comment.version.version_number }} · {{ comment.author_role }} · {{ comment.created_at|date:"d M Y" }} · {{ comment.get_status_display }}</p>
+      <p class="text-[12px] font-semibold text-slate-700">{{ comment.body }}</p>
+      {% if comment.response %}<p class="text-[12px] font-semibold text-slate-500">Response: {{ comment.response }}</p>{% endif %}
+      <form method="post" action="/policy-compliance/comments/{{ comment.id }}" class="flex flex-col sm:flex-row sm:items-center gap-2">
+        {% csrf_token %}
+        <label class="sr-only" for="resp-{{ comment.id }}">Response to this comment</label>
+        <input id="resp-{{ comment.id }}" name="response" placeholder="Reply to this person" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface flex-1">
+        <label class="flex items-center gap-1.5 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="resolve"> Resolve</label>
+        <button type="submit" class="h-8 px-3 rounded-control edify-primary-solid text-white text-[12px] font-bold shrink-0">Send</button>
+      </form>
+    </div>
+    {% empty %}
+    <p class="text-[12px] font-medium text-slate-400 py-6 text-center">No comments awaiting review.</p>
+    {% endfor %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

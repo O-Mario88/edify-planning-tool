@@ -252,6 +252,96 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
             "the previous implementations both returned 0."
         ),
     ),
+    # ── Upload Center ────────────────────────────────────────────────────────
+    MetricSpec(
+        key="uploads_awaiting_review",
+        label="Awaiting Review",
+        definition=(
+            "Records in the Upload Center whose next action is a review: a "
+            "staged import batch, or a document submitted and not yet approved."
+        ),
+        question="What is waiting on somebody to look at it?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.documents.upload_center.UploadCenterService",
+        source_models=(
+            "documents.DocumentAsset",
+            "schools.SchoolImportBatch",
+            "schools.SSAImportBatch",
+        ),
+        numerator="Authorised rows whose next action is a review step",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="Only the categories the viewer's role can see",
+        owner_page="uploads",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="uploads",
+        notes=(
+            "Counted across adapters, so one number covers imports and "
+            "documents rather than a tile per source."
+        ),
+    ),
+    MetricSpec(
+        key="uploads_documents_published",
+        label="Published",
+        definition="Documents in the library that are published or effective.",
+        question="How much of the library is live?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.documents.upload_center.UploadCenterService",
+        source_models=("documents.DocumentAsset",),
+        numerator="DocumentAsset rows in a readable status",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="Documents the viewer administers or is an audience for",
+        owner_page="uploads",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="uploads",
+    ),
+    # ── Policy compliance ────────────────────────────────────────────────────
+    MetricSpec(
+        key="policy_acknowledgements_accepted",
+        label="Accepted",
+        definition=(
+            "People who have agreed to the current version of a mandatory "
+            "document, within the viewer's scope."
+        ),
+        question="Who has accepted the policies required of them?",
+        category=Category.PROGRESS,
+        unit=Unit.COUNT,
+        service="apps.documents.compliance.PolicyComplianceService",
+        source_models=("documents.DocumentAcknowledgement",),
+        numerator="Acknowledgements in the agreed state",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="HR: their remit · CD: their country · PL: supervised staff",
+        owner_page="policy_compliance",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="policy_compliance",
+        notes=(
+            "Keyed on the version, so agreeing to v1 does not count as " "accepting v2."
+        ),
+    ),
+    MetricSpec(
+        key="policy_acknowledgements_overdue",
+        label="Overdue",
+        definition=(
+            "Pending acknowledgements whose due date has passed, within the "
+            "viewer's scope."
+        ),
+        question="Who has run out of time to respond?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.documents.compliance.PolicyComplianceService",
+        source_models=("documents.DocumentAcknowledgement",),
+        numerator="Pending acknowledgements with due_date in the past",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="HR: their remit · CD: their country · PL: supervised staff",
+        owner_page="policy_compliance",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="policy_compliance",
+    ),
 )
 
 
