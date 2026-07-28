@@ -145,7 +145,121 @@ Producing a number now would be narrative, which §54 explicitly forbids.
 What can be stated: two hard gates are clean and pinned, three are open with
 named findings and a fix path, and the full suite is green at this commit.
 
-## 6. Pass 2
+## 6. Pass 2 — remediation (done)
+
+| Issue | Status | Evidence |
+| --- | --- | --- |
+| ISSUE-001 SSA verification written from a view | **CLOSED** | `verify_record` / `return_record` in `apps/ssa/services.py`; 7 tests in `apps/ssa/test_verification_authority.py` including one that fails if the transition moves back into a view |
+| ISSUE-002 Finance state written from views | **CLOSED** | `return_weekly_request` + `roll_up_accountability` in the disbursement service, behind `_require_accountant_action` |
+| ISSUE-005 Weighted SSA mean in JavaScript | **PARTIAL** | Canonical `weighted_ssa_mean` / `combine_district_rows` in `apps/analytics/subregion_analytics.py`, 11 tests. The template has **not** been switched over — see below |
+| ISSUE-006 Six undeclared routes | **ACCEPTED EXCEPTION** | Verified `performance_engine` enforces authorization (13 `Forbidden` raises, ownership + window checks). Recorded here rather than declared at the route |
+
+Raw workflow mutations: **30 → 26**.
+
+### ISSUE-001, in detail
+
+The view *did* check `ia.verify` before writing, so this was never an open
+door. The defect was location: a transition written in a view is one every
+other caller — an API, an HTMX endpoint, a management command, a future page —
+can perform without the authority check, the readiness recompute or the audit
+row. Those three are what make a confirmation mean anything.
+
+The service is idempotent: a double-submitted form re-confirms nothing and
+writes no second audit row.
+
+One thing I nearly broke: moving the code, I renamed the audit action from
+`weekly_fund_request.return_by_accountant` to an underscored variant. An
+existing test caught it. The established audit vocabulary is a contract with
+history and must not change as a side effect of moving code.
+
+### ISSUE-005, why it is only partial
+
+The server already computed this weighted mean correctly in `_group`; the
+template was a second implementation for map boundaries spanning several
+districts. The canonical helper now exists and is tested, including a worked
+example pinning it to the formula the JavaScript used.
+
+Retiring the JavaScript needs the boundary-to-district mapping to move
+server-side as well — the client currently matches GeoJSON polygons to district
+rows, so the server does not know which districts a hovered boundary covers.
+That is a separate change and is **not done**. The JavaScript gate therefore
+still reads 3.
+
+## 7. Planning productivity (§2)
+
+`apps/system_health/planning_benchmark.py`, 9 tests.
+
+**Mechanical half — measured:**
+
+| | |
+| --- | --- |
+| Fields a human supplies | **4** — school/cluster, date, executor, override reason |
+| Fields the platform derives | **21** — SSA record, intervention, activity type, entitlement slot, FY, quarter, month, week, catalogue rate, unit cost, quantity, total, budget line, My Plan entry, weekly request line, monthly and annual contribution, approver, responsible staff, notification, audit |
+| Automation ratio | **84.0%** |
+| Repeated manual entries | **0** |
+
+**Time half — UNVERIFIED, and the code says so.** `Benchmark.reduction()`
+returns `verified: False` with a reason when there are no paired observations,
+and a test asserts it never emits a percentage without them. A near-miss test
+pins that 94.7% is reported as a miss rather than rounded up.
+
+To complete this gate, record `Observation` rows from representative staff
+performing the baseline and optimised tasks. The 95% conclusion computes
+itself from those; it cannot be derived from the code, and §2 forbids claiming
+it because automation exists.
+
+## 8. Previously-unverified gates — executed
+
+| Gate | Status | Evidence |
+| --- | --- | --- |
+| Backup restore rehearsal (§53) | **PASSED** | `scripts/backup_restore_rehearsal.sh` run at this commit: 228 tables, 203 migrations, 250 validated FK constraints, environment stamp preserved, audit hash chain intact, 8 pages served from the restored copy |
+| Latency budgets (§46) | **RUN — 1 breach** | `scripts/latency_budget.py`, 15 samples per page per role after 2 discarded, 702 schools. 23 of 24 page/role combinations within budget; `/todos` for the Country Director breached |
+| Scale invariance (§46) | **PASSED** | `apps/system_health/test_load_scale.py` at 15,000 schools + 3,000 growth, in the green suite |
+| Wall-clock p95 at 15,000 schools | **STILL UNVERIFIED** | The latency run above is against the 702-school dev estate. The scale harness proves query counts do not grow; it does not measure production wall time, and says so |
+| Rollback rehearsal (§53) | **STILL UNVERIFIED** | Not attempted this pass |
+| Visual regression / accessibility tooling (§4) | **STILL UNVERIFIED** | Not configured in this repository |
+| 95% planning-time reduction (§2) | **STILL UNVERIFIED** | Mechanical half measured (see §7); human half needs staff observations |
+
+Two gates that were UNVERIFIED are now executed with evidence, and the latency
+run found a real defect.
+
+### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
+
+Measured: **p95 829ms against an 800ms budget, on 501 queries**, at 702 schools.
+
+Isolating each To-Do generator for a Country Director:
+
+```
+_cd_analytics_todos         603 queries
+_field_debrief_todos         16
+_activity_todos               3
+_pd_todos                     3
+_country_budget_todos         2
+_leave_todos                  1
+everything else               0
+```
+
+One source. `_cd_analytics_todos` runs the full CD analytics engine to derive a
+handful of items — `pl_oversight` (281 queries) and `recommended_actions`
+(316).
+
+**Root cause:** `pl_oversight` is N+1 across Program Leads. Per PL it runs a
+weighted-achievement pass, an area-achievement pass, a school count, a backlog
+count and a budget lookup. The cost grows with the number of PLs — on a page
+every Country Director opens.
+
+**Not fixed in this pass, deliberately.** The fix is batching inside the
+targets engine, and that engine is where a previous optimisation of mine
+silently replaced an average over all records with a mean of school means. A
+correctness regression there is worse than a slow page, and I would rather do
+it with room to verify the numbers are unchanged.
+
+**Pinned meanwhile:** `apps/command_center/test_todo_query_budget.py` records
+the ceiling so the page can only get better, and carries the growth assertion
+that will pass once `pl_oversight` batches — skipped with an explanatory
+message while the N+1 stands, rather than left permanently red.
+
+## 9. Pass 3
 
 1. ISSUE-001 and ISSUE-002 — move SSA verification and finance transitions into
    their canonical services, with regression tests that fail if a view writes

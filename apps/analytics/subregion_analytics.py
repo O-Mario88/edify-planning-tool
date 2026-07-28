@@ -174,6 +174,76 @@ def district_frame(
     return base
 
 
+def weighted_ssa_mean(rows) -> float | None:
+    """The n-weighted mean SSA score across a set of district rows.
+
+    One definition, because there were two. `_group` below weights each
+    district's mean by the assessments behind it -- a district with 3 confirmed
+    assessments must not move a sub-region as much as one with 200 -- and the
+    regional map template re-implemented the same arithmetic in JavaScript for
+    boundaries that span several districts. Section 40 permits no authoritative
+    business analytic in JavaScript, and two implementations of a weighted mean
+    is one more than can be kept honest.
+
+    Returns None, never 0, when nothing has been assessed: "no confirmed
+    assessment" and "an average of zero" are different facts.
+    """
+    measured = [
+        row
+        for row in rows
+        if row.get("ssa_avg") is not None and (row.get("ssa_n") or 0) > 0
+    ]
+    weight = sum(row["ssa_n"] for row in measured)
+    if not weight:
+        return None
+    total = sum(float(row["ssa_avg"]) * row["ssa_n"] for row in measured)
+    return round(total / weight, 2)
+
+
+#: Fields that simply add when several districts are combined.
+_ADDITIVE_FIELDS = (
+    "schools",
+    "clusters",
+    "core_schools",
+    "ssa_done",
+    "ssa_total",
+    "ssa_n",
+    "trained",
+    "visited",
+    "teachers_trained",
+    "leaders_trained",
+)
+
+
+def combine_district_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Combine several district rows into one, for a map boundary spanning them.
+
+    The counts add; the SSA average is re-weighted rather than averaged again.
+    Cohort averages (cluster, core) ship no independent sample size, so when
+    more than one district is combined they are left absent rather than given
+    an invented weighting -- the same decision the JavaScript made, now made
+    once, on the server, where it can be tested.
+    """
+    combined: dict[str, Any] = {field: 0 for field in _ADDITIVE_FIELDS}
+    combined["matched_keys"] = [row.get("key") for row in rows if row.get("key")]
+    if not rows:
+        combined.update(ssa_avg=None, ssa_avg_cluster=None, ssa_avg_core=None)
+        return combined
+
+    for row in rows:
+        for field in _ADDITIVE_FIELDS:
+            combined[field] += row.get(field) or 0
+
+    combined["ssa_avg"] = weighted_ssa_mean(rows)
+    if len(rows) == 1:
+        combined["ssa_avg_cluster"] = rows[0].get("ssa_avg_cluster")
+        combined["ssa_avg_core"] = rows[0].get("ssa_avg_core")
+    else:
+        combined["ssa_avg_cluster"] = None
+        combined["ssa_avg_core"] = None
+    return combined
+
+
 def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
     """Aggregate the district frame up to `key` (subregion / region)."""
     if frame.empty:

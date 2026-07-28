@@ -1624,3 +1624,102 @@ def _notify_requester(fr, event, title, body):
         )
     except Exception:  # noqa: BLE001
         pass
+
+
+# ── Accountant transitions that used to live in the view ─────────────────────
+
+
+@transaction.atomic
+def return_weekly_request(principal, weekly_request, reason: str):
+    """Send a confirmed weekly advance back for correction.
+
+    Moved out of finance_views: the view re-stated the Accountant check as an
+    inline `active_role != "Accountant"` string comparison, which is a second
+    definition of an authority this module already owns. One gate, one place --
+    otherwise the two drift and the weaker one becomes the way in.
+    """
+    from apps.audit.services import log as audit_log
+    from apps.fund_requests.models import AdvanceRequestStatus
+
+    _require_accountant_action(principal)
+    if not (reason or "").strip():
+        raise BadRequest("A return reason is required.")
+    if weekly_request.status != "confirmed_for_advance":
+        raise BadRequest(
+            "Only a confirmed request can be returned by the accountant — this "
+            f"one is already {weekly_request.get_status_display()}."
+        )
+
+    weekly_request.status = "returned_by_accountant"
+    weekly_request.confirmed_at = None
+    weekly_request.save(update_fields=["status", "confirmed_at", "updated_at"])
+
+    # Only advances still awaiting disbursement move with it. One already
+    # disbursed or accounted on a sibling line must never be silently reopened.
+    moved = 0
+    for line in weekly_request.lines.select_related("activity_budget_line"):
+        advance = line.activity_budget_line.advance_requests.filter(
+            status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE
+        ).first()
+        if advance:
+            advance.status = AdvanceRequestStatus.RETURNED
+            advance.last_note = reason
+            advance.save(update_fields=["status", "last_note", "updated_at"])
+            moved += 1
+
+    audit_log(
+        # The established audit vocabulary. Moving this transition into the
+        # service must not rename the event that already exists in history.
+        action="weekly_fund_request.return_by_accountant",
+        subject_kind="WeeklyFundRequest",
+        subject_id=weekly_request.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        success=True,
+        reason=reason,
+        payload={
+            "reason": reason,
+            "total_amount": weekly_request.total_amount,
+            "advances_returned": moved,
+        },
+    )
+    return weekly_request
+
+
+def roll_up_accountability(weekly_request, advances) -> bool:
+    """Project child advance state onto the parent weekly request.
+
+    A projection, not an independent transition: the parent becomes
+    `accounted` because every child already is. Kept here beside the
+    transitions it summarises so the derivation has one definition.
+    """
+    if not advances:
+        return False
+    if not all(a.status == "accounted" for a in advances):
+        return False
+
+    codes = sorted(
+        {a.accountability_netsuite_id for a in advances if a.accountability_netsuite_id}
+    )
+    weekly_request.status = "accounted"
+    weekly_request.accountability_netsuite_id = ", ".join(codes)[:128] or None
+    weekly_request.accountability_submitted_at = (
+        weekly_request.accountability_submitted_at
+        or min(
+            (
+                a.accountability_submitted_at
+                for a in advances
+                if a.accountability_submitted_at
+            ),
+            default=None,
+        )
+    )
+    weekly_request.save(
+        update_fields=[
+            "status",
+            "accountability_netsuite_id",
+            "accountability_submitted_at",
+            "updated_at",
+        ]
+    )
+    return True

@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from apps.core.redirects import local_redirect
-from apps.audit.services import log as audit_log
 from apps.core.permissions import (
     has_permission,
     render_access_denied,
@@ -337,47 +336,26 @@ def ssa_verification_queue_view(request):
         if rec is None:
             raise Http404("SSA record not found.")
 
-        if action == "verify":
-            rec.verification_status = VerificationStatus.CONFIRMED.value
-            rec.verified_by_user_id = request.user.user_id
-            rec.verified_at = timezone.now()
-            rec.save()
+        # The transition itself lives in apps.ssa.services: the authority
+        # check, the readiness recompute and the audit row belong to it, not
+        # to whichever page happens to be rendering the queue.
+        from apps.core.exceptions import Forbidden
+        from apps.ssa.services import return_record, verify_record
 
-            # Update school status
-            from apps.ssa.services import _recompute_readiness
-
-            _recompute_readiness(rec.school)
-
-            audit_log(
-                action="ssa_verify",
-                subject_kind="SsaRecord",
-                subject_id=rec.id,
-                actor_id=request.user.user_id,
-                actor_role=getattr(request.user, "active_role", None),
-                payload={"schoolId": rec.school_id, "schoolName": rec.school.name},
-            )
-            messages.success(
-                request, f"SSA for '{rec.school.name}' has been successfully verified."
-            )
-        elif action == "return":
-            rec.verification_status = VerificationStatus.RETURNED.value
-            rec.save()
-
-            from apps.ssa.services import _recompute_readiness
-
-            _recompute_readiness(rec.school)
-
-            audit_log(
-                action="ssa_return",
-                subject_kind="SsaRecord",
-                subject_id=rec.id,
-                actor_id=request.user.user_id,
-                actor_role=getattr(request.user, "active_role", None),
-                payload={"schoolId": rec.school_id, "schoolName": rec.school.name},
-            )
-            messages.warning(
-                request, f"SSA for '{rec.school.name}' returned for correction."
-            )
+        try:
+            if action == "verify":
+                verify_record(rec, request.user)
+                messages.success(
+                    request,
+                    f"SSA for '{rec.school.name}' has been successfully verified.",
+                )
+            elif action == "return":
+                return_record(rec, request.user, request.POST.get("reason", ""))
+                messages.warning(
+                    request, f"SSA for '{rec.school.name}' returned for correction."
+                )
+        except Forbidden as exc:
+            return render_access_denied(request, str(exc))
 
         return redirect("/ssa/verification/")
 

@@ -32,9 +32,16 @@ class GateBaselineTests(SimpleTestCase):
     #: docs/production-readiness-ledger.md. The number may fall; it must never
     #: rise without the ledger entry that explains why.
     KNOWN_OPEN = {
+        # Still 3: the canonical server-side weighted mean now exists and is
+        # tested (apps/analytics/test_weighted_ssa_mean.py), but the regional
+        # map template has not yet been switched over to it. Retiring the
+        # JavaScript needs the boundary-to-district mapping to move server-side
+        # too, which is a separate change.
         "javascript_business_maths": 3,
         "unguarded_page_route": 6,
-        "raw_workflow_mutation": 30,
+        # Was 30. SSA verification and the accountant's return moved into their
+        # canonical services; the rest are triaged in the ledger.
+        "raw_workflow_mutation": 26,
     }
 
     def test_the_clean_gates_are_still_clean(self):
@@ -133,10 +140,18 @@ class ScannerBehaviourTests(SimpleTestCase):
             self.assertIn(name, _EXEMPT_VIEW_NAMES)
 
     def test_the_workflow_scanner_finds_state_written_from_a_view(self):
-        """The gate that matters most: SSA verification set outside IA's service."""
+        """The scanner must still be able to see this class of defect.
+
+        It originally pointed at ssa_views.py, which set SSA verification
+        status inline. That transition now lives in apps.ssa.services, so the
+        assertion moved to a file that still has one -- and this test will move
+        again as each is fixed, which is the point.
+        """
         findings = scan_raw_workflow_mutations()
         paths = {f.path for f in findings}
-        self.assertIn("apps/frontend/views/ssa_views.py", paths)
+        self.assertIn("apps/frontend/views/core_schools_views.py", paths)
+        # The one that is fixed must stay fixed.
+        self.assertNotIn("apps/frontend/views/ssa_views.py", paths)
 
     def test_every_declared_gate_has_a_scanner(self):
         self.assertEqual(
