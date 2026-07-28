@@ -228,11 +228,7 @@ def school_directory_view(request):
             | Q(uploaded_district_text__icontains=q)
             | Q(uploaded_sub_county_text__icontains=q)
             | Q(account_owner_name_raw__icontains=q)
-            | Q(
-                cluster_id__in=Cluster.objects.filter(name__icontains=q).values(
-                    "id"
-                )
-            )
+            | Q(cluster_id__in=Cluster.objects.filter(name__icontains=q).values("id"))
         )
     if region_id:
         filtered_qs = filtered_qs.filter(region_id=region_id)
@@ -513,9 +509,7 @@ def school_directory_view(request):
     )
     regions = Region.objects.all().order_by("name")
     districts = (
-        District.objects.filter(id__in=scoped_district_ids)
-        .distinct()
-        .order_by("name")
+        District.objects.filter(id__in=scoped_district_ids).distinct().order_by("name")
     )
     sub_counties = (
         SubCounty.objects.filter(id__in=scoped_sub_county_ids)

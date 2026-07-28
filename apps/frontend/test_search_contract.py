@@ -37,9 +37,7 @@ class SchoolDirectorySearchContractTest(TestCase):
 
     def setUp(self):
         self.region = Region.objects.create(name="Contract Region")
-        self.district = District.objects.create(
-            name="Buikwe", region=self.region
-        )
+        self.district = District.objects.create(name="Buikwe", region=self.region)
         self.other_district = District.objects.create(
             name="Kayunga", region=self.region
         )
@@ -117,9 +115,7 @@ class SchoolDirectorySearchContractTest(TestCase):
 
     def test_search_composes_with_filters_instead_of_replacing_them(self):
         """A filtered view stays filtered once a query is typed into it."""
-        in_scope = listed_count(
-            self._get(q="Primary", district=str(self.district.id))
-        )
+        in_scope = listed_count(self._get(q="Primary", district=str(self.district.id)))
         self.assertEqual(in_scope, 1)
 
         # The same query against the other district must not return the first.
@@ -187,9 +183,7 @@ class VerificationQueueSearchContractTest(TestCase):
 
     def setUp(self):
         self.region = Region.objects.create(name="Queue Region")
-        self.district = District.objects.create(
-            name="Nakaseke", region=self.region
-        )
+        self.district = District.objects.create(name="Nakaseke", region=self.region)
         self.school = School.objects.create(
             school_id="SC-QUEUE-1",
             name="Semuto Parents Primary",
@@ -270,9 +264,7 @@ class AnalyticsSearchContractTest(TestCase):
 
     def setUp(self):
         self.region = Region.objects.create(name="Analytics Region")
-        self.district = District.objects.create(
-            name="Wakiso", region=self.region
-        )
+        self.district = District.objects.create(name="Wakiso", region=self.region)
         School.objects.create(
             school_id="SC-ANALYTICS-1",
             name="Nansana Progressive Primary",
@@ -319,9 +311,7 @@ class NoDuplicatePersistentSearchTest(TestCase):
     plus a screen reader announcing a search landmark twice.
     """
 
-    INPUT = re.compile(
-        r'<input[^>]*(?:type="search"|name="q")[^>]*>', re.IGNORECASE
-    )
+    INPUT = re.compile(r'<input[^>]*(?:type="search"|name="q")[^>]*>', re.IGNORECASE)
 
     def setUp(self):
         self.admin = User.objects.create_user(
@@ -370,9 +360,7 @@ class FilterOptionsContractTest(TestCase):
 
     def setUp(self):
         self.region = Region.objects.create(name="Options Region")
-        self.populated = District.objects.create(
-            name="Mityana", region=self.region
-        )
+        self.populated = District.objects.create(name="Mityana", region=self.region)
         # A real district that holds none of this directory's schools.
         self.empty = District.objects.create(name="Amudat", region=self.region)
         self.sub_county = SubCounty.objects.create(
@@ -425,9 +413,7 @@ class CountsAgreeWithResultsTest(TestCase):
 
     def setUp(self):
         self.region = Region.objects.create(name="Counts Region")
-        self.district = District.objects.create(
-            name="Kiboga", region=self.region
-        )
+        self.district = District.objects.create(name="Kiboga", region=self.region)
         for i in range(6):
             School.objects.create(
                 school_id=f"SC-COUNT-{i}",
@@ -451,9 +437,7 @@ class CountsAgreeWithResultsTest(TestCase):
         listed = listed_count(body)
         flat = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", body))
         headline = re.search(r"TOTAL SCHOOLS ([\d,]+)", flat, re.IGNORECASE)
-        return listed, (
-            int(headline.group(1).replace(",", "")) if headline else None
-        )
+        return listed, (int(headline.group(1).replace(",", "")) if headline else None)
 
     def test_headline_agrees_with_the_list_under_every_narrowing(self):
         for label, params in (
@@ -486,9 +470,7 @@ class CountsAgreeWithResultsTest(TestCase):
                 )
 
         paged, _ = self._both(school_type="client", page=2)
-        self.assertEqual(
-            paged, base, "paging changed how many records matched"
-        )
+        self.assertEqual(paged, base, "paging changed how many records matched")
 
     def test_tab_partitions_sum_to_the_filtered_total(self):
         """Complementary tabs must account for every filtered record, once."""

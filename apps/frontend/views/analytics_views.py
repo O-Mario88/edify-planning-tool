@@ -77,9 +77,7 @@ def analytics_dashboard_view(request):
     # Cluster carries its own district, so it scopes through the same set
     # rather than through School.cluster_id, which is a CharField.
     clusters = (
-        Cluster.objects.filter(
-            district_id__in=_scoped_schools.values("district_id")
-        )
+        Cluster.objects.filter(district_id__in=_scoped_schools.values("district_id"))
         .distinct()
         .order_by("name")
     )

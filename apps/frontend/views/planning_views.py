@@ -339,9 +339,9 @@ def planning_dashboard_view(request):
     # 3. Dropdowns options — only places holding schools this user can plan for.
     from apps.core.scoping import resolve_user_scope, school_queryset
 
-    _planning_schools = school_queryset(
-        resolve_user_scope(request.user)
-    ).filter(deleted_at__isnull=True)
+    _planning_schools = school_queryset(resolve_user_scope(request.user)).filter(
+        deleted_at__isnull=True
+    )
 
     districts = (
         District.objects.filter(id__in=_planning_schools.values("district_id"))
@@ -359,9 +359,9 @@ def planning_dashboard_view(request):
     else:
         sub_counties = (
             SubCounty.objects.filter(
-                id__in=_planning_schools.exclude(
-                    sub_county__isnull=True
-                ).values("sub_county_id")
+                id__in=_planning_schools.exclude(sub_county__isnull=True).values(
+                    "sub_county_id"
+                )
             )
             .distinct()
             .order_by("name")

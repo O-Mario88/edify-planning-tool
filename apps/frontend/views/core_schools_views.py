@@ -220,25 +220,23 @@ def core_schools_view(request):
     _core_district_ids = core_schools_qs.values("district_id")
     regions = Region.objects.all().order_by("name")
     districts = (
-        District.objects.filter(id__in=_core_district_ids)
-        .distinct()
-        .order_by("name")
+        District.objects.filter(id__in=_core_district_ids).distinct().order_by("name")
     )
     # Owners of the core schools in view, not every staff record in the system.
     staff_members = (
         StaffProfile.objects.filter(
-            user_id__in=core_schools_qs.exclude(
-                account_owner_id__isnull=True
-            ).values("account_owner_id")
+            user_id__in=core_schools_qs.exclude(account_owner_id__isnull=True).values(
+                "account_owner_id"
+            )
         )
         .select_related("user")
         .order_by("user__name")
     )
     partners = (
         Partner.objects.filter(
-            id__in=PartnerAssignment.objects.filter(
-                school__school_type="core"
-            ).values("partner_id")
+            id__in=PartnerAssignment.objects.filter(school__school_type="core").values(
+                "partner_id"
+            )
         )
         .distinct()
         .order_by("name")

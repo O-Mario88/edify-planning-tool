@@ -136,9 +136,9 @@ class AnalyticsDashboardService:
             from apps.accounts.models import User as _User
 
             staff_name_ids = set(
-                StaffProfile.objects.filter(
-                    user__name__icontains=search_q
-                ).values_list("id", flat=True)
+                StaffProfile.objects.filter(user__name__icontains=search_q).values_list(
+                    "id", flat=True
+                )
             ) | set(
                 _User.objects.filter(name__icontains=search_q).values_list(
                     "id", flat=True
