@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import io
 import zipfile
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
@@ -99,7 +99,7 @@ class DocumentTestBase(TestCase):
         document = DocumentService.create(self.hr, data)
         DocumentService.set_audience(self.hr, document, [{"role": "CCEO"}])
         version = DocumentService.add_version(
-            self.hr, document, _pdf(), {"effective_date": date.today()}
+            self.hr, document, _pdf(), {"effective_date": timezone.localdate()}
         )
         return document, version
 
@@ -280,7 +280,7 @@ class LifecycleTests(DocumentTestBase):
             },
         )
         version = DocumentService.add_version(
-            self.hr, document, _pdf(), {"effective_date": date.today()}
+            self.hr, document, _pdf(), {"effective_date": timezone.localdate()}
         )
         DocumentService.submit_for_review(self.hr, document)
         DocumentService.review(self.hr, version, True)
@@ -349,7 +349,7 @@ class LifecycleTests(DocumentTestBase):
         document, version = self._policy()
         self._publish(document, version)
         second = DocumentService.add_version(
-            self.hr, document, _pdf("v2.pdf"), {"effective_date": date.today()}
+            self.hr, document, _pdf("v2.pdf"), {"effective_date": timezone.localdate()}
         )
         self.assertEqual(second.version_number, 2)
         version.refresh_from_db()
@@ -391,7 +391,7 @@ class PreviewTests(DocumentTestBase):
         )
         DocumentService.set_audience(self.admin, document, [{"role": "CCEO"}])
         version = DocumentService.add_version(
-            self.ia, document, _pptx(), {"effective_date": date.today()}
+            self.ia, document, _pptx(), {"effective_date": timezone.localdate()}
         )
         DocumentService.submit_for_review(self.ia, document)
         DocumentService.review(self.admin, version, True)
@@ -462,7 +462,7 @@ class AcknowledgementTests(DocumentTestBase):
             self.hr,
             document,
             _pdf("v2.pdf"),
-            {"effective_date": date.today(), "material_change": True},
+            {"effective_date": timezone.localdate(), "material_change": True},
         )
         DocumentService.submit_for_review(self.hr, document)
         DocumentService.review(self.hr, second, True)
@@ -484,7 +484,7 @@ class AcknowledgementTests(DocumentTestBase):
             self.hr,
             document,
             _pdf("v2.pdf"),
-            {"effective_date": date.today(), "material_change": True},
+            {"effective_date": timezone.localdate(), "material_change": True},
         )
         DocumentService.submit_for_review(self.hr, document)
         DocumentService.review(self.hr, second, True)
@@ -504,7 +504,7 @@ class AcknowledgementTests(DocumentTestBase):
             self.hr,
             document,
             _pdf("v2.pdf"),
-            {"effective_date": date.today(), "material_change": False},
+            {"effective_date": timezone.localdate(), "material_change": False},
         )
         DocumentService.submit_for_review(self.hr, document)
         DocumentService.review(self.hr, second, True)
@@ -767,7 +767,7 @@ class HelpIntegrationTests(DocumentTestBase):
         before = HelpArticle.objects.count()
 
         second = DocumentService.add_version(
-            self.hr, document, _pdf("v2.pdf"), {"effective_date": date.today()}
+            self.hr, document, _pdf("v2.pdf"), {"effective_date": timezone.localdate()}
         )
         DocumentService.submit_for_review(self.hr, document)
         DocumentService.review(self.hr, second, True)
@@ -895,7 +895,7 @@ class ComplianceReportTests(DocumentTestBase):
         from apps.documents.compliance import PolicyComplianceService
 
         DocumentAcknowledgement.objects.filter(version=self.version).update(
-            due_date=date.today() - timedelta(days=3)
+            due_date=timezone.localdate() - timedelta(days=3)
         )
         report = PolicyComplianceService.report(self.hr)
         overdue = [k for k in report["kpis"] if k["label"] == "Overdue"][0]
@@ -921,7 +921,7 @@ class DocumentJobTests(DocumentTestBase):
         from apps.documents.jobs import activate_effective_documents
 
         DocumentVersion.objects.filter(id=self.version.id).update(
-            effective_date=date.today() + timedelta(days=10)
+            effective_date=timezone.localdate() + timedelta(days=10)
         )
         self.assertEqual(activate_effective_documents(), 0)
 
@@ -929,7 +929,7 @@ class DocumentJobTests(DocumentTestBase):
         from apps.documents.jobs import send_acknowledgement_reminders
 
         DocumentAcknowledgement.objects.filter(version=self.version).update(
-            due_date=date.today()
+            due_date=timezone.localdate()
         )
         self.assertEqual(send_acknowledgement_reminders(), 1)
         # A second run the same day must stay silent.
@@ -939,7 +939,7 @@ class DocumentJobTests(DocumentTestBase):
         from apps.documents.jobs import send_acknowledgement_reminders
 
         DocumentAcknowledgement.objects.filter(version=self.version).update(
-            due_date=date.today() - timedelta(days=2)
+            due_date=timezone.localdate() - timedelta(days=2)
         )
         self.assertEqual(send_acknowledgement_reminders(), 1)
 
@@ -1122,3 +1122,72 @@ class DocumentPageRenderTests(DocumentTestBase):
                 client = Client()
                 client.force_login(user)
                 self.assertEqual(client.get("/uploads").status_code, 200)
+
+
+class ReminderDedupeAcrossTimezonesTest(DocumentTestBase):
+    """One reminder per condition per day, in the platform's timezone.
+
+    The dedupe compared `last_reminded_at.date()` — the UTC day — against
+    `timezone.localdate()`, the Africa/Kampala day. For the three hours a day
+    the offset spans, those disagree, the dedupe silently fails, and a person
+    receives a second reminder for the same condition on the same day. §23
+    forbids exactly that.
+
+    Found because a full-suite run crossed midnight. This pins it so the next
+    one does not have to.
+    """
+
+    def setUp(self):
+        self.document, self.version = self._policy()
+        self._publish(self.document, self.version)
+        DocumentAcknowledgement.objects.filter(version=self.version).update(
+            due_date=timezone.localdate()
+        )
+
+    def test_a_second_run_the_same_local_day_sends_nothing(self):
+        from apps.documents.jobs import send_acknowledgement_reminders
+
+        self.assertEqual(send_acknowledgement_reminders(), 1)
+        self.assertEqual(send_acknowledgement_reminders(), 0)
+
+    def test_a_reminder_sent_late_last_night_still_counts_as_today(self):
+        """The exact window: UTC says yesterday, the platform says today.
+
+        Django stores aware datetimes in UTC and hands them back in UTC, so
+        `.date()` on a value read from the database is the UTC day. At 00:30 in
+        Africa/Kampala that is still the previous calendar day — which is the
+        three-hour window where the old comparison silently let a second
+        reminder through.
+        """
+        from datetime import datetime, time
+
+        from apps.documents.jobs import send_acknowledgement_reminders
+
+        self.assertEqual(send_acknowledgement_reminders(), 1)
+
+        ack = DocumentAcknowledgement.objects.get(version=self.version)
+        local_early_today = timezone.make_aware(
+            datetime.combine(timezone.localdate(), time(hour=0, minute=30))
+        )
+        DocumentAcknowledgement.objects.filter(id=ack.id).update(
+            last_reminded_at=local_early_today
+        )
+
+        stored = DocumentAcknowledgement.objects.get(id=ack.id).last_reminded_at
+        self.assertNotEqual(
+            stored.date(),
+            timezone.localdate(stored),
+            "this test is meaningless unless the stored UTC day and the local "
+            "day actually differ",
+        )
+        self.assertEqual(send_acknowledgement_reminders(), 0)
+
+    def test_a_reminder_sent_yesterday_does_send_again(self):
+        """Dedupe is per day, not permanent."""
+        from apps.documents.jobs import send_acknowledgement_reminders
+
+        self.assertEqual(send_acknowledgement_reminders(), 1)
+        DocumentAcknowledgement.objects.filter(version=self.version).update(
+            last_reminded_at=timezone.now() - timedelta(days=1)
+        )
+        self.assertEqual(send_acknowledgement_reminders(), 1)

@@ -1,19 +1,22 @@
-"""The To-Do page's query cost, pinned so it cannot quietly get worse.
+"""The To-Do page's query cost, pinned so it cannot get worse again.
 
 Measured by scripts/latency_budget.py at 702 schools: /todos for a Country
 Director was p95 829ms against an 800ms budget, on 501 queries. Isolating the
-generators showed a single source — `_cd_analytics_todos`, which runs the full
-CD analytics engine (`pl_oversight` + `recommended_actions`) to derive a
-handful of items.
+generators found one source -- `_cd_analytics_todos`, which runs the CD
+analytics engine to derive a handful of items.
 
-Inside `pl_oversight` the shape is an N+1 across Program Leads: per PL it runs
-a weighted-achievement pass, an area-achievement pass, a school count, a
-backlog count and a budget lookup. The cost therefore grows with the number of
-PLs, which is the thing that must not be true of a page everyone opens.
+The cause was not the engine. `_weighted_achievement` already pools from a
+pre-fetched per-user target series when it is given one, and every other caller
+of `pl_oversight` primes that series first. `cd_todos` did not, so the ledger
+was re-fetched once per Program Lead.
 
-This test does not fix that. It records the ceiling so the number can only move
-down, and it fails loudly if a change makes the page worse while the real fix
-is outstanding. Ledger: ISSUE-007.
+Priming it took /todos from 501 queries to 216, and p95 from 829ms to 414ms,
+with byte-identical output.
+
+A residual O(Program Leads) term remains -- roughly four queries each, from the
+per-PL roster and budget lookups -- so the growth assertion below still skips.
+It is small and bounded, and the page is now comfortably inside budget; the
+ceiling here exists so neither of those quietly stops being true.
 """
 
 from __future__ import annotations
@@ -41,10 +44,10 @@ def _user(key, role):
 class TodoQueryBudgetTests(TestCase):
     """A ceiling, never a target."""
 
-    #: Generous against an empty fixture; the point is the *shape*, proven by
-    #: the growth test below. Tightening this without fixing ISSUE-007 would
-    #: only make the suite brittle.
-    CEILING = 120
+    #: Measured at 55 for a Country Director against this fixture after the
+    #: series-priming fix (was ~120 before). The headroom covers a handful of
+    #: Program Leads; it is a ceiling, never a target.
+    CEILING = 90
 
     @classmethod
     def setUpTestData(cls):
@@ -88,9 +91,10 @@ class TodoQueryBudgetTests(TestCase):
 
         if grown > baseline:
             self.skipTest(
-                f"ISSUE-007 open: {baseline} -> {grown} queries when 3 Program "
-                "Leads are added. pl_oversight batches per PL; this passes once "
-                "it is batched across them."
+                f"ISSUE-007 residual: {baseline} -> {grown} queries when 3 "
+                "Program Leads are added. The heavy per-PL ledger re-fetch is "
+                "fixed; what remains is the per-PL roster and budget lookup, "
+                "roughly four queries each. This passes once those batch too."
             )
         self.assertEqual(baseline, grown)
         self.assertTrue(callable(get_todos))

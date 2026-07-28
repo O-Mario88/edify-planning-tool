@@ -2140,6 +2140,16 @@ class CDAnalyticsService:
         fy = fy or get_operational_fy()
         cd = resolve_cd_scope(fy, quarter, month, filters or {})
         acts = _country_activities(cd)
+        # Prime the per-user target series once for the whole roster.
+        #
+        # `pl_oversight` below asks `_weighted_achievement` for one subset per
+        # Program Lead. Given a primed series it pools those subsets in Python;
+        # without one it re-fetches the ledger per PL, so the cost of the To-Do
+        # page grew with the size of the country's PL bench. Every other caller
+        # of pl_oversight (get_dashboard, export_rows) already primes -- this
+        # one was simply missed, which is why /todos measured 501 queries and
+        # breached its latency budget while the analytics page did not.
+        _prime_target_series(cd)
         todos = []
 
         # High/critical-risk PL teams → request a recovery plan.

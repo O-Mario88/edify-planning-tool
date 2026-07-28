@@ -39,9 +39,10 @@ class GateBaselineTests(SimpleTestCase):
         # too, which is a separate change.
         "javascript_business_maths": 3,
         "unguarded_page_route": 6,
-        # Was 30. SSA verification and the accountant's return moved into their
-        # canonical services; the rest are triaged in the ledger.
-        "raw_workflow_mutation": 26,
+        # Was 30. SSA verification, the accountant's return and the
+        # accountability roll-up moved into their canonical services; the rest
+        # are triaged in the ledger by whether a service owns that transition.
+        "raw_workflow_mutation": 25,
     }
 
     def test_the_clean_gates_are_still_clean(self):

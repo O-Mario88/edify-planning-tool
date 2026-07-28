@@ -477,3 +477,52 @@ class CDTargetCreditConvergenceTest(TestCase):
         row = next(r for r in d["pl_oversight"]["rows"] if r["name"] == "PL Solo")
         self.assertEqual(kpi["Overall Target Achievement"], f"{row['target_pct']}%")
         self.assertEqual(row["target_pct"], 50)
+
+
+class PrimedSeriesChangesCostNotNumbersTest(TestCase):
+    """Priming the target series must be invisible in the output.
+
+    `cd_todos` did not prime the per-user target series, so `pl_oversight`
+    re-fetched the ledger once per Program Lead: 501 queries on /todos and a
+    breached latency budget. Priming is the fix.
+
+    The risk in a change like this is not that it stays slow — it is that
+    pooling from a pre-fetched series quietly computes something slightly
+    different from re-fetching. This asserts it does not, because a wrong
+    target percentage is far worse than a slow page.
+    """
+
+    def test_pl_oversight_agrees_with_itself_primed_and_unprimed(self):
+        from apps.analytics.cd_analytics_service import (
+            CDAnalyticsService,
+            _country_activities,
+            _prime_target_series,
+            resolve_cd_scope,
+        )
+        from apps.core.fy import get_operational_fy
+
+        fy = get_operational_fy()
+
+        cold = resolve_cd_scope(fy, None, None, {})
+        unprimed = CDAnalyticsService.pl_oversight(cold, _country_activities(cold))
+
+        warm = resolve_cd_scope(fy, None, None, {})
+        _prime_target_series(warm)
+        primed = CDAnalyticsService.pl_oversight(warm, _country_activities(warm))
+
+        self.assertEqual(
+            [r["id"] for r in unprimed["rows"]],
+            [r["id"] for r in primed["rows"]],
+        )
+        for cold_row, warm_row in zip(unprimed["rows"], primed["rows"]):
+            self.assertEqual(cold_row, warm_row)
+
+    def test_cd_todos_primes_the_series(self):
+        """The regression: a future caller dropping the prime and slowing the
+        page back down without changing a single number, so nothing fails."""
+        import inspect
+
+        from apps.analytics.cd_analytics_service import CDAnalyticsService
+
+        source = inspect.getsource(CDAnalyticsService.cd_todos)
+        self.assertIn("_prime_target_series", source)

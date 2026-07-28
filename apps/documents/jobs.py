@@ -96,7 +96,13 @@ def send_acknowledgement_reminders() -> int:
         overdue = days_left < 0
         if not overdue and days_left not in REMINDER_DAYS_BEFORE:
             continue
-        if ack.last_reminded_at and ack.last_reminded_at.date() == today:
+        # Compare in the same timezone the rest of this function works in.
+        # `last_reminded_at` is stored UTC-aware, so `.date()` gives the UTC
+        # day while `today` is the local one -- for the hours the offset spans
+        # (three, for Africa/Kampala) they disagree, the dedupe silently fails,
+        # and a person receives a second reminder for the same condition on the
+        # same day. Found by the suite crossing midnight mid-run.
+        if ack.last_reminded_at and timezone.localdate(ack.last_reminded_at) == today:
             continue  # already reminded today
 
         WorkflowNotificationService.trigger(

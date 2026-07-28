@@ -259,7 +259,102 @@ the ceiling so the page can only get better, and carries the growth assertion
 that will pass once `pl_oversight` batches — skipped with an explanatory
 message while the N+1 stands, rather than left permanently red.
 
-## 9. Pass 3
+## 9. Pass 3 — ISSUE-007 closed, mutations triaged
+
+### ISSUE-007 · CLOSED
+
+The cause was not the analytics engine. `_weighted_achievement` already pools
+from a pre-fetched per-user target series when given one, and every other
+caller of `pl_oversight` primes that series first. `cd_todos` did not, so the
+ledger was re-fetched once per Program Lead.
+
+One line, using machinery built for exactly this case:
+
+| | before | after |
+| --- | --- | --- |
+| `/todos` queries (Country Director) | 501 | **216** |
+| `/todos` p95 | 829ms | **414ms** |
+| Latency budgets inside target | 23 / 24 | **24 / 24** |
+
+**Output is byte-identical** — asserted before and after, and pinned by
+`PrimedSeriesChangesCostNotNumbersTest`, which runs `pl_oversight` primed and
+unprimed and requires every row to match. That test exists because the risk in
+this change was never that it stayed slow; it was that pooling from a
+pre-fetched series quietly computes something slightly different. A wrong
+target percentage is far worse than a slow page.
+
+A residual O(Program Leads) term remains — roughly four queries each, from the
+per-PL roster and budget lookups. Small, bounded, comfortably inside budget,
+and recorded in the growth assertion that still skips.
+
+### Raw workflow mutations · 30 → 25, and triaged
+
+The remaining 25 are not one defect repeated 25 times. Grouped by whether a
+canonical service already owns the transition:
+
+**Genuine transitions that belong in a service (7)** — the real remainder:
+
+| Site | Transition |
+| --- | --- |
+| `core_schools_views.py` ×3 | Core slot `Scheduled` / `Assigned` — the 9-slot package and 2+2 staff cap are enforced in the Core service |
+| `planning_views.py` ×2 | `partner_scheduled` — partner assignment scheduling |
+| `leave_views.py:1810` | leave → `hr_review` |
+| `pd_views.py:457` | PD request `cancelled` |
+
+**An import routine's own bookkeeping (9)** — `upload_views.py` ×3,
+`school_views.py`, `extended_views.py:2246`, and the unmatched-SSA resolution
+states. The view *is* the import process here; there is no separate service
+being bypassed, and inventing one would add indirection without adding a guard.
+
+**Queue and triage state, not business workflow (9)** — IA duplicate flags,
+data-quality issue resolution, help-article draft, coverage revocation, member
+invite/active. These carry no money, no target credit and no verification
+authority.
+
+Pass 4 should take the seven. The other eighteen are recorded as accepted, with
+the reason, rather than left looking like eighteen open defects.
+
+### ISSUE-005 · why it is still open after pass 3
+
+The canonical `weighted_ssa_mean` exists and is tested. The template still
+computes its own because of where the *matching* happens, not the arithmetic:
+
+`matchMetricsToFeatures` pairs each district metric to a GeoJSON boundary by
+`boundary_code`, then by name alias, and deliberately refuses to guess when a
+historical name is ambiguous. The server does not hold the boundary features,
+so it cannot know which districts a given polygon covers.
+
+The clean fix is one batched call after matching — the client sends the matched
+key groups, the server returns the combined rows. That is a small change, and
+I did not make it here: building the endpoint without wiring the client would
+leave dead code, which §11 of this same mandate forbids, and wiring an
+interactive map is not something to do without room to verify it.
+
+So the gate honestly still reads 3.
+
+### ISSUE-008 · Reminder dedupe failed for three hours a day · **MEDIUM** · CLOSED
+
+Found because a full-suite run crossed midnight and one test failed that had
+passed an hour earlier.
+
+`send_acknowledgement_reminders` deduplicated on
+`ack.last_reminded_at.date()` — the **UTC** day — against
+`timezone.localdate()`, the **Africa/Kampala** day. Between 00:00 and 03:00
+local, those disagree, the dedupe silently fails, and a person receives a
+second reminder for the same condition on the same day. §23 forbids precisely
+that.
+
+My first diagnosis was wrong: I assumed the test was at fault for using
+`date.today()` and fixed that, and it still failed. The defect was in the
+production code.
+
+Pinned by `ReminderDedupeAcrossTimezonesTest`, which sets a reminder at 00:30
+local, reads it back from the database to get the UTC day, and **asserts the
+two dates actually differ** before testing the dedupe — a first draft of that
+test built the datetime in local time, so both dates agreed and it would have
+passed against the bug. The guard caught it.
+
+## 10. Pass 4
 
 1. ISSUE-001 and ISSUE-002 — move SSA verification and finance transitions into
    their canonical services, with regression tests that fail if a view writes

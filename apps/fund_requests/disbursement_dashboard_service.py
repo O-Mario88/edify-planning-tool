@@ -1690,35 +1690,61 @@ def roll_up_accountability(weekly_request, advances) -> bool:
     """Project child advance state onto the parent weekly request.
 
     A projection, not an independent transition: the parent becomes
-    `accounted` because every child already is. Kept here beside the
+    `accounted` because every child already is. It lives here beside the
     transitions it summarises so the derivation has one definition.
+
+    Faithful to the view it replaces, deliberately. An earlier draft of this
+    function handled only ACCOUNTED and dropped the reimbursed case, the
+    reviewed-at stamp and both money totals -- wiring that in would have been a
+    silent loss of behaviour dressed up as a refactor. REIMBURSEMENT_SUBMITTED
+    and REIMBURSEMENT_DISBURSED are legitimate in-progress states and must not
+    close the request.
     """
+    from apps.fund_requests.models import AdvanceRequestStatus
+
+    advances = list(advances)
     if not advances:
         return False
-    if not all(a.status == "accounted" for a in advances):
+    closing = (AdvanceRequestStatus.ACCOUNTED, AdvanceRequestStatus.REIMBURSED)
+    if not all(advance.status in closing for advance in advances):
         return False
 
     codes = sorted(
-        {a.accountability_netsuite_id for a in advances if a.accountability_netsuite_id}
+        {
+            advance.accountability_netsuite_id
+            for advance in advances
+            if advance.accountability_netsuite_id
+        }
     )
+    now = timezone.now()
     weekly_request.status = "accounted"
     weekly_request.accountability_netsuite_id = ", ".join(codes)[:128] or None
     weekly_request.accountability_submitted_at = (
         weekly_request.accountability_submitted_at
         or min(
             (
-                a.accountability_submitted_at
-                for a in advances
-                if a.accountability_submitted_at
+                advance.accountability_submitted_at
+                for advance in advances
+                if advance.accountability_submitted_at
             ),
-            default=None,
+            default=now,
         )
+    )
+    weekly_request.accountability_reviewed_at = now
+    weekly_request.accounted_amount = sum(
+        advance.accounted_amount or 0 for advance in advances
+    )
+    weekly_request.returned_amount = sum(
+        advance.returned_amount or 0 for advance in advances
     )
     weekly_request.save(
         update_fields=[
             "status",
             "accountability_netsuite_id",
             "accountability_submitted_at",
+            "accountability_reviewed_at",
+            "accounted_amount",
+            "returned_amount",
             "updated_at",
         ]
     )

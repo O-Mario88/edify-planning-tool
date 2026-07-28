@@ -442,50 +442,13 @@ def confirm_accountability_action(request):
                 # in-progress states that must NOT close the request yet.
                 for adv in advances:
                     adv.refresh_from_db()
-                if all(
-                    a.status
-                    in (
-                        AdvanceRequestStatus.ACCOUNTED,
-                        AdvanceRequestStatus.REIMBURSED,
-                    )
-                    for a in advances
-                ):
-                    codes = sorted(
-                        {
-                            a.accountability_netsuite_id
-                            for a in advances
-                            if a.accountability_netsuite_id
-                        }
-                    )
-                    wfr.status = "accounted"
-                    wfr.accountability_netsuite_id = ", ".join(codes)[:128] or None
-                    wfr.accountability_submitted_at = (
-                        wfr.accountability_submitted_at
-                        or min(
-                            (
-                                a.accountability_submitted_at
-                                for a in advances
-                                if a.accountability_submitted_at
-                            ),
-                            default=timezone.now(),
-                        )
-                    )
-                    wfr.accountability_reviewed_at = timezone.now()
-                    wfr.accounted_amount = sum(
-                        a.accounted_amount or 0 for a in advances
-                    )
-                    wfr.returned_amount = sum(a.returned_amount or 0 for a in advances)
-                    wfr.save(
-                        update_fields=[
-                            "status",
-                            "accountability_netsuite_id",
-                            "accountability_submitted_at",
-                            "accountability_reviewed_at",
-                            "accounted_amount",
-                            "returned_amount",
-                            "updated_at",
-                        ]
-                    )
+                # The parent's state is a projection of its children's, and the
+                # derivation lives with the transitions it summarises.
+                from apps.fund_requests.disbursement_dashboard_service import (
+                    roll_up_accountability,
+                )
+
+                roll_up_accountability(wfr, advances)
 
             response = HttpResponse("<script>window.location.reload();</script>")
             response["HX-Trigger"] = "close-drawer"
