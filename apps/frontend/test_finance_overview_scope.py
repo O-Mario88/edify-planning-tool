@@ -223,6 +223,43 @@ class CardsNameTheirPopulationTest(SimpleTestCase):
         self.assertNotIn("Weekly Advances This Month", _read(ACCOUNTANT_CARD))
 
 
+class QueueListNamesItsContentsTest(SimpleTestCase):
+    """The Accountant's list is weekly advances; only one queue is consolidated.
+
+    Both pages titled their list "Consolidated Fund Queue", but the Accountant
+    home page builds its list from WeeklyFundRequest and renders weekly-shaped
+    detail beside it -- week start and end dates, WeeklyFundRequestLine rows,
+    the per-stage approval chain. Only the Disbursements workspace queue is
+    genuinely consolidated.
+
+    Once the FY figures above the list started covering every fund type, a
+    reader had no way to tell why the list did not match them. The list is named
+    for its contents and points at the page that owns the consolidated view,
+    rather than rebuilding that workspace inside a dashboard panel.
+    """
+
+    def test_the_accountant_list_says_it_holds_weekly_advances(self):
+        self.assertIn("Weekly Advance Queue", _read(ACCOUNTANT_CARD))
+
+    def test_the_accountant_list_no_longer_claims_to_be_consolidated(self):
+        """Matched on the rendered heading, not the prose.
+
+        The template explains the rename in a {% comment %} that names the old
+        title, so a bare substring check fails on the explanation rather than
+        on the markup a reader sees.
+        """
+        self.assertNotIn(">Consolidated Fund Queue<", _read(ACCOUNTANT_CARD))
+
+    def test_the_disbursements_queue_keeps_the_consolidated_name(self):
+        """It earns the title: monthly, weekly, partner and reimbursement."""
+        self.assertIn(">Consolidated Fund Queue<", _read(DISBURSEMENTS_CARD))
+
+    def test_the_accountant_page_points_at_the_consolidated_queue(self):
+        body = _read(ACCOUNTANT_CARD)
+        self.assertIn('href="/disbursements"', body)
+        self.assertIn("Weekly advances only", body)
+
+
 class WeeklyAdvancesCannotBeHeldTest(SimpleTestCase):
     """Why the Held question never arose on the old Accountant card."""
 

@@ -71,44 +71,69 @@ FY {{ fy }} · Live workflow data
 {% include "components/analytics_provenance.html" with engine=analytics.engine %}
 
 <!-- ================= TOP KPI STRIP ================= -->
-<div class="legacy-kpi-strip grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4" aria-label="Account workflow summary">
+{% comment %}
+  Four columns, not seven. At 1366px a seven-column strip gave each tile 139px
+  while its content needed 185-246px, so every one of the six overflowed and
+  values collided with their labels. Four columns give ~320px each, which fits
+  the longest figure ("UGX 27.1M") with room to spare; the Budget Utilization
+  tile still spans two, so the six tiles fill two tidy rows.
+{% endcomment %}
+<div class="legacy-kpi-strip grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" aria-label="Account workflow summary">
+{% comment %}
+  consistency.css sets `display: flex` on every legacy KPI tile and
+  expects a single content child, the way .admin-kpi wraps its copy.
+  These tiles had three bare siblings, so on a narrow tile flex-row
+  laid label, value and context side by side and clipped the context
+  ("121 requ in ch"). One wrapper restores the intended stack.
+{% endcomment %}
 <!-- Total Funds -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<div class="min-w-0 w-full space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Approved Funds</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_approved }}</h3>
 <span class="edify-text-caption text-emerald-600 font-semibold block pt-1">FY {{ fy }}</span>
 </div>
+</div>
 
 <!-- Pending Disbursement -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<div class="min-w-0 w-full space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Pending Disbursement</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.pending_disb }}</h3>
 <span class="edify-text-caption text-amber-600 font-bold block pt-1">{{ kpis.pending_disb_count }} request{{ kpis.pending_disb_count|pluralize }} awaiting</span>
 </div>
+</div>
 
 <!-- Total Disbursed -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<div class="min-w-0 w-full space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_disbursed }}</h3>
 <span class="edify-text-caption edify-primary-text font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }} made</span>
 </div>
+</div>
 
 <!-- Awaiting Approval -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<div class="min-w-0 w-full space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approvals</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.awaiting_approval }}</h3>
 <span class="edify-text-caption edify-primary-text font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
 </div>
+</div>
 
 <!-- Reconciliation Rate -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<div class="min-w-0 w-full space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Reconciliation Rate</p>
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.recon_rate }}</h3>
 <span class="edify-text-caption text-emerald-600 font-semibold block pt-1">{{ kpis.accounted_count }} of {{ kpis.disbursed_count }} accounted</span>
 </div>
+</div>
 
 <!-- Budget Utilization -->
 <div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1 col-span-2">
+<div class="min-w-0 w-full space-y-1">
 <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Budget Util.</p>
 <div class="flex items-baseline justify-between mt-1">
 <h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.budget_util }}</h3>
@@ -119,22 +144,41 @@ FY {{ fy }} · Live workflow data
 </div>
 </div>
 </div>
+</div>
 
 
 <!-- ================= MAIN WORKSPACE GRID ================= -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-<!-- LEFT PANEL: CONSOLIDATED FUND QUEUE (Col Span 3) -->
+<!-- LEFT PANEL: WEEKLY ADVANCE QUEUE (Col Span 3) -->
+{% comment %}
+  This list holds weekly advances only: it is built from WeeklyFundRequest and
+  its detail panel beside it renders weekly-shaped fields -- week start and end
+  dates, WeeklyFundRequestLine rows, and the per-stage approval chain. It was
+  titled "Consolidated Fund Queue", which is the title the Disbursements
+  workspace uses for a queue that genuinely is consolidated (monthly fund
+  plans, weekly advances, partner payments and reimbursements).
+
+  It is named for its contents rather than rebuilt, because /disbursements
+  already owns the consolidated queue and renders each fund type with the right
+  detail. Reproducing that here would recreate a whole workspace inside a
+  dashboard panel; the link below sends the reader to the page that owns it.
+{% endcomment %}
 <div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Queue</h2>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Weekly Advance Queue</h2>
 <span class="edify-primary-solid text-white font-semibold rounded-pill px-1.5 py-0.5 edify-text-caption flex items-center justify-center">{{ all_funds|length }}</span>
 </div>
 
 <span class="edify-text-caption font-semibold text-slate-400" x-text="`${filteredFunds().length} shown`"></span>
 </div>
+<p class="edify-text-caption font-semibold text-slate-400 pt-2">
+  Weekly advances only. The figures above cover every fund type &mdash;
+  <a href="/disbursements" class="edify-primary-text hover:underline">open the consolidated queue</a>
+  for monthly fund plans, partner payments and reimbursements.
+</p>
 
 <div class="space-y-2 mt-4 max-h-[600px] overflow-y-auto pr-1">
 <template x-for="fund in filteredFunds()" :key="fund.id">
