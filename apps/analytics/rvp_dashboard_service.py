@@ -18,6 +18,7 @@ from __future__ import annotations
 from datetime import date
 
 from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
 from apps.core.fy import get_operational_fy
@@ -396,12 +397,31 @@ class RVPDashboardService:
         }
         _, _, total_target = CDAnalyticsService._weighted_overall(cd)
         monthly_target = (total_target / 12.0) if total_target else 0
+
+        # Twelve months used to mean thirty-six COUNT queries -- three per
+        # month, in a loop -- to draw one chart. This is the same grouped shape
+        # `CDDashboardService.execution_timeline` already uses for the identical
+        # chart, and the same shape `validated_by_month` uses directly above:
+        # count in SQL, return twelve rows. Pulling the year's activities into
+        # Python to bucket them there would also be one query, but it carries
+        # every row across the wire for a twelve-point chart.
+        buckets = {
+            row["month_bucket"]: row
+            for row in acts.exclude(planned_date__isnull=True)
+            .annotate(month_bucket=TruncMonth("planned_date"))
+            .values("month_bucket")
+            .annotate(
+                planned=Count("id"),
+                completed=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                verified=Count("id", filter=Q(status__in=VERIFIED_STATUSES)),
+            )
+        }
         for m in range(1, 13):
-            start, end = Cal.month_range(fy, m)
-            month_qs = acts.filter(planned_date__gte=start, planned_date__lt=end)
-            planned.append(month_qs.count())
-            completed.append(month_qs.filter(status__in=COMPLETED_STATUSES).count())
-            verified.append(month_qs.filter(status__in=VERIFIED_STATUSES).count())
+            start, _end = Cal.month_range(fy, m)
+            row = buckets.get(start) or {}
+            planned.append(row.get("planned", 0))
+            completed.append(row.get("completed", 0))
+            verified.append(row.get("verified", 0))
             v = validated_by_month.get(m, 0)
             achievement.append(round(v / monthly_target * 100) if monthly_target else 0)
         return {

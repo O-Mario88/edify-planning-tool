@@ -9,8 +9,10 @@ active cluster per sub-county by default — a 2nd requires CLUSTER_OVERRIDE.
 from __future__ import annotations
 
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from collections import defaultdict
+
 from django.db import transaction
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, Max, Min, Prefetch, Q
 
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -41,6 +43,18 @@ def _latest_confirmed_ssa(school):
     from apps.ssa.services import latest_applicable_record
 
     return latest_applicable_record(school)
+
+
+def _latest_confirmed_ssa_map(schools):
+    """Batched `_latest_confirmed_ssa` for a set of schools, scores included.
+
+    Same canonical rule, one query instead of two per school. Schools with no
+    confirmed record are absent from the mapping rather than present with a
+    zero -- a missing measurement must never read as a bad one.
+    """
+    from apps.ssa.services import latest_applicable_records
+
+    return latest_applicable_records(schools, with_scores=True)
 
 
 def _scope_filter(principal):
@@ -735,12 +749,12 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
 
     intervention_scores = {key.value: [] for key in SsaIntervention}
 
-    for s in schools:
-        latest = _latest_confirmed_ssa(s)
-        if latest:
-            for score in latest.scores.all():
-                if score.score is not None:
-                    intervention_scores[score.intervention].append(score.score)
+    # One read for every school's latest confirmed record plus its scores,
+    # rather than two per school inside the loop.
+    for latest in _latest_confirmed_ssa_map(schools).values():
+        for score in latest.scores.all():
+            if score.score is not None:
+                intervention_scores[score.intervention].append(score.score)
 
     results = []
     for key in SsaIntervention:
@@ -789,12 +803,10 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
     from apps.core.enums import SsaIntervention
 
     intervention_scores = {key.value: [] for key in SsaIntervention}
-    for s in schools:
-        latest = _latest_confirmed_ssa(s)
-        if latest:
-            for score in latest.scores.all():
-                if score.score is not None:
-                    intervention_scores[score.intervention].append(score.score)
+    for latest in _latest_confirmed_ssa_map(schools).values():
+        for score in latest.scores.all():
+            if score.score is not None:
+                intervention_scores[score.intervention].append(score.score)
     results = []
     for key in SsaIntervention:
         scores = intervention_scores[key.value]
@@ -887,111 +899,124 @@ def cluster_planning(principal) -> list[dict]:
         .prefetch_related("covered_sub_counties__sub_county")
     )
 
+    # Every figure below used to be a per-cluster query: five school counts,
+    # three activity counts, two ordered `.first()` reads and two school-id
+    # sets -- about a dozen round trips per row, so a four-cluster page ran 51
+    # queries and a fifty-cluster deployment would run over six hundred. They
+    # are now eight grouped reads whose cost does not change with the number of
+    # clusters. The status and activity-type sets are unchanged, so every row
+    # keeps the value it had.
+    DONE_STATUSES = ["ia_verified", "closed", "accountant_confirmed"]
+    OPEN_STATUSES = [
+        "scheduled",
+        "partner_scheduled",
+        "assigned_to_partner",
+        "evidence_uploaded",
+        "in_progress",
+        "awaiting_ia_verification",
+    ]
+    TRAINING_KINDS = ["cluster_training", "school_improvement_training"]
+    SCHOOL_TRAINING_KINDS = ["school_training", "core_training", "project_activity"]
+
+    cluster_ids = [c.id for c in clusters]
+
+    school_rows = {
+        row["cluster_id"]: row
+        for row in School.objects.filter(
+            cluster_id__in=cluster_ids, deleted_at__isnull=True
+        )
+        .values("cluster_id")
+        .annotate(
+            total=Count("id"),
+            ssa_done=Count("id", filter=Q(current_fy_ssa_status="done")),
+            ready=Count(
+                "id", filter=Q(planning_readiness="ready_for_support_planning")
+            ),
+            baseline=Count("id", filter=Q(planning_readiness="ready_for_baseline_ssa")),
+            cleanup=Count("id", filter=~Q(data_quality_status="Clean")),
+        )
+    }
+
+    activity_rows = {
+        row["cluster_id"]: row
+        for row in Activity.objects.filter(
+            cluster_id__in=cluster_ids, deleted_at__isnull=True
+        )
+        .values("cluster_id")
+        .annotate(
+            meetings_done=Count(
+                "id",
+                filter=Q(activity_type="cluster_meeting", status__in=DONE_STATUSES),
+            ),
+            meetings_open=Count(
+                "id",
+                filter=Q(activity_type="cluster_meeting", status__in=OPEN_STATUSES),
+            ),
+            trainings_done=Count(
+                "id",
+                filter=Q(activity_type__in=TRAINING_KINDS, status__in=DONE_STATUSES),
+            ),
+            last_meeting=Max(
+                "scheduled_date",
+                filter=Q(activity_type="cluster_meeting", status__in=DONE_STATUSES),
+            ),
+            next_meeting=Min(
+                "scheduled_date",
+                filter=Q(activity_type="cluster_meeting", status__in=OPEN_STATUSES),
+            ),
+        )
+    }
+
+    # Which schools have been reached, keyed by the cluster they belong to.
+    def _reached_by_cluster(activity_types) -> dict[str, set]:
+        reached: dict[str, set] = defaultdict(set)
+        for cluster_id, school_id in (
+            Activity.objects.filter(
+                school__cluster_id__in=cluster_ids,
+                activity_type__in=activity_types,
+                status__in=DONE_STATUSES,
+                deleted_at__isnull=True,
+            )
+            .exclude(school_id__isnull=True)
+            .values_list("school__cluster_id", "school_id")
+            .distinct()
+        ):
+            reached[cluster_id].add(school_id)
+        return reached
+
+    visited_by_cluster = _reached_by_cluster(["school_visit"])
+    trained_by_cluster = _reached_by_cluster(SCHOOL_TRAINING_KINDS)
+
     out = []
     for c in clusters:
-        schools = School.objects.filter(cluster_id=c.id, deleted_at__isnull=True)
-        total_schools = schools.count()
-        ssa_done = schools.filter(current_fy_ssa_status="done").count()
+        srow = school_rows.get(c.id) or {}
+        total_schools = srow.get("total", 0)
+        ssa_done = srow.get("ssa_done", 0)
         ssa_missing = total_schools - ssa_done
         ssa_coverage_pct = (
             round((ssa_done / total_schools) * 100, 1) if total_schools > 0 else 0.0
         )
 
-        ready_for_planning = schools.filter(
-            planning_readiness="ready_for_support_planning"
-        ).count()
-        needing_baseline = schools.filter(
-            planning_readiness="ready_for_baseline_ssa"
-        ).count()
-        needing_cleanup = schools.exclude(data_quality_status="Clean").count()
+        ready_for_planning = srow.get("ready", 0)
+        needing_baseline = srow.get("baseline", 0)
+        needing_cleanup = srow.get("cleanup", 0)
 
-        # Activities for this cluster
-        acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
+        arow = activity_rows.get(c.id) or {}
+        meetings_completed = arow.get("meetings_done", 0)
+        meetings_scheduled = arow.get("meetings_open", 0)
+        trainings_completed = arow.get("trainings_done", 0)
 
-        meetings_completed = acts.filter(
-            activity_type__in=["cluster_meeting"],
-            status__in=["ia_verified", "closed", "accountant_confirmed"],
-        ).count()
-
-        meetings_scheduled = acts.filter(
-            activity_type__in=["cluster_meeting"],
-            status__in=[
-                "scheduled",
-                "partner_scheduled",
-                "assigned_to_partner",
-                "evidence_uploaded",
-                "in_progress",
-                "awaiting_ia_verification",
-            ],
-        ).count()
-
-        trainings_completed = acts.filter(
-            activity_type__in=["cluster_training", "school_improvement_training"],
-            status__in=["ia_verified", "closed", "accountant_confirmed"],
-        ).count()
-
-        # Last completed meeting date
-        last_meet = (
-            acts.filter(
-                activity_type__in=["cluster_meeting"],
-                status__in=["ia_verified", "closed", "accountant_confirmed"],
-            )
-            .order_by("-scheduled_date")
-            .first()
-        )
-        last_meeting_date = (
-            last_meet.scheduled_date.isoformat()
-            if last_meet and last_meet.scheduled_date
-            else None
-        )
-
-        # Next scheduled meeting date
-        next_meet = (
-            acts.filter(
-                activity_type__in=["cluster_meeting"],
-                status__in=[
-                    "scheduled",
-                    "partner_scheduled",
-                    "assigned_to_partner",
-                    "evidence_uploaded",
-                    "in_progress",
-                    "awaiting_ia_verification",
-                ],
-            )
-            .order_by("scheduled_date")
-            .first()
-        )
-        next_scheduled_meeting_date = (
-            next_meet.scheduled_date.isoformat()
-            if next_meet and next_meet.scheduled_date
-            else None
-        )
+        last_meeting = arow.get("last_meeting")
+        last_meeting_date = last_meeting.isoformat() if last_meeting else None
+        next_meeting = arow.get("next_meeting")
+        next_scheduled_meeting_date = next_meeting.isoformat() if next_meeting else None
 
         met_this_quarter = meetings_completed > 0 or meetings_scheduled > 0
 
-        # Schools not visited / trained / neither
-        visited_school_ids = set(
-            Activity.objects.filter(
-                school__in=schools,
-                activity_type="school_visit",
-                status__in=["ia_verified", "closed", "accountant_confirmed"],
-                deleted_at__isnull=True,
-            ).values_list("school_id", flat=True)
-        )
+        visited_school_ids = visited_by_cluster.get(c.id, set())
         schools_not_visited = max(0, total_schools - len(visited_school_ids))
 
-        trained_school_ids = set(
-            Activity.objects.filter(
-                school__in=schools,
-                activity_type__in=[
-                    "school_training",
-                    "core_training",
-                    "project_activity",
-                ],
-                status__in=["ia_verified", "closed", "accountant_confirmed"],
-                deleted_at__isnull=True,
-            ).values_list("school_id", flat=True)
-        )
+        trained_school_ids = trained_by_cluster.get(c.id, set())
         schools_not_trained = max(0, total_schools - len(trained_school_ids))
 
         neither_count = max(
