@@ -11,6 +11,9 @@ from datetime import timedelta
 from apps.activities.models import Activity
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.command_center import services as cc_services
+from apps.command_center.planning_progress import (
+    normalise_period as normalise_progress_period,
+)
 from apps.core.cards import render_card
 from apps.core.navigation import get_user_role_slug
 from apps.core.permissions import RolePermissionService, require_page_permission
@@ -919,7 +922,12 @@ def dashboard_view(request):
     # this is the only reader of `metrics`. Built at the top of the view, it
     # cost 54-62 queries and 73-110 ms that were discarded on every CD, PL,
     # RVP, HR, CCEO and Project Coordinator dashboard load.
-    metrics = DashboardMetricsService.get_dashboard_metrics(user)
+    # The Planning Progress card's Week/Month/Quarter/FY switch. Read from the
+    # query string so the chosen period survives a reload, a bookmark and a
+    # shared link -- and so the tabs can be real links rather than the
+    # decorative spans they used to be.
+    progress_period = normalise_progress_period(request.GET.get("progress_period"))
+    metrics = DashboardMetricsService.get_dashboard_metrics(user, progress_period)
 
     context = {
         "alerts": alerts_list,
@@ -934,6 +942,9 @@ def dashboard_view(request):
         "signals": metrics["signals"],
         "priorities": metrics["priorities"],
         "weekly_progress": metrics["weekly_progress"],
+        "progress_period": metrics["progress_period"],
+        "progress_tabs": metrics["progress_tabs"],
+        "progress_description": metrics["progress_description"],
         "best_interventions": metrics["best_interventions"],
         "weakest_interventions": metrics["weakest_interventions"],
         "team_targets": metrics["team_targets"],
@@ -1004,6 +1015,16 @@ def dashboard_view(request):
             ),
         )
     }
+
+    if role == "Admin":
+        # Admin's home is a Platform Operations command centre, not a country
+        # programme dashboard: incidents, tickets, overdue platform work and
+        # security alerts come first. The observability sections below stay --
+        # Admin still needs to see whether the business surfaces are working --
+        # but they are diagnostic context, not Admin's own scorecard.
+        from apps.admin_ops.services import AdminOpsDashboardService
+
+        context["admin_ops"] = AdminOpsDashboardService.summary(request.user)
 
     return render(request, "pages/dashboards/main.html", context)
 
@@ -1228,3 +1249,24 @@ def cd_dashboard_approve_view(request):
         "user_name": request.user.name,
     }
     return render(request, "partials/dashboards/cd/body.html", context)
+
+
+@require_page_permission("dashboard")
+def planning_progress_fragment_view(request):
+    """The Planning Progress chart for one period, for the card's tabs.
+
+    Renders the same partial the full page uses, so the two cannot drift. The
+    tabs also carry a plain href, so the period still switches with htmx
+    unavailable -- the fragment is an optimisation, not the mechanism.
+    """
+    period = normalise_progress_period(request.GET.get("progress_period"))
+    metrics = DashboardMetricsService.get_dashboard_metrics(request.user, period)
+    return render(
+        request,
+        "partials/dashboards/admin/_planning_progress_body.html",
+        {
+            "weekly_progress": metrics["weekly_progress"],
+            "progress_period": metrics["progress_period"],
+            "progress_description": metrics["progress_description"],
+        },
+    )

@@ -56,11 +56,11 @@ CARD_REGISTRY: tuple[CardSpec, ...] = (
         key="admin_planning_progress",
         title="Planning Progress",
         purpose=(
-            "Planned against completed activity across the weeks of the current "
-            "period, so a flat or falling week is visible before it becomes a "
-            "missed quarter."
+            "Planned against completed activity over the period the reader "
+            "chooses -- week, month, quarter or financial year -- so a flat or "
+            "falling stretch is visible before it becomes a missed year."
         ),
-        question="Is delivery keeping pace with the plan week by week?",
+        question="Is delivery keeping pace with the plan over this period?",
         action="Open Planning where a week is behind.",
         card_type=CardType.CHART,
         owner_page=_MAIN_DASHBOARD,
@@ -68,8 +68,12 @@ CARD_REGISTRY: tuple[CardSpec, ...] = (
         scope="Country-wide activities",
         service="apps.command_center.dashboard_service.DashboardMetricsService",
         source_models=("activities.Activity",),
-        period=Period.MONTH,
-        filter_behaviour=FilterBehaviour.FIXED_CONTEXT,
+        # The card carries its own Week/Month/Quarter/FY switch, so the period
+        # is the reader's choice; WEEK is the default the page opens on. The
+        # switch used to be four decorative <span>s that changed nothing, which
+        # is why this was recorded as fixed context.
+        period=Period.WEEK,
+        filter_behaviour=FilterBehaviour.FILTERED,
         empty_message="No planned activity in this period yet.",
         drilldown="/planning",
         refresh_events=("activity_scheduled", "activity_closed"),
@@ -120,9 +124,11 @@ CARD_REGISTRY: tuple[CardSpec, ...] = (
         drilldown="/team-targets",
         refresh_events=("activity_ia_verified", "target_set"),
         notes=(
-            "A second copy of this card rendered in the right rail with the "
-            "same loop and the same numbers; it was removed. Team Targets owns "
-            "the full analysis -- this is the preview."
+            "Renders once, in the action rail below Quick Actions -- placed "
+            "there at the owner's request. It originally appeared twice (main "
+            "column and rail, same loop, same numbers); the duplicate was "
+            "removed, and later the surviving copy moved to the rail. Team "
+            "Targets owns the full analysis -- this is the preview."
         ),
     ),
     CardSpec(

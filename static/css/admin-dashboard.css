@@ -146,7 +146,11 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 
 .admin-grid { min-width: 0; display: grid; gap: 0.9rem; align-items: stretch; }
 .admin-grid--top { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.08fr); }
-.admin-grid--middle { grid-template-columns: minmax(0, 1.05fr) minmax(12.5rem, 0.58fr) minmax(0, 0.86fr); }
+/* Two panels since Team Target Progress moved to the action rail: the middle
+   0.58fr track existed only to hold that narrow card, and with it gone a
+   three-track grid would push Priority Schools' table into the 12.5rem slot
+   and leave the third track empty. The survivors keep their old ratio. */
+.admin-grid--middle { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.86fr); }
 .admin-grid--lower { grid-template-columns: minmax(17rem, 0.72fr) minmax(0, 1.45fr); }
 
 .admin-panel {
@@ -269,8 +273,32 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
   border-radius: 0.55rem;
   background: var(--edify-surface-muted);
 }
-.admin-period-switch span { padding: 0.32rem 0.48rem; border-radius: 0.4rem; color: var(--edify-text-muted); font-size: 0.58rem; font-weight: 550; text-align: center; }
-.admin-period-switch .is-active { color: var(--edify-on-accent); background: var(--edify-accent); box-shadow: var(--edify-shadow-sm); }
+/* The period tabs are real links now, not decorative spans, so they need the
+   states an interactive control has: a hover affordance, a visible focus ring
+   for keyboard users, and a target big enough to hit. The old 0.58rem sat
+   below the platform's smallest type tier -- fine for a label nobody could
+   click, not fine for a control. */
+.admin-period-switch a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 1.75rem;
+  padding: 0.32rem 0.48rem;
+  border-radius: 0.4rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 650;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color .15s ease, color .15s ease;
+}
+.admin-period-switch a:hover { color: var(--edify-text); background: var(--edify-surface); }
+.admin-period-switch a:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 1px;
+}
+.admin-period-switch .is-active,
+.admin-period-switch .is-active:hover { color: var(--edify-on-accent); background: var(--edify-accent); box-shadow: var(--edify-shadow-sm); }
 .admin-line-figure { padding: 0.2rem 0.8rem 0; }
 .admin-line-chart { width: 100%; height: 8rem; overflow: visible; }
 .admin-line-chart__grid line { stroke: var(--edify-border); stroke-width: 1; }
@@ -292,7 +320,9 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-progress > span[data-tone="success"] { background: var(--edify-success); }
 .admin-progress > span[data-tone="warning"] { background: var(--edify-warning); }
 
-.admin-team-targets,
+/* Was paired with .admin-team-targets so the two middle-grid panels matched
+   heights; that card now lives in the rail, where stretching to an auto row
+   means nothing. */
 .admin-priority-schools { min-height: 100%; }
 .admin-target-list { display: grid; }
 .admin-target-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: 0.82rem 0.9rem; border-bottom: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: 0.6rem; }
@@ -404,8 +434,10 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 
 @container admin-command (max-width: 88rem) {
   .admin-kpi-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .admin-grid--middle { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .admin-priority-schools { grid-column: 1 / -1; }
+  /* One column here, not two-plus-a-span: that reflow existed to give the
+     Priority Schools table a full-width row beneath the two narrow panels.
+     With two panels left, stacking keeps the table full-width all the same. */
+  .admin-grid--middle { grid-template-columns: minmax(0, 1fr); }
 }
 
 @container admin-command (max-width: 76rem) {
@@ -497,3 +529,36 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 @media (prefers-reduced-motion: reduce) {
   .admin-command :where(a, button, .admin-kpi) { transition: none !important; }
 }
+
+/* ── Platform Operations command centre ────────────────────────────────────
+   Admin's own scorecard sits above the observability sections, so the page
+   needs a heading that separates "my work" from "what I am watching", and an
+   honest empty line for the panels that are empty because nothing is wrong. */
+.admin-command__section-heading {
+  margin: 22px 0 2px;
+  font-size: var(--edify-text-label-size);
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--edify-text-subtle);
+}
+
+.admin-command__section-note {
+  margin: 0 0 12px;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  color: var(--edify-text-subtle);
+}
+
+.admin-panel__empty {
+  padding: 26px 16px;
+  text-align: center;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  color: var(--edify-text-subtle);
+}
+
+/* The ops tiles are links; the strip's own styling assumes <article>. */
+a.admin-kpi { text-decoration: none; color: inherit; }
+a.admin-kpi:hover { border-color: var(--brand-primary); }
+a.admin-kpi:focus-visible { outline: var(--edify-focus-outline); outline-offset: 2px; }

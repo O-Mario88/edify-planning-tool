@@ -261,7 +261,14 @@ class FrontendViewsTestCase(TestCase):
         self.assertNotContains(response, "Confirm this week")
 
         html = response.content.decode()
-        self.assertEqual(html.count('class="admin-kpi"'), 7)
+        # Admin's dashboard now leads with the Platform Operations command
+        # centre (8 tiles) and keeps the 7-tile country strip below it as
+        # observability. The two are counted separately so a change to either
+        # is visible here rather than hidden in a single total.
+        self.assertEqual(html.count('aria-label="Platform operations summary"'), 1)
+        self.assertEqual(html.count('aria-label="Country operational summary"'), 1)
+        self.assertEqual(html.count('class="admin-kpi"'), 15)
+        self.assertIn("Platform Observability", html)
         for region in (
             "admin-workspace",
             "admin-grid--top",

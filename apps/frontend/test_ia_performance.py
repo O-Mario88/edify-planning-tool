@@ -173,10 +173,13 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertEqual(response.status_code, 200)
         self.assertLessEqual(
             len(ctx.captured_queries),
-            60,
+            61,
             f"/ia/dashboard/ ran {len(ctx.captured_queries)} queries -- investigation "
             "measured ~61-62 before deduplicating the copy-pasted KPI block; should "
-            "now be meaningfully lower and, either way, a small constant.",
+            "now be meaningfully lower and, either way, a small constant. The "
+            "ceiling moved 60 -> 61 for the policy gate's single EXISTS, which "
+            "runs on every authenticated request; the sibling test below is the "
+            "one that proves the count still does not grow with data volume.",
         )
 
     # ── 2. /ia/dashboard/ query count doesn't grow with data volume ─────────
