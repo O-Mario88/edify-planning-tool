@@ -35,8 +35,10 @@
       <h3 id="card-{{ card.card_key }}-title"
           class="text-[15px] font-semibold edify-text tracking-tight leading-tight">{{ card.title }}</h3>
       {% if card.question %}
-        {# The card's own question, for assistive tech: a heading alone does not
-           say why the reader should care about what follows. #}
+        {% comment %}
+          The card's own question, for assistive tech: a heading alone does not
+          say why the reader should care about what follows.
+        {% endcomment %}
         <p class="sr-only">{{ card.question }}</p>
       {% endif %}
     </div>

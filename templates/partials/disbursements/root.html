@@ -121,8 +121,10 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
       </div>
 
       <div class="card p-5">
-        {# Month-scoped; the Accountant dashboard's card of the same name covers
-           the financial year. Both titles now name their period. #}
+        {% comment %}
+          Month-scoped; the Accountant dashboard's card of the same name covers
+          the financial year. Both titles now name their period.
+        {% endcomment %}
         <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-3">Disbursement Status This Month</h3>
         {% include "partials/components/donut_rings.html" with donut=donut_rings donut_label="Disbursement status by value" headline=donut.total_fmt subline="total this month" %}
 

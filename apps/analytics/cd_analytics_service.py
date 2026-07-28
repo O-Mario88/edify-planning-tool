@@ -218,31 +218,14 @@ def _refresh_target_ledger(cd: CDScope) -> None:
 
 
 def _prime_target_series(cd: CDScope) -> None:
-    """Populate cd.areas/cd.per_user_series ONCE per request: fetches every
-    in-scope CCEO's monthly target/achieved series exactly once each
-    (apps.targets.my_targets.per_user_monthly_series). Every
-    _weighted_achievement() call in this same request then pools from this
-    cached data (apps.targets.my_targets.pool_series — pure Python, no DB)
-    instead of re-fetching per PL row AND again per CCEO row, which is what
-    made target_by_pl_cceo/pl_oversight/kpis each independently re-derive the
-    same people's numbers.
-
-    `rebuild=False`: leadership roll-ups read the ledger as the
-    `target_ledger_sync` job last left it rather than rebuilding it first.
-
-    Rebuilding is a *write* on the way to answering a read, and it cost roughly
-    six queries per in-scope CCEO on every CD and RVP page load — the single
-    largest remaining cost on those surfaces. The question a country roll-up
-    answers does not change materially in half an hour, and the job bounds
-    staleness at thirty minutes.
-
-    The trade is safe because the bound is monitored rather than assumed:
-    `target_ledger_sync` declares `max_interval_minutes=90` and
-    `apps.realtime.health` reports the job overdue if it stops running, so a
-    stale ledger surfaces as a failing health check instead of as quietly wrong
-    national numbers. Surfaces where a person reads their own credit — My
-    Targets, Team Targets, Staff Performance — still rebuild on read.
-    """
+    """Populate cd.areas/cd.per_user_series ONCE per request: rebuilds every
+    in-scope CCEO's ledger and fetches their monthly target/achieved series
+    exactly once each (apps.targets.my_targets.per_user_monthly_series).
+    Every _weighted_achievement() call in this same request then pools from
+    this cached data (apps.targets.my_targets.pool_series — pure Python, no
+    DB) instead of re-rebuilding + re-fetching per PL row AND again per CCEO
+    row, which is what made target_by_pl_cceo/pl_oversight/kpis each
+    independently re-derive the same people's numbers."""
     from apps.targets.my_targets import active_target_areas, per_user_monthly_series
 
     cd.areas = active_target_areas()
@@ -253,7 +236,6 @@ def _prime_target_series(cd: CDScope) -> None:
         User.objects.filter(id__in=cd.cceo_user_ids),
         cd.fy,
         areas=cd.areas,
-        rebuild=False,
     )
 
 

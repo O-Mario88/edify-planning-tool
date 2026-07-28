@@ -193,9 +193,7 @@ def weighted_period_pct(
     return round(psum / wsum), tot_a, tot_t
 
 
-def per_user_monthly_series(
-    users, fy: str, areas=None, *, rebuild: bool = True
-) -> dict:
+def per_user_monthly_series(users, fy: str, areas=None) -> dict:
     """Per-person building block underneath pooled_monthly_series: rebuilds
     each user's achievement ledger and fetches their monthly_targets/
     monthly_achievements EXACTLY ONCE, keyed by user_id.
@@ -208,22 +206,6 @@ def per_user_monthly_series(
     once per subset — that would re-run rebuild() + the query pair for the
     same person as many times as they appear across subsets.
 
-    ``rebuild=False`` reads the ledger as the `target_ledger_sync` job last
-    left it instead of rebuilding it first. That is a deliberate freshness
-    trade, and it belongs only on aggregate surfaces:
-
-    * A person reading their OWN number — My Targets, Team Targets, Staff
-      Performance — expects the credit they earned this morning to be there,
-      so those keep the rebuild.
-    * A country or regional roll-up is a different question. Rebuilding nine
-      people's ledgers to redraw a national percentage costs ~54 queries on
-      every load, and the job already bounds staleness at 30 minutes.
-
-    Skipping is safe *because* that bound is monitored: `target_ledger_sync`
-    declares `max_interval_minutes=90` and `apps.realtime.health` reports it
-    overdue if it stops running. A stale ledger therefore shows up as a failing
-    health check rather than as quietly wrong leadership numbers.
-
     Returns {user_id: ({area.key: [12 monthly targets]}, {area.key: [12
     monthly achieved]})}.
     """
@@ -231,8 +213,7 @@ def per_user_monthly_series(
         areas = active_target_areas()
     out = {}
     for u in users:
-        if rebuild:
-            TargetAchievementService.rebuild(u, fy)
+        TargetAchievementService.rebuild(u, fy)
         t = MyTargetQueryService.monthly_targets(u, fy)
         a = MyTargetQueryService.monthly_achievements(u, fy)
         out[u.id] = (
@@ -261,9 +242,7 @@ def pool_series(user_ids, per_user: dict, areas) -> tuple[dict, dict]:
     return t_out, a_out
 
 
-def pooled_monthly_series(
-    users, fy: str, areas=None, *, rebuild: bool = True
-) -> tuple[dict, dict]:
+def pooled_monthly_series(users, fy: str, areas=None) -> tuple[dict, dict]:
     """THE canonical multi-person pooling step: sums MyTargetQueryService's
     per-user monthly_targets/monthly_achievements series across `users`,
     rebuilding each user's achievement ledger first.
@@ -289,7 +268,7 @@ def pooled_monthly_series(
     """
     if areas is None:
         areas = active_target_areas()
-    per_user = per_user_monthly_series(users, fy, areas=areas, rebuild=rebuild)
+    per_user = per_user_monthly_series(users, fy, areas=areas)
     return pool_series([u.id for u in users], per_user, areas)
 
 
