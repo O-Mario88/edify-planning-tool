@@ -53,6 +53,7 @@ from apps.core.metrics.payload import (
     render_metric,
     render_strip,
 )
+from apps.core.metrics.ratio import percentage, percentage_or_zero
 from apps.core.metrics.registry import (
     AMBIGUOUS_LABELS,
     METRIC_REGISTRY,
@@ -97,6 +98,8 @@ __all__ = [
     "format_value",
     "get_metric",
     "metrics_for_page",
+    "percentage",
+    "percentage_or_zero",
     "render_metric",
     "render_strip",
 ]

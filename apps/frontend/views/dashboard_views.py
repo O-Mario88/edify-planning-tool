@@ -500,13 +500,16 @@ def dashboard_view(request):
 
         total_tasks = completed_cnt + in_progress_cnt + planned_cnt + overdue_cnt
 
-        def _pct(n):
-            return round(n / total_tasks * 100) if total_tasks else 0
+        # A CCEO with nothing scheduled has every share render as 0% -- which
+        # on this strip reads as "you have done none of it" rather than "you
+        # have nothing". Preserved as-is for now; the honest form is
+        # apps.core.metrics.percentage (None) or MetricValue.ratio (NO_DATA).
+        from apps.core.metrics import percentage_or_zero
 
-        completed_pct = _pct(completed_cnt)
-        in_progress_pct = _pct(in_progress_cnt)
-        planned_pct = _pct(planned_cnt)
-        overdue_pct = _pct(overdue_cnt)
+        completed_pct = percentage_or_zero(completed_cnt, total_tasks)
+        in_progress_pct = percentage_or_zero(in_progress_cnt, total_tasks)
+        planned_pct = percentage_or_zero(planned_cnt, total_tasks)
+        overdue_pct = percentage_or_zero(overdue_cnt, total_tasks)
 
         # ── "This Week's Plan" — three real, actionable operating lists ────────
         _interv = dict(SsaIntervention.choices)

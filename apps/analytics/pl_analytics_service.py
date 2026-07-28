@@ -145,8 +145,11 @@ def _ssa_bar_pct(score: float | None) -> float:
     return round(max(0.0, min(10.0, score or 0.0)) * 10, 1)
 
 
-def _pct(n: int, d: int) -> int:
-    return round(n / d * 100) if d else 0
+# Re-exported under the old name because cd_dashboard_service and
+# rvp_dashboard_service import `_pct` from here. The alias names what it
+# does: an empty denominator renders as a real-looking 0%, which on these
+# surfaces means "no targets set" reads as "0% achieved".
+from apps.core.metrics import percentage_or_zero as _pct  # noqa: E402
 
 
 def _sparkline(values: list[float]) -> str:

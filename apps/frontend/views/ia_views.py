@@ -958,8 +958,7 @@ def ia_dashboard_view(request):
     )[:5]
 
     # ── SSA donuts: school coverage + record review status ──────────────────
-    def _pct(part, whole):
-        return round(part / whole * 100) if whole else 0
+    from apps.core.metrics import percentage_or_zero as _pct
 
     ssa_overview = {
         "total": school_total,
