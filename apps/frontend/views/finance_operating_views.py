@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Sum
 
 from apps.core.donut import build_rings
 from apps.core.permissions import require_export_permission, require_page_permission
@@ -21,8 +20,8 @@ from apps.fund_requests.finance_services import (
     PartnerPaymentService,
 )
 from apps.fund_requests.disbursement_dashboard_service import (
+    fy_totals_all_fund_types,
     month_overview_all_fund_types,
-    weekly_status_buckets,
 )
 from apps.analytics.platform_engine import finance_health
 
@@ -48,53 +47,41 @@ def accountant_dashboard_view(request):
     fy = get_operational_fy()
     fy_qs = WeeklyFundRequest.objects.filter(fy=fy)
 
-    # 1. Real database queries for KPIs — bucketed through the same canonical
-    # status classifier the Disbursement Dashboard uses (weekly_status_buckets)
-    # so the two "current budget status" surfaces can never diverge. (The old
-    # version filtered on payment/status literals like "approved_by_cd",
-    # "sent_to_accountant" and "accountability_pending" that WeeklyFundRequest
-    # never actually writes — see weekly_service.py — which silently excluded
-    # "confirmed_for_advance" advances from the approved-funds denominator and
-    # skewed Budget Utilization.)
-    fy_wfrs = list(fy_qs)
-    fy_buckets = weekly_status_buckets(fy_wfrs)
+    # 1. FY KPIs across every fund type with a financial year — monthly fund
+    # plans and weekly advances — through the canonical aggregate the queue
+    # classifiers feed (fy_totals_all_fund_types).
+    #
+    # These tiles are named "Total Approved Funds", "Total Disbursed" and
+    # "Budget Utilization": figures a reader takes as the country's. They were
+    # built from WeeklyFundRequest alone, so monthly fund plans — which carry
+    # most of the value — were missing from every one of them, and Budget
+    # Utilization divided one fund type's disbursement by one fund type's
+    # approvals while presenting itself as the organisation's rate.
+    fy_totals = fy_totals_all_fund_types(fy)
 
-    def _bucket_sum(*labels):
-        return sum(w.total_amount for w in fy_wfrs if fy_buckets[w.id] in labels)
+    total_disbursed_db = fy_totals["disbursed"]
+    total_accounted_db = fy_totals["accounted"]
+    total_returned_db = fy_totals["returned"]
 
-    def _bucket_count(*labels):
-        return sum(1 for w in fy_wfrs if fy_buckets[w.id] in labels)
-
-    total_disbursed_db = (
-        fy_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
-    )
-    total_accounted_db = (
-        fy_qs.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0
-    )
-    total_returned_db = (
-        fy_qs.aggregate(Sum("returned_amount"))["returned_amount__sum"] or 0
-    )
-
-    # Approved but not yet disbursed
-    pending_disb_sum = _bucket_sum("Pending Disbursement")
-    pending_disb_count = _bucket_count("Pending Disbursement")
+    # Approved but not yet disbursed (Held included: a hold pauses approved
+    # money rather than rejecting it).
+    pending_disb_sum = fy_totals["pending_disbursement"]
+    pending_disb_count = fy_totals["pending_disbursement_count"]
 
     # Still travelling up the approval chain
-    awaiting_sum = _bucket_sum("Pending Approval")
-    awaiting_count = _bucket_count("Pending Approval")
+    awaiting_sum = fy_totals["awaiting_approval"]
+    awaiting_count = fy_totals["awaiting_approval_count"]
 
-    returned_sum = _bucket_sum("Returned")
+    returned_sum = fy_totals["returned"]
 
     # Every request that has ever been disbursed (still outstanding
     # reconciliation or already closed) vs. the reconciled subset.
-    disbursed_count = _bucket_count("Disbursed", "Awaiting Reconciliation", "Closed")
-    accounted_count = _bucket_count("Closed")
+    disbursed_count = fy_totals["disbursed_count"]
+    accounted_count = fy_totals["accounted_count"]
 
     # "Approved" = passed approval and disbursable-or-beyond — the
     # denominator for the Budget Utilization ratio.
-    total_approved_db = _bucket_sum(
-        "Pending Disbursement", "Disbursed", "Awaiting Reconciliation", "Closed"
-    )
+    total_approved_db = fy_totals["approved"]
     finance_analytics = finance_health(
         approved=total_approved_db,
         disbursed=total_disbursed_db,
@@ -102,7 +89,7 @@ def accountant_dashboard_view(request):
         returned=total_returned_db,
         reconciled_count=accounted_count,
         disbursed_count=disbursed_count,
-        record_count=len(fy_wfrs),
+        record_count=fy_totals["record_count"],
     )
     recon_rate = round(finance_analytics["reconciliation"]["rate"])
     budget_util = round(finance_analytics["utilization"]["utilization_rate"] or 0)

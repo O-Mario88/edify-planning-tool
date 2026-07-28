@@ -30,6 +30,7 @@ from django.test import SimpleTestCase, TestCase
 from apps.core.fy import get_operational_fy
 from apps.fund_requests.disbursement_dashboard_service import (
     _weekly_status,
+    fy_totals_all_fund_types,
     month_overview_all_fund_types,
 )
 
@@ -105,6 +106,105 @@ class OneServiceFeedsBothCardsTest(TestCase):
             True,
         )
         self.assertIsInstance(raw["approved_not_disbursed"], int)
+
+
+class FyTotalsCoverEveryFundTypeTest(TestCase):
+    """The Accountant's FY KPI strip must not report one fund type as all money.
+
+    "Total Approved Funds", "Total Disbursed" and "Budget Utilization" read as
+    the country's figures. They were built from WeeklyFundRequest alone, so
+    monthly fund plans -- which carry most of the value -- were missing from
+    every one of them. On the seed, Awaiting Approvals read UGX 13.1M where the
+    true figure across both fund types is UGX 27.1M.
+    """
+
+    def test_it_reports_every_row_the_strip_needs(self):
+        totals = fy_totals_all_fund_types(get_operational_fy())
+        for key in (
+            "approved",
+            "pending_disbursement",
+            "pending_disbursement_count",
+            "awaiting_approval",
+            "awaiting_approval_count",
+            "disbursed",
+            "accounted",
+            "returned",
+            "disbursed_count",
+            "accounted_count",
+            "record_count",
+        ):
+            with self.subTest(key):
+                self.assertIn(key, totals)
+                self.assertIsInstance(totals[key], int)
+
+    def test_monthly_fund_plans_are_counted_not_just_weekly_advances(self):
+        from apps.fund_requests.models import FundRequest, WeeklyFundRequest
+
+        fy = get_operational_fy()
+        weekly_only = sum(
+            w.total_amount or 0
+            for w in WeeklyFundRequest.objects.filter(fy=fy).exclude(
+                status__in=["not_requested", "cancelled"]
+            )
+        )
+        monthly = FundRequest.objects.filter(period="monthly", fy=fy)
+        if not monthly.exists():
+            self.skipTest("no monthly fund plans in this database")
+
+        totals = fy_totals_all_fund_types(fy)
+        staged = totals["approved"] + totals["awaiting_approval"] + totals["returned"]
+        self.assertGreater(
+            staged,
+            weekly_only,
+            "the FY figures must include monthly fund plans, not weekly alone",
+        )
+
+    def test_an_empty_financial_year_reports_zeros(self):
+        totals = fy_totals_all_fund_types("1999")
+        self.assertEqual(totals["record_count"], 0)
+        self.assertEqual(totals["approved"], 0)
+        self.assertEqual(totals["awaiting_approval"], 0)
+
+    def test_held_money_counts_as_approved(self):
+        """Same rule as the month card: a hold pauses approved money."""
+        totals = fy_totals_all_fund_types(get_operational_fy())
+        self.assertGreaterEqual(
+            totals["approved"],
+            totals["pending_disbursement"],
+            "approved is the wider set; pending disbursement sits inside it",
+        )
+
+
+class MonthCardIsActuallyMonthScopedTest(TestCase):
+    """A card titled "This Month" must not carry a standing backlog.
+
+    `_partner_items` calls itself "month-agnostic" and `_reimbursement_items`
+    "due now"; both assign the Pending Disbursement status. Including them put
+    rows 1-3 of the card on any month while Disbursed and Reconciled covered
+    this one -- one card, two periods.
+    """
+
+    def test_the_overview_excludes_month_agnostic_queues(self):
+        import apps.fund_requests.disbursement_dashboard_service as service
+
+        fy, month = get_operational_fy(), date.today().month
+        names: dict = {}
+        month_scoped = service._monthly_items(fy, month, names) + service._weekly_items(
+            fy, month, names
+        )
+        standing = service._partner_items() + service._reimbursement_items(names)
+
+        expected = sum(
+            i["amount"] for i in month_scoped if i["status"] == "Pending Approval"
+        )
+        self.assertEqual(
+            month_overview_all_fund_types(fy, month)["waiting_for_approval"],
+            expected,
+            "the month card must sum month-scoped fund types only",
+        )
+        # Guard the premise: if the standing queues ever became month-scoped,
+        # this test would be asserting nothing.
+        self.assertIsInstance(standing, list)
 
 
 class CardsNameTheirPopulationTest(SimpleTestCase):

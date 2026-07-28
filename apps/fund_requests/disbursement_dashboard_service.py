@@ -253,6 +253,84 @@ def _month_of_period_key(period_key):
 
 
 # ── Queue building ────────────────────────────────────────────────────────────
+def fy_totals_all_fund_types(fy) -> dict:
+    """The financial year's money across monthly plans and weekly advances.
+
+    The Accountant's home KPI strip used to build these from WeeklyFundRequest
+    alone while naming them "Total Approved Funds", "Total Disbursed" and
+    "Budget Utilization" -- figures a reader takes as the country's, not one
+    fund type's. Monthly fund plans, which carry most of the value, were absent
+    from every one of them.
+
+    Both fund types are classified through the same two canonical status
+    functions the queue uses (`_monthly_status`, `_weekly_status`), so a stage
+    means the same thing here as it does on the Disbursement Dashboard.
+
+    Partner payables and reimbursements are deliberately excluded: both are
+    "due now" queues with no financial year of their own (see
+    `_partner_items`), and folding a month-agnostic backlog into an FY total
+    would make the figure mean neither one thing nor the other.
+
+    Returns raw integers; callers format them.
+    """
+    from .models import FundRequest, WeeklyFundRequest
+
+    monthly = list(FundRequest.objects.filter(period="monthly", fy=fy))
+    weekly = list(
+        WeeklyFundRequest.objects.filter(fy=fy).exclude(
+            status__in=["not_requested", "cancelled"]
+        )
+    )
+    weekly_buckets = weekly_status_buckets(weekly)
+
+    staged: list[tuple[str, int, int, int]] = [
+        (
+            _monthly_status(f),
+            f.total_amount or 0,
+            f.disbursed_amount or 0,
+            f.accounted_amount or 0,
+        )
+        for f in monthly
+    ] + [
+        (
+            weekly_buckets[w.id],
+            w.total_amount or 0,
+            w.disbursed_amount or 0,
+            w.accounted_amount or 0,
+        )
+        for w in weekly
+    ]
+
+    def _sum(*labels):
+        return sum(total for status, total, _d, _a in staged if status in labels)
+
+    def _count(*labels):
+        return sum(1 for status, _t, _d, _a in staged if status in labels)
+
+    # "Approved" = cleared approval and disbursable-or-beyond. Held belongs
+    # here for the same reason it belongs in approved-not-disbursed: a hold
+    # pauses approved money rather than rejecting it.
+    approved = _sum(
+        "Pending Disbursement", "Held", "Disbursed", "Awaiting Reconciliation", "Closed"
+    )
+    disbursed = sum(d for _s, _t, d, _a in staged)
+    accounted = sum(a for _s, _t, _d, a in staged)
+
+    return {
+        "approved": approved,
+        "pending_disbursement": _sum("Pending Disbursement", "Held"),
+        "pending_disbursement_count": _count("Pending Disbursement", "Held"),
+        "awaiting_approval": _sum("Pending Approval"),
+        "awaiting_approval_count": _count("Pending Approval"),
+        "disbursed": disbursed,
+        "accounted": accounted,
+        "returned": _sum("Returned"),
+        "disbursed_count": _count("Disbursed", "Awaiting Reconciliation", "Closed"),
+        "accounted_count": _count("Closed"),
+        "record_count": len(staged),
+    }
+
+
 def month_overview_all_fund_types(fy, month) -> dict:
     """The month's money across every fund type, in raw UGX.
 
@@ -273,13 +351,14 @@ def month_overview_all_fund_types(fy, month) -> dict:
 
     Returns raw integers; callers format them.
     """
+    # Month-scoped fund types only. `_partner_items` describes itself as
+    # "month-agnostic" and `_reimbursement_items` as "due now": both are
+    # standing payable queues that belong to no particular month. Including
+    # them made rows 1-3 of this card cover any month while rows 4-5 (Disbursed,
+    # Reconciled) covered this one -- one card, two periods. They remain in the
+    # queue list beside it, which is a work list rather than a period total.
     names: dict[str, str] = {}
-    queue = (
-        _monthly_items(fy, month, names)
-        + _weekly_items(fy, month, names)
-        + _partner_items()
-        + _reimbursement_items(names)
-    )
+    queue = _monthly_items(fy, month, names) + _weekly_items(fy, month, names)
 
     def _sum(status):
         return sum(i["amount"] for i in queue if i["status"] == status)
