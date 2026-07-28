@@ -356,7 +356,17 @@ Open Canonical Disbursement Queue
 
 <!-- This Month Overview -->
 <div class="edify-surface p-5 rounded-surface  shadow-sm space-y-3">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month Overview</h3>
+{% comment %}
+  Named for what it counts. Every figure on this page comes from
+  WeeklyFundRequest (finance_operating_views.accountant_dashboard_view scopes
+  fy_qs to it), so this card covers weekly advances only. The Disbursements
+  workspace carries a card with the same five rows built from the consolidated
+  queue -- monthly fund plans, weekly advances, partner payments and
+  reimbursements -- and on the seed that is a further UGX 2.07M of monthly
+  plans this card never mentioned. Two identical titles over different
+  populations of money left no way to tell which was which.
+{% endcomment %}
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Weekly Advances This Month</h3>
 <div class="space-y-2 text-[12px] font-bold text-slate-500">
 <a href="/accounts/weekly-requests" class="flex items-center justify-between hover:bg-slate-50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">{{ month_overview.waiting_for_approval }}</span></a>
 <a href="/accounts/returned" class="flex items-center justify-between text-rose-600 hover:bg-rose-50/50 -mx-1 px-1 py-0.5 rounded-small transition-colors"><span>Returned</span> <span class="font-semibold">{{ month_overview.returned }}</span></a>

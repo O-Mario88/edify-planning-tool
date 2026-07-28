@@ -110,7 +110,13 @@ scheduled, costed fund requests — the accountant never creates work here.{% en
     <!-- RIGHT: finance intelligence -->
     <div class="lg:col-span-3 space-y-5">
       <div class="card p-5">
-        <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-3">This Month Overview</h3>
+        {% comment %}
+          Built from the consolidated queue -- monthly fund plans, weekly
+          advances, partner payments and reimbursements -- so it is named for
+          that. The Accountant home dashboard carries a card with the same five
+          rows scoped to weekly advances alone; both titles now say which.
+        {% endcomment %}
+        <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-3">All Fund Types This Month</h3>
         <div class="space-y-2 text-[12px] font-semibold">
           <div class="flex justify-between"><span class="text-slate-400">Waiting for Approval</span><span class="text-slate-700 tabular-nums">{{ overview.waiting }}</span></div>
           <div class="flex justify-between"><span class="text-slate-400">Returned</span><span class="text-rose-600 tabular-nums">{{ overview.returned }}</span></div>
