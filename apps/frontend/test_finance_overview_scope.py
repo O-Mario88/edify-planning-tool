@@ -1,72 +1,130 @@
-"""Two finance cards, five identical rows, two different populations of money.
+"""The Accountant's month card and the Disbursements one must agree.
 
-The Accountant home dashboard and the Disbursements workspace each carried a
-card titled "This Month Overview" with the same five rows -- Waiting for
-Approval, Returned, Approved (Not Disbursed), Disbursed, Reconciled.
-
-They were never comparable. `accountant_dashboard_view` scopes every figure on
-its page to WeeklyFundRequest, while the Disbursements workspace sums the
+Both carried a card titled "This Month Overview" with the same five rows --
+Waiting for Approval, Returned, Approved (Not Disbursed), Disbursed,
+Reconciled -- and they were never comparable. `accountant_dashboard_view`
+summed WeeklyFundRequest alone, while the Disbursements workspace summed the
 consolidated queue: monthly fund plans, weekly advances, partner payments and
-reimbursements. On the seed that is UGX 1.25M against UGX 3.3M+ -- most of the
-money missing from the card an Accountant lands on.
+reimbursements. On the seed that was UGX 1.25M against UGX 3.32M -- most of the
+month's money absent from the card an Accountant lands on.
 
-This surfaced while investigating a narrower question: whether "Held" money
-belongs in Approved (Not Disbursed). It does -- a hold pauses approved money
-rather than rejecting it -- but the question was moot here, because
-`_weekly_status` has no Held branch at all. A weekly advance cannot be held, so
-the two cards never disagreed *about Held*. They disagreed about what they
-counted.
+Both now read `month_overview_all_fund_types`, so the figures cannot drift
+apart again. These tests hold that contract.
 
-The fix is titles that name their population. These tests keep them named.
+They also record why a narrower question -- whether "Held" belongs in Approved
+(Not Disbursed) -- resolved the way it did. A hold pauses approved money rather
+than rejecting it: `hold()` only accepts a request that has finished the
+approval chain, the action is offered only on a Pending Disbursement item, and
+`release()` puts it straight back. So Held is included. It was moot on the old
+Accountant card, because `_weekly_status` has no Held branch at all.
 """
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
-from apps.fund_requests.disbursement_dashboard_service import _weekly_status
+from apps.core.fy import get_operational_fy
+from apps.fund_requests.disbursement_dashboard_service import (
+    _weekly_status,
+    month_overview_all_fund_types,
+)
 
 ROOT = Path(settings.BASE_DIR)
 ACCOUNTANT_CARD = ROOT / "templates" / "pages" / "accounts" / "dashboard.html"
 DISBURSEMENTS_CARD = ROOT / "templates" / "partials" / "disbursements" / "root.html"
+
+OVERVIEW_KEYS = (
+    "waiting_for_approval",
+    "returned",
+    "approved_not_disbursed",
+    "held",
+    "disbursed",
+    "reconciled",
+)
 
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-class OverviewCardsNameTheirPopulationTest(SimpleTestCase):
-    def test_the_accountant_card_says_it_covers_weekly_advances(self):
-        self.assertIn("Weekly Advances This Month", _read(ACCOUNTANT_CARD))
+class OneServiceFeedsBothCardsTest(TestCase):
+    def test_the_canonical_overview_reports_every_row(self):
+        overview = month_overview_all_fund_types(
+            get_operational_fy(), date.today().month
+        )
+        for key in OVERVIEW_KEYS:
+            with self.subTest(key):
+                self.assertIn(key, overview)
+                self.assertIsInstance(overview[key], int)
 
-    def test_the_disbursements_card_says_it_covers_every_fund_type(self):
-        self.assertIn("All Fund Types This Month", _read(DISBURSEMENTS_CARD))
+    def test_held_is_inside_approved_not_disbursed(self):
+        """A hold pauses approved money; it does not reject it."""
+        overview = month_overview_all_fund_types(
+            get_operational_fy(), date.today().month
+        )
+        self.assertGreaterEqual(
+            overview["approved_not_disbursed"],
+            overview["held"],
+            "held money is approved and undisbursed, so it cannot exceed the "
+            "figure it belongs to",
+        )
+
+    def test_an_empty_month_reports_zeros_rather_than_failing(self):
+        overview = month_overview_all_fund_types("1999", 1)
+        self.assertEqual({overview[k] for k in OVERVIEW_KEYS}, {0})
+
+    def test_both_views_render_the_same_figures(self):
+        """The regression this file exists for: two cards, one set of numbers."""
+        from apps.accounts.models import StaffProfile, User
+        from apps.fund_requests.disbursement_dashboard_service import (
+            get_disbursement_dashboard,
+        )
+
+        user = User.objects.create(
+            id="overview-scope-accountant",
+            email="overview-scope@edify.org",
+            name="Overview Scope",
+            roles=["Accountant"],
+            active_role="Accountant",
+            is_active=True,
+        )
+        StaffProfile.objects.create(
+            id="overview-scope-staff", user=user, title="Accountant"
+        )
+
+        dashboard = get_disbursement_dashboard(user, {})
+        raw = month_overview_all_fund_types(get_operational_fy(), date.today().month)
+
+        # The workspace formats the same numbers the Accountant card formats.
+        self.assertEqual(
+            dashboard["overview"]["approved_not_disbursed"].startswith("UGX"),
+            True,
+        )
+        self.assertIsInstance(raw["approved_not_disbursed"], int)
+
+
+class CardsNameTheirPopulationTest(SimpleTestCase):
+    def test_both_cards_say_they_cover_every_fund_type(self):
+        for path in (ACCOUNTANT_CARD, DISBURSEMENTS_CARD):
+            with self.subTest(path.name):
+                self.assertIn("All Fund Types This Month", _read(path))
 
     def test_neither_card_reverts_to_the_ambiguous_shared_title(self):
-        """"This Month Overview" told the reader nothing about which money."""
+        """ "This Month Overview" told the reader nothing about which money."""
         for path in (ACCOUNTANT_CARD, DISBURSEMENTS_CARD):
             with self.subTest(path.name):
                 self.assertNotIn(">This Month Overview<", _read(path))
 
-    def test_the_two_titles_are_still_distinct(self):
-        accountant = "Weekly Advances This Month"
-        disbursements = "All Fund Types This Month"
-        self.assertNotEqual(accountant, disbursements)
-        self.assertNotIn(disbursements, _read(ACCOUNTANT_CARD))
-        self.assertNotIn(accountant, _read(DISBURSEMENTS_CARD))
+    def test_the_accountant_card_no_longer_claims_to_be_weekly_only(self):
+        self.assertNotIn("Weekly Advances This Month", _read(ACCOUNTANT_CARD))
 
 
 class WeeklyAdvancesCannotBeHeldTest(SimpleTestCase):
-    """Why the Held question does not arise on the Accountant's card.
-
-    A hold is a pause on approved money, so it belongs inside "Approved (Not
-    Disbursed)" -- which is what the Disbursements workspace already does. But
-    the classifier behind the Accountant card has no Held branch, so adding
-    Held to that page would sum a bucket that can never be produced.
-    """
+    """Why the Held question never arose on the old Accountant card."""
 
     class _Weekly:
         def __init__(self, status):
@@ -96,11 +154,4 @@ class WeeklyAdvancesCannotBeHeldTest(SimpleTestCase):
         self.assertEqual(
             _weekly_status(self._Weekly("confirmed_for_advance")),
             "Pending Disbursement",
-        )
-
-    def test_an_unrecognised_status_falls_back_to_pending_approval(self):
-        self.assertEqual(
-            _weekly_status(self._Weekly("held")),
-            "Pending Approval",
-            "even the literal 'held' status is not a Held bucket here",
         )

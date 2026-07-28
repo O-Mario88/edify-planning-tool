@@ -20,7 +20,10 @@ from apps.fund_requests.finance_services import (
     FinanceBlockedReasonService,
     PartnerPaymentService,
 )
-from apps.fund_requests.disbursement_dashboard_service import weekly_status_buckets
+from apps.fund_requests.disbursement_dashboard_service import (
+    month_overview_all_fund_types,
+    weekly_status_buckets,
+)
 from apps.analytics.platform_engine import finance_health
 
 
@@ -180,31 +183,24 @@ def accountant_dashboard_view(request):
 
     all_funds = queue_items
 
-    # This Month Overview (current calendar month, by week start date) — same
-    # bucket classifier as the FY-wide KPIs above, scoped to this month's rows.
+    # This Month Overview — every fund type, through the canonical service the
+    # Disbursement Dashboard uses.
+    #
+    # This card used to sum WeeklyFundRequest alone while carrying the same
+    # five rows and the same title as the Disbursements workspace card, which
+    # sums the consolidated queue: monthly fund plans, weekly advances, partner
+    # payments and reimbursements. On the seed that was UGX 1.25M against UGX
+    # 3.3M+ -- most of the month's money absent from the card an Accountant
+    # lands on. Both now read one implementation, so they cannot diverge.
+    #
+    # Note this is deliberately broader than the FY KPI strip above, which
+    # remains weekly-advance-scoped; the card names its own population.
     today = date.today()
-    month_qs = fy_qs.filter(
-        week_start_date__year=today.year, week_start_date__month=today.month
-    )
-    month_wfrs = list(month_qs)
-    month_buckets = weekly_status_buckets(month_wfrs)
-
-    def _month_sum(*labels):
-        return sum(w.total_amount for w in month_wfrs if month_buckets[w.id] in labels)
-
+    month_overview_raw = month_overview_all_fund_types(fy, today.month)
     month_overview = {
-        "waiting_for_approval": format_ugx_compact(_month_sum("Pending Approval")),
-        "returned": format_ugx_compact(_month_sum("Returned")),
-        "approved_not_disbursed": format_ugx_compact(
-            _month_sum("Pending Disbursement")
-        ),
-        "disbursed": format_ugx_compact(
-            month_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
-        ),
-        "reconciled": format_ugx_compact(
-            month_qs.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0
-        ),
+        key: format_ugx_compact(value) for key, value in month_overview_raw.items()
     }
+    month_overview["held_raw"] = month_overview_raw["held"]
 
     # Disbursement Status donut (share of FY value per stage)
     donut_parts = {
