@@ -31,6 +31,21 @@ class NotificationLinkResolver:
 
         role = (role or "Staff").lower()
 
+        # Platform-operations events resolve to the exact affected record, not
+        # to a queue the Admin then has to search. A notification that lands on
+        # a generic dashboard costs the reader the whole diagnosis.
+        if event_type.startswith("admin_ops."):
+            if event_type == "admin_ops.incident.detected" and context_id:
+                return f"/admin-ops/incidents/{context_id}", "Open Incident"
+            if event_type == "admin_ops.ticket.created":
+                return "/admin-ops/support", "Triage Ticket"
+            if event_type == "admin_ops.ticket.resolved":
+                # The reporter, not the Admin: their own ticket list.
+                return "/support", "View Your Report"
+            if event_type == "admin_ops.work_item.due":
+                return "/admin-ops/my-plan", "Open Admin My Plan"
+            return "/admin-ops/my-plan", "Open Platform Operations"
+
         if event_type == "critical_school_ssa":
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/planning"

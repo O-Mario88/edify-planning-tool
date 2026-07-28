@@ -35,7 +35,11 @@ class AdminNavigationSurfaceSmokeTest(TestCase):
         # sub-navigation rather than from their own sidebar links, so they are
         # smoke-tested through the same door a user walks through.
         urls |= {section["url"] for section in build_analytics_sections(self.user, "/")}
-        self.assertGreaterEqual(len(urls), 40)
+        # The floor is a guard against the loop below passing on an empty
+        # sidebar, not a target. It was 40 when Admin carried every workspace on
+        # the platform; Platform Operations deliberately carries far fewer, so
+        # the floor tracks the doctrine rather than the other way round.
+        self.assertGreaterEqual(len(urls), 20)
 
         for url in sorted(urls):
             with self.subTest(url=url):

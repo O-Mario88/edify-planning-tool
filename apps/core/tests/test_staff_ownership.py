@@ -60,8 +60,15 @@ class StaffOwnershipTest(APITestCase):
             "pl@staff.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value, "Grace PL"
         )
         self.pl_staff = StaffProfile.objects.create(user=self.pl, title="PL")
-        # Admin for the staff-candidate + supervisor endpoints.
+        # Admin for the staff-candidate + supervisor endpoints (user
+        # administration, which is Admin's).
         self.admin = self._user("admin@staff.test", EdifyRole.ADMIN.value, "Admin User")
+        # The Country Director for project-portfolio decisions. Admin used to
+        # stand in here because it held every permission; project management is
+        # programme work, so the actor now matches the test's own name.
+        self.cd = self._user(
+            "cd@staff.test", EdifyRole.COUNTRY_DIRECTOR.value, "Dora CD"
+        )
 
     def _user(self, email, role, name):
         return User.objects.create_user(
@@ -269,7 +276,7 @@ class StaffOwnershipTest(APITestCase):
         proj = Project.objects.create(
             code="SP-TEST", name="Test Project", category="pilot"
         )
-        self._as(self.admin)
+        self._as(self.cd)
         res = self.client.patch(
             f"/api/special-projects/{proj.id}",
             {"managerStaffId": self.pl_staff.id},

@@ -1,0 +1,37 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Maintenance Calendar — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+
+  {% include "pages/admin_ops/_header.html" with page_title="Maintenance Calendar" page_purpose="Recurring platform upkeep. When a template falls due it generates a scheduled work item in Admin My Plan, so routine maintenance does not depend on anyone remembering it." %}
+
+  <section class="card p-4" aria-labelledby="maintenance-templates-title">
+    <h2 id="maintenance-templates-title" class="text-[14px] font-extrabold text-slate-800 mb-2">Recurring Maintenance</h2>
+    {% for template in templates %}
+    <div class="py-3 border-b border-slate-50 last:border-0 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-[13px] font-bold text-slate-700">{{ template.name }}</p>
+        <p class="edify-text-caption font-semibold text-slate-400">{{ template.get_category_display }} · every {{ template.frequency_days }} days · about {{ template.estimated_minutes }} min</p>
+      </div>
+      <p class="text-[12px] font-bold text-slate-600 tabular-nums shrink-0">Next {{ template.next_due_date|date:"d M Y" }}</p>
+    </div>
+    {% empty %}
+    <p class="text-[12px] font-medium text-slate-400 py-8 text-center">No maintenance templates are configured yet.</p>
+    {% endfor %}
+  </section>
+
+  <section class="card p-4" aria-labelledby="maintenance-open-title">
+    <h2 id="maintenance-open-title" class="text-[14px] font-extrabold text-slate-800 mb-2">Open Maintenance Work</h2>
+    {% for item in generated %}
+    <div class="py-3 border-b border-slate-50 last:border-0">
+      <p class="text-[13px] font-bold text-slate-700">{{ item.reference }} · {{ item.title }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400">{{ item.get_status_display }}{% if item.scheduled_date %} · scheduled {{ item.scheduled_date|date:"d M" }}{% endif %}</p>
+    </div>
+    {% empty %}
+    <p class="text-[12px] font-medium text-slate-400 py-8 text-center">No maintenance work is open.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

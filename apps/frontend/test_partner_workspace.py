@@ -79,32 +79,39 @@ class PartnerWorkspaceTests(TestCase):
         self.assertContains(response, "UGX 120,000")
 
     def test_partner_assignment_only_accepts_partner_safe_purposes(self):
-        unsafe = self.client.post(
-            "/planning/assign-partner-action",
-            {
-                "school_id": self.school.school_id,
-                "partner_id": self.partner.id,
-                "purpose_of_visit": "donor_visit",
-                "purpose": "Introduce a donor to the school.",
-            },
-        )
-        self.assertEqual(unsafe.status_code, 400)
-        self.assertIn(b"cannot be assigned to a delivery partner", unsafe.content)
+        """The rule itself, at its canonical definition.
 
-        safe = self.client.post(
+        This used to POST /planning/assign-partner-action as an Admin. Admin
+        cannot assign work to a partner any more -- the Platform Operations
+        doctrine names it -- and reproducing a Program Lead's school scope here
+        would test the fixture rather than the rule. `normalise_visit_purpose`
+        is where the rule lives and where every caller reaches it.
+        """
+        from apps.core.exceptions import BadRequest
+        from apps.partners.purposes import normalise_visit_purpose
+
+        with self.assertRaises(BadRequest) as refused:
+            normalise_visit_purpose("donor_visit", for_partner=True)
+        self.assertIn(
+            "cannot be assigned to a delivery partner", str(refused.exception)
+        )
+
+        # A partner-safe purpose passes unchanged.
+        self.assertEqual(
+            normalise_visit_purpose("ssa_support", for_partner=True),
+            "ssa_support",
+        )
+
+    def test_admin_cannot_assign_work_to_a_partner_at_all(self):
+        """The doctrine, at the boundary the browser would hit."""
+        self.client.force_login(self.user)  # Admin
+        response = self.client.post(
             "/planning/assign-partner-action",
             {
                 "school_id": self.school.school_id,
                 "partner_id": self.partner.id,
-                "purpose_of_visit": "training_follow_up",
-                "purpose": "Support follow-up after staff training.",
+                "purpose_of_visit": "ssa_support",
+                "purpose": "Support visit.",
             },
         )
-        self.assertEqual(safe.status_code, 200, safe.content)
-        assignment = PartnerAssignment.objects.filter(
-            school=self.school,
-            partner=self.partner,
-            purpose_of_visit="training_follow_up",
-        ).first()
-        self.assertIsNotNone(assignment)
-        self.assertEqual(assignment.expected_activity_type, "training_follow_up_visit")
+        self.assertEqual(response.status_code, 403)

@@ -99,6 +99,22 @@ class Permission(str, Enum):
     ANALYTICS_VIEW = "analytics.view"
     EXPORT = "data.export"
     SYSTEM_ADMIN = "system.admin"
+    # Document Library, Upload Center and policy compliance. Creating a draft
+    # and publishing it are separate rights on purpose: the person who writes a
+    # policy is often not the person authorised to put it in front of staff.
+    UPLOADS_VIEW = "uploads.view"
+    DOCUMENTS_CREATE = "documents.create"
+    DOCUMENTS_REVIEW = "documents.review"
+    DOCUMENTS_PUBLISH = "documents.publish"
+    DOCUMENTS_ARCHIVE = "documents.archive"
+    DOCUMENTS_MANAGE_AUDIENCE = "documents.manage_audience"
+    POLICIES_MANAGE_ACKNOWLEDGEMENTS = "policies.manage_acknowledgements"
+    # The private comment a person writes beside their acknowledgement. Read
+    # access is deliberately narrow -- a Program Lead sees whether their team
+    # has answered, never what they wrote.
+    POLICIES_REVIEW_COMMENTS = "policies.review_comments"
+    TRAINING_RESOURCES_CREATE = "training_resources.create"
+    TRAINING_RESOURCES_PUBLISH = "training_resources.publish"
     # Leadership Decision Engine — recommends; never auto-executes.
     LEADERSHIP_ENGINE_VIEW = "leadership.view"
     LEADERSHIP_DECISION_REVIEW = "leadership.review"
@@ -110,10 +126,62 @@ class Permission(str, Enum):
 P = Permission
 
 
+# Business-execution authority the Admin role must never hold. Admin is a
+# Platform Operations Administrator: full observability, user/system
+# administration, data-quality tooling — but no field-programme execution.
+# `list(Permission)` used to grant Admin everything, which made Admin a
+# business-process superuser: able to schedule field activities, verify as IA,
+# approve fund requests and clear disbursements. Visibility must never be
+# confused with business authority, so the matrix now states what Admin is
+# denied, and the grant is derived — a new Permission is Admin's by default
+# only if it is not an execution right.
+ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
+    {
+        # Field planning and execution
+        P.PLANNING_CREATE,
+        P.ACTIVITY_ASSIGN,
+        P.ACTIVITY_COMPLETE,
+        # NOT excluded: CLUSTER_ASSIGN / CLUSTER_OVERRIDE. Which cluster a
+        # school belongs to is registry data, and Admin already owns the school
+        # registry -- upload, edit, duplicate resolution, delete, geography
+        # setup. Scheduling a cluster *meeting* is execution and stays out via
+        # PLANNING_CREATE / ACTIVITY_ASSIGN above.
+        # PROJECT_MANAGE stays out: creating and running a project, and
+        # scheduling its work, is programme work. PROJECT_ASSIGN_SCHOOL is not
+        # excluded -- which project a school participates in is registry data,
+        # the same call as cluster membership above.
+        P.PROJECT_MANAGE,
+        # Evidence and verification
+        P.EVIDENCE_REVIEW,
+        # NOT excluded: SSA_UPLOAD. Admin uploads school data and SSA files and
+        # edits schools -- that is data administration. What Admin may not do is
+        # CONFIRM an SSA record, which is IA_VERIFY below and stays cut.
+        P.IA_VERIFY,
+        # Money movement and approval chains
+        P.PAYMENT_ACT,
+        P.BUDGET_APPROVE,
+        P.COUNTRY_BUDGET_SUBMIT,
+        P.COUNTRY_BUDGET_APPROVE,
+        P.FUND_REQUEST_APPROVE_ESCALATED,
+        # Leadership business decisions (the engines recommend to leaders;
+        # Admin keeps the VIEW permissions for diagnostics).
+        P.LEADERSHIP_DECISION_REVIEW,
+        P.BUDGET_DECISION_REVIEW,
+    }
+)
+
+
 # Role → permissions matrix. Single source of truth seeded into RolePermission.
 ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
-    EdifyRole.ADMIN: list(Permission),
+    EdifyRole.ADMIN: [p for p in Permission if p not in ADMIN_EXCLUDED_PERMISSIONS],
     EdifyRole.COUNTRY_DIRECTOR: [
+        # Country-scoped policy authorship, and the country's policy comments.
+        P.UPLOADS_VIEW,
+        P.DOCUMENTS_CREATE,
+        P.DOCUMENTS_REVIEW,
+        P.DOCUMENTS_PUBLISH,
+        P.DOCUMENTS_MANAGE_AUDIENCE,
+        P.POLICIES_REVIEW_COMMENTS,
         # No SCHOOL_DIRECTORY_VIEW — CD leads through analytics, not the
         # operational directory. CD doesn't plan or assign field work; CD flags
         # issues to the PL instead. CD owns the rate card but does NOT approve
@@ -154,6 +222,13 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_DECISION_REVIEW,
     ],
     EdifyRole.REGIONAL_VICE_PRESIDENT: [
+        # May author and publish policy within its scope, and sees regional
+        # acknowledgement summaries -- not the private comments behind them.
+        P.UPLOADS_VIEW,
+        P.DOCUMENTS_CREATE,
+        P.DOCUMENTS_REVIEW,
+        P.DOCUMENTS_PUBLISH,
+        P.DOCUMENTS_MANAGE_AUDIENCE,
         # No SCHOOL_DIRECTORY_VIEW — summary analytics + recruitment only.
         P.SCHOOL_VIEW,
         P.SSA_VIEW,
@@ -174,6 +249,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.EXPORT,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
+        # Sees their own evidence and PD certificates in the Upload Center.
+        P.UPLOADS_VIEW,
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
         P.SCHOOL_EDIT,
@@ -202,6 +279,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PROJECT_ASSIGN_SCHOOL,
     ],
     EdifyRole.CCEO: [
+        # Sees their own evidence and PD certificates in the Upload Center.
+        P.UPLOADS_VIEW,
         # The CCEO is the primary cluster-assigning field role. Not CLUSTER_OVERRIDE.
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
@@ -225,6 +304,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PROJECT_ASSIGN_SCHOOL,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
+        # Training manuals and presentations are IA's; organisational policy
+        # is not.
+        P.UPLOADS_VIEW,
+        P.TRAINING_RESOURCES_CREATE,
+        P.TRAINING_RESOURCES_PUBLISH,
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
         P.SCHOOL_UPLOAD,
@@ -266,6 +350,17 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_DECISION_REVIEW,
     ],
     EdifyRole.HUMAN_RESOURCES: [
+        # Policies and organisational manuals are HR's to write, publish and
+        # administer, including the audience, the acknowledgement rules and the
+        # private comments people leave beside their answers.
+        P.UPLOADS_VIEW,
+        P.DOCUMENTS_CREATE,
+        P.DOCUMENTS_REVIEW,
+        P.DOCUMENTS_PUBLISH,
+        P.DOCUMENTS_ARCHIVE,
+        P.DOCUMENTS_MANAGE_AUDIENCE,
+        P.POLICIES_MANAGE_ACKNOWLEDGEMENTS,
+        P.POLICIES_REVIEW_COMMENTS,
         # People surfaces only — no SCHOOL_DIRECTORY_VIEW.
         P.STAFF_MANAGE,
         P.USER_MANAGE,

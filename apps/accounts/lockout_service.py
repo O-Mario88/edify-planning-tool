@@ -51,6 +51,18 @@ def _require_admin_unlock_after_escalation() -> bool:
     return getattr(settings, "AUTH_REQUIRE_ADMIN_UNLOCK_AFTER_ESCALATION", True)
 
 
+def _alert_threshold() -> int:
+    """Consecutive failures that raise an Admin security alert (mandate S17).
+
+    Separate from `_max_failed()`, which is the lockout policy.
+    """
+    from apps.admin_ops.services import FAILED_LOGIN_ALERT_THRESHOLD
+
+    return getattr(
+        settings, "AUTH_FAILED_LOGIN_ALERT_THRESHOLD", FAILED_LOGIN_ALERT_THRESHOLD
+    )
+
+
 def _reset_window_minutes() -> int:
     return getattr(settings, "AUTH_FAILED_LOGIN_RESET_WINDOW_MINUTES", 30)
 
@@ -112,6 +124,11 @@ class AuthenticationLockoutService:
         if user.failed_login_count == 0:
             user.failed_login_streak_started_at = now
         user.failed_login_count += 1
+        # The security-alert threshold is deliberately separate from, and lower
+        # than, the lockout threshold: Admin should see a credential attack
+        # forming before the account locks, and the lock branch below resets
+        # `failed_login_count` to 0 -- so the streak is read here, not after.
+        alert_streak = user.failed_login_count
 
         update_fields = ["failed_login_count", "failed_login_streak_started_at"]
 
@@ -153,7 +170,34 @@ class AuthenticationLockoutService:
                 )
 
         user.save(update_fields=update_fields)
+
+        if alert_streak == _alert_threshold():
+            AuthenticationLockoutService._raise_security_alert(user, alert_streak)
+
         return AuthenticationLockoutService.check_lockout(user)
+
+    @staticmethod
+    def _raise_security_alert(user, streak: int) -> None:
+        """Five consecutive failures -> one Admin security incident.
+
+        Observation only: the public login response is untouched and still
+        reveals nothing about whether the account exists. The alert carries a
+        masked identifier and lockout history -- never the attempted password,
+        the stored password, or any authentication token.
+        """
+        from apps.admin_ops.services import SecurityAlertService
+
+        try:
+            SecurityAlertService.failed_login_threshold_reached(
+                user_id=user.id,
+                masked_identifier=SecurityAlertService.mask(user.email),
+                streak=streak,
+                locked=bool(user.locked_until or user.lockout_escalated),
+            )
+        except Exception:
+            # A failure to raise the alert must never turn a wrong password
+            # into a 500 -- that would itself be an authentication outage.
+            pass
 
     # ── Success path ──────────────────────────────────────────────────────────
     @staticmethod

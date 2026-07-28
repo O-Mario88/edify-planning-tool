@@ -317,9 +317,10 @@ def _require_weekly_approver(wfr: WeeklyFundRequest, principal) -> str:
     # Escalated advances (PL/PC/IA/Accountant owners) clear at the CD.
     # Permission-gated so this authority appears in the RBAC matrix; the role
     # tuple remains as a fallback for principals resolved before the seed.
-    can_clear_escalated = has_permission(
-        principal, Permission.FUND_REQUEST_APPROVE_ESCALATED.value
-    ) or role in ("CountryDirector", "Admin")
+    can_clear_escalated = (
+        has_permission(principal, Permission.FUND_REQUEST_APPROVE_ESCALATED.value)
+        or role == "CountryDirector"
+    )
     if wfr.status == "submitted_to_cd":
         if not can_clear_escalated:
             raise Forbidden("Only the Country Director can act on this request.")

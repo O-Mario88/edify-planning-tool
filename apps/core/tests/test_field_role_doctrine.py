@@ -252,9 +252,12 @@ class SeparationOfDuties(TestCase):
             for role in EdifyRole
             if Permission.IA_VERIFY.value in permissions_for_role(role)
         }
+        # Admin used to be listed here, which contradicted the assertion's own
+        # message. Platform Operations observes verification and performs none
+        # of it, so "alone" is now literally true.
         self.assertEqual(
             holders,
-            {EdifyRole.IMPACT_ASSESSMENT.value, EdifyRole.ADMIN.value},
+            {EdifyRole.IMPACT_ASSESSMENT.value},
             "activity verification is Impact Assessment's authority alone",
         )
 
@@ -264,9 +267,11 @@ class SeparationOfDuties(TestCase):
             for role in EdifyRole
             if Permission.PAYMENT_ACT.value in permissions_for_role(role)
         }
+        # Admin no longer holds payment.act: visibility over the disbursement
+        # dashboard is not authority to move money.
         self.assertEqual(
             holders,
-            {EdifyRole.PROGRAM_ACCOUNTANT.value, EdifyRole.ADMIN.value},
+            {EdifyRole.PROGRAM_ACCOUNTANT.value},
             "disbursement is the Accountant's authority alone",
         )
 
@@ -278,12 +283,13 @@ class SeparationOfDuties(TestCase):
             for role in EdifyRole
             if Permission.BUDGET_APPROVE.value in permissions_for_role(role)
         }
+        # "Nobody outside it" now includes Admin, whose remit is the platform,
+        # not the field approval chain.
         self.assertEqual(
             holders,
             {
                 EdifyRole.CCEO.value,
                 EdifyRole.COUNTRY_PROGRAM_LEAD.value,
-                EdifyRole.ADMIN.value,
             },
         )
 

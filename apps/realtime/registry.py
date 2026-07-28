@@ -195,6 +195,41 @@ JOB_REGISTRY: list[JobSpec] = [
         retryable=True,
         max_retries=2,
     ),
+    JobSpec(
+        name="document_lifecycle",
+        description=(
+            "Activates effective documents, expires lapsed ones, retries failed "
+            "previews, sends acknowledgement reminders and closes idle viewer "
+            "sessions."
+        ),
+        cron="daily 06:15 Africa/Kampala",
+        cron_kwargs={"hour": 6, "minute": 15},
+        expected_runtime_seconds=45,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note=(
+            "Every step is a no-op when there is nothing due; reminders are "
+            "deduplicated on last_reminded_at, so a second run the same day "
+            "sends nothing."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
+        name="admin_maintenance_generation",
+        description="Materialises due MaintenanceTemplates into scheduled Admin work items.",
+        cron="daily 05:30 Africa/Kampala",
+        cron_kwargs={"hour": 5, "minute": 30},
+        expected_runtime_seconds=10,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note=(
+            "next_due_date advances only after its work item is created, so a "
+            "crashed run resumes and a completed run finds nothing due."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
 ]
 
 JOB_NAMES = {spec.name for spec in JOB_REGISTRY}

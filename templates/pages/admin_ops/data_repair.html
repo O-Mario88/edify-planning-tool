@@ -1,0 +1,55 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Data Repair Center — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+
+  {% include "pages/admin_ops/_header.html" with page_title="Data Repair Center" page_purpose="The only path by which Admin changes a business record — dry run first, a reason always, verification and an audit row after. Ordinary pages stay read-only." %}
+
+  <div class="card divide-y divide-slate-50">
+    {% for repair in catalogue %}
+    <div class="p-4 flex flex-col lg:flex-row lg:items-start gap-3">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-1.5 rounded-pill edify-text-caption font-bold {% if repair.automatic %}bg-slate-100 text-slate-500{% else %}bg-amber-100 text-amber-700{% endif %}">{% if repair.automatic %}Automatic{% else %}Referred{% endif %}</span>
+          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ repair.affected }} affected</span>
+        </div>
+        <p class="text-[13px] font-bold text-slate-700 mt-1">{{ repair.title }}</p>
+        <p class="text-[12px] font-semibold text-slate-500 mt-0.5">{{ repair.description }}</p>
+        <p class="edify-text-caption font-semibold text-slate-400 mt-1">Outcome: {{ repair.outcome }}</p>
+        {% if repair.referral %}<p class="edify-text-caption font-semibold text-amber-600 mt-1">{{ repair.referral }}</p>{% endif %}
+      </div>
+      <a href="/data-repair?repair={{ repair.key }}" class="h-8 px-3.5 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 inline-flex items-center shrink-0">Dry Run</a>
+    </div>
+    {% empty %}
+    <p class="p-16 text-center text-[12px] font-medium text-slate-400">No repairs are defined.</p>
+    {% endfor %}
+  </div>
+
+  {% if preview %}
+  <section class="card p-4 space-y-3" aria-labelledby="repair-preview-title">
+    <h2 id="repair-preview-title" class="text-[14px] font-extrabold text-slate-800">Impact Preview — {{ preview.title }}</h2>
+    <p class="text-[12px] font-semibold text-slate-500">{{ preview.affected }} record(s) match. {{ preview.outcome }}</p>
+
+    {% if preview.records %}
+    <ul class="text-[12px] font-medium text-slate-600 space-y-1 max-h-64 overflow-y-auto">
+      {% for record in preview.records %}<li class="truncate">{{ record }}</li>{% endfor %}
+    </ul>
+    {% if preview.truncated %}<p class="edify-text-caption font-semibold text-slate-400">Showing the first 50.</p>{% endif %}
+    {% else %}
+    <p class="text-[12px] font-medium text-slate-400">Nothing matches — there is nothing to repair.</p>
+    {% endif %}
+
+    {% if preview.affected %}
+    <form method="post" action="/data-repair/{{ preview.key }}/apply" class="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-slate-50">
+      {% csrf_token %}
+      <label class="sr-only" for="repair-reason">Reason for this repair</label>
+      <input id="repair-reason" name="reason" required placeholder="Why is this repair being made?" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface flex-1">
+      <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold shrink-0">{% if preview.automatic %}Apply Repair{% else %}Refer for Correction{% endif %}</button>
+    </form>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

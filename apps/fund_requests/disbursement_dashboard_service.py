@@ -124,6 +124,18 @@ def _require_accountant(principal):
         raise Forbidden("Only a Program Accountant can access disbursements.")
 
 
+def _require_accountant_action(principal):
+    """Moving money is the Accountant's alone.
+
+    Admin passes `_require_accountant` so the dashboard stays observable
+    for support, but disburse/hold/release/return are finance clearance --
+    the Platform Operations doctrine forbids Admin every one of them.
+    """
+    role = getattr(principal, "active_role", None)
+    if role != "Accountant":
+        raise Forbidden("Only a Program Accountant can act on disbursements.")
+
+
 def _monthly_status(fr):
     """Queue status label for a monthly FundRequest."""
     s = fr.status
@@ -1351,7 +1363,7 @@ def _get_monthly_fr(fund_request_id, expected_statuses, for_update=False):
 def disburse(principal, fund_request_id, data=None):
     """Release approved funds → ``disbursed``. Records payment method/reference
     and notifies the requester to confirm receipt."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     data = data or {}
 
     now = timezone.now()
@@ -1488,7 +1500,7 @@ def disburse(principal, fund_request_id, data=None):
 
 def hold(principal, fund_request_id, data):
     """Pause a disbursement without rejecting it → ``held``. Requires a reason."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A hold reason is required.")
@@ -1512,7 +1524,7 @@ def hold(principal, fund_request_id, data):
 
 def release(principal, fund_request_id):
     """Release a held plan back into the disbursement queue."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     fr = _get_monthly_fr(fund_request_id, {"held"})
     fr.status = "sent_to_accountant"
     fr.held_reason = None
@@ -1525,7 +1537,7 @@ def release(principal, fund_request_id):
 def return_item(principal, fund_request_id, data):
     """Return a fund plan for correction → ``returned_by_accountant``. The
     requester's Fix To-Do derives automatically from this status."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A return reason is required.")

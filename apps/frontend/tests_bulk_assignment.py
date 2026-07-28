@@ -9,6 +9,9 @@ from apps.accounts.models import StaffProfile
 class BulkAssignmentTests(TestCase):
     def setUp(self):
         User = get_user_model()
+        # Admin is the right actor: cluster membership is registry data, which
+        # Platform Operations maintains. Planning, scheduling, execution,
+        # verification, approval and payment are what Admin cannot do.
         self.user = User.objects.create(
             id="user-1",
             email="cceo@edify.org",

@@ -144,21 +144,18 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertIn("Lakeview Project School", export.content.decode())
         self.assertNotIn("Reading Excellence Initiative", export.content.decode())
 
-    def test_bulk_drawers_accept_only_real_assignment_ids(self):
+    def test_admin_cannot_bulk_schedule_project_work(self):
+        """Bulk scheduling is planning, which Admin does not do.
+
+        The drawer used to be exercised as an Admin because Admin held every
+        permission. Admin still *reads* this page -- it is observability -- but
+        the scheduling drawers are refused.
+        """
         schedule = self.client.get(
-            f"/projects/planning/bulk-schedule?assignments={self.assignment_a.id},{self.assignment_b.id}"
+            f"/projects/planning/bulk-schedule?assignments={self.assignment_a.id}"
         )
-        self.assertEqual(schedule.status_code, 200)
-        self.assertContains(schedule, "Schedule Project Visits")
-        self.assertContains(schedule, "Reading Excellence Initiative")
+        self.assertEqual(schedule.status_code, 403)
 
-        partner = self.client.get(
-            f"/projects/planning/bulk-partner?assignments={self.assignment_a.id}"
-        )
-        self.assertEqual(partner.status_code, 200)
-        self.assertContains(partner, "Bulk Assign to Partner")
-
-        invalid = self.client.get(
-            "/projects/planning/bulk-partner?assignments=not-an-assignment"
-        )
-        self.assertEqual(invalid.status_code, 400)
+    def test_admin_still_reads_the_project_planning_page(self):
+        page = self.client.get("/projects/planning")
+        self.assertEqual(page.status_code, 200)
