@@ -94,8 +94,19 @@ class FinancialYearCalendarService:
         )
 
     @staticmethod
-    def _leave_days_cached(sp_id: str, start: date, end: date) -> frozenset:
-        """Same reasoning for a staff member's approved leave."""
+    def _all_leave_days(sp_id: str) -> frozenset:
+        """Every approved leave day for one staff member, memoised per request.
+
+        Keyed on the person alone, deliberately. The previous cache keyed on
+        (person, start, end), which sounds tighter but missed on almost every
+        call: Team Targets asks about the same nine people over five different
+        windows, so forty-five distinct keys each ran their own query. A
+        person's approved leave cannot change mid-request, so it is read once
+        and every window is answered from it.
+
+        Approved leave runs to a handful of rows per person, so expanding all
+        of it costs less than the query that would otherwise narrow it.
+        """
         from datetime import date as _d
 
         from apps.accounts.models import Leave
@@ -103,24 +114,28 @@ class FinancialYearCalendarService:
 
         def _compute() -> frozenset:
             days: set = set()
-            for lv in Leave.objects.filter(
-                status="approved",
-                staff_id=sp_id,
-                start_date__lt=end.isoformat(),
-                end_date__gte=start.isoformat(),
-            ):
+            for lv in Leave.objects.filter(status="approved", staff_id=sp_id):
                 try:
                     d0 = _d.fromisoformat(lv.start_date)
                     d1 = _d.fromisoformat(lv.end_date)
                 except (TypeError, ValueError):
                     continue
-                d = max(d0, start)
-                while d <= min(d1, end - timedelta(days=1)):
-                    days.add(d)
-                    d += timedelta(days=1)
+                day = d0
+                while day <= d1:
+                    days.add(day)
+                    day += timedelta(days=1)
             return frozenset(days)
 
-        return memoize(("leave", sp_id, start, end), _compute)
+        return memoize(("leave_all", sp_id), _compute)
+
+    @staticmethod
+    def _leave_days_cached(sp_id: str, start: date, end: date) -> frozenset:
+        """A staff member's approved leave days within ``[start, end)``."""
+        return frozenset(
+            day
+            for day in FinancialYearCalendarService._all_leave_days(sp_id)
+            if start <= day < end
+        )
 
     @staticmethod
     def working_days(start: date, end: date, user=None) -> int:
