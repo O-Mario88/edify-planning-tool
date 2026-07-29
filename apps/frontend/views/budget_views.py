@@ -203,6 +203,22 @@ def _export_weekly_fund_requests_csv(wfr_qs):
     return response
 
 
+def _monthly_summary_band(totals: dict) -> list[dict]:
+    """Registry-built items for the monthly summary band."""
+    from apps.core.metrics import MetricValue, render_metric, render_strip
+
+    pairs = (
+        ("fund_request_monthly_visits_budget", totals["visits"]),
+        ("fund_request_monthly_trainings_budget", totals["trainings"]),
+        ("fund_request_monthly_meetings_budget", totals["meetings"]),
+        ("fund_request_monthly_admin_budget", totals["admin"]),
+        ("fund_request_monthly_total", totals["total"]),
+    )
+    return render_strip(
+        [render_metric(key, MetricValue.measured(value)) for key, value in pairs]
+    )
+
+
 def _weekly_status_label(weekly_request) -> str:
     """The canonical stage label for one weekly request, or "" if there is none."""
     if not weekly_request:
@@ -989,6 +1005,12 @@ def _build_fund_requests_context(request):
         "source_activities": source_activities,
         "monthly_weeks": monthly_weeks,
         "monthly_totals_by_type": monthly_totals_by_type,
+        # The five-tile monthly band, built through the metric registry so
+        # each tile carries its registered key, definition and finance stage
+        # (PLANNED). The hand-written label/value dicts this replaces were
+        # invisible to the duplication and denominator guards -- the KPI
+        # inventory's ratchet caught them the same day they were written.
+        "monthly_summary_band": _monthly_summary_band(monthly_totals_by_type),
         "period_budgets": period_budgets,
         # The week's request, for the submit control on the week tab. Only an
         # owner-confirmable request may be submitted; anything already in the
