@@ -70,6 +70,8 @@ INTENTIONALLY_UNGATED_PAGES = {
     "partner_detail": "partner rows filtered by scope",
     "decision_log": "service scopes rows: deployment-wide for RVP/Admin, "
     "country for the CD, own-decisions-only for everyone else",
+    "report_problem": "reporting a platform problem is every role's right; the "
+    "page shows only the reporter's own tickets, and triage is Admin-only",
 }
 
 
@@ -250,10 +252,13 @@ class SummaryOnlyDoctrineContract(TestCase):
             for role in EdifyRole
             if Permission.IA_VERIFY.value in permissions_for_role(role)
         ]
+        # Admin was removed when the role became Platform Operations: SSA
+        # confirmation is a field judgement about school data, and observing it
+        # is not the same as making it.
         self.assertEqual(
             sorted(holders),
-            sorted([EdifyRole.IMPACT_ASSESSMENT.value, EdifyRole.ADMIN.value]),
-            "Only Impact Assessment (and Admin) may confirm SSA records",
+            [EdifyRole.IMPACT_ASSESSMENT.value],
+            "Only Impact Assessment may confirm SSA records",
         )
 
 

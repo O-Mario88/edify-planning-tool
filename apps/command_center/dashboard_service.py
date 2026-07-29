@@ -9,6 +9,12 @@ from apps.activities.models import Activity
 from apps.clusters.models import Cluster, SchoolClusterAssignment
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
+from apps.command_center.planning_progress import (
+    PERIOD_DESCRIPTION,
+    normalise_period,
+    series as planning_progress_series,
+    tabs as planning_progress_tabs,
+)
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.partners.models import Partner
 from apps.ssa.models import SsaScore
@@ -29,9 +35,10 @@ def _ugx_compact_top(val):
 
 class DashboardMetricsService:
     @staticmethod
-    def get_dashboard_metrics(user):
+    def get_dashboard_metrics(user, progress_period: str = "week"):
         fy = get_operational_fy()
         today = date.today()
+        progress_period = normalise_period(progress_period)
 
         # Resolve scoping
         from apps.analytics.services import _scoped_schools
@@ -152,45 +159,27 @@ class DashboardMetricsService:
                 }
             )
 
-        # 4. Weekly Planning Progress — real completion rate over the last 5 weeks.
+        # 4. Planning Progress over the selected period (week/month/quarter/FY).
         #
-        # This ran two COUNT queries per week inside the loop: ten round trips
-        # to answer one question about a five-week span. One read of
-        # (planned_date, status) over the whole span answers it, and the
-        # bucketing is cheaper in Python than in five extra queries.
-        #
-        # The done-set is COMPLETED_WORK_STATUSES rather than the local
-        # ["completed", "ia_verified", "closed"] it used to name, which omitted
-        # `accountant_confirmed` -- finished work that stopped counting as
-        # finished once it reached the accountant.
-        span_start = start_week - timedelta(weeks=4)
-        span_end = start_week + timedelta(days=6)
-        rows = activities_qs.filter(
-            planned_date__gte=span_start, planned_date__lte=span_end
-        ).values_list("planned_date", "status")
+        # The card's four period tabs were decorative <span>s; the series is now
+        # built for whichever one is chosen. Deliberately built from a queryset
+        # that is NOT filtered to a single financial year -- the FY view spans
+        # three, and an fy-filtered queryset would report two empty years beside
+        # the current one. See apps/command_center/planning_progress.py.
+        progress_qs = Activity.objects.filter(deleted_at__isnull=True)
+        if not scope.country_scope:
+            if scope.staff_ids:
+                progress_qs = progress_qs.filter(
+                    responsible_staff_id__in=scope.staff_ids
+                )
+            elif scope.partner_ids:
+                progress_qs = progress_qs.filter(
+                    assigned_partner_id__in=scope.partner_ids
+                )
+            else:
+                progress_qs = progress_qs.none()
 
-        totals: dict[int, int] = {i: 0 for i in range(5)}
-        done: dict[int, int] = {i: 0 for i in range(5)}
-        for planned_date, status in rows:
-            index = (planned_date - span_start).days // 7
-            if not 0 <= index < 5:
-                continue
-            totals[index] += 1
-            if status in COMPLETED_WORK_STATUSES:
-                done[index] += 1
-
-        weekly_progress = []
-        for index in range(5):
-            wk_start = span_start + timedelta(weeks=index)
-            wk_total = totals[index]
-            weekly_progress.append(
-                {
-                    "week": f"{wk_start.strftime('%b %-d')} Wk",
-                    "percentage": (
-                        round(done[index] * 100 / wk_total) if wk_total else 0
-                    ),
-                }
-            )
+        weekly_progress = planning_progress_series(progress_qs, progress_period, today)
 
         # 5. SSA Interventions Performance
         ssa_averages = (
@@ -828,6 +817,9 @@ class DashboardMetricsService:
             "attention_items": attention_items,
             "recommended_action": recommended_action,
             "weekly_progress": weekly_progress,
+            "progress_period": progress_period,
+            "progress_tabs": planning_progress_tabs(progress_period),
+            "progress_description": PERIOD_DESCRIPTION[progress_period],
             "best_interventions": best_interventions,
             "weakest_interventions": weakest_interventions,
             "team_targets": team_targets,

@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Roles & Permissions — Edify{% endblock %}
@@ -19,11 +20,12 @@
 <!-- Matrix Card Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate roles "roles_page" as roles_pager %}
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
 <th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider edify-permission-column">Permission</th>
-{% for role in roles %}
+{% for role in roles_pager.rows %}
 <th class="px-3 py-3.5 text-center edify-text-caption font-semibold uppercase text-slate-500 tracking-wider" title="{{ role.value }}">
 {{ role.label }}
 </th>
@@ -70,6 +72,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=roles_pager param="roles_page" %}
 </div>
 </div>
 

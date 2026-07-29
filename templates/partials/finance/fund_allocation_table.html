@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% load frontend_filters %}
 <!-- Allocation Table & Out-of-band updates -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden " id="allocation-table-container">
@@ -27,6 +28,7 @@ Open CD Monthly Admin Plan
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
+{% paginate rows "rows_page" as rows_pager %}
 <table class="w-full text-left text-[12px] border-collapse min-w-[1400px]">
 <thead>
 <!-- Grouped Headers Row -->
@@ -71,7 +73,7 @@ Open CD Monthly Admin Plan
 
 <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
 {% if rows %}
-{% for r in rows %}
+{% for r in rows_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors {% if r.user_id == 'cd_admin_budget' %}bg-rose-50/30 text-rose-950 font-semibold border-y border-rose-150{% endif %}">
 <!-- Staff Name -->
 <td class="px-4 py-3 font-bold text-slate-800 border-r  {% if r.user_id == 'cd_admin_budget' %}text-rose-900{% endif %}">
@@ -229,6 +231,7 @@ No planned allocation for this month.
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
 </div>
 
 <!-- Pagination strip -->

@@ -14,8 +14,8 @@ from typing import Iterable
 from django.db import transaction
 from django.utils import timezone
 
-from apps.core.enums import SsaIntervention
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.enums import SsaIntervention, VerificationStatus
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
@@ -508,3 +508,85 @@ __all__ = [
     "verification_summary",
     "get_ssa_progress_by_fy",
 ]
+
+
+# ── Verification: the one place an SSA record changes verification state ─────
+
+
+def _assert_ia_authority(principal) -> None:
+    """Confirming an SSA is Impact Assessment's authority.
+
+    Stated once, here, rather than at each call site. The scoring, targets and
+    impact stack all rest on which records are confirmed, so "this role can
+    open the queue" must never be the same question as "this role may confirm".
+    """
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if not has_permission(principal, Permission.IA_VERIFY.value):
+        raise Forbidden("Only Impact Assessment may confirm or return an SSA record.")
+
+
+@transaction.atomic
+def verify_record(record, principal):
+    """Confirm one SSA record.
+
+    Lives in the service, not in the view that happens to render the queue: a
+    transition written inline is a transition every other caller -- an API, an
+    HTMX endpoint, a management command, a future page -- can perform without
+    the authority check, the readiness recompute or the audit row. Those three
+    are what make a confirmation mean anything, so they belong to the
+    transition rather than to one of its callers.
+    """
+    from apps.audit.services import log as audit_log
+
+    _assert_ia_authority(principal)
+    if record.verification_status == VerificationStatus.CONFIRMED.value:
+        # Idempotent: a double-submitted form re-confirms nothing and writes no
+        # second audit row.
+        return record
+
+    record.verification_status = VerificationStatus.CONFIRMED.value
+    record.verified_by_user_id = getattr(principal, "user_id", None) or getattr(
+        principal, "id", None
+    )
+    record.verified_at = timezone.now()
+    record.save(
+        update_fields=["verification_status", "verified_by_user_id", "verified_at"]
+    )
+    _recompute_readiness(record.school)
+
+    audit_log(
+        action="ssa_verify",
+        subject_kind="SsaRecord",
+        subject_id=record.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={"schoolId": record.school_id, "schoolName": record.school.name},
+    )
+    return record
+
+
+@transaction.atomic
+def return_record(record, principal, reason: str = ""):
+    """Send one SSA record back for correction."""
+    from apps.audit.services import log as audit_log
+
+    _assert_ia_authority(principal)
+    if record.verification_status == VerificationStatus.RETURNED.value:
+        return record
+
+    record.verification_status = VerificationStatus.RETURNED.value
+    record.save(update_fields=["verification_status"])
+    _recompute_readiness(record.school)
+
+    audit_log(
+        action="ssa_return",
+        subject_kind="SsaRecord",
+        subject_id=record.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        reason=reason or None,
+        payload={"schoolId": record.school_id, "schoolName": record.school.name},
+    )
+    return record

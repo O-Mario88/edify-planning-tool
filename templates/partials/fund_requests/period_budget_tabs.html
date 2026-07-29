@@ -1,0 +1,83 @@
+{% load frontend_filters %}
+{% comment %}
+  My Budget at the four horizons a person plans against, in the canonical
+  budget format — the same group tables, subtotals and grand total the budget
+  pages render, fed by the same service (budget_workspace), so this card
+  cannot disagree with the page it summarises.
+
+  Real links rather than an ARIA tablist: each one navigates and the server
+  renders the panel, so there is no tabpanel widget to promise a screen
+  reader. aria-current marks the one in view.
+
+  Only the week carries a submit control. Money is disbursed weekly, so the
+  week is the request; the month, quarter and year are the plan around it.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-3.5"
+         aria-labelledby="period-budget-title">
+  {% comment %}
+    One header row, per the owner: the money on the far left -- the figure a
+    person opens this card for -- and the card's name with the request's
+    status chip at the right end. The period switch lives in the page-level
+    tab bar above the card.
+  {% endcomment %}
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned budget</p>
+      <p class="text-[22px] font-extrabold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.total|ugx }}</p>
+      {% if period_budgets.active == "week" and active_wfr %}
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1">
+        Fund request · {{ selected_week_label }} · Owner:
+        <span class="font-bold text-slate-600">{{ active_wfr.owner_name }}</span>
+      </p>
+      {% endif %}
+    </div>
+    <div class="text-right">
+      <div class="flex items-center gap-2.5 justify-end">
+        {% if period_budgets.active == "week" and active_wfr %}
+        {% include "partials/fund_requests/_wfr_status_chip.html" %}
+        {% endif %}
+        <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">My Budget</h3>
+      </div>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ period_budgets.selected.title }}</p>
+      {% if card_scope_switch %}
+      {% comment %}
+        The CD's two hats: their own admin plan, and monitoring the country's
+        field budget. Real links; the period and filters travel with them.
+      {% endcomment %}
+      <nav class="flex items-center gap-1 justify-end mt-1.5" aria-label="Budget scope">
+        {% for s in card_scope_switch %}
+        <a href="?{{ period_tab_query }}period_tab={{ period_budgets.active }}&budget_scope={{ s.key }}"
+           {% if s.key == card_budget_scope %}aria-current="page"{% endif %}
+           class="h-7 px-2.5 rounded-control edify-text-caption font-bold inline-flex items-center transition-colors {% if s.key == card_budget_scope %}edify-primary-soft edify-primary-text ring-1 edify-primary-ring{% else %}text-slate-400 hover:text-slate-600 hover:bg-slate-50{% endif %}">{{ s.label }}</a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if period_budgets.active == "week" %}
+  {% comment %}
+    The week IS the request — money moves weekly — so the week tab carries the
+    request workflow: the line items with their per-line status, and the
+    confirm / approve / return / self-funded actions. The other horizons are
+    budget views and carry the canonical breakdown instead.
+  {% endcomment %}
+  {% include "partials/fund_requests/weekly_request_workflow.html" %}
+  {% else %}
+  {% if period_budgets.groups %}
+  <div class="overflow-x-auto rounded-control border border-slate-200">
+    {% include "partials/budgets/budget_group_tables.html" with groups=period_budgets.groups all_groups=period_budgets.groups staff_total=period_budgets.staff_total total=period_budgets.total selected=period_budgets.selected workspace_title=period_budgets.workspace_title budget_scope=period_budgets.budget_scope %}
+  </div>
+  {% else %}
+  <div class="rounded-surface border border-dashed border-slate-200 p-8 text-center">
+    <p class="text-[13px] font-bold text-slate-600">{{ period_budgets.empty_title }}</p>
+    <p class="edify-text-caption font-medium text-slate-400 mt-1">{{ period_budgets.empty_help }}</p>
+  </div>
+  {% endif %}
+  {% endif %}
+  <p class="edify-text-caption text-slate-400 font-semibold flex items-center gap-1.5 pt-1 border-t border-slate-100">
+    <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span>Fund requests are generated automatically from the activities scheduled in My Plan — nothing here is entered by hand.</span>
+    <a href="/help" class="edify-primary-text hover:underline shrink-0 ml-auto">Learn more</a>
+  </p>
+</section>

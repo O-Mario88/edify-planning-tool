@@ -1,0 +1,94 @@
+{% comment %}
+  The Platform Operations command centre — Admin's own scorecard.
+
+  Every tile answers a platform-operations question with a next step behind it.
+  None of them measures school visits or SSA outcomes: Admin's performance is
+  availability, support and security, and measuring it by field results was
+  part of what made this role look like a business role.
+{% endcomment %}
+<section class="admin-kpi-strip" aria-label="Platform operations summary">
+  <a class="admin-kpi" data-tone="{% if admin_ops.critical_incidents %}danger{% else %}success{% endif %}" href="/admin-ops/incidents">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Critical Incidents</span>
+      <strong>{{ admin_ops.critical_incidents }}</strong>
+      <small>{{ admin_ops.unacknowledged_incidents }} open and unacknowledged</small>
+    </span>
+  </a>
+  <a class="admin-kpi" data-tone="{% if admin_ops.untriaged_tickets %}warning{% else %}neutral{% endif %}" href="/admin-ops/support">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Open Support Tickets</span>
+      <strong>{{ admin_ops.open_tickets }}</strong>
+      <small>{{ admin_ops.untriaged_tickets }} awaiting triage</small>
+    </span>
+  </a>
+  <a class="admin-kpi" data-tone="{% if admin_ops.overdue_admin_work %}warning{% else %}neutral{% endif %}" href="/admin-ops/my-plan">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Overdue Admin Work</span>
+      <strong>{{ admin_ops.overdue_admin_work }}</strong>
+      <small>{{ admin_ops.unscheduled_work }} still unscheduled</small>
+    </span>
+  </a>
+  <a class="admin-kpi" data-tone="{% if admin_ops.job_incidents %}warning{% else %}neutral{% endif %}" href="/admin-ops/incidents">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Background Job Incidents</span>
+      <strong>{{ admin_ops.job_incidents }}</strong>
+      <small>failed or overdue jobs</small>
+    </span>
+  </a>
+  <a class="admin-kpi" data-tone="{% if admin_ops.performance_incidents %}warning{% else %}neutral{% endif %}" href="/admin-ops/incidents">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Slow or Unhealthy Routes</span>
+      <strong>{{ admin_ops.performance_incidents }}</strong>
+      <small>open SLO breaches</small>
+    </span>
+  </a>
+  <a class="admin-kpi" data-tone="{% if admin_ops.security_alerts %}danger{% else %}success{% endif %}" href="/admin-ops/incidents">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Security Alerts</span>
+      <strong>{{ admin_ops.security_alerts }}</strong>
+      <small>open security incidents</small>
+    </span>
+  </a>
+  <a class="admin-kpi" data-tone="{% if admin_ops.maintenance_due %}warning{% else %}neutral{% endif %}" href="/admin-ops/maintenance">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Maintenance Due</span>
+      <strong>{{ admin_ops.maintenance_due }}</strong>
+      <small>templates at or past their date</small>
+    </span>
+  </a>
+  <a class="admin-kpi" data-tone="neutral" href="/admin-ops/team-plans">
+    <span class="admin-kpi__copy">
+      <span class="admin-kpi__label">Team Plans</span>
+      <strong>Open</strong>
+      <small>everyone's My Plan, read-only</small>
+    </span>
+  </a>
+</section>
+
+<div class="admin-grid admin-grid--middle">
+  <section class="admin-panel" aria-labelledby="admin-ops-critical-title">
+    <header class="admin-panel__header"><h2 id="admin-ops-critical-title">Critical Now</h2></header>
+    {% for item in admin_ops.critical_now %}
+    <div class="admin-target-row">
+      <span>{{ item.reference }} · {{ item.title }}</span>
+      <strong>{{ item.get_category_display }}</strong>
+      <span class="admin-status s-red">{{ item.next_action|default:item.get_status_display }}</span>
+    </div>
+    {% empty %}
+    <p class="admin-panel__empty">Nothing critical is open. Incidents and critical tickets appear here the moment they are detected.</p>
+    {% endfor %}
+  </section>
+
+  <section class="admin-panel" aria-labelledby="admin-ops-recent-title">
+    <header class="admin-panel__header"><h2 id="admin-ops-recent-title">Recent Incidents</h2></header>
+    {% for incident in admin_ops.recent_incidents %}
+    <div class="admin-target-row">
+      <a href="/admin-ops/incidents/{{ incident.id }}">{{ incident.reference }} · {{ incident.title }}</a>
+      <strong>{{ incident.occurrence_count }}×</strong>
+      <span class="admin-status {% if incident.severity == 'critical' %}s-red{% elif incident.severity == 'high' %}s-orange{% else %}s-blue{% endif %}">{{ incident.get_status_display }}</span>
+    </div>
+    {% empty %}
+    <p class="admin-panel__empty">No open incidents. Server errors, broken routes, SLO breaches and failed jobs are detected automatically.</p>
+    {% endfor %}
+  </section>
+</div>

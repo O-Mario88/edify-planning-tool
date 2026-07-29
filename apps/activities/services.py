@@ -1168,6 +1168,17 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         )
         from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES
 
+        # Where the money currently sits, captured before anything reprices.
+        # Both branches below move cost lines to the new week; only one of them
+        # used to tell finance about the week being vacated.
+        from apps.activities.models import ActivityScheduleCostLine
+
+        prior_buckets = list(
+            ActivityScheduleCostLine.objects.filter(activity=a).values_list(
+                "responsible_user", "fiscal_year", "month", "week_start_date"
+            )
+        )
+
         if (
             a.activity_type in DAILY_BATCH_ELIGIBLE_TYPES
             and a.delivery_type == "staff"
@@ -1186,6 +1197,24 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 reason=data.get("reason"),
                 principal=principal,
             )
+            # The batch reprices and then calls trigger_generate_for_activity,
+            # which raises the NEW week's request and says nothing about the
+            # old one. The old week therefore kept its full amount while the
+            # new week gained the same amount again -- the same money
+            # requested twice, for work happening once. Staff school visits are
+            # the most common activity there is, and they all take this branch.
+            #
+            # sync_* regenerates every affected bucket, old and new, so the
+            # vacated week empties instead of being left holding a total.
+            from apps.fund_requests.monthly_service import (
+                sync_monthly_drafts_for_activity,
+            )
+            from apps.fund_requests.weekly_service import (
+                sync_weekly_requests_for_activity,
+            )
+
+            sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
+            sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
         else:
             # Re-price against the current catalogue so the budget line follows the
             # new schedule (rates may have changed; participant/period inputs may

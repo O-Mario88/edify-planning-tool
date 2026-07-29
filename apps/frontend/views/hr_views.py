@@ -1880,6 +1880,12 @@ def _conversation_redirect(request, target_id, caps):
     return redirect(url)
 
 
+# Declared here as well as enforced in apps.hr.performance_engine. The
+# engine owns the real rules -- ownership, the review window, who may sign
+# off -- and keeps them. This decorator states the audience where the route
+# is, so a page-permission audit can see it; §9 treats an undeclared route
+# as authorization drift even when the view behind it is safe.
+@require_page_permission("performance_conversations")
 def performance_input_save_view(request, priority_id):
     """One POST per channel. The engine enforces window + role; we only route
     the fields to the matching save_* function."""
@@ -1925,6 +1931,12 @@ def performance_input_save_view(request, priority_id):
     return _conversation_redirect(request, priority.review.staff_id, caps)
 
 
+# Declared here as well as enforced in apps.hr.performance_engine. The
+# engine owns the real rules -- ownership, the review window, who may sign
+# off -- and keeps them. This decorator states the audience where the route
+# is, so a page-permission audit can see it; §9 treats an undeclared route
+# as authorization drift even when the view behind it is safe.
+@require_page_permission("performance_conversations")
 def performance_value_save_view(request, commitment_id):
     from apps.core.exceptions import BadRequest, Forbidden
     from apps.hr.models import ValueCommitment
@@ -1956,6 +1968,12 @@ def performance_value_save_view(request, commitment_id):
     return _conversation_redirect(request, commitment.review.staff_id, caps)
 
 
+# Declared here as well as enforced in apps.hr.performance_engine. The
+# engine owns the real rules -- ownership, the review window, who may sign
+# off -- and keeps them. This decorator states the audience where the route
+# is, so a page-permission audit can see it; §9 treats an undeclared route
+# as authorization drift even when the view behind it is safe.
+@require_page_permission("performance_conversations")
 def performance_signoff_view(request, review_id):
     """The employee acknowledges and signs the conversation for the window."""
     from apps.core.exceptions import BadRequest
@@ -2062,6 +2080,12 @@ def hr_performance_console_view(request):
     return render(request, "pages/hr/performance_console.html", context)
 
 
+# Declared here as well as enforced in apps.hr.performance_engine. The
+# engine owns the real rules -- ownership, the review window, who may sign
+# off -- and keeps them. This decorator states the audience where the route
+# is, so a page-permission audit can see it; §9 treats an undeclared route
+# as authorization drift even when the view behind it is safe.
+@require_page_permission("performance_console")
 def hr_performance_action_view(request):
     """One POST endpoint for the console's state changes; `action` selects."""
     from apps.core.exceptions import BadRequest, Forbidden
@@ -2224,6 +2248,12 @@ def hr_performance_action_view(request):
 # HR → policy scope) and every open is audit-logged by the engine.
 
 
+# Declared here as well as enforced in apps.hr.performance_engine. The
+# engine owns the real rules -- ownership, the review window, who may sign
+# off -- and keeps them. This decorator states the audience where the route
+# is, so a page-permission audit can see it; §9 treats an undeclared route
+# as authorization drift even when the view behind it is safe.
+@require_page_permission("performance_conversations")
 def performance_document_view(request, review_id, window):
     from apps.core.exceptions import BadRequest
     from apps.hr.models import PerformanceReview
@@ -2320,6 +2350,12 @@ def performance_document_view(request, review_id, window):
     return render(request, "pages/hr/conversation_document.html", doc)
 
 
+# Declared here as well as enforced in apps.hr.performance_engine. The
+# engine owns the real rules -- ownership, the review window, who may sign
+# off -- and keeps them. This decorator states the audience where the route
+# is, so a page-permission audit can see it; §9 treats an undeclared route
+# as authorization drift even when the view behind it is safe.
+@require_page_permission("performance_conversations")
 def performance_acknowledge_view(request, review_id):
     """The employee acknowledges their confirmed final rating (§14)."""
     from apps.core.exceptions import BadRequest, Forbidden

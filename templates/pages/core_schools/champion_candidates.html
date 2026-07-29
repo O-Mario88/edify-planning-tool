@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load static %}
 
 {% block title %}Champion School Candidates — Edify{% endblock %}
@@ -37,6 +38,7 @@ class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border bor
 </div>
 
 <div class="overflow-x-auto">
+{% paginate candidates "candidates_page" as candidates_pager %}
 <table class="w-full text-left text-[12px] border-collapse ">
 <thead>
 <tr class="text-slate-400 font-semibold uppercase edify-text-caption border-b border-slate-100 tracking-wider">
@@ -51,7 +53,7 @@ class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border bor
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for c in candidates %}
+{% for c in candidates_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <td class="py-3.5 text-slate-900 font-semibold text-[12px]">{{ c.name }}</td>
 <td class="py-3.5 text-slate-500 font-bold">{{ c.district }}</td>
@@ -96,6 +98,7 @@ Review
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=candidates_pager param="candidates_page" %}
 </div>
 </div>
 </div>

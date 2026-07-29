@@ -1,0 +1,115 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}Team Plans — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6">
+
+  {% include "pages/admin_ops/_header.html" with page_title="Team Plans" page_purpose="Everyone's My Plan, consolidated. Read-only — this is how Platform Operations checks that plans are being generated, routed and updated correctly." %}
+
+  <div class="card p-3 flex items-start gap-2.5 border-l-4 border-l-amber-400" role="status">
+    <svg class="h-4 w-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+    <p class="text-[12px] font-semibold text-slate-600">Admin Support View · Read Only — Admin observes field work and never executes it. Start, reschedule, approve, verify, disburse and close belong to the roles that own them.</p>
+  </div>
+
+  <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-5 gap-3" aria-label="Team plan health">
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Active Plan Items</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ health.total_active }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Overdue</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ health.overdue }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">No Next Action</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ health.no_next_action }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-500">Cost Missing</p><p class="text-[22px] font-bold text-slate-600 tabular-nums leading-none mt-1">{{ health.cost_missing }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-500">Unassigned</p><p class="text-[22px] font-bold text-slate-600 tabular-nums leading-none mt-1">{{ health.unassigned }}</p></div>
+  </div>
+
+  <form method="get" class="card p-3 flex flex-wrap items-end gap-2.5">
+    <label class="flex flex-col gap-1"><span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Role</span>
+      <select name="role" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+        <option value="">All roles</option>
+        {% for r in options.roles %}<option value="{{ r }}" {% if filters.role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1"><span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Type</span>
+      <select name="activity_type" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+        <option value="">All types</option>
+        {% for t in options.activity_types %}<option value="{{ t }}" {% if filters.activity_type == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1"><span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Workflow State</span>
+      <select name="status" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+        <option value="">All states</option>
+        {% for s in options.statuses %}<option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1"><span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</span>
+      <select name="district" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+        <option value="">All districts</option>
+        {% for d in options.districts %}<option value="{{ d.id }}" {% if filters.district == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex items-center gap-1.5 h-8">
+      <input type="checkbox" name="overdue" value="1" {% if filters.overdue %}checked{% endif %} class="rounded">
+      <span class="text-[12px] font-semibold text-slate-600">Overdue only</span>
+    </label>
+    <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Apply</button>
+    <a href="/admin-ops/team-plans" class="h-8 px-3 rounded-control border border-slate-200 text-[12px] font-bold text-slate-500 inline-flex items-center">Reset</a>
+  </form>
+
+  {% if rows %}
+  <div class="card overflow-x-auto">
+    {% paginate rows "rows_page" as rows_pager %}
+<table class="w-full text-left">
+      <caption class="sr-only">Consolidated My Plan records across all users, read-only</caption>
+      <thead>
+        <tr class="border-b border-slate-100">
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">User</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Role</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Activity</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">School / Cluster / Project</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Planned</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Status</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Next Action</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Executor</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Budget</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Evidence</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">IA</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Finance</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Updated</th>
+          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Inspect</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for row in rows_pager.rows %}
+        <tr class="text-[12px] font-medium text-slate-600{% if row.overdue %} bg-rose-50/40{% endif %}">
+          <td class="px-3 py-2.5 font-semibold text-slate-700">{{ row.user }}</td>
+          <td class="px-3 py-2.5">{{ row.role }}</td>
+          <td class="px-3 py-2.5">{{ row.activity }}</td>
+          <td class="px-3 py-2.5">{{ row.target }}</td>
+          <td class="px-3 py-2.5 tabular-nums">{% if row.plannedDate %}{{ row.plannedDate|date:"d M" }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2.5">{{ row.status }}</td>
+          <td class="px-3 py-2.5">{{ row.nextAction }}</td>
+          <td class="px-3 py-2.5">{{ row.executor }}</td>
+          <td class="px-3 py-2.5">{{ row.budgetState }}</td>
+          <td class="px-3 py-2.5">{{ row.evidenceState }}</td>
+          <td class="px-3 py-2.5">{{ row.iaState }}</td>
+          <td class="px-3 py-2.5">{{ row.financeState }}</td>
+          <td class="px-3 py-2.5 tabular-nums">{{ row.lastUpdated|date:"d M H:i" }}</td>
+          <td class="px-3 py-2.5">
+            <a href="{{ row.detailUrl }}" class="edify-primary-text font-bold">Open</a>
+            <span class="text-slate-300 mx-1">·</span>
+            <a href="/support?route=/my-plan/{{ row.id }}" class="text-slate-500 font-bold">Report</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
+  </div>
+  {% if truncated %}<p class="text-[12px] font-semibold text-slate-400">Showing the first {{ rows|length }} rows — narrow the filters to see the rest.</p>{% endif %}
+  {% else %}
+  <div class="card p-16 text-center">
+    <p class="text-[15px] font-semibold text-slate-600">No plan records match these filters</p>
+    <p class="text-[12px] font-medium text-slate-400 mt-1.5">This is a real result, not an error: for {{ fy }} nothing matches. Widen the filters, or check whether plans are being generated at all.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

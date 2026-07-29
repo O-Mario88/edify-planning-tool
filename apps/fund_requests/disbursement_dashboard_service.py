@@ -124,6 +124,18 @@ def _require_accountant(principal):
         raise Forbidden("Only a Program Accountant can access disbursements.")
 
 
+def _require_accountant_action(principal):
+    """Moving money is the Accountant's alone.
+
+    Admin passes `_require_accountant` so the dashboard stays observable
+    for support, but disburse/hold/release/return are finance clearance --
+    the Platform Operations doctrine forbids Admin every one of them.
+    """
+    role = getattr(principal, "active_role", None)
+    if role != "Accountant":
+        raise Forbidden("Only a Program Accountant can act on disbursements.")
+
+
 def _monthly_status(fr):
     """Queue status label for a monthly FundRequest."""
     s = fr.status
@@ -1351,7 +1363,7 @@ def _get_monthly_fr(fund_request_id, expected_statuses, for_update=False):
 def disburse(principal, fund_request_id, data=None):
     """Release approved funds → ``disbursed``. Records payment method/reference
     and notifies the requester to confirm receipt."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     data = data or {}
 
     now = timezone.now()
@@ -1488,7 +1500,7 @@ def disburse(principal, fund_request_id, data=None):
 
 def hold(principal, fund_request_id, data):
     """Pause a disbursement without rejecting it → ``held``. Requires a reason."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A hold reason is required.")
@@ -1512,7 +1524,7 @@ def hold(principal, fund_request_id, data):
 
 def release(principal, fund_request_id):
     """Release a held plan back into the disbursement queue."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     fr = _get_monthly_fr(fund_request_id, {"held"})
     fr.status = "sent_to_accountant"
     fr.held_reason = None
@@ -1525,7 +1537,7 @@ def release(principal, fund_request_id):
 def return_item(principal, fund_request_id, data):
     """Return a fund plan for correction → ``returned_by_accountant``. The
     requester's Fix To-Do derives automatically from this status."""
-    _require_accountant(principal)
+    _require_accountant_action(principal)
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A return reason is required.")
@@ -1612,3 +1624,138 @@ def _notify_requester(fr, event, title, body):
         )
     except Exception:  # noqa: BLE001
         pass
+
+
+# ── Accountant transitions that used to live in the view ─────────────────────
+
+
+@transaction.atomic
+def return_weekly_request(principal, weekly_request, reason: str):
+    """Send a confirmed weekly advance back for correction.
+
+    Moved out of finance_views: the view re-stated the Accountant check as an
+    inline `active_role != "Accountant"` string comparison, which is a second
+    definition of an authority this module already owns. One gate, one place --
+    otherwise the two drift and the weaker one becomes the way in.
+    """
+    from apps.audit.services import log as audit_log
+    from apps.fund_requests.models import AdvanceRequestStatus
+
+    _require_accountant_action(principal)
+    if not (reason or "").strip():
+        raise BadRequest("A return reason is required.")
+    if weekly_request.status != "confirmed_for_advance":
+        # WeeklyFundRequest.status is a plain CharField with no `choices`, so
+        # Django generates no get_status_display and calling it raised
+        # AttributeError -- which the view caught as an unexpected error, so
+        # the Accountant was told "something went wrong" instead of which
+        # stage the request had already moved to. `weekly_status_buckets` is
+        # the canonical label for that stage, and using it here means this
+        # refusal names the request exactly as the Disbursement Dashboard does.
+        stage = weekly_status_buckets([weekly_request]).get(
+            weekly_request.id, weekly_request.status
+        )
+        raise BadRequest(
+            "Only a confirmed request can be returned by the accountant — this "
+            f"one is already {stage}."
+        )
+
+    weekly_request.status = "returned_by_accountant"
+    weekly_request.confirmed_at = None
+    weekly_request.save(update_fields=["status", "confirmed_at", "updated_at"])
+
+    # Only advances still awaiting disbursement move with it. One already
+    # disbursed or accounted on a sibling line must never be silently reopened.
+    moved = 0
+    for line in weekly_request.lines.select_related("activity_budget_line"):
+        advance = line.activity_budget_line.advance_requests.filter(
+            status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE
+        ).first()
+        if advance:
+            advance.status = AdvanceRequestStatus.RETURNED
+            advance.last_note = reason
+            advance.save(update_fields=["status", "last_note", "updated_at"])
+            moved += 1
+
+    audit_log(
+        # The established audit vocabulary. Moving this transition into the
+        # service must not rename the event that already exists in history.
+        action="weekly_fund_request.return_by_accountant",
+        subject_kind="WeeklyFundRequest",
+        subject_id=weekly_request.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=getattr(principal, "active_role", None),
+        success=True,
+        reason=reason,
+        payload={
+            "reason": reason,
+            "total_amount": weekly_request.total_amount,
+            "advances_returned": moved,
+        },
+    )
+    return weekly_request
+
+
+def roll_up_accountability(weekly_request, advances) -> bool:
+    """Project child advance state onto the parent weekly request.
+
+    A projection, not an independent transition: the parent becomes
+    `accounted` because every child already is. It lives here beside the
+    transitions it summarises so the derivation has one definition.
+
+    Faithful to the view it replaces, deliberately. An earlier draft of this
+    function handled only ACCOUNTED and dropped the reimbursed case, the
+    reviewed-at stamp and both money totals -- wiring that in would have been a
+    silent loss of behaviour dressed up as a refactor. REIMBURSEMENT_SUBMITTED
+    and REIMBURSEMENT_DISBURSED are legitimate in-progress states and must not
+    close the request.
+    """
+    from apps.fund_requests.models import AdvanceRequestStatus
+
+    advances = list(advances)
+    if not advances:
+        return False
+    closing = (AdvanceRequestStatus.ACCOUNTED, AdvanceRequestStatus.REIMBURSED)
+    if not all(advance.status in closing for advance in advances):
+        return False
+
+    codes = sorted(
+        {
+            advance.accountability_netsuite_id
+            for advance in advances
+            if advance.accountability_netsuite_id
+        }
+    )
+    now = timezone.now()
+    weekly_request.status = "accounted"
+    weekly_request.accountability_netsuite_id = ", ".join(codes)[:128] or None
+    weekly_request.accountability_submitted_at = (
+        weekly_request.accountability_submitted_at
+        or min(
+            (
+                advance.accountability_submitted_at
+                for advance in advances
+                if advance.accountability_submitted_at
+            ),
+            default=now,
+        )
+    )
+    weekly_request.accountability_reviewed_at = now
+    weekly_request.accounted_amount = sum(
+        advance.accounted_amount or 0 for advance in advances
+    )
+    weekly_request.returned_amount = sum(
+        advance.returned_amount or 0 for advance in advances
+    )
+    weekly_request.save(
+        update_fields=[
+            "status",
+            "accountability_netsuite_id",
+            "accountability_submitted_at",
+            "accountability_reviewed_at",
+            "accounted_amount",
+            "returned_amount",
+            "updated_at",
+        ]
+    )
+    return True

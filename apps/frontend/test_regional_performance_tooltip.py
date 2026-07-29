@@ -98,11 +98,26 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
         self.assertIn('aria-label="Toggle school distribution pins"', template)
         self.assertIn("toggleSchoolType(type.key)", template)
-        self.assertIn("district.school_distribution?.[type.key]", template)
+        # The pins read each district's own distribution through schoolMix().
+        # This used to assert the literal line inside syncSchoolTotals, which
+        # summed the cohorts across every district -- a country-wide figure
+        # that moved to the server (§40 permits no authoritative business
+        # analytic in JavaScript). That assertion pinned an implementation
+        # detail of the legend, not the behaviour of the pins.
+        self.assertIn("school_distribution", template)
+        self.assertIn("schoolMix(district)", template)
         self.assertIn("class','sr-school-pin'", template)
         self.assertIn("appendPinVisual(pin, type", template)
         self.assertNotIn("sr-pin-count", template)
         self.assertNotIn("this.compact(mix[type.key])", template)
+
+    def test_the_legend_totals_come_from_the_server(self):
+        """Country-wide cohort counts are an authoritative figure, so they are
+        computed in apps.analytics.country_map_context, not summed here."""
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("subregion-school-type-totals", template)
+        self.assertNotIn("districts.reduce(", template)
 
     def test_school_pin_colours_match_the_classification_legend(self):
         template = _read("templates/partials/analytics/regional_performance.html")

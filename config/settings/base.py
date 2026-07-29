@@ -95,6 +95,8 @@ INSTALLED_APPS = [
     "apps.pl_review",
     "apps.command_center",
     "apps.admin_users",
+    "apps.admin_ops",
+    "apps.documents",
     "apps.staff_setup",
     "apps.evidence",
     "apps.projects",
@@ -140,6 +142,20 @@ MIDDLEWARE = [
     "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Admin Support View: platform-wide visibility, zero business
+    # authority. Enforced at the edge so a direct POST, an HTMX request or
+    # a hand-edited URL is refused the same way a hidden button is.
+    # Detection sits outside the read-only gate so it observes the response
+    # that is actually sent -- a 500 raised by a view, and a route that
+    # 404s, both reach it.
+    "apps.admin_ops.detection.PlatformFailureDetectionMiddleware",
+    "apps.admin_ops.middleware.AdminReadOnlyBusinessMiddleware",
+    "apps.admin_ops.middleware.AdminSupportViewBannerMiddleware",
+    # Mandatory-policy gate. After the admin middleware so an Admin's
+    # read-only refusal is decided first, and before the view layer so a
+    # direct URL, an HTMX fragment, an API call and an SSE stream are all
+    # withheld -- a template redirect would only stop the person who clicked.
+    "apps.documents.gate.PolicyGateMiddleware",
     # Generic error envelope — no stack traces / DB errors to clients; mirrors
     # the NestJS AllExceptionsFilter. Business 4xx keep their messages.
     "apps.core.middleware.AllExceptionsMiddleware",
@@ -187,6 +203,13 @@ _is_testing = "test" in sys.argv or "pytest" in sys.modules
 # production -- a lock-hygiene problem must fail the build, but it must not
 # turn a slow provider into a lost sign-in code for a real person.
 IS_TESTING = _is_testing
+
+# Platform-failure detection writes a System Incident for every server error,
+# broken route, permission drift and SLO breach. The suite deliberately drives
+# hundreds of refusals and error paths, so under test the edge is off and the
+# detection functions are exercised directly instead. Production and dev keep
+# it on.
+ADMIN_OPS_DETECTION_ENABLED = not _is_testing
 
 # Parse database URL including query parameters (like sslmode=require) using django-environ
 _db_config = environ.Env.db_url_config(_db_url)
@@ -376,6 +399,13 @@ REDIS_URL = os.environ.get("REDIS_URL") or None
 # default is ephemeral (files lost on redeploy), which is fine locally.
 EVIDENCE_STORAGE_DIR = os.environ.get("EVIDENCE_STORAGE_DIR") or str(
     BASE_DIR / "uploads" / "evidence"
+)
+
+# Organisational documents live in their own store, not beside activity
+# evidence: the two have different retention, different audiences and a
+# different size ceiling.
+DOCUMENT_STORAGE_DIR = os.environ.get("DOCUMENT_STORAGE_DIR") or str(
+    BASE_DIR / "uploads" / "documents"
 )
 
 # Evidence malware scanning (apps.evidence.services._scan_upload) — off by

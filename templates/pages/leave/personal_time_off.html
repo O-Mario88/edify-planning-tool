@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Personal Time Off · Edify{% endblock %}
 
@@ -446,7 +447,8 @@
     </div>
 
     <div class="pto-table-wrap overflow-x-auto">
-      <table>
+      {% paginate tracker_leaves "tracker_leaves_page" as tracker_leaves_pager %}
+<table>
         <caption class="sr-only">Team leave requests, balances, coverage and approval status</caption>
         <thead>
           <tr>
@@ -454,7 +456,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for tl in tracker_leaves %}
+          {% for tl in tracker_leaves_pager.rows %}
           <tr>
             <td><strong>{{ tl.staff_name }}</strong><small>{{ tl.supervisor_name }}</small></td>
             <td>{{ tl.role }}</td>
@@ -470,6 +472,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=tracker_leaves_pager param="tracker_leaves_page" %}
     </div>
 
     <div class="pto-tracker-cards">

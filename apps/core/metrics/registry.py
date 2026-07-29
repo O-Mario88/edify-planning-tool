@@ -19,6 +19,7 @@ from apps.core.metrics.spec import (
     Category,
     DateBasis,
     FilterBehaviour,
+    FinanceStage,
     MetricSpec,
     Period,
     Unit,
@@ -251,6 +252,212 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
             "numerator nor the period. An empty period is NO_DATA, not 0% -- "
             "the previous implementations both returned 0."
         ),
+    ),
+    # ── Upload Center ────────────────────────────────────────────────────────
+    MetricSpec(
+        key="uploads_awaiting_review",
+        label="Awaiting Review",
+        definition=(
+            "Records in the Upload Center whose next action is a review: a "
+            "staged import batch, or a document submitted and not yet approved."
+        ),
+        question="What is waiting on somebody to look at it?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.documents.upload_center.UploadCenterService",
+        source_models=(
+            "documents.DocumentAsset",
+            "schools.SchoolImportBatch",
+            "schools.SSAImportBatch",
+        ),
+        numerator="Authorised rows whose next action is a review step",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="Only the categories the viewer's role can see",
+        owner_page="uploads",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="uploads",
+        notes=(
+            "Counted across adapters, so one number covers imports and "
+            "documents rather than a tile per source."
+        ),
+    ),
+    MetricSpec(
+        key="uploads_documents_published",
+        label="Published",
+        definition="Documents in the library that are published or effective.",
+        question="How much of the library is live?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.documents.upload_center.UploadCenterService",
+        source_models=("documents.DocumentAsset",),
+        numerator="DocumentAsset rows in a readable status",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="Documents the viewer administers or is an audience for",
+        owner_page="uploads",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="uploads",
+    ),
+    # ── Policy compliance ────────────────────────────────────────────────────
+    MetricSpec(
+        key="policy_acknowledgements_accepted",
+        label="Accepted",
+        definition=(
+            "People who have agreed to the current version of a mandatory "
+            "document, within the viewer's scope."
+        ),
+        question="Who has accepted the policies required of them?",
+        category=Category.PROGRESS,
+        unit=Unit.COUNT,
+        service="apps.documents.compliance.PolicyComplianceService",
+        source_models=("documents.DocumentAcknowledgement",),
+        numerator="Acknowledgements in the agreed state",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="HR: their remit · CD: their country · PL: supervised staff",
+        owner_page="policy_compliance",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="policy_compliance",
+        notes=(
+            "Keyed on the version, so agreeing to v1 does not count as " "accepting v2."
+        ),
+    ),
+    # ── Fund requests: the monthly summary band ─────────────────────────────
+    # Five planned-money figures for the month the page has open. All PLANNED:
+    # sums of ActivityScheduleCostLine for the selected month, before any
+    # approval or disbursement -- naming the stage is what stops this band
+    # disagreeing with a disbursement figure under the same word "budget".
+    MetricSpec(
+        key="fund_request_monthly_visits_budget",
+        label="School Visits",
+        definition=(
+            "Planned school-visit spend for the selected month: the sum of schedule cost lines on visit activities planned in that month."
+        ),
+        question="How much of this month's plan is school visits?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.frontend.views.budget_views._build_fund_requests_context",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Cost-line amounts on visit-type activities planned in the month",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
+        owner_page="fund_requests",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="fund_requests",
+    ),
+    MetricSpec(
+        key="fund_request_monthly_trainings_budget",
+        label="Cluster Trainings",
+        definition=("Planned cluster-training spend for the selected month."),
+        question="How much of this month's plan is trainings?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.frontend.views.budget_views._build_fund_requests_context",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Cost-line amounts on training-type activities planned in the month",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
+        owner_page="fund_requests",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="fund_requests",
+    ),
+    MetricSpec(
+        key="fund_request_monthly_meetings_budget",
+        label="Cluster Meetings",
+        definition=("Planned cluster-meeting spend for the selected month."),
+        question="How much of this month's plan is cluster meetings?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.frontend.views.budget_views._build_fund_requests_context",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Cost-line amounts on cluster-meeting activities planned in the month",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
+        owner_page="fund_requests",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="fund_requests",
+    ),
+    MetricSpec(
+        key="fund_request_monthly_admin_budget",
+        label="Admin Budget (for CD)",
+        definition=(
+            "Planned administrative spend for the selected month -- the CD's monthly admin plan lines, not field-activity costs."
+        ),
+        question="How much administrative money does this month's plan carry?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.frontend.views.budget_views._build_fund_requests_context",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Admin budget lines for the month",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
+        owner_page="fund_requests",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="fund_requests",
+    ),
+    MetricSpec(
+        key="fund_request_monthly_total",
+        label="Total Monthly Request",
+        definition=(
+            "Everything the selected month's plan asks for: visits, trainings, meetings and admin together."
+        ),
+        question="What will this month's plan request in total?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.frontend.views.budget_views._build_fund_requests_context",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Sum of the four monthly components",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
+        owner_page="fund_requests",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="fund_requests",
+    ),
+    MetricSpec(
+        key="policy_acknowledgements_overdue",
+        label="Overdue",
+        definition=(
+            "Pending acknowledgements whose due date has passed, within the "
+            "viewer's scope."
+        ),
+        question="Who has run out of time to respond?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.documents.compliance.PolicyComplianceService",
+        source_models=("documents.DocumentAcknowledgement",),
+        numerator="Pending acknowledgements with due_date in the past",
+        date_basis=DateBasis.RECORD_CREATED,
+        period=Period.ALL_TIME,
+        scope="HR: their remit · CD: their country · PL: supervised staff",
+        owner_page="policy_compliance",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="policy_compliance",
     ),
 )
 

@@ -13,13 +13,13 @@
 
   <header class="admin-command__header">
     <div>
-      <h1 class="edify-page-title">Main Dashboard</h1>
-      <p>A complete view of execution, priorities, school improvement, and operational health.</p>
+      <h1 class="edify-page-title">{% if admin_ops %}Platform Operations{% else %}Main Dashboard{% endif %}</h1>
+      <p>{% if admin_ops %}Keeping Edify available, secure, fast and working as designed. Business figures below are diagnostic context, not Admin's own targets.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
     </div>
     <div class="admin-command__actions">
-      <a href="/my-plan" class="admin-button admin-button--primary">
+      <a href="{% if admin_ops %}/admin-ops/my-plan{% else %}/my-plan{% endif %}" class="admin-button admin-button--primary">
         {% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}
-        <span>Open My Plan</span>
+        <span>{% if admin_ops %}Open Admin My Plan{% else %}Open My Plan{% endif %}</span>
       </a>
       <a href="/analytics" class="admin-button admin-button--secondary">
         {% include "partials/dashboards/admin/_icon.html" with name="analytics" only %}
@@ -27,6 +27,12 @@
       </a>
     </div>
   </header>
+
+{% if admin_ops %}
+  {% include "partials/dashboards/admin/_platform_operations.html" %}
+  <h2 class="admin-command__section-heading">Platform Observability — Read Only</h2>
+  <p class="admin-command__section-note">How the business surfaces are behaving. Admin observes these; the roles that own them act on them.</p>
+{% endif %}
 
   <section class="admin-kpi-strip" aria-label="Country operational summary">
     {% for item in kpi_strip_items %}
@@ -91,24 +97,25 @@
             <h2 id="admin-planning-title">Planning Progress</h2>
             <a href="/planning">View Details</a>
           </header>
-          <div class="admin-period-switch" aria-label="Displayed reporting period">
-            <span class="is-active">Week</span><span>Month</span><span>Quarter</span><span>FY</span>
+          {% comment %}
+            These were four <span>s with no href, no handler and no target --
+            they could not be clicked, and the chart drew the same five weeks
+            whichever one looked active. They are real links now: the period
+            lives in the query string, so it survives a reload and a shared
+            link, and the page works with or without htmx.
+          {% endcomment %}
+          <div class="admin-period-switch" role="group" aria-label="Planning progress reporting period">
+            {% for tab in progress_tabs %}
+            <a href="?progress_period={{ tab.period }}"
+               hx-get="/dashboard/planning-progress?progress_period={{ tab.period }}"
+               hx-target="#admin-planning-progress-body"
+               hx-swap="outerHTML"
+               hx-push-url="true"
+               class="{% if tab.active %}is-active{% endif %}"
+               {% if tab.active %}aria-current="true"{% endif %}>{{ tab.label }}</a>
+            {% endfor %}
           </div>
-          <figure class="admin-line-figure">
-            <svg class="admin-line-chart" data-admin-progress-chart data-values="{% for point in weekly_progress %}{{ point.percentage }}{% if not forloop.last %},{% endif %}{% endfor %}" viewBox="0 0 640 180" role="img" aria-labelledby="admin-progress-chart-title admin-progress-chart-desc">
-              <title id="admin-progress-chart-title">Weekly planning progress</title>
-              <desc id="admin-progress-chart-desc">Completion percentage across the five most recent planning weeks.</desc>
-              <defs><linearGradient id="admin-progress-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--edify-accent)" stop-opacity=".18"/><stop offset="1" stop-color="var(--edify-accent)" stop-opacity="0"/></linearGradient></defs>
-              <g class="admin-line-chart__grid" aria-hidden="true"><line x1="42" y1="20" x2="620" y2="20"/><line x1="42" y1="78" x2="620" y2="78"/><line x1="42" y1="136" x2="620" y2="136"/><text x="4" y="24">100%</text><text x="12" y="82">50%</text><text x="20" y="140">0%</text></g>
-              <path class="admin-line-chart__area" data-admin-progress-area aria-hidden="true"/>
-              <polyline class="admin-line-chart__series" data-admin-progress-series aria-hidden="true"/>
-              <g data-admin-progress-points aria-hidden="true"></g>
-            </svg>
-            <div class="admin-line-chart__labels" aria-hidden="true">{% for point in weekly_progress %}<span>{{ point.week }}</span>{% endfor %}</div>
-            <figcaption class="sr-only">
-              <table><caption>Weekly planning progress values</caption><thead><tr><th scope="col">Week</th><th scope="col">Completion</th></tr></thead><tbody>{% for point in weekly_progress %}<tr><th scope="row">{{ point.week }}</th><td>{{ point.percentage }}%</td></tr>{% endfor %}</tbody></table>
-            </figcaption>
-          </figure>
+          {% include "partials/dashboards/admin/_planning_progress_body.html" %}
         </section>
       </div>
 
@@ -130,16 +137,11 @@
           </div>
         </section>
 
-        <section class="admin-panel admin-team-targets"
-                 {% include "components/registered_card_attrs.html" with card=cards.team_targets %} aria-labelledby="admin-team-targets-title">
-          <header class="admin-panel__header"><h2 id="admin-team-targets-title">Team Target Progress</h2></header>
-          <div class="admin-target-list">
-            {% for target in team_targets %}
-            <div class="admin-target-row"><span>{{ target.name }}</span><strong>{{ target.percentage }}%</strong><span class="admin-status {{ target.class }}">{{ target.status }}</span></div>
-            {% endfor %}
-          </div>
-        </section>
-
+        {% comment %}
+          Team Target Progress lives in the action rail, below Quick Actions —
+          moved there by request. Still the card's only appearance on the page;
+          .admin-grid--middle is tuned for the two panels that remain.
+        {% endcomment %}
         <section class="admin-panel admin-priority-schools"
                  {% include "components/registered_card_attrs.html" with card=cards.priority_schools %} aria-labelledby="admin-priority-schools-title">
           <header class="admin-panel__header"><h2 id="admin-priority-schools-title">Priority Schools</h2><a href="/schools">View All</a></header>
@@ -247,6 +249,22 @@
         </ul>
       </section>
 
+      {% comment %}
+        Moved here from the middle grid by request — below Quick Actions, and
+        still the page's only Team Target Progress card. The --rail list
+        modifier keeps the three-cell row layout the rail's narrow column
+        needs; its CSS remained from the duplicate this card replaces.
+      {% endcomment %}
+      <section class="admin-panel admin-rail-card admin-team-targets"
+                 {% include "components/registered_card_attrs.html" with card=cards.team_targets %} aria-labelledby="admin-team-targets-title">
+        <header class="admin-panel__header"><h2 id="admin-team-targets-title">Team Target Progress</h2></header>
+        <div class="admin-target-list admin-target-list--rail">
+          {% for target in team_targets %}
+          <div class="admin-target-row"><span>{{ target.name }}</span><strong>{{ target.percentage }}%</strong><span class="admin-status {{ target.class }}">{{ target.status }}</span></div>
+          {% endfor %}
+        </div>
+      </section>
+
       <section class="admin-panel admin-execution"
                  {% include "components/registered_card_attrs.html" with card=cards.execution_summary %} aria-labelledby="admin-execution-title">
         <h2 id="admin-execution-title" class="sr-only">Execution Summary</h2>
@@ -262,30 +280,93 @@
 <script>
   (() => {
     const ns = 'http://www.w3.org/2000/svg';
-    document.querySelectorAll('[data-admin-progress-chart]').forEach((chart) => {
-      const values = (chart.dataset.values || '').split(',').filter(Boolean).map(Number);
-      if (!values.length) return;
+
+    /* Draw the planning-progress line.
+     *
+     * Two things this has to get right, both of which the first version did
+     * not, because the chart only ever had one period and never re-rendered:
+     *
+     * 1. A bucket with nothing planned is an empty slot, not a missing point.
+     *    Dropping empties with .filter(Boolean) shifted every later point one
+     *    place left, so the line silently stopped matching the labels beneath
+     *    it. Points are positioned by their bucket index, and a gap breaks the
+     *    line into segments rather than being drawn through.
+     * 2. The period tabs swap this figure via htmx, so the drawing has to run
+     *    again afterwards or the new chart renders blank.
+     */
+    const draw = (chart) => {
+      if (chart.dataset.drawn === '1') return;
+      const raw = (chart.dataset.values || '').split(',');
+      const values = raw.map((value) => (value === '' ? null : Number(value)));
+      const measured = values.filter((value) => value !== null);
+      if (!measured.length) return;
+
       const left = 42;
       const right = 620;
       const top = 20;
       const bottom = 136;
       const step = values.length > 1 ? (right - left) / (values.length - 1) : 0;
-      const points = values.map((value, index) => {
-        const x = left + (step * index);
-        const y = bottom - ((Math.max(0, Math.min(100, value)) / 100) * (bottom - top));
-        return [x, y];
-      });
-      chart.querySelector('[data-admin-progress-series]').setAttribute('points', points.map((point) => point.join(',')).join(' '));
-      chart.querySelector('[data-admin-progress-area]').setAttribute('d', `M ${left} ${bottom} L ${points.map((point) => point.join(' ')).join(' L ')} L ${right} ${bottom} Z`);
+      const coordinate = (value, index) => [
+        left + (step * index),
+        bottom - ((Math.max(0, Math.min(100, value)) / 100) * (bottom - top)),
+      ];
+
+      const series = chart.querySelector('[data-admin-progress-series]');
+      const area = chart.querySelector('[data-admin-progress-area]');
       const pointGroup = chart.querySelector('[data-admin-progress-points]');
-      points.forEach(([cx, cy]) => {
+      series.textContent = '';
+      pointGroup.textContent = '';
+
+      /* Contiguous runs of measured buckets — one polyline each, so the line
+       * never spans a period nobody planned anything in. */
+      let run = [];
+      const flush = () => {
+        if (run.length > 1) {
+          const line = document.createElementNS(ns, 'polyline');
+          line.setAttribute('class', 'admin-line-chart__series');
+          line.setAttribute('points', run.map((point) => point.join(',')).join(' '));
+          series.appendChild(line);
+        }
+        run = [];
+      };
+
+      values.forEach((value, index) => {
+        if (value === null) { flush(); return; }
+        run.push(coordinate(value, index));
+      });
+      const lastRun = run.slice();
+      flush();
+
+      /* The filled area follows the longest leading run; with gaps present it
+       * is decoration, so it simply spans whatever the final run covers. */
+      const areaRun = lastRun.length > 1 ? lastRun : null;
+      if (areaRun) {
+        area.setAttribute(
+          'd',
+          `M ${areaRun[0][0]} ${bottom} L ${areaRun.map((point) => point.join(' ')).join(' L ')} L ${areaRun[areaRun.length - 1][0]} ${bottom} Z`
+        );
+      } else {
+        area.removeAttribute('d');
+      }
+
+      values.forEach((value, index) => {
+        if (value === null) return;
+        const [cx, cy] = coordinate(value, index);
         const circle = document.createElementNS(ns, 'circle');
         circle.setAttribute('cx', cx);
         circle.setAttribute('cy', cy);
         circle.setAttribute('r', '3.5');
         pointGroup.appendChild(circle);
       });
-    });
+
+      chart.dataset.drawn = '1';
+    };
+
+    const drawAll = (root) =>
+      (root || document).querySelectorAll('[data-admin-progress-chart]').forEach(draw);
+
+    drawAll();
+    document.body.addEventListener('htmx:afterSettle', (event) => drawAll(event.target));
   })();
 </script>
 {% endblock %}

@@ -442,50 +442,13 @@ def confirm_accountability_action(request):
                 # in-progress states that must NOT close the request yet.
                 for adv in advances:
                     adv.refresh_from_db()
-                if all(
-                    a.status
-                    in (
-                        AdvanceRequestStatus.ACCOUNTED,
-                        AdvanceRequestStatus.REIMBURSED,
-                    )
-                    for a in advances
-                ):
-                    codes = sorted(
-                        {
-                            a.accountability_netsuite_id
-                            for a in advances
-                            if a.accountability_netsuite_id
-                        }
-                    )
-                    wfr.status = "accounted"
-                    wfr.accountability_netsuite_id = ", ".join(codes)[:128] or None
-                    wfr.accountability_submitted_at = (
-                        wfr.accountability_submitted_at
-                        or min(
-                            (
-                                a.accountability_submitted_at
-                                for a in advances
-                                if a.accountability_submitted_at
-                            ),
-                            default=timezone.now(),
-                        )
-                    )
-                    wfr.accountability_reviewed_at = timezone.now()
-                    wfr.accounted_amount = sum(
-                        a.accounted_amount or 0 for a in advances
-                    )
-                    wfr.returned_amount = sum(a.returned_amount or 0 for a in advances)
-                    wfr.save(
-                        update_fields=[
-                            "status",
-                            "accountability_netsuite_id",
-                            "accountability_submitted_at",
-                            "accountability_reviewed_at",
-                            "accounted_amount",
-                            "returned_amount",
-                            "updated_at",
-                        ]
-                    )
+                # The parent's state is a projection of its children's, and the
+                # derivation lives with the transitions it summarises.
+                from apps.fund_requests.disbursement_dashboard_service import (
+                    roll_up_accountability,
+                )
+
+                roll_up_accountability(wfr, advances)
 
             response = HttpResponse("<script>window.location.reload();</script>")
             response["HX-Trigger"] = "close-drawer"
@@ -498,77 +461,46 @@ def confirm_accountability_action(request):
 @require_page_permission("disbursements")
 def finance_return_action(request):
     """POST to return a confirmed-for-advance weekly fund request for
-    correction — the Accountant's alternative to disbursing it."""
-    if request.user.active_role != "Accountant":
-        return HttpResponse("Unauthorized", status=403)
+    correction — the Accountant's alternative to disbursing it.
 
-    if request.method == "POST":
-        request_id = request.POST.get("request_id")
-        reason = request.POST.get("reason", "").strip()
-        if not reason:
-            return HttpResponse(
-                '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">A return reason is required.</div>',
-                status=400,
+    The transition itself lives in the disbursement service. This view used to
+    hold it, along with its own `active_role != "Accountant"` string check —
+    a second definition of an authority that module already owns.
+    """
+    from django.db import transaction
+
+    from apps.core.exceptions import Forbidden
+    from apps.fund_requests.disbursement_dashboard_service import (
+        return_weekly_request,
+    )
+
+    request_id = request.POST.get("request_id")
+    reason = request.POST.get("reason", "").strip()
+
+    try:
+        with transaction.atomic():
+            wfr = (
+                WeeklyFundRequest.objects.select_for_update()
+                .filter(id=request_id)
+                .first()
             )
+            if not wfr:
+                return notice_fragment("Weekly fund request not found.")
+            return_weekly_request(request.user, wfr, reason)
+    # All three through error_fragment: it already draws the line these
+    # branches were drawing by hand — a user-facing exception keeps its own
+    # sentence, anything else gets the generic line with the traceback logged.
+    # The 403 branch survives only because the status differs; it used to
+    # write str(exc) straight into the body, unescaped, which is the defect
+    # apps/core/htmx_errors.py exists to prevent.
+    except Forbidden as exc:
+        return error_fragment(exc, status=403)
+    except Exception as exc:  # noqa: BLE001 — surfaced to the drawer
+        return error_fragment(exc, status=400)
 
-        try:
-            from django.db import transaction
-
-            with transaction.atomic():
-                wfr = (
-                    WeeklyFundRequest.objects.select_for_update()
-                    .filter(id=request_id)
-                    .first()
-                )
-                if not wfr:
-                    return HttpResponse(
-                        '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Weekly fund request not found.</div>',
-                        status=400,
-                    )
-                # Same precondition disburse() requires — only a plan the
-                # Accountant hasn't yet acted on can still be returned. This
-                # also blocks the request from being un-disbursed/un-accounted
-                # by a stale tab or double-click on this action.
-                if wfr.status != "confirmed_for_advance":
-                    return notice_fragment(
-                        "Only a confirmed request can be returned by the "
-                        "accountant — this one is already "
-                        f"{wfr.get_status_display()}."
-                    )
-
-                wfr.status = "returned_by_accountant"
-                wfr.confirmed_at = None
-                wfr.save(update_fields=["status", "confirmed_at", "updated_at"])
-
-                # Only advances still awaiting disbursement move with it — an
-                # advance that's already disbursed/accounted on a sibling line
-                # must never be silently reopened.
-                for line in wfr.lines.select_related("activity_budget_line"):
-                    adv = line.activity_budget_line.advance_requests.filter(
-                        status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE
-                    ).first()
-                    if adv:
-                        adv.status = AdvanceRequestStatus.RETURNED
-                        adv.last_note = reason
-                        adv.save(update_fields=["status", "last_note", "updated_at"])
-
-                from apps.audit.services import log as audit_log
-
-                audit_log(
-                    action="weekly_fund_request.return_by_accountant",
-                    subject_kind="WeeklyFundRequest",
-                    subject_id=str(wfr.id),
-                    actor_id=str(request.user.id),
-                    actor_role=request.user.active_role,
-                    success=True,
-                    payload={"reason": reason, "total_amount": wfr.total_amount},
-                )
-
-            response = HttpResponse("<script>window.location.reload();</script>")
-            response["HX-Trigger"] = "close-drawer"
-            return response
-        except Exception as e:
-            return error_fragment(e, status=400)
+    response = HttpResponse("<script>window.location.reload();</script>")
+    response["HX-Trigger"] = "close-drawer"
+    return response
 
 
 @require_page_permission("consolidated_fund_allocation")

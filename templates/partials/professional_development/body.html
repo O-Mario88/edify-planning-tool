@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% load frontend_filters %}
 <div class="space-y-5">
 
@@ -232,7 +233,8 @@
     </div>
     {% if courses %}
     <div class="overflow-x-auto">
-      <table class="w-full text-left edify-text-caption border-collapse min-w-[760px]">
+      {% paginate courses "courses_page" as courses_pager %}
+<table class="w-full text-left edify-text-caption border-collapse min-w-[760px]">
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
             <th class="py-2 px-3">Course</th>
@@ -246,7 +248,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-          {% for c in courses %}
+          {% for c in courses_pager.rows %}
           <tr x-show="tab === 'all' || tab === '{{ c.bucket }}'" class="hover:bg-slate-50/50 cursor-pointer"
               hx-get="/my-professional-development/request?id={{ c.id }}" hx-target="#drawer-container" hx-swap="innerHTML">
             <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.course_name }}</td>
@@ -270,6 +272,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=courses_pager param="courses_page" %}
     </div>
     {% else %}
     {% include "components/empty_state.html" with title="No Professional Development requests yet" message="Use Request Professional Development above to submit your first course for this financial year." %}

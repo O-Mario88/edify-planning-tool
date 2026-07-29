@@ -54,13 +54,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260719partnerworkspace1">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260729fundlayout1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260727barcharts1">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260727searchsubmit1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260729kpiband2">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260725settingsgear2">
   <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260726cardrows2">
 <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260725typetiers6">
@@ -218,6 +218,11 @@ button, a, select, input, textarea {
 
 <!-- Alpine.js Components -->
     <script src="{% static 'js/alpine-components.js' %}?v=20260727barcharts2"></script>
+
+<!-- Platform defect beacon: dead buttons, script errors and failed HTMX
+     exchanges are invisible to the server, so the page reports them. Each
+     unique defect becomes one System Incident for the Admin. -->
+<script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260728beacon1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>

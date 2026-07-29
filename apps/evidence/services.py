@@ -99,6 +99,40 @@ def evidence_path(stored_name: str) -> str:
     return resolved
 
 
+def resolve_evidence_kind(file_obj, activity=None, asserted: str | None = None) -> str:
+    """What this upload is, for the completion requirement to read.
+
+    Order of trust:
+
+    1. What the person said it is, if they said anything valid.
+    2. What the activity type requires — the platform already knows a school
+       visit needs a Visit Form, so it should not make someone tell it.
+    3. The file's own shape, which only ever distinguishes a PDF from a photo.
+
+    Step 2 is the one that was missing, and its absence made completion
+    impossible. `infer_kind_from_upload` can only return PDF or PHOTO, while
+    every requirement asks for a purpose — visit form, attendance form, meeting
+    minutes. There is no overlap, so for all 20 activity types carrying a
+    requirement the gate could never be satisfied: upload the right document,
+    get "Required evidence missing: Visit Form", forever.
+    """
+    valid = {choice for choice, _label in EvidenceKind.choices}
+    if asserted and asserted in valid:
+        return asserted
+
+    if activity is not None:
+        from apps.evidence.requirements import missing_evidence_kinds
+
+        outstanding = missing_evidence_kinds(activity)
+        if outstanding:
+            # Fill the first gap the activity still has. Someone uploading a
+            # document to an activity that is asking for one is almost always
+            # uploading that one.
+            return outstanding[0]["kind"]
+
+    return infer_kind_from_upload(file_obj)
+
+
 def infer_kind_from_upload(file_obj, default: str = EvidenceKind.PHOTO) -> str:
     """Best-effort EvidenceKind from a just-uploaded file's name/content-type.
 

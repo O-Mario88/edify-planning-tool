@@ -64,6 +64,8 @@ class Command(BaseCommand):
             "weekly_debrief_reports": jobs.weekly_debrief_reports_job,
             "daily_debrief_reminders": jobs.daily_debrief_reminders_job,
             "analytics_report_delivery": jobs.analytics_report_delivery_job,
+            "admin_maintenance_generation": jobs.admin_maintenance_generation_job,
+            "document_lifecycle": jobs.document_lifecycle_job,
             "escalation_sla_sweep": jobs.escalation_sla_sweep_job,
             "performance_readiness": jobs.performance_readiness_job,
             "mfa_challenge_purge": jobs.mfa_challenge_purge_job,

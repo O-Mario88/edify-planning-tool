@@ -319,6 +319,17 @@ class AccountantReturnGuardTest(TestCase):
         self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.DISBURSED)
 
+        # The refusal has to say why, and this assertion is the point of the
+        # test rather than a decoration on it. The status code alone passed
+        # while the guard was crashing: it called get_status_display() on a
+        # CharField with no `choices`, the AttributeError fell through to the
+        # generic handler, and the Accountant got "something went wrong" —
+        # still a 400, still no state change, still green. The stage label has
+        # to match what the Disbursement Dashboard calls this same request.
+        body = resp.content.decode()
+        self.assertIn("Only a confirmed request can be returned", body)
+        self.assertIn("Disbursed", body)
+
     def test_empty_reason_is_rejected(self):
         self.wfr.status = "confirmed_for_advance"
         self.wfr.save(update_fields=["status"])

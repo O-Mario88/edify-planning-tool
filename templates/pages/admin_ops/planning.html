@@ -1,0 +1,83 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Admin Planning — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+
+  {% include "pages/admin_ops/_header.html" with page_title="Admin Planning" page_purpose="Platform work that is not yet scheduled: maintenance, incidents, support, security, performance, data repair, features and releases. Scheduling an item moves it into Admin My Plan." %}
+
+  <div class="legacy-kpi-strip grid grid-cols-3 gap-3" aria-label="Planning backlog summary">
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Unscheduled Work</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ backlog|length }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Open Incidents</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ open_incidents|length }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Tickets Awaiting Triage</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ untriaged_tickets|length }}</p></div>
+  </div>
+
+  <section class="card p-4 space-y-3" aria-labelledby="admin-backlog-title">
+    <h2 id="admin-backlog-title" class="text-[14px] font-extrabold text-slate-800">Unscheduled Platform Work</h2>
+    {% if backlog %}
+    <div class="divide-y divide-slate-50">
+      {% for item in backlog %}
+      <div class="py-3 flex flex-col lg:flex-row lg:items-center gap-3">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-1.5 rounded-pill edify-text-caption font-bold {% if item.severity == 'critical' %}bg-rose-100 text-rose-700{% elif item.severity == 'high' %}bg-amber-100 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ item.get_severity_display }}</span>
+            <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ item.reference }}</span>
+            <span class="edify-text-caption font-bold text-slate-400">{{ item.get_category_display }}</span>
+          </div>
+          <p class="text-[13px] font-bold text-slate-700 mt-1">{{ item.title }}</p>
+          {% if item.affected_route %}<p class="text-[12px] font-semibold text-slate-400 mt-0.5">{{ item.affected_route }}</p>{% endif %}
+        </div>
+        <form method="post" action="/admin-ops/work-items/{{ item.id }}/schedule" class="flex items-center gap-2 shrink-0">
+          {% csrf_token %}
+          <label class="sr-only" for="sched-{{ item.id }}">Schedule {{ item.reference }} for</label>
+          <input id="sched-{{ item.id }}" type="date" name="scheduled_date" required class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+          <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Schedule</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-[12px] font-medium text-slate-400 py-8 text-center">Nothing is waiting to be scheduled. New tickets, incidents and maintenance appear here automatically.</p>
+    {% endif %}
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <section class="card p-4 space-y-2" aria-labelledby="admin-open-incidents-title">
+      <h2 id="admin-open-incidents-title" class="text-[14px] font-extrabold text-slate-800">Open Incidents</h2>
+      {% for incident in open_incidents %}
+      <a href="/admin-ops/incidents/{{ incident.id }}" class="block py-2 border-b border-slate-50 last:border-0">
+        <div class="flex items-center gap-2">
+          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ incident.reference }}</span>
+          <span class="edify-text-caption font-bold text-slate-400">seen {{ incident.occurrence_count }}×</span>
+        </div>
+        <p class="text-[12px] font-bold text-slate-700">{{ incident.title }}</p>
+      </a>
+      {% empty %}
+      <p class="text-[12px] font-medium text-slate-400 py-6 text-center">No open incidents.</p>
+      {% endfor %}
+    </section>
+
+    <section class="card p-4 space-y-2" aria-labelledby="admin-untriaged-title">
+      <h2 id="admin-untriaged-title" class="text-[14px] font-extrabold text-slate-800">Tickets Awaiting Triage</h2>
+      {% for ticket in untriaged_tickets %}
+      <form method="post" action="/admin-ops/tickets/{{ ticket.id }}/triage" class="py-2 border-b border-slate-50 last:border-0 flex flex-col sm:flex-row sm:items-center gap-2">
+        {% csrf_token %}
+        <div class="min-w-0 flex-1">
+          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ ticket.reference }}</span>
+          <p class="text-[12px] font-bold text-slate-700">{{ ticket.title }}</p>
+          <p class="edify-text-caption font-semibold text-slate-400">{{ ticket.get_category_display }} · {{ ticket.reporter_role|default:"user" }}</p>
+        </div>
+        <label class="sr-only" for="sev-{{ ticket.id }}">Severity for {{ ticket.reference }}</label>
+        <select id="sev-{{ ticket.id }}" name="severity" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">
+          {% for value, label in severities %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="h-8 px-3 rounded-control edify-primary-solid text-white text-[12px] font-bold shrink-0">Triage</button>
+      </form>
+      {% empty %}
+      <p class="text-[12px] font-medium text-slate-400 py-6 text-center">No tickets are waiting for triage.</p>
+      {% endfor %}
+    </section>
+  </div>
+</div>
+{% endblock %}

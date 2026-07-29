@@ -1,0 +1,42 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Upload Center — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6">
+
+  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+    <div class="min-w-0">
+      <p class="edify-page-eyebrow">Files</p>
+      <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Upload Center</h1>
+      <p class="text-[12px] text-slate-500 font-semibold mt-1">Manage structured imports, Policies, Manuals, Training Resources, Activity Evidence and Professional Development documents.</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      {% if can_create_document %}<a href="/uploads/new" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold inline-flex items-center">New Policy or Manual</a>{% endif %}
+      {% if can_create_training %}<a href="/uploads/new?kind=training" class="h-9 px-4 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600 inline-flex items-center">New Training Resource</a>{% endif %}
+    </div>
+  </div>
+
+  {% comment %}
+    The canonical KPI strip. These tiles are built through
+    apps.core.metrics.render_metric, so each carries its registered key,
+    period and scope -- which is what lets the platform's duplication and
+    denominator guards audit them. A hand-rolled tile is invisible to those.
+  {% endcomment %}
+  {% include "components/kpi_strip.html" with items=kpis title="Upload summary" %}
+
+  {% comment %}
+    Navigation, not an ARIA tablist. Each of these navigates to its own URL and
+    controls no panel on this page, so role="tab" would promise a screen-reader
+    user a widget that does not exist. aria-current marks the one they are on.
+  {% endcomment %}
+  <nav class="flex items-center gap-1.5 flex-wrap" aria-label="Upload categories">
+    {% for t in tabs %}
+    <a href="?tab={{ t.key }}"{% if tab == t.key %} aria-current="page"{% endif %}
+       class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all inline-flex items-center {% if tab == t.key %}edify-primary-soft edify-primary-text ring-1 edify-primary-ring{% else %}text-slate-500 hover:bg-slate-50{% endif %}">{{ t.label }}</a>
+    {% endfor %}
+  </nav>
+
+  {% include "partials/documents/upload_table.html" %}
+</div>
+{% endblock %}

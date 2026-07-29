@@ -31,6 +31,17 @@ class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:ro
 >
 </div>
 
+<div class="mt-2">
+<label for="evidence_kind" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Document type</label>
+<select name="evidence_kind" id="evidence_kind"
+        class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 edify-text-caption font-semibold focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+{% for item in evidence_checklist %}<option value="{{ item.kind }}" {% if not item.uploaded %}selected{% endif %}>{{ item.label }}{% if item.uploaded %} — already uploaded{% endif %}</option>{% endfor %}
+{% for value, label in evidence_kind_choices %}{% if value not in evidence_required_kinds %}<option value="{{ value }}">{{ label }}</option>{% endif %}{% endfor %}
+</select>
+{% if evidence_checklist %}<p class="mt-1 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">This activity needs {% for item in evidence_checklist %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% endfor %} before it can be submitted.</p>{% endif %}
+</div>
+
+
 <!-- Listed uploaded evidence files if any exist -->
 {% if evidence_list %}
 <div class="space-y-1.5 pt-2">

@@ -1,14 +1,16 @@
+{% load table_pagination %}
 <section class="sp-card sp-table-card sp-table-card--{{ accent }}" aria-labelledby="sp-table-{{ kind }}">
   <div class="sp-card__header">
     <div><p class="sp-card__eyebrow">{{ period_label }}</p><h2 id="sp-table-{{ kind }}">{{ title }} <span class="sp-count">{{ count }}</span>{% if readonly %}<span class="sp-readonly">Read only</span>{% endif %}</h2></div>
     <a href="/projects/planning">View planning <span aria-hidden="true">→</span></a>
   </div>
   <div class="sp-table-wrap">
-    <table class="sp-table">
+    {% paginate rows "rows_page" as rows_pager %}
+<table class="sp-table">
       <caption class="sr-only">{{ title }} for {{ period_label }}</caption>
       <thead><tr><th scope="col">School / Cluster</th><th scope="col">Project</th>{% if kind == 'visits' %}<th scope="col">District</th>{% else %}<th scope="col">Focus</th>{% endif %}<th scope="col">Planned date</th><th scope="col">Purpose</th>{% if kind == 'partners' %}<th scope="col">Partner</th><th scope="col">Evidence</th>{% elif kind == 'trainings' %}<th scope="col">Participants</th>{% endif %}<th scope="col">Status</th><th scope="col">Action</th></tr></thead>
       <tbody>
-        {% for row in rows %}
+        {% for row in rows_pager.rows %}
         <tr>
           <th scope="row"><strong>{{ row.school }}</strong><small>{{ row.district }}</small></th>
           <td>{{ row.project }}</td>
@@ -22,5 +24,6 @@
         {% empty %}<tr><td class="sp-table__empty" colspan="9">{{ empty }}</td></tr>{% endfor %}
       </tbody>
     </table>
+{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
   </div>
 </section>

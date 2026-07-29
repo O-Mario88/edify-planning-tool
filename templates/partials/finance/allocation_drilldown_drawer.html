@@ -1,4 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block drawer_title %}{{ category_label }} Allocation Details{% endblock %}
@@ -14,6 +15,7 @@
 <div class="border border-slate-200 rounded-surface overflow-hidden shadow-sm">
 {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">
+{% paginate lines "lines_page" as lines_pager %}
 <table class="w-full text-left text-[12px] border-collapse edify-surface">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-200 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
@@ -25,7 +27,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% for line in lines %}
+{% for line in lines_pager.rows %}
 <tr class="hover:bg-slate-50/50">
 <td class="px-4 py-3 font-semibold text-slate-800 capitalize">
 {{ line.activity.activity_type|replace_underscore }}
@@ -55,6 +57,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=lines_pager param="lines_page" %}
 </div>
 </div>
 {% else %}

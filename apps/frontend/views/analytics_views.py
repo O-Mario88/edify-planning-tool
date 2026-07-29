@@ -1,8 +1,9 @@
 import csv
 import datetime
 
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
 from apps.core.permissions import require_export_permission, require_page_permission
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
@@ -773,3 +774,37 @@ def cd_analytics_export_view(request):
             ]
         )
     return resp
+
+
+@require_POST
+@require_page_permission("analytics")
+def combine_map_boundaries_view(request):
+    """Combine sub-county rows for the boundaries the map matched.
+
+    The browser does the geometry -- matching GeoJSON polygons to metric rows,
+    which is presentation work -- and posts the matching here once, when the
+    layer is drawn. The arithmetic happens on the server, where it has one
+    implementation and tests behind it.
+    """
+    import json
+
+    from apps.analytics.subcounty_insight import combine_boundaries
+
+    try:
+        payload = json.loads(request.body.decode() or "{}")
+    except ValueError:
+        return JsonResponse({"detail": "Invalid payload."}, status=400)
+
+    groups = payload.get("groups")
+    if not isinstance(groups, dict):
+        return JsonResponse({"detail": "`groups` must be an object."}, status=400)
+    # A country has a few thousand sub-counties; anything beyond that is not a
+    # map draw.
+    if len(groups) > 5000:
+        return JsonResponse({"detail": "Too many boundaries."}, status=400)
+
+    cleaned = {
+        str(feature_id): [str(key) for key in (keys or [])][:200]
+        for feature_id, keys in list(groups.items())[:5000]
+    }
+    return JsonResponse({"combined": combine_boundaries(cleaned)})

@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Assigned Schools · Partner Portal · Edify{% endblock %}
@@ -17,7 +18,8 @@
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     {% if schools %}
     <div class="overflow-x-auto -mx-1">
-      <table class="w-full edify-text-caption">
+      {% paginate schools "schools_page" as schools_pager %}
+<table class="w-full edify-text-caption">
         <thead>
           <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
             <th class="text-left font-bold py-2 pl-1">School</th>
@@ -28,7 +30,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          {% for s in schools %}
+          {% for s in schools_pager.rows %}
           <tr>
             <td class="text-left font-semibold py-2.5 pl-1">{{ s.name }}</td>
             <td class="text-left text-slate-500 py-2.5">{{ s.district.name|default:"—" }}</td>
@@ -43,6 +45,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=schools_pager param="schools_page" %}
     </div>
     {% else %}
     {% include "components/empty_state.html" with title="No schools assigned yet" message="Schools appear here once activities are assigned to your organization." %}

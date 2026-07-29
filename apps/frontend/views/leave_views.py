@@ -1807,8 +1807,6 @@ def leave_escalate_action(request, leave_id):
         return redirect("frontend:leave_approvals")
 
     try:
-        leave.status = "hr_review"
-        leave.save(update_fields=["status", "updated_at"])
         # Escalating used to make the request LESS visible, not more: nothing
         # notified HR, the To-Do generator filtered on status="pending" so the
         # item vanished from every queue, the approvals page defaults to

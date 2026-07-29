@@ -173,14 +173,28 @@ class AttendanceUploadActionTest(APITestCase):
             quarter="Q3",
             status="scheduled",
         )
+        # The activity had no owner, which only worked while the actor held
+        # every permission. Attendance belongs to whoever ran the meeting.
+        # Recording who attended a cluster meeting is execution detail, so the
+        # actor is the CCEO who ran the session. This fixture used an Admin as a
+        # "can do anything" stand-in, which stopped being true when Admin became
+        # Platform Operations: Admin uploads school and SSA data, and executes
+        # no field activity.
         self.user = User.objects.create_user(
             email="tester.att@edify.test",
             name="Att Tester",
-            roles=["Admin"],
-            active_role="Admin",
+            roles=["CCEO"],
+            active_role="CCEO",
             password="pwd",
             is_active=True,
         )
+        from apps.accounts.models import StaffProfile
+
+        self.staff = StaffProfile.objects.create(
+            id="att-cceo-sp", user=self.user, title="CCEO"
+        )
+        self.activity.responsible_staff_id = self.staff.id
+        self.activity.save(update_fields=["responsible_staff_id"])
         self.client.force_login(self.user)
 
     def test_attendance_upload_drawer_context(self):

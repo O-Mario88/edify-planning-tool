@@ -1,0 +1,74 @@
+{% load frontend_filters %}
+{% comment %}
+  THE budget breakdown table — groups of cost items with per-group
+  subtotals and a grand total, in the canonical format.
+
+  Extracted from pages/budgets/monthly.html so the fund-request page's
+  period tabs render literally the same markup, not a look-alike that
+  drifts. Both feed it from apps.budget.services.budget_workspace, so the
+  numbers cannot disagree either.
+
+  Context: groups (the page slice), all_groups (for the footer guard),
+  staff_total, total, selected, workspace_title, budget_scope.
+{% endcomment %}
+<table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
+        <caption class="sr-only">{{ workspace_title }} cost breakdown for {{ selected.title }}</caption>
+        <tbody class="divide-y divide-slate-200">
+          {% for group in groups %}
+          <tr>
+            <td colspan="6" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
+              <div class="flex items-center gap-2">
+                <span class="budget-category-name">{{ group.label }}</span>
+                <span class="edify-text-caption font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
+              </div>
+            </td>
+          </tr>
+          <tr class="font-bold">
+            <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
+            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' %}Meetings{% elif group.table_kind == 'training' %}Training sessions{% elif group.table_kind == 'admin' %}Quantity{% else %}No. of Days{% endif %}</th>
+            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}Participants{% elif group.table_kind == 'admin' %}—{% else %}No. of Persons{% endif %}</th>
+            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Rate / Unit</th>
+            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Staff cost</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'admin' %}Total{% else %}Activity{% endif %}</th>
+          </tr>
+          {% for row in group.rows %}
+          <tr class="edify-primary-soft-hover">
+            <td class="px-4 py-3">
+              <div class="flex min-w-0 items-center gap-3">
+                <p class="min-w-0 font-semibold text-slate-800">{{ row.item }}</p>
+                {% if budget_scope == 'team' %}
+                <span class="ml-auto max-w-[46%] truncate rounded-pill edify-primary-soft px-2 py-0.5 edify-text-caption font-bold text-[var(--edify-accent)]" title="Responsible staff: {{ row.owners }}">{{ row.owners }}</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}{{ row.activity_count }}{% else %}{{ row.days }}{% endif %}</td>
+            <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{{ row.people }}</td>
+            <td class="px-3 py-3 text-right font-semibold tabular-nums text-slate-700">{% if row.mixed_rate %}Mixed{% else %}{{ row.rate|ugx }}{% endif %}</td>
+            <td class="px-3 py-3 text-right font-semibold tabular-nums text-emerald-700">{% if row.staff_total %}{{ row.staff_total|ugx }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ row.total|ugx }}</td>
+          </tr>
+          {% endfor %}
+          <tr class="budget-subtotal-row">
+            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
+            <td class="px-3 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.staff_total|ugx }}</td>
+            <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total|ugx }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if all_groups %}
+        <tfoot>
+          <tr class="text-[15px] font-extrabold">
+            <td colspan="4" class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Grand total</td>
+            <td class="px-3 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ staff_total|ugx }}</td>
+            <td class="px-4 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ total|ugx }}</td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+{% comment %}
+  The pager renders here, inside the partial, when the caller paginates --
+  monthly.html passes groups_pager. The fund-request card passes none: its
+  groups are one per activity type, a fixed vocabulary of a handful, so there
+  is nothing for a pager to do there.
+{% endcomment %}
+{% if groups_pager %}{% include "components/table_pager.html" with pager=groups_pager param=groups_param|default:"groups_page" %}{% endif %}

@@ -1294,6 +1294,79 @@ select:not([multiple]):not(.select-native) {
   font-weight: 500;
 }
 
+/* Band version — one surface, items divided by rules, in the pattern of the
+   login page's stats strip. For pages where a wall of six bordered cards
+   reads as clutter: the figures matter, the chrome does not. Items stay the
+   component's own markup (identity attrs, drill-down links, accessible
+   descriptions all intact); only the dress changes. */
+.kpi-strip--band {
+  background-color: var(--edify-surface);
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  box-shadow: var(--edify-shadow-sm);
+  padding: 0.85rem 0.5rem;
+}
+
+.kpi-strip--band .kpi-strip__grid {
+  gap: 0;
+  row-gap: 0.75rem;
+  /* One row on a desktop. The default auto-fit minimum (9.5rem) wraps six
+     items into two rows on ordinary laptop widths; a band exists to be a
+     single line, so its items may compress further before wrapping. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+}
+
+.kpi-strip--band .kpi-strip__item {
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  min-height: 0;
+  padding: 0.2rem 0.85rem;
+  /* The divider between neighbours. The first item's is hidden below; a
+     wrapped row's leading item keeps its rule, which reads as a soft grid. */
+  border-left: 1px solid var(--edify-border) !important;
+}
+
+.kpi-strip--band .kpi-strip__item:first-child {
+  border-left: 0 !important;
+}
+
+.kpi-strip--band .kpi-strip__item:hover {
+  box-shadow: none !important;
+  background-color: var(--edify-surface-muted) !important;
+}
+
+.kpi-strip--band .kpi-strip__item-body {
+  align-items: center;
+}
+
+.kpi-strip--band .kpi-strip__value {
+  font-size: 1.15rem;
+  line-height: 1.15;
+}
+
+/* Tighter chrome so six figures sit comfortably on one line. */
+.kpi-strip--band .kpi-strip__icon-container {
+  width: 28px;
+  height: 28px;
+}
+
+.kpi-strip--band .kpi-strip__icon-container svg {
+  width: 15px;
+  height: 15px;
+}
+
+.kpi-strip--band .kpi-strip__item-body {
+  gap: 0.6rem;
+}
+
+.kpi-strip--band .kpi-strip__meta {
+  margin-top: 0.1rem;
+}
+
 /* Compact version */
 .kpi-strip--compact {
   padding: 0.75rem;
@@ -2355,4 +2428,50 @@ select:not([multiple]):not(.select-native) {
   outline: none;
   box-shadow: var(--edify-focus-ring);
   color: var(--edify-text);
+}
+
+/* ── Admin Support View banner ─────────────────────────────────────────────
+   Shown on every business page an Admin is observing. Platform-wide
+   visibility with no business authority is an easy thing to forget when the
+   page looks exactly as it does for the role that owns it, so the page says
+   which mode it is in. The refusal that enforces it lives in
+   apps/admin_ops/middleware.py — a banner is a courtesy, not a control.
+   Uses the warning tone tokens, which carry their own light/dark values. */
+.edify-admin-support-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: var(--edify-warning-text);
+  background: var(--edify-warning-light);
+  border-block-end: 1px solid color-mix(in srgb, var(--edify-warning) 32%, transparent);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+}
+
+.edify-admin-support-banner svg {
+  inline-size: 15px;
+  block-size: 15px;
+  flex: 0 0 auto;
+}
+
+.edify-admin-support-banner strong { font-weight: 800; }
+
+.edify-admin-support-banner a {
+  margin-inline-start: auto;
+  flex: 0 0 auto;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: .2rem;
+}
+
+.edify-admin-support-banner a:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-sm);
+}
+
+@media (max-width: 640px) {
+  .edify-admin-support-banner { flex-wrap: wrap; }
+  .edify-admin-support-banner a { margin-inline-start: 0; }
 }

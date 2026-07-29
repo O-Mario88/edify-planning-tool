@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Team Availability Heatmap — Edify{% endblock %}
 
@@ -85,11 +86,12 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-[12px] border-collapse">
+      {% paginate weeks_headers "weeks_headers_page" as weeks_headers_pager %}
+<table class="w-full text-[12px] border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100 text-left text-slate-400">
             <th class="px-6 py-4 edify-text-caption font-bold uppercase tracking-wider w-1/3">Staff Member & Role</th>
-            {% for header in weeks_headers %}
+            {% for header in weeks_headers_pager.rows %}
             <th class="px-4 py-4 edify-text-caption font-bold uppercase tracking-wider text-center w-1/6">{{ header }}</th>
             {% endfor %}
           </tr>
@@ -123,6 +125,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=weeks_headers_pager param="weeks_headers_page" %}
     </div>
   </div>
 

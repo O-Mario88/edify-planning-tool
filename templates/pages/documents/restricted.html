@@ -1,0 +1,35 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Access Restricted — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-5">
+  <div class="min-w-0">
+    <p class="edify-page-eyebrow">Policy</p>
+    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Your access is limited while HR reviews this</h1>
+    <p class="text-[12px] text-slate-500 font-semibold mt-1">You recorded a disagreement with a required policy. HR and your Country Director have been notified. Nothing has been suspended — you can change your answer at any time.</p>
+  </div>
+
+  {% for ack in declined %}
+  <section class="card p-4 space-y-3">
+    <h2 class="text-[15px] font-extrabold text-slate-800">{{ ack.document.title }}</h2>
+    <p class="text-[12px] font-semibold text-slate-500">{{ ack.document.description }}</p>
+    <p class="text-[12px] font-semibold text-slate-600"><strong>Your reason:</strong> {{ ack.comment }}</p>
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="/documents/{{ ack.document.slug }}/" class="h-9 px-4 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600 inline-flex items-center">Read the policy again</a>
+      <a href="/support" class="h-9 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600 inline-flex items-center">Contact support</a>
+    </div>
+    <form method="post" action="/api/documents/acknowledge/{{ ack.id }}" class="pt-3 border-t border-slate-50 space-y-2">
+      {% csrf_token %}
+      <p class="text-[12px] font-semibold text-slate-700">{{ ack.document.agreement_statement }}</p>
+      <input type="hidden" name="choice" value="agree">
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Comment</span>
+        <textarea name="comment" rows="2" class="px-2.5 py-2 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface"></textarea>
+      </label>
+      <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Change my answer to Agree</button>
+    </form>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

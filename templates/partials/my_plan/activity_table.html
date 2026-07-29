@@ -1,5 +1,7 @@
+{% load table_pagination %}
 {% load frontend_filters %}
 <div class="overflow-x-auto border border-slate-200/60 rounded-surface edify-surface shadow-sm">
+{% paginate activity_list "activity_list_page" as activity_list_pager %}
 <table class="mp-table w-full text-left edify-text-caption border-collapse">
 <thead>
 <tr class="bg-slate-50/50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
@@ -12,7 +14,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 text-slate-700">
-{% for act in activity_list %}
+{% for act in activity_list_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 
 <!-- Column 1: Details & Context -->
@@ -132,4 +134,5 @@ class="urgent-action urgent-action--primary"
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=activity_list_pager param="activity_list_page" %}
 </div>

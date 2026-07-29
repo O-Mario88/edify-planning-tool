@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Reports & Performance — Edify{% endblock %}
 
@@ -112,12 +113,13 @@
 </div>
 
 <div class="overflow-x-auto">
+{% paginate periods "periods_page" as periods_pager %}
 <table class="w-full text-left edify-text-caption border-collapse min-w-[1200px]">
 <thead>
 <tr class="bg-slate-50 text-slate-500 font-bold border-b ">
 <!-- Headers split -->
 <th class="p-4 font-semibold border-r  w-[200px]" rowspan="2">TARGET AREA</th>
-{% for period in periods %}
+{% for period in periods_pager.rows %}
 <th class="py-2.5 text-center {% if not forloop.last %}border-r{% endif %} font-bold bg-slate-50/30" colspan="3">{{ period.chevron_label }} <span class="edify-text-caption text-slate-500 block uppercase">{{ period.kind_label }}</span></th>
 {% endfor %}
 </tr>
@@ -150,6 +152,7 @@
 </tr>
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=periods_pager param="periods_page" %}
 </div>
 </div>
 

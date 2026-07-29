@@ -269,6 +269,53 @@ class CorePackageSchedulingService:
             raise BadRequest("That core support slot is no longer available to assign.")
         return slot
 
+    @classmethod
+    def commit_schedule(
+        cls,
+        slot: CoreActivitySlot,
+        *,
+        activity_id: str,
+        scheduled_for,
+        scheduled_month: str,
+        scheduled_week,
+        assigned_staff_id: str,
+        partner_id: str | None = None,
+    ) -> CoreActivitySlot:
+        """Mark a locked slot Scheduled against its created activity.
+
+        The commit half of `assert_can_schedule`. It used to live in the two
+        views that call the pair, as identical copy-pasted blocks -- so the
+        4 + 4 policy's guard was in this class while the state it protects was
+        written elsewhere, and a third caller could lock a slot and then write
+        any status it liked. Guard and commit belong to the same owner.
+        """
+        slot.status = "Scheduled"
+        slot.activity_id = activity_id
+        slot.scheduled_for = scheduled_for
+        slot.scheduled_month = scheduled_month
+        slot.scheduled_week = scheduled_week
+        slot.assigned_staff_id = assigned_staff_id
+        if partner_id:
+            slot.assigned_partner_id = partner_id
+            slot.owner = "partner"
+        else:
+            slot.owner = "staff"
+        slot.save()
+        return slot
+
+    @classmethod
+    def commit_assign(
+        cls, slot: CoreActivitySlot, *, partner_id: str, partner_name: str
+    ) -> CoreActivitySlot:
+        """Reserve a locked slot for a partner (the commit half of
+        `assert_can_assign`)."""
+        slot.status = "Assigned"
+        slot.assigned_partner_id = partner_id
+        slot.assigned_partner_name = partner_name
+        slot.owner = "partner"
+        slot.save()
+        return slot
+
 
 def build_sparkline_path(
     values: list, width: int = 60, height: int = 20, padding: int = 2

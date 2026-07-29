@@ -136,6 +136,18 @@ def _require_pl(principal):
         raise Forbidden("Only a Program Lead can access team fund approvals.")
 
 
+def _require_pl_action(principal):
+    """The approval itself is the Program Lead's alone.
+
+    Admin passes `_require_pl` so the queue stays observable for support,
+    but approving, returning or bulk-approving a team fund plan is a
+    business decision -- visibility must never be confused with authority.
+    """
+    role = getattr(principal, "active_role", None)
+    if role != "Program Lead":
+        raise Forbidden("Only a Program Lead can act on team fund plans.")
+
+
 def _period_key(fy, month):
     return f"{fy}-M{int(month)}"
 
@@ -694,7 +706,7 @@ def approve(principal, cceo_user_id, fy, month):
     and the accountants who will disburse)."""
     from .models import FundRequest
 
-    _require_pl(principal)
+    _require_pl_action(principal)
     cceo = _resolve_cceo(principal, cceo_user_id)
 
     existing = FundRequest.objects.filter(
@@ -746,7 +758,7 @@ def approve(principal, cceo_user_id, fy, month):
 
 def return_request(principal, cceo_user_id, fy, month, data):
     """PL returns a plan for correction → returned_by_pl (+ audit + notify + CCEO To-Do)."""
-    _require_pl(principal)
+    _require_pl_action(principal)
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A return reason is required.")
@@ -788,7 +800,7 @@ def approve_all_valid(principal, fy, month):
     Invalid ("Needs Review") plans are skipped, never force-approved. Returns
     (approved_count, skipped_count) so the caller can surface the outcome.
     """
-    _require_pl(principal)
+    _require_pl_action(principal)
     data = get_pl_fund_approvals(principal, {"fy": fy, "month": month})
     approved = skipped = 0
     for q in data["queue"]:

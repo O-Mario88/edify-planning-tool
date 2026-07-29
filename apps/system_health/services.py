@@ -61,7 +61,10 @@ def report() -> dict:
     data["auditChainIntegrity"] = _audit_chain_integrity()
     data["backgroundAutomation"] = _background_automation()
     data["authLockout"] = _auth_lockout()
+    data["adminOps"] = _admin_ops()
+    data["documents"] = _documents()
     data["unmatchedSsa"] = _unmatched_ssa()
+    data["financeIntegrity"] = _finance_integrity()
     data["evidenceStorage"] = _evidence_storage()
     data["documentationCoverage"] = _documentation_coverage()
     data["referentialIntegrity"] = _referential_integrity()
@@ -138,6 +141,45 @@ def _auth_lockout() -> dict:
         from apps.accounts.health import auth_lockout_health
 
         return auth_lockout_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _documents() -> dict:
+    """Document Library health: audience, ownership, agreement wording,
+    effective dates, previews, Help mapping, version pointers, acknowledgement
+    overdue and disagreement review."""
+    try:
+        from apps.documents.health import document_health
+
+        return document_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _admin_ops() -> dict:
+    """Platform-operations health: incident acknowledgement, support triage,
+    incident ownership, maintenance generation, notification lifecycle, and the
+    Admin business-mutation boundary itself."""
+    try:
+        from apps.admin_ops.health import admin_ops_health
+
+        return admin_ops_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _finance_integrity() -> dict:
+    """Is the money in the week the work is, and asked for once?
+
+    Each of these looks for a relationship defect: every record involved is
+    individually valid, and only the link between them is wrong — which is why
+    they survive until someone reconciles by hand.
+    """
+    try:
+        from apps.budget.health import finance_integrity_health
+
+        return finance_integrity_health()
     except Exception:  # noqa: BLE001 — the health page must render regardless
         return {"checks": []}
 

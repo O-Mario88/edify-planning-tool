@@ -1,0 +1,70 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ document.title }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-4xl mx-auto space-y-5">
+  <div class="min-w-0">
+    {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
+    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">{{ document.title }}</h1>
+    <p class="text-[12px] text-slate-500 font-semibold mt-1">{{ document.get_document_type_display }} · {{ document.get_status_display }}</p>
+  </div>
+
+  <section class="card p-4 space-y-3">
+    <h2 class="text-[14px] font-extrabold text-slate-800">Lifecycle</h2>
+    <p class="text-[12px] font-semibold text-slate-500">Draft → Under Review → Approved → Published. A published version is never edited; a correction is a new version.</p>
+    <div class="flex flex-wrap items-center gap-2">
+      {% if document.status == "draft" or document.status == "returned" %}
+      <form method="post" action="/documents/{{ document.slug }}/submit">{% csrf_token %}<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Submit for review</button></form>
+      {% endif %}
+      {% if document.status == "under_review" and can_review %}
+      <form method="post" action="/documents/{{ document.slug }}/approve" class="flex items-center gap-2">{% csrf_token %}
+        <label class="sr-only" for="review-note">Review note</label>
+        <input id="review-note" name="note" placeholder="Review note" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+        <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Approve</button>
+      </form>
+      <form method="post" action="/documents/{{ document.slug }}/return">{% csrf_token %}<button type="submit" class="h-9 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600">Return for correction</button></form>
+      {% endif %}
+      {% if document.status == "approved" and can_publish %}
+      <form method="post" action="/documents/{{ document.slug }}/publish">{% csrf_token %}<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Publish</button></form>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card p-4">
+    <h2 class="text-[14px] font-extrabold text-slate-800 mb-2">Audience</h2>
+    {% for rule in audience %}
+    <p class="text-[12px] font-semibold text-slate-600 py-1 border-b border-slate-50 last:border-0">{{ rule }}</p>
+    {% empty %}
+    <p class="text-[12px] font-medium text-amber-600 py-3">No audience set — this document currently reaches nobody and cannot be published.</p>
+    {% endfor %}
+  </section>
+
+  <section class="card p-4">
+    <h2 class="text-[14px] font-extrabold text-slate-800 mb-2">Versions</h2>
+    {% for version in versions %}
+    <div class="py-2 border-b border-slate-50 last:border-0">
+      <p class="text-[12px] font-bold text-slate-700">v{{ version.version_number }} · {{ version.original_filename }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400">
+        Preview {{ version.get_preview_status_display }} · scan {{ version.scan_status }}
+        {% if version.published_at %}· published {{ version.published_at|date:"d M Y" }}{% endif %}
+        {% if version.superseded_at %}· superseded{% endif %}
+      </p>
+      {% if version.preview_error %}<p class="edify-text-caption font-semibold text-rose-500">{{ version.preview_error }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+
+  {% if acknowledgements %}
+  <section class="card p-4">
+    <h2 class="text-[14px] font-extrabold text-slate-800 mb-2">Acknowledgements</h2>
+    {% for ack in acknowledgements %}
+    <div class="py-1.5 border-b border-slate-50 last:border-0 flex items-center justify-between gap-3 text-[12px] font-semibold text-slate-600">
+      <span>{{ ack.user_id }} · v{{ ack.version.version_number }}</span>
+      <span>{{ ack.get_state_display }}</span>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

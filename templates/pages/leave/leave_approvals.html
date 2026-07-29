@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Leave Approvals Cockpit — Edify{% endblock %}
@@ -191,7 +192,8 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
+      {% paginate recent_activity "recent_activity_page" as recent_activity_pager %}
+<table class="w-full text-left border-collapse">
         <thead>
           <tr class="border-b edify-text-caption font-bold uppercase tracking-wider text-slate-400 edify-border edify-surface-muted">
             <th class="px-4 py-3">Date & Time</th>
@@ -204,7 +206,7 @@
           </tr>
         </thead>
         <tbody class="divide-y text-xs font-semibold text-slate-600" style="divide-color:var(--edify-border);">
-          {% for act in recent_activity %}
+          {% for act in recent_activity_pager.rows %}
           <tr class="hover:bg-slate-50">
             <td class="px-4 py-3 text-slate-400">{{ act.datetime|date:"N j, Y H:i" }}</td>
             <td class="px-4 py-3 text-slate-700">{{ act.staff.name }}</td>
@@ -229,6 +231,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=recent_activity_pager param="recent_activity_page" %}
     </div>
   </div>
 

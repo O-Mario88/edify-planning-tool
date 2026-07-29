@@ -160,6 +160,11 @@ urlpatterns = [
     # Realtime — SSE live stream.
     *api("realtime", "apps.realtime.urls"),
     # Frontend Pages
+    # Platform operations + the platform-wide support intake. Ahead of the
+    # frontend catch-all so /support resolves here rather than to a
+    # frontend pattern.
+    path("", include("apps.admin_ops.urls")),
+    path("", include("apps.documents.urls")),
     path("", include("apps.frontend.urls")),
 ]
 

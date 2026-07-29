@@ -15,6 +15,7 @@ from urllib.parse import urlencode
 
 from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
+from apps.partners.services import mark_assignment_scheduled
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
@@ -858,9 +859,7 @@ def assign_partner_action_view(request):
             # assigned monitor.
             # Keep the PartnerAssignment in sync with the Activity it now
             # owns instead of leaving it stuck at pending_scheduling.
-            pa.status = "partner_scheduled"
-            pa.scheduled_date = expected_date
-            pa.save(update_fields=["status", "scheduled_date", "updated_at"])
+            mark_assignment_scheduled(pa, scheduled_date=expected_date)
 
         # Idempotency guard: a double-click or a retried htmx POST must not
         # create a second PartnerAssignment (and, worse, a second costed
@@ -1222,9 +1221,7 @@ def bulk_action_view(request):
                         },
                         principal=request.user,
                     )
-                    pa.status = "partner_scheduled"
-                    pa.scheduled_date = bulk_date
-                    pa.save(update_fields=["status", "scheduled_date", "updated_at"])
+                    mark_assignment_scheduled(pa, scheduled_date=bulk_date)
                 s.current_fy_ssa_status = "partner_assigned"
                 s.save(
                     update_fields=[

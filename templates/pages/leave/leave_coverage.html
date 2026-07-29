@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Delegated Coverage Access — Edify{% endblock %}
 
@@ -36,7 +37,8 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-[12px] border-collapse">
+      {% paginate coverages "coverages_page" as coverages_pager %}
+<table class="w-full text-[12px] border-collapse">
         <thead>
           <tr class="bg-slate-50 border-b border-slate-100 text-left">
             <th class="px-5 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Covering Staff</th>
@@ -49,7 +51,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 font-medium">
-          {% for cov in coverages %}
+          {% for cov in coverages_pager.rows %}
           <tr class="hover:bg-slate-50/50 transition">
             <td class="px-5 py-4">
               <span class="font-bold text-slate-800 block text-[13px]">{{ cov.covering_staff.user.name }}</span>
@@ -95,6 +97,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=coverages_pager param="coverages_page" %}
     </div>
   </div>
 

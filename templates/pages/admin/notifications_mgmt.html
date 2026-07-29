@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Notification Logs — Edify{% endblock %}
 
@@ -17,6 +18,7 @@
 <!-- Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate logs "logs_page" as logs_pager %}
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
@@ -28,7 +30,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for log in logs %}
+{% for log in logs_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-800 block">{{ log.title }}</span>
@@ -85,6 +87,7 @@ No notification delivery logs registered in the database database.
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=logs_pager param="logs_page" %}
 </div>
 </div>
 

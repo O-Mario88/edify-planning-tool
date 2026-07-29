@@ -264,6 +264,7 @@
 </div>
 
 {{ district_insight|json_script:"subregion-district-metrics" }}
+{{ school_type_totals|json_script:"subregion-school-type-totals" }}
 {{ subcounty_insight|json_script:"subregion-subcounty-metrics" }}
 {{ subregion_performance.colours|json_script:"subregion-colours" }}
 
@@ -283,6 +284,7 @@ function subregionMap(){
     subcountyLabelLayer:null, unmatchedSchoolCount:0,
     boundaryExitHandler:null,
     sx:null, sy:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
+    combinedBoundaries:{},
     schoolTypes:[
       {key:'core', label:'Core', colour:'#f97316', on:true, total:0},
       {key:'client', label:'Client', colour:'#2563eb', on:true, total:0},
@@ -320,12 +322,21 @@ function subregionMap(){
         || {core:0, client:0, champion:0, core_trained:0};
     },
     syncSchoolTotals(){
-      const districts = Object.values(this.metrics);
-      this.schoolTypes.forEach(type => {
-        type.total = districts.reduce(
-          (sum, district) => sum + (district.school_distribution?.[type.key] || 0), 0
-        );
-      });
+      /* Read the server's totals rather than re-summing the district payload
+         here. These counts tell a Country Director how many Core schools
+         exist, which makes them an authoritative figure, and §40 permits no
+         authoritative business analytic in JavaScript. The server computes
+         them in apps.analytics.country_map_context.school_type_totals. */
+      let totals = {};
+      try {
+        totals = JSON.parse(
+          document.getElementById('subregion-school-type-totals').textContent) || {};
+      } catch (e) {
+        totals = {};
+      }
+      for (const type of this.schoolTypes) {
+        type.total = totals[type.key] ?? 0;
+      }
     },
     toggleSchoolType(key){
       const type = this.schoolTypes.find(item => item.key === key);
@@ -663,57 +674,70 @@ function subregionMap(){
       return {byFeature, unmatched};
     },
     combineBoundaryMetrics(properties, matchedRows){
+      /* The server combines. This used to weight the SSA mean by sample size
+         here, duplicating apps.analytics.subregion_analytics.weighted_ssa_mean
+         -- and §40 permits no authoritative business analytic in JavaScript.
+
+         Geometry matching stays in the browser because that is presentation
+         work; the matching it produces is posted once, when the layer draws,
+         and every combined row comes back together. So this is a cache read,
+         not a round trip per boundary. */
       const matches = matchedRows || this.metricsForBoundary(properties);
+      const key = this.boundaryCacheKey(properties, matches);
+      const served = this.combinedBoundaries[key];
       const base = {
-        district:properties.d || properties.od || this.focusedDistrict,
-        subregion:this.metrics[this.focusedDistrict]?.subregion || '',
-        subcounty:properties.n,
+        district: properties.d || properties.od || this.focusedDistrict,
+        subcounty: properties.n,
+        matched_keys: matches.map(metric => metric.key),
         schools:0, clusters:0, core_schools:0,
         school_distribution:{core:0,client:0,champion:0,core_trained:0},
         ssa_done:0, ssa_total:0, ssa_n:0,
         ssa_avg:null, ssa_avg_cluster:null, ssa_avg_core:null,
         best:null, worst:null, trained:0, visited:0,
         teachers_trained:0, leaders_trained:0,
-        matched_keys:matches.map(metric => metric.key),
+        subregion: this.metrics[this.focusedDistrict]?.subregion || '',
       };
-      if(!matches.length) return base;
-      matches.forEach(metric => {
-        base.schools += metric.schools || 0;
-        base.clusters += metric.clusters || 0;
-        base.core_schools += metric.core_schools || 0;
-        base.ssa_done += metric.ssa_done || 0;
-        base.ssa_total += metric.ssa_total || 0;
-        base.ssa_n += metric.ssa_n || 0;
-        base.trained += metric.trained || 0;
-        base.visited += metric.visited || 0;
-        base.teachers_trained += metric.teachers_trained || 0;
-        base.leaders_trained += metric.leaders_trained || 0;
-        this.schoolTypes.forEach(type => {
-          base.school_distribution[type.key] +=
-            metric.school_distribution?.[type.key] || 0;
-        });
+      /* No served row yet (the combine request is still in flight, or it
+         failed) means "not known", never zero. The tooltip renders em-dashes
+         for absent values, which is the honest state while loading. */
+      return served ? Object.assign(base, served) : base;
+    },
+    boundaryCacheKey(properties, matches){
+      return (matches || []).map(metric => metric.key).sort().join('|')
+        || `empty:${properties.n || ''}`;
+    },
+    async fetchCombinedBoundaries(features, matching){
+      /* One request for the whole layer. Keyed on the matched sub-county keys
+         so two boundaries covering the same rows share an answer. */
+      const groups = {};
+      features.forEach(feature => {
+        const matches = matching.byFeature.get(feature) || [];
+        if(!matches.length) return;
+        groups[this.boundaryCacheKey(feature.properties, matches)] =
+          matches.map(metric => metric.key);
       });
-      const weightedAverage = key => {
-        const measured = matches.filter(
-          metric => metric[key] !== null && metric[key] !== undefined && metric.ssa_n
-        );
-        const weight = measured.reduce((sum, metric) => sum + metric.ssa_n, 0);
-        if(!weight) return null;
-        return Math.round(
-          measured.reduce((sum, metric) => sum + metric[key] * metric.ssa_n, 0)
-          / weight * 100
-        ) / 100;
-      };
-      base.ssa_avg = weightedAverage('ssa_avg');
-      // Cohort-specific averages do not ship independent sample sizes. When
-      // aliases combine, leave them absent rather than inventing a weighting.
-      if(matches.length === 1){
-        base.ssa_avg_cluster = matches[0].ssa_avg_cluster;
-        base.ssa_avg_core = matches[0].ssa_avg_core;
-        base.best = matches[0].best;
-        base.worst = matches[0].worst;
+      if(!Object.keys(groups).length) return;
+      try {
+        const res = await fetch('/api/analytics/combine-map-boundaries', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': this.csrfToken(),
+          },
+          body: JSON.stringify({groups}),
+        });
+        if(!res.ok) return;
+        const data = await res.json();
+        this.combinedBoundaries = Object.assign(
+          this.combinedBoundaries, data.combined || {});
+      } catch (e) {
+        /* Leave the cache empty: boundaries render with absent values rather
+           than fabricated ones. */
       }
-      return base;
+    },
+    csrfToken(){
+      const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+      return match ? match[1] : '';
     },
     unassignedForFocusedDistrict(){
       const key = Object.keys(this.subcountyUnassigned).find(
@@ -1181,6 +1205,17 @@ function subregionMap(){
       this.clearSubcounties();
       const features = payload.features || [];
       const matching = this.matchMetricsToFeatures(features);
+      /* Ask the server to combine every matched group, then redraw once the
+         answers arrive. The first pass paints geometry with absent values --
+         honest while loading, and it keeps the map interactive rather than
+         blocking on a request. */
+      if(!this._combineRequested){
+        this._combineRequested = true;
+        this.fetchCombinedBoundaries(features, matching).then(() => {
+          this._combineRequested = false;
+          this.drawSubcounties(payload);
+        });
+      }
       const layer = document.createElementNS(this.NS, 'g');
       layer.setAttribute('class', 'sr-boundary-layer sr-subcounty-layer');
       const labelLayer = document.createElementNS(this.NS, 'g');

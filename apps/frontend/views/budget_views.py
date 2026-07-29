@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest
 from apps.core.metrics import format_ugx_compact
@@ -107,9 +108,28 @@ def _scoped_base_querysets(request, fy):
         wfr_qs = wfr_qs.filter(q_scope)
         budget_qs = budget_qs.filter(q_scope)
 
-        q_act_scope = Q(responsible_staff_id=user.user_id)
+        # `Activity.responsible_staff_id` holds a StaffProfile CUID or a User
+        # CUID depending on which the scheduler had -- activities.services
+        # .create() prefers the StaffProfile and falls back to the User. This
+        # matched only the User id, so a CCEO whose work was stamped with their
+        # StaffProfile saw almost none of it: 13 activities out of 213 for the
+        # account this was found on.
+        #
+        # The page then opened on "the newest scheduled activity it could see",
+        # which was April, and the monthly, quarterly and annual budgets came
+        # back empty because the cost lines behind them were invisible too. The
+        # month label was never wrong; the scope beneath it was.
+        #
+        # Both identity spaces, the same way my_plan.services.get covers them.
+        own_identities = {user.user_id}
+        own_identities.update(scope.staff_ids or [])
+        own_identities.discard(None)
+
+        q_act_scope = Q(responsible_staff_id__in=own_identities or {"__none__"})
         if supervised_user_ids:
             q_act_scope |= Q(responsible_staff_id__in=supervised_user_ids)
+        if scope.supervised_staff_ids:
+            q_act_scope |= Q(responsible_staff_id__in=scope.supervised_staff_ids)
         activities_qs = activities_qs.filter(q_act_scope)
 
     # Apply dropdown filters. NOTE: StaffProfile has no `district_id` field —
@@ -183,6 +203,33 @@ def _export_weekly_fund_requests_csv(wfr_qs):
     return response
 
 
+def _monthly_summary_band(totals: dict) -> list[dict]:
+    """Registry-built items for the monthly summary band."""
+    from apps.core.metrics import MetricValue, render_metric, render_strip
+
+    pairs = (
+        ("fund_request_monthly_visits_budget", totals["visits"]),
+        ("fund_request_monthly_trainings_budget", totals["trainings"]),
+        ("fund_request_monthly_meetings_budget", totals["meetings"]),
+        ("fund_request_monthly_admin_budget", totals["admin"]),
+        ("fund_request_monthly_total", totals["total"]),
+    )
+    return render_strip(
+        [render_metric(key, MetricValue.measured(value)) for key, value in pairs]
+    )
+
+
+def _weekly_status_label(weekly_request) -> str:
+    """The canonical stage label for one weekly request, or "" if there is none."""
+    if not weekly_request:
+        return ""
+    from apps.fund_requests.disbursement_dashboard_service import (
+        weekly_status_buckets,
+    )
+
+    return weekly_status_buckets([weekly_request]).get(weekly_request.id, "")
+
+
 def _build_fund_requests_context(request):
     """The full Fund Requests page context (weekly card, monthly preview,
     KPIs, insights, breakdown). Shared by the GET page render and by the
@@ -195,6 +242,30 @@ def _build_fund_requests_context(request):
     quarter = request.GET.get("quarter", "").strip()
     month_name = request.GET.get("month", "").strip()
     active_tab = request.GET.get("tab", "weekly").strip()
+    # Which budget horizon the period card is showing. The week is the default
+    # because it is the one that moves money.
+    _role = getattr(request.user, "active_role", "")
+    # A Country Director's own plan is the monthly admin plan -- admin lines
+    # are planned by month and never estimated into a week -- so their card
+    # opens on the month. Field staff open on the week, which moves the money.
+    _default_tab = "month" if _role in ("CountryDirector", "Admin") else "week"
+    period_tab = request.GET.get("period_tab", _default_tab).strip().lower()
+    if period_tab not in ("week", "month", "quarter", "fy"):
+        period_tab = _default_tab
+
+    # Which slice of the budget the card reads. PLs read their team (the plan
+    # they approve). CDs read their admin plan by default -- "CD majorly has
+    # admin and monitoring plans" (the owner) -- with a one-click switch to
+    # the country field view for the monitoring half. budget_workspace itself
+    # validates who may hold which scope, so an unauthorised value in the URL
+    # falls back to "my" there rather than being trusted here.
+    if _role == "Program Lead":
+        _default_scope = "team"
+    elif _role in ("CountryDirector", "Admin"):
+        _default_scope = "admin"
+    else:
+        _default_scope = ""
+    card_budget_scope = request.GET.get("budget_scope", _default_scope).strip().lower()
     request_type = request.GET.get("request_type", "").strip()
 
     MONTH_MAP = {
@@ -235,7 +306,8 @@ def _build_fund_requests_context(request):
             .first()
         )
         month_num = (
-            latest_for_month.scheduled_date.date().month
+            # Same local-date rule as the week selection below.
+            timezone.localtime(latest_for_month.scheduled_date).date().month
             if latest_for_month and latest_for_month.scheduled_date
             else date.today().month
         )
@@ -268,7 +340,14 @@ def _build_fund_requests_context(request):
             .first()
         )
         if latest_act:
-            latest_d = latest_act.scheduled_date.date()
+            # Local date, never the raw UTC one. An activity at local midnight
+            # is stored as 21:00 UTC the previous day, and `.date()` on that
+            # picks the previous day -- for a Monday activity that is a Sunday,
+            # whose Monday-of is a week early, so the page opened on the wrong
+            # week with the wrong (empty) budget. The fourth appearance of
+            # this timezone class in this codebase; see also the cost-line
+            # drift health check and the reminder dedupe.
+            latest_d = timezone.localtime(latest_act.scheduled_date).date()
             selected_week_start = latest_d - timedelta(days=latest_d.weekday())
         else:
             selected_week_start = (
@@ -594,65 +673,114 @@ def _build_fund_requests_context(request):
             }
         )
 
-    # Monthly Summary by Activity Type
+    # Monthly summary, from the canonical budget builder.
+    #
+    # This block used to run four hand-written type-bucket aggregations over
+    # budget_qs. Two defects, both live: an activity type outside the four
+    # hard-coded lists fell out of every bucket AND out of the total, so a
+    # month of core visits summed to zero; and the buckets scoped differently
+    # from the My Budget card beside them, so a Program Lead's band said
+    # 548,000 while the month tab said 0. One source now -- budget_workspace,
+    # split by the same table_kind the budget tables group by. A Program Lead's
+    # band reads their team (the plan they approve); everyone else reads their
+    # own scope.
+    # Still read directly for one thing only: "does this month have any cost
+    # lines at all", which drives the monthly request's derived status below.
     month_lines = budget_qs.filter(planned_date__month=month_num)
 
-    school_visits_total = (
-        month_lines.filter(
-            activity__activity_type__in=[
-                "school_visit",
-                "follow_up_visit",
-                "coaching_visit",
-                "in_school_support",
-                "core_visit",
-            ]
-        ).aggregate(total=Sum("amount"))["total"]
-        or 0
-    )
+    from apps.budget.services import budget_workspace as _band_builder
 
-    trainings_total = (
-        month_lines.filter(
-            activity__activity_type__in=[
-                "training",
-                "school_improvement_training",
-                "cluster_training",
-                "core_training",
-            ]
-        ).aggregate(total=Sum("amount"))["total"]
-        or 0
+    _band_workspace = _band_builder(
+        user,
+        {
+            "period": "month",
+            "fy": fy,
+            "date": date(year_num, month_num, 1).isoformat(),
+            **({"budget_scope": card_budget_scope} if card_budget_scope else {}),
+        },
     )
-
-    meetings_total = (
-        month_lines.filter(activity__activity_type="cluster_meeting").aggregate(
-            total=Sum("amount")
-        )["total"]
-        or 0
-    )
-
-    admin_total = (
-        month_lines.exclude(
-            activity__activity_type__in=[
-                "school_visit",
-                "follow_up_visit",
-                "coaching_visit",
-                "in_school_support",
-                "core_visit",
-                "training",
-                "school_improvement_training",
-                "cluster_training",
-                "core_training",
-                "cluster_meeting",
-            ]
-        ).aggregate(total=Sum("amount"))["total"]
-        or 0
-    )
-
+    _band_kind_totals = {"training": 0, "meeting": 0, "admin": 0, "standard": 0}
+    for _group in _band_workspace["groups"]:
+        _kind = _group.get("table_kind")
+        _band_kind_totals[_kind if _kind in _band_kind_totals else "standard"] += (
+            _group.get("total") or 0
+        )
     monthly_totals_by_type = {
-        "visits": school_visits_total,
-        "trainings": trainings_total,
-        "meetings": meetings_total,
-        "admin": admin_total,
-        "total": school_visits_total + trainings_total + meetings_total + admin_total,
+        "visits": _band_kind_totals["standard"],
+        "trainings": _band_kind_totals["training"],
+        "meetings": _band_kind_totals["meeting"],
+        "admin": _band_kind_totals["admin"],
+        "total": _band_workspace["total"],
+    }
+
+    from urllib.parse import urlencode
+
+    _period_tab_query = urlencode(
+        {
+            key: value
+            for key, value in request.GET.items()
+            if value and key != "period_tab"
+        }
+    )
+    if _period_tab_query:
+        _period_tab_query += "&"
+
+    # The budget at the chosen horizon, from the canonical builder.
+    #
+    # An earlier version of this card computed week/month/quarter/FY sums here,
+    # by hand, from budget_qs. Those numbers could disagree with the My Budget
+    # page over quarter boundaries and scope, and a card that argues with the
+    # page it links to is worse than no card. budget_workspace is the one
+    # source: same scoping (resolve_user_scope), same period arithmetic, and
+    # the same `groups` the reference budget table renders -- so the card can
+    # show the full breakdown, not just a headline.
+    from apps.budget.services import budget_workspace
+
+    if period_tab == "week":
+        _budget_anchor = selected_week_start
+    else:
+        # The month the page has open, so the Month/Quarter tabs follow the
+        # month filter rather than silently resetting to today.
+        _budget_anchor = date(year_num, month_num, 1)
+
+    period_workspace = budget_workspace(
+        user,
+        {
+            "period": period_tab,
+            "fy": fy,
+            "date": _budget_anchor.isoformat(),
+            **({"budget_scope": card_budget_scope} if card_budget_scope else {}),
+        },
+    )
+
+    from urllib.parse import urlencode
+
+    _period_tab_query = urlencode(
+        {
+            key: value
+            for key, value in request.GET.items()
+            if value and key != "period_tab"
+        }
+    )
+    if _period_tab_query:
+        _period_tab_query += "&"
+
+    period_budgets = {
+        "active": period_tab,
+        "selected": period_workspace["selected"],
+        "total": period_workspace["total"],
+        "staff_total": period_workspace["staff_total"],
+        "groups": period_workspace["groups"],
+        "workspace_title": period_workspace["workspace_title"],
+        "budget_scope": period_workspace["budget_scope"],
+        "empty_title": period_workspace["empty_title"],
+        "empty_help": period_workspace["empty_help"],
+        "tabs": [
+            {"key": "week", "label": "Week", "submits": True},
+            {"key": "month", "label": "Month", "submits": False},
+            {"key": "quarter", "label": "Quarter", "submits": False},
+            {"key": "fy", "label": "FY", "submits": False},
+        ],
     }
 
     # Monthly Request Status — driven by the REAL monthly FundRequest (the
@@ -876,6 +1004,38 @@ def _build_fund_requests_context(request):
         "source_activities": source_activities,
         "monthly_weeks": monthly_weeks,
         "monthly_totals_by_type": monthly_totals_by_type,
+        # The five-tile monthly band, built through the metric registry so
+        # each tile carries its registered key, definition and finance stage
+        # (PLANNED). The hand-written label/value dicts this replaces were
+        # invisible to the duplication and denominator guards -- the KPI
+        # inventory's ratchet caught them the same day they were written.
+        "monthly_summary_band": _monthly_summary_band(monthly_totals_by_type),
+        "period_budgets": period_budgets,
+        # The week's request, for the submit control on the week tab. Only an
+        # owner-confirmable request may be submitted; anything already in the
+        # approval chain says so instead of offering the button again.
+        "active_wfr_id": getattr(active_wfr, "id", None),
+        "active_wfr_can_submit": getattr(active_wfr, "status", None)
+        == "pending_responsible_confirmation",
+        # WeeklyFundRequest.status carries no `choices`, so there is no
+        # get_status_display. `weekly_status_buckets` is the canonical label
+        # for a weekly request's stage -- the same one the Disbursement
+        # Dashboard and the Accountant home read -- so this page cannot
+        # describe a request differently from the pages that act on it.
+        "active_wfr_status_label": _weekly_status_label(active_wfr),
+        "period_tab_query": _period_tab_query,
+        # The CD's two hats: their own admin plan, and monitoring the country's
+        # field budget. Rendered as a switch on the card only when the role
+        # actually holds both scopes.
+        "card_scope_switch": (
+            [
+                {"key": "admin", "label": "Admin plan"},
+                {"key": "country", "label": "Country (monitoring)"},
+            ]
+            if _role in ("CountryDirector", "Admin")
+            else []
+        ),
+        "card_budget_scope": period_workspace["budget_scope"],
         "monthly_stepper": monthly_stepper,
         "insights": insights,
         "breakdown": breakdown,

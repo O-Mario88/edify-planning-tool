@@ -22,7 +22,10 @@ ALL_ROLES = {ADMIN, CCEO, PL, CD, IA, RVP, HR, ACCOUNTANT, PARTNER, PROJECT_COOR
 # are the roles whose day-to-day work belongs in the field operations group;
 # leadership and support roles may retain scoped read access through their own
 # intelligence, verification, finance, or people workspaces.
-FIELD_NAV_ROLES = {ADMIN, CCEO, PL, PARTNER, PROJECT_COORDINATOR}
+# Admin is deliberately absent: Platform Operations observes field work
+# through Team Plans, Support Tickets, Incidents and Search, and never
+# carries a field workspace of its own.
+FIELD_NAV_ROLES = {CCEO, PL, PARTNER, PROJECT_COORDINATOR}
 
 
 def get_user_role_slug(user) -> str:
@@ -211,6 +214,21 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "search": ALL_ROLES,
     # Specific sub-routes / components
     "admin_dashboard": {ADMIN},
+    # Platform-operations workspaces (Admin-only).
+    "admin_team_plans": {ADMIN},
+    "admin_planning": {ADMIN},
+    "admin_my_plan": {ADMIN},
+    "admin_support_queue": {ADMIN},
+    "admin_incidents": {ADMIN},
+    "admin_maintenance": {ADMIN},
+    "data_repair": {ADMIN},
+    # Upload Center: one entry point for every file that enters Edify. Which
+    # categories a role actually sees is decided by the adapters, so the route
+    # is open to everyone who can upload or review anything at all.
+    "uploads": {ADMIN, IA, HR, CD, RVP, CCEO, PL, PARTNER, PROJECT_COORDINATOR},
+    "policy_compliance": {HR, CD, PL, RVP, ADMIN},
+    # Reporting a problem is every role's right, so intake is universal.
+    "report_problem": ALL_ROLES,
     "audit_log": {ADMIN},
     "workflow_rules": {ADMIN},
     "page_access_matrix": {ADMIN},
@@ -690,6 +708,14 @@ SIDEBAR_ITEMS = [
                 "page_key": "todos",
             },
             {
+                "label": "Upload Center",
+                "url": "/uploads",
+                "page_key": "uploads",
+                # Admin reaches it from PLATFORM OPERATIONS instead, so it is
+                # not advertised twice in one sidebar.
+                "visible_to": {IA, HR, CD, RVP, CCEO, PL, PARTNER, PROJECT_COORDINATOR},
+            },
+            {
                 "label": "Field Debrief",
                 "url": "/debriefs",
                 "page_key": "daily_debrief",
@@ -939,6 +965,55 @@ SIDEBAR_ITEMS = [
         ],
     },
     {
+        # Admin's home. Placed before ADMINISTRATION so the first thing a
+        # Platform Operations Administrator sees is their own operating queue,
+        # not the user table.
+        "group_label": "PLATFORM OPERATIONS",
+        "visible_to": {ADMIN},
+        "items": [
+            {
+                "label": "Admin My Plan",
+                "url": "/admin-ops/my-plan",
+                "page_key": "admin_my_plan",
+            },
+            {
+                "label": "Admin Planning",
+                "url": "/admin-ops/planning",
+                "page_key": "admin_planning",
+            },
+            {
+                "label": "Team Plans",
+                "url": "/admin-ops/team-plans",
+                "page_key": "admin_team_plans",
+            },
+            {
+                "label": "Support Tickets",
+                "url": "/admin-ops/support",
+                "page_key": "admin_support_queue",
+            },
+            {
+                "label": "System Incidents",
+                "url": "/admin-ops/incidents",
+                "page_key": "admin_incidents",
+            },
+            {
+                "label": "Maintenance Calendar",
+                "url": "/admin-ops/maintenance",
+                "page_key": "admin_maintenance",
+            },
+            {
+                "label": "Data Repair Center",
+                "url": "/data-repair",
+                "page_key": "data_repair",
+            },
+            {
+                "label": "Upload Center",
+                "url": "/uploads",
+                "page_key": "uploads",
+            },
+        ],
+    },
+    {
         "group_label": "ADMINISTRATION",
         "items": [
             {
@@ -966,6 +1041,11 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "PEOPLE & TEAMS",
         "items": [
+            {
+                "label": "Policy Compliance",
+                "url": "/policy-compliance",
+                "page_key": "policy_compliance",
+            },
             {
                 "label": "People Directory",
                 "url": "/staff",
@@ -1138,6 +1218,53 @@ SIDEBAR_ITEMS = [
 ]
 
 
+# Admin's sidebar is an allow-list, not a subtraction.
+#
+# Route authorization for Admin stays wide -- Platform Operations must be able
+# to OPEN any business page to diagnose it. Navigation is the opposite: it says
+# what a role's work *is*. Admin's work is the platform, so the sidebar carries
+# platform operations, access administration and system configuration, and
+# nothing else. Business pages are reached through Team Plans, Support Tickets,
+# Incidents, Search and audit deep links.
+#
+# An allow-list rather than a per-item exclusion because the failure mode being
+# fixed is exactly the drift a subtraction invites: every new business page
+# would otherwise appear in Admin's sidebar by default, and the sidebar would
+# slowly turn Admin back into a business-process superuser.
+ADMIN_NAV_PAGE_KEYS: set[str] = {
+    # Admin home
+    "dashboard",
+    "todos",
+    "admin_my_plan",
+    "admin_planning",
+    "admin_team_plans",
+    # Support and operations
+    "admin_support_queue",
+    "admin_incidents",
+    "admin_maintenance",
+    "data_repair",
+    "uploads",
+    "system_health",
+    # School data administration: Admin uploads schools and SSA files and
+    # edits school records, so it needs to reach every school.
+    "schools",
+    "school_directory",
+    "school_upload",
+    "ia_upload_center",
+    "data_quality_center",
+    "upload_history",
+    # Access and security
+    "users",
+    "roles_permissions",
+    "audit_log",
+    # Platform configuration
+    "workflow_rules",
+    "page_access_matrix",
+    "region_district_setup",
+    "notifications_mgmt",
+}
+
+
 def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     """Generates the grouped list of visible sidebar links for the given user."""
     role = get_user_role_slug(user)
@@ -1188,6 +1315,8 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 "visible_to",
                 PAGE_PERMISSIONS.get(item["page_key"], set()),
             )
+            if role == ADMIN and item["page_key"] not in ADMIN_NAV_PAGE_KEYS:
+                continue
             if role in allowed:
                 # Per-role URL override (e.g. a Project Coordinator's "Planning"
                 # points to the project-scoped planning page).

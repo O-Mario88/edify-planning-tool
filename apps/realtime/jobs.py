@@ -411,3 +411,47 @@ def mfa_challenge_purge_job():
     if not _enabled():
         return
     run_tracked_job("mfa_challenge_purge", _do_mfa_challenge_purge)
+
+
+# ── Admin platform maintenance ───────────────────────────────────────────────
+def _do_admin_maintenance_generation() -> int:
+    """Turn every due MaintenanceTemplate into scheduled Admin work.
+
+    Routine upkeep -- backup verification, restore rehearsal, dead-route scans,
+    permission review -- should not depend on anyone remembering it. When a
+    template falls due this puts it in Admin My Plan with a date on it.
+    """
+    from apps.admin_ops.services import MaintenanceService
+
+    return MaintenanceService.generate_due()
+
+
+def admin_maintenance_generation_job():
+    if not _enabled():
+        return
+    run_tracked_job("admin_maintenance_generation", _do_admin_maintenance_generation)
+
+
+# ── Document Library lifecycle ───────────────────────────────────────────────
+def _do_document_lifecycle() -> int:
+    """One daily pass over the Document Library.
+
+    Grouped into a single job because each step is small, they share no state,
+    and five separate registry entries would be five things to monitor for one
+    daily sweep.
+    """
+    from apps.documents import jobs as document_jobs
+
+    return (
+        document_jobs.activate_effective_documents()
+        + document_jobs.expire_documents()
+        + document_jobs.retry_failed_previews()
+        + document_jobs.send_acknowledgement_reminders()
+        + document_jobs.finalise_engagement_sessions()
+    )
+
+
+def document_lifecycle_job():
+    if not _enabled():
+        return
+    run_tracked_job("document_lifecycle", _do_document_lifecycle)
