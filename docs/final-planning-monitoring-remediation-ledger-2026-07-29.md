@@ -6,6 +6,10 @@ Branch: `codex/final-planning-monitoring-audit`
 Criticality: Tier 1 — Mission Critical
 Deployment gate: **Blocked / provisional NO-GO**
 
+Implementation commit: `a3393e4e` applies to PMG-001 through PMG-012. PMG-013
+is intentionally unresolved and has no fix commit because it requires
+business-owned data decisions, incident ownership and live worker evidence.
+
 ## Baseline safeguards
 
 - PR #18 merged the pre-audit feature work into `main` at `00e4989a` after
@@ -71,4 +75,5 @@ Deployment gate: **Blocked / provisional NO-GO**
 | 2026-07-29 | Repeated full-suite matrix | Fresh run: 3,286 tests in 705.024s. Reused database runs: 709.639s and 724.734s. Every run had 0 failures/errors and 2 skips. | PMG-001, PMG-012 |
 | 2026-07-29 | Instrumented pytest and coverage | 3,284 passed, 2 skipped, 34 retained warnings and 2,342 subtests in 3,070.58s; 88% across 82,809 statements, with 627 files at 100%. | PMG-001, PMG-012 |
 | 2026-07-29 | Production artifact | Exact-tree image `edify-planning:audit-20260729` built successfully. Shell-form CMD warning repaired with JSON form plus `exec`; repeat build reports 0 warnings. Deployment contracts pass 25/25. | PMG-001, PMG-003 |
+| 2026-07-29 | Post-commit rollback rehearsal | `00e4989a` served the schema left by `a3393e4e`; 8/8 authenticated routes, sequence continuity and audit hash chain passed. | PMG-001, PMG-003, PMG-010 |
 | 2026-07-29 | Honest post-repair health | 18 workflow blocker categories remain; scheduler is disabled in local process; two old critical demo incidents are unacknowledged. No ambiguous business row was changed by inference. | PMG-002, PMG-013 |

@@ -34,6 +34,7 @@ candidate and obtain a green System Health result.
 | Item | Evidence |
 |---|---|
 | Pre-audit merge | PR #18, merged to `main` as `00e4989abb42eec5a406832026471ab76aba453f`; required Django, security and CodeQL checks green |
+| Audit implementation | `a3393e4e` (`audit planning and monitoring deployment gates`) |
 | Audit working branch | `codex/final-planning-monitoring-audit` |
 | Python / Django | Python 3.13.12 / Django 5.2.16 |
 | Node / npm | Node 24.14.0 / npm 11.9.0 |
@@ -410,8 +411,11 @@ include every fail-closed secret/bridge setting and the current pytest runner.
 Backup artifact:
 `.backup-rehearsal/edify_pm-20260729T144158Z.dump`.
 
-Restore rehearsal: **pass**. Release rollback rehearsal and live infrastructure
-recovery evidence are recorded in section AM/final release prerequisites.
+Restore rehearsal: **pass**. Post-commit rollback rehearsal: **pass**. The
+pre-audit release `00e4989a` served the schema left by `a3393e4e`; sequences
+advanced, eight authenticated smoke routes returned HTTP 200 and the audit hash
+chain remained intact. Live infrastructure recovery evidence remains a final
+release prerequisite.
 
 ## AK. Historical data repairs
 
@@ -472,7 +476,7 @@ more than 60 minutes. A green production worker heartbeat was not supplied.
 | Compose configuration | Valid; web and worker require encryption key | Pass |
 | Container build | `edify-planning:audit-20260729` built from the final tree; 0 Docker warnings after exec-safe Daphne command repair | Pass |
 | Backup/restore | Counts, FKs, routes, stamp and audit chain preserved | Pass |
-| Release rollback rehearsal | Runs against the committed audit candidate in the post-commit gate | Pending final capture |
+| Release rollback rehearsal | `00e4989a` served `a3393e4e` schema; 8/8 routes, sequences and audit chain passed | Pass |
 | System Health | 18 workflow categories + 2 unacknowledged critical incidents | **Fail** |
 | Live scheduler/staging | No production worker/staging access | **Unproven / Fail hard gate** |
 
