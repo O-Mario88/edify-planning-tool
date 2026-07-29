@@ -244,9 +244,28 @@ def _build_fund_requests_context(request):
     active_tab = request.GET.get("tab", "weekly").strip()
     # Which budget horizon the period card is showing. The week is the default
     # because it is the one that moves money.
-    period_tab = request.GET.get("period_tab", "week").strip().lower()
+    _role = getattr(request.user, "active_role", "")
+    # A Country Director's own plan is the monthly admin plan -- admin lines
+    # are planned by month and never estimated into a week -- so their card
+    # opens on the month. Field staff open on the week, which moves the money.
+    _default_tab = "month" if _role in ("CountryDirector", "Admin") else "week"
+    period_tab = request.GET.get("period_tab", _default_tab).strip().lower()
     if period_tab not in ("week", "month", "quarter", "fy"):
-        period_tab = "week"
+        period_tab = _default_tab
+
+    # Which slice of the budget the card reads. PLs read their team (the plan
+    # they approve). CDs read their admin plan by default -- "CD majorly has
+    # admin and monitoring plans" (the owner) -- with a one-click switch to
+    # the country field view for the monitoring half. budget_workspace itself
+    # validates who may hold which scope, so an unauthorised value in the URL
+    # falls back to "my" there rather than being trusted here.
+    if _role == "Program Lead":
+        _default_scope = "team"
+    elif _role in ("CountryDirector", "Admin"):
+        _default_scope = "admin"
+    else:
+        _default_scope = ""
+    card_budget_scope = request.GET.get("budget_scope", _default_scope).strip().lower()
     request_type = request.GET.get("request_type", "").strip()
 
     MONTH_MAP = {
@@ -654,65 +673,44 @@ def _build_fund_requests_context(request):
             }
         )
 
-    # Monthly Summary by Activity Type
+    # Monthly summary, from the canonical budget builder.
+    #
+    # This block used to run four hand-written type-bucket aggregations over
+    # budget_qs. Two defects, both live: an activity type outside the four
+    # hard-coded lists fell out of every bucket AND out of the total, so a
+    # month of core visits summed to zero; and the buckets scoped differently
+    # from the My Budget card beside them, so a Program Lead's band said
+    # 548,000 while the month tab said 0. One source now -- budget_workspace,
+    # split by the same table_kind the budget tables group by. A Program Lead's
+    # band reads their team (the plan they approve); everyone else reads their
+    # own scope.
+    # Still read directly for one thing only: "does this month have any cost
+    # lines at all", which drives the monthly request's derived status below.
     month_lines = budget_qs.filter(planned_date__month=month_num)
 
-    school_visits_total = (
-        month_lines.filter(
-            activity__activity_type__in=[
-                "school_visit",
-                "follow_up_visit",
-                "coaching_visit",
-                "in_school_support",
-                "core_visit",
-            ]
-        ).aggregate(total=Sum("amount"))["total"]
-        or 0
-    )
+    from apps.budget.services import budget_workspace as _band_builder
 
-    trainings_total = (
-        month_lines.filter(
-            activity__activity_type__in=[
-                "training",
-                "school_improvement_training",
-                "cluster_training",
-                "core_training",
-            ]
-        ).aggregate(total=Sum("amount"))["total"]
-        or 0
+    _band_workspace = _band_builder(
+        user,
+        {
+            "period": "month",
+            "fy": fy,
+            "date": date(year_num, month_num, 1).isoformat(),
+            **({"budget_scope": card_budget_scope} if card_budget_scope else {}),
+        },
     )
-
-    meetings_total = (
-        month_lines.filter(activity__activity_type="cluster_meeting").aggregate(
-            total=Sum("amount")
-        )["total"]
-        or 0
-    )
-
-    admin_total = (
-        month_lines.exclude(
-            activity__activity_type__in=[
-                "school_visit",
-                "follow_up_visit",
-                "coaching_visit",
-                "in_school_support",
-                "core_visit",
-                "training",
-                "school_improvement_training",
-                "cluster_training",
-                "core_training",
-                "cluster_meeting",
-            ]
-        ).aggregate(total=Sum("amount"))["total"]
-        or 0
-    )
-
+    _band_kind_totals = {"training": 0, "meeting": 0, "admin": 0, "standard": 0}
+    for _group in _band_workspace["groups"]:
+        _kind = _group.get("table_kind")
+        _band_kind_totals[_kind if _kind in _band_kind_totals else "standard"] += (
+            _group.get("total") or 0
+        )
     monthly_totals_by_type = {
-        "visits": school_visits_total,
-        "trainings": trainings_total,
-        "meetings": meetings_total,
-        "admin": admin_total,
-        "total": school_visits_total + trainings_total + meetings_total + admin_total,
+        "visits": _band_kind_totals["standard"],
+        "trainings": _band_kind_totals["training"],
+        "meetings": _band_kind_totals["meeting"],
+        "admin": _band_kind_totals["admin"],
+        "total": _band_workspace["total"],
     }
 
     from urllib.parse import urlencode
@@ -751,6 +749,7 @@ def _build_fund_requests_context(request):
             "period": period_tab,
             "fy": fy,
             "date": _budget_anchor.isoformat(),
+            **({"budget_scope": card_budget_scope} if card_budget_scope else {}),
         },
     )
 
@@ -1025,6 +1024,18 @@ def _build_fund_requests_context(request):
         # describe a request differently from the pages that act on it.
         "active_wfr_status_label": _weekly_status_label(active_wfr),
         "period_tab_query": _period_tab_query,
+        # The CD's two hats: their own admin plan, and monitoring the country's
+        # field budget. Rendered as a switch on the card only when the role
+        # actually holds both scopes.
+        "card_scope_switch": (
+            [
+                {"key": "admin", "label": "Admin plan"},
+                {"key": "country", "label": "Country (monitoring)"},
+            ]
+            if _role in ("CountryDirector", "Admin")
+            else []
+        ),
+        "card_budget_scope": period_workspace["budget_scope"],
         "monthly_stepper": monthly_stepper,
         "insights": insights,
         "breakdown": breakdown,

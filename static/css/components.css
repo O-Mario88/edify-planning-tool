@@ -1294,6 +1294,79 @@ select:not([multiple]):not(.select-native) {
   font-weight: 500;
 }
 
+/* Band version — one surface, items divided by rules, in the pattern of the
+   login page's stats strip. For pages where a wall of six bordered cards
+   reads as clutter: the figures matter, the chrome does not. Items stay the
+   component's own markup (identity attrs, drill-down links, accessible
+   descriptions all intact); only the dress changes. */
+.kpi-strip--band {
+  background-color: var(--edify-surface);
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  box-shadow: var(--edify-shadow-sm);
+  padding: 0.85rem 0.5rem;
+}
+
+.kpi-strip--band .kpi-strip__grid {
+  gap: 0;
+  row-gap: 0.75rem;
+  /* One row on a desktop. The default auto-fit minimum (9.5rem) wraps six
+     items into two rows on ordinary laptop widths; a band exists to be a
+     single line, so its items may compress further before wrapping. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+}
+
+.kpi-strip--band .kpi-strip__item {
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  min-height: 0;
+  padding: 0.2rem 0.85rem;
+  /* The divider between neighbours. The first item's is hidden below; a
+     wrapped row's leading item keeps its rule, which reads as a soft grid. */
+  border-left: 1px solid var(--edify-border) !important;
+}
+
+.kpi-strip--band .kpi-strip__item:first-child {
+  border-left: 0 !important;
+}
+
+.kpi-strip--band .kpi-strip__item:hover {
+  box-shadow: none !important;
+  background-color: var(--edify-surface-muted) !important;
+}
+
+.kpi-strip--band .kpi-strip__item-body {
+  align-items: center;
+}
+
+.kpi-strip--band .kpi-strip__value {
+  font-size: 1.15rem;
+  line-height: 1.15;
+}
+
+/* Tighter chrome so six figures sit comfortably on one line. */
+.kpi-strip--band .kpi-strip__icon-container {
+  width: 28px;
+  height: 28px;
+}
+
+.kpi-strip--band .kpi-strip__icon-container svg {
+  width: 15px;
+  height: 15px;
+}
+
+.kpi-strip--band .kpi-strip__item-body {
+  gap: 0.6rem;
+}
+
+.kpi-strip--band .kpi-strip__meta {
+  margin-top: 0.1rem;
+}
+
 /* Compact version */
 .kpi-strip--compact {
   padding: 0.75rem;

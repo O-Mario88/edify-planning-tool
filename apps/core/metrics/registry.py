@@ -343,7 +343,10 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         numerator="Cost-line amounts on visit-type activities planned in the month",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
-        scope="The signed-in user's own cost lines plus supervised staff",
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
         owner_page="fund_requests",
         filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="fund_requests",
@@ -361,7 +364,10 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         numerator="Cost-line amounts on training-type activities planned in the month",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
-        scope="The signed-in user's own cost lines plus supervised staff",
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
         owner_page="fund_requests",
         filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="fund_requests",
@@ -379,7 +385,10 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         numerator="Cost-line amounts on cluster-meeting activities planned in the month",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
-        scope="The signed-in user's own cost lines plus supervised staff",
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
         owner_page="fund_requests",
         filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="fund_requests",
@@ -399,7 +408,10 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         numerator="Admin budget lines for the month",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
-        scope="The signed-in user's own cost lines plus supervised staff",
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
         owner_page="fund_requests",
         filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="fund_requests",
@@ -419,7 +431,10 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         numerator="Sum of the four monthly components",
         date_basis=DateBasis.PLANNED_DATE,
         period=Period.MONTH,
-        scope="The signed-in user's own cost lines plus supervised staff",
+        scope=(
+            "Role-dependent: CCEO own plan · PL supervised team · "
+            "CD/Admin their monthly admin plan (switchable to country)"
+        ),
         owner_page="fund_requests",
         filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="fund_requests",

@@ -14,20 +14,45 @@
 {% endcomment %}
 <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-3.5"
          aria-labelledby="period-budget-title">
-  <div class="flex flex-wrap items-center justify-between gap-3">
+  {% comment %}
+    One header row, per the owner: the money on the far left -- the figure a
+    person opens this card for -- and the card's name with the request's
+    status chip at the right end. The period switch lives in the page-level
+    tab bar above the card.
+  {% endcomment %}
+  <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
-      <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">My Budget</h3>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ period_budgets.selected.title }}</p>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned budget</p>
+      <p class="text-[22px] font-extrabold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.total|ugx }}</p>
+      {% if period_budgets.active == "week" and active_wfr %}
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1">
+        Fund request · {{ selected_week_label }} · Owner:
+        <span class="font-bold text-slate-600">{{ active_wfr.owner_name }}</span>
+      </p>
+      {% endif %}
     </div>
-{% comment %}
-      The period switch lives in the page-level tab bar above the card now --
-      one set of tabs, not one here and one there.
-    {% endcomment %}
-  </div>
-
-  <div>
-    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned budget</p>
-    <p class="text-[22px] font-extrabold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.total|ugx }}</p>
+    <div class="text-right">
+      <div class="flex items-center gap-2.5 justify-end">
+        {% if period_budgets.active == "week" and active_wfr %}
+        {% include "partials/fund_requests/_wfr_status_chip.html" %}
+        {% endif %}
+        <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">My Budget</h3>
+      </div>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ period_budgets.selected.title }}</p>
+      {% if card_scope_switch %}
+      {% comment %}
+        The CD's two hats: their own admin plan, and monitoring the country's
+        field budget. Real links; the period and filters travel with them.
+      {% endcomment %}
+      <nav class="flex items-center gap-1 justify-end mt-1.5" aria-label="Budget scope">
+        {% for s in card_scope_switch %}
+        <a href="?{{ period_tab_query }}period_tab={{ period_budgets.active }}&budget_scope={{ s.key }}"
+           {% if s.key == card_budget_scope %}aria-current="page"{% endif %}
+           class="h-7 px-2.5 rounded-control edify-text-caption font-bold inline-flex items-center transition-colors {% if s.key == card_budget_scope %}edify-primary-soft edify-primary-text ring-1 edify-primary-ring{% else %}text-slate-400 hover:text-slate-600 hover:bg-slate-50{% endif %}">{{ s.label }}</a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+    </div>
   </div>
 
   {% if period_budgets.active == "week" %}
