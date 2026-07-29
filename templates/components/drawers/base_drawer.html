@@ -5,6 +5,9 @@ size: '{{ drawer_size|default:'md' }}',
 type: '{{ drawer_type|default:'center' }}',
 isDirty: false,
 confirmDiscard: false,
+previousFocus: null,
+backgroundNodes: [],
+backgroundStates: [],
 {# One close path for the backdrop, the Escape key, the header button and #}
 {# every footer Cancel. It was the same seven-line confirm() block copied #}
 {# into all of them, three times here and once in each child drawer. #}
@@ -14,21 +17,63 @@ if (!this.isDirty) { this.$dispatch('close-drawer'); return;
 this.confirmDiscard = true;
 this.$nextTick(() => this.$refs.discardKeep?.focus());
 },
-discard() { this.confirmDiscard = false; this.$dispatch('close-drawer'); }
+discard() { this.confirmDiscard = false; this.$dispatch('close-drawer'); },
+focusables() {
+return [...this.$refs.surface.querySelectorAll(
+'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex=&quot;-1&quot;])'
+)].filter((element) => !element.closest('[x-cloak]') && element.offsetParent !== null);
+},
+trapFocus(event) {
+const items = this.focusables();
+if (!items.length) { event.preventDefault(); this.$refs.surface.focus(); return; }
+const first = items[0];
+const last = items[items.length - 1];
+if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+},
+restoreBackground() {
+this.backgroundNodes.forEach((node, index) => {
+const state = this.backgroundStates[index];
+node.inert = state.inert;
+if (state.ariaHidden === null) node.removeAttribute('aria-hidden');
+else node.setAttribute('aria-hidden', state.ariaHidden);
+});
+},
+finishClose() {
+this.restoreBackground();
+const target = this.previousFocus;
+setTimeout(() => {
+$el.remove();
+if (target?.isConnected) target.focus();
+}, 300);
+}
 }"
 x-init="
+previousFocus = document.activeElement;
 $nextTick(() => {
+const host = $el.parentElement;
+backgroundNodes = [...host.parentElement.children].filter((node) => node !== host);
+backgroundStates = backgroundNodes.map((node) => ({
+inert: node.inert,
+ariaHidden: node.getAttribute('aria-hidden')
+}));
+backgroundNodes.forEach((node) => {
+node.inert = true;
+node.setAttribute('aria-hidden', 'true');
+});
 active = true;
 document.body.style.overflow = 'hidden';
 $nextTick(() => {
-$refs.surface.querySelector('.drawer-body input:not([type=hidden]), .drawer-body select, .drawer-body textarea, .drawer-body button')?.focus();
+setTimeout(() => {
+$refs.surface.querySelector('.drawer-body input:not([type=hidden]), .drawer-body select, .drawer-body textarea, .drawer-body button, .drawer-close-btn')?.focus();
+}, 50);
 });
 })
 "
 @close-drawer.window="
 active = false;
 document.body.style.overflow = '';
-setTimeout(() => { $el.remove() }, 300);
+finishClose();
 "
 @keydown.escape.window="
 confirmDiscard ? (confirmDiscard = false) : requestClose()
@@ -52,6 +97,8 @@ x-ref="surface"
 role="dialog"
 aria-modal="true"
 aria-labelledby="drawer-title"
+tabindex="-1"
+@keydown.tab="trapFocus($event)"
 @input="isDirty = true"
 @change="isDirty = true"
 >

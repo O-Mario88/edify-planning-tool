@@ -519,6 +519,60 @@ class LeaveApprovalService:
     """Manages reviewing, approving, or rejecting leave requests."""
 
     @staticmethod
+    def revoke_coverage(assignment_id: str, reviewer_user: User):
+        """Revoke delegated access under lock, with hierarchy authorization."""
+        from apps.core.navigation import get_user_role_slug
+
+        with transaction.atomic():
+            coverage = (
+                TemporaryCoverageAssignment.objects.select_for_update()
+                .select_related("leave_request", "leave_request__staff__user")
+                .filter(id=assignment_id)
+                .first()
+            )
+            if not coverage:
+                raise NotFoundError("Coverage assignment not found.")
+            authorized = get_user_role_slug(reviewer_user) == "HR" or (
+                LeaveApprovalService.is_authorized_approver(
+                    reviewer_user, coverage.leave_request
+                )
+            )
+            if not authorized:
+                raise BadRequest(
+                    "You are not authorized to revoke this coverage assignment."
+                )
+            if coverage.status != "active":
+                raise BadRequest(
+                    f"This coverage assignment is already {coverage.status}."
+                )
+            coverage.status = "revoked"
+            coverage.revoked_at = timezone.now()
+            coverage.revoked_by_user_id = reviewer_user.id
+            coverage.save(
+                update_fields=[
+                    "status",
+                    "revoked_at",
+                    "revoked_by_user_id",
+                    "updated_at",
+                ]
+            )
+
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action="hr.coverage_revoked",
+                subject_kind="temporary_coverage_assignment",
+                subject_id=coverage.id,
+                actor_id=reviewer_user.id,
+                actor_role=getattr(reviewer_user, "active_role", None),
+                payload={
+                    "originalStaffId": coverage.original_staff_id,
+                    "coveringStaffId": coverage.covering_staff_id,
+                },
+            )
+        return coverage
+
+    @staticmethod
     def is_authorized_approver(reviewer_user: User, leave: Leave) -> bool:
         """Enforces the strict organizational hierarchy for leave approvals."""
         if not leave or not reviewer_user:

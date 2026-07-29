@@ -196,7 +196,7 @@ hx-get="/schools"
 hx-trigger="schools-updated from:body"
 hx-include="#filters-form"
 >
-{% include "partials/schools/table.html" %}
+{% include "partials/schools/table.html" with include_page_oob=False %}
 </div>
 </div>
 </div>
@@ -386,7 +386,5 @@ class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md 
 </div>
 </div>
 {% endif %}
-<!-- Drawer Container for HTMX drawer rendering -->
-<div id="drawer-container"></div>
 </div>
 {% endblock %}

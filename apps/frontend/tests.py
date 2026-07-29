@@ -339,6 +339,9 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, f"/schools/{self.school.id}/add-to-cluster")
         self.assertContains(response, f"/schools/{self.school.id}/assign-to-project")
         self.assertNotContains(response, "Column Settings")
+        html = response.content.decode()
+        self.assertEqual(html.count('id="filters-page-input"'), 1)
+        self.assertEqual(html.count('id="drawer-container"'), 1)
 
     def test_school_lists_show_real_grouped_ssa_scores(self):
         """Both school lists must show the stored scores, never placeholders."""

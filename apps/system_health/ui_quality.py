@@ -19,7 +19,7 @@ MAIN_CSS = os.path.join(settings.BASE_DIR, "static", "css", "main.css")
 _EMOJI = re.compile(r"[\U0001F300-\U0001FAFF☀-➿]")
 _MOCK = re.compile(r">\s*(?:Lorem|John Doe|Jane Doe|N\d{2,3}M|\$[\d,]+)\s*<", re.I)
 _LINK = re.compile(r'(?:href|hx-get|hx-post)="(/[a-z0-9\-_/]*?)(?:[?#][^"]*)?"')
-_XL = re.compile(r"\b((?:2xl|xl):[a-z0-9\-\[\]/.]+)")
+_XL = re.compile(r"\b((?:max-)?(?:2xl|xl):[a-z0-9\-\[\]/.]+)")
 # ApexCharts series built from literal numbers instead of template variables.
 _STATIC_SERIES = re.compile(r"data:\s*\[\s*\d+\s*(?:,\s*\d+\s*){2,}\]")
 _LIGHT_GRID = re.compile(r"borderColor:\s*'#f[0-9a-f]{5}'")

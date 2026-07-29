@@ -19,6 +19,8 @@ from apps.core.rbac import EdifyRole
 
 ROOT = Path(__file__).resolve().parents[2]
 SIDEBAR = ROOT / "templates" / "components" / "sidebar.html"
+SHELL = ROOT / "templates" / "layouts" / "shell.html"
+BASE_DRAWER = ROOT / "templates" / "components" / "drawers" / "base_drawer.html"
 
 # Everything the Settings page offers, reachable from the gear.
 SETTINGS_DESTINATIONS = ["/settings", "/profile", "/change-password", "/notifications"]
@@ -52,6 +54,22 @@ class SidebarSettingsMarkupTest(TestCase):
         self.assertIn('action="/logout"', self.src)
         form = self.src.split('action="/logout"', 1)[1]
         self.assertIn("csrf_token", form.split("</form>", 1)[0])
+
+    def test_mobile_navigation_restores_focus_and_hides_background(self):
+        shell = SHELL.read_text()
+        self.assertIn('x-ref="mobileSidebarOpen"', shell)
+        self.assertIn("$refs.mobileSidebarOpen?.focus()", shell)
+        self.assertIn(':inert="sidebarOpen"', shell)
+        self.assertIn(":aria-hidden=\"sidebarOpen ? 'true' : null\"", shell)
+
+    def test_shared_drawer_traps_focus_hides_background_and_restores_opener(self):
+        drawer = BASE_DRAWER.read_text()
+        self.assertIn('role="dialog"', drawer)
+        self.assertIn('aria-modal="true"', drawer)
+        self.assertIn('@keydown.tab="trapFocus($event)"', drawer)
+        self.assertIn("backgroundNodes.forEach", drawer)
+        self.assertIn("node.inert = true", drawer)
+        self.assertIn("target?.isConnected", drawer)
 
 
 class SidebarSettingsWiringTest(TestCase):

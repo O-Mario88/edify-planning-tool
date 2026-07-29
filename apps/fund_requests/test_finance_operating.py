@@ -445,9 +445,8 @@ class FinanceOperatingSystemTest(TestCase):
             ).exists()
         )
 
-    def test_reimbursement_claim_calculations(self):
-        # Staff overspent or self-funded
-        # Create advance disbursement first
+    def test_legacy_reimbursement_claim_creation_is_retired(self):
+        """Overspend must remain on the canonical AdvanceRequest ledger."""
         AdvanceDisbursementService.disburse_advance(
             activity=self.staff_activity,
             amount=450000,
@@ -456,55 +455,13 @@ class FinanceOperatingSystemTest(TestCase):
             user_id="accountant_jane",
         )
 
-        # Staff actual spend is 600,000 (disbursed is 450,000) -> Claim is 150,000
-        claim = ReimbursementService.claim_reimbursement(
-            activity=self.staff_activity, actual_spend=600000, staff_id="cceo_user"
-        )
-        self.assertEqual(claim.reimbursement_amount, 150000)
-        self.assertEqual(claim.status, "pending")
-
-    def test_disburse_reimbursement_creates_completed_snapshot(self):
-        """ReimbursementService.disburse_reimbursement() writes
-        activity.status="closed" directly (it bypasses the canonical
-        ActivityClosureService.close() gate — reimbursement claims carry no
-        NetSuite ID of their own) but it must not skip the
-        CompletedActivitySnapshot the canonical path always leaves behind."""
-        AdvanceDisbursementService.disburse_advance(
-            activity=self.staff_activity,
-            amount=450000,
-            method="Mobile Money",
-            reference="TXN-ADV-777",
-            user_id="accountant_jane",
-        )
-        claim = ReimbursementService.claim_reimbursement(
-            activity=self.staff_activity, actual_spend=600000, staff_id="cceo_user"
-        )
-
-        # A closed activity requires a Salesforce ID at the DB level
-        # (closed_activity_must_have_sf_id) — satisfy it like a real
-        # IA-verified activity would have.
-        self.staff_activity.status = "ia_verified"
-        self.staff_activity.salesforce_activity_id = "SF-ACT-STAFF-REIMB-1"
-        self.staff_activity.save(update_fields=["status", "salesforce_activity_id"])
-
-        self.assertFalse(
-            CompletedActivitySnapshot.objects.filter(
-                activity=self.staff_activity
-            ).exists()
-        )
-
-        ReimbursementService.disburse_reimbursement(
-            claim=claim,
-            method="Bank Transfer",
-            reference="TXN-REIMB-1",
-            user_id="accountant_jane",
-        )
-
-        self.staff_activity.refresh_from_db()
-        self.assertEqual(self.staff_activity.status, "closed")
-        snapshot = CompletedActivitySnapshot.objects.get(activity=self.staff_activity)
-        # 450,000 advance + 150,000 reimbursement = 600,000 total disbursed.
-        self.assertEqual(snapshot.disbursed_amount, 600000)
+        with self.assertRaisesMessage(BadRequest, "legacy reimbursement"):
+            ReimbursementService.claim_reimbursement(
+                activity=self.staff_activity,
+                actual_spend=600000,
+                staff_id="cceo_user",
+            )
+        self.assertEqual(self.staff_activity.reimbursement_claims.count(), 0)
 
     def test_accountability_and_netsuite_entry(self):
         # 1. Disburse advance

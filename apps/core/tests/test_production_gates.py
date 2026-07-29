@@ -325,16 +325,67 @@ class DisbursementRoundingTest(TestCase):
 
 class RepairCommandTest(TestCase):
     def test_dry_run_and_apply_are_idempotent(self):
+        from apps.audit.models import AuditLog
+        from apps.budget.models import CostCatalogue, CostSetting
+
         school = _world("RC1")
-        Activity.objects.create(
+        activity = Activity.objects.create(
             school=school,
-            activity_type="school_visit",
+            activity_type="cluster_meeting",
             status="scheduled",
             fy=get_operational_fy(),
         )
+        catalogue = CostCatalogue.objects.create(
+            fy=get_operational_fy(),
+            version=99,
+            is_active=False,
+        )
+        canonical, _ = CostSetting.objects.update_or_create(
+            key="cluster_meeting_participant_meal_cost_per_head",
+            defaults={
+                "label": "Participant snacks",
+                "unit_cost": 10_000,
+                "fy": get_operational_fy(),
+                "version": 1,
+                "catalogue": catalogue,
+            },
+        )
+        line = ActivityScheduleCostLine.objects.create(
+            activity=activity,
+            cost_setting_key="cluster_meeting_cost",
+            label="Cluster meeting",
+            unit_cost=canonical.unit_cost,
+            quantity=2,
+            amount=canonical.unit_cost * 2,
+            catalogue_id=catalogue.id,
+            catalogue_version=catalogue.version,
+        )
         call_command("repair_ecosystem_data")  # dry-run, must not raise
+        line.refresh_from_db()
+        self.assertEqual(line.cost_setting_key, "cluster_meeting_cost")
+
         call_command("repair_ecosystem_data", "--apply")
+        line.refresh_from_db()
+        self.assertEqual(
+            line.cost_setting_key,
+            "cluster_meeting_participant_meal_cost_per_head",
+        )
+        self.assertEqual(line.line_item_type, "participant_meals")
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="data_repair.cluster_meeting_cost_key",
+                subject_id=line.id,
+            ).exists()
+        )
+
         call_command("repair_ecosystem_data", "--apply")  # idempotent
+        self.assertEqual(
+            AuditLog.objects.filter(
+                action="data_repair.cluster_meeting_cost_key",
+                subject_id=line.id,
+            ).count(),
+            1,
+        )
 
 
 class FinanceSeamVerificationTest(TestCase):

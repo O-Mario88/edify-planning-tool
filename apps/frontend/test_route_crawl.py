@@ -51,9 +51,24 @@ def _zero_argument_routes() -> list[str]:
     genuinely resolve.
     """
 
+    def literal_path(pattern) -> str:
+        """Turn our boundary-aware include regex into its literal prefix.
+
+        API includes intentionally use ``^api/foo(?:/|$)`` so ``/api/foo``
+        works without accidentally admitting ``/api/foobar``. Treating every
+        regex as opaque made the crawl silently drop the whole API after that
+        routing repair.
+        """
+
+        value = str(pattern)
+        suffix = "(?:/|$)"
+        if value.startswith("^") and value.endswith(suffix):
+            return value[1 : -len(suffix)] + "/"
+        return value
+
     def walk(resolver, prefix=""):
         for pattern in resolver.url_patterns:
-            path = prefix + str(pattern.pattern)
+            path = prefix + literal_path(pattern.pattern)
             if hasattr(pattern, "url_patterns"):
                 yield from walk(pattern, path)
             else:

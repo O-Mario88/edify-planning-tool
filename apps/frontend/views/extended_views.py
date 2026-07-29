@@ -17,7 +17,6 @@ from apps.core.permissions import (
     RolePermissionService,
 )
 from apps.core.scoping import resolve_user_scope, school_queryset
-from django.db import transaction
 from django.db.models import Q, Avg, Count, Sum
 from datetime import date, timedelta
 
@@ -1179,92 +1178,26 @@ def admin_user_detail_view(request, user_id):
             from apps.admin_users.services import resend_invite
 
             resend_invite(member.id, request.user)
-            member.status = "pending_invited"
-            member.save(update_fields=["status"])
             messages.success(
                 request, f"Invitation successfully sent to {member.email}."
             )
 
         elif action == "reset_password":
-            # Setting a password IS taking the account over, so it needs the
-            # same Admin-only guard the sibling "edit" action delegates to.
-            # Without it any USER_MANAGE holder (CountryDirector, HR) could
-            # set a password on a sitting Admin -- reproduced against the dev
-            # database as hr@edify.org before this guard existed.
-            from apps.admin_users.services import assert_may_administer
+            from apps.admin_users.services import set_temporary_password
             from apps.core.exceptions import BadRequest
-
-            try:
-                assert_may_administer(member, request.user)
-            except BadRequest as exc:
-                messages.error(
-                    request, str(exc.detail if hasattr(exc, "detail") else exc)
-                )
-                return redirect("frontend:admin_user_detail", user_id=user_id)
 
             new_password = request.POST.get("new_password", "").strip()
             if not new_password:
                 messages.error(request, "Password cannot be empty.")
                 return redirect("frontend:admin_user_detail", user_id=user_id)
 
-            from apps.core.security import validate_password
-
-            violations = validate_password(new_password, member.email)
-            if violations:
-                messages.error(request, " ".join(violations))
+            try:
+                set_temporary_password(member.id, new_password, request.user)
+            except BadRequest as exc:
+                messages.error(
+                    request, str(exc.detail if hasattr(exc, "detail") else exc)
+                )
                 return redirect("frontend:admin_user_detail", user_id=user_id)
-
-            from django.utils import timezone
-
-            from apps.accounts.lockout_service import AuthenticationLockoutService
-
-            member.set_password(new_password)
-            member.must_change_password = True
-            member.password_set_at = timezone.now()
-            member.status = "active"
-            member.is_active = True
-            member.save(
-                update_fields=[
-                    "password",
-                    "must_change_password",
-                    "password_set_at",
-                    "status",
-                    "is_active",
-                ]
-            )
-            # Delegate lock-clearing to the ONE canonical service — an admin
-            # password reset must fully clear lockout state (including
-            # escalation), not just the two fields a hand-rolled reset used
-            # to touch, which used to leave lockout_escalated=True accounts
-            # still unable to log in after their "reset".
-            AuthenticationLockoutService.admin_unlock(member.id, actor=request.user)
-
-            # A credential reset is exactly the moment old sessions should
-            # stop working — revoke live refresh tokens the same way
-            # self-service reset_password and the API's force_password_reset
-            # do.
-            from apps.accounts.models import RefreshToken
-
-            RefreshToken.objects.filter(
-                user_id=member.id, revoked_at__isnull=True
-            ).update(revoked_at=timezone.now())
-
-            from apps.core.email import mailer
-
-            mailer.send_password_reset_by_admin_notification(
-                to=member.email, name=member.name, reset_by_name=request.user.name
-            )
-
-            from apps.audit.services import log as audit_log
-
-            audit_log(
-                action="admin.password_reset_direct",
-                subject_kind="user",
-                subject_id=member.id,
-                actor_id=request.user.id,
-                actor_role=getattr(request.user, "active_role", None),
-                payload={"email": member.email},
-            )
             messages.success(
                 request,
                 f"Password reset for '{member.name}'. They will be required to change it on next login.",
@@ -2224,7 +2157,7 @@ def admin_staff_setup_queue_view(request):
 @require_page_permission("upload_history")
 def admin_school_upload_history_view(request):
     """School and SSA upload history batches."""
-    from apps.schools.models import SchoolImportBatch, SSAImportBatch, UploadBatch
+    from apps.schools.models import UploadBatch
 
     # Flags a batch as failed/cancelled for bookkeeping only — this does NOT
     # delete or revert any School row the batch created or updated. A real
@@ -2236,15 +2169,10 @@ def admin_school_upload_history_view(request):
     # not claim more than this actually does.
     if request.method == "POST" and "rollback_id" in request.POST:
         batch_id = request.POST.get("rollback_id")
-        # Try finding in both batches
-        batch = (
-            SchoolImportBatch.objects.filter(id=batch_id).first()
-            or SSAImportBatch.objects.filter(id=batch_id).first()
-            or UploadBatch.objects.filter(id=batch_id).first()
-        )
+        from apps.schools.upload_service import mark_upload_batch_inactive
+
+        batch = mark_upload_batch_inactive(batch_id, request.user)
         if batch:
-            batch.status = "failed" if isinstance(batch, UploadBatch) else "cancelled"
-            batch.save()
             from django.contrib import messages
 
             messages.success(
@@ -2379,52 +2307,23 @@ def data_quality_issue_action_view(request, issue_id):
     apps.schools.models.create_data_quality_issues) — resolving here is an
     explicit human acknowledgement, not a guarantee the data got fixed.
     """
-    from django.http import HttpResponseNotAllowed
-    from django.utils import timezone
-    from django.db import transaction
-    from apps.schools.models import DataQualityIssue
-    from apps.audit.services import log as audit_log
+    from django.http import HttpResponse, HttpResponseNotAllowed
+    from apps.core.exceptions import BadRequest, NotFoundError
+    from apps.schools.services import triage_data_quality_issue
 
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
-    issue = get_object_or_404(DataQualityIssue, id=issue_id)
     action = request.POST.get("action")
     assignee_name = None
 
-    if action == "resolve" and issue.status == "open":
-        with transaction.atomic():
-            issue.status = "resolved"
-            issue.resolved_at = timezone.now()
-            if not issue.assigned_to:
-                issue.assigned_to = str(request.user.id)
-            issue.save(update_fields=["status", "resolved_at", "assigned_to"])
-            audit_log(
-                action="data_quality_issue.resolve",
-                subject_kind="DataQualityIssue",
-                subject_id=issue.id,
-                actor_id=str(request.user.id),
-                actor_role=getattr(request.user, "active_role", None),
-                success=True,
-                payload={"issue_type": issue.issue_type, "school_id": issue.school_id},
-            )
-    elif action == "assign" and issue.status == "open":
-        with transaction.atomic():
-            issue.assigned_to = str(request.user.id)
-            issue.save(update_fields=["assigned_to"])
-            audit_log(
-                action="data_quality_issue.assign",
-                subject_kind="DataQualityIssue",
-                subject_id=issue.id,
-                actor_id=str(request.user.id),
-                actor_role=getattr(request.user, "active_role", None),
-                success=True,
-                payload={
-                    "issue_type": issue.issue_type,
-                    "school_id": issue.school_id,
-                    "assigned_to": str(request.user.id),
-                },
-            )
+    try:
+        issue = triage_data_quality_issue(issue_id, action, request.user)
+    except NotFoundError as exc:
+        return HttpResponse(str(exc.detail), status=404)
+    except BadRequest as exc:
+        return HttpResponse(str(exc.detail), status=409)
+    if action == "assign":
         assignee_name = getattr(request.user, "name", None)
 
     context = {"issue": issue, "assignee_name": assignee_name}
@@ -2601,17 +2500,16 @@ def admin_region_district_setup_view(request):
             ).delete()
 
         elif action == "approve_group":
-            from django.utils import timezone as _timezone
+            from apps.core.exceptions import BadRequest, NotFoundError
+            from apps.geography.services import approve_secondary_district_group
 
-            group = get_object_or_404(
-                SecondaryDistrictGroup, id=request.POST.get("group_id")
-            )
-            group.status = "approved"
-            group.approved_by = request.user.user_id
-            group.approved_at = _timezone.now()
-            group.save(
-                update_fields=["status", "approved_by", "approved_at", "updated_at"]
-            )
+            try:
+                group = approve_secondary_district_group(
+                    request.POST.get("group_id"), request.user
+                )
+            except (BadRequest, NotFoundError) as exc:
+                messages.error(request, str(exc.detail))
+                return redirect("/admin-panel/region-district-setup")
             messages.success(
                 request, f"'{group.name}' approved for same-day scheduling."
             )
@@ -2701,7 +2599,7 @@ def unmatched_ssa_queue_view(request):
     from django.utils import timezone
     from apps.ssa import unmatched_service
     from apps.ssa.services import upload as upload_ssa
-    from apps.core.exceptions import BadRequest
+    from apps.core.exceptions import BadRequest, NotFoundError
 
     def record_matched_ssa(rec, school):
         """Send unmatched-row resolution through the canonical SSA writer.
@@ -2737,13 +2635,17 @@ def unmatched_ssa_queue_view(request):
             )
 
             try:
-                record_matched_ssa(rec, school)
-            except BadRequest as exc:
+                from apps.ssa.unmatched_service import transition_unmatched_record
+
+                transition_unmatched_record(
+                    rec.id,
+                    "matched",
+                    request.user,
+                    on_match=lambda locked: record_matched_ssa(locked, school),
+                )
+            except (BadRequest, NotFoundError) as exc:
                 messages.error(request, f"Cannot match SSA record: {exc}")
                 return redirect("/ssa/unmatched")
-
-            rec.status = "matched"
-            rec.save()
 
             messages.success(
                 request, f"Successfully matched SSA report to '{school.name}'."
@@ -2785,19 +2687,28 @@ def unmatched_ssa_queue_view(request):
             # A failed canonical SSA validation must not leave behind a
             # seemingly-onboarded school with no valid baseline record.
             try:
-                with transaction.atomic():
+                from apps.ssa.unmatched_service import transition_unmatched_record
+
+                def create_and_import(locked_record):
                     school = School.objects.create(
                         school_id=school_id_numeric,
-                        name=rec.school_name_raw or f"School {school_id_numeric}",
+                        name=locked_record.school_name_raw
+                        or f"School {school_id_numeric}",
                         district=district_obj,
                         region=region_obj,
                         school_type="client",
                         current_fy_ssa_status="not_done",
                     )
-                    record_matched_ssa(rec, school)
-                    rec.status = "matched"
-                    rec.save(update_fields=["status", "updated_at"])
-            except BadRequest as exc:
+                    record_matched_ssa(locked_record, school)
+                    return school
+
+                _record, school = transition_unmatched_record(
+                    rec.id,
+                    "matched",
+                    request.user,
+                    on_match=create_and_import,
+                )
+            except (BadRequest, NotFoundError) as exc:
                 messages.error(request, f"Cannot create school from SSA record: {exc}")
                 return redirect("/ssa/unmatched")
 
@@ -2807,14 +2718,24 @@ def unmatched_ssa_queue_view(request):
             return redirect("/ssa/unmatched")
 
         elif action == "hold":
-            rec.status = "hold"
-            rec.save()
+            from apps.ssa.unmatched_service import transition_unmatched_record
+
+            try:
+                transition_unmatched_record(rec.id, "hold", request.user)
+            except (BadRequest, NotFoundError) as exc:
+                messages.error(request, f"Cannot hold SSA record: {exc}")
+                return redirect("/ssa/unmatched")
             messages.info(request, "Unmatched SSA record held for review.")
             return redirect("/ssa/unmatched")
 
         elif action == "ignore":
-            rec.status = "ignored"
-            rec.save()
+            from apps.ssa.unmatched_service import transition_unmatched_record
+
+            try:
+                transition_unmatched_record(rec.id, "ignored", request.user)
+            except (BadRequest, NotFoundError) as exc:
+                messages.error(request, f"Cannot ignore SSA record: {exc}")
+                return redirect("/ssa/unmatched")
             messages.info(request, "Unmatched SSA record marked as ignored.")
             return redirect("/ssa/unmatched")
 

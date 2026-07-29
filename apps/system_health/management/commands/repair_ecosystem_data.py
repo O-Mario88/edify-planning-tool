@@ -20,6 +20,7 @@ FIXES = (
     "catchup-sync",
     "debrief-drafts",
     "core-recommendations",
+    "cluster-meeting-cost-key",
 )
 SCANS = (
     "duplicate-partner-payments",
@@ -55,6 +56,8 @@ class Command(BaseCommand):
             self._fix_debrief_drafts(apply)
         if wants("core-recommendations"):
             self._fix_core_recommendations(apply)
+        if wants("cluster-meeting-cost-key"):
+            self._fix_cluster_meeting_cost_key(apply)
         if wants("duplicate-partner-payments"):
             self._scan_duplicate_partner_payments()
         if wants("paid-without-partner-payment"):
@@ -65,6 +68,17 @@ class Command(BaseCommand):
             self._scan_lineless()
 
     # ── fixes ────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _audit(name, subject_kind, subject_id, before, after):
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=f"data_repair.{name}",
+            subject_kind=subject_kind,
+            subject_id=str(subject_id),
+            payload={"before": before, "after": after},
+        )
 
     def _fix_core_counters(self, apply):
         """Recount every CorePlan with the corrected done-status set (closed
@@ -87,6 +101,14 @@ class Command(BaseCommand):
                 plan.trainings_completed,
                 plan.assessment_completed,
             )
+            if apply and after != before:
+                self._audit(
+                    "core_counters",
+                    "CorePlan",
+                    plan.id,
+                    list(before),
+                    list(after),
+                )
             if not apply:
                 # compute would-be values without writing
                 from apps.core_schools.services import CORE_SLOT_DONE_STATUSES
@@ -134,7 +156,22 @@ class Command(BaseCommand):
         count = stale.count()
         if apply:
             for school in stale:
+                before = {
+                    "current_fy_ssa_status": school.current_fy_ssa_status,
+                    "planning_readiness": school.planning_readiness,
+                }
                 _recompute_readiness(school)
+                school.refresh_from_db()
+                self._audit(
+                    "ssa_status",
+                    "School",
+                    school.school_id,
+                    before,
+                    {
+                        "current_fy_ssa_status": school.current_fy_ssa_status,
+                        "planning_readiness": school.planning_readiness,
+                    },
+                )
         self.stdout.write(f"ssa-status: {count} stale school stamp(s)")
 
     def _fix_catchup(self, apply):
@@ -147,6 +184,14 @@ class Command(BaseCommand):
         count = plans.count()
         if apply:
             PLCatchUpPlanService.sync_completion(plans)
+            if count:
+                self._audit(
+                    "catchup_sync",
+                    "CatchUpPlanSet",
+                    "live",
+                    {"candidate_count": count},
+                    {"synchronized": True},
+                )
         self.stdout.write(f"catchup-sync: {count} live plan(s) synced")
 
     def _fix_debrief_drafts(self, apply):
@@ -169,10 +214,18 @@ class Command(BaseCommand):
         count = stuck.count()
         if apply:
             for activity in stuck:
+                before = {"status": activity.status, "quarter": activity.quarter}
                 activity.status = "planned"
                 if not activity.quarter:
                     activity.quarter = get_quarter_for_date(activity.planned_date)
                 activity.save(update_fields=["status", "quarter", "updated_at"])
+                self._audit(
+                    "debrief_draft",
+                    "Activity",
+                    activity.id,
+                    before,
+                    {"status": activity.status, "quarter": activity.quarter},
+                )
         self.stdout.write(f"debrief-drafts: {count} invisible follow-up(s)")
 
     def _fix_core_recommendations(self, apply):
@@ -203,8 +256,90 @@ class Command(BaseCommand):
                     "backfilled": True,
                 }
                 plan.save(update_fields=["interventions", "updated_at"])
+                self._audit(
+                    "core_recommendation",
+                    "CorePlan",
+                    plan.id,
+                    {"recommended": []},
+                    {
+                        "recommended_count": len(
+                            plan.interventions.get("recommended") or []
+                        ),
+                        "algorithm_version": 1,
+                        "backfilled": True,
+                    },
+                )
         self.stdout.write(
             f"core-recommendations: {len(missing)} active plan(s) missing persisted set"
+        )
+
+    def _fix_cluster_meeting_cost_key(self, apply):
+        """Rename the one legacy cluster-meeting rate key when provenance and
+        amount prove it is the canonical Participant snacks rate.
+
+        A different amount/catalogue is ambiguous and remains reported for
+        manual review; the command never guesses or rewrites money.
+        """
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.budget.models import CostSetting
+
+        canonical_key = "cluster_meeting_participant_meal_cost_per_head"
+        canonical = CostSetting.objects.filter(key=canonical_key).first()
+        candidates = ActivityScheduleCostLine.objects.filter(
+            activity__activity_type__in=[
+                "cluster_meeting",
+                "cluster_meeting_ssa_review",
+            ]
+        ).exclude(cost_setting_key=canonical_key)
+
+        eligible_ids = []
+        ambiguous = 0
+        for line in candidates:
+            matches_provenance = (
+                canonical is not None
+                and line.catalogue_id == canonical.catalogue_id
+                and line.catalogue_version
+                == getattr(canonical.catalogue, "version", None)
+                and line.unit_cost == canonical.unit_cost
+                and line.amount == canonical.unit_cost * line.quantity
+            )
+            if matches_provenance:
+                eligible_ids.append(line.id)
+            else:
+                ambiguous += 1
+
+        if apply and canonical:
+            for line in ActivityScheduleCostLine.objects.filter(id__in=eligible_ids):
+                before = {
+                    "cost_setting_key": line.cost_setting_key,
+                    "label": line.label,
+                }
+                line.cost_setting_key = canonical_key
+                line.label = canonical.label
+                line.line_item_type = "participant_meals"
+                line.save(
+                    update_fields=[
+                        "cost_setting_key",
+                        "label",
+                        "line_item_type",
+                        "updated_at",
+                    ]
+                )
+                self._audit(
+                    "cluster_meeting_cost_key",
+                    "ActivityScheduleCostLine",
+                    line.id,
+                    before,
+                    {
+                        "cost_setting_key": line.cost_setting_key,
+                        "label": line.label,
+                    },
+                )
+
+        self.stdout.write(
+            "cluster-meeting-cost-key: "
+            f"{len(eligible_ids)} deterministic rename(s); "
+            f"{ambiguous} manual-review row(s)"
         )
 
     # ── scans (report-only; ambiguity → manual review) ───────────────────────

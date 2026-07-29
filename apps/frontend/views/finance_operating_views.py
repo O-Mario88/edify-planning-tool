@@ -476,13 +476,13 @@ def budget_amendment_action(request, amendment_id):
 
 @require_page_permission("disbursements")
 def reimbursements_view(request):
-    """Reimbursement Queue."""
-    claims = ReimbursementClaim.objects.filter(status="pending").select_related(
-        "activity", "activity__school"
+    """Redirect the retired queue to its canonical replacement."""
+    messages.info(
+        request,
+        "Reimbursements are processed from the Disbursement Dashboard, where "
+        "NetSuite verification and employee receipt confirmation remain linked.",
     )
-
-    context = {"claims": claims, "methods": ["Mobile Money", "Bank Transfer"]}
-    return render(request, "pages/accounts/reimbursements.html", context)
+    return redirect("/disbursements?queue=reimbursements")
 
 
 @require_page_permission("disbursements")
@@ -500,7 +500,7 @@ def pay_reimbursement_action(request, claim_id):
         "This legacy payout path is retired. Reimbursements are paid from the "
         "advance accountability queue, which keeps closure checks intact.",
     )
-    return redirect("/accounts/reimbursements/")
+    return redirect("/disbursements?queue=reimbursements")
 
 
 @require_page_permission("disbursements")
@@ -667,13 +667,9 @@ def batch_payments_view(request):
         .select_related("school")
         .annotate(amount_ugx=F("est_cost_cents"))
     )
-    reimbursements = ReimbursementClaim.objects.filter(status="pending").select_related(
-        "activity"
-    )
-
     # CSV payout-file exports per tab.
     export = request.GET.get("export", "").strip()
-    if export in ("advances", "partners", "reimbursements"):
+    if export in ("advances", "partners"):
         import csv
         from django.http import HttpResponse
 
@@ -714,39 +710,11 @@ def batch_payments_view(request):
                         a.amount_ugx or 0,
                     ]
                 )
-        else:
-            writer.writerow(
-                [
-                    "Claim ID",
-                    "Staff ID",
-                    "Activity Type",
-                    "Approved Budget (UGX)",
-                    "Advanced (UGX)",
-                    "Actual Spend (UGX)",
-                    "Reimbursement (UGX)",
-                ]
-            )
-            for c in reimbursements[:5000]:
-                # These fields hold plain UGX despite the model's stale
-                # "Cents" comments (see apps/fund_requests/finance_models.py)
-                # -- no /100 here.
-                writer.writerow(
-                    [
-                        c.id,
-                        c.staff_id,
-                        c.activity.get_activity_type_display(),
-                        c.approved_budget,
-                        c.amount_advanced,
-                        c.actual_spend,
-                        c.reimbursement_amount,
-                    ]
-                )
         return response
 
     context = {
         "advances": advances,
         "partners": partners,
-        "reimbursements": reimbursements,
     }
     return render(request, "pages/accounts/batch_payments.html", context)
 

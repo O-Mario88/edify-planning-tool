@@ -72,5 +72,6 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
   CMD curl -fsS "http://localhost:${PORT:-4000}/api/health/live" || exit 1
 ENTRYPOINT ["./docker-entrypoint.sh"]
-# Use a shell form so $PORT expands at runtime (Railway injects its own PORT).
-CMD daphne -b 0.0.0.0 -p ${PORT:-4000} config.asgi:application
+# Keep runtime PORT expansion while making the final process Daphne itself, so
+# SIGTERM/SIGINT reach it directly during rolling deploys and shutdowns.
+CMD ["sh", "-c", "exec daphne -b 0.0.0.0 -p \"${PORT:-4000}\" config.asgi:application"]

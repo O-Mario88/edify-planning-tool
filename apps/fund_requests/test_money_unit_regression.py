@@ -112,6 +112,8 @@ class BatchPaymentsCsvMoneyUnitTest(TestCase):
         advances = list(resp.context["advances"])
         match = next(a for a in advances if a.id == self.staff_activity.id)
         self.assertEqual(match.amount_ugx, 450000)
+        self.assertNotContains(resp, "batch-tab-reimbursements")
+        self.assertNotIn("reimbursements", resp.context)
 
 
 class DisbursementNotificationMoneyUnitTest(TestCase):

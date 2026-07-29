@@ -1559,8 +1559,9 @@ def school_upload_preview_view(request, batch_id):
             messages.success(request, "Schools successfully imported into directory!")
             return local_redirect(f"/schools/uploads/{batch.id}/result")
         elif action == "cancel":
-            batch.status = "cancelled"
-            batch.save()
+            from apps.schools.upload_service import cancel_school_import_batch
+
+            cancel_school_import_batch(batch.id, request.user)
             messages.info(request, "Import cancelled.")
             return redirect("/schools/upload")
 

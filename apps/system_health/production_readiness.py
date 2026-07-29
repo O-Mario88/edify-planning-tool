@@ -329,6 +329,32 @@ _WORKFLOW_FIELDS = {
 }
 
 
+def _workflow_mutations_in_source(source: str, relative: str) -> list[Finding]:
+    """Return raw transition writes from one Python source string."""
+    findings: list[Finding] = []
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if (
+                isinstance(target, ast.Attribute)
+                and target.attr in _WORKFLOW_FIELDS
+                and isinstance(target.value, ast.Name)
+                and target.value.id not in ("self", "cls")
+            ):
+                findings.append(
+                    Finding(
+                        "raw_workflow_mutation",
+                        relative,
+                        node.lineno,
+                        f"{target.value.id}.{target.attr} = …",
+                        "workflow state set outside a canonical service",
+                    )
+                )
+    return findings
+
+
 def scan_raw_workflow_mutations() -> list[Finding]:
     """Assignments to a workflow field inside a view module.
 
@@ -342,28 +368,13 @@ def scan_raw_workflow_mutations() -> list[Finding]:
         if "/views" not in relative and not relative.endswith("views.py"):
             continue
         try:
-            tree = ast.parse(path.read_text(encoding="utf-8"))
+            findings.extend(
+                _workflow_mutations_in_source(
+                    path.read_text(encoding="utf-8"), relative
+                )
+            )
         except (OSError, SyntaxError, UnicodeDecodeError):
             continue
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Assign):
-                continue
-            for target in node.targets:
-                if (
-                    isinstance(target, ast.Attribute)
-                    and target.attr in _WORKFLOW_FIELDS
-                    and isinstance(target.value, ast.Name)
-                    and target.value.id not in ("self", "cls")
-                ):
-                    findings.append(
-                        Finding(
-                            "raw_workflow_mutation",
-                            relative,
-                            node.lineno,
-                            f"{target.value.id}.{target.attr} = …",
-                            "workflow state set outside a canonical service",
-                        )
-                    )
     return findings
 
 

@@ -252,13 +252,67 @@ def _create_invitation(user_id: str, invited_by_id: str) -> str:
 
 
 def resend_invite(user_id: str, principal) -> dict:
-    user = _get_user(user_id)
-    token = _create_invitation(user.id, principal.id)
+    with transaction.atomic():
+        user = (
+            User.objects.select_for_update()
+            .filter(id=user_id, deleted_at__isnull=True)
+            .first()
+        )
+        if not user:
+            raise NotFoundError("User not found.")
+        token = _create_invitation(user.id, principal.id)
+        user.status = "pending_invited"
+        user.is_active = False
+        user.save(update_fields=["status", "is_active"])
     mailer.send_invitation(
         to=user.email, name=user.name, invited_by_name=principal.name, token=token
     )
     _audit_lifecycle("admin.invite_resent", user, principal)
     return {"ok": True, "inviteToken": token if not settings.IS_PRODUCTION else None}
+
+
+def set_temporary_password(user_id: str, password: str, principal) -> dict:
+    """Set an administrator-issued one-time password and revoke old sessions."""
+    from apps.accounts.lockout_service import AuthenticationLockoutService
+    from apps.accounts.models import RefreshToken
+    from apps.core.security import validate_password
+
+    with transaction.atomic():
+        user = (
+            User.objects.select_for_update()
+            .filter(id=user_id, deleted_at__isnull=True)
+            .first()
+        )
+        if not user:
+            raise NotFoundError("User not found.")
+        assert_may_administer(user, principal)
+        violations = validate_password(password, user.email)
+        if violations:
+            raise BadRequest(" ".join(violations))
+        user.set_password(password)
+        user.must_change_password = True
+        user.password_set_at = timezone.now()
+        user.status = "active"
+        user.is_active = True
+        user.save(
+            update_fields=[
+                "password",
+                "must_change_password",
+                "password_set_at",
+                "status",
+                "is_active",
+            ]
+        )
+        RefreshToken.objects.filter(user_id=user.id, revoked_at__isnull=True).update(
+            revoked_at=timezone.now()
+        )
+        AuthenticationLockoutService.admin_unlock(user.id, actor=principal)
+
+    mailer.send_password_reset_by_admin_notification(
+        to=user.email, name=user.name, reset_by_name=principal.name
+    )
+    _audit_lifecycle("admin.password_reset_direct", user, principal)
+    return {"ok": True}
 
 
 def revoke_invite(user_id: str, principal) -> dict:

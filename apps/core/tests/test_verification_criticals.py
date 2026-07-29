@@ -283,9 +283,9 @@ class ClusterAttendanceMembershipTests(Fixture):
 
 
 class ReimbursementIdempotencyTests(Fixture):
-    """The reimbursement channel was the only money path with no repeat guard."""
+    """The retired reimbursement ledger cannot move money or close work."""
 
-    def test_a_paid_claim_cannot_be_paid_again(self):
+    def test_legacy_claim_cannot_be_paid_even_once(self):
         from apps.fund_requests.finance_models import ReimbursementClaim
         from apps.fund_requests.finance_services import ReimbursementService
 
@@ -305,20 +305,19 @@ class ReimbursementIdempotencyTests(Fixture):
             approved_budget=25_000,
             actual_spend=50_000,
         )
-        ReimbursementService.disburse_reimbursement(
-            claim, "bank", "REF-1", self.cceo.id
-        )
-        with self.assertRaises(BadRequest):
+        with self.assertRaisesMessage(BadRequest, "legacy reimbursement"):
             ReimbursementService.disburse_reimbursement(
-                claim, "bank", "REF-2", self.cceo.id
+                claim, "bank", "REF-1", self.cceo.id
             )
         from apps.fund_requests.finance_models import Disbursement
 
         self.assertEqual(
             Disbursement.objects.filter(activity=activity).count(),
-            1,
-            "a retry must not write a second Disbursement row for one debt",
+            0,
+            "a retired path must never write a Disbursement row",
         )
+        activity.refresh_from_db()
+        self.assertEqual(activity.status, "ia_verified")
 
 
 class SsaUploadAuthorityTests(Fixture):

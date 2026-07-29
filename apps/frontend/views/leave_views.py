@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.core.htmx_errors import UNEXPECTED_MESSAGE, is_user_facing
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.redirects import local_redirect
 from apps.core.permissions import render_access_denied, require_page_permission
 from apps.accounts.models import (
@@ -1112,39 +1112,14 @@ def revoke_coverage_action(request, assignment_id):
     oversight by design, but is_authorized_approver's hierarchy rules don't
     grant HR-as-reviewer blanket rights the way they do CD/RVP).
     """
-    from apps.core.navigation import get_user_role_slug
-
-    cov = get_object_or_404(TemporaryCoverageAssignment, id=assignment_id)
-    authorized = get_user_role_slug(request.user) == "HR" or (
-        LeaveApprovalService.is_authorized_approver(request.user, cov.leave_request)
-    )
-    if not authorized:
-        messages.error(
-            request, "You are not authorized to revoke this coverage assignment."
-        )
+    try:
+        coverage = LeaveApprovalService.revoke_coverage(assignment_id, request.user)
+    except (BadRequest, NotFoundError) as exc:
+        messages.error(request, str(exc.detail))
         return redirect("frontend:leave_coverage")
-
-    cov.status = "revoked"
-    cov.revoked_at = timezone.now()
-    cov.revoked_by_user_id = request.user.id
-    cov.save(update_fields=["status", "revoked_at", "revoked_by_user_id", "updated_at"])
-
-    from apps.audit.services import log as audit_log
-
-    audit_log(
-        action="hr.coverage_revoked",
-        subject_kind="temporary_coverage_assignment",
-        subject_id=cov.id,
-        actor_id=request.user.id,
-        actor_role=getattr(request.user, "active_role", None),
-        payload={
-            "originalStaffId": cov.original_staff_id,
-            "coveringStaffId": cov.covering_staff_id,
-        },
-    )
     messages.success(
         request,
-        f"Delegated access for {cov.covering_staff.user.name} has been revoked.",
+        f"Delegated access for {coverage.covering_staff.user.name} has been revoked.",
     )
     return redirect("frontend:leave_coverage")
 

@@ -180,6 +180,52 @@ class DuplicateDetectionService:
         return len(dups) == 0
 
 
+class DuplicateReviewService:
+    """Own the IA duplicate-review state machine and its audit trail."""
+
+    @staticmethod
+    def decide(duplicate_id: str, action: str, actor) -> DuplicateActivity:
+        targets = {"ignore": "ignored", "flag": "flagged", "return": "resolved"}
+        if action not in targets:
+            raise BadRequest("Select a valid duplicate-review action.")
+
+        with transaction.atomic():
+            duplicate = (
+                DuplicateActivity.objects.select_for_update()
+                .select_related("activity")
+                .filter(id=duplicate_id)
+                .first()
+            )
+            if not duplicate:
+                raise BadRequest("Duplicate flag not found.")
+            if duplicate.status != "potential":
+                raise BadRequest(f"This duplicate flag is already {duplicate.status}.")
+            if action == "return":
+                ActivityReturnService.return_activity(
+                    duplicate.activity,
+                    ["Duplicate Activity"],
+                    f"Flagged as duplicate of Activity ID {duplicate.duplicate_of_id}.",
+                    actor.user_id,
+                )
+            duplicate.status = targets[action]
+            duplicate.save(update_fields=["status", "updated_at"])
+
+            from apps.audit.services import log as audit_log
+
+            audit_log(
+                action=f"ia.duplicate_{action}",
+                subject_kind="duplicate_activity",
+                subject_id=duplicate.id,
+                actor_id=actor.id,
+                actor_role=getattr(actor, "active_role", None),
+                payload={
+                    "activityId": duplicate.activity_id,
+                    "duplicateOfId": duplicate.duplicate_of_id,
+                },
+            )
+        return duplicate
+
+
 class AnalyticsPublishingService:
     """Updates and triggers downstream analytics metrics recalculations."""
 

@@ -43,7 +43,8 @@ In the **service** (not the database), set these under **Variables**.
 | Variable | Example | Notes |
 |---|---|---|
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` | **Reference the Postgres variable.** Railway interpolates this. Do **not** hardcode the connection string — it rotates. |
-| `JWT_SECRET` | (random, ≥ 16 chars) | Used for both Django `SECRET_KEY` and JWT signing. **Must not contain** `change-me` or `dev-only`. Generate with `openssl rand -hex 32`. |
+| `JWT_SECRET` | (random, ≥ 50 chars) | Used for both Django `SECRET_KEY` and JWT signing. **Must not contain** `change-me` or `dev-only`. Generate with `openssl rand -hex 32`. Production deployment checks require at least 50 characters. |
+| `FIELD_ENCRYPTION_KEY` | (32-byte hex/base64 key) | Encrypts restricted fields at rest. Generate once, store as a shared secret on both web and worker, back it up securely, and do not rotate it without the key-rotation runbook. Production refuses to boot without a valid key. |
 | `SUPER_ADMIN_PASSWORD` | (strong password) | Login password for the bootstrap super-admin account. |
 | `SUPER_ADMIN_EMAIL` | `admin@yourdomain.org` | Email for the super-admin account. |
 | `ALLOWED_HOSTS` | `edify.up.railway.app,yourdomain.com` | Comma-separated. Railway's `*.up.railway.app` domain + any custom domain. `localhost`/`127.0.0.1` are added automatically for health probes. |
@@ -161,16 +162,23 @@ Before deploying, verify the prod config boots and collects static:
 # Set the required vars (use dummy values for local smoke test)
 export $(grep -v '^#' .env | xargs)  # or set manually
 export DJANGO_SETTINGS_MODULE=config.settings.prod
-export JWT_SECRET="local-prod-test-secret-strong-enough"
+export JWT_SECRET="local-prod-smoke-jwt-secret-0123456789abcdef0123456789abcdef"
+export FIELD_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 export AUTHZ_MODE=enforce
 export EVIDENCE_STORAGE_DIR=/tmp/evidence
-export SUPER_ADMIN_PASSWORD=test-pass
+export SUPER_ADMIN_PASSWORD="local-prod-smoke-admin-password"
 export ALLOWED_HOSTS=localhost
+export CSRF_TRUSTED_ORIGINS=https://localhost
+export ENABLE_MOCK_DATA=false
+export ENABLE_DEV_ENDPOINTS=false
+export ENABLE_DEV_SEED=false
+export ENABLE_DEV_IMPORTS=false
+export PARTNER_ROLE_BRIDGE=false
 
-python manage.py check           # → "System check identified no issues"
-python manage.py collectstatic   # → "N static files copied"
-python manage.py migrate         # → apply any pending migrations
-python manage.py test            # → 234 tests pass
+python manage.py check --deploy  # → "System check identified no issues"
+python manage.py collectstatic   # → static assets collected
+python manage.py migrate --plan  # → review pending migration operations
+python -m pytest -q              # → repository suite passes
 ```
 
 ---
