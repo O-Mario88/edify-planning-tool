@@ -40,7 +40,8 @@ services:
       SESSION_COOKIE_SECURE: "false"
       CSRF_COOKIE_SECURE: "false"
       DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}
-      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=16 chars)}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=50 chars)}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env (32-byte hex/base64)}
       ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
       REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-7}
       DEMO_LOGIN_PASSWORD: ${DEMO_LOGIN_PASSWORD:-edify}
@@ -75,7 +76,8 @@ services:
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
       SECURE_SSL_REDIRECT: "false"
       DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}
-      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=16 chars)}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=50 chars)}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env (32-byte hex/base64)}
       SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
       ENABLE_BACKGROUND_JOBS: "true"
       EVIDENCE_STORAGE_DIR: /data/evidence

@@ -1,5 +1,7 @@
 {% load frontend_filters %}
+{% if include_page_oob != False %}
 <input type="hidden" name="page" id="filters-page-input" value="{{ page_obj.number|default:1 }}" hx-swap-oob="true">
+{% endif %}
 
 <div class="school-directory-listbar">
   <label class="school-directory-listbar__select" for="select-all-schools">

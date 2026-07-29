@@ -14,6 +14,8 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import resolve_user_scope
 
+ACTIVE_MY_PLAN_EXCLUDED_STATUSES = ("closed", "cancelled", "rejected")
+
 
 def get_weeks_for_month(year: int, month: int) -> list[dict]:
     """Helper to generate week choices within a month."""
@@ -139,7 +141,7 @@ def get(principal, query: dict) -> dict:
     # leaves the active queue and lives in Completed Activities instead
     # (previously they leaked into the "upcoming" bucket).
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy).exclude(
-        status__in=["closed", "cancelled", "rejected"]
+        status__in=ACTIVE_MY_PLAN_EXCLUDED_STATUSES
     )
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
@@ -502,8 +504,8 @@ def get_frontend_context(principal, query: dict) -> dict:
     # the active feed and live in Completed Activities — unless the caller
     # explicitly filters for one of those statuses.
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    if status not in ("closed", "cancelled", "rejected"):
-        qs = qs.exclude(status__in=["closed", "cancelled", "rejected"])
+    if status not in ACTIVE_MY_PLAN_EXCLUDED_STATUSES:
+        qs = qs.exclude(status__in=ACTIVE_MY_PLAN_EXCLUDED_STATUSES)
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:

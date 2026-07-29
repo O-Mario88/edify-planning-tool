@@ -248,10 +248,18 @@ def _fy() -> str:
 
 
 def missing_cost_lines_count() -> int:
-    """Scheduled activities carrying no budget/cost line. Broken out as its own
-    function so other pages (e.g. the admin dashboard) can surface this exact
-    real count without running the full `report()` (which does much more work,
-    including filesystem checks)."""
+    """Cost-bearing scheduled activities carrying no budget/cost line.
+
+    Zero-cost work is a valid ledger state (notably imported historic work and
+    partner-delivered SSA collection). Treating every such row as a broken
+    budget made System Health permanently red even though no money needed
+    reconciling. This predicate intentionally matches the deterministic repair
+    command: a missing line is a defect only when the persisted estimate says
+    the activity carries cost.
+
+    Broken out as its own function so other pages (e.g. the admin dashboard)
+    can surface this exact real count without running the full ``report()``.
+    """
     from apps.activities.models import Activity
 
     active = Activity.objects.filter(deleted_at__isnull=True)
@@ -260,7 +268,7 @@ def missing_cost_lines_count() -> int:
     )
     return (
         scheduled.annotate(cost_line_count=Count("schedule_cost_lines"))
-        .filter(cost_line_count=0)
+        .filter(cost_line_count=0, est_cost_cents__gt=0)
         .count()
     )
 
@@ -669,16 +677,25 @@ def _workflow_issues() -> dict:
         if _live_sum != _wfr.total_amount:
             confirmed_wfrs_drifted += 1
 
-    # Terminal-status activities still returned by the My Plan feed (feed lacks
-    # a status exclusion).
-    closed_still_in_my_plan = active.filter(
-        status__in=[
-            ActivityStatus.CLOSED,
-            ActivityStatus.CANCELLED,
-            ActivityStatus.REJECTED,
-        ],
-        fy=fy,
-    ).count()
+    # The health gate and both My Plan feeds share the same exclusion contract.
+    # Counting every terminal Activity in PostgreSQL here used to report all
+    # correctly-archived history as "still returned by My Plan", even though
+    # both feed queries already excluded it.
+    from apps.my_plan.services import ACTIVE_MY_PLAN_EXCLUDED_STATUSES
+
+    terminal_statuses = {
+        ActivityStatus.CLOSED,
+        ActivityStatus.CANCELLED,
+        ActivityStatus.REJECTED,
+    }
+    unexcluded_terminal_statuses = terminal_statuses.difference(
+        ACTIVE_MY_PLAN_EXCLUDED_STATUSES
+    )
+    closed_still_in_my_plan = (
+        active.filter(status__in=unexcluded_terminal_statuses, fy=fy).count()
+        if unexcluded_terminal_statuses
+        else 0
+    )
 
     # ── Daily Visit Batch integrity checks ───────────────────────────────────
     from apps.daily_visit_batches.models import DailyVisitBatch
@@ -989,7 +1006,7 @@ def _workflow_issues() -> dict:
         )
     if closed_still_in_my_plan:
         blockers.append(
-            f"{closed_still_in_my_plan} Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion)."
+            f"{closed_still_in_my_plan} terminal-status activities are not excluded by the My Plan feed contract."
         )
     if confirmed_wfrs_drifted:
         blockers.append(
@@ -1372,67 +1389,25 @@ def _workflow_issues() -> dict:
 
 
 def _permission_guards_audit() -> dict:
-    """Scan all URLs in the application's URL configuration to detect any routes
-    missing the central require_page_permission decorator or custom role controls."""
-    from django.urls import get_resolver
+    """Expose the canonical page-route scanner through System Health.
 
-    resolver = get_resolver()
-    unguarded_routes = []
+    This used to reimplement route traversal with a smaller exemption list.
+    It therefore reported health/readiness probes, PWA assets, MFA setup and
+    object-authorized document endpoints as unguarded while the release-gate
+    scanner correctly reported zero. One security question must have one
+    implementation; otherwise operators learn to ignore the health signal.
+    """
+    from apps.system_health.production_readiness import scan_unguarded_page_routes
 
-    def _traverse(patterns, prefix=""):
-        for pattern in patterns:
-            pattern_str = prefix + str(pattern.pattern)
-
-            if hasattr(pattern, "url_patterns"):
-                _traverse(pattern.url_patterns, pattern_str)
-            elif hasattr(pattern, "callback"):
-                callback = pattern.callback
-
-                is_drf_view = False
-                view_class = getattr(callback, "cls", None)
-                if view_class:
-                    is_drf_view = True
-
-                # Skip public/built-in paths
-                if pattern_str.startswith("admin/"):
-                    continue
-                if any(
-                    x in pattern_str
-                    for x in ["login", "logout", "password_reset", "password_change"]
-                ):
-                    continue
-                if pattern_str.startswith("static/") or pattern_str.startswith(
-                    "media/"
-                ):
-                    continue
-                if is_drf_view and getattr(view_class, "permission_classes", None):
-                    continue
-
-                has_guard = getattr(callback, "has_permission_guard", False)
-
-                is_exempt = False
-                callback_name = getattr(callback, "__name__", "")
-                if callback_name in [
-                    "switch_role_view",
-                    "select2_list_view",
-                    "debug_toolbar_view",
-                    "ping_view",
-                    "health_check",
-                    "_health",
-                    "stream",
-                    "force_change_password_view",
-                ]:
-                    is_exempt = True
-
-                if not has_guard and not is_exempt:
-                    unguarded_routes.append(
-                        {
-                            "route": "/" + pattern_str.rstrip("$?^"),
-                            "view_name": f"{callback.__module__}.{callback_name}",
-                        }
-                    )
-
-    _traverse(resolver.url_patterns)
+    findings = scan_unguarded_page_routes()
+    unguarded_routes = [
+        {
+            "route": finding.evidence,
+            "view_name": finding.detail,
+            "source": f"{finding.path}:{finding.line}",
+        }
+        for finding in findings
+    ]
 
     return {
         "unguardedCount": len(unguarded_routes),

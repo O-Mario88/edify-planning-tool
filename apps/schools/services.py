@@ -8,7 +8,9 @@ operational records is constrained by the resolved user scope — never all rows
 
 from __future__ import annotations
 
+from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 
 from apps.core.enums import DuplicateStatus, PlanningReadiness, SchoolType
 from apps.core.exceptions import BadRequest, NotFoundError
@@ -231,6 +233,49 @@ def resolve_duplicate(school_id: str, resolution: str, principal) -> dict:
     )
     school.save(update_fields=["duplicate_status", "updated_at"])
     return {"ok": True, "schoolId": school.school_id, "resolution": resolution}
+
+
+def triage_data_quality_issue(issue_id: str, action: str, principal):
+    """Assign or resolve a data-quality issue under lock with an audit row."""
+    from .models import DataQualityIssue
+
+    if action not in {"assign", "resolve"}:
+        raise BadRequest("Select assign or resolve.")
+    with transaction.atomic():
+        issue = (
+            DataQualityIssue.objects.select_for_update()
+            .select_related("school")
+            .filter(id=issue_id)
+            .first()
+        )
+        if not issue:
+            raise NotFoundError("Data-quality issue not found.")
+        if issue.status != "open":
+            raise BadRequest("This data-quality issue is already resolved.")
+        issue.assigned_to = str(principal.id)
+        update_fields = ["assigned_to"]
+        if action == "resolve":
+            issue.status = "resolved"
+            issue.resolved_at = timezone.now()
+            update_fields.extend(["status", "resolved_at"])
+        issue.save(update_fields=[*update_fields, "updated_at"])
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=f"data_quality_issue.{action}",
+            subject_kind="DataQualityIssue",
+            subject_id=issue.id,
+            actor_id=str(principal.id),
+            actor_role=getattr(principal, "active_role", None),
+            success=True,
+            payload={
+                "issue_type": issue.issue_type,
+                "school_id": issue.school_id,
+                "assigned_to": issue.assigned_to,
+            },
+        )
+    return issue
 
 
 # ── Proposals / workflow (stubs refined as SSA + activities land) ────────────

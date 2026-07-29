@@ -148,7 +148,7 @@ FY {{ fy }} · Live workflow data
 
 
 <!-- ================= MAIN WORKSPACE GRID ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
 <!-- LEFT PANEL: WEEKLY ADVANCE QUEUE (Col Span 3) -->
 {% comment %}
@@ -164,7 +164,7 @@ FY {{ fy }} · Live workflow data
   detail. Reproducing that here would recreate a whole workspace inside a
   dashboard panel; the link below sends the reader to the page that owns it.
 {% endcomment %}
-<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
+<div class="xl:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
@@ -216,7 +216,7 @@ class="p-3 border rounded-surface cursor-pointer flex items-center gap-3 transit
 </div>
 
 <!-- MIDDLE PANEL: DETAILS WORKSPACE (Col Span 6) -->
-<div class="lg:col-span-6 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between" x-show="selectedItem">
+<div class="xl:col-span-6 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between" x-show="selectedItem">
 <div>
 <!-- Selected Request Title block -->
 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
@@ -390,13 +390,13 @@ Open Canonical Disbursement Queue
 </div>
 </div>
 
-<div class="lg:col-span-6 edify-empty-state" x-show="!selectedItem">
+<div class="xl:col-span-6 edify-empty-state" x-show="!selectedItem">
 <strong>No fund requests exist for FY {{ fy }}</strong>
 <span>Approved requests will appear here when they reach the finance workflow.</span>
 </div>
 
 <!-- RIGHT PANEL SIDEBAR: STATS & RULES (Col Span 3) -->
-<div class="lg:col-span-3 space-y-6">
+<div class="xl:col-span-3 space-y-6">
 
 <!-- This Month Overview -->
 <div class="edify-surface p-5 rounded-surface  shadow-sm space-y-3">
@@ -470,10 +470,10 @@ Open Canonical Disbursement Queue
 
 
 <!-- ================= BOTTOM ROW GRID ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
 <!-- RECENT DISBURSEMENT ACTIVITY (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
+<div class="xl:col-span-4 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Disbursement Activity</h3>
@@ -503,7 +503,7 @@ Open Canonical Disbursement Queue
 </div>
 
 <!-- RECONCILIATION & PROOF TRACKER (Col Span 5) -->
-<div class="lg:col-span-5 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
+<div class="xl:col-span-5 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Reconciliation &amp; Proof Tracker</h3>
@@ -550,7 +550,7 @@ Open Canonical Disbursement Queue
 </div>
 
 <!-- CASH POSITION / BUDGET BALANCE (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
+<div class="xl:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cash Position / Budget Balance</h3>

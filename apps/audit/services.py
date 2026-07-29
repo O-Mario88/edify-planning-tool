@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from django.db import transaction
+from django.db import connection, transaction
 
 from apps.core.logging_filters import escape_control_characters
 from apps.core.audit_hash import CanonicalAuditFields, canonical_audit, chain_hash
@@ -21,6 +21,13 @@ from apps.core.request_context import get_request_context
 from .models import AuditLog
 
 logger = logging.getLogger("edify.audit")
+
+# A transaction-scoped PostgreSQL advisory lock serializes the append point even
+# when the chain is empty. Row-locking only the current tail is insufficient:
+# two transactions can both select the same old tail and calculate the same
+# next sequence, causing the later insert to lose its audit event to the unique
+# constraint. The fixed key is private to this application/database.
+_AUDIT_CHAIN_LOCK_ID = 0x4544494659415544  # "EDIFYAUD", signed-bigint safe
 
 
 def log(
@@ -94,9 +101,15 @@ def log(
             payload=payload,
         )
         with transaction.atomic():
-            # select_for_update on the tail serializes chain appends so prevHash
-            # always points at the true tail (the legacy used a Postgres advisory
-            # lock; row-level locking on the last row achieves the same).
+            if connection.vendor == "postgresql":
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT pg_advisory_xact_lock(%s)",
+                        [_AUDIT_CHAIN_LOCK_ID],
+                    )
+            # The advisory lock above serializes the empty-chain case and every
+            # append. select_for_update remains useful as defence in depth and
+            # for database backends without PostgreSQL advisory locks.
             last = (
                 AuditLog.objects.select_for_update()
                 .order_by("-seq")

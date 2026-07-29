@@ -6,7 +6,7 @@ from apps.activities.closure_services import (
     ActivityClosureService,
     ClosureEligibilityService,
 )
-from apps.activities.models import Activity, CompletedActivitySnapshot
+from apps.activities.models import Activity
 from apps.fund_requests.models import (
     AdvanceRequestStatus,
     Disbursement,
@@ -344,140 +344,37 @@ class PartnerPaymentService:
 
 
 class ReimbursementService:
-    """Manages staff self-funded activities and overspent budgets claims."""
+    """Fail-closed compatibility guard for the retired reimbursement ledger.
+
+    Self-funded and over-spend reimbursement is owned by ``AdvanceRequest``:
+    ``submit_reimbursement``/``approve_accountability`` → ``reimburse`` →
+    ``confirm_reimbursement_receipt``. That canonical path locks one row,
+    derives the variance, requires a NetSuite Code and employee receipt, and
+    leaves closure to ``ActivityClosureService``.
+
+    Historical ``ReimbursementClaim`` rows remain readable for audit, but old
+    integrations must not create a second payable debt or close an Activity
+    by assigning its status directly.
+    """
+
+    _RETIRED_MESSAGE = (
+        "The legacy reimbursement-claim workflow is retired. Use the Activity's "
+        "AdvanceRequest accountability workflow, which derives one reimbursement, "
+        "requires NetSuite verification and receipt confirmation, and closes only "
+        "through the canonical ActivityClosureService."
+    )
 
     @staticmethod
     def claim_reimbursement(
         activity: Activity, actual_spend: int, staff_id: str, notes: str = ""
     ) -> ReimbursementClaim:
-        approved_budget = (
-            activity.schedule_cost_lines.aggregate(s=Sum("amount"))["s"] or 0
-        )
-
-        # Calculate disbursed amount
-        disbursed = (
-            Disbursement.objects.filter(activity=activity).aggregate(
-                s=Sum("amount_disbursed")
-            )["s"]
-            or 0
-        )
-
-        reimbursement_amount = actual_spend - disbursed
-        if reimbursement_amount <= 0:
-            raise BadRequest(
-                "Actual spend does not exceed advance amount. No reimbursement needed."
-            )
-
-        with transaction.atomic():
-            claim = ReimbursementClaim.objects.create(
-                activity=activity,
-                staff_id=staff_id,
-                approved_budget=approved_budget,
-                amount_advanced=disbursed,
-                actual_spend=actual_spend,
-                reimbursement_amount=reimbursement_amount,
-                status="pending",
-                notes=notes,
-            )
-
-            # Log event
-            FinanceAuditService.log_finance_event(
-                activity=activity,
-                event_type="reimbursement_claimed",
-                actor_id=staff_id,
-                actor_role="CCEO",
-                new_value=f"Claimed reimbursement of {reimbursement_amount} UGX (Spend: {actual_spend}, Advance: {disbursed})",
-            )
-
-            return claim
+        raise BadRequest(ReimbursementService._RETIRED_MESSAGE)
 
     @staticmethod
     def disburse_reimbursement(
         claim: ReimbursementClaim, method: str, reference: str, user_id: str
     ) -> ReimbursementClaim:
-        activity = claim.activity
-
-        # Reimbursement can only be paid if IA Verified
-        if activity.status not in ["ia_verified", "closed", "accountant_confirmed"]:
-            raise BadRequest("Reimbursement is blocked: IA Verification Missing")
-
-        with transaction.atomic():
-            # Re-read under lock and refuse a repeat. This was the only
-            # money-moving path with no idempotency protection at all — a
-            # double-click or a network retry marked the claim paid twice and
-            # wrote two Disbursement rows for one debt. The advance and
-            # partner channels both guard this; the reimbursement channel is
-            # the same money and gets the same guard.
-            claim = type(claim).objects.select_for_update().get(id=claim.id)
-            if claim.status == "paid":
-                raise BadRequest(
-                    "This reimbursement has already been paid "
-                    f"({claim.payment_reference or 'no reference'})."
-                )
-            claim.status = "paid"
-            claim.payment_method = method
-            claim.payment_reference = reference
-            claim.payment_date = timezone.now()
-            claim.paid_by = user_id
-            claim.save()
-
-            # Also create a Disbursement record
-            Disbursement.objects.create(
-                activity=activity,
-                amount_disbursed=claim.reimbursement_amount,
-                disbursed_by=user_id,
-                payment_method=method,
-                payment_reference=reference,
-                notes=f"Reimbursement payout for claim ID {claim.id}",
-            )
-
-            # Close the activity
-            activity.status = "closed"
-            activity.save(update_fields=["status", "updated_at"])
-
-            # This still bypasses the canonical ActivityClosureService.close()
-            # gate — reimbursement claims carry no NetSuite ID of their own to
-            # satisfy ClosureEligibilityService's netsuite check, so fully
-            # routing through it is a larger refactor. But it must not skip
-            # the CompletedActivitySnapshot the canonical path always leaves
-            # behind, or this activity renders with snapshot=None forever.
-            from apps.evidence.models import EvidenceRecord
-
-            budget_total = (
-                activity.schedule_cost_lines.aggregate(s=Sum("amount"))["s"] or 0
-            )
-            disb_total = (
-                Disbursement.objects.filter(activity=activity).aggregate(
-                    s=Sum("amount_disbursed")
-                )["s"]
-                or 0
-            )
-            ns_rec = NetSuiteExpenseRecord.objects.filter(activity=activity).first()
-            CompletedActivitySnapshot.objects.update_or_create(
-                activity=activity,
-                defaults={
-                    "final_budget_amount": budget_total,
-                    "disbursed_amount": disb_total,
-                    "actual_spend_amount": disb_total,
-                    "netsuite_expense_id": ns_rec.netsuite_expense_id
-                    if ns_rec
-                    else None,
-                    "evidence_count": EvidenceRecord.objects.filter(
-                        activity=activity
-                    ).count(),
-                    "snapshot_taken_at": timezone.now(),
-                },
-            )
-
-            FinanceAuditService.log_finance_event(
-                activity=activity,
-                event_type="reimbursement_disbursed",
-                actor_id=user_id,
-                actor_role="Accountant",
-                new_value=f"Disbursed reimbursement claim of {claim.reimbursement_amount} UGX via {method} (Ref: {reference})",
-            )
-
-            return claim
+        raise BadRequest(ReimbursementService._RETIRED_MESSAGE)
 
 
 class AccountabilityService:

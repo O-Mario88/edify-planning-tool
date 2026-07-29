@@ -50,6 +50,13 @@ SYNONYMS = {
 }
 
 
+def prepare_new_draft(article: HelpArticle, author) -> HelpArticle:
+    """Initialize a newly-authored guide through the article lifecycle owner."""
+    article.author = author
+    article.state = HelpArticleState.DRAFT
+    return article
+
+
 def _friendly_summary(summary: str) -> str:
     """Keep the precise meaning, but use words a day-to-day user will recognise."""
     replacements = (

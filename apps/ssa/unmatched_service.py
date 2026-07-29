@@ -28,10 +28,46 @@ from __future__ import annotations
 import difflib
 
 from django.core.paginator import Paginator
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
+
+from apps.core.exceptions import BadRequest, NotFoundError
 
 DEFAULT_PAGE_SIZE = 25
 CANDIDATE_LIMIT = 200  # hard cap on the Python-fallback candidate pool
+
+
+def transition_unmatched_record(record_id: str, target: str, actor, *, on_match=None):
+    """Own unmatched-SSA triage, including the matched-record side effect."""
+    if target not in {"matched", "hold", "ignored"}:
+        raise BadRequest("Select match, hold, or ignore.")
+    if target == "matched" and on_match is None:
+        raise BadRequest("A matched SSA record must be imported.")
+
+    from apps.schools.models import UnmatchedSSARecord
+
+    with transaction.atomic():
+        record = (
+            UnmatchedSSARecord.objects.select_for_update().filter(id=record_id).first()
+        )
+        if not record:
+            raise NotFoundError("Unmatched SSA record not found.")
+        if record.status not in {"pending", "hold"}:
+            raise BadRequest(f"This SSA record is already {record.status}.")
+        result = on_match(record) if on_match is not None else None
+        record.status = target
+        record.save(update_fields=["status", "updated_at"])
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=f"ssa.unmatched_{target}",
+            subject_kind="UnmatchedSSARecord",
+            subject_id=record.id,
+            actor_id=actor.id,
+            actor_role=getattr(actor, "active_role", None),
+            payload={"schoolIdRaw": record.school_id},
+        )
+    return record, result
 
 
 def compute_suggested_match(school_name_raw: str | None, district_raw: str | None):

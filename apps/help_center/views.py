@@ -407,8 +407,9 @@ def manage_article(request, slug=None):
         if form.is_valid():
             item = form.save(commit=False)
             if instance is None:
-                item.author = request.user
-                item.state = HelpArticleState.DRAFT
+                from .services import prepare_new_draft
+
+                prepare_new_draft(item, request.user)
             item.save()
             item.rebuild_search_document(save=True)
             HelpArticleRoleAccess.objects.filter(article=item).delete()

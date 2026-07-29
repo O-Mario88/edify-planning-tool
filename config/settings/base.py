@@ -553,7 +553,7 @@ REST_FRAMEWORK = {
     # `throttle_classes`, NOT globally — the rate limiter is only for those
     # brute-force-sensitive endpoints.
     "EXCEPTION_HANDLER": "apps.core.exceptions.edify_exception_handler",
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "apps.core.openapi.EdifyAutoSchema",
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 
@@ -563,6 +563,9 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    "PREPROCESSING_HOOKS": [
+        "apps.core.openapi.normalize_api_prefix_paths",
+    ],
 }
 
 # django-apscheduler — runs the 4 background jobs in-process (single-process

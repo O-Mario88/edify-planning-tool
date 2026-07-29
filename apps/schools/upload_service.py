@@ -805,4 +805,112 @@ def _build_message(success: bool, counts: dict, total: int) -> str:
     return "Nothing was saved — no rows were created or updated."
 
 
-__all__ = ["upload_school_file", "import_school_batch"]
+def act_on_upload_batch(batch_id: str, action: str, principal, *, reason: str = ""):
+    """Validate, reject, or import a persisted upload batch under one lock."""
+    from apps.core.scoping import resolve_user_scope
+    from apps.schools.models import UploadBatch
+
+    with transaction.atomic():
+        batch = UploadBatch.objects.select_for_update().filter(id=batch_id).first()
+        scope = resolve_user_scope(principal)
+        if not batch or (
+            not scope.country_scope and batch.uploaded_by != principal.user_id
+        ):
+            from apps.core.exceptions import NotFoundError
+
+            raise NotFoundError("Upload batch not found.")
+
+        if action == "validate":
+            if batch.status != "uploaded":
+                raise BadRequest("Batch must be in 'uploaded' status to validate.")
+            has_failures = batch.row_results.filter(status="failed").exists()
+            batch.status = "completed_with_errors" if has_failures else "validated"
+            batch.save(update_fields=["status", "updated_at"])
+        elif action == "reject":
+            if batch.status in {"imported", "rejected"}:
+                raise BadRequest(f"An {batch.status} batch cannot be rejected.")
+            batch.status = "rejected"
+            if reason:
+                batch.error_summary = reason
+            batch.save(update_fields=["status", "error_summary", "updated_at"])
+        elif action == "import":
+            if batch.status == "imported":
+                return batch
+            if batch.status not in {
+                "validated",
+                "completed_with_errors",
+                "uploaded",
+            }:
+                raise BadRequest("Batch must be validated to import.")
+            if batch.upload_type == "schools":
+                import_school_batch(batch, principal)
+            elif batch.upload_type == "ssa":
+                from apps.ssa.upload_service import import_ssa_batch
+
+                import_ssa_batch(batch, principal)
+            else:
+                raise BadRequest("Unsupported upload type.")
+            batch.status = "imported"
+            batch.save(update_fields=["status", "updated_at"])
+        else:
+            raise BadRequest("Invalid action.")
+    return batch
+
+
+def cancel_school_import_batch(batch_id: str, principal):
+    """Cancel an unimported school staging batch."""
+    from apps.schools.models import SchoolImportBatch
+
+    with transaction.atomic():
+        batch = (
+            SchoolImportBatch.objects.select_for_update().filter(id=batch_id).first()
+        )
+        if not batch:
+            from apps.core.exceptions import NotFoundError
+
+            raise NotFoundError("School import batch not found.")
+        if batch.status != "staged":
+            raise BadRequest(f"This batch is already {batch.status}.")
+        batch.status = "cancelled"
+        batch.save(update_fields=["status", "updated_at"])
+    return batch
+
+
+def mark_upload_batch_inactive(batch_id: str, principal):
+    """Mark history as failed/cancelled without pretending to revert its rows."""
+    from apps.schools.models import SchoolImportBatch, SSAImportBatch, UploadBatch
+
+    with transaction.atomic():
+        batch = (
+            SchoolImportBatch.objects.select_for_update().filter(id=batch_id).first()
+            or SSAImportBatch.objects.select_for_update().filter(id=batch_id).first()
+            or UploadBatch.objects.select_for_update().filter(id=batch_id).first()
+        )
+        if not batch:
+            return None
+        if isinstance(batch, UploadBatch):
+            batch.status = "failed"
+        else:
+            batch.status = "cancelled"
+        batch.save(update_fields=["status", "updated_at"])
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="school_upload.batch_marked_inactive",
+            subject_kind=type(batch).__name__,
+            subject_id=batch.id,
+            actor_id=principal.id,
+            actor_role=getattr(principal, "active_role", None),
+            payload={"status": batch.status},
+        )
+    return batch
+
+
+__all__ = [
+    "upload_school_file",
+    "import_school_batch",
+    "act_on_upload_batch",
+    "cancel_school_import_batch",
+    "mark_upload_batch_inactive",
+]

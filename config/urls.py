@@ -6,14 +6,17 @@ probe lives at the prefix root; everything else hangs off `api/`.
 
 Routes have NO trailing slash (matching NestJS: /api/schools, /api/auth/login).
 APPEND_SLASH is disabled in settings. Each module's urls define leaves WITHOUT a
-trailing slash; the `api(...)` helper registers both the bare and slashed prefix
-so `/api/schools` and `/api/schools/proposals` both resolve.
+trailing slash; the `api(...)` helper uses one boundary-aware matcher so
+`/api/schools` and `/api/schools/proposals` both resolve without also creating
+the malformed shadow route `/api/schoolsproposals`.
 """
+
+import re
 
 from django.conf import settings
 from django.contrib import admin
 from django.http import HttpRequest, JsonResponse
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 
 def _liveness(request: HttpRequest) -> JsonResponse:
@@ -52,15 +55,20 @@ def _readiness(request: HttpRequest) -> JsonResponse:
 
 
 def api(prefix: str, url_module: str) -> list:
-    """Register a module's urls at an /api prefix, accepting both the bare
-    prefix (e.g. /api/schools) and the slashed form (/api/schools/...).
+    """Register one boundary-aware API prefix.
 
-    NestJS routes have no trailing slash, so the bare form must match for the
-    collection root. The slashed form is required for sub-routes (Django's
-    include concatenates prefix + leaf)."""
+    The old pair of ``path()`` includes made both intended forms work, but the
+    bare include also concatenated every child without a separator. That made
+    `/api/schoolsbulk` a real endpoint and duplicated the entire OpenAPI
+    surface. One regex consumes either a slash or the end of the string.
+    """
+    if not re.fullmatch(r"[a-z0-9/-]+", prefix):
+        raise ValueError(f"Unsafe API prefix: {prefix!r}")
     return [
-        path(f"api/{prefix}", include(url_module)),
-        path(f"api/{prefix}/", include(url_module)),
+        re_path(
+            rf"^api/{prefix}(?:/|$)",
+            include(url_module),
+        )
     ]
 
 
@@ -124,8 +132,7 @@ urlpatterns = [
     # Flags — CD→PL flag handoff.
     *api("flags", "apps.flags.urls"),
     # PL review queue.
-    path("api/pl/review-queue", include("apps.pl_review.urls")),
-    path("api/pl/review-queue/", include("apps.pl_review.urls")),
+    *api("pl/review-queue", "apps.pl_review.urls"),
     # Command center — recommendation-led home feed + alerts.
     *api("command-center", "apps.command_center.urls"),
     # Admin users — account provisioning.
@@ -153,8 +160,7 @@ urlpatterns = [
     # Analytics — role-scoped summaries.
     *api("analytics", "apps.analytics.urls"),
     # Leadership Decision Engine — recommends; leadership decides.
-    path("api/leadership/decision-engine", include("apps.leadership.urls")),
-    path("api/leadership/decision-engine/", include("apps.leadership.urls")),
+    *api("leadership/decision-engine", "apps.leadership.urls"),
     # Budget Intelligence — the financial decision engine.
     *api("budget-intelligence", "apps.budget_intelligence.urls"),
     # Realtime — SSE live stream.

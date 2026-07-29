@@ -20,11 +20,13 @@ from apps.activities.models import (
 from apps.activities.ia_services import (
     IAVerificationService,
     DuplicateDetectionService,
+    DuplicateReviewService,
     VerificationTimelineService,
     ActivityCertificationService,
     ActivityReturnService,
 )
 from apps.core.enums import ActivityStatus
+from apps.core.exceptions import BadRequest
 
 QUEUE_PAGE_SIZE = 50
 
@@ -573,27 +575,19 @@ def ia_duplicates_view(request):
 @require_page_permission("ia_duplicates")
 def ia_duplicate_action(request, duplicate_id):
     """Handles actions on potential duplicates: merge, ignore, return, flag."""
-    dup = get_object_or_404(DuplicateActivity, id=duplicate_id)
     action = request.POST.get("action")
 
+    if action in {"ignore", "flag", "return"}:
+        try:
+            DuplicateReviewService.decide(duplicate_id, action, request.user)
+        except BadRequest as exc:
+            messages.error(request, str(exc.detail))
+            return redirect("/ia/duplicates/")
     if action == "ignore":
-        dup.status = "ignored"
-        dup.save(update_fields=["status"])
         messages.success(request, "Duplicate flag ignored.")
     elif action == "flag":
-        dup.status = "flagged"
-        dup.save(update_fields=["status"])
         messages.success(request, "Activity flagged for investigation.")
     elif action == "return":
-        # Return the target activity
-        ActivityReturnService.return_activity(
-            dup.activity,
-            ["Duplicate Activity"],
-            f"Flagged as duplicate of Activity ID {dup.duplicate_of_id}.",
-            request.user.user_id,
-        )
-        dup.status = "resolved"
-        dup.save(update_fields=["status"])
         messages.success(request, "Activity returned and duplicate flag resolved.")
 
     return redirect("/ia/duplicates/")

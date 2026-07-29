@@ -42,17 +42,9 @@ class GateBaselineTests(SimpleTestCase):
         # the declaration is what makes a page-permission audit able to see
         # them, which is what §9 is about.
         "unguarded_page_route": 0,
-        # Was 30. Every finding that was a genuine business transition now
-        # lives in the service that owns it -- SSA verification, the
-        # accountant's return and roll-up, Core package slots, partner
-        # scheduling, leave escalation and PD cancellation.
-        #
-        # The 18 that remain are deliberate, and the ledger names each: an
-        # import routine's own bookkeeping (no service is being bypassed) and
-        # queue/triage state carrying no money, target credit or verification
-        # authority. This number should not reach 0 by moving those; it should
-        # only move if a real transition appears.
-        "raw_workflow_mutation": 18,
+        # Closed. Views now delegate every workflow transition, including
+        # upload bookkeeping and human triage decisions, to a domain service.
+        "raw_workflow_mutation": 0,
     }
 
     def test_the_clean_gates_are_still_clean(self):
@@ -89,6 +81,20 @@ class GateBaselineTests(SimpleTestCase):
                 with self.subTest(gate=gate, path=finding["path"]):
                     self.assertTrue(finding["path"])
                     self.assertTrue(finding["evidence"])
+
+    def test_system_health_uses_the_canonical_permission_gate(self):
+        """The operator page and the release scanner must answer identically."""
+        from apps.system_health.services import _permission_guards_audit
+
+        scanner_findings = scan_unguarded_page_routes()
+        health = _permission_guards_audit()
+
+        self.assertEqual(health["unguardedCount"], len(scanner_findings))
+        self.assertEqual(health["clean"], not scanner_findings)
+        self.assertEqual(
+            {row["route"] for row in health["unguardedRoutes"]},
+            {finding.evidence for finding in scanner_findings},
+        )
 
 
 class ScannerBehaviourTests(SimpleTestCase):
@@ -151,31 +157,17 @@ class ScannerBehaviourTests(SimpleTestCase):
             self.assertIn(name, _EXEMPT_VIEW_NAMES)
 
     def test_the_workflow_scanner_finds_state_written_from_a_view(self):
-        """The scanner must still be able to see this class of defect.
+        from apps.system_health.production_readiness import (
+            _workflow_mutations_in_source,
+        )
 
-        It originally pointed at ssa_views.py, which set SSA verification
-        status inline. That transition now lives in apps.ssa.services, so the
-        assertion moved to a file that still has one -- and this test will move
-        again as each is fixed, which is the point.
-        """
-        findings = scan_raw_workflow_mutations()
-        paths = {f.path for f in findings}
-        # The scanner must still be able to see this class of defect. This
-        # file holds accepted findings (upload-batch bookkeeping), not a
-        # business transition -- see the ledger's pass-4 triage.
-        self.assertIn("apps/schools/upload_views.py", paths)
-
-        # Every genuine transition that has been moved into its service must
-        # stay moved. These are the ones that carry authority, money, target
-        # credit or a policy cap.
-        for fixed in (
-            "apps/frontend/views/ssa_views.py",
-            "apps/frontend/views/core_schools_views.py",
-            "apps/frontend/views/planning_views.py",
-            "apps/frontend/views/pd_views.py",
-        ):
-            with self.subTest(fixed):
-                self.assertNotIn(fixed, paths)
+        findings = _workflow_mutations_in_source(
+            "def post(request):\n    batch.status = 'imported'\n",
+            "apps/example/views.py",
+        )
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].evidence, "batch.status = …")
+        self.assertEqual(scan_raw_workflow_mutations(), [])
 
     def test_every_declared_gate_has_a_scanner(self):
         self.assertEqual(

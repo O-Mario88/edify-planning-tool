@@ -394,6 +394,54 @@ class LegacyEntryPointRetiredTest(FinanceUnificationBaseTest):
         activity.refresh_from_db()
         self.assertNotEqual(activity.status, "closed")
 
+    def test_legacy_reimbursement_pages_redirect_without_paying_or_closing(self):
+        from apps.fund_requests.finance_models import (
+            Disbursement,
+            ReimbursementClaim,
+        )
+
+        activity, _advance = _make_activity_and_advance(
+            self.school, self.cceo, amount=100_000
+        )
+        claim = ReimbursementClaim.objects.create(
+            activity=activity,
+            staff_id=self.cceo.id,
+            approved_budget=100_000,
+            amount_advanced=100_000,
+            actual_spend=125_000,
+            reimbursement_amount=25_000,
+            status="pending",
+        )
+        self.client.force_login(self.accountant)
+
+        queue_response = self.client.get("/accounts/reimbursements/")
+        self.assertEqual(queue_response.status_code, 302)
+        self.assertEqual(
+            queue_response.headers["Location"],
+            "/disbursements?queue=reimbursements",
+        )
+
+        pay_response = self.client.post(
+            f"/accounts/reimbursements/{claim.id}/pay",
+            {"method": "Bank Transfer", "reference": "MUST-NOT-MOVE"},
+        )
+        self.assertEqual(pay_response.status_code, 302)
+        self.assertEqual(
+            pay_response.headers["Location"],
+            "/disbursements?queue=reimbursements",
+        )
+
+        claim.refresh_from_db()
+        activity.refresh_from_db()
+        self.assertEqual(claim.status, "pending")
+        self.assertNotEqual(activity.status, "closed")
+        self.assertFalse(
+            Disbursement.objects.filter(
+                activity=activity,
+                payment_reference="MUST-NOT-MOVE",
+            ).exists()
+        )
+
 
 class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest):
     """§28 (this pass): the closure snapshot must not silently read 0 for an

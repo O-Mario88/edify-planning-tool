@@ -20,7 +20,7 @@ from apps.core.rbac import Permission
 from apps.core.scoping import resolve_user_scope
 
 from .models import UploadBatch
-from .upload_service import upload_school_file
+from .upload_service import act_on_upload_batch, upload_school_file
 
 UPLOAD = [Permission.SCHOOL_UPLOAD.value]
 
@@ -126,44 +126,12 @@ class UploadBatchActionView(APIView):
     required_permissions = UPLOAD
 
     def post(self, request: Request, batch_id: str, action: str) -> Response:
-        batch = _scoped_batches(request.user).filter(id=batch_id).first()
-        if not batch:
-            raise NotFoundError("Upload batch not found.")
-
-        if action == "validate":
-            if batch.status != "uploaded":
-                raise BadRequest("Batch must be in 'uploaded' status to validate.")
-            has_failures = batch.row_results.filter(status="failed").exists()
-            batch.status = "completed_with_errors" if has_failures else "validated"
-            batch.save()
-
-        elif action == "reject":
-            reason = request.data.get("reason", "").strip()
-            batch.status = "rejected"
-            if reason:
-                batch.error_summary = reason
-            batch.save()
-
-        elif action == "import":
-            if batch.status == "imported":
-                return Response(_serialize_batch(batch))
-            if batch.status not in ("validated", "completed_with_errors", "uploaded"):
-                raise BadRequest("Batch must be validated to import.")
-
-            if batch.upload_type == "schools":
-                from apps.schools.upload_service import import_school_batch
-
-                import_school_batch(batch, request.user)
-            elif batch.upload_type == "ssa":
-                from apps.ssa.upload_service import import_ssa_batch
-
-                import_ssa_batch(batch, request.user)
-
-            batch.status = "imported"
-            batch.save()
-        else:
-            raise BadRequest("Invalid action.")
-
+        batch = act_on_upload_batch(
+            batch_id,
+            action,
+            request.user,
+            reason=request.data.get("reason", "").strip(),
+        )
         return Response(_serialize_batch(batch))
 
 
