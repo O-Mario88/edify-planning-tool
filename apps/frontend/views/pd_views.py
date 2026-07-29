@@ -452,10 +452,7 @@ def pd_action_view(request, request_id):
             req = _own_request_or_404(request_id, P)
             if req is None:
                 return HttpResponseForbidden("Not your request.")
-            if req.status != "draft":
-                return HttpResponseBadRequest("Only a draft can be cancelled.")
-            req.status = "cancelled"
-            req.save(update_fields=["status", "updated_at"])
+            StaffPDService.cancel_draft(req, request.user)
             messages.info(request, "Draft cancelled.")
         else:
             return HttpResponseBadRequest("Unknown action.")

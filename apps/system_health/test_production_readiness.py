@@ -32,17 +32,27 @@ class GateBaselineTests(SimpleTestCase):
     #: docs/production-readiness-ledger.md. The number may fall; it must never
     #: rise without the ledger entry that explains why.
     KNOWN_OPEN = {
-        # Still 3: the canonical server-side weighted mean now exists and is
-        # tested (apps/analytics/test_weighted_ssa_mean.py), but the regional
-        # map template has not yet been switched over to it. Retiring the
-        # JavaScript needs the boundary-to-district mapping to move server-side
-        # too, which is a separate change.
-        "javascript_business_maths": 3,
-        "unguarded_page_route": 6,
-        # Was 30. SSA verification, the accountant's return and the
-        # accountability roll-up moved into their canonical services; the rest
-        # are triaged in the ledger by whether a service owns that transition.
-        "raw_workflow_mutation": 25,
+        # Closed. The map's school-cohort totals and its n-weighted SSA mean
+        # are both computed on the server now; the browser matches geometry
+        # and posts that matching once per layer draw.
+        "javascript_business_maths": 0,
+        # Closed. The six performance-conversation endpoints now declare
+        # their audience at the route as well as enforcing it in
+        # apps.hr.performance_engine. The engine still owns the real rules;
+        # the declaration is what makes a page-permission audit able to see
+        # them, which is what §9 is about.
+        "unguarded_page_route": 0,
+        # Was 30. Every finding that was a genuine business transition now
+        # lives in the service that owns it -- SSA verification, the
+        # accountant's return and roll-up, Core package slots, partner
+        # scheduling, leave escalation and PD cancellation.
+        #
+        # The 18 that remain are deliberate, and the ledger names each: an
+        # import routine's own bookkeeping (no service is being bypassed) and
+        # queue/triage state carrying no money, target credit or verification
+        # authority. This number should not reach 0 by moving those; it should
+        # only move if a real transition appears.
+        "raw_workflow_mutation": 18,
     }
 
     def test_the_clean_gates_are_still_clean(self):
@@ -150,9 +160,22 @@ class ScannerBehaviourTests(SimpleTestCase):
         """
         findings = scan_raw_workflow_mutations()
         paths = {f.path for f in findings}
-        self.assertIn("apps/frontend/views/core_schools_views.py", paths)
-        # The one that is fixed must stay fixed.
-        self.assertNotIn("apps/frontend/views/ssa_views.py", paths)
+        # The scanner must still be able to see this class of defect. This
+        # file holds accepted findings (upload-batch bookkeeping), not a
+        # business transition -- see the ledger's pass-4 triage.
+        self.assertIn("apps/schools/upload_views.py", paths)
+
+        # Every genuine transition that has been moved into its service must
+        # stay moved. These are the ones that carry authority, money, target
+        # credit or a policy cap.
+        for fixed in (
+            "apps/frontend/views/ssa_views.py",
+            "apps/frontend/views/core_schools_views.py",
+            "apps/frontend/views/planning_views.py",
+            "apps/frontend/views/pd_views.py",
+        ):
+            with self.subTest(fixed):
+                self.assertNotIn(fixed, paths)
 
     def test_every_declared_gate_has_a_scanner(self):
         self.assertEqual(
@@ -173,3 +196,72 @@ class ScannerBehaviourTests(SimpleTestCase):
             scan_raw_workflow_mutations,
         ):
             self.assertTrue(callable(scanner))
+
+
+class JavaScriptScannerAccuracyTests(SimpleTestCase):
+    """The scanner must catch real client-side arithmetic and nothing else.
+
+    Both directions matter. A scanner that misses a real computation gives
+    false assurance; one that reports honest code as a defect teaches people to
+    route around the gate, which is worse — it destroys the signal rather than
+    weakening it.
+
+    The allowances tested here were added after the scanner flagged
+    `totals = JSON.parse(...)` and `type.total = totals[key] ?? 0`, neither of
+    which computes anything.
+    """
+
+    def _findings(self, line: str):
+        import re
+
+        from apps.system_health.production_readiness import (
+            _JS_ASSIGNMENT_ONLY,
+            _JS_BUSINESS_MATH,
+            _JS_DESERIALISE,
+            _JS_REDUCE,
+            _JS_VISUAL_NAMES,
+        )
+
+        if _JS_VISUAL_NAMES.search(line):
+            return False
+        if _JS_DESERIALISE.search(line):
+            return False
+        if _JS_ASSIGNMENT_ONLY.search(line):
+            return False
+        return bool(
+            _JS_BUSINESS_MATH.search(line)
+            or (_JS_REDUCE.search(line) and re.search(r"total|amount|sum", line, re.I))
+        )
+
+    def test_it_still_catches_real_client_side_arithmetic(self):
+        for line in (
+            "total = a + b;",
+            "this.amount = price * quantity;",
+            "const sum = rows.reduce((acc, r) => acc + r.total, 0);",
+            "budgetRemaining = budget - spent;",
+            "row.achievement = done / target * 100;",
+            "this.balance = opening + credits - debits;",
+        ):
+            with self.subTest(line):
+                self.assertTrue(self._findings(line), f"missed: {line}")
+
+    def test_it_does_not_flag_reading_a_value_the_server_computed(self):
+        for line in (
+            "type.total = totals[type.key] ?? 0;",
+            "type.total = totals[type.key] || 0;",
+            "this.total = data.total || 0;",
+            "totals = JSON.parse(document.getElementById('x').textContent);",
+            "let totals = JSON.parse(",
+            "this.balance = 0;",
+            "const amount = row.amount;",
+        ):
+            with self.subTest(line):
+                self.assertFalse(self._findings(line), f"false positive: {line}")
+
+    def test_visual_arithmetic_is_still_excluded(self):
+        for line in (
+            "const x = left + step * index;",
+            "point.height = value / 100 * boxHeight;",
+        ):
+            with self.subTest(line):
+                self.assertFalse(self._findings(line))

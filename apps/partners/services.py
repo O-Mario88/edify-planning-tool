@@ -273,3 +273,22 @@ __all__ = [
     "onboard",
     "update",
 ]
+
+
+def mark_assignment_scheduled(assignment, *, scheduled_date):
+    """Move a PartnerAssignment from pending to scheduled, once its Activity exists.
+
+    Both planning views -- the single handoff and the bulk one -- wrote this
+    three-line transition inline and identically. Keeping it here means the
+    assignment lifecycle has one owner: a handoff that stays stuck at
+    `pending_scheduling` after its Activity was created is a real defect people
+    have hit, and it is easier to see and to fix in one function than in two
+    copies inside unrelated view bodies.
+
+    Idempotent: re-running it on an already-scheduled assignment rewrites the
+    same values rather than raising, so a retried HTMX POST is harmless.
+    """
+    assignment.status = "partner_scheduled"
+    assignment.scheduled_date = scheduled_date
+    assignment.save(update_fields=["status", "scheduled_date", "updated_at"])
+    return assignment

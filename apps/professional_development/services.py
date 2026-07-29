@@ -777,6 +777,33 @@ class StaffPDService:
 
     # ── Workload/calendar conflict check (§14) ──────────────────────────────
     @staticmethod
+    def cancel_draft(request_obj, principal):
+        """Withdraw a request that has not yet entered the approval chain.
+
+        Only a draft may be cancelled. Once a request is submitted it carries
+        an approver's attention, a budget commitment and a calendar block, and
+        withdrawing it is a different transition with different consequences --
+        so the guard belongs with the write rather than in whichever view
+        happens to offer the button.
+        """
+        from apps.audit.services import log as audit_log
+        from apps.core.exceptions import BadRequest
+
+        if request_obj.status != "draft":
+            raise BadRequest("Only a draft can be cancelled.")
+
+        request_obj.status = "cancelled"
+        request_obj.save(update_fields=["status", "updated_at"])
+        audit_log(
+            action="pd_request_cancelled",
+            subject_kind="ProfessionalDevelopmentRequest",
+            subject_id=request_obj.id,
+            actor_id=getattr(principal, "id", None),
+            actor_role=getattr(principal, "active_role", None),
+        )
+        return request_obj
+
+    @staticmethod
     def check_conflict(user, start_date: date, end_date: date) -> dict:
         from apps.accounts.models import CalendarBlock, Leave
         from apps.activities.models import Activity

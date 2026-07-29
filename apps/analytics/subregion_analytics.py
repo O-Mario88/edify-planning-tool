@@ -227,20 +227,55 @@ def combine_district_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
     combined: dict[str, Any] = {field: 0 for field in _ADDITIVE_FIELDS}
     combined["matched_keys"] = [row.get("key") for row in rows if row.get("key")]
     if not rows:
-        combined.update(ssa_avg=None, ssa_avg_cluster=None, ssa_avg_core=None)
+        combined.update(
+            ssa_avg=None,
+            ssa_avg_cluster=None,
+            ssa_avg_core=None,
+            best=None,
+            worst=None,
+            subregion="",
+            school_distribution={
+                "core": 0,
+                "client": 0,
+                "champion": 0,
+                "core_trained": 0,
+            },
+        )
         return combined
 
     for row in rows:
         for field in _ADDITIVE_FIELDS:
             combined[field] += row.get(field) or 0
 
+    # School cohorts add like the other counts, but live one level down.
+    distribution = {key: 0 for key in ("core", "client", "champion", "core_trained")}
+    for row in rows:
+        source = row.get("school_distribution") or {}
+        for key in distribution:
+            distribution[key] += source.get(key) or 0
+    combined["school_distribution"] = distribution
+
     combined["ssa_avg"] = weighted_ssa_mean(rows)
     if len(rows) == 1:
-        combined["ssa_avg_cluster"] = rows[0].get("ssa_avg_cluster")
-        combined["ssa_avg_core"] = rows[0].get("ssa_avg_core")
+        # A single district contributes its own values unchanged, including
+        # the two cohort averages and its best/worst interventions.
+        only = rows[0]
+        combined["ssa_avg_cluster"] = only.get("ssa_avg_cluster")
+        combined["ssa_avg_core"] = only.get("ssa_avg_core")
+        combined["best"] = only.get("best")
+        combined["worst"] = only.get("worst")
+        combined["subregion"] = only.get("subregion") or ""
     else:
+        # Cohort averages ship no independent sample size, and a "best
+        # intervention" across combined districts would be a claim nothing
+        # measured. Absent, rather than invented.
         combined["ssa_avg_cluster"] = None
         combined["ssa_avg_core"] = None
+        combined["best"] = None
+        combined["worst"] = None
+        combined["subregion"] = next(
+            (r.get("subregion") for r in rows if r.get("subregion")), ""
+        )
     return combined
 
 

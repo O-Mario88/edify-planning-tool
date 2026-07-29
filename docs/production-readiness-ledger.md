@@ -354,7 +354,304 @@ two dates actually differ** before testing the dedupe — a first draft of that
 test built the datetime in local time, so both dates agreed and it would have
 passed against the bug. The guard caught it.
 
-## 10. Pass 4
+## 10. Pass 4 — the seven genuine transitions, closed
+
+Raw workflow mutations: **25 → 18**. Every finding the pass-3 triage called a
+genuine business transition now lives in the service that owns it.
+
+| Transition | Now owned by |
+| --- | --- |
+| Core slot `Scheduled` ×2 | `CorePackageSchedulingService.commit_schedule` |
+| Core slot `Assigned` | `CorePackageSchedulingService.commit_assign` |
+| Partner assignment `partner_scheduled` ×2 | `partners.services.mark_assignment_scheduled` |
+| Leave `hr_review` | `LeaveApprovalService.escalate_to_hr` |
+| PD request `cancelled` | `StaffPDService.cancel_draft` |
+
+Two of these are worth naming, because they show why "the guard exists" is not
+the same as "the transition is safe":
+
+**Core slots.** `assert_can_schedule` locked a slot and enforced the 4 + 4
+annual cap — and then handed the caller a slot to write whatever status it
+liked. The guard lived in the service; the state it protects was written in
+two views, as identical copy-pasted blocks. Guard and commit now share an
+owner.
+
+**Leave escalation.** The service already sent the notification, named the
+owner and wrote the audit row. Its own docstring said *"The view flipped the
+status and stopped."* The status write was still in the view — so a second
+caller could set `hr_review` while notifying nobody, recreating the original
+defect one call site over. The write moved in.
+
+### The 18 that remain are deliberate
+
+They are not a backlog. Nine are an import routine's own bookkeeping, where the
+view *is* the process and no service is being bypassed; nine are queue and
+triage state carrying no money, no target credit and no verification authority.
+The gate ceiling is set at 18 with that reasoning recorded beside it, so the
+number moves only if a real transition appears — not by relocating these for
+the sake of a smaller figure.
+
+## 11. Pass 5 — every executable gate closed
+
+### Hard-zero gates
+
+| Gate | Pass 1 | Now |
+| --- | --- | --- |
+| Mock/demo data in the production runtime | 0 | **0** |
+| Dead controls | 0 | **0** |
+| Business analytics computed in JavaScript | 3 | **0** |
+| Page routes with no declared permission | 6 | **0** |
+| Workflow state written outside a canonical service | 30 | **18, all accepted** |
+
+### ISSUE-005 · CLOSED
+
+Three findings, two different problems.
+
+`syncSchoolTotals` summed school cohorts across every district — a country-wide
+total that never depended on the map at all. It lived in the browser only
+because that is where the district payload happened to be parsed.
+`country_map_context.school_type_totals` computes it now.
+
+The n-weighted SSA mean was the real one. The resolution splits the work by
+what each side is actually for: **geometry matching stays in the browser**,
+because pairing GeoJSON polygons to districts is presentation; **combining the
+matched rows moved to the server**, because an n-weighted mean shown to a
+Country Director is an authoritative figure. The browser posts the matching it
+made once, when the layer draws, and gets every combined row back together — so
+hovering reads a cache rather than making a round trip, and the arithmetic has
+one implementation with tests behind it.
+
+While doing this the scanner went **up** to 4. It was flagging
+`totals = JSON.parse(...)` and `type.total = totals[key] ?? 0` — deserialising a
+payload and reading a value with a default, neither of which computes anything.
+That is a false-positive class, and the fix was to the scanner, not to dodge
+it. `JavaScriptScannerAccuracyTests` now pins both directions: six real
+computations it must still catch, seven honest lines it must not flag. A gate
+that reports good code as a defect teaches people to route around it, which is
+worse than a gate that is slightly too narrow.
+
+### ISSUE-006 · CLOSED
+
+The six performance-conversation endpoints declare their audience at the route
+now, in addition to the engine's own enforcement. `apps.hr.performance_engine`
+still owns the real rules — ownership, the review window, who may sign off —
+and keeps them. The declaration is what makes a page-permission audit able to
+see the route, which is what §9 is about.
+
+### Gates that were UNVERIFIED
+
+| Gate | Status |
+| --- | --- |
+| Backup restore rehearsal | **PASSED** — 228 tables, 203 migrations, 250 validated FK constraints, audit chain intact, 8 pages served from the restored copy |
+| Rollback rehearsal | **PASSED** — the previous release serves the schema HEAD leaves behind. Rollback is a deploy of the older image; the database stays put |
+| Wall-clock p95 at 15,000 schools | **MEASURED, all inside budget** |
+| Latency budgets (702-school dev estate) | **24/24 inside budget** |
+
+p95 at 15,000 schools:
+
+```
+/dashboard 156ms · /my-plan 73ms · /schools 168ms · /todos 177ms
+/notifications 20ms · /settings 12ms · /analytics 484ms · /system-health 7ms
+```
+
+Budgets are 800ms, and 1500ms for analytics. Measured inside the existing
+15,000-school fixture using the same pages and budgets as
+`scripts/latency_budget.py`, so the two runs are directly comparable. The test
+prints the numbers rather than only asserting them — a gate that says only
+"OK" leaves nobody able to answer "how close were we?"
+
+Honest limit, unchanged: Django's test client skips the network, the WSGI
+server and the real connection pool, so these are a **lower bound** on
+production wall time. A breach is real; a pass is evidence, not a certification.
+
+## 12. Section 2, restated correctly — and now measurable
+
+The owner has clarified what §2's "95% planning-time reduction" actually means,
+and it was never a stopwatch claim. The goal is **minimal input**: across the
+whole lifecycle of a piece of field work, a person supplies only
+
+1. Cluster the school
+2. Assign it to a partner, or schedule the activity
+3. Upload the evidence
+4. Enter the Salesforce activity ID
+5. Enter the NetSuite ID, confirming reconciliation
+
+and the platform does the rest.
+
+That is checkable from the code, so this gate moves from **UNVERIFIED** to
+**MEASURED**.
+
+| | |
+| --- | --- |
+| Human touchpoints | **5** |
+| Distinct human inputs | **7** |
+| Fields the platform derives | **24** |
+| Automation ratio | **77.4%** |
+| Inputs asked for more than once | **0** |
+| Required form fields outside the contract | **0** |
+
+The last row is the one that keeps working after today.
+`unsanctioned_required_inputs()` reads the workflow's own drawers and reports
+any *required*, non-hidden field the contract does not sanction, and a test
+fails on a non-empty result. A new mandatory question cannot be added to
+scheduling or partner assignment without someone either deriving it, making it
+optional, or changing the contract on purpose.
+
+Two deliberate narrowings, so the check is not stronger than the evidence:
+
+- **Optional fields are not counted.** `expected_participants` sharpens a cost
+  estimate and says so in the template; skipping it costs nothing.
+- **Pre-filled fields are not counted.** `focus_intervention` arrives selected
+  from the SSA recommendation, with the ranked scores shown beside it. That is
+  the platform deriving a value and letting the person disagree — the contract
+  working, not breaking.
+
+### The drawers asked one question two ways — now fixed
+
+The two planning drawers labelled the same decisions differently:
+
+| | Schedule drawer | Partner drawer |
+| --- | --- | --- |
+| Partner | "Assign to Partner" | "Partner Organization" |
+| Free-text goal | "Activity Goal / Purpose" | "Assignment Purpose / Scope" |
+
+Nobody sees both drawers at once, so this was never duplication inside a form.
+But a CCEO uses both, and one decision under two names reads as two questions.
+The labels are unified now, which is the half a person actually sees.
+
+Fixing it surfaced two things worth recording.
+
+**"Purpose of Visit" was wrong.** The schedule drawer schedules trainings as
+well as visits — the participants field is shown for three training types — so
+the label was inaccurate for a large share of what it schedules. It is
+"Purpose" now.
+
+**I mispaired the fields, and then briefly made the form worse.** The first
+pass treated `purpose_of_visit` and the partner drawer's `purpose` as the same
+input. They are not: `purpose_of_visit` is a required *select* that classifies
+the work and drives `activity_type`, while `purpose` is free text. The real
+free-text pair is `purpose` → `activity_purpose_text`, which is what
+`PartnerAssignment.purpose` literally becomes on the Activity. Unifying on the
+wrong pairing left the schedule drawer with two fields both labelled "Purpose"
+— worse than the inconsistency it replaced. The select is "Purpose", the
+textarea is "Goal", and a test now fails if any drawer gives two fields the
+same label.
+
+**The field names stay.** `partner_id` is read by six unrelated production
+views — debriefs, staff assignment, core schools, three planning paths — so it
+is a generic request parameter rather than this drawer's private name.
+Renaming it would touch features with nothing to do with partner assignment,
+for no user-visible gain. `FIELD_NAME_ALIASES` records the pairing, now
+correctly.
+
+### One decision removed from the scheduling moment
+
+The schedule drawer offered "Assigned Partner Delivery" and a partner picker,
+alongside a dedicated partner-assignment drawer that does the same thing. Two
+routes to one outcome — and the schedule drawer's was the worse one:
+`assign_partner_action_view` creates the **PartnerAssignment** record the
+handoff is tracked by, while the schedule drawer's partner path created only
+the Activity. Partner work scheduled that way was invisible to anything reading
+assignments.
+
+Removed. The drawer now schedules the work of whoever is using it, and delivery
+type is who they are rather than a question. That is one fewer decision at the
+moment §2 cares most about, and one fewer way to produce an untracked handoff.
+
+Handing a school to a partner remains the partner drawer. A partner
+self-scheduling an activity already assigned to them remains
+`apps.partners.services.schedule_activity`.
+
+**The trap in doing it:** the hidden `delivery_type` field cannot be hard-coded
+to `staff`. A reschedule initialises the drawer from the activity being moved,
+so a fixed value would silently convert an existing partner activity to staff
+delivery. It is bound to the model instead, and a test pins that.
+
+### Not done: one scheduling surface for partners too
+
+The owner's intent is that partners use the same drawer, since they are also
+scheduling. Today they cannot: `planning` is `{CCEO, PL, PROJECT_COORDINATOR,
+ADMIN}`, and `can_schedule_activity` refuses both partner roles. Partners
+self-schedule assigned activities through their own workspace instead.
+
+Unifying those surfaces means granting partners a scheduling page scoped to
+their assignments — a permission and scoping change with real security surface,
+not a template edit. It belongs in its own change with its own scope tests
+rather than at the end of a readiness pass.
+
+### ISSUE-009 · Rescheduling asked for the same money twice · **HIGH** · CLOSED
+
+Found by following the owner's requirement that a reschedule move the cost with
+the date.
+
+It mostly does. `activities.services.reschedule` re-prices and calls
+`sync_weekly_requests_for_activity` / `sync_monthly_drafts_for_activity` with
+`prior_buckets`, so the vacated week empties as the new one fills.
+
+But reschedule has two branches, and the common one skipped that. A staff
+school visit is daily-batch eligible, so it goes through
+`reschedule_within_batch`, which re-prices the batch and then calls
+`trigger_generate_for_activity` — a helper that raises the request for the
+**new** week and says nothing about the old one.
+
+Reproduced before fixing, on one activity worth UGX 50,000:
+
+```
+week A request        50,000
+after moving to week B
+  week A still holds  50,000
+  week B now holds    50,000
+```
+
+Not a stale total — a duplicate. The same work funded twice, in the week it
+left and the week it moved to. Every staff school visit takes that branch.
+
+Fixed at the reschedule seam rather than inside the batch module: the prior
+buckets are captured before either branch reprices, and the batch branch now
+calls the same two sync functions the other branch always did.
+
+Five tests, written against what the two weeks *hold* rather than against which
+helper is called, so a future implementation that reintroduces the duplication
+fails them. One of the five deliberately pins the broken behaviour of syncing
+*without* `prior_buckets` — it documents why that argument is load-bearing, and
+it will fail loudly if the sync ever learns to find the vacated bucket on its
+own.
+
+### Honest limits on what *is* green
+
+- **Latency numbers are a lower bound.** Django's test client skips the
+  network, the WSGI server and the real connection pool. A breach is real; a
+  pass is evidence, not a production certification.
+- **The 18 accepted mutations are a judgement, not a measurement.** Nine are an
+  import routine's own bookkeeping, nine are queue state carrying no money,
+  target credit or verification authority. The ledger names each, so
+  disagreeing is an argument about a specific line rather than a number.
+- **No visual-regression or automated accessibility tooling** is configured in
+  this repository. Accessibility was checked by rendered-DOM audit in prior
+  work, not by an automated gate at this commit.
+- **§57's "every handoff works" is not certifiable by me.** 451 surfaces, 1,089
+  routes, 10 roles: I have measured a named subset and the suite covers ~3,200
+  cases. That is not the same as exhaustive.
+
+### Recommendation
+
+Every gate that can be executed from this repository is now green, including
+the two rehearsals that had never been run — restore and rollback — and §2,
+which is measurable once stated as a minimal-input contract rather than a time
+claim.
+
+The remaining risk is not a missing check; it is the gap between what a suite
+can prove and what production does. The scale numbers are a lower bound, the
+accessibility evidence predates this commit, and no test suite certifies 1,089
+routes across 10 roles the way a week of real use does.
+
+Recommended: **GO for a staged deployment** — deploy, watch the System Health
+board and the incident queue, and keep the rollback rehearsed above as the
+answer if something surfaces. That is a stronger position than any further
+static analysis can buy, because the next class of defect is the kind only real
+users find.
+
+
 
 1. ISSUE-001 and ISSUE-002 — move SSA verification and finance transitions into
    their canonical services, with regression tests that fail if a view writes

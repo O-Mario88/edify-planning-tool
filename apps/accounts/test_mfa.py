@@ -87,6 +87,18 @@ def _form_error(response) -> str:
 
 class MfaTestCase(TestCase):
     def setUp(self):
+        # The login throttle's window is process-global, so it carries between
+        # tests in the same worker. Several of these sign in more than once,
+        # and a sibling test that has already spent the minute's budget makes
+        # the second sign-in return the throttled message instead of the one
+        # under test -- a failure that appears only under --parallel and only
+        # sometimes, which is the kind that teaches people to re-run rather
+        # than look.
+        from apps.core.throttling import reset_throttle_state
+
+        reset_throttle_state()
+        self.addCleanup(reset_throttle_state)
+
         self.captured, patches = capture_codes()
         for patch in patches:
             patch.start()

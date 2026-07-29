@@ -8,7 +8,7 @@ of a weighted mean is one more than can be kept honest.
 
 from __future__ import annotations
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from apps.analytics.subregion_analytics import (
     combine_district_rows,
@@ -122,3 +122,85 @@ class ServerAndClientAgreeTests(SimpleTestCase):
         ]
         # (6.4*25 + 7.1*40 + 5.9*15) / 80 = 532.5 / 80 = 6.65625 -> 6.66
         self.assertEqual(weighted_ssa_mean(rows), 6.66)
+
+
+class CombineBoundariesEndpointTests(TestCase):
+    """The map's arithmetic now happens here, so it needs the same guarantees.
+
+    The browser matches GeoJSON polygons to metric rows -- presentation work,
+    and it stays there. It posts that matching once when the layer draws, and
+    the server combines. §40 permits no authoritative business analytic in
+    JavaScript, and an n-weighted SSA mean shown to a Country Director is one.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        from apps.accounts.models import StaffProfile, User
+
+        cls.cd = User.objects.create(
+            id="combine-cd",
+            email="combine-cd@edify.org",
+            name="Combine CD",
+            roles=["CountryDirector"],
+            active_role="CountryDirector",
+            is_active=True,
+        )
+        StaffProfile.objects.create(id="combine-cd-sp", user=cls.cd, title="CD")
+
+    def _post(self, payload, client=None):
+        import json
+
+        from django.test import Client
+
+        client = client or Client()
+        if client is not None and not getattr(client, "_logged_in", False):
+            client.force_login(self.cd)
+            client._logged_in = True
+        return client.post(
+            "/api/analytics/combine-map-boundaries",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+    def test_an_authorised_viewer_gets_combined_rows(self):
+        response = self._post({"groups": {"g1": []}})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("g1", response.json()["combined"])
+
+    def test_an_anonymous_visitor_is_turned_away(self):
+        from django.test import Client
+
+        response = Client().post(
+            "/api/analytics/combine-map-boundaries",
+            data="{}",
+            content_type="application/json",
+        )
+        self.assertIn(response.status_code, (302, 403))
+
+    def test_an_unknown_boundary_key_is_absent_not_fabricated(self):
+        """A historical name matching nothing must not become zeros presented
+        as measurement."""
+        row = self._post({"groups": {"g": ["no-such-key"]}}).json()["combined"]["g"]
+        self.assertIsNone(row["ssa_avg"])
+        self.assertEqual(row["schools"], 0)
+
+    def test_a_malformed_payload_is_refused_rather_than_guessed(self):
+        self.assertEqual(self._post({"groups": "not-an-object"}).status_code, 400)
+
+    def test_the_request_is_bounded(self):
+        """A map draw is a few thousand boundaries; anything more is not one."""
+        response = self._post({"groups": {str(i): [] for i in range(5001)}})
+        self.assertEqual(response.status_code, 400)
+
+    def test_the_template_no_longer_computes_the_weighted_mean(self):
+        """The regression: the arithmetic creeping back into the browser."""
+        import pathlib
+
+        from django.conf import settings
+
+        source = (
+            pathlib.Path(settings.BASE_DIR)
+            / "templates/partials/analytics/regional_performance.html"
+        ).read_text()
+        self.assertNotIn("weightedAverage", source)
+        self.assertIn("fetchCombinedBoundaries", source)

@@ -64,6 +64,7 @@ def report() -> dict:
     data["adminOps"] = _admin_ops()
     data["documents"] = _documents()
     data["unmatchedSsa"] = _unmatched_ssa()
+    data["financeIntegrity"] = _finance_integrity()
     data["evidenceStorage"] = _evidence_storage()
     data["documentationCoverage"] = _documentation_coverage()
     data["referentialIntegrity"] = _referential_integrity()
@@ -164,6 +165,21 @@ def _admin_ops() -> dict:
         from apps.admin_ops.health import admin_ops_health
 
         return admin_ops_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _finance_integrity() -> dict:
+    """Is the money in the week the work is, and asked for once?
+
+    Each of these looks for a relationship defect: every record involved is
+    individually valid, and only the link between them is wrong — which is why
+    they survive until someone reconciles by hand.
+    """
+    try:
+        from apps.budget.health import finance_integrity_health
+
+        return finance_integrity_health()
     except Exception:  # noqa: BLE001 — the health page must render regardless
         return {"checks": []}
 

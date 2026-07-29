@@ -26,6 +26,8 @@ in_school_coaching: 'in_school_coaching_visit'
 },
 setPurpose() { this.activityType = this.purposeActivityTypes[this.purposeOfVisit] || this.activityType },
 setDelivery() {
+/* Kept for the reschedule path, where `delivery` arrives from the activity
+   rather than from a control the person can change. */
 if (this.delivery === 'partner' && !this.partnerPurposes.includes(this.purposeOfVisit)) {
 this.purposeOfVisit = 'ssa_support';
 this.setPurpose();
@@ -54,16 +56,12 @@ this.setPurpose();
 <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Will SSA be collected during this activity?</span>
 <div class="flex flex-col sm:flex-row sm:items-center gap-4 mt-1.5 font-medium text-slate-700">
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collection_expected" value="yes" x-model="ssa_expected" @change="delivery = 'staff'" class="h-4 w-4 edify-primary-text edify-primary-focus">
+<input type="radio" name="ssa_collection_expected" value="yes" x-model="ssa_expected" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>Collect SSA during this activity</span>
 </label>
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
 <input type="radio" name="ssa_collection_expected" value="no" x-model="ssa_expected" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>Proceed without SSA</span>
-</label>
-<label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collection_expected" value="partner" x-model="ssa_expected" @change="delivery = 'partner'" class="h-4 w-4 edify-primary-text edify-primary-focus">
-<span>Assign SSA collection to Partner</span>
 </label>
 </div>
 </div>
@@ -82,7 +80,7 @@ this.setPurpose();
 {% endif %}
 
 <div>
-<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose of Visit</label>
+<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose</label>
 <select
 name="purpose_of_visit"
 id="purpose_of_visit"
@@ -282,39 +280,31 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 {% endif %}
 </div>
 
-<!-- Delivery Type selection -->
-<div>
-<label for="delivery_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
-<select
-name="delivery_type"
-id="delivery_type"
-x-model="delivery"
-@change="setDelivery()"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="staff">Direct Staff Delivery</option>
-<option value="partner">Assigned Partner Delivery</option>
-</select>
+{% comment %}
+  No delivery-type choice here, and no partner picker.
 
-<!-- Partner dropdown if selected -->
-<div x-show="delivery === 'partner'" class="mt-3">
-<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assign to Partner</label>
-<select
-name="assigned_partner_id"
-id="assigned_partner_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="">Select Partner Field Officer...</option>
-{% for p in partners %}
-<option value="{{ p.id }}">{{ p.name }} ({{ p.organization }})</option>
-{% endfor %}
-</select>
-</div>
-</div>
+  Handing a school to a partner is its own workflow with its own drawer, and
+  that path creates the PartnerAssignment record the handoff is tracked by.
+  This drawer used to offer a second route to the same outcome that skipped
+  that record — so partner work scheduled here was invisible to everything
+  that reads assignments.
+
+  This drawer schedules the work of whoever is using it. Delivery type is
+  therefore who they are, not a question: staff scheduling produces staff
+  delivery, and a partner self-scheduling an assigned activity goes through
+  apps.partners.services.schedule_activity.
+{% endcomment %}
+{% comment %}
+    Bound, not hard-coded. `delivery` starts at 'staff' for new work, but a
+    reschedule initialises it from the activity being moved -- so an existing
+    partner-delivered activity keeps its delivery type instead of being
+    silently converted to staff.
+  {% endcomment %}
+  <input type="hidden" name="delivery_type" :value="delivery">
 
 <!-- Activity Goal -->
 <div>
-<label for="activity_purpose_text" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
+<label for="activity_purpose_text" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Goal</label>
 <textarea
 name="activity_purpose_text"
 id="activity_purpose_text"

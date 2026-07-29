@@ -405,19 +405,18 @@ def core_schedule_visit_action(request):
             payload["coreSlotVerified"] = True
             act_data = create_activity(payload, request.user)
 
-            # 2. Update the policy-checked core support slot.
-            slot.status = "Scheduled"
-            slot.activity_id = act_data["id"]
-            slot.scheduled_for = scheduled_date
-            slot.scheduled_month = str(payload.get("plannedMonth"))
-            slot.scheduled_week = payload.get("plannedWeek")
-            slot.assigned_staff_id = responsible_staff_id
-            if partner_id:
-                slot.assigned_partner_id = partner_id
-                slot.owner = "partner"
-            else:
-                slot.owner = "staff"
-            slot.save()
+            # 2. Commit the policy-checked slot through the same service that
+            # locked it, so the 4 + 4 guard and the state it protects share an
+            # owner.
+            CorePackageSchedulingService.commit_schedule(
+                slot,
+                activity_id=act_data["id"],
+                scheduled_for=scheduled_date,
+                scheduled_month=str(payload.get("plannedMonth")),
+                scheduled_week=payload.get("plannedWeek"),
+                assigned_staff_id=responsible_staff_id,
+                partner_id=partner_id,
+            )
 
             # Audit log
             audit_log(
@@ -562,19 +561,18 @@ def core_schedule_training_action(request):
             payload["coreSlotVerified"] = True
             act_data = create_activity(payload, request.user)
 
-            # 2. Update the policy-checked core support slot.
-            slot.status = "Scheduled"
-            slot.activity_id = act_data["id"]
-            slot.scheduled_for = scheduled_date
-            slot.scheduled_month = str(payload.get("plannedMonth"))
-            slot.scheduled_week = payload.get("plannedWeek")
-            slot.assigned_staff_id = responsible_staff_id
-            if partner_id:
-                slot.assigned_partner_id = partner_id
-                slot.owner = "partner"
-            else:
-                slot.owner = "staff"
-            slot.save()
+            # 2. Commit the policy-checked slot through the same service that
+            # locked it, so the 4 + 4 guard and the state it protects share an
+            # owner.
+            CorePackageSchedulingService.commit_schedule(
+                slot,
+                activity_id=act_data["id"],
+                scheduled_for=scheduled_date,
+                scheduled_month=str(payload.get("plannedMonth")),
+                scheduled_week=payload.get("plannedWeek"),
+                assigned_staff_id=responsible_staff_id,
+                partner_id=partner_id,
+            )
 
             # Audit log
             audit_log(
@@ -720,12 +718,10 @@ def core_assign_partner_action(request):
                 support_type=support_type,
             )
 
-            # 2. Reserve the policy-checked CoreActivitySlot.
-            slot.status = "Assigned"
-            slot.assigned_partner_id = partner_id
-            slot.assigned_partner_name = partner.name
-            slot.owner = "partner"
-            slot.save()
+            # 2. Reserve the slot through the service that locked it.
+            CorePackageSchedulingService.commit_assign(
+                slot, partner_id=partner_id, partner_name=partner.name
+            )
 
             # Audit log
             audit_log(

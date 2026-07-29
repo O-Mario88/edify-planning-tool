@@ -293,3 +293,32 @@ def subcounty_insight(
 
 
 __all__ = ["boundary_key", "boundary_name", "subcounty_insight"]
+
+
+def combine_boundaries(groups: dict[str, list[str]]) -> dict[str, dict]:
+    """Combine sub-county rows for map boundaries that span several of them.
+
+    The regional map matches GeoJSON polygons to metric rows in the browser --
+    geometry is a presentation concern and belongs there. Combining the matched
+    rows is not: an n-weighted SSA mean is an authoritative figure, and §40
+    permits no authoritative business analytic in JavaScript.
+
+    So the browser sends the matching it made, once, when the layer is drawn,
+    and gets every combined row back in one response. Hovering then reads a
+    cached answer; no round trip per boundary, and the arithmetic has one
+    implementation with tests behind it.
+
+    Unknown keys are ignored rather than rejected: a boundary whose historical
+    name matches nothing is already handled as unmatched upstream, and failing
+    the whole request over one would blank the entire map.
+    """
+    from apps.analytics.subregion_analytics import combine_district_rows
+
+    entries = subcounty_insight()["entries"]
+    by_key = {row["key"]: row for row in entries}
+
+    combined: dict[str, dict] = {}
+    for feature_id, keys in groups.items():
+        rows = [by_key[key] for key in keys if key in by_key]
+        combined[str(feature_id)] = combine_district_rows(rows)
+    return combined

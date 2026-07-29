@@ -350,6 +350,11 @@ urlpatterns = [
         dashboard_views.planning_progress_fragment_view,
         name="planning_progress_fragment",
     ),
+    path(
+        "api/analytics/combine-map-boundaries",
+        analytics_views.combine_map_boundaries_view,
+        name="combine_map_boundaries",
+    ),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
     path(
         "my-plan/<str:activity_id>",

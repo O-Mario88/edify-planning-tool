@@ -123,10 +123,21 @@ _JS_VISUAL_NAMES = re.compile(
 _JS_REDUCE = re.compile(r"\.reduce\s*\(")
 #: An assignment whose right-hand side is a literal, or a plain read of a
 #: server-supplied field with a fallback. No arithmetic is being performed.
+#:
+#: Both defaulting operators are covered, and the read may be a property or a
+#: bracket index: `x = totals[key] ?? 0` reads a number the server decided,
+#: exactly as `x = data.total || 0` does. Recognising one and not the other
+#: reported honest code as a defect, which is the failure mode that teaches
+#: people to route around a gate.
 _JS_ASSIGNMENT_ONLY = re.compile(
     r"=\s*(?:\d+(?:\.\d+)?|null|undefined|\[\]|\{\}|"
-    r"[\w.]+\s*\|\|\s*[\d\[\{'\"]|[\w.$]+)\s*[;,)]?\s*$"
+    r"[\w.$]+(?:\[[^\]]+\])?\s*(?:\|\||\?\?)\s*[\d\[\{'\"]|"
+    r"[\w.$]+(?:\[[^\]]+\])?)\s*[;,)]?\s*$"
 )
+#: Deserialising a server payload is not computing one. `JSON.parse(` opening a
+#: multi-line call was read as arithmetic purely because the variable it lands
+#: in is called `totals`.
+_JS_DESERIALISE = re.compile(r"=\s*JSON\.parse\s*\(")
 
 
 def scan_javascript_business_maths() -> list[Finding]:
@@ -151,6 +162,8 @@ def scan_javascript_business_maths() -> list[Finding]:
                     continue
             if _JS_VISUAL_NAMES.search(line):
                 continue  # chart geometry, not business arithmetic
+            if _JS_DESERIALISE.search(line):
+                continue  # reading the server's payload, not computing one
             if _JS_ASSIGNMENT_ONLY.search(line):
                 # `x = 0` and `x = data.total || 0` read or initialise a value
                 # the server already decided. The gate is about arithmetic the

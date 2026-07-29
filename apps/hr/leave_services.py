@@ -632,7 +632,15 @@ class LeaveApprovalService:
         The view flipped the status and stopped. Everything that makes an
         escalation an escalation — a named owner, a notification, an audit
         entry — was absent, so the request became invisible instead of urgent.
+
+        The status write now lives here too. Leaving it in the view meant the
+        transition and the things that make it meaningful had different owners,
+        and a second caller could set `hr_review` while notifying nobody —
+        recreating the original defect one call site over.
         """
+        if leave.status != "hr_review":
+            leave.status = "hr_review"
+            leave.save(update_fields=["status", "updated_at"])
         try:
             from apps.accounts.models import User
             from apps.notifications.services import WorkflowNotificationService

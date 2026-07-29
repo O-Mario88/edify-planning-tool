@@ -481,6 +481,80 @@ class ScaleGateTest(TestCase):
     # follows redirects, had been printing a "/my-plan CountryDirector" row
     # that was really the dashboard measured twice.
 
+    # ── Wall-clock latency (§46) ──────────────────────────────────────────
+    #
+    # The tests above prove query counts do not grow with the estate. That is
+    # the stronger guarantee and it is not the same claim: a page can hold its
+    # query count and still be slow, because the queries themselves get slower
+    # as tables grow.
+    #
+    # These use the same pages, roles and budgets as
+    # scripts/latency_budget.py, which runs against the 702-school dev estate,
+    # so two runs of one method at two sizes answer what §46 actually asks.
+    #
+    # Not a production certification: the test client skips the network, the
+    # WSGI server and the real connection pool, so these are a lower bound on
+    # production wall time. A breach is real; a pass is evidence.
+
+    def _p95(self, url):
+        samples = []
+        for index in range(LATENCY_SAMPLES + LATENCY_WARMUP):
+            measurement = self._measure(url, allow_statuses=(200, 302))
+            if index >= LATENCY_WARMUP:
+                samples.append(measurement["seconds"] * 1000)
+        samples.sort()
+        position = min(
+            int(round(0.95 * (len(samples) - 1))),
+            len(samples) - 1,
+        )
+        return samples[position]
+
+    def test_every_page_meets_its_objective_at_fifteen_thousand_schools(self):
+        breaches = []
+        measured = {}
+        for url, budget in SLO_MS.items():
+            p95 = self._p95(url)
+            measured[url] = p95
+            if p95 > budget:
+                breaches.append(f"{url} p95={p95:.0f}ms > {budget}ms")
+
+        report = " · ".join(f"{u}={v:.0f}ms" for u, v in measured.items())
+        # Printed, not just asserted. A gate that only says "OK" leaves nobody
+        # able to answer "how close were we?", which is the question that
+        # matters between one release and the next.
+        print(
+            f"\n  p95 at {School.objects.count():,} schools: {report}",
+            flush=True,
+        )
+        self.assertEqual(
+            breaches,
+            [],
+            f"Latency objectives breached at {School.objects.count():,} "
+            f"schools: {breaches}. Measured: {report}",
+        )
+
+    def test_latency_does_not_grow_when_the_estate_grows(self):
+        """The shape that matters, and the one a single measurement cannot show.
+
+        A page that is fast at 15,000 and twice as slow at 18,000 is a page
+        that will be slow at 30,000. Growth is measured on the heaviest
+        country-wide page rather than all of them, to keep the fixture build
+        to one pass.
+        """
+        before = self._p95("/dashboard")
+        self._grow()
+        after = self._p95("/dashboard")
+
+        # Generous: this is looking for proportional growth, not jitter. A
+        # 20% estate increase must not cost anything like 20% more time.
+        self.assertLess(
+            after,
+            max(before * 2.0, before + 250),
+            f"/dashboard went {before:.0f}ms -> {after:.0f}ms when the estate "
+            f"grew by {GROWTH_SCHOOLS:,} schools -- that is proportional "
+            f"growth, not a constant.",
+        )
+
     def test_cd_dashboard_roster_growth_costs_only_the_rebuild(self):
         """Add CCEOs; the dashboard may pay the per-person rebuild for each,
         and nothing else. The regression this catches is exact: before the
@@ -534,3 +608,23 @@ def _analyze():
     """
     with connection.cursor() as cursor:
         cursor.execute("ANALYZE")
+
+
+# Section 46's objectives, in milliseconds. The same numbers
+# scripts/latency_budget.py gates on against the dev estate, so the two runs
+# are directly comparable.
+SLO_MS: dict[str, int] = {
+    "/dashboard": 800,
+    "/my-plan": 800,
+    "/schools": 800,
+    "/todos": 800,
+    "/notifications": 800,
+    "/settings": 800,
+    "/analytics": 1500,
+    "/system-health": 1500,
+}
+
+# Samples per page. Enough for a stable p95 without tripling the fixture's
+# already-substantial build time.
+LATENCY_SAMPLES = 7
+LATENCY_WARMUP = 2
