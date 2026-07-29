@@ -1,4 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block drawer_title %}{% if selected_area_label %}{{ selected_area_label }} · Team Progress{% else %}Team Targets Detail Matrix{% endif %}{% endblock %}
@@ -8,11 +9,12 @@
 <div class="space-y-3 text-slate-700">
   {% if rows %}
   <div class="overflow-x-auto rounded-surface border border-slate-100">
-    <table class="w-full min-w-[900px] edify-text-caption">
+    {% paginate heads "heads_page" as heads_pager %}
+<table class="w-full min-w-[900px] edify-text-caption">
       <thead>
         <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
           <th class="py-2 px-3 text-left sticky left-0 edify-surface z-10">Staff · Target Area</th>
-          {% for h in heads %}
+          {% for h in heads_pager.rows %}
           <th class="py-2 px-2 text-center border-l border-slate-100{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}" colspan="3">
             <span class="block text-slate-600 font-bold">{{ h.label }}</span>
             <span class="block edify-text-caption text-slate-400 normal-case">{{ h.sub }}{% if h.key == quarter %} · Current quarter{% endif %}</span>
@@ -39,6 +41,7 @@
         {% endfor %}
       </tbody>
     </table>
+{% include "components/table_pager.html" with pager=heads_pager param="heads_page" %}
   </div>
   <p class="edify-text-caption text-slate-400 font-medium">Quarter and FY values are derived sums of monthly targets and validated achievements — never entered directly.</p>
   {% else %}

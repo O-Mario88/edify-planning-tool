@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Upload History — Edify{% endblock %}
 
@@ -17,6 +18,7 @@
 <!-- Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate batches "batches_page" as batches_pager %}
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
@@ -28,7 +30,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for batch in batches %}
+{% for batch in batches_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-800 block">{{ batch.file_name|default:batch.original_file_name }}</span>
@@ -97,6 +99,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=batches_pager param="batches_page" %}
 </div>
 </div>
 

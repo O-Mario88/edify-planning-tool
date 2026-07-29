@@ -17,6 +17,8 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 <div class="p-3.5 rounded-surface bg-emerald-50 border border-emerald-200 text-[12px] font-bold text-emerald-700">{{ action_ok }}</div>
 {% endif %}
 
+{% include "partials/fund_requests/period_budget_tabs.html" %}
+
 {% if receipt_pending_plans %}
 <div class="space-y-2">
   {% for p in receipt_pending_plans %}

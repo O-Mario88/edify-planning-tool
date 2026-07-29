@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Staff Setup Queue — Edify{% endblock %}
 
@@ -17,6 +18,7 @@
 <!-- Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate unmatched_schools "unmatched_schools_page" as unmatched_schools_pager %}
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
@@ -28,7 +30,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for school in unmatched_schools %}
+{% for school in unmatched_schools_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-800 block">{{ school.name }}</span>
@@ -88,6 +90,7 @@ No unmatched school records currently in queue. Data integrity is clean!
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=unmatched_schools_pager param="unmatched_schools_page" %}
 </div>
 </div>
 

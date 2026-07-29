@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Policy Compliance — Edify{% endblock %}
 
@@ -39,7 +40,8 @@
   </form>
 
   <div class="card overflow-x-auto">
-    <table class="w-full text-left">
+    {% paginate rows "rows_page" as rows_pager %}
+<table class="w-full text-left">
       <caption class="sr-only">Policy acknowledgement status within your scope</caption>
       <thead>
         <tr class="border-b border-slate-100">
@@ -57,7 +59,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-50">
-        {% for row in rows %}
+        {% for row in rows_pager.rows %}
         <tr class="text-[12px] font-medium text-slate-600{% if row.overdue %} bg-rose-50/40{% endif %}">
           <td class="px-3 py-2.5 font-semibold text-slate-700">{{ row.user }}</td>
           <td class="px-3 py-2.5">{{ row.role }}</td>
@@ -76,6 +78,7 @@
         {% endfor %}
       </tbody>
     </table>
+{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
   </div>
 
   {% if can_read_comments %}

@@ -1386,6 +1386,9 @@
   .min-w-6 {
     min-width: calc(var(--spacing) * 6);
   }
+  .min-w-8 {
+    min-width: calc(var(--spacing) * 8);
+  }
   .min-w-11 {
     min-width: calc(var(--spacing) * 11);
   }
@@ -4909,6 +4912,13 @@
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-violet-700);
+      }
+    }
+  }
+  .hover\:bg-white {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-white);
       }
     }
   }

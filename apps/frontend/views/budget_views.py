@@ -107,9 +107,28 @@ def _scoped_base_querysets(request, fy):
         wfr_qs = wfr_qs.filter(q_scope)
         budget_qs = budget_qs.filter(q_scope)
 
-        q_act_scope = Q(responsible_staff_id=user.user_id)
+        # `Activity.responsible_staff_id` holds a StaffProfile CUID or a User
+        # CUID depending on which the scheduler had -- activities.services
+        # .create() prefers the StaffProfile and falls back to the User. This
+        # matched only the User id, so a CCEO whose work was stamped with their
+        # StaffProfile saw almost none of it: 13 activities out of 213 for the
+        # account this was found on.
+        #
+        # The page then opened on "the newest scheduled activity it could see",
+        # which was April, and the monthly, quarterly and annual budgets came
+        # back empty because the cost lines behind them were invisible too. The
+        # month label was never wrong; the scope beneath it was.
+        #
+        # Both identity spaces, the same way my_plan.services.get covers them.
+        own_identities = {user.user_id}
+        own_identities.update(scope.staff_ids or [])
+        own_identities.discard(None)
+
+        q_act_scope = Q(responsible_staff_id__in=own_identities or {"__none__"})
         if supervised_user_ids:
             q_act_scope |= Q(responsible_staff_id__in=supervised_user_ids)
+        if scope.supervised_staff_ids:
+            q_act_scope |= Q(responsible_staff_id__in=scope.supervised_staff_ids)
         activities_qs = activities_qs.filter(q_act_scope)
 
     # Apply dropdown filters. NOTE: StaffProfile has no `district_id` field —
@@ -183,6 +202,17 @@ def _export_weekly_fund_requests_csv(wfr_qs):
     return response
 
 
+def _weekly_status_label(weekly_request) -> str:
+    """The canonical stage label for one weekly request, or "" if there is none."""
+    if not weekly_request:
+        return ""
+    from apps.fund_requests.disbursement_dashboard_service import (
+        weekly_status_buckets,
+    )
+
+    return weekly_status_buckets([weekly_request]).get(weekly_request.id, "")
+
+
 def _build_fund_requests_context(request):
     """The full Fund Requests page context (weekly card, monthly preview,
     KPIs, insights, breakdown). Shared by the GET page render and by the
@@ -195,6 +225,11 @@ def _build_fund_requests_context(request):
     quarter = request.GET.get("quarter", "").strip()
     month_name = request.GET.get("month", "").strip()
     active_tab = request.GET.get("tab", "weekly").strip()
+    # Which budget horizon the period card is showing. The week is the default
+    # because it is the one that moves money.
+    period_tab = request.GET.get("period_tab", "week").strip().lower()
+    if period_tab not in ("week", "month", "quarter", "fy"):
+        period_tab = "week"
     request_type = request.GET.get("request_type", "").strip()
 
     MONTH_MAP = {
@@ -655,6 +690,101 @@ def _build_fund_requests_context(request):
         "total": school_visits_total + trainings_total + meetings_total + admin_total,
     }
 
+    # The month is one of three periods a CCEO plans against, and the page only
+    # ever showed the month. Without the quarter and the year beside it, a
+    # month reading zero says nothing about whether that is a quiet month or an
+    # empty year.
+    #
+    # Calendar months, matching month_num and the `planned_date__month` filters
+    # above. The FY quarter is resolved through the canonical helper rather
+    # than `((month-1)//3)+1`, which is off by one for every month here.
+    _quarter_months = {
+        "Q1": (10, 11, 12),
+        "Q2": (1, 2, 3),
+        "Q3": (4, 5, 6),
+        "Q4": (7, 8, 9),
+    }.get(quarter, ())
+    quarter_total = (
+        budget_qs.filter(planned_date__month__in=_quarter_months).aggregate(
+            total=Sum("amount")
+        )["total"]
+        or 0
+    )
+    # budget_qs is already constrained to this fiscal year by
+    # _scoped_base_querysets, so this is the FY figure without a second filter.
+    annual_total = budget_qs.aggregate(total=Sum("amount"))["total"] or 0
+
+    from urllib.parse import urlencode
+
+    _period_tab_query = urlencode(
+        {
+            key: value
+            for key, value in request.GET.items()
+            if value and key != "period_tab"
+        }
+    )
+    if _period_tab_query:
+        _period_tab_query += "&"
+
+    week_total = (
+        budget_qs.filter(week_start_date=selected_week_start).aggregate(
+            total=Sum("amount")
+        )["total"]
+        or 0
+    )
+
+    # Four horizons in one shape, because a CCEO plans against all of them and
+    # the page only ever showed the month. The week is the one that moves
+    # money -- disbursement is weekly -- so it is the default tab and the only
+    # one that carries a submit control.
+    period_budgets = {
+        "active": period_tab,
+        "tabs": [
+            {
+                "key": "week",
+                "label": "Week",
+                "period_label": (
+                    f"{selected_week_start:%d %b} – "
+                    f"{selected_week_start + timedelta(days=6):%d %b %Y}"
+                ),
+                "total": week_total,
+                "caption": "Disbursed weekly",
+                "submits": True,
+            },
+            {
+                "key": "month",
+                "label": "Month",
+                "period_label": f"{month_name} {year_num}",
+                "total": monthly_totals_by_type["total"],
+                "caption": "Planned this month",
+                "submits": False,
+            },
+            {
+                "key": "quarter",
+                "label": "Quarter",
+                "period_label": f"{quarter} FY{fy}",
+                "total": quarter_total,
+                "caption": "Planned this quarter",
+                "submits": False,
+            },
+            {
+                "key": "fy",
+                "label": "FY",
+                "period_label": f"FY {fy}",
+                "total": annual_total,
+                "caption": "Planned this financial year",
+                "submits": False,
+            },
+        ],
+        # Kept flat as well; the monthly preview card reads these directly.
+        "month_label": f"{month_name} {year_num}",
+        "month_total": monthly_totals_by_type["total"],
+        "quarter_label": f"{quarter} FY{fy}",
+        "quarter_total": quarter_total,
+        "annual_label": f"FY {fy}",
+        "annual_total": annual_total,
+    }
+
     # Monthly Request Status — driven by the REAL monthly FundRequest (the
     # same model/state apps.fund_requests.pl_approval_service and
     # disbursement_dashboard_service use for PL approval + disbursement),
@@ -876,6 +1006,20 @@ def _build_fund_requests_context(request):
         "source_activities": source_activities,
         "monthly_weeks": monthly_weeks,
         "monthly_totals_by_type": monthly_totals_by_type,
+        "period_budgets": period_budgets,
+        # The week's request, for the submit control on the week tab. Only an
+        # owner-confirmable request may be submitted; anything already in the
+        # approval chain says so instead of offering the button again.
+        "active_wfr_id": getattr(active_wfr, "id", None),
+        "active_wfr_can_submit": getattr(active_wfr, "status", None)
+        == "pending_responsible_confirmation",
+        # WeeklyFundRequest.status carries no `choices`, so there is no
+        # get_status_display. `weekly_status_buckets` is the canonical label
+        # for a weekly request's stage -- the same one the Disbursement
+        # Dashboard and the Accountant home read -- so this page cannot
+        # describe a request differently from the pages that act on it.
+        "active_wfr_status_label": _weekly_status_label(active_wfr),
+        "period_tab_query": _period_tab_query,
         "monthly_stepper": monthly_stepper,
         "insights": insights,
         "breakdown": breakdown,

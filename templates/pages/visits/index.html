@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Visits Log — Edify{% endblock %}
 
@@ -36,6 +37,7 @@ Schedule
 {% if visits %}
 {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">
+{% paginate visits "visits_page" as visits_pager %}
 <table class="w-full text-[12px]">
 <thead>
 <tr class="bg-slate-50/60 border-b border-slate-100">
@@ -48,7 +50,7 @@ Schedule
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% for v in visits %}
+{% for v in visits_pager.rows %}
 <tr class="hover:bg-slate-50/60 transition-colors group">
 <td class="px-5 py-3.5">
 <p class="font-bold text-slate-800">{% if v.school %}{{ v.school.name }}{% else %}No school{% endif %}</p>
@@ -83,6 +85,7 @@ Schedule
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=visits_pager param="visits_page" %}
 </div>
 {% else %}
 <div class="p-12 text-center">

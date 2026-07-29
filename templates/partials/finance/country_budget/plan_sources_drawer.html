@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}View Plan Sources drawer. Params: fy, month, month_label, rows, count{% endcomment %}
 <div x-data="{ active: true }" x-show="active" x-cloak
      @close-drawer.window="active=false; setTimeout(()=>$el.remove(), 220)"
@@ -18,7 +19,8 @@
     <div class="overflow-y-auto flex-1">
       {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
       <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
+      {% paginate rows "rows_page" as rows_pager %}
+<table class="w-full text-left border-collapse">
         <thead class="sticky top-0 bg-slate-50/95 backdrop-blur">
           <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-4 py-2.5">Activity</th>
@@ -30,7 +32,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          {% for r in rows %}
+          {% for r in rows_pager.rows %}
           <tr class="hover:bg-slate-50/50 text-[12px]">
             <td class="px-4 py-2.5">
               <p class="font-bold text-slate-800">{{ r.activity_type }}</p>
@@ -50,6 +52,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
       </div>
     </div>
   </div>

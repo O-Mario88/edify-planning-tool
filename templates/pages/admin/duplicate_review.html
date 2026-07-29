@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Duplicate Review — Edify{% endblock %}
 
@@ -18,6 +19,7 @@
 <!-- Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
+{% paginate issues "issues_page" as issues_pager %}
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
@@ -29,7 +31,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for issue in issues %}
+{% for issue in issues_pager.rows %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-900 block">{{ issue.school.name }}</span>
@@ -58,6 +60,7 @@ No active duplicate risks found in directory.
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=issues_pager param="issues_page" %}
 </div>
 </div>
 

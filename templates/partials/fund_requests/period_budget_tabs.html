@@ -1,0 +1,64 @@
+{% load frontend_filters %}
+{% comment %}
+  The same budget, at the four horizons a person plans against.
+
+  Real links rather than an ARIA tablist: each one navigates and the server
+  renders the panel, so there is no tabpanel widget to promise a screen reader.
+  aria-current marks the one in view.
+
+  Only the week carries a submit control. Money is disbursed weekly, so the
+  week is the request; the month, quarter and year are the plan around it and
+  approving them would mean nothing.
+
+  Zero renders as zero. An empty week is a fact about the plan, and a dash
+  would let it read as "not loaded".
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4"
+         aria-labelledby="period-budget-title">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">My Budget</h3>
+    <nav class="flex items-center gap-1 p-1 rounded-control bg-slate-50 border border-slate-200/70"
+         aria-label="Budget period">
+      {% for t in period_budgets.tabs %}
+      <a href="?{{ period_tab_query }}period_tab={{ t.key }}"
+         {% if t.key == period_budgets.active %}aria-current="page"{% endif %}
+         class="h-8 px-3 rounded-control edify-text-caption font-bold transition-colors inline-flex items-center
+                {% if t.key == period_budgets.active %}edify-primary-solid text-white shadow-sm{% else %}text-slate-500 hover:bg-white{% endif %}">{{ t.label }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  {% for t in period_budgets.tabs %}{% if t.key == period_budgets.active %}
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+    <div>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ t.period_label }}</p>
+      <p class="text-[26px] font-extrabold text-slate-800 tabular-nums leading-none mt-1">{{ t.total|ugx }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1">{{ t.caption }}</p>
+    </div>
+
+    {% if t.submits %}
+    <div class="shrink-0">
+      {% if active_wfr_id and active_wfr_can_submit %}
+      <form method="post" action="/fund-requests/weekly/{{ active_wfr_id }}/confirm">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="/fund-requests/weekly">
+        <button type="submit"
+                class="h-10 px-5 rounded-control edify-primary-solid text-white text-[12px] font-bold shadow-sm">
+          Submit for Approval
+        </button>
+      </form>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1.5">Sends this week's request to your approver.</p>
+      {% elif active_wfr_id %}
+      <p class="edify-text-caption font-semibold text-slate-500">
+        Already submitted — {{ active_wfr_status_label }}.
+      </p>
+      {% else %}
+      <p class="edify-text-caption font-semibold text-slate-400">
+        Nothing costed for this week yet. Schedule activities and the request builds itself.
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}{% endfor %}
+</section>

@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% load frontend_filters %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-5 " id="weekly-request-card-container">
 {% if active_wfr %}
@@ -32,6 +33,7 @@
 
 <!-- Table -->
 <div class="overflow-x-auto border border-slate-100 rounded-surface">
+{% paginate weekly_lines "weekly_lines_page" as weekly_lines_pager %}
 <table class="w-full text-left text-[12px] border-collapse">
 <thead>
 <tr class="border-b border-slate-100 edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
@@ -46,7 +48,7 @@
 </thead>
 <tbody class="divide-y divide-slate-100 text-slate-700">
 {% if weekly_lines %}
-{% for line in weekly_lines %}
+{% for line in weekly_lines_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <td class="px-4 py-3 font-semibold text-slate-800">{{ line.source }}</td>
 <td class="px-4 py-3">{{ line.cost_item }}</td>
@@ -78,6 +80,7 @@ No cost lines calculated for this weekly request.
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=weekly_lines_pager param="weekly_lines_page" %}
 </div>
 
 <!-- Total Row -->

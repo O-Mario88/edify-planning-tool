@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}
 Columns: School, District, Priority issue, Shipping address, Recommended
 response, Action.
@@ -10,7 +11,8 @@ text rather than an outlined pill — eight identical red badges down a column
 read as decoration rather than emphasis.
 {% endcomment %}
 <div class="pl-urgent-table-scroll overflow-x-auto">
-  <table class="pl-urgent-table w-full border-collapse text-left edify-text-caption">
+  {% paginate urgent_schools "urgent_schools_page" as urgent_schools_pager %}
+<table class="pl-urgent-table w-full border-collapse text-left edify-text-caption">
     <caption class="sr-only">Schools needing urgent attention, what is already scheduled, and the next available workflow action</caption>
     <thead>
       <tr class="font-semibold uppercase tracking-[0.05em]">
@@ -23,7 +25,7 @@ read as decoration rather than emphasis.
       </tr>
     </thead>
     <tbody>
-      {% for row in urgent_schools %}
+      {% for row in urgent_schools_pager.rows %}
       <tr>
         <th scope="row" class="px-2.5 py-2.5 align-top">
           <a href="/schools/{{ row.school_id }}" class="font-semibold no-underline edify-text">{{ row.school }}</a>
@@ -103,4 +105,5 @@ read as decoration rather than emphasis.
       {% endfor %}
     </tbody>
   </table>
+{% include "components/table_pager.html" with pager=urgent_schools_pager param="urgent_schools_page" %}
 </div>

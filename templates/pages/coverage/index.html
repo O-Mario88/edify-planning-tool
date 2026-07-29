@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Coverage · Edify{% endblock %}
@@ -47,7 +48,8 @@
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Clusters</h2>
     {% if clusters %}
     <div class="overflow-x-auto -mx-1">
-      <table class="w-full edify-text-caption">
+      {% paginate clusters "clusters_page" as clusters_pager %}
+<table class="w-full edify-text-caption">
         <thead>
           <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
             <th class="text-left font-bold py-2 pl-1">Cluster</th>
@@ -57,7 +59,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          {% for c in clusters %}
+          {% for c in clusters_pager.rows %}
           <tr>
             <td class="text-left font-semibold py-2.5 pl-1">{{ c.name }}</td>
             <td class="text-left text-slate-500 py-2.5">{{ c.district.name|default:"—" }}</td>
@@ -69,6 +71,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=clusters_pager param="clusters_page" %}
     </div>
     {% else %}
     {% include "components/empty_state.html" with title="No clusters yet" message="Clusters appear as schools are grouped for operations." %}

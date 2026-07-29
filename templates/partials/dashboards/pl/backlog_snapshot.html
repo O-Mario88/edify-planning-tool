@@ -1,6 +1,8 @@
+{% load table_pagination %}
 {% load frontend_filters %}
 <div class="overflow-x-auto flex-1">
-  <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
+  {% paginate backlog_snapshot "backlog_snapshot_page" as backlog_snapshot_pager %}
+<table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
     <thead>
       <tr class="edify-text-subtle border-b edify-border-bottom edify-surface-muted" style="font-size: 12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; text-align:left">
         <th style="padding:8px 10px;">Item</th>
@@ -8,7 +10,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for c in backlog_snapshot %}
+      {% for c in backlog_snapshot_pager.rows %}
       <tr class="edify-data-row border-b edify-border-bottom" style="cursor:pointer"
           hx-get="/dashboard/pl-drilldown{{ c.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
           tabindex="0">
@@ -18,5 +20,6 @@
       {% endfor %}
     </tbody>
   </table>
+{% include "components/table_pager.html" with pager=backlog_snapshot_pager param="backlog_snapshot_page" %}
 </div>
 <div class="p-3 pt-2"><a href="/analytics/program-lead" class="edify-primary-text" style="font-size: 12px; font-weight:600; text-decoration:none">View backlog analytics &rarr;</a></div>

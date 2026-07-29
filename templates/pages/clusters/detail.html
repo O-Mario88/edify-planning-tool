@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}{{ cluster.name }} - Cluster details{% endblock %}
@@ -63,6 +64,7 @@ Schedule Cluster Meeting
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold bg-slate-100 text-slate-600">{{ schools|length }} Schools</span>
 </div>
 <div class="overflow-x-auto">
+{% paginate schools "schools_page" as schools_pager %}
 <table class="edify-data-table w-full text-left text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-[var(--edify-border)] edify-text-caption font-bold text-slate-400 uppercase tracking-wider text-left">
@@ -76,7 +78,7 @@ Schedule Cluster Meeting
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
 {% if schools %}
-{% for s in schools %}
+{% for s in schools_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-4 py-3 font-bold text-[var(--edify-accent)]">{{ s.schoolId }}</td>
 <td class="px-4 py-3">
@@ -99,6 +101,7 @@ Schedule Cluster Meeting
 {% endif %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=schools_pager param="schools_page" %}
 </div>
 </div>
 

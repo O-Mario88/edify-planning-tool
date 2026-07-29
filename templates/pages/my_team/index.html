@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}My Team — Edify Command Center{% endblock %}
 
@@ -25,6 +26,7 @@
    rather than merely off-screen. The inner scroller restores access without
    giving the page body a horizontal scrollbar. {% endcomment %}
 <div class="overflow-x-auto">
+{% paginate team "team_page" as team_pager %}
 <table class="edify-data-table">
 <thead>
 <tr class="bg-slate-50/50 border-b border-[var(--edify-border)]">
@@ -37,7 +39,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
-{% for m in team %}
+{% for m in team_pager.rows %}
 <tr class="edify-data-row transition-colors group cursor-pointer"
     tabindex="0"
     role="link"
@@ -77,6 +79,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=team_pager param="team_page" %}
 </div>
 {% else %}
 <div class="p-16 text-center border border-dashed border-[var(--edify-border)] m-4 rounded-surface bg-slate-50/50 flex flex-col items-center justify-center space-y-3">

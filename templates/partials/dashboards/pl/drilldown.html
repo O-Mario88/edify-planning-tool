@@ -1,4 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block drawer_title %}{{ title|default:"Detail" }}{% endblock %}
@@ -33,11 +34,12 @@
   <div class="rounded-surface border border-slate-100 overflow-hidden">
     {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
     <div class="overflow-x-auto">
-    <table class="w-full text-left border-collapse">
+    {% paginate activities "activities_page" as activities_pager %}
+<table class="w-full text-left border-collapse">
       <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
         <th class="py-2 px-3">Activity</th><th class="py-2 px-3">School</th><th class="py-2 px-3">Owner</th><th class="py-2 px-3">Status</th></tr></thead>
       <tbody class="divide-y divide-slate-50">
-        {% for a in activities %}
+        {% for a in activities_pager.rows %}
         <tr><td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{{ a.type }}</td>
           <td class="py-2 px-3 edify-text-caption text-slate-500">{{ a.school }}</td>
           <td class="py-2 px-3 edify-text-caption text-slate-500">{{ a.owner }}</td>
@@ -45,6 +47,7 @@
         {% empty %}<tr><td colspan="4" class="py-6 text-center text-[12px] text-slate-400 font-semibold">Nothing here.</td></tr>{% endfor %}
       </tbody>
     </table>
+{% include "components/table_pager.html" with pager=activities_pager param="activities_page" %}
     </div>
   </div>
 

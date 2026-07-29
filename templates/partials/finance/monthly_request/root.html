@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% if action_error %}
 <div class="mb-4 flex items-start gap-2 rounded-surface border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] font-semibold text-rose-800" role="alert">
   <span class="mt-0.5 text-rose-600">!</span><span>{{ action_error }}</span>
@@ -129,9 +130,10 @@
         <span class="text-[12px] font-semibold text-slate-500">By Program Category</span>
       </div>
       <div class="overflow-x-auto rounded-control border border-slate-200">
-        <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
+        {% paginate cost_groups "cost_groups_page" as cost_groups_pager %}
+<table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
           <tbody class="divide-y divide-slate-200">
-            {% for group in cost_groups %}
+            {% for group in cost_groups_pager.rows %}
             <tr>
               <td colspan="5" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
                 <div class="flex items-center gap-2"><span class="budget-category-name font-bold">{{ group.label }}</span><span class="edify-text-caption font-semibold opacity-80">{{ group.activity_count }} activit{{ group.activity_count|pluralize:'y,ies' }}</span></div>
@@ -166,6 +168,7 @@
             </tr>
           </tfoot>
         </table>
+{% include "components/table_pager.html" with pager=cost_groups_pager param="cost_groups_page" %}
       </div>
     </div>
     {% else %}

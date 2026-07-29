@@ -17,6 +17,32 @@
     </div>
   </div>
 
+  {% comment %}
+    The month beside the quarter and the year. On its own a month reading zero
+    says nothing about whether that is a quiet month or an empty year -- the
+    CCEO planning against three horizons could see only one of them.
+
+    Zero is rendered as zero, not as a dash: these are real sums over the
+    person's own cost lines, and an empty period is a fact worth showing.
+  {% endcomment %}
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-label="Planned budget by period">
+    <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ period_budgets.month_label }}</p>
+      <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.month_total|ugx }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">This month</p>
+    </div>
+    <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ period_budgets.quarter_label }}</p>
+      <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.quarter_total|ugx }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">This quarter</p>
+    </div>
+    <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ period_budgets.annual_label }}</p>
+      <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.annual_total|ugx }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Full financial year</p>
+    </div>
+  </div>
+
   <div class="space-y-3">
     <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Weekly Totals ({{ selected_month }})</h4>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">

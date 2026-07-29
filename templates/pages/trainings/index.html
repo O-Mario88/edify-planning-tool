@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Trainings Log — Edify{% endblock %}
 
@@ -34,6 +35,7 @@ Schedule
 {% if trainings %}
 {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">
+{% paginate trainings "trainings_page" as trainings_pager %}
 <table class="w-full text-[12px]">
 <thead>
 <tr class="bg-slate-50/60 border-b border-slate-100">
@@ -46,7 +48,7 @@ Schedule
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% for t in trainings %}
+{% for t in trainings_pager.rows %}
 <tr class="hover:bg-violet-50/30 transition-colors group">
 <td class="px-5 py-3.5">
 <p class="font-bold text-slate-800">{% if t.school %}{{ t.school.name }}{% elif t.cluster %}{{ t.cluster.name }} Cluster{% else %}General Training{% endif %}</p>
@@ -74,6 +76,7 @@ Schedule
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=trainings_pager param="trainings_page" %}
 </div>
 {% else %}
 <div class="p-12 text-center">

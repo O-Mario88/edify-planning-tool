@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Budget Overview — Edify{% endblock %}
@@ -59,6 +60,7 @@
 <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold">Monthly Breakdown</h2></div>
 {% if monthly_data %}
 <div class="overflow-x-auto">
+{% paginate monthly_data "monthly_data_page" as monthly_data_pager %}
 <table class="w-full min-w-[720px] text-[12px] font-semibold text-slate-600">
 <thead>
 <tr class="bg-slate-50 edify-text-caption font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
@@ -73,7 +75,7 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% for m in monthly_data %}
+{% for m in monthly_data_pager.rows %}
 <tr class="hover:bg-slate-50/50">
 <td class="px-5 py-3.5 font-bold text-slate-800">{{ m.display_name }}</td>
 <td class="px-4 py-3.5 text-right font-bold text-[var(--edify-primary)]">{{ m.plannedBudget|ugx }}</td>
@@ -87,6 +89,7 @@
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=monthly_data_pager param="monthly_data_page" %}
 </div>
 {% else %}
 <div class="p-12 text-center">

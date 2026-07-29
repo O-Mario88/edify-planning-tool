@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% block shell_content %}
 <div class="space-y-5 print:space-y-3" id="conversation-document">
 
@@ -28,7 +29,8 @@
     {# Priorities with frozen figures + ratings (§12) #}
     <section>
       <h3 class="text-[14px] font-bold text-slate-800 mb-2">Priorities</h3>
-      <table class="w-full text-[12.5px] border-collapse">
+      {% paginate doc_rows "doc_rows_page" as doc_rows_pager %}
+<table class="w-full text-[12.5px] border-collapse">
         <thead><tr class="text-left text-slate-400 border-b border-slate-200">
           <th class="py-1.5 pr-2">Priority</th>
           <th class="py-1.5 px-2">Target</th>
@@ -40,7 +42,7 @@
           <th class="py-1.5 pl-2">Weight</th>
         </tr></thead>
         <tbody>
-        {% for r in doc_rows %}
+        {% for r in doc_rows_pager.rows %}
         <tr class="border-b border-slate-100 align-top">
           <td class="py-2 pr-2">
             <strong class="text-slate-800">{{ r.frozen.outcome }}</strong>
@@ -59,6 +61,7 @@
         {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=doc_rows_pager param="doc_rows_page" %}
     </section>
 
     {# Development plan #}

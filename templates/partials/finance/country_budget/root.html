@@ -1,3 +1,4 @@
+{% load table_pagination %}
 {% comment %}General Budget root — re-rendered by HTMX on filter/action.
 New monthly workflows consolidate only CD-approved Program Lead request
 snapshots. Historic months keep their read-only plan-backed source. CD admin
@@ -175,7 +176,8 @@ items are the only manual country-level costs.{% endcomment %}
     <!-- LEFT: staff monthly budget table -->
     <div class="xl:col-span-9 card overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        {% paginate category_order "category_order_page" as category_order_pager %}
+<table class="w-full text-left border-collapse">
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
               <th class="px-3 py-2 sticky left-0 bg-slate-50/60 z-10" rowspan="2">Staff</th>
@@ -190,7 +192,7 @@ items are the only manual country-level costs.{% endcomment %}
               <th class="px-3 py-2 text-center border-l border-slate-100" rowspan="2">Plan Source<br>Status</th>
             </tr>
             <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
-              {% for cat in category_order %}
+              {% for cat in category_order_pager.rows %}
               <th class="px-2 py-1.5 text-center border-l border-slate-100">#</th>
               <th class="px-2 py-1.5 text-center">Cost</th>
               <th class="px-2 py-1.5 text-right">Total</th>
@@ -247,6 +249,7 @@ items are the only manual country-level costs.{% endcomment %}
             </tr>
           </tfoot>
         </table>
+{% include "components/table_pager.html" with pager=category_order_pager param="category_order_page" %}
       </div>
     </div>
 

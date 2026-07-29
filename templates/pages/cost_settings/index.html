@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 {% load frontend_filters %}
 
 {% block title %}Cost Catalogue — Edify{% endblock %}
@@ -25,6 +26,7 @@
 
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if cost_items %}
+{% paginate cost_items "cost_items_page" as cost_items_pager %}
 <table class="edify-data-table">
 <thead>
 <tr>
@@ -34,11 +36,12 @@
 </tr>
 </thead>
 <tbody>
-{% for c in cost_items %}
+{% for c in cost_items_pager.rows %}
 {% include "partials/cost_settings/cost_setting_row.html" with c=c mode="view" %}
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=cost_items_pager param="cost_items_page" %}
 {% else %}
 <div class="edify-empty-state py-12">
 <p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.3a1.7 1.7 0 013.4 0 1.7 1.7 0 002.6 1.1 1.7 1.7 0 012.4 2.4 1.7 1.7 0 001 2.5 1.7 1.7 0 010 3.4 1.7 1.7 0 00-1 2.6 1.7 1.7 0 01-2.4 2.4 1.7 1.7 0 00-2.6 1 1.7 1.7 0 01-3.4 0 1.7 1.7 0 00-2.5-1 1.7 1.7 0 01-2.4-2.4 1.7 1.7 0 00-1.1-2.6 1.7 1.7 0 010-3.4 1.7 1.7 0 001.1-2.5 1.7 1.7 0 012.4-2.4 1.7 1.7 0 002.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg></p>
