@@ -1,64 +1,58 @@
 {% load frontend_filters %}
 {% comment %}
-  The same budget, at the four horizons a person plans against.
+  My Budget at the four horizons a person plans against, in the canonical
+  budget format — the same group tables, subtotals and grand total the budget
+  pages render, fed by the same service (budget_workspace), so this card
+  cannot disagree with the page it summarises.
 
   Real links rather than an ARIA tablist: each one navigates and the server
-  renders the panel, so there is no tabpanel widget to promise a screen reader.
-  aria-current marks the one in view.
+  renders the panel, so there is no tabpanel widget to promise a screen
+  reader. aria-current marks the one in view.
 
   Only the week carries a submit control. Money is disbursed weekly, so the
-  week is the request; the month, quarter and year are the plan around it and
-  approving them would mean nothing.
-
-  Zero renders as zero. An empty week is a fact about the plan, and a dash
-  would let it read as "not loaded".
+  week is the request; the month, quarter and year are the plan around it.
 {% endcomment %}
-<section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4"
+<section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-3.5"
          aria-labelledby="period-budget-title">
   <div class="flex flex-wrap items-center justify-between gap-3">
-    <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">My Budget</h3>
-    <nav class="flex items-center gap-1 p-1 rounded-control bg-slate-50 border border-slate-200/70"
-         aria-label="Budget period">
-      {% for t in period_budgets.tabs %}
-      <a href="?{{ period_tab_query }}period_tab={{ t.key }}"
-         {% if t.key == period_budgets.active %}aria-current="page"{% endif %}
-         class="h-8 px-3 rounded-control edify-text-caption font-bold transition-colors inline-flex items-center
-                {% if t.key == period_budgets.active %}edify-primary-solid text-white shadow-sm{% else %}text-slate-500 hover:bg-white{% endif %}">{{ t.label }}</a>
-      {% endfor %}
-    </nav>
-  </div>
-
-  {% for t in period_budgets.tabs %}{% if t.key == period_budgets.active %}
-  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
     <div>
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ t.period_label }}</p>
-      <p class="text-[26px] font-extrabold text-slate-800 tabular-nums leading-none mt-1">{{ t.total|ugx }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-1">{{ t.caption }}</p>
+      <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">My Budget</h3>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ period_budgets.selected.title }}</p>
     </div>
-
-    {% if t.submits %}
-    <div class="shrink-0">
-      {% if active_wfr_id and active_wfr_can_submit %}
-      <form method="post" action="/fund-requests/weekly/{{ active_wfr_id }}/confirm">
-        {% csrf_token %}
-        <input type="hidden" name="next" value="/fund-requests/weekly">
-        <button type="submit"
-                class="h-10 px-5 rounded-control edify-primary-solid text-white text-[12px] font-bold shadow-sm">
-          Submit for Approval
-        </button>
-      </form>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-1.5">Sends this week's request to your approver.</p>
-      {% elif active_wfr_id %}
-      <p class="edify-text-caption font-semibold text-slate-500">
-        Already submitted — {{ active_wfr_status_label }}.
-      </p>
-      {% else %}
-      <p class="edify-text-caption font-semibold text-slate-400">
-        Nothing costed for this week yet. Schedule activities and the request builds itself.
-      </p>
-      {% endif %}
-    </div>
-    {% endif %}
+{% comment %}
+      The period switch lives in the page-level tab bar above the card now --
+      one set of tabs, not one here and one there.
+    {% endcomment %}
   </div>
-  {% endif %}{% endfor %}
+
+  <div>
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned budget</p>
+    <p class="text-[22px] font-extrabold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.total|ugx }}</p>
+  </div>
+
+  {% if period_budgets.active == "week" %}
+  {% comment %}
+    The week IS the request — money moves weekly — so the week tab carries the
+    request workflow: the line items with their per-line status, and the
+    confirm / approve / return / self-funded actions. The other horizons are
+    budget views and carry the canonical breakdown instead.
+  {% endcomment %}
+  {% include "partials/fund_requests/weekly_request_workflow.html" %}
+  {% else %}
+  {% if period_budgets.groups %}
+  <div class="overflow-x-auto rounded-control border border-slate-200">
+    {% include "partials/budgets/budget_group_tables.html" with groups=period_budgets.groups all_groups=period_budgets.groups staff_total=period_budgets.staff_total total=period_budgets.total selected=period_budgets.selected workspace_title=period_budgets.workspace_title budget_scope=period_budgets.budget_scope %}
+  </div>
+  {% else %}
+  <div class="rounded-surface border border-dashed border-slate-200 p-8 text-center">
+    <p class="text-[13px] font-bold text-slate-600">{{ period_budgets.empty_title }}</p>
+    <p class="edify-text-caption font-medium text-slate-400 mt-1">{{ period_budgets.empty_help }}</p>
+  </div>
+  {% endif %}
+  {% endif %}
+  <p class="edify-text-caption text-slate-400 font-semibold flex items-center gap-1.5 pt-1 border-t border-slate-100">
+    <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span>Fund requests are generated automatically from the activities scheduled in My Plan — nothing here is entered by hand.</span>
+    <a href="/help" class="edify-primary-text hover:underline shrink-0 ml-auto">Learn more</a>
+  </p>
 </section>

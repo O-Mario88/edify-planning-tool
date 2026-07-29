@@ -7,54 +7,10 @@
   {% include "components/kpi_card.html" with label="Admin Budget (for CD)" value=monthly_totals_by_type.admin|ugx tone="warning" icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" %}
   {% include "components/kpi_card.html" with label="Total Monthly Request" value=monthly_totals_by_type.total|ugx tone="success" icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" %}
 </div>
-
-<!-- Monthly Fund Request Preview Card (Weekly Totals) -->
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700 mt-6">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <h3 class="text-[15px] font-semibold text-slate-800">Monthly Fund Request — {{ selected_month }} {{ selected_fy }}</h3>
-      <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Preview</span>
-    </div>
-  </div>
-
-  {% comment %}
-    The month beside the quarter and the year. On its own a month reading zero
-    says nothing about whether that is a quiet month or an empty year -- the
-    CCEO planning against three horizons could see only one of them.
-
-    Zero is rendered as zero, not as a dash: these are real sums over the
-    person's own cost lines, and an empty period is a fact worth showing.
-  {% endcomment %}
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" aria-label="Planned budget by period">
-    <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ period_budgets.month_label }}</p>
-      <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.month_total|ugx }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">This month</p>
-    </div>
-    <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ period_budgets.quarter_label }}</p>
-      <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.quarter_total|ugx }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">This quarter</p>
-    </div>
-    <div class="rounded-surface border border-slate-100 bg-slate-50/60 p-3">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ period_budgets.annual_label }}</p>
-      <p class="text-[17px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.annual_total|ugx }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Full financial year</p>
-    </div>
-  </div>
-
-  <div class="space-y-3">
-    <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Weekly Totals ({{ selected_month }})</h4>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      {% for wk in monthly_weeks %}
-        <div class="bg-slate-50/50 p-3 rounded-surface border border-slate-100 flex flex-col justify-between hover:shadow-sm transition-shadow">
-          <div>
-            <span class="edify-text-caption font-bold text-slate-400 block">{{ wk.label }}</span>
-            <span class="edify-text-caption text-slate-500 font-semibold block mt-0.5">{{ wk.range_str }}</span>
-          </div>
-          <span class="text-[14px] font-bold text-slate-800 block mt-3">{{ wk.total|ugx }}</span>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
-</div>
+{% comment %}
+  Only the five summary tiles remain here. The "Monthly Fund Request — <month>"
+  preview card that followed (a Preview pill plus per-week total tiles) was
+  removed at the owner's request: the My Budget card's Week and Month tabs
+  answer the same questions from the same canonical source, so the card was a
+  second monthly surface saying it again.
+{% endcomment %}

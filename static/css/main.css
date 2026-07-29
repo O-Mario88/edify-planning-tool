@@ -4915,13 +4915,6 @@
       }
     }
   }
-  .hover\:bg-white {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-white);
-      }
-    }
-  }
   .hover\:bg-white\/10 {
     &:hover {
       @media (hover: hover) {
@@ -5963,6 +5956,11 @@
       grid-template-columns: repeat(9, minmax(0, 1fr));
     }
   }
+  .lg\:grid-cols-10 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+    }
+  }
   .lg\:grid-cols-12 {
     @media (width >= 64rem) {
       grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -6062,11 +6060,6 @@
   .xl\:inline {
     @media (width >= 80rem) {
       display: inline;
-    }
-  }
-  .xl\:w-96 {
-    @media (width >= 80rem) {
-      width: calc(var(--spacing) * 96);
     }
   }
   .xl\:grid-cols-2 {

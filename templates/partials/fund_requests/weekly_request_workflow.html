@@ -1,11 +1,18 @@
 {% load table_pagination %}
 {% load frontend_filters %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-5 " id="weekly-request-card-container">
+{% comment %}
+  The week's fund-request workflow: the line items with their per-line status,
+  and the actions (confirm, approve, return, self-funded). Embedded in the
+  period-budget card's Week tab — this WAS a standalone card above that one,
+  which put two "this week's money" surfaces on the page saying the same
+  thing. The card provides the surface and the title; this provides the work.
+{% endcomment %}
+<div class="space-y-5">
 {% if active_wfr %}
 <!-- Card Header -->
 <div class="flex items-center justify-between">
 <div>
-<h3 class="text-[15px] font-semibold text-slate-800">Weekly Fund Request for {{ selected_week_label }}</h3>
+<p class="text-[13px] font-bold text-slate-700">Fund request · {{ selected_week_label }}</p>
 <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Owner: <span class="font-bold text-slate-600">{{ active_wfr.owner_name }}</span></p>
 </div>
 
@@ -31,57 +38,24 @@
 </div>
 </div>
 
-<!-- Table -->
-<div class="overflow-x-auto border border-slate-100 rounded-surface">
-{% paginate weekly_lines "weekly_lines_page" as weekly_lines_pager %}
-<table class="w-full text-left text-[12px] border-collapse">
-<thead>
-<tr class="border-b border-slate-100 edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
-<th class="px-4 py-3">Activity Source</th>
-<th class="px-4 py-3">Cost Item</th>
-<th class="px-4 py-3">Quantity</th>
-<th class="px-4 py-3">Unit Cost (UGX)</th>
-<th class="px-4 py-3">Total (UGX)</th>
-<th class="px-4 py-3">Source From My Plan</th>
-<th class="px-4 py-3">Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100 text-slate-700">
-{% if weekly_lines %}
-{% for line in weekly_lines_pager.rows %}
-<tr class="hover:bg-slate-50/40 transition-colors">
-<td class="px-4 py-3 font-semibold text-slate-800">{{ line.source }}</td>
-<td class="px-4 py-3">{{ line.cost_item }}</td>
-<td class="px-4 py-3 font-bold">{{ line.quantity }}</td>
-<td class="px-4 py-3 font-semibold">{{ line.unit_cost|ugx }}</td>
-<td class="px-4 py-3 font-semibold">{{ line.total_cost|ugx }}</td>
-<td class="px-4 py-3">
-<a href="/my-plan/{{ line.activity_id }}" class="inline-flex items-center gap-1 rounded-small border border-slate-200 px-2 py-0.5 edify-text-caption font-bold bg-slate-50 text-slate-600 hover:bg-slate-100">
-From My Plan
-</a>
-</td>
-<td class="px-4 py-3">
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold tracking-wider
-{% if line.status == 'Ready' %}bg-emerald-50 text-emerald-700 border border-emerald-100
-{% elif line.status == 'Awaiting Confirmation' %}bg-amber-50 text-amber-600 border border-amber-100
-{% elif line.status == 'Self-funded' %}bg-purple-50 text-purple-700 border border-purple-100
-{% else %}edify-primary-soft edify-primary-text border edify-primary-border{% endif %}">
-{{ line.status }}
-</span>
-</td>
-</tr>
-{% endfor %}
-{% else %}
-<tr>
-<td colspan="7" class="px-4 py-8 text-center text-slate-400 font-semibold">
-No cost lines calculated for this weekly request.
-</td>
-</tr>
-{% endif %}
-</tbody>
-</table>
-{% include "components/table_pager.html" with pager=weekly_lines_pager param="weekly_lines_page" %}
+{% comment %}
+  The week's money, in the canonical budget format — the same group tables,
+  subtotals and grand total every other horizon shows, fed by the same
+  budget_workspace groups. This replaced a bespoke line-items table (Activity
+  Source / Cost Item / Qty / status chips) that showed the same amounts in a
+  third layout of its own; the per-activity view it offered lives in the
+  Source Activities panel beside this card, which links each activity to
+  My Plan.
+{% endcomment %}
+{% if period_budgets.groups %}
+<div class="overflow-x-auto rounded-control border border-slate-200">
+  {% include "partials/budgets/budget_group_tables.html" with groups=period_budgets.groups all_groups=period_budgets.groups staff_total=period_budgets.staff_total total=period_budgets.total selected=period_budgets.selected workspace_title=period_budgets.workspace_title budget_scope=period_budgets.budget_scope %}
 </div>
+{% else %}
+<div class="rounded-surface border border-dashed border-slate-200 p-6 text-center">
+  <p class="edify-text-caption font-semibold text-slate-400">The request below carries this week's lines, but no costed budget rows fall in this week's window.</p>
+</div>
+{% endif %}
 
 <!-- Total Row -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4">

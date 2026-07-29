@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest
 from apps.core.metrics import format_ugx_compact
@@ -270,7 +271,8 @@ def _build_fund_requests_context(request):
             .first()
         )
         month_num = (
-            latest_for_month.scheduled_date.date().month
+            # Same local-date rule as the week selection below.
+            timezone.localtime(latest_for_month.scheduled_date).date().month
             if latest_for_month and latest_for_month.scheduled_date
             else date.today().month
         )
@@ -303,7 +305,14 @@ def _build_fund_requests_context(request):
             .first()
         )
         if latest_act:
-            latest_d = latest_act.scheduled_date.date()
+            # Local date, never the raw UTC one. An activity at local midnight
+            # is stored as 21:00 UTC the previous day, and `.date()` on that
+            # picks the previous day -- for a Monday activity that is a Sunday,
+            # whose Monday-of is a week early, so the page opened on the wrong
+            # week with the wrong (empty) budget. The fourth appearance of
+            # this timezone class in this codebase; see also the cost-line
+            # drift health check and the reminder dedupe.
+            latest_d = timezone.localtime(latest_act.scheduled_date).date()
             selected_week_start = latest_d - timedelta(days=latest_d.weekday())
         else:
             selected_week_start = (
@@ -690,29 +699,44 @@ def _build_fund_requests_context(request):
         "total": school_visits_total + trainings_total + meetings_total + admin_total,
     }
 
-    # The month is one of three periods a CCEO plans against, and the page only
-    # ever showed the month. Without the quarter and the year beside it, a
-    # month reading zero says nothing about whether that is a quiet month or an
-    # empty year.
-    #
-    # Calendar months, matching month_num and the `planned_date__month` filters
-    # above. The FY quarter is resolved through the canonical helper rather
-    # than `((month-1)//3)+1`, which is off by one for every month here.
-    _quarter_months = {
-        "Q1": (10, 11, 12),
-        "Q2": (1, 2, 3),
-        "Q3": (4, 5, 6),
-        "Q4": (7, 8, 9),
-    }.get(quarter, ())
-    quarter_total = (
-        budget_qs.filter(planned_date__month__in=_quarter_months).aggregate(
-            total=Sum("amount")
-        )["total"]
-        or 0
+    from urllib.parse import urlencode
+
+    _period_tab_query = urlencode(
+        {
+            key: value
+            for key, value in request.GET.items()
+            if value and key != "period_tab"
+        }
     )
-    # budget_qs is already constrained to this fiscal year by
-    # _scoped_base_querysets, so this is the FY figure without a second filter.
-    annual_total = budget_qs.aggregate(total=Sum("amount"))["total"] or 0
+    if _period_tab_query:
+        _period_tab_query += "&"
+
+    # The budget at the chosen horizon, from the canonical builder.
+    #
+    # An earlier version of this card computed week/month/quarter/FY sums here,
+    # by hand, from budget_qs. Those numbers could disagree with the My Budget
+    # page over quarter boundaries and scope, and a card that argues with the
+    # page it links to is worse than no card. budget_workspace is the one
+    # source: same scoping (resolve_user_scope), same period arithmetic, and
+    # the same `groups` the reference budget table renders -- so the card can
+    # show the full breakdown, not just a headline.
+    from apps.budget.services import budget_workspace
+
+    if period_tab == "week":
+        _budget_anchor = selected_week_start
+    else:
+        # The month the page has open, so the Month/Quarter tabs follow the
+        # month filter rather than silently resetting to today.
+        _budget_anchor = date(year_num, month_num, 1)
+
+    period_workspace = budget_workspace(
+        user,
+        {
+            "period": period_tab,
+            "fy": fy,
+            "date": _budget_anchor.isoformat(),
+        },
+    )
 
     from urllib.parse import urlencode
 
@@ -726,63 +750,22 @@ def _build_fund_requests_context(request):
     if _period_tab_query:
         _period_tab_query += "&"
 
-    week_total = (
-        budget_qs.filter(week_start_date=selected_week_start).aggregate(
-            total=Sum("amount")
-        )["total"]
-        or 0
-    )
-
-    # Four horizons in one shape, because a CCEO plans against all of them and
-    # the page only ever showed the month. The week is the one that moves
-    # money -- disbursement is weekly -- so it is the default tab and the only
-    # one that carries a submit control.
     period_budgets = {
         "active": period_tab,
+        "selected": period_workspace["selected"],
+        "total": period_workspace["total"],
+        "staff_total": period_workspace["staff_total"],
+        "groups": period_workspace["groups"],
+        "workspace_title": period_workspace["workspace_title"],
+        "budget_scope": period_workspace["budget_scope"],
+        "empty_title": period_workspace["empty_title"],
+        "empty_help": period_workspace["empty_help"],
         "tabs": [
-            {
-                "key": "week",
-                "label": "Week",
-                "period_label": (
-                    f"{selected_week_start:%d %b} – "
-                    f"{selected_week_start + timedelta(days=6):%d %b %Y}"
-                ),
-                "total": week_total,
-                "caption": "Disbursed weekly",
-                "submits": True,
-            },
-            {
-                "key": "month",
-                "label": "Month",
-                "period_label": f"{month_name} {year_num}",
-                "total": monthly_totals_by_type["total"],
-                "caption": "Planned this month",
-                "submits": False,
-            },
-            {
-                "key": "quarter",
-                "label": "Quarter",
-                "period_label": f"{quarter} FY{fy}",
-                "total": quarter_total,
-                "caption": "Planned this quarter",
-                "submits": False,
-            },
-            {
-                "key": "fy",
-                "label": "FY",
-                "period_label": f"FY {fy}",
-                "total": annual_total,
-                "caption": "Planned this financial year",
-                "submits": False,
-            },
+            {"key": "week", "label": "Week", "submits": True},
+            {"key": "month", "label": "Month", "submits": False},
+            {"key": "quarter", "label": "Quarter", "submits": False},
+            {"key": "fy", "label": "FY", "submits": False},
         ],
-        # Kept flat as well; the monthly preview card reads these directly.
-        "month_label": f"{month_name} {year_num}",
-        "month_total": monthly_totals_by_type["total"],
-        "quarter_label": f"{quarter} FY{fy}",
-        "quarter_total": quarter_total,
-        "annual_label": f"FY {fy}",
-        "annual_total": annual_total,
     }
 
     # Monthly Request Status — driven by the REAL monthly FundRequest (the
