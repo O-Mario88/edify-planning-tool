@@ -125,7 +125,10 @@ def new_document_view(request):
         )
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-        return redirect(request.get_full_path())
+        # Back to this form's own route, written out, rather than echoing the
+        # submitted URL back into a Location header. `kind` is the only state
+        # the form carries in its query string, and it is already parsed.
+        return redirect("/uploads/new?kind=training" if is_training else "/uploads/new")
 
     messages.success(
         request,

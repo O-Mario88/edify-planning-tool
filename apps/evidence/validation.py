@@ -100,11 +100,6 @@ def _detect_families(head: bytes) -> list[str]:
     return found
 
 
-# Identity map over the allowed extensions, so a validated extension can be
-# exchanged for the constant with the same spelling.
-_CANONICAL_EXTENSION = {extension: extension for extension in EXTENSION_FAMILY}
-
-
 def assert_safe_upload(
     *,
     original_name: str,
@@ -147,15 +142,20 @@ def assert_safe_upload(
     actual = _detect_families(head[:512])
     if not any(f in expected_families for f in actual):
         raise BadRequest("The file content does not match its declared type.")
-    # Return this module's own spelling of the extension, not the slice taken
-    # off the submitted filename. The two compare equal — that is what the
-    # membership check above established — but only one of them is a value
-    # this module chose, and the returned extension is concatenated into a
-    # filesystem path by every caller.
-    # Return this module's own spelling where it knows the extension, and the
-    # caller-declared store's spelling otherwise -- either way a value chosen
-    # from an allow-list, never the slice taken off the submitted filename.
-    return _CANONICAL_EXTENSION.get(ext, ext)
+    # Return the allow-list's own spelling of the extension, never the slice
+    # taken off the submitted filename. The two compare equal -- that is what
+    # the membership check above established -- but only one of them is a
+    # value this module chose, and every caller concatenates the result
+    # straight into a filesystem path.
+    #
+    # Keyed off `families`, not off a map of EXTENSION_FAMILY alone, so the
+    # guarantee also covers extensions a caller added via
+    # `extra_extension_family`. It did not before: the Document Library's
+    # .ppt/.pptx missed the map and fell through to the submitted slice, which
+    # left caller-supplied text as the last remaining source of a stored
+    # filename. `families` is assembled from module constants, so its keys are
+    # values this codebase chose no matter who widened the gate.
+    return {allowed: allowed for allowed in families}[ext]
 
 
 # Map declared MIME -> the extensions it may legitimately accompany.

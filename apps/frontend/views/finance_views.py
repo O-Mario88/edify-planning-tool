@@ -469,7 +469,7 @@ def finance_return_action(request):
     """
     from django.db import transaction
 
-    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.core.exceptions import Forbidden
     from apps.fund_requests.disbursement_dashboard_service import (
         return_weekly_request,
     )
@@ -487,10 +487,14 @@ def finance_return_action(request):
             if not wfr:
                 return notice_fragment("Weekly fund request not found.")
             return_weekly_request(request.user, wfr, reason)
+    # All three through error_fragment: it already draws the line these
+    # branches were drawing by hand — a user-facing exception keeps its own
+    # sentence, anything else gets the generic line with the traceback logged.
+    # The 403 branch survives only because the status differs; it used to
+    # write str(exc) straight into the body, unescaped, which is the defect
+    # apps/core/htmx_errors.py exists to prevent.
     except Forbidden as exc:
-        return HttpResponse(str(exc), status=403)
-    except BadRequest as exc:
-        return notice_fragment(str(exc))
+        return error_fragment(exc, status=403)
     except Exception as exc:  # noqa: BLE001 — surfaced to the drawer
         return error_fragment(exc, status=400)
 

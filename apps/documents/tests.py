@@ -231,6 +231,49 @@ class FileSecurityTests(DocumentTestBase):
                 with self.assertRaises(BadRequest):
                     document_path(name)
 
+    def test_the_returned_extension_is_the_allow_lists_own_object(self):
+        """The stored filename must be built from a value this code chose.
+
+        `assert_safe_upload` returns an extension that every caller
+        concatenates into a filesystem path, so identity is the property worth
+        testing, not equality: a slice off the submitted filename compares
+        equal to ".pptx" while still being caller-supplied text.
+
+        `.pptx` is the case that regressed. The canonical map was built from
+        EXTENSION_FAMILY alone, so extensions a caller added through
+        `extra_extension_family` missed it and fell through to the submitted
+        slice — which made the Document Library, the one store that widens the
+        gate, the one store without the guarantee.
+        """
+        from apps.documents.storage import (
+            DOCUMENT_EXTENSION_FAMILY,
+            assert_safe_document_upload,
+        )
+
+        cases = [
+            ("report.pdf", "application/pdf", b"%PDF-1.4" + b"\x00" * 16),
+            (
+                "deck.pptx",
+                "application/vnd.openxmlformats-officedocument."
+                "presentationml.presentation",
+                b"PK\x03\x04" + b"\x00" * 20,
+            ),
+        ]
+        for name, mime, head in cases:
+            with self.subTest(name):
+                returned = assert_safe_document_upload(
+                    original_name=name, mime_type=mime, head=head, size=1000
+                )
+                allowed = next(
+                    key for key in DOCUMENT_EXTENSION_FAMILY if key == returned
+                )
+                self.assertIs(
+                    returned,
+                    allowed,
+                    f"{name}: the extension concatenated into the stored "
+                    "filename came from the submitted name, not the allow-list",
+                )
+
     def test_the_evidence_ceiling_is_unchanged_by_the_document_ceiling(self):
         from apps.evidence.validation import MAX_FILE_SIZE, assert_safe_upload
 

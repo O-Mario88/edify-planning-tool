@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from urllib.parse import quote, urlencode
 
 from django.contrib import messages
 from django.http import HttpResponseForbidden, JsonResponse
@@ -342,6 +343,19 @@ def incident_detail_view(request, incident_id):
     )
 
 
+def _incident_url(incident_id) -> str:
+    """This incident's own page, with the id encoded into the path segment.
+
+    The URLconf declares ``<str:incident_id>``, and Django's ``str`` converter
+    already excludes "/", so interpolating the raw id could not escape the
+    /admin-ops/ prefix today. Encode it anyway: a Location header should be
+    provably inert at the line that builds it, not by way of a converter
+    declared in another file that a later route change could loosen to
+    ``<path:…>`` without anyone rereading these redirects.
+    """
+    return f"/admin-ops/incidents/{quote(str(incident_id), safe='')}"
+
+
 @require_POST
 @require_page_permission("admin_incidents")
 def acknowledge_incident_view(request, incident_id):
@@ -352,7 +366,7 @@ def acknowledge_incident_view(request, incident_id):
         SystemIncidentService.acknowledge(incident_id, request.user)
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-    return redirect(f"/admin-ops/incidents/{incident_id}")
+    return redirect(_incident_url(incident_id))
 
 
 @require_POST
@@ -367,7 +381,7 @@ def resolve_incident_view(request, incident_id):
         )
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-    return redirect(f"/admin-ops/incidents/{incident_id}")
+    return redirect(_incident_url(incident_id))
 
 
 # ── Maintenance calendar ─────────────────────────────────────────────────────
@@ -432,7 +446,7 @@ def apply_repair_view(request, key):
         result = DataRepairService.apply(request.user, key, reason)
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
-        return redirect(f"/data-repair?repair={key}")
+        return redirect(f"/data-repair?{urlencode({'repair': key})}")
     if result.get("referred"):
         messages.success(
             request,

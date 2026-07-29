@@ -1645,9 +1645,19 @@ def return_weekly_request(principal, weekly_request, reason: str):
     if not (reason or "").strip():
         raise BadRequest("A return reason is required.")
     if weekly_request.status != "confirmed_for_advance":
+        # WeeklyFundRequest.status is a plain CharField with no `choices`, so
+        # Django generates no get_status_display and calling it raised
+        # AttributeError -- which the view caught as an unexpected error, so
+        # the Accountant was told "something went wrong" instead of which
+        # stage the request had already moved to. `weekly_status_buckets` is
+        # the canonical label for that stage, and using it here means this
+        # refusal names the request exactly as the Disbursement Dashboard does.
+        stage = weekly_status_buckets([weekly_request]).get(
+            weekly_request.id, weekly_request.status
+        )
         raise BadRequest(
             "Only a confirmed request can be returned by the accountant — this "
-            f"one is already {weekly_request.get_status_display()}."
+            f"one is already {stage}."
         )
 
     weekly_request.status = "returned_by_accountant"
