@@ -57,4 +57,6 @@ Open Planning
 {% endif %}
 </div>
 
+
+{% include "partials/my_plan/_pager.html" with pager=school_visits_pager param="school_visits_page" label="School visits" base_query=my_plan_base_query %}
 </div>

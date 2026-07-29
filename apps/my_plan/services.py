@@ -1277,6 +1277,38 @@ def get_frontend_context(principal, query: dict) -> dict:
         "fy": planned_this_fy,
     }
 
+    from urllib.parse import urlencode
+
+    from apps.my_plan.pagination import page_from, paginate
+
+    # Every filter except the three page numbers, so paging one card keeps the
+    # period, district and staff choices the person made. Rebuilt rather than
+    # passed through request.GET so a card cannot carry another card's page.
+    _page_params = {
+        "school_visits_page",
+        "cluster_trainings_page",
+        "cluster_meetings_page",
+    }
+    _base_query = urlencode(
+        {
+            key: value
+            for key, value in (query or {}).items()
+            if value and key not in _page_params and isinstance(value, (str, int))
+        }
+    )
+    if _base_query:
+        _base_query += "&"
+
+    school_visits_page = paginate(
+        school_visits_list, page_from(query, "school_visits_page")
+    )
+    cluster_trainings_page = paginate(
+        cluster_trainings_list, page_from(query, "cluster_trainings_page")
+    )
+    cluster_meetings_page = paginate(
+        cluster_meetings_list, page_from(query, "cluster_meetings_page")
+    )
+
     return {
         "live": True,
         "period": period,
@@ -1304,11 +1336,22 @@ def get_frontend_context(principal, query: dict) -> dict:
                 status and status != "all",
             ]
         ),
+        "my_plan_base_query": _base_query,
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
-        "school_visits": school_visits_list,
-        "cluster_trainings": cluster_trainings_list,
-        "cluster_meetings": cluster_meetings_list,
+        # Each card shows ten; the rest sit behind pages that run as far as
+        # the person has actually planned. The full lists stay in the context
+        # under their original names so counts, KPIs and any consumer that
+        # wants the whole set are unaffected by the paging.
+        "school_visits": school_visits_page["rows"],
+        "school_visits_all": school_visits_list,
+        "school_visits_pager": school_visits_page,
+        "cluster_trainings": cluster_trainings_page["rows"],
+        "cluster_trainings_all": cluster_trainings_list,
+        "cluster_trainings_pager": cluster_trainings_page,
+        "cluster_meetings": cluster_meetings_page["rows"],
+        "cluster_meetings_all": cluster_meetings_list,
+        "cluster_meetings_pager": cluster_meetings_page,
         "waiting_on_me": waiting_on_me_list,
         "due_today": due_today_list,
         "this_week": this_week_list,

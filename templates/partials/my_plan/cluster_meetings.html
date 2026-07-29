@@ -53,4 +53,6 @@ Open Planning
 {% endif %}
 </div>
 
+
+{% include "partials/my_plan/_pager.html" with pager=cluster_meetings_pager param="cluster_meetings_page" label="Cluster meetings" base_query=my_plan_base_query %}
 </div>

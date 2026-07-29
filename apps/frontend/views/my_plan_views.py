@@ -34,6 +34,7 @@ from apps.evidence.services import (
     record_upload,
     evidence_records_for_activity,
     infer_kind_from_upload,
+    resolve_evidence_kind,
 )
 from apps.core.enums import ActivityType, SsaIntervention
 from apps.pl_review.services import (
@@ -284,6 +285,18 @@ def complete_drawer_view(request, activity_id):
         "needs_netsuite_id": needs_netsuite_id,
         "disbursed_amount": disbursed_amount,
     }
+    # The platform already knows what this activity type needs, so the form
+    # says so and pre-selects the outstanding one rather than offering twelve
+    # kinds and letting someone guess wrong.
+    from apps.core.enums import EvidenceKind
+    from apps.evidence.requirements import checklist as evidence_checklist
+    from apps.evidence.requirements import required_kinds
+
+    _checklist = evidence_checklist(a)
+    context["evidence_checklist"] = _checklist
+    context["evidence_required_kinds"] = list(required_kinds(a.activity_type))
+    context["evidence_kind_choices"] = EvidenceKind.choices
+
     return render(request, "partials/my_plan/complete_drawer.html", context)
 
 
@@ -644,7 +657,16 @@ def complete_activity_action(request, activity_id):
                 record_upload(
                     principal=request.user,
                     activity_id=activity_id,
-                    kind=infer_kind_from_upload(evidence_file),
+                    # What the person selected, else what this activity still
+                    # needs, else the file's shape. Inference alone can only say
+                    # "pdf" or "photo", which no requirement asks for -- so
+                    # completion was unreachable for every activity type that
+                    # declares one.
+                    kind=resolve_evidence_kind(
+                        evidence_file,
+                        activity=a,
+                        asserted=request.POST.get("evidence_kind"),
+                    ),
                     file_obj=evidence_file,
                 )
             except Exception as e:
@@ -1020,6 +1042,18 @@ def evidence_upload_drawer_view(request, activity_id):
         "evidence_list": evidence_list,
         "drawer_size": "sm",
     }
+    # The platform already knows what this activity type needs, so the form
+    # says so and pre-selects the outstanding one rather than offering twelve
+    # kinds and letting someone guess wrong.
+    from apps.core.enums import EvidenceKind
+    from apps.evidence.requirements import checklist as evidence_checklist
+    from apps.evidence.requirements import required_kinds
+
+    _checklist = evidence_checklist(a)
+    context["evidence_checklist"] = _checklist
+    context["evidence_required_kinds"] = list(required_kinds(a.activity_type))
+    context["evidence_kind_choices"] = EvidenceKind.choices
+
     return render(request, "partials/my_plan/evidence_drawer.html", context)
 
 
@@ -1040,7 +1074,16 @@ def evidence_upload_action(request, activity_id):
                 record_upload(
                     principal=request.user,
                     activity_id=activity_id,
-                    kind=infer_kind_from_upload(evidence_file),
+                    # What the person selected, else what this activity still
+                    # needs, else the file's shape. Inference alone can only say
+                    # "pdf" or "photo", which no requirement asks for -- so
+                    # completion was unreachable for every activity type that
+                    # declares one.
+                    kind=resolve_evidence_kind(
+                        evidence_file,
+                        activity=a,
+                        asserted=request.POST.get("evidence_kind"),
+                    ),
                     file_obj=evidence_file,
                 )
 
