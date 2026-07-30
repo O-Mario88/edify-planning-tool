@@ -708,12 +708,23 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         self.assertEqual(heatmap[0]["staff_name"], self.cceo2_user.name)
 
     def test_leave_budget_impact_sync(self):
-        """Verify LeaveBudgetImpactService updates cost line planned periods and appends description trail."""
+        """LeaveBudgetImpactService appends the reschedule audit trail to cost
+        lines and never rewrites their period stamps.
+
+        Successor contract: this service used to also rewrite each line's
+        planned_date/week/month from the raw datetime, AFTER
+        costing_service.apply_to_activity had already derived the periods —
+        the raw-UTC weekday could land a line in a different week than the
+        weekly fund request just built from it (the drift
+        budget.health.cost_line_period_drift detects). The period rewrite was
+        deliberately removed: apply_to_activity is the ONLY period writer, and
+        this service's job is now the audit trail alone.
+        """
         # Setup activity schedule cost lines
         from apps.activities.models import ActivityScheduleCostLine
 
         act = Activity.objects.create(
-            activity_type="school_visit",
+            activity_type="follow_up_visit",
             school=self.school2,
             responsible_staff_id=self.cceo2_user.id,
             scheduled_date="2026-10-05",
@@ -739,8 +750,18 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         )
 
         line.refresh_from_db()
-        self.assertEqual(line.planned_date, date(2026, 10, 12))
+        # The audit trail lands on the line…
         self.assertIn("Audit: Rescheduled due to holiday conflict", line.description)
+        # …but the period stamps stay untouched: only the costing service's
+        # apply_to_activity may move a cost line between periods.
+        self.assertEqual(line.planned_date, date(2026, 10, 5))
+
+        # Idempotent: a second call must not stack a second trail entry.
+        LeaveBudgetImpactService.handle_reschedule(
+            act, date(2026, 10, 12), date(2026, 10, 19), "second move"
+        )
+        line.refresh_from_db()
+        self.assertEqual(line.description.count("Rescheduled due to"), 1)
 
     def test_coverage_access_window(self):
         """Test coverage access window begins at 8:00 AM on start date and expires at 5:00 PM on end date."""

@@ -49,7 +49,10 @@ class AdminBudgetAllocationService:
         else:
             status_class = "bg-emerald-50 text-emerald-700 border-emerald-250"
 
-        lines = list(mwp.admin_lines.all())
+        # Only active admin lines count toward money totals — the same filter
+        # every other admin-line aggregation applies (a removed/inactive line
+        # must not keep inflating the allocation).
+        lines = list(mwp.admin_lines.filter(status="active"))
 
         # Calculate planned vs allocated
         # Under policy: CD planned lines are sum of all lines; allocated is sum if approved

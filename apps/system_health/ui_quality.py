@@ -40,6 +40,7 @@ _BUTTON_BEHAVIOR = re.compile(
         |@(?:click|change|submit)
         |x-on:
         |type=["'](?:submit|reset)["']
+        |\bpopovertarget=
         |\bform=
         |\bdisabled\b
         |\bdata-[\w-]+)""",

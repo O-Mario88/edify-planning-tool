@@ -11,28 +11,11 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 x-data="{
 delivery: '{% if reschedule_mode %}{{ reschedule_activity.delivery_type|default:'staff' }}{% else %}staff{% endif %}',
 ssa_expected: 'yes',
-purposeOfVisit: '{{ recommended_visit_purpose|default:'ssa_support' }}',
 activityType: '{{ recommended_activity_type|default:'school_visit' }}',
-partnerPurposes: ['in_school_training', 'training_follow_up', 'ssa_support'],
-purposeActivityTypes: {
-in_school_training: 'in_school_training',
-training_follow_up: 'training_follow_up_visit',
-ssa_support: 'school_visit_ssa_collection',
-donor_visit: 'donor_visit',
-story_gathering: 'story_gathering_visit',
-school_invitation: 'school_invitation',
-social_visit: 'social_visit',
-in_school_coaching: 'in_school_coaching_visit'
-},
-setPurpose() { this.activityType = this.purposeActivityTypes[this.purposeOfVisit] || this.activityType },
-setDelivery() {
-/* Kept for the reschedule path, where `delivery` arrives from the activity
-   rather than from a control the person can change. */
-if (this.delivery === 'partner' && !this.partnerPurposes.includes(this.purposeOfVisit)) {
-this.purposeOfVisit = 'ssa_support';
-this.setPurpose();
-}
-}
+catalogueItemId: '{{ selected_catalogue_item.catalogueItemId|default:'' }}',
+focusIntervention: '{{ recommended_focus_intervention|default:'' }}',
+recommendationReason: '{{ selected_catalogue_item.recommendationReason|default:''|escapejs }}',
+alternative: false
 }"
 >
 {% csrf_token %}
@@ -45,57 +28,80 @@ this.setPurpose();
 <div id="form-errors"></div>
 
 {% if not reschedule_mode %}
-<!-- SSA Missing Warning & Purpose of Visit Select -->
-{% if school.current_fy_ssa_status != 'done' %}
-<div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-surface text-[12px] font-bold leading-normal shadow-sm">
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> SSA is missing. We recommend collecting SSA during this activity.
-</div>
+<input type="hidden" name="require_catalogue" value="yes">
+<input type="hidden" name="catalogue_item_id" :value="catalogueItemId">
+<input type="hidden" name="activity_type" :value="activityType">
+<input type="hidden" name="focus_intervention" :value="focusIntervention">
+<input type="hidden" name="recommendation_reason" :value="recommendationReason">
 
-<!-- Will SSA be collected during this activity? -->
-<div class="space-y-1.5 bg-slate-50/50 p-3 rounded-surface border border-slate-200/60">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Will SSA be collected during this activity?</span>
-<div class="flex flex-col sm:flex-row sm:items-center gap-4 mt-1.5 font-medium text-slate-700">
-<label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collection_expected" value="yes" x-model="ssa_expected" class="h-4 w-4 edify-primary-text edify-primary-focus">
-<span>Collect SSA during this activity</span>
-</label>
-<label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collection_expected" value="no" x-model="ssa_expected" class="h-4 w-4 edify-primary-text edify-primary-focus">
-<span>Proceed without SSA</span>
-</label>
-</div>
+{% if not catalogue_recommendations.hasApplicableSsa %}
+<div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-surface text-[12px] leading-normal shadow-sm" role="status">
+  <p class="font-bold">Top Priority: Complete SSA</p>
+  <p class="mt-1 font-medium">No intervention score is shown because this School has no applicable verified SSA. Complete the assessment, then regenerate support recommendations.</p>
 </div>
 {% else %}
-<div class="flex items-start gap-2.5 rounded-surface p-3 edify-text edify-info-soft border edify-info-border">
-  <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="var(--edify-info)" stroke-width="1.8" aria-hidden="true">
-    <path d="M10 3v14M3 10h14"/>
-  </svg>
-  <div>
-    <p class="font-semibold">Recommended activity: {{ recommended_activity_label|default:"School Visit" }}</p>
-    {% if recommended_focus_intervention %}
-    <p class="mt-0.5 font-medium edify-text-muted">The weakest verified intervention is selected below.</p>
-    {% endif %}
+<div class="rounded-surface border border-[var(--edify-border)] bg-slate-50/70 p-3">
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA intelligence</p>
+  <div class="mt-2 flex items-center justify-between gap-3">
+    <div>
+      <p class="font-bold text-slate-800">{{ catalogue_recommendations.priority.label }}</p>
+      <p class="font-medium text-slate-500">{{ catalogue_recommendations.ssaDate }} · {{ catalogue_recommendations.verificationState|title }}</p>
+    </div>
+    <span class="rounded-full bg-amber-100 px-2.5 py-1 font-bold text-amber-800">{{ catalogue_recommendations.priority.band }} · {{ catalogue_recommendations.priority.score }}/10</span>
   </div>
 </div>
 {% endif %}
 
-<div>
-<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose</label>
-<select
-name="purpose_of_visit"
-id="purpose_of_visit"
-required
-x-model="purposeOfVisit"
-@change="setPurpose()"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-{% for value, label in staff_visit_purposes %}
-<option value="{{ value }}" :disabled="delivery === 'partner' && !partnerPurposes.includes('{{ value }}')">{{ label }}</option>
-{% endfor %}
-</select>
-<p class="mt-1.5 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">Partners can only be assigned In-school Training, Training Follow Up, or SSA Support.</p>
-<input type="hidden" name="activity_type" :value="activityType">
+<fieldset class="space-y-2">
+  <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Recommended Activities</legend>
+  {% for item in primary_catalogue_items %}
+  <label class="block cursor-pointer rounded-overlay border border-[var(--border-card)] bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <span class="flex items-start gap-3">
+      <input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}"
+        {% if forloop.first %}checked{% endif %}
+        @change="catalogueItemId='{{ item.catalogueItemId }}'; activityType='{{ item.workflowKind }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; alternative=false"
+        class="mt-1 h-4 w-4 edify-primary-text edify-primary-focus">
+      <span class="min-w-0 flex-1">
+        <span class="flex flex-wrap items-center gap-2">
+          <strong class="text-[13px] text-slate-800">{{ item.displayName }}</strong>
+          <span class="rounded-full edify-primary-soft px-2 py-0.5 edify-text-caption font-bold edify-primary-text">Recommended</span>
+        </span>
+        <span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span>
+        <span class="mt-2 flex flex-wrap gap-2 edify-text-caption font-semibold text-slate-500">
+          <span>{{ item.suggestedDeliveryMethod|title }}</span><span>·</span>
+          <span>{{ item.targetAudience }}</span><span>·</span>
+          <span>{{ item.requiredEvidence|title }}</span>
+        </span>
+        {% if item.existingSupportConflict %}<span class="mt-2 block font-bold text-amber-700">Related support is already active.</span>{% endif %}
+      </span>
+    </span>
+  </label>
+  {% empty %}
+  <div class="rounded-surface border border-rose-200 bg-rose-50 p-3 text-rose-800" role="alert">No approved Catalogue Activity is eligible for this context. Review Project, School, executor, and Catalogue governance rules.</div>
+  {% endfor %}
+</fieldset>
+
+{% if other_catalogue_items %}
+<details class="rounded-surface border border-[var(--edify-border)] bg-white p-3">
+  <summary class="cursor-pointer font-bold text-[var(--color-edify-primary)]">View Other Eligible Activities</summary>
+  <fieldset class="mt-3 space-y-2">
+    <legend class="sr-only">Other eligible Activities</legend>
+    {% for item in other_catalogue_items %}
+    <label class="flex cursor-pointer items-start gap-3 rounded-control border border-slate-200 p-3 hover:bg-slate-50">
+      <input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}"
+        @change="catalogueItemId='{{ item.catalogueItemId }}'; activityType='{{ item.workflowKind }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; alternative=true"
+        class="mt-1 h-4 w-4 edify-primary-text edify-primary-focus">
+      <span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span>
+    </label>
+    {% endfor %}
+  </fieldset>
+</details>
+<div x-show="alternative" style="display:none">
+  <label for="override_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for selecting an alternative</label>
+  <textarea id="override_reason" name="override_reason" x-bind:required="alternative" maxlength="1000" aria-describedby="override-help" class="mt-1 min-h-20 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[13px] focus:border-[#2563eb] focus:ring-4 edify-primary-focus"></textarea>
+  <p id="override-help" class="mt-1 font-medium text-slate-500">The system recommendation, selected alternative, actor, reason and timestamp are retained for review.</p>
 </div>
+{% endif %}
 {% else %}
 <div class="edify-primary-soft border edify-primary-border rounded-surface p-3 text-[12px] font-semibold">
 <span class="edify-text-caption uppercase tracking-wider edify-primary-text font-bold">Scheduled activity</span>
@@ -258,6 +264,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 </div>
 
 <!-- Focus Intervention -->
+{% if reschedule_mode %}
 <div>
 <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
 <select
@@ -277,6 +284,13 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <p>&bull; {{ r.label }} (Score: {{ r.score }})</p>
 {% endfor %}
 </div>
+{% else %}
+<div class="rounded-surface border border-slate-200 bg-slate-50 p-3">
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Catalogue handoff</p>
+  <p class="mt-1 font-semibold text-slate-700">Evidence: <span x-text="catalogueItemId ? 'Defined by the selected Catalogue Activity' : 'Unavailable'"></span></p>
+  <p class="mt-1 font-medium text-slate-500">Cost is resolved from the effective CD Cost Catalogue only after the Activity and delivery date are confirmed.</p>
+</div>
+{% endif %}
 {% endif %}
 </div>
 

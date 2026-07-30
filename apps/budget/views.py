@@ -14,6 +14,11 @@ from . import services
 
 VIEW = [Permission.PLANNING_VIEW.value]
 COST_MANAGE = [Permission.COST_SETTINGS_MANAGE.value]
+# Country-wide financial rollups (/api/budgets/*) are finance-leadership
+# surfaces: BUDGET_VIEW_SUMMARY is held only by CD, RVP, Accountant, IA and
+# Admin — not by every PLANNING_VIEW holder (CCEO/PL), who previously could
+# read the whole country's totals.
+BUDGET_SUMMARY = [Permission.BUDGET_VIEW_SUMMARY.value]
 
 
 def _q(request: Request) -> dict:
@@ -87,7 +92,7 @@ class BudgetBoardView(APIView):
 # ── /api/budgets/* — program + admin aggregation by period ──────────────────
 class MonthlyBudgetView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = VIEW
+    required_permissions = BUDGET_SUMMARY
 
     def get(self, request: Request) -> Response:
         return Response(services.monthly_budget(_q(request)))
@@ -95,7 +100,7 @@ class MonthlyBudgetView(APIView):
 
 class QuarterlyBudgetView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = VIEW
+    required_permissions = BUDGET_SUMMARY
 
     def get(self, request: Request) -> Response:
         return Response(services.quarterly_budget(_q(request)))
@@ -103,7 +108,7 @@ class QuarterlyBudgetView(APIView):
 
 class FyBudgetView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = VIEW
+    required_permissions = BUDGET_SUMMARY
 
     def get(self, request: Request) -> Response:
         return Response(services.fy_budget(_q(request)))

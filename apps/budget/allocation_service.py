@@ -78,15 +78,26 @@ class MonthlyFundAllocationService:
         # Get list of all matching staff IDs for total stats
         all_staff_ids = [s.user.user_id for s in staff_qs]
 
-        # 2. Get cost lines for all these staff in the month & FY
-        cost_lines = ActivityScheduleCostLine.objects.filter(
-            fiscal_year=fy, month=month_num, responsible_user__in=all_staff_ids
-        ).select_related("activity")
+        # 2. Get cost lines for all these staff in the month & FY.
+        # Cancelled/rejected/deferred and soft-deleted activities are money
+        # that will never move — including them inflated every allocation.
+        cost_lines = (
+            ActivityScheduleCostLine.objects.filter(
+                fiscal_year=fy,
+                month=month_num,
+                responsible_user__in=all_staff_ids,
+                activity__deleted_at__isnull=True,
+            )
+            .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
+            .select_related("activity")
+        )
 
-        # Build category mappings and totals
+        # Build category mappings and totals. Amounts are attributed per
+        # (activity, responsible_user) pair — the old code stamped the whole
+        # activity onto whichever owner appeared on its FIRST cost line, so a
+        # multi-owner activity's money all landed under one person.
         activity_categories = {}
-        activity_amounts = {}
-        activity_staff = {}
+        pair_amounts: dict[tuple[str, str], int] = {}
 
         for line in cost_lines:
             act_id = line.activity_id
@@ -124,10 +135,9 @@ class MonthlyFundAllocationService:
                     cat = "staff_visits"
 
                 activity_categories[act_id] = cat
-                activity_amounts[act_id] = 0
-                activity_staff[act_id] = line.responsible_user
 
-            activity_amounts[act_id] += line.amount
+            pair_key = (act_id, line.responsible_user)
+            pair_amounts[pair_key] = pair_amounts.get(pair_key, 0) + line.amount
 
         # Initialize data structures for CCEOs
         staff_data = {}
@@ -177,12 +187,14 @@ class MonthlyFundAllocationService:
             "total_allocation": 0,
         }
 
-        # Group activity counts and values by staff
+        # Group activity counts and values by staff — one entry per
+        # (activity, responsible_user) pair, so every owner of a shared
+        # activity receives exactly the cost-line money attributed to them.
         staff_activities = {}
         staff_category_totals = {}
 
-        for act_id, cat in activity_categories.items():
-            u_id = activity_staff[act_id]
+        for (act_id, u_id), amount in pair_amounts.items():
+            cat = activity_categories[act_id]
             if u_id not in staff_activities:
                 staff_activities[u_id] = {
                     "staff_visits": set(),
@@ -199,7 +211,7 @@ class MonthlyFundAllocationService:
                     "partner_in_school_training": 0,
                 }
             staff_activities[u_id][cat].add(act_id)
-            staff_category_totals[u_id][cat] += activity_amounts[act_id]
+            staff_category_totals[u_id][cat] += amount
 
         # Populate paginated CCEO rows
         for u_id, s_info in staff_data.items():
@@ -311,6 +323,7 @@ class MonthlyFundAllocationService:
                 "highest_cost_staff": None,
                 "largest_cluster_budget": None,
                 "partner_cost_share": 0.0,
+                "partner_total": 0,
                 "top_cost_category": {"name": "None", "total": 0, "pct": 0},
                 "average_allocation": 0,
                 "admin_share_pct": 0,
@@ -394,6 +407,7 @@ class MonthlyFundAllocationService:
                 "pct": round(largest_cluster_pct, 1),
             },
             "partner_cost_share": round(partner_share, 1),
+            "partner_total": partner_total,
             "top_cost_category": {
                 "name": top_cat,
                 "total": cats[top_cat],

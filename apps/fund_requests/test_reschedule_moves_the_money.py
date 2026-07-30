@@ -254,16 +254,25 @@ class RescheduleKeepsTheWorkWhereItBelongsTest(TestCase):
         self.assertEqual(activity.responsible_staff_id, "routing-staff")
 
     def test_reschedule_never_writes_the_delivery_identity(self):
-        """The guarantee stated where it lives: `reschedule` saves an explicit
-        field list, and none of the delivery fields are in it."""
+        """The guarantee stated where it lives: `reschedule` saves explicit
+        field lists, and none of the delivery fields are in any of them.
+
+        Parsed with a regex over every ``update_fields=[…]`` block rather
+        than slicing between two literal anchors — the old anchor
+        (``expected_participants``) raised an opaque ValueError whenever a
+        concurrent edit moved it, which read as a mystery flake instead of
+        a real verdict. (Note: as a source-inspection test this can still
+        fail transiently if ``services.py`` is saved mid-edit during a long
+        run; rerun it alone before treating a failure as real.)"""
         import inspect
+        import re
 
         from apps.activities import services
 
         source = inspect.getsource(services.reschedule)
-        saved = source[
-            source.index("update_fields=[") : source.index("expected_participants")
-        ]
+        blocks = re.findall(r"update_fields=\[[^\]]*\]", source)
+        self.assertTrue(blocks, "reschedule no longer saves explicit field lists")
         for field in ("delivery_type", "assigned_partner_id", "responsible_staff_id"):
             with self.subTest(field):
-                self.assertNotIn(field, saved)
+                for block in blocks:
+                    self.assertNotIn(field, block)

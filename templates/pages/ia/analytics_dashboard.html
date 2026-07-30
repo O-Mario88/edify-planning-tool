@@ -1,765 +1,406 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
-{% block title %}IA Quality Analytics — Edify{% endblock %}
+{% block title %}Impact Assessment Dashboard — Edify{% endblock %}
+
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260730iafocus1">
+{% endblock %}
 
 {% block shell_content %}
-<!-- Custom Premium Styles for the Dashboard -->
-<style>
-.kpi-scroll-container::-webkit-scrollbar {
-height: 4px;
-}
-.kpi-scroll-container::-webkit-scrollbar-track {
-background: rgba(226, 232, 240, 0.5);
-border-radius: 4px;
-}
-.kpi-scroll-container::-webkit-scrollbar-thumb {
-background: rgba(148, 163, 184, 0.4);
-border-radius: 4px;
-}
-</style>
-
-<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
-
-<!-- ================= TOP HEADER BAR ================= -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
-<div class="flex items-center gap-2">
-<div class="p-2 bg-emerald-50 text-emerald-600 rounded-surface">
-<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
-</svg>
-</div>
-<p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Impact Assessment Dashboard</h1>
-</div>
-<p class="text-[12px] text-slate-500 font-bold mt-1.5">Data upload, verification, quality control, and compliance monitoring.</p>
-</div>
-
-<!-- Date range (current week) -->
-<div class="flex flex-wrap items-center gap-2">
-<span class="h-9 px-3 edify-surface border border-slate-200 rounded-pill text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-{{ date_range }}
-</span>
-</div>
-</div>
-
-{% include "partials/analytics/section_nav.html" %}
-
-<!-- ================= TOP KPI ROW ================= -->
-<div class="legacy-kpi-strip ia-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-2" aria-label="Impact assessment summary">
-<!-- Records Uploaded Today -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 edify-primary-soft edify-primary-text rounded-surface">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-</div>
-<div>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Records Uploaded Today</p>
-<h3 class="text-[21px] font-extrabold tracking-tight mt-0.5">{{ kpis.uploads_today }}</h3>
-<span class="edify-text-caption text-slate-400 font-semibold flex items-center gap-0.5 mt-0.5">SSA records + evidence files</span>
-</div>
-</div>
-
-<!-- Pending Verification -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-amber-50 text-amber-600 rounded-surface">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-</div>
-<div>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Pending Verification</p>
-<h3 class="text-[21px] font-extrabold tracking-tight mt-0.5">{{ kpis.waiting }}</h3>
-<span class="edify-text-caption text-slate-400 font-semibold flex items-center gap-0.5 mt-0.5">Awaiting IA review</span>
-</div>
-</div>
-
-<!-- Verified This Week -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-emerald-50 text-emerald-600 rounded-surface">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-</div>
-<div>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Verified This Week</p>
-<h3 class="text-[21px] font-extrabold tracking-tight mt-0.5">{{ kpis.verified_week }}</h3>
-<span class="edify-text-caption text-slate-400 font-semibold flex items-center gap-0.5 mt-0.5">{{ kpis.verified_today }} today</span>
-</div>
-</div>
-
-<!-- Returned for Correction -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-rose-50 text-rose-600 rounded-surface">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H19.9"/></svg>
-</div>
-<div>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Returned for Correction</p>
-<h3 class="text-[21px] font-extrabold tracking-tight mt-0.5">{{ kpis.returned_open }}</h3>
-<span class="edify-text-caption text-slate-400 font-semibold flex items-center gap-0.5 mt-0.5">{{ kpis.returned_today }} today</span>
-</div>
-</div>
-
-<!-- Data Quality Score -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center gap-3">
-<div class="p-3 bg-teal-50 text-teal-600 rounded-surface">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-</div>
-<div class="flex-1 min-w-0">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Data Quality Score</p>
-<div class="flex flex-col items-start mt-0.5">
-<h3 class="ia-quality-value block w-full text-[21px] font-extrabold tracking-tight">{{ kpis.quality }}</h3>
-<span class="ia-quality-helper block w-full edify-text-caption text-slate-400 font-medium mt-0.5">Average across schools</span>
-</div>
-<!-- progress bar -->
-<div class="w-full bg-slate-100 h-1.5 rounded-pill mt-1.5 overflow-hidden">
-<div class="bg-teal-500 h-full rounded-pill" style="width: {{ kpis.quality_pct }}%"></div>
-</div>
-</div>
-</div>
-</div>
-
-<!-- Pending-queue strip -->
-<div class="legacy-kpi-strip grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2" aria-label="Pending verification queues">
-<!-- Salesforce Queue Pending -->
-<div class="bg-slate-50 p-3 rounded-surface border border-slate-100/50 flex flex-col justify-between">
-<div class="flex items-center justify-between">
-<span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Salesforce Queue</span>
-<span class="h-2 w-2 rounded-pill edify-primary-solid"></span>
-</div>
-<div class="mt-2">
-<h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.sf_queue }}</h4>
-<span class="edify-text-caption font-bold text-slate-400 block mt-1">Missing SF ID</span>
-</div>
-</div>
-
-<!-- SSA Submissions Pending -->
-<div class="bg-slate-50 p-3 rounded-surface border border-slate-100/50 flex flex-col justify-between">
-<div class="flex items-center justify-between">
-<span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">SSA Submissions</span>
-<span class="h-2 w-2 rounded-pill bg-amber-500"></span>
-</div>
-<div class="mt-2">
-<h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.ssa_pending_review }}</h4>
-<span class="edify-text-caption font-bold text-slate-400 block mt-1">Pending review</span>
-</div>
-</div>
-
-<!-- Evidence Files Pending -->
-<div class="bg-slate-50 p-3 rounded-surface border border-slate-100/50 flex flex-col justify-between">
-<div class="flex items-center justify-between">
-<span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Evidence Files</span>
-<span class="h-2 w-2 rounded-pill bg-violet-500"></span>
-</div>
-<div class="mt-2">
-<h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.evidence_pending }}</h4>
-<span class="edify-text-caption font-bold text-slate-400 block mt-1">Pending review</span>
-</div>
-</div>
-</div>
-<p class="edify-text-caption text-slate-400 font-semibold">Click any tile to open the matching record queue.</p>
-</div>
-{% include "components/kpi_strip.html" with items=dq_metrics %}
-
-
-<!-- ================= GRID ROW 1: Verification Work Queue (full width) ================= -->
-<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-<!-- DATA UPLOAD / INTAKE CONTROL PANEL (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between space-y-4">
-<div>
-<div class="flex items-center gap-1.5 pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Data Upload / Intake Control Panel</h2>
-<span class="inline-flex text-slate-400" title="Manage bulk uploads and data streams" aria-label="Manage bulk uploads and data streams"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></span>
-</div>
-
-<div class="grid grid-cols-1 gap-2 mt-4">
-<a href="/ssa/upload/" class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-control edify-text-caption font-semibold flex items-center justify-start px-3 gap-2 transition-all">
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12V4m0 0L9 7m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg> Upload SSA Data
-</a>
-<a href="/ssa/upload/" class="h-9 w-full edify-primary-solid edify-primary-hover text-white rounded-control text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg> Import Bulk File
-</a>
-</div>
-</div>
-
-<!-- Upload Status Footer Panel -->
-<div class="bg-slate-50 p-3 rounded-surface border border-slate-100 space-y-2 mt-4">
-<div class="flex items-center justify-between edify-text-caption">
-<span class="text-slate-500 font-bold">Last upload:</span>
-<span class="font-semibold">{% if upload_status.last_upload %}{{ upload_status.last_upload|date:"d M Y, h:i A" }}{% else %}No uploads yet{% endif %}</span>
-</div>
-<div class="flex items-center justify-between edify-text-caption">
-<span class="text-slate-500 font-bold">Failed uploads:</span>
-<span class="{% if upload_status.failed %}text-rose-600{% else %}text-slate-700{% endif %} font-semibold">{{ upload_status.failed }}</span>
-</div>
-</div>
-</div>
-
-<!-- VERIFICATION WORK QUEUE (Col Span 6) -->
-<div class="lg:col-span-6 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
-<div>
-<div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Verification Work Queue</h2>
-<a href="/ia/verification/" class="edify-text-caption font-semibold edify-primary-text hover:underline">View all &rarr;</a>
-</div>
-
-<!-- Interactive Tabs -->
-<div class="flex flex-wrap gap-1 mt-3 border-b border-slate-100 pb-2">
-<a href="/ia/verification/" class="px-3 py-1.5 bg-slate-900 text-white edify-text-caption font-semibold rounded-surface">All Pending</a>
-<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">Salesforce Verification <span class="edify-primary-soft edify-primary-text px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.sf_queue }}</span></a>
-<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.ssa_pending_review }}</span></a>
-<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.evidence_pending }}</span></a>
-<a href="/ia/returned/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 edify-text-caption font-semibold rounded-surface">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ kpis.returned_open }}</span></a>
-</div>
-
-<!-- Table -->
-<div class="overflow-x-auto mt-4">
-<table class="w-full text-left text-[12px] border-collapse">
-<thead>
-<tr class="border-b border-slate-100 text-slate-400 font-bold">
-<th class="py-2.5 font-bold">Record ID</th>
-<th class="py-2.5 font-bold">School</th>
-<th class="py-2.5 font-bold">District</th>
-<th class="py-2.5 font-bold">Activity Type</th>
-<th class="py-2.5 font-bold">Submitted By</th>
-<th class="py-2.5 font-bold">Date</th>
-<th class="py-2.5 font-bold">Status</th>
-<th class="py-2.5 text-right font-bold">Quick Actions</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-50">
-{% for item in queue_items %}
-<tr class="hover:bg-slate-50/50 transition-colors">
-<td class="py-3 font-semibold edify-primary-text">{{ item.record_id }}</td>
-<td class="py-3 font-semibold text-slate-800">{{ item.school }}</td>
-<td class="py-3 font-semibold text-slate-500">{{ item.district }}</td>
-<td class="py-3">
-<span class="inline-flex items-center rounded-pill bg-slate-100 px-1.5 py-0.5 edify-text-caption font-bold border border-slate-200">
-{{ item.activity_type }}
-</span>
-</td>
-<td class="py-3 font-bold text-slate-600">{{ item.submitted_by }}</td>
-<td class="py-3 text-slate-400 font-bold whitespace-nowrap">{{ item.submission_date }}</td>
-<td class="py-3">
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider border {{ item.status_class }}">
-{{ item.status }}
-</span>
-</td>
-<td class="py-3 text-right">
-<div class="flex items-center justify-end gap-1.5">
-<a href="/ia/verification/" class="h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-small edify-text-caption font-semibold inline-flex items-center">Open queue &rarr;</a>
-</div>
-</td>
-</tr>
-{% empty %}
-<tr>
-<td colspan="8" class="py-6 text-center text-slate-400 font-bold">No pending records in verification queue.</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
-<!-- Table Footer -->
-<div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
-<span class="edify-text-caption text-slate-400 font-bold">Showing {{ queue_items|length }} of {{ kpis.waiting }} pending record{{ kpis.waiting|pluralize }}</span>
-</div>
-</div>
-
-<!-- ALERTS / EXCEPTIONS (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
-<div>
-<div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<div class="flex items-center gap-1.5">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Alerts / Exceptions</h2>
-<span class="bg-rose-500 text-white font-semibold rounded-pill h-5 px-1.5 edify-text-caption flex items-center justify-center">{{ exceptions|length }}</span>
-</div>
-<a href="/data-quality/duplicates" class="edify-text-caption font-semibold edify-primary-text hover:underline">View all &rarr;</a>
-</div>
-
-<div class="space-y-2 mt-4">
-{% for exception in exceptions %}
-<div class="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-surface border border-slate-100 flex items-start gap-3 transition-colors cursor-pointer group">
-<!-- custom alert colored shapes -->
-{% if exception.severity == 'error' %}
-<div class="h-5 w-5 bg-rose-100 text-rose-600 font-semibold rounded-surface flex items-center justify-center edify-text-caption shrink-0 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
-{% elif exception.severity == 'warning' %}
-<div class="h-5 w-5 bg-amber-100 text-amber-600 font-semibold rounded-surface flex items-center justify-center edify-text-caption shrink-0 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></div>
-{% else %}
-<div class="h-5 w-5 edify-primary-soft edify-primary-text rounded-surface flex items-center justify-center shrink-0 mt-0.5"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></div>
-{% endif %}
-<div class="flex-1 min-w-0">
-<p class="text-[12px] font-semibold text-slate-800 leading-tight">
-<span class="{% if exception.severity == 'error' %}text-rose-600{% elif exception.severity == 'warning' %}text-amber-600{% else %}edify-primary-text{% endif %}">{{ exception.count }}</span>
-{{ exception.text }}
-</p>
-</div>
-<span class="text-slate-300 font-bold group-hover:text-slate-500">&rarr;</span>
-</div>
-{% empty %}
-<div class="edify-text-caption text-slate-400 font-bold py-2">No open alerts.</div>
-{% endfor %}
-</div>
-</div>
-</div>
-</div>
-
-
-<!-- ================= GRID ROW 2: SSA Analytics + Evidence Review ================= -->
-<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-<!-- DATA QUALITY & COMPLIANCE PANEL (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
-<div class="pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Data Quality & Compliance Panel</h2>
-</div>
-
-<div class="grid grid-cols-1 gap-3">
-{% for metric in dq_metrics %}
-<div class="flex items-center justify-between p-3 rounded-surface bg-slate-50/50 border border-slate-100">
-<div>
-<p class="edify-kpi-label edify-text-caption text-slate-400">{{ metric.label }}</p>
-<h4 class="text-[21px] font-extrabold tracking-tight mt-0.5">{{ metric.value }}</h4>
-</div>
-</div>
-{% endfor %}
-</div>
-
-<!-- Aggregate indicator -->
-<div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[12px] font-bold">
-<span class="text-slate-500">Overall Data Quality Score</span>
-<span class="text-teal-600">{{ kpis.quality }}</span>
-</div>
-</div>
-
-<!-- SSA MONITORING ANALYTICS (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm space-y-6">
-<div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">SSA Monitoring Analytics</h2>
-<a href="/analytics" class="edify-text-caption font-semibold edify-primary-text hover:underline">View full analytics &rarr;</a>
-</div>
-
-<!-- Donut & Bar chart container -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<!-- Donut 1: school SSA coverage (current FY) -->
-<div class="flex flex-col items-center justify-center p-3 rounded-surface bg-slate-50/50 border border-slate-100 text-center space-y-2">
-{% include "partials/components/donut_rings.html" with donut=ssa_overview.rings donut_label="School SSA coverage" headline=ssa_overview.total subline="schools in scope" %}
-<div class="edify-text-caption space-y-1 font-bold w-full">
-<div class="flex items-center justify-between text-emerald-600"><span>● SSA Done</span> <span>{{ ssa_overview.done }} ({{ ssa_overview.done_pct }}%)</span></div>
-<div class="flex items-center justify-between text-amber-600"><span>● Scheduled</span> <span>{{ ssa_overview.scheduled }} ({{ ssa_overview.scheduled_pct }}%)</span></div>
-<div class="flex items-center justify-between text-slate-500"><span>● Not Done</span> <span>{{ ssa_overview.not_done }} ({{ ssa_overview.not_done_pct }}%)</span></div>
-</div>
-</div>
-
-<!-- Lowest Performing Interventions -->
-<div class="space-y-3">
-<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Lowest Interventions</h4>
-{% for item in lowest_performing %}
-<div class="space-y-1">
-<div class="flex items-center justify-between edify-text-caption font-bold">
-<span class="truncate pr-1">{{ item.name }}</span>
-<span>{{ item.rate }}%</span>
-</div>
-<div class="w-full bg-slate-100 h-1 rounded-pill overflow-hidden">
-<div class="bg-rose-500 h-full rounded-pill" style="width: {{ item.rate }}%"></div>
-</div>
-</div>
-{% empty %}
-<div class="edify-text-caption text-slate-400 font-bold py-2">No low-performing interventions identified.</div>
-{% endfor %}
-</div>
-</div>
-
-<!-- Leaderboard & Cluster Progress grid split -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-<!-- Leaderboard list -->
-<div>
-<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider mb-2">Completion Leaderboard</h4>
-<div class="space-y-2">
-{% for item in leaderboard_dc %}
-<div class="flex items-center justify-between edify-text-caption">
-<span class="text-slate-500 font-bold flex items-center gap-1">
-<span class="text-slate-300 font-semibold edify-text-caption">{{ forloop.counter }}</span> {{ item.name }}
-</span>
-<div class="flex items-center gap-2">
-<div class="w-16 bg-slate-100 h-1.5 rounded-pill overflow-hidden hidden sm:block">
-<div class="bg-teal-500 h-full rounded-pill" style="width: {{ item.rate }}%"></div>
-</div>
-<span class="text-slate-800 font-semibold">{{ item.rate }}%</span>
-</div>
-</div>
-{% empty %}
-<div class="edify-text-caption text-slate-400 font-bold py-2">No leaderboard data available.</div>
-{% endfor %}
-</div>
-</div>
-
-<!-- SSA Record Review Donut -->
-<div class="flex flex-col items-center justify-center p-3 rounded-surface bg-slate-50/50 border border-slate-100 text-center space-y-2">
-{% include "partials/components/donut_rings.html" with donut=ssa_review.rings donut_label="SSA record review status" headline=ssa_review.confirmed_pct headline_unit="%" subline="confirmed" %}
-</div>
-</div>
-</div>
-</div>
-
-<!-- EVIDENCE REVIEW PANEL (Col Span 6) -->
-<div class="lg:col-span-6 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
-<div>
-<div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<div class="flex items-center gap-1.5">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Evidence Review Panel</h2>
-<span class="inline-flex text-slate-400" title="Verification logs by document type" aria-label="Verification logs by document type"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></span>
-</div>
-<a href="/evidence/" class="edify-text-caption font-semibold edify-primary-text hover:underline">View all &rarr;</a>
-</div>
-
-<div class="overflow-x-auto mt-4">
-<table class="w-full text-left edify-text-caption border-collapse">
-<thead>
-<tr class="border-b border-slate-100 text-slate-400 font-bold">
-<th class="py-2 font-bold">Category</th>
-<th class="py-2 text-right font-bold">Submitted</th>
-<th class="py-2 text-right font-bold text-emerald-600">Verified</th>
-<th class="py-2 text-right font-bold text-rose-500">Returned</th>
-<th class="py-2 text-right font-bold text-rose-700">Rejected</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-50">
-{% for metric in evidence_metrics %}
-<tr class="hover:bg-slate-50/50 transition-colors">
-<td class="py-2.5 font-bold text-slate-800">{{ metric.category }}</td>
-<td class="py-2.5 text-right text-slate-600 font-semibold">{{ metric.submitted }}</td>
-<td class="py-2.5 text-right text-emerald-600 font-semibold">{{ metric.verified }}</td>
-<td class="py-2.5 text-right text-amber-600 font-semibold">{{ metric.returned }}</td>
-<td class="py-2.5 text-right text-rose-600 font-semibold">{{ metric.rejected }}</td>
-</tr>
-{% empty %}
-<tr>
-<td colspan="5" class="py-4 text-center text-slate-400 font-bold">No evidence files submitted yet.</td>
-</tr>
-{% endfor %}
-<!-- Bold aggregate summary row -->
-<tr class="border-t border-slate-200 font-semibold text-slate-800">
-<td class="py-3 uppercase tracking-wider font-semibold">Total</td>
-<td class="py-3 text-right">{{ evidence_totals.submitted }}</td>
-<td class="py-3 text-right text-emerald-600 font-semibold">{{ evidence_totals.verified }}</td>
-<td class="py-3 text-right text-amber-700 font-semibold">{{ evidence_totals.returned }}</td>
-<td class="py-3 text-right text-rose-700 font-semibold">{{ evidence_totals.rejected }}</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-
-</div>
-<!-- ================= END GRID ROW 2 ================= -->
-
-
-<!-- ================= GRID ROW 3: Recent Activity + Quick Actions + SLA gauge ================= -->
-<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-<!-- RECENT ACTIVITY FEED (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-surface  shadow-sm flex flex-col justify-between">
-<div>
-<div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Activity Feed</h2>
-<a href="/ia/verification/" class="edify-text-caption font-semibold edify-primary-text hover:underline">View all &rarr;</a>
-</div>
-
-<div class="relative border-l  ml-2 pl-4 space-y-5 mt-4">
-{% for act in recent_activities %}
-<div class="relative">
-<!-- circular dot on timeline -->
-<span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-pill border-2 border-white bg-slate-900 shadow-sm"></span>
-<div class="space-y-0.5">
-<h4 class="text-[12px] font-semibold text-slate-800 leading-tight">{{ act.title }}</h4>
-<p class="edify-text-caption text-slate-500 font-semibold">{{ act.detail }}</p>
-<span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ act.time }}</span>
-</div>
-</div>
-{% empty %}
-<div class="edify-text-caption text-slate-400 font-bold py-2">No recent activity recorded.</div>
-{% endfor %}
-</div>
-</div>
-
-<a href="/ia/history/" class="edify-text-caption font-semibold edify-primary-text hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
-View all activity
-</a>
-</div>
-
-</div>
-
-
-<!-- ================= GRID ROW 3 ================= -->
-<div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-<!-- FIELD MONITORING / STAFF COMPLIANCE (Col Span 9) -->
-<div class="lg:col-span-9 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
-<div class="flex items-center gap-1.5 pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Field Monitoring / Staff Compliance</h2>
-<span class="inline-flex text-slate-400" title="Compliance stats and verifier queues" aria-label="Compliance stats and verifier queues"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 11v5m0-8h.01"/></svg></span>
-</div>
-
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 pt-2">
-
-<!-- Col 1: Staff with Highest Pending Queue -->
-<div class="lg:col-span-4 space-y-3">
-<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Highest Pending Queue</h4>
-<div class="space-y-2">
-{% for item in field_monitoring.highest_pending %}
-<div class="flex items-center justify-between text-[12px] font-bold">
-<span class="text-slate-700">{{ item.name }}</span>
-<span class="text-rose-600 font-semibold">{{ item.count }}</span>
-</div>
-{% empty %}
-<div class="edify-text-caption text-slate-400 font-bold py-2">No pending activities assigned to staff.</div>
-{% endfor %}
-</div>
-</div>
-
-<!-- Col 2: Partner Submissions Pending -->
-<div class="lg:col-span-4 space-y-3">
-<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Partner Pending Submissions</h4>
-<div class="space-y-2">
-{% for item in field_monitoring.partner_submissions %}
-<div class="flex items-center justify-between text-[12px] font-bold">
-<span class="text-slate-700">{{ item.name }}</span>
-<span class="text-amber-600 font-semibold">{{ item.count }}</span>
-</div>
-{% empty %}
-<div class="edify-text-caption text-slate-400 font-bold py-2">No pending partner submissions.</div>
-{% endfor %}
-</div>
-</div>
-
-<!-- Col 3: Top Verifiers -->
-<div class="lg:col-span-4 space-y-3">
-<h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Top Verifiers (This Week)</h4>
-<div class="space-y-2">
-{% for item in field_monitoring.top_verifiers %}
-<div class="flex items-center justify-between text-[12px] font-bold">
-<span class="text-slate-700">{{ item.name }}</span>
-<span class="text-emerald-600 font-semibold">{{ item.count }}</span>
-</div>
-{% empty %}
-<div class="edify-text-caption text-slate-400 font-bold py-2">No verifications recorded this week.</div>
-{% endfor %}
-</div>
-</div>
-
-</div>
-</div>
-
-<!-- QUICK ACTIONS / WORKFLOWS (Col Span 3) -->
-<div class="lg:col-span-3 edify-surface p-5 rounded-surface  shadow-sm space-y-4">
-<div class="pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Quick Actions / Workflows</h2>
-</div>
-
-<div class="grid grid-cols-2 gap-2">
-<!-- Start Verification -->
-<a href="/ia/verification/" class="h-20 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-100 rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-pill bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-<span class="edify-text-caption font-semibold block mt-1">Start Verification</span>
-</a>
-
-<!-- Review Returned -->
-<a href="/ia/returned/" class="h-20 bg-amber-50 hover:bg-amber-100/70 border border-amber-100 rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-pill bg-amber-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M5.5 15a7 7 0 0011.4 2.1L20 15M4 9l3.1-2.1A7 7 0 0118.5 9"/></svg></div>
-<span class="edify-text-caption font-semibold block mt-1">Review Returned</span>
-</a>
-
-<!-- Open Salesforce Queue -->
-<a href="/ia/verification/" class="h-20 edify-primary-soft edify-primary-soft-hover border edify-primary-border rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-pill edify-primary-solid text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 18a4 4 0 010-8 5 5 0 019.6-1.3A3.5 3.5 0 0117 18H7z"/></svg></div>
-<span class="edify-text-caption font-semibold block mt-1">Salesforce Queue</span>
-</a>
-
-<!-- View School 360 -->
-<a href="/schools" class="h-20 bg-teal-50 hover:bg-teal-100/70 border border-teal-100 rounded-surface p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-pill bg-teal-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg></div>
-<span class="edify-text-caption font-semibold block mt-1">View School 360</span>
-</a>
-</div>
-</div>
-
-<!-- Verification SLA Gauge (Col Span 4) -->
-<div class="lg:col-span-4 edify-surface p-5 rounded-surface shadow-sm">
-<div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Verification SLA</h2>
-<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">24-hour target</span>
-</div>
-<div class="flex items-center justify-center gap-5 pt-5">
-{% comment %}An unmeasured SLA draws no ring at all. A 0% arc would read as
-a service that missed every deadline rather than one with nothing to
-measure yet.{% endcomment %}
-{% if verification_sla.gauge %}
-<div class="shrink-0" style="--edify-donut-gauge-size: 6rem; --edify-donut-gauge-headline: 1.3125rem">
-{% include "partials/components/donut_rings.html" with donut=verification_sla.gauge donut_class="edify-donut--gauge" donut_label="Verifications within the 24-hour target" headline=verification_sla.pct|floatformat:1 headline_unit="%" %}
-</div>
-{% else %}
-<div class="h-24 w-24 shrink-0 flex items-center justify-center rounded-full border-2 border-dashed border-slate-200">
-<span class="text-[21px] font-semibold tracking-tight leading-none text-slate-300">&mdash;</span>
-</div>
-{% endif %}
-<div class="space-y-1.5">
-{% if verification_sla.pct is not None %}
-<p class="text-[12px] font-semibold text-slate-500">Within SLA <span class="text-slate-400">&middot; n={{ verification_sla.sample_size }}</span></p>
-{% if verification_sla.delta is not None %}
-<p class="edify-text-caption font-semibold {% if verification_sla.delta > 0 %}text-emerald-600{% elif verification_sla.delta < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">{% if verification_sla.delta > 0 %}&#9650;{% elif verification_sla.delta < 0 %}&#9660;{% endif %} {{ verification_sla.delta|floatformat:1 }} pts vs previous week</p>
-{% else %}
-<p class="edify-text-caption text-slate-400 font-medium">Previous week not yet measured</p>
-{% endif %}
-{% else %}
-<p class="text-[12px] font-semibold text-slate-500">Not yet measured</p>
-<p class="edify-text-caption text-slate-400 font-medium">Starts with the next completed IA cycle</p>
-{% endif %}
-<a href="/ia/verification/" class="inline-flex items-center gap-1 edify-text-caption font-semibold edify-primary-text hover:underline mt-1">Open queue &rarr;</a>
-</div>
-</div>
-</div>
-
-</div>
-<!-- ================= END GRID ROW 3 ================= -->
-
-
-<!-- ================= GRID ROW 4: Field Monitoring — split into 4 separate cards ================= -->
-<div>
-<h3 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-3 px-1">Field Monitoring &amp; Staff Compliance</h3>
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-<!-- Highest Pending Queue -->
-<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
-<div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Highest Pending Queue</h2>
-<span class="edify-text-caption font-bold text-rose-600 uppercase tracking-wider">Backlog</span>
-</div>
-<div class="space-y-2.5 pt-1">
-{% for item in field_monitoring.highest_pending %}
-<div class="flex items-center justify-between text-[12px] font-bold">
-<span class="text-slate-700">{{ item.name }}</span>
-<span class="text-rose-600 font-semibold">{{ item.count }}</span>
-</div>
-{% empty %}
-<p class="edify-text-caption text-slate-400 font-bold py-2">No backlog.</p>
-{% endfor %}
-</div>
-</div>
-
-<!-- Partner Pending Submissions -->
-<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
-<div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Partner Pending Submissions</h2>
-<span class="edify-text-caption font-bold text-amber-600 uppercase tracking-wider">Partners</span>
-</div>
-<div class="space-y-2.5 pt-1">
-{% for item in field_monitoring.partner_submissions %}
-<div class="flex items-center justify-between text-[12px] font-bold">
-<span class="text-slate-700">{{ item.name }}</span>
-<span class="text-amber-600 font-semibold">{{ item.count }}</span>
-</div>
-{% empty %}
-<p class="edify-text-caption text-slate-400 font-bold py-2">No pending partner submissions.</p>
-{% endfor %}
-</div>
-</div>
-
-<!-- Top Verifiers -->
-<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
-<div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Top Verifiers (This Week)</h2>
-<span class="edify-text-caption font-bold text-emerald-600 uppercase tracking-wider">Leaders</span>
-</div>
-<div class="space-y-2.5 pt-1">
-{% for item in field_monitoring.top_verifiers %}
-<div class="flex items-center justify-between text-[12px] font-bold">
-<span class="text-slate-700">{{ item.name }}</span>
-<span class="text-emerald-600 font-semibold">{{ item.count }}</span>
-</div>
-{% empty %}
-<p class="edify-text-caption text-slate-400 font-bold py-2">No verifier data.</p>
-{% endfor %}
-</div>
-</div>
-
-<!-- Slowest Turnaround -->
-<div class="edify-surface p-5 rounded-surface shadow-sm space-y-3">
-<div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Slowest Turnaround</h2>
-<span class="edify-text-caption font-bold text-rose-500 uppercase tracking-wider">Bottlenecks</span>
-</div>
-<div class="space-y-2.5 pt-1">
-{% for item in field_monitoring.slowest_turnaround %}
-<div class="flex items-center justify-between edify-text-caption font-bold">
-<span class="truncate pr-1">{{ item.name }}</span>
-<span class="text-rose-500 font-semibold">{{ item.time }}</span>
-</div>
-{% empty %}
-<p class="edify-text-caption text-slate-400 font-bold py-2">No slow turnarounds.</p>
-{% endfor %}
-</div>
-</div>
-
-</div>
-</div>
-<!-- ================= END GRID ROW 4 ================= -->
-
-
-<!-- ================= GRID ROW 5: Awaiting Follow-up (full width) ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-<!-- Awaiting Follow-up (Col Span 12) -->
-<div class="lg:col-span-12 edify-surface p-5 rounded-surface shadow-sm">
-<div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Awaiting Follow-up</h2>
-<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Correction cycle</span>
-</div>
-<div class="flex items-center justify-center gap-6 pt-4">
-<div class="flex flex-col items-center justify-center text-center shrink-0">
-<h4 class="text-[36px] font-semibold text-slate-800 leading-none">{{ returned_open_school_cnt }}</h4>
-<span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider mt-1">Schools</span>
-</div>
-<div class="space-y-1.5">
-<p class="text-[12px] font-bold text-slate-500">Returned for correction</p>
-<p class="edify-text-caption text-slate-400 font-semibold">{% if avg_resolution_days is not None %}Avg. resolution: {{ avg_resolution_days }} days{% else %}Avg. resolution: No data yet{% endif %}</p>
-<a href="/ia/verification/?tab=returned" class="inline-flex items-center gap-1 edify-text-caption font-semibold edify-primary-text hover:underline mt-1">Review returned records &rarr;</a>
-</div>
-</div>
-</div>
-
-</div>
-<!-- ================= END GRID ROW 5 ================= -->
-
-
-<!-- ================= GRID ROW 6: Field Quality & Data Signals ================= -->
-<a href="/debriefs" class="block edify-surface p-5 rounded-surface shadow-sm space-y-3 hover:shadow-md transition-shadow">
-<div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Field Quality &amp; Data Signals from Field Debriefs <span class="text-slate-400 font-medium edify-text-caption">(last {{ field_debrief_intel.days }} days)</span></h2>
-<span class="edify-text-caption font-bold edify-primary-text uppercase tracking-wider">Open Field Debriefs &rarr;</span>
-</div>
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-<div class="rounded-surface bg-slate-50 py-3 text-center">
-<p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ field_debrief_intel.total }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Debriefs Filed</p>
-</div>
-<div class="rounded-surface py-3 text-center {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
-<p class="text-[18px] font-bold tabular-nums {% if field_debrief_intel.critical %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.critical }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Critical Risk</p>
-</div>
-<div class="rounded-surface py-3 text-center {% if field_debrief_intel.action_required %}bg-amber-50{% else %}bg-slate-50{% endif %}">
-<p class="text-[18px] font-bold tabular-nums {% if field_debrief_intel.action_required %}text-amber-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.action_required }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Action Required</p>
-</div>
-<div class="rounded-surface py-3 text-center {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
-<p class="text-[18px] font-bold tabular-nums {% if field_debrief_intel.escalated %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.escalated }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Escalated</p>
-</div>
-</div>
-{% if field_debrief_intel.top_challenge %}
-<p class="edify-text-caption text-slate-400 font-semibold">Most reported field challenge: <span class="font-bold text-slate-600">{{ field_debrief_intel.top_challenge }}</span> ({{ field_debrief_intel.top_challenge_count }} debriefs)</p>
-{% else %}
-<p class="edify-text-caption text-slate-300 font-semibold">No field debriefs filed in this window.</p>
-{% endif %}
-</a>
-<!-- ================= END GRID ROW 6 ================= -->
-
+<div class="ia-dashboard">
+  <header class="ia-hero">
+    <div class="ia-hero__content">
+      <div class="ia-hero__eyebrow">
+        <span class="ia-hero__pulse" aria-hidden="true"></span>
+        Quality operations
+      </div>
+      <h1 class="edify-page-title">Impact Assessment</h1>
+      <p>Certify completed work, protect data quality, and resolve exceptions before they reach reporting.</p>
+      <div class="ia-hero__meta">
+        <span>{% include "partials/dashboards/admin/_icon.html" with name="calendar" only %} {{ date_range }}</span>
+        <span>
+          {% include "partials/dashboards/admin/_icon.html" with name="evidence" only %}
+          Last upload:
+          {% if upload_status.last_upload %}{{ upload_status.last_upload|date:"j M, H:i" }}{% else %}none yet{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="ia-hero__actions" aria-label="Primary IA actions">
+      <a href="/ia/verification/" class="ia-button ia-button--primary">
+        Review verification queue
+        {% if kpis.waiting %}<span>{{ kpis.waiting }}</span>{% endif %}
+      </a>
+      <a href="/ssa/upload/" class="ia-button ia-button--secondary">
+        {% include "partials/dashboards/admin/_icon.html" with name="plus" only %}
+        Upload SSA data
+      </a>
+    </div>
+  </header>
+
+  {% include "partials/analytics/section_nav.html" %}
+
+  <section class="ia-metric-grid" aria-label="Impact assessment summary" role="list">
+    <a href="/ia/verification/" class="ia-metric" data-tone="warning" role="listitem">
+      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="evidence" only %}</span>
+      <span class="ia-metric__copy">
+        <span class="ia-metric__label">Awaiting verification</span>
+        <strong>{{ kpis.waiting }}</strong>
+        <small>{% if kpis.waiting %}Oldest work is shown first{% else %}Queue is clear{% endif %}</small>
+      </span>
+      <span class="ia-metric__arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a href="/ia/returned/" class="ia-metric" data-tone="{% if kpis.returned_open %}danger{% else %}neutral{% endif %}" role="listitem">
+      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="warning" only %}</span>
+      <span class="ia-metric__copy">
+        <span class="ia-metric__label">Awaiting correction</span>
+        <strong>{{ kpis.returned_open }}</strong>
+        <small>{{ kpis.returned_today }} returned today</small>
+      </span>
+      <span class="ia-metric__arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a href="/ia/history/" class="ia-metric" data-tone="success" role="listitem">
+      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="health" only %}</span>
+      <span class="ia-metric__copy">
+        <span class="ia-metric__label">Verified this week</span>
+        <strong>{{ kpis.verified_week }}</strong>
+        <small>{{ kpis.verified_today }} completed today</small>
+      </span>
+      <span class="ia-metric__arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a href="/ia/verification/" class="ia-metric" data-tone="{% if verification_sla.pct is None %}neutral{% elif verification_sla.pct >= 80 %}success{% else %}warning{% endif %}" role="listitem">
+      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}</span>
+      <span class="ia-metric__copy">
+        <span class="ia-metric__label">Within 24-hour SLA</span>
+        <strong>{% if verification_sla.pct is not None %}{{ verification_sla.pct|floatformat:1 }}%{% else %}—{% endif %}</strong>
+        <small>{% if verification_sla.sample_size %}{{ verification_sla.sample_size }} measured cycles{% else %}Not yet measured · waiting for a completed cycle{% endif %}</small>
+      </span>
+      <span class="ia-metric__arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a href="/analytics" class="ia-metric" data-tone="{% if kpis.quality_pct >= 80 %}success{% else %}warning{% endif %}" role="listitem">
+      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="analytics" only %}</span>
+      <span class="ia-metric__copy">
+        <span class="ia-metric__label">Data quality</span>
+        <strong>{{ kpis.quality }}</strong>
+        <small>Average across active schools</small>
+        <span class="ia-progress" aria-hidden="true"><i style="--ia-progress: {{ kpis.quality_pct }}%"></i></span>
+      </span>
+      <span class="ia-metric__arrow" aria-hidden="true">→</span>
+    </a>
+  </section>
+
+  <div class="ia-focus-grid">
+    <section class="ia-panel ia-queue" aria-labelledby="ia-queue-title">
+      <header class="ia-panel__header">
+        <div>
+          <p class="ia-section-kicker">Do next</p>
+          <h2 id="ia-queue-title">Verification queue</h2>
+          <p>Prioritized by time waiting. Records beyond 24 hours are marked at risk.</p>
+        </div>
+        <a href="/ia/verification/" class="ia-text-link">Open full queue <span aria-hidden="true">→</span></a>
+      </header>
+
+      {% if queue_items %}
+      <div class="ia-queue-table" role="table" aria-label="Oldest pending verification records">
+        <div class="ia-queue-table__header" role="row">
+          <span role="columnheader">Record</span>
+          <span role="columnheader">School and activity</span>
+          <span role="columnheader">Owner</span>
+          <span role="columnheader">Waiting</span>
+          <span role="columnheader"><span class="sr-only">Action</span></span>
+        </div>
+        <div role="rowgroup">
+          {% for item in queue_items %}
+          <div class="ia-queue-row" role="row">
+            <div class="ia-queue-row__record" role="cell">
+              <a href="{{ item.review_url }}">#{{ item.record_id }}</a>
+              {% if item.is_overdue %}<span class="ia-status ia-status--danger">SLA risk</span>{% else %}<span class="ia-status ia-status--warning">Pending</span>{% endif %}
+            </div>
+            <div class="ia-queue-row__school" role="cell">
+              <strong>{{ item.school }}</strong>
+              <span>{{ item.district }} · {{ item.activity_type }}</span>
+            </div>
+            <div class="ia-queue-row__owner" role="cell">
+              <strong>{{ item.submitted_by }}</strong>
+              <span>Responsible staff</span>
+            </div>
+            <div class="ia-queue-row__age" role="cell">
+              <strong>{{ item.submitted_relative }}</strong>
+              <span>{{ item.submission_date }}</span>
+            </div>
+            <div class="ia-queue-row__action" role="cell">
+              <a href="{{ item.review_url }}" aria-label="Review {{ item.activity_type }} at {{ item.school }}">Review <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="ia-empty">
+        <span aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="health" only %}</span>
+        <div>
+          <strong>Verification queue is clear</strong>
+          <p>Newly submitted activities will appear here automatically.</p>
+        </div>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="ia-attention" aria-label="IA action centre">
+      <section class="ia-panel">
+        <header class="ia-panel__header ia-panel__header--compact">
+          <div>
+            <p class="ia-section-kicker">Work lanes</p>
+            <h2>Open queues</h2>
+          </div>
+        </header>
+        <nav class="ia-lane-list" aria-label="Impact Assessment queues">
+          <a href="/ssa/verification/">
+            <span data-tone="warning">{% include "partials/dashboards/admin/_icon.html" with name="school" only %}</span>
+            <span><strong>SSA review</strong><small>Confirm assessment records</small></span>
+            <b>{{ kpis.ssa_pending_review }}</b>
+          </a>
+          <a href="/evidence/">
+            <span data-tone="purple">{% include "partials/dashboards/admin/_icon.html" with name="evidence" only %}</span>
+            <span><strong>Evidence review</strong><small>Uploaded files awaiting a decision</small></span>
+            <b>{{ kpis.evidence_pending }}</b>
+          </a>
+          <a href="/ia/returned/">
+            <span data-tone="danger">{% include "partials/dashboards/admin/_icon.html" with name="warning" only %}</span>
+            <span><strong>Returned work</strong><small>Corrections still outstanding</small></span>
+            <b>{{ kpis.returned_open }}</b>
+          </a>
+          <a href="/ia/duplicates/">
+            <span data-tone="neutral">{% include "partials/dashboards/admin/_icon.html" with name="attention" only %}</span>
+            <span><strong>Duplicate review</strong><small>Potential duplicate activities</small></span>
+            <b>{{ kpis.duplicate_risk }}</b>
+          </a>
+        </nav>
+      </section>
+
+      <section class="ia-panel">
+        <header class="ia-panel__header ia-panel__header--compact">
+          <div>
+            <p class="ia-section-kicker">Exceptions</p>
+            <h2>Needs attention</h2>
+          </div>
+          {% if exceptions %}<span class="ia-count">{{ exceptions|length }}</span>{% endif %}
+        </header>
+        {% if exceptions %}
+        <ul class="ia-exception-list">
+          {% for exception in exceptions|slice:":5" %}
+          <li>
+            <a href="{{ exception.href }}">
+              <span class="ia-exception-list__count" data-tone="{{ exception.severity }}">{{ exception.count }}</span>
+              <span>{{ exception.text }}</span>
+              <span aria-hidden="true">→</span>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="ia-quiet-state">
+          <span aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="health" only %}</span>
+          <p>No active data-quality exceptions.</p>
+        </div>
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+
+  <section class="ia-section" aria-labelledby="ia-quality-title">
+    <header class="ia-section__header">
+      <div>
+        <p class="ia-section-kicker">Programme confidence</p>
+        <h2 id="ia-quality-title">Quality and coverage</h2>
+      </div>
+      <a href="/analytics" class="ia-text-link">Open full analytics <span aria-hidden="true">→</span></a>
+    </header>
+
+    <div class="ia-quality-grid">
+      <article class="ia-panel ia-coverage">
+        <header class="ia-card-heading">
+          <div>
+            <h3>SSA coverage</h3>
+            <p>Current operational FY</p>
+          </div>
+          <strong>{{ ssa_overview.done_pct }}%</strong>
+        </header>
+        <div class="ia-stacked-progress" role="img" aria-label="{{ ssa_overview.done_pct }} percent complete, {{ ssa_overview.scheduled_pct }} percent scheduled, {{ ssa_overview.not_done_pct }} percent not done">
+          <span data-tone="success" style="--ia-segment: {{ ssa_overview.done_pct }}%"></span>
+          <span data-tone="warning" style="--ia-segment: {{ ssa_overview.scheduled_pct }}%"></span>
+          <span data-tone="neutral" style="--ia-segment: {{ ssa_overview.not_done_pct }}%"></span>
+        </div>
+        <dl class="ia-coverage__legend">
+          <div><dt><i data-tone="success"></i>Done</dt><dd>{{ ssa_overview.done }}</dd></div>
+          <div><dt><i data-tone="warning"></i>Scheduled</dt><dd>{{ ssa_overview.scheduled }}</dd></div>
+          <div><dt><i data-tone="neutral"></i>Not done</dt><dd>{{ ssa_overview.not_done }}</dd></div>
+        </dl>
+        <div class="ia-subsection">
+          <div class="ia-subsection__heading">
+            <h4>Lowest-scoring interventions</h4>
+            <span>Confirmed SSA only</span>
+          </div>
+          <ul class="ia-bar-list">
+            {% for item in lowest_performing|slice:":4" %}
+            <li>
+              <div><span>{{ item.name }}</span><strong>{{ item.rate }}%</strong></div>
+              <span class="ia-bar"><i style="--ia-progress: {{ item.rate }}%"></i></span>
+            </li>
+            {% empty %}
+            <li class="ia-list-empty">No confirmed SSA scores for this FY.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </article>
+
+      <article class="ia-panel ia-evidence">
+        <header class="ia-card-heading">
+          <div>
+            <h3>Evidence quality</h3>
+            <p>Decision outcomes by evidence type</p>
+          </div>
+          <a href="/evidence/" class="ia-text-link">Review evidence <span aria-hidden="true">→</span></a>
+        </header>
+        <dl class="ia-evidence__summary">
+          <div><dt>Submitted</dt><dd>{{ evidence_totals.submitted }}</dd></div>
+          <div data-tone="success"><dt>Accepted</dt><dd>{{ evidence_totals.verified }}</dd></div>
+          <div data-tone="warning"><dt>Returned</dt><dd>{{ evidence_totals.returned }}</dd></div>
+          <div data-tone="danger"><dt>Rejected</dt><dd>{{ evidence_totals.rejected }}</dd></div>
+        </dl>
+        <div class="ia-evidence-table">
+          <div class="ia-evidence-table__header">
+            <span>Evidence type</span><span>Submitted</span><span>Accepted</span><span>Returned</span>
+          </div>
+          {% for metric in evidence_metrics|slice:":6" %}
+          <div class="ia-evidence-table__row">
+            <strong>{{ metric.category }}</strong>
+            <span>{{ metric.submitted }}</span>
+            <span data-tone="success">{{ metric.verified }}</span>
+            <span data-tone="{% if metric.returned %}warning{% else %}neutral{% endif %}">{{ metric.returned }}</span>
+          </div>
+          {% empty %}
+          <div class="ia-list-empty">No evidence has been submitted yet.</div>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="ia-panel ia-integrity">
+        <header class="ia-card-heading">
+          <div>
+            <h3>Data integrity</h3>
+            <p>Conditions weakening reporting confidence</p>
+          </div>
+        </header>
+        <ul class="ia-integrity-list">
+          {% for metric in dq_metrics %}
+          <li>
+            <span>{{ metric.label }}</span>
+            <strong data-tone="{% if metric.value %}warning{% else %}success{% endif %}">{{ metric.value }}</strong>
+          </li>
+          {% endfor %}
+        </ul>
+        <div class="ia-correction-cycle">
+          <span class="ia-correction-cycle__value">{{ returned_open_school_cnt }}</span>
+          <span>
+            <strong>schools awaiting correction</strong>
+            <small>{% if avg_resolution_days is not None %}Average resolution {{ avg_resolution_days }} days{% else %}No completed correction cycle yet{% endif %}</small>
+          </span>
+        </div>
+        <a href="/ia/returned/" class="ia-button ia-button--quiet">Review returned records <span aria-hidden="true">→</span></a>
+      </article>
+    </div>
+  </section>
+
+  <section class="ia-section" aria-labelledby="ia-operations-title">
+    <header class="ia-section__header">
+      <div>
+        <p class="ia-section-kicker">Operational context</p>
+        <h2 id="ia-operations-title">Where quality is getting stuck</h2>
+      </div>
+    </header>
+
+    <div class="ia-operations-grid">
+      <article class="ia-panel ia-workload">
+        <header class="ia-card-heading">
+          <div>
+            <h3>Queue ownership</h3>
+            <p>People and partners carrying the current backlog</p>
+          </div>
+        </header>
+        <div class="ia-workload__groups">
+          <section>
+            <h4>Staff backlog</h4>
+            <ol>
+              {% for item in field_monitoring.highest_pending %}
+              <li><span>{{ item.name }}</span><strong>{{ item.count }}</strong></li>
+              {% empty %}<li class="ia-list-empty">No staff backlog.</li>{% endfor %}
+            </ol>
+          </section>
+          <section>
+            <h4>Partner submissions</h4>
+            <ol>
+              {% for item in field_monitoring.partner_submissions %}
+              <li><span>{{ item.name }}</span><strong>{{ item.count }}</strong></li>
+              {% empty %}<li class="ia-list-empty">No partner backlog.</li>{% endfor %}
+            </ol>
+          </section>
+          <section>
+            <h4>Verified this week</h4>
+            <ol>
+              {% for item in field_monitoring.top_verifiers %}
+              <li><span>{{ item.name }}</span><strong data-tone="success">{{ item.count }}</strong></li>
+              {% empty %}<li class="ia-list-empty">No completed verifications.</li>{% endfor %}
+            </ol>
+          </section>
+        </div>
+      </article>
+
+      <article class="ia-panel ia-activity">
+        <header class="ia-card-heading">
+          <div>
+            <h3>Recent decisions</h3>
+            <p>Latest verification and return activity</p>
+          </div>
+          <a href="/ia/history/" class="ia-text-link">History <span aria-hidden="true">→</span></a>
+        </header>
+        <ol class="ia-activity-list">
+          {% for activity in recent_activities %}
+          <li>
+            <span class="ia-activity-list__marker" aria-hidden="true"></span>
+            <div>
+              <strong>{{ activity.title }}</strong>
+              <span>{{ activity.detail }}</span>
+              <time>{{ activity.time }}</time>
+            </div>
+          </li>
+          {% empty %}
+          <li class="ia-list-empty">No verification decisions recorded yet.</li>
+          {% endfor %}
+        </ol>
+      </article>
+    </div>
+  </section>
+
+  <a href="/debriefs" class="ia-field-signals">
+    <div class="ia-field-signals__heading">
+      <span class="ia-field-signals__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="attention" only %}</span>
+      <span>
+        <strong>Field quality signals</strong>
+        <small>Reported through field debriefs in the last {{ field_debrief_intel.days }} days</small>
+      </span>
+    </div>
+    <dl>
+      <div><dt>Debriefs</dt><dd>{{ field_debrief_intel.total }}</dd></div>
+      <div data-tone="{% if field_debrief_intel.critical %}danger{% else %}neutral{% endif %}"><dt>Critical risk</dt><dd>{{ field_debrief_intel.critical }}</dd></div>
+      <div data-tone="{% if field_debrief_intel.action_required %}warning{% else %}neutral{% endif %}"><dt>Action required</dt><dd>{{ field_debrief_intel.action_required }}</dd></div>
+      <div data-tone="{% if field_debrief_intel.escalated %}danger{% else %}neutral{% endif %}"><dt>Escalated</dt><dd>{{ field_debrief_intel.escalated }}</dd></div>
+    </dl>
+    <span class="ia-field-signals__arrow" aria-hidden="true">→</span>
+  </a>
 </div>
 {% endblock %}

@@ -734,6 +734,28 @@ class MyTargetQueryService:
                 }
             )
 
+        strategic_milestones = []
+        strategic_priorities = []
+        project_priorities = []
+        if getattr(user, "staff_profile_id", None):
+            from apps.hr.milestone_allocations import (
+                personal_milestone_targets,
+                strategic_priority_overview,
+            )
+
+            strategic_milestones = personal_milestone_targets(
+                staff=user.staff_profile,
+                fy=fy,
+                month_of_fy=month_of_fy,
+            )
+            strategic_priorities = strategic_priority_overview(
+                fy=fy,
+                staff_ids=[user.staff_profile_id],
+            )
+            from apps.projects.staff_priorities import staff_project_priorities
+
+            project_priorities = staff_project_priorities(user=user, fy=fy)
+
         return {
             "fy": fy,
             "month_of_fy": month_of_fy,
@@ -772,6 +794,9 @@ class MyTargetQueryService:
                 {"value": m, "label": Cal.month_label(fy, m)} for m in range(1, 13)
             ],
             "last_refreshed": timezone.now(),
+            "strategic_milestones": strategic_milestones,
+            "strategic_priorities": strategic_priorities,
+            "project_priorities": project_priorities,
         }
 
     # ── Gap reasons + drawer detail (traceability) ───────────────────────────

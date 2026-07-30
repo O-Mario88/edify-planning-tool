@@ -1888,37 +1888,33 @@ class LeaveNotificationService:
 class LeaveBudgetImpactService:
     @staticmethod
     def handle_reschedule(activity, old_date, new_date, reason) -> None:
+        """Append the reschedule audit trail to the activity's cost lines.
+
+        Historical note: this used to ALSO rewrite every line's period stamps
+        (planned_date/week/month/quarter/fy) from the raw datetime — running
+        AFTER costing_service.apply_to_activity had already derived them from
+        timezone.localtime() and after the weekly/monthly fund-request sync.
+        The raw-UTC weekday could land a line in a different week than the
+        weekly request just built from it (the exact drift
+        budget.health.cost_line_period_drift exists to detect), so the period
+        rewrite was removed: apply_to_activity is the only period writer."""
         if not old_date or not new_date or old_date == new_date:
             return
 
         from apps.activities.models import ActivityScheduleCostLine
-        from apps.core.fy import get_operational_fy, get_quarter_for_date
-
-        new_fy = get_operational_fy(new_date)
-        new_quarter = get_quarter_for_date(new_date)
 
         new_week = new_date.isocalendar()[1]
         old_week = old_date.isocalendar()[1]
 
-        cost_lines = ActivityScheduleCostLine.objects.filter(activity=activity)
-        for line in cost_lines:
-            line.planned_date = new_date
-            line.week_start_date = new_date - timedelta(days=new_date.weekday())
-            line.week_end_date = line.week_start_date + timedelta(days=6)
-            line.month = new_date.month
-            line.quarter = new_quarter
-            line.fiscal_year = new_fy
-
-            trail = f" [Audit: Rescheduled due to {reason}. Old period: Week {old_week}, New period: Week {new_week}]"
+        trail = (
+            f" [Audit: Rescheduled due to {reason}. "
+            f"Old period: Week {old_week}, New period: Week {new_week}]"
+        )
+        for line in ActivityScheduleCostLine.objects.filter(activity=activity):
             if line.description:
-                if "Rescheduled due to" not in line.description:
-                    line.description = f"{line.description}{trail}"[:255]
+                if "Rescheduled due to" in line.description:
+                    continue
+                line.description = f"{line.description}{trail}"[:255]
             else:
                 line.description = trail.strip()[:255]
-
-            line.save()
-
-            wfr_line = line.weekly_request_lines.first()
-            if wfr_line:
-                wfr_line.week_number = new_week
-                wfr_line.save()
+            line.save(update_fields=["description", "updated_at"])

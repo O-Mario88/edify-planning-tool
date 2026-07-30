@@ -165,13 +165,38 @@ class DrawerLabelTests(SimpleTestCase):
                 )
 
     def test_the_classification_and_the_goal_stay_distinct(self):
-        """`purpose_of_visit` drives activity_type; the goal is prose. They are
-        not the same question and must not read as one."""
+        """The classification drives activity_type; the goal is prose. They
+        are not the same question and must not read as one.
+
+        The classification control has two eras: the legacy
+        `purpose_of_visit` select, and the Activity Catalogue's "Recommended
+        Activities" fieldset that now derives the type from the selected
+        Catalogue item. Whichever the drawer carries, its heading must stay
+        distinct from the free-text Goal label."""
+        import re
+        from pathlib import Path
+
+        from django.conf import settings
+
         schedule = dict(self._labels(self.SCHEDULE))
-        self.assertNotEqual(
-            schedule["purpose_of_visit"].strip(),
-            schedule["activity_purpose_text"].strip(),
+        goal = schedule["activity_purpose_text"].strip()
+        if "purpose_of_visit" in schedule:
+            self.assertNotEqual(schedule["purpose_of_visit"].strip(), goal)
+            return
+        text = (Path(settings.BASE_DIR) / self.SCHEDULE).read_text(
+            encoding="utf-8"
         )
+        legends = [
+            m.strip()
+            for m in re.findall(r"<legend[^>]*>([^<]+)</legend>", text)
+        ]
+        self.assertTrue(
+            legends,
+            "The schedule drawer has neither a purpose_of_visit select nor a "
+            "catalogue fieldset — the classification question is missing.",
+        )
+        for legend in legends:
+            self.assertNotEqual(legend, goal)
 
 
 class OneWayToHandWorkToAPartnerTests(SimpleTestCase):

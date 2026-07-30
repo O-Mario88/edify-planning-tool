@@ -1,14 +1,19 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Fix & Edit School Data{% endblock %}
-{% block drawer_subtitle %}Complete fields, assign account owners, and resolve validation issues. Data Quality score recomputes on save.{% endblock %}
+{% block drawer_subtitle %}School ID, School Name, District, and Staff Name are required. Complete any optional profile fields as the information becomes available.{% endblock %}
 
 {% block drawer_body %}
 <div class="space-y-6 ">
 <form
+method="post"
+action="/schools/{{ school.id }}/edit-drawer"
 hx-post="/schools/{{ school.id }}/edit-drawer"
 hx-target="#drawer-container"
 hx-disabled-elt="find button[type='submit']"
+@focusout.capture="if ($event.target.matches('[required]')) $event.target.toggleAttribute('aria-invalid', !$event.target.checkValidity())"
+@input.capture="if ($event.target.matches('[required]') && $event.target.checkValidity()) $event.target.removeAttribute('aria-invalid')"
+@submit="Array.from($el.querySelectorAll('[required]')).forEach((field) => field.toggleAttribute('aria-invalid', !field.checkValidity()))"
 class="space-y-4 text-[12px] font-bold text-slate-600"
 >
 {% csrf_token %}
@@ -23,7 +28,7 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 
 <!-- School ID (Read-only reference) -->
 <div>
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce School ID (Immutable)</label>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School ID <span class="text-rose-500">*</span> <span class="normal-case tracking-normal text-slate-400">(Immutable)</span></label>
 <input
 type="text"
 value="{{ school.school_id }}"
@@ -34,32 +39,51 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 
 <!-- School Name -->
 <div>
-<label for="name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name</label>
+<label for="name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name <span class="text-rose-500">*</span></label>
 <input
 type="text"
 name="name"
 id="name"
 value="{{ school.name }}"
 required
+aria-describedby="school-name-help"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
+<p id="school-name-help" class="mt-1 edify-text-caption font-medium text-slate-400">Required for every school record.</p>
+</div>
+
+<!-- Current partner type -->
+<div>
+<label for="school_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Current Partner Type <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<select
+name="school_type"
+id="school_type"
+aria-describedby="school-type-help"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
+>
+{% for value, label in school_types %}
+<option value="{{ value }}" {% if school.school_type == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+<p id="school-type-help" class="mt-1 edify-text-caption font-medium text-slate-400">Changing this moves the school to the matching partner category across the app.</p>
 </div>
 
 <!-- Phone Number -->
 <div>
-<label for="school_phone" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Phone</label>
+<label for="school_phone" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Phone <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
-type="text"
+type="tel"
 name="school_phone"
 id="school_phone"
 value="{{ school.school_phone|default:'' }}"
+autocomplete="tel"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
 
 <!-- Primary Contact -->
 <div>
-<label for="primary_contact_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Contact Person</label>
+<label for="primary_contact_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Contact Person <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
 type="text"
 name="primary_contact_name"
@@ -69,9 +93,22 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 >
 </div>
 
+<!-- Primary Contact Phone -->
+<div>
+<label for="primary_contact_phone" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Contact Phone <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<input
+type="tel"
+name="primary_contact_phone"
+id="primary_contact_phone"
+value="{{ school.primary_contact_phone|default:'' }}"
+autocomplete="tel"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
+>
+</div>
+
 <!-- Director Name -->
 <div>
-<label for="director_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Director Name</label>
+<label for="director_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Director Name <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
 type="text"
 name="director_name"
@@ -83,7 +120,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 
 <!-- Headteacher Name -->
 <div>
-<label for="headteacher_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Headteacher Name</label>
+<label for="headteacher_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Headteacher Name <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
 type="text"
 name="headteacher_name"
@@ -114,7 +151,7 @@ Location &amp; school size
 </legend>
 
 <div>
-<label for="enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Pupil Enrolment</label>
+<label for="enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Pupil Enrolment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
 type="number"
 name="enrollment"
@@ -133,23 +170,49 @@ Current pupil count. Leave blank only when it is not yet known.
 </div>
 
 <div>
-<label for="school_district" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
+<label for="last_enrollment_date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Last Enrolment Date <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
-type="text"
-id="school_district"
-value="{{ school.district.name }}"
-readonly
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-100 text-slate-500 focus:outline-none"
+type="date"
+name="last_enrollment_date"
+id="last_enrollment_date"
+value="{{ school.last_enrollment_date|date:'Y-m-d' }}"
+aria-describedby="last-enrollment-date-help"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
+<p id="last-enrollment-date-help" class="mt-1 edify-text-caption font-medium text-slate-400">When the pupil headcount was recorded.</p>
 </div>
 
 <div>
-<label for="sub_county_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Sub-county</label>
+<label for="district_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District <span class="text-rose-500">*</span></label>
+<select
+name="district_id"
+id="district_id"
+required
+hx-get="/schools/sub-counties"
+hx-trigger="change"
+hx-target="#sub_county_id"
+hx-swap="innerHTML"
+@change="$refs.subCounty.value = ''; filterParishes('', true); const cluster = document.getElementById('cluster_id'); if (cluster) cluster.value = ''"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
+>
+<option value="">Select a District</option>
+{% for district in districts %}
+<option value="{{ district.id }}" {% if school.district_id == district.id %}selected{% endif %}>{{ district.name }} ({{ district.region.name }})</option>
+{% endfor %}
+</select>
+</div>
+
+<div>
+<label for="sub_county_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Sub-county <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <select
 name="sub_county_id"
 id="sub_county_id"
 x-ref="subCounty"
 @change="filterParishes($event.target.value)"
+hx-get="/schools/parishes"
+hx-trigger="change"
+hx-target="#parish_id"
+hx-swap="innerHTML"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 <option value="">Not specified</option>
@@ -160,7 +223,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 </div>
 
 <div>
-<label for="parish_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Parish</label>
+<label for="parish_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Parish <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <select
 name="parish_id"
 id="parish_id"
@@ -184,7 +247,7 @@ Parishes are filtered by the selected sub-county.
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 <div>
-<label for="latitude" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Latitude</label>
+<label for="latitude" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Latitude <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
 type="number"
 name="latitude"
@@ -200,7 +263,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 >
 </div>
 <div>
-<label for="longitude" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Longitude</label>
+<label for="longitude" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Longitude <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
 type="number"
 name="longitude"
@@ -221,11 +284,12 @@ Enter both coordinates in decimal degrees, or leave both blank.
 </p>
 
 <div>
-<label for="shipping_address" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Physical Address</label>
+<label for="shipping_address" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Physical Address <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <textarea
 name="shipping_address"
 id="shipping_address"
 rows="2"
+autocomplete="street-address"
 class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >{{ school.shipping_address|default:'' }}</textarea>
 </div>
@@ -233,7 +297,7 @@ class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semib
 
 <!-- Cluster assignment dropdown -->
 <div>
-<label for="cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Assignment</label>
+<label for="cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Assignment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <select
 name="cluster_id"
 id="cluster_id"
@@ -248,17 +312,20 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 
 <!-- Staff matcher / account owner dropdown -->
 <div>
-<label for="account_owner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Account Owner / Staff Match</label>
+<label for="account_owner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Staff Name <span class="text-rose-500">*</span></label>
 <select
 name="account_owner_id"
 id="account_owner_id"
+required
+aria-describedby="staff-name-help"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
-<option value="">-- Unassigned --</option>
+<option value="" disabled {% if not school.account_owner_id %}selected{% endif %}>Select a CCEO or Program Lead</option>
 {% for st in staff %}
-<option value="{{ st.id }}" {% if school.account_owner_id == st.id %}selected{% endif %}>{{ st.user.name }} ({{ st.get_role_display }})</option>
+<option value="{{ st.id }}" {% if school.account_owner_id == st.id %}selected{% endif %}>{{ st.user.name }} ({{ st.user.active_role }})</option>
 {% endfor %}
 </select>
+<p id="staff-name-help" class="mt-1 edify-text-caption font-medium text-slate-400">Required. This person owns the school portfolio and its assigned priorities.</p>
 </div>
 
 <!-- Footer Actions -->
@@ -274,7 +341,7 @@ Cancel
 type="submit"
 class="px-6 h-9 rounded-control edify-primary-solid edify-primary-hover text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
 >
-<span>Recalculate & Save</span>
+<span>Save School Profile</span>
 </button>
 </div>
 </form>

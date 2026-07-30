@@ -61,15 +61,23 @@ CLUSTER_MEETING_SNACK_RATE_KEY = "cluster_meeting_participant_meal_cost_per_head
 
 
 def _participants_of(a: dict, default_n: int) -> int:
+    """Participant quantity for per-head pricing.
+
+    The PLANNED count drives the budget (2026-07-30 audit §32: participant
+    rate × planned participant count) — attendance actuals are a completion
+    record, and preferring them here meant a post-completion reschedule
+    silently converted a planned estimate into an actuals-based figure.
+    Actuals are used only when no plan was ever captured, ahead of the
+    hardcoded default."""
+    expected = a.get("expectedParticipants") or 0
+    if expected > 0:
+        return expected
     counted = (
         (a.get("teachersAttended") or 0)
         + (a.get("leadersAttended") or 0)
         + (a.get("otherParticipants") or 0)
     )
-    if counted > 0:
-        return counted
-    expected = a.get("expectedParticipants") or 0
-    return expected if expected > 0 else default_n
+    return counted if counted > 0 else default_n
 
 
 def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
@@ -201,7 +209,17 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                         "dinner",
                     ),
                 )
-                nights = max(0, a.get("nights") or 0)
+                # A secondary-district visit day is an overnight by policy —
+                # the Daily Visit Batch pool always carries one night's
+                # accommodation, but this itemized path only added it when the
+                # caller sent "nights", which no form ever does. Default to
+                # one night for parity; an explicit nights=0 still means a
+                # same-day return.
+                nights = a.get("nights")
+                try:
+                    nights = 1 if nights is None else max(0, int(nights))
+                except (TypeError, ValueError):
+                    nights = 1
                 if nights > 0:
                     add(
                         "Accommodation",

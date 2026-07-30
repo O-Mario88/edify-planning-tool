@@ -210,9 +210,60 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1
 
 <!-- School Attendance Checklist (Collapsible Dropdown) -->
 {% if cluster_schools %}
-<div class="space-y-2 mt-4" x-data="{ openDropdown: false }">
+<div
+class="space-y-2 mt-4"
+x-data="{
+openDropdown: false,
+scrollContainer: null,
+repositionDropdown: null,
+positionDropdown() {
+const trigger = this.$refs.attendanceTrigger;
+const panel = this.$refs.attendanceMenu;
+if (!trigger || !panel) return;
+
+const rect = trigger.getBoundingClientRect();
+const edge = 12;
+const gap = 6;
+const viewportWidth = document.documentElement.clientWidth;
+const viewportHeight = window.innerHeight;
+const width = Math.min(rect.width, viewportWidth - (edge * 2));
+const left = Math.min(
+Math.max(edge, rect.left),
+viewportWidth - edge - width
+);
+const roomBelow = viewportHeight - rect.bottom - edge;
+const roomAbove = rect.top - edge;
+const opensAbove = roomBelow < 160 && roomAbove > roomBelow;
+const availableHeight = Math.max(
+96,
+(opensAbove ? roomAbove : roomBelow) - gap
+);
+
+Object.assign(panel.style, {
+left: `${left}px`,
+width: `${width}px`,
+maxHeight: `${Math.min(240, availableHeight)}px`,
+top: opensAbove ? 'auto' : `${rect.bottom + gap}px`,
+bottom: opensAbove ? `${viewportHeight - rect.top + gap}px` : 'auto',
+transformOrigin: opensAbove ? 'bottom center' : 'top center'
+});
+},
+init() {
+this.repositionDropdown = () => {
+if (this.openDropdown) this.positionDropdown();
+};
+this.scrollContainer = this.$el.closest('.drawer-body');
+this.scrollContainer?.addEventListener('scroll', this.repositionDropdown, { passive: true });
+window.addEventListener('resize', this.repositionDropdown, { passive: true });
+},
+destroy() {
+this.scrollContainer?.removeEventListener('scroll', this.repositionDropdown);
+window.removeEventListener('resize', this.repositionDropdown);
+}
+}"
+>
 <div class="flex items-center justify-between">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Attendance Checklist</label>
+<label id="school-attendance-checklist-label-{{ act.id }}" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Attendance Checklist</label>
 <button
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.clusterId }}"
@@ -228,7 +279,10 @@ class="edify-text-caption font-semibold edify-primary-text edify-primary-text-ho
 <div class="relative">
 <button
 type="button"
-@click="openDropdown = !openDropdown"
+x-ref="attendanceTrigger"
+popovertarget="school-attendance-checklist-{{ act.id }}"
+aria-controls="school-attendance-checklist-{{ act.id }}"
+:aria-expanded="openDropdown"
 class="w-full h-10 px-4 rounded-control border border-slate-200 edify-surface text-left text-[12px] font-semibold text-slate-700 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer"
 >
 <span>Click to view/select schools</span>
@@ -239,11 +293,16 @@ class="w-full h-10 px-4 rounded-control border border-slate-200 edify-surface te
 
 <!-- Collapsible Checklist Dropdown -->
 <div
-x-show="openDropdown"
-@click.away="openDropdown = false"
-class="absolute left-0 right-0 mt-1 z-20 border border-slate-200 rounded-surface divide-y divide-slate-100 edify-surface shadow-lg max-h-48 overflow-y-auto"
-x-transition
-x-cloak
+id="school-attendance-checklist-{{ act.id }}"
+x-ref="attendanceMenu"
+popover="auto"
+role="group"
+aria-labelledby="school-attendance-checklist-label-{{ act.id }}"
+@toggle="
+openDropdown = $event.newState === 'open';
+if (openDropdown) $nextTick(() => positionDropdown());
+"
+class="attendance-checklist-popover divide-y divide-slate-100"
 >
 {% for school in cluster_schools %}
 <label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">

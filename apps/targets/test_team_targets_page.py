@@ -187,6 +187,25 @@ class TeamTargetsPageTest(TestCase):
         self.assertEqual(page["month_label"], "July 2026")
         self.assertEqual(page["quarter"], "Q4")
 
+    def test_fy2027_governed_priorities_are_visible_before_team_allocation(self):
+        client = Client()
+        client.force_login(self.pl)
+
+        response = client.get("/team-targets", {"fy": "2027", "month": 1})
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        for title in (
+            "Program Growth and Expansion",
+            "Program Quality",
+            "Business Transformation",
+            "Education Technology",
+            "Governance and People Management",
+        ):
+            self.assertIn(title, html)
+        self.assertIn("No approved supervised-team milestone allocations", html)
+        self.assertIn("Manager personal targets remain on My Targets", html)
+
     def test_mid_year_not_rendered(self):
         c = Client()
         c.force_login(self.pl)

@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from apps.core.permissions import RequirePermissions
 from apps.core.rbac import Permission
+from apps.activity_catalogue.services import list_catalogue, serialize_item
 
 from . import services
 
@@ -22,6 +23,20 @@ class ProjectListView(APIView):
 
     def get(self, request: Request) -> Response:
         return Response(services.list_projects(request.user))
+
+    def get_permissions(self):
+        self.required_permissions = (
+            [Permission.PROJECT_CONFIGURE_PRIORITIES.value]
+            if self.request.method == "POST"
+            else VIEW
+        )
+        return [IsAuthenticated(), RequirePermissions()]
+
+    def post(self, request: Request) -> Response:
+        return Response(
+            services.create_project(request.data, request.user),
+            status=201,
+        )
 
 
 class ProjectDetailView(APIView):
@@ -56,6 +71,22 @@ class ProjectImpactView(APIView):
         return Response(services.impact(project_id, request.user))
 
 
+class ProjectEligibleActivitiesView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.PLANNING_VIEW.value]
+
+    def get(self, request: Request, project_id: str) -> Response:
+        from .scoping import get_scoped_project
+
+        project = get_scoped_project(project_id, request.user)
+        return Response(
+            [
+                serialize_item(item)
+                for item in list_catalogue(project_id=project.id)
+            ]
+        )
+
+
 class ProjectPartnersView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = VIEW
@@ -72,7 +103,34 @@ class ProjectSchoolsAssignView(APIView):
     required_permissions = ASSIGN
 
     def post(self, request: Request, project_id: str) -> Response:
-        return Response(services.assign_school(project_id, request.data), status=201)
+        return Response(
+            services.assign_school(project_id, request.data, request.user),
+            status=201,
+        )
+
+
+class ProjectStaffAssignmentsView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.PROJECT_CONFIGURE_PRIORITIES.value]
+
+    def get(self, request: Request, project_id: str) -> Response:
+        return Response(services.staff_assignments(project_id, request.user))
+
+    def post(self, request: Request, project_id: str) -> Response:
+        return Response(
+            services.assign_staff(project_id, request.data, request.user),
+            status=201,
+        )
+
+
+class ProjectStaffAssignmentDetailView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.PROJECT_CONFIGURE_PRIORITIES.value]
+
+    def delete(
+        self, request: Request, project_id: str, staff_id: str
+    ) -> Response:
+        return Response(services.revoke_staff(project_id, staff_id, request.user))
 
 
 class ProjectSchoolsRemoveView(APIView):

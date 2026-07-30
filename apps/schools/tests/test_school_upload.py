@@ -81,7 +81,7 @@ class SchoolUploadTest(APITestCase):
     def test_exact_template_headers_save_rows(self):
         body = (
             f"{EXACT_HEADERS}\n"
-            ",SCH-1,Gulu Primary,Gulu,Client,320,2026-01-15,+256700000001,Head Teacher,PO Box 1\n"
+            "Aisha Dar,SCH-1,Gulu Primary,Gulu,Client,320,2026-01-15,+256700000001,Head Teacher,PO Box 1\n"
         )
         res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
@@ -97,8 +97,8 @@ class SchoolUploadTest(APITestCase):
 
     def test_header_variations_save_rows(self):
         body = (
-            "schoolid,Name,district,Partner Type,enrollment,Last Date of Enrollment\n"
-            "SCH-2,Variant Primary,Gulu,core,410,2026-02-01\n"
+            "schoolid,Name,district,Staff Name,Partner Type,enrollment,Last Date of Enrollment\n"
+            "SCH-2,Variant Primary,Gulu,Aisha Dar,core,410,2026-02-01\n"
         )
         res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
@@ -109,8 +109,47 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(school.school_type, "core")
         self.assertEqual(school.enrollment, 410)
 
+    def test_all_current_partner_type_labels_are_imported(self):
+        rows = [
+            f"Aisha Dar,SCH-TYPE-{index},Type {index} Primary,Gulu,{label},100,,,,"
+            for index, label in enumerate(
+                ["Champion", "Client", "Core", "Core Graduate", "Core Trained"],
+                start=1,
+            )
+        ]
+        res = self._post_and_import(
+            self._csv(f"{EXACT_HEADERS}\n" + "\n".join(rows) + "\n")
+        )
+
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(
+            list(
+                School.objects.filter(school_id__startswith="SCH-TYPE-")
+                .order_by("school_id")
+                .values_list("school_type", flat=True)
+            ),
+            ["champion", "client", "core", "core_graduate", "core_trained"],
+        )
+
+    def test_download_template_sub_county_header_is_imported(self):
+        from apps.geography.models import SubCounty
+
+        sub_county = SubCounty.objects.create(name="Bardege", district=self.district)
+        body = (
+            "School ID,School Name,District,Sub County,Staff Name\n"
+            "SCH-SC,Sub County Primary,Gulu,Bardege,Aisha Dar\n"
+        )
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-SC")
+        self.assertEqual(school.sub_county_id, sub_county.id)
+
     def test_numeric_uploaded_school_id_is_preserved_without_prefix(self):
-        body = "School ID,School Name,District\n" "51230,Uploaded ID Primary,Gulu\n"
+        body = (
+            "School ID,School Name,District,Staff Name\n"
+            "51230,Uploaded ID Primary,Gulu,Aisha Dar\n"
+        )
         res = self._post_and_import(self._csv(body))
 
         self.assertEqual(res.status_code, 200, res.content)
@@ -128,11 +167,14 @@ class SchoolUploadTest(APITestCase):
                 "School ID",
                 "School Name",
                 "District",
+                "Staff Name",
                 "Current Partner Type",
                 "Enrolment",
             ]
         )
-        ws.append(["SCH-XLSX", "Spreadsheet Primary", "Gulu", "Client", 250])
+        ws.append(
+            ["SCH-XLSX", "Spreadsheet Primary", "Gulu", "Aisha Dar", "Client", 250]
+        )
         buf = io.BytesIO()
         wb.save(buf)
         f = SimpleUploadedFile(
@@ -148,32 +190,36 @@ class SchoolUploadTest(APITestCase):
     def test_missing_required_values_fail_rows(self):
         body = (
             f"{EXACT_HEADERS}\n"
-            ",,No Id School,Gulu,Client,1,,,,\n"  # missing School ID
-            ",SCH-NO-NAME,,Gulu,Client,1,,,,\n"  # missing Name
-            ",SCH-NO-DIST,Has No District,,Client,1,,,,\n"  # missing District
-            ",SCH-OK,Valid Primary,Gulu,Client,100,,,,\n"  # valid
+            "Aisha Dar,,No Id School,Gulu,Client,1,,,,\n"  # missing School ID
+            "Aisha Dar,SCH-NO-NAME,,Gulu,Client,1,,,,\n"  # missing Name
+            "Aisha Dar,SCH-NO-DIST,Has No District,,Client,1,,,,\n"  # optional District
+            "Aisha Dar,SCH-OK,Valid Primary,Gulu,Client,100,,,,\n"  # valid
         )
         res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
-        self.assertEqual(data["createdRows"], 1)
-        self.assertEqual(data["failedRows"], 3)
+        self.assertEqual(data["createdRows"], 2)
+        self.assertEqual(data["failedRows"], 2)
         self.assertTrue(School.objects.filter(school_id="SCH-OK").exists())
+        incomplete = School.objects.get(school_id="SCH-NO-DIST")
+        self.assertIsNone(incomplete.district_id)
+        self.assertIsNone(incomplete.region_id)
         self.assertFalse(School.objects.filter(school_id="SCH-NO-NAME").exists())
 
-    def test_unmatched_district_fails_row(self):
-        body = f"{EXACT_HEADERS}\n,SCH-BADGEO,Nowhere Primary,Atlantis,Client,1,,,,\n"
-        res = self._post(self._csv(body))
-        self.assertEqual(res.status_code, 422, res.content)
-        data = res.json()
-        self.assertFalse(data["success"])
-        self.assertEqual(data["failed_rows"], 1)
-        self.assertIn("Atlantis", data["errors"][0]["error"])
+    def test_unmatched_optional_district_creates_incomplete_profile(self):
+        body = f"{EXACT_HEADERS}\nAisha Dar,SCH-BADGEO,Nowhere Primary,Atlantis,Client,1,,,,\n"
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-BADGEO")
+        self.assertIsNone(school.district_id)
+        self.assertIsNone(school.region_id)
+        self.assertEqual(school.uploaded_district_text, "Atlantis")
 
     def test_blank_rows_skipped(self):
         body = (
             f"{EXACT_HEADERS}\n"
-            ",SCH-REAL,Real Primary,Gulu,Client,100,,,,\n"
+            "Aisha Dar,SCH-REAL,Real Primary,Gulu,Client,100,,,,\n"
             ",,,,,,,,,\n"  # fully blank
             "\n"
         )
@@ -184,11 +230,13 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(data["skippedRows"], 1)
 
     def test_duplicate_then_update_existing(self):
-        body = f"{EXACT_HEADERS}\n,SCH-DUP,First Name,Gulu,Client,100,,,,\n"
+        body = f"{EXACT_HEADERS}\nAisha Dar,SCH-DUP,First Name,Gulu,Client,100,,,,\n"
         self.assertEqual(self._post_and_import(self._csv(body)).status_code, 200)
 
         # Second upload, same id, no update_existing → duplicate, nothing saved.
-        dup_body = f"{EXACT_HEADERS}\n,SCH-DUP,Second Name,Gulu,Client,200,,,,\n"
+        dup_body = (
+            f"{EXACT_HEADERS}\nAisha Dar,SCH-DUP,Second Name,Gulu,Client,200,,,,\n"
+        )
         res = self._post(self._csv(dup_body))
         self.assertEqual(res.status_code, 422, res.content)
         data = res.json()
@@ -204,13 +252,44 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(School.objects.get(school_id="SCH-DUP").name, "Second Name")
         self.assertEqual(School.objects.filter(school_id="SCH-DUP").count(), 1)
 
-    def test_missing_required_header_blocks_whole_upload(self):
-        body = "School ID,School Name\nSCH-X,No District Column\n"
+    def test_only_school_id_and_name_columns_create_incomplete_school(self):
+        body = "School ID,School Name\nSCH-MIN,Minimal School\n"
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-MIN")
+        self.assertEqual(school.name, "Minimal School")
+        self.assertIsNone(school.district_id)
+        self.assertIsNone(school.region_id)
+        self.assertIsNone(school.account_owner_id)
+        self.assertEqual(school.account_owner_status, "pending")
+
+    def test_missing_school_name_header_blocks_whole_upload(self):
+        body = "School ID,District\nSCH-X,Gulu\n"
         res = self._post(self._csv(body))
+
         self.assertEqual(res.status_code, 400, res.content)
-        self.assertIn("District", str(res.content))
+        self.assertIn("School Name", str(res.content))
         self.assertEqual(School.objects.count(), 0)
         self.assertEqual(UploadBatch.objects.count(), 0)
+
+    def test_missing_staff_name_header_is_allowed(self):
+        body = "School ID,School Name,District\nSCH-X,No Staff Column,Gulu\n"
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-X")
+        self.assertIsNone(school.account_owner_id)
+        self.assertEqual(school.account_owner_status, "pending")
+
+    def test_blank_staff_name_creates_pending_profile(self):
+        body = f"{EXACT_HEADERS}\n,SCH-NO-STAFF,No Staff Primary,Gulu,Client,100,,,,\n"
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-NO-STAFF")
+        self.assertIsNone(school.account_owner_id)
+        self.assertEqual(school.account_owner_status, "pending")
 
     def test_account_owner_matched_and_unmatched(self):
         body = (
@@ -233,8 +312,8 @@ class SchoolUploadTest(APITestCase):
     def test_row_results_persisted(self):
         body = (
             f"{EXACT_HEADERS}\n"
-            ",SCH-RR-1,Good Primary,Gulu,Client,100,,,,\n"
-            ",,Bad Primary,Gulu,Client,100,,,,\n"
+            "Aisha Dar,SCH-RR-1,Good Primary,Gulu,Client,100,,,,\n"
+            "Aisha Dar,,Bad Primary,Gulu,Client,100,,,,\n"
         )
         res = self._post(self._csv(body))
         batch_id = res.json()["upload_batch_id"]
@@ -248,23 +327,24 @@ class SchoolUploadTest(APITestCase):
         cell left blank) must not silently demote a Core school back to
         Client — map_school_type() defaults blank text to "client", which
         used to defeat the upsert's blank-doesn't-overwrite guard."""
-        core_body = f"{EXACT_HEADERS}\n,SCH-CORE,Core Primary,Gulu,Core,100,,,,\n"
+        core_body = (
+            f"{EXACT_HEADERS}\nAisha Dar,SCH-CORE,Core Primary,Gulu,Core,100,,,,\n"
+        )
         self.assertEqual(self._post_and_import(self._csv(core_body)).status_code, 200)
         self.assertEqual(School.objects.get(school_id="SCH-CORE").school_type, "core")
 
         # Re-upload with the Current Partner Type column blank.
-        partial_body = f"{EXACT_HEADERS}\n,SCH-CORE,Core Primary,Gulu,,150,,,,\n"
+        partial_body = (
+            f"{EXACT_HEADERS}\nAisha Dar,SCH-CORE,Core Primary,Gulu,,150,,,,\n"
+        )
         res = self._post_and_import(self._csv(partial_body), update_existing=True)
         self.assertEqual(res.status_code, 200, res.content)
         school = School.objects.get(school_id="SCH-CORE")
         self.assertEqual(school.school_type, "core")
         self.assertEqual(school.enrollment, 150)
 
-    def test_blank_account_owner_does_not_reset_matched_status_to_pending(self):
-        """A re-upload that leaves the Account Owner column blank must not
-        reset an already-matched account_owner_status back to "pending" —
-        that value used to always be written (even when no name was given),
-        defeating the upsert's blank-doesn't-overwrite guard."""
+    def test_blank_staff_name_reupload_retains_owner_and_updates_other_fields(self):
+        """An optional blank Staff Name must not erase an existing owner."""
         owned_body = (
             f"{EXACT_HEADERS}\nAisha Dar,SCH-OWNED,Owned Primary,Gulu,Client,100,,,,\n"
         )
@@ -273,7 +353,7 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(school.account_owner_status, "matched")
         self.assertEqual(school.account_owner_id, self.staff.id)
 
-        # Re-upload with Account Owner blank.
+        # Re-upload with Staff Name blank.
         partial_body = (
             f"{EXACT_HEADERS}\n,SCH-OWNED,Owned Primary,Gulu,Client,150,,,,\n"
         )
@@ -296,7 +376,7 @@ class SchoolUploadTest(APITestCase):
 
         from apps.schools.models import UploadBatch
 
-        body = f"{EXACT_HEADERS}\n,SCH-BOOM,Boom Primary,Gulu,Client,100,,,,\n"
+        body = f"{EXACT_HEADERS}\nAisha Dar,SCH-BOOM,Boom Primary,Gulu,Client,100,,,,\n"
         with patch(
             "apps.schools.upload_service.import_school_batch",
             side_effect=RuntimeError("simulated import crash"),
@@ -322,7 +402,7 @@ class SchoolUploadTest(APITestCase):
         self.assertIn("simulated import crash", batch.error_summary)
 
     def test_directory_returns_uploaded_rows(self):
-        body = f"{EXACT_HEADERS}\n,SCH-DIR,Directory Primary,Gulu,Client,100,,,,\n"
+        body = f"{EXACT_HEADERS}\nAisha Dar,SCH-DIR,Directory Primary,Gulu,Client,100,,,,\n"
         self.assertEqual(self._post_and_import(self._csv(body)).status_code, 200)
         res = self.client.get("/api/schools?pageSize=200")
         self.assertEqual(res.status_code, 200, res.content)
@@ -330,7 +410,7 @@ class SchoolUploadTest(APITestCase):
         self.assertIn("SCH-DIR", ids)
 
     def test_uploads_read_endpoints(self):
-        body = f"{EXACT_HEADERS}\n,SCH-RD,Read Primary,Gulu,Client,100,,,,\n"
+        body = f"{EXACT_HEADERS}\nAisha Dar,SCH-RD,Read Primary,Gulu,Client,100,,,,\n"
         batch_id = self._post(self._csv(body)).json()["upload_batch_id"]
 
         listing = self.client.get("/api/uploads")
@@ -347,16 +427,12 @@ class SchoolUploadTest(APITestCase):
 
 
 class ResolveGeographyTest(APITestCase):
-    """Direct coverage for upload_service._resolve_geography(). Today's
-    school-upload CSV template has no "sub county" header mapping at all
-    (SCHOOL_HEADER_MAP has no sub_county entry), so the district-blank/
-    sub_county-present combination this function guards against can't
-    currently be triggered through the live upload endpoint or the manual
-    create_one() API (which requires an explicit districtId). This is
-    still real, worthwhile coverage: it proves the fix is correct for
-    whenever a sub-county column is wired up, and proves the dangerous
-    District.objects.first()/Region.objects.first() arbitrary-fallback
-    that used to run is gone for good."""
+    """Direct coverage for upload_service._resolve_geography().
+
+    This proves the template's Sub County column resolves deterministically,
+    including district inference when the sub-county name is unique, without
+    reviving the old arbitrary District.objects.first() fallback.
+    """
 
     def setUp(self):
         self.region = Region.objects.create(name="Northern")

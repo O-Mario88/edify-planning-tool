@@ -118,19 +118,11 @@ class="school-filters-form space-y-3"
 </select>
 </div>
 <!-- Sub-county -->
+{% include "partials/schools/directory_sub_county_filter.html" %}
+<!-- Current Partner Type -->
 <div>
-<span class="edify-filter-label">Sub-county</span>
-<select aria-label="Sub-county" name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="">All</option>
-{% for sc in sub_counties %}
-<option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
-{% endfor %}
-</select>
-</div>
-<!-- School Type -->
-<div>
-<span class="edify-filter-label">School type</span>
-<select aria-label="School type" name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<span class="edify-filter-label">Partner type</span>
+<select aria-label="Partner type" name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
 <option value="">All</option>
 {% for val, label in school_types %}
 <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
@@ -337,33 +329,50 @@ class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md 
 <button type="button" aria-label="Close Add School form" @click="addSchoolOpen = false" class="min-h-11 min-w-11 text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
 </div>
 
-<form action="/schools/add-school" method="post" class="space-y-4">
+<form
+action="/schools/add-school"
+method="post"
+@focusout.capture="if ($event.target.matches('[required]')) $event.target.toggleAttribute('aria-invalid', !$event.target.checkValidity())"
+@input.capture="if ($event.target.matches('[required]') && $event.target.checkValidity()) $event.target.removeAttribute('aria-invalid')"
+@submit="Array.from($el.querySelectorAll('[required]')).forEach((field) => field.toggleAttribute('aria-invalid', !field.checkValidity()))"
+class="space-y-4"
+>
 {% csrf_token %}
 
 <div class="space-y-1">
-<label for="add-school-id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Official School ID</label>
+<label for="add-school-id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Official School ID <span class="text-rose-500">*</span></label>
 <input type="text" id="add-school-id" name="school_id" maxlength="64" autocomplete="off" placeholder="e.g. 1011" aria-describedby="add-school-id-help" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
 <p id="add-school-id-help" class="edify-text-caption text-slate-400">Enter the official ID exactly as assigned. The app will not add an S- prefix.</p>
 </div>
 
 <div class="space-y-1">
-<label for="add-school-name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name</label>
+<label for="add-school-name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name <span class="text-rose-500">*</span></label>
 <input type="text" id="add-school-name" name="name" maxlength="255" autocomplete="organization" placeholder="e.g. Hope Academy" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
 </div>
 
 <div class="grid grid-cols-2 gap-3">
 <div class="space-y-1">
-<label for="add-school-type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Type</label>
+<label for="add-school-type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Current Partner Type <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <select id="add-school-type" name="school_type" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus">
-<option value="client">Client</option>
-<option value="core">Core</option>
+{% for value, label in school_types %}
+<option value="{{ value }}" {% if value == "client" %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
 </select>
 </div>
 <div class="space-y-1">
-<label for="add-school-district" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
-<select id="add-school-district" name="district_id" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
+<label for="add-school-district" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District <span class="text-rose-500">*</span></label>
+<select
+id="add-school-district"
+name="district_id"
+hx-get="/schools/sub-counties"
+hx-trigger="change"
+hx-target="#add-school-sub-county"
+hx-swap="innerHTML"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus"
+required
+>
 <option value="">-- Choose District --</option>
-{% for d in districts %}
+{% for d in reference_districts %}
 <option value="{{ d.id }}">{{ d.name }}</option>
 {% endfor %}
 </select>
@@ -371,7 +380,25 @@ class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md 
 </div>
 
 <div class="space-y-1">
-<label for="add-school-enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment</label>
+<label for="add-school-sub-county" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Sub-county <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<select id="add-school-sub-county" name="sub_county_id" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus">
+<option value="">Choose a district first</option>
+</select>
+</div>
+
+<div class="space-y-1">
+<label for="add-school-owner" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Staff Name <span class="text-rose-500">*</span></label>
+<select id="add-school-owner" name="account_owner_id" aria-describedby="add-school-owner-help" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus" required>
+<option value="">-- Choose CCEO or Program Lead --</option>
+{% for member in school_owners %}
+<option value="{{ member.id }}">{{ member.user.name }} ({{ member.user.active_role }})</option>
+{% endfor %}
+</select>
+<p id="add-school-owner-help" class="edify-text-caption text-slate-400">Required. The selected staff member becomes the school’s account owner.</p>
+</div>
+
+<div class="space-y-1">
+<label for="add-school-enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input type="number" id="add-school-enrollment" name="enrollment" min="0" inputmode="numeric" placeholder="e.g. 250" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus">
 </div>
 

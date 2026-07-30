@@ -45,3 +45,8 @@ _to_delete_git_locks/
 .zcode/
 referential-integrity-backup*.json
 .backup-rehearsal/
+
+# Agent working directories and generated artifacts
+.codex-work/
+outputs/
+backups/

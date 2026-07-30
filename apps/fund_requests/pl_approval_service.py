@@ -334,7 +334,10 @@ def get_pl_fund_approvals(principal, filters=None):
                 activity__fy=fy,
                 month=month,
                 activity__deleted_at__isnull=True,
-            ).select_related(
+            )
+            # Cancelled/rejected/deferred work must never reach a fund plan.
+            .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
+            .select_related(
                 "activity",
                 "activity__school",
                 "activity__school__district",
@@ -645,7 +648,11 @@ def _ensure_fund_request(principal, cceo, fy, month):
             activity__fy=fy,
             month=month,
             activity__deleted_at__isnull=True,
-        ).select_related("activity")
+        )
+        # Match get_pl_fund_approvals: cancelled/rejected/deferred activities
+        # must not be funded, so they must not enter the approval total either.
+        .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
+        .select_related("activity")
     )
     if not lines:
         raise BadRequest("This plan has no scheduled, costed activities to approve.")
@@ -655,13 +662,18 @@ def _ensure_fund_request(principal, cceo, fy, month):
     # between the delete and the bulk_create would otherwise leave the
     # FundRequest with a stale total_amount/activity_count but zero items.
     with transaction.atomic():
+        # `scope` belongs in the LOOKUP, not the defaults: (submitted_by,
+        # period, period_key, scope) is the model's uniqueness key, and this
+        # service manages the CCEO's own-scope monthly request (every read in
+        # this file filters scope="own"). Without it, a user holding both an
+        # "own" and a "team" row for the period raised MultipleObjectsReturned.
         fr, _ = FundRequest.objects.update_or_create(
             submitted_by_user_id=cceo["user_id"],
             period="monthly",
             period_key=_period_key(fy, month),
+            scope="own",
             defaults={
                 "fy": fy,
-                "scope": "own",
                 "submitted_by_role": "CCEO",
                 "total_amount": total,
                 "activity_count": len(act_ids),

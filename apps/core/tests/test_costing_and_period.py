@@ -15,17 +15,20 @@ Isolated test DB only — never touches the persistent/local database.
 
 from __future__ import annotations
 
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import ActivityScheduleCostLine
 from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
 from apps.fund_requests.models import FundRequestItem
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
+from apps.ssa.models import SsaRecord, SsaScore
 
 
 class CostingBudgetPeriodTest(APITestCase):
@@ -73,20 +76,44 @@ class CostingBudgetPeriodTest(APITestCase):
             is_active=True,
         )
         self.staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
-        self.school = School.objects.create(
-            school_id="COST-SCH",
-            name="Cost Primary",
+        # The mandatory Activity Catalogue makes a dated staff school visit a
+        # CLIENT_SCHOOL_FOLLOWUP_VISIT, and that catalogue item is restricted
+        # to client schools. It carries counts_toward_client_visit, so it
+        # CONSUMES the one-visit-per-FY client entitlement — tests that need
+        # more than one visit in a fiscal year must spread them across
+        # distinct client schools.
+        self.school = self._client_school("COST-SCH", "Cost Primary")
+        self._as(self.cceo)
+
+    def _client_school(self, school_id, name):
+        school = School.objects.create(
+            school_id=school_id,
+            name=name,
             region=self.region,
             district=self.district,
             sub_county=self.sub_county,
-            # This fixture verifies period/cost aggregation, not the client
-            # entitlement; use a non-client school so two deliberately
-            # distinct monthly visits remain valid test inputs.
-            school_type="other",
+            school_type="client",
             current_fy_ssa_status="done",
         )
-        StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
-        self._as(self.cceo)
+        StaffSchoolAssignment.objects.create(staff=self.staff, school_id=school.id)
+        # CLIENT_SCHOOL_FOLLOWUP_VISIT requires a current confirmed SSA —
+        # scheduling intervention support is impossible without one.
+        record = SsaRecord.objects.create(
+            school=school,
+            date_of_ssa=timezone.now(),
+            fy=get_operational_fy(),
+            quarter="Q1",
+            average_score=7,
+            verification_status="confirmed",
+            uploaded_by="test",
+        )
+        for intervention, _label in SsaIntervention.choices:
+            SsaScore.objects.create(
+                ssa_record=record,
+                intervention=intervention,
+                score=3 if intervention == SsaIntervention.LEADERSHIP else 8,
+            )
+        return school
 
     # ── helpers ──────────────────────────────────────────────────────────────
     def _as(self, user):
@@ -104,15 +131,23 @@ class CostingBudgetPeriodTest(APITestCase):
         self.assertEqual(r.status_code, expected, r.content)
         return r.json()
 
-    def _make_visit(self, month=7, week=2):
+    def _make_visit(self, month=7, week=2, school_id="COST-SCH"):
+        # Catalogue-mandatory contract: a dated staff school visit is the
+        # CLIENT_SCHOOL_FOLLOWUP_VISIT catalogue item (workflow_kind
+        # follow_up_visit); the focus intervention must be a canonical SSA
+        # intervention. Each week gets its own day so the double-submit
+        # duplicate guard (same type/target/day/owner) never fires on these
+        # deliberately distinct visits. Days land Wed/Sat — never Sunday.
+        day = 7 * week + 1
         return self._post(
             "/api/planning/schedule-school-visit",
             {
-                "schoolId": "COST-SCH",
-                "scheduledDate": f"2026-0{month}-10T09:00:00+03:00",
+                "schoolId": school_id,
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
+                "scheduledDate": f"2026-0{month}-{day:02d}T09:00:00+03:00",
                 "plannedMonth": month,
                 "plannedWeek": week,
-                "purposeIntervention": "leadership",
+                "focusIntervention": "leadership",
             },
             201,
         )
@@ -163,8 +198,12 @@ class CostingBudgetPeriodTest(APITestCase):
 
     # ── 2. Fund request total == sum of persisted budget-line items ──────────
     def test_fund_request_total_equals_line_item_sum(self):
+        # One visit entitlement per client school per FY: the second visit
+        # must target a second school, and the fund request still sums both
+        # because it aggregates by owner and period, not by school.
+        second = self._client_school("COST-SCH-2", "Cost Primary Two")
         a1 = self._make_visit(month=7, week=1)
-        a2 = self._make_visit(month=7, week=2)
+        a2 = self._make_visit(month=7, week=2, school_id=second.school_id)
         expected = sum(
             l.amount
             for l in ActivityScheduleCostLine.objects.filter(activity_id=a1["id"])
@@ -196,8 +235,10 @@ class CostingBudgetPeriodTest(APITestCase):
 
     # ── 3. My Plan honours the period ────────────────────────────────────────
     def test_my_plan_period_narrows_the_window(self):
+        # Distinct schools: each client school carries one visit per FY.
+        second = self._client_school("COST-SCH-2", "Cost Primary Two")
         self._make_visit(month=7, week=1)
-        self._make_visit(month=8, week=2)
+        self._make_visit(month=8, week=2, school_id=second.school_id)
 
         month7 = self._get("/api/my-plan?fy=2026&period=month&month=7")
         month8 = self._get("/api/my-plan?fy=2026&period=month&month=8")

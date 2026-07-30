@@ -101,6 +101,32 @@ _KEY_LABEL = {
 }
 
 
+_COSTING_PROFILE_ACTIVITY_TYPE = {
+    "IN_SCHOOL_TRAINING": "in_school_training",
+    "CLUSTER_TRAINING": "cluster_training",
+    "CLUSTER_MEETING": "cluster_meeting",
+    "ONLINE_TRAINING": "training",
+    "STAFF_SCHOOL_VISIT": "school_visit",
+    "ADMIN_PARTNER_MEETING": "partner_activity",
+    "SSA_DATA_GATHERING": "baseline_ssa_visit",
+    "GROUP_YOUTH_CAMP": "training",
+}
+
+
+def _profiled_input(input: dict) -> dict:
+    """Resolve the explicit Activity Catalogue costing profile centrally."""
+    profile = input.get("costingProfile")
+    if not profile:
+        return input
+    activity_type = _COSTING_PROFILE_ACTIVITY_TYPE.get(profile)
+    if not activity_type:
+        raise BadRequest(
+            f"Unknown Activity Catalogue costing profile '{profile}'. "
+            "Country Director configuration must be repaired before scheduling."
+        )
+    return {**input, "activityType": activity_type}
+
+
 def _missing_label(key: str) -> str:
     return _KEY_LABEL.get(key, key.replace("_", " ").title())
 
@@ -113,6 +139,7 @@ def preview(input: dict) -> dict:
               costMissing, missingItems[], blockers[], canSchedule}.
     A blocker is raised-candidate text naming the exact missing cost item so the
     UI can show e.g. "Group training participant meal cost is not set."."""
+    input = _profiled_input(input)
     fy = input.get("fy")
     catalogue = active_catalogue(fy)
     rates, _by_key = _rate_card(catalogue)
@@ -143,6 +170,7 @@ def assert_schedulable(input: dict) -> None:
     """Raise BadRequest if the activity cannot be costed (missing rate / no
     catalogue / invalid participants). Called by every scheduling path BEFORE
     persisting, so no activity is ever created with a fake or missing cost."""
+    input = _profiled_input(input)
     # Check scheduled date is present
     scheduled_date_raw = input.get("scheduledDate")
     if not scheduled_date_raw:
@@ -281,6 +309,7 @@ def apply_to_activity(
 
     Returns the ActivityCost (amount + lines) so callers can return a preview in
     the same response as the schedule."""
+    input = _profiled_input(input)
     fy = input.get("fy") or activity.fy
     catalogue = active_catalogue(fy)
     rates, settings_by_key = _rate_card(catalogue)
@@ -388,6 +417,39 @@ def apply_to_activity(
             "weekly fund request. Return that request before changing its cost."
         )
 
+    # A submitted/approved MONTHLY FundRequest is equally a finance snapshot,
+    # but its items reference cost lines by a bare CharField id (no FK) — the
+    # delete-and-rebuild below would leave those payable item rows dangling
+    # with live amounts and no source line. Freeze re-pricing the same way the
+    # weekly check above does.
+    from apps.fund_requests.models import FundRequestItem, FundRequestStatus
+
+    line_ids = list(
+        ActivityScheduleCostLine.objects.filter(activity=activity).values_list(
+            "id", flat=True
+        )
+    )
+    if (
+        line_ids
+        and FundRequestItem.objects.filter(
+            activity_schedule_cost_line_id__in=line_ids,
+        )
+        .exclude(
+            fund_request__status__in=[
+                FundRequestStatus.DRAFT,
+                # Returned/rejected requests are back in the owner's hands —
+                # re-pricing is the legitimate next step for those.
+                FundRequestStatus.RETURNED,
+                FundRequestStatus.REJECTED,
+            ]
+        )
+        .exists()
+    ):
+        raise BadRequest(
+            "This activity is already included in a submitted or approved "
+            "monthly fund request. Return that request before changing its cost."
+        )
+
     # The clear-and-rebuild of ActivityScheduleCostLine plus the activity's own
     # cost-field save must succeed or fail together — a crash mid-sequence (e.g.
     # after the delete but before the bulk_create completes) would otherwise
@@ -426,6 +488,9 @@ def apply_to_activity(
                     ),
                     catalogue_id=catalogue_id,
                     catalogue_version=catalogue_version,
+                    activity_catalogue_item_id=activity.catalogue_item_id,
+                    activity_catalogue_version=activity.catalogue_version,
+                    costing_profile=activity.costing_profile_snapshot,
                     line_item_type=_line_item_type(line.key),
                     currency="UGX",
                     description=f"[{tag}] {line.label}" if tag else line.label,

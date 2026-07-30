@@ -18,10 +18,26 @@ from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
-from .costing import cost_for_activity
 from .models import CostSetting, CostSettingHistory
 from .reference import CANONICAL_RATE_KEYS, RETIRED_COST_SETTING_KEYS
 from apps.core.activity_types import TRAINING_TYPES
+
+# Calendar month → fiscal quarter (Oct-start FY: Q1 Oct–Dec … Q4 Jul–Sep),
+# matching apps/core/fy.py::get_quarter_for_date.
+_FISCAL_QUARTER_BY_MONTH = {
+    10: "Q1",
+    11: "Q1",
+    12: "Q1",
+    1: "Q2",
+    2: "Q2",
+    3: "Q2",
+    4: "Q3",
+    5: "Q3",
+    6: "Q3",
+    7: "Q4",
+    8: "Q4",
+    9: "Q4",
+}
 
 
 # ── Rate card ────────────────────────────────────────────────────────────────
@@ -147,31 +163,34 @@ def cost_setting_history(key: str, principal) -> list[dict]:
     ]
 
 
-def _rate_card() -> dict:
-    return {c.key: c.unit_cost for c in CostSetting.objects.all()}
-
-
 # ── Costing preview ──────────────────────────────────────────────────────────
 def cost_preview(data: dict, principal) -> dict:
-    """Preview the cost of a notional activity from the rate card."""
-    rates = _rate_card()
-    cost = cost_for_activity(data, rates)
+    """Preview the cost of a notional activity.
+
+    Delegates to the canonical CostingService preview (active catalogue +
+    FY-aware rate resolution) instead of keeping a second, unfiltered rate
+    card here — the old local copy read every CostSetting row including
+    retired keys, so previews could disagree with the engine that actually
+    prices scheduled activities."""
+    from .costing_service import preview as costing_preview
+
+    result = costing_preview(data)
     return {
-        "amount": cost.amount,
+        "amount": result["amount"],
         "lines": [
             {
-                "label": line.label,
-                "key": line.key,
-                "unit": line.unit,
-                "qty": line.qty,
-                "amount": line.amount,
-                "missing": line.missing,
+                "label": line["label"],
+                "key": line["key"],
+                "unit": line["unit"],
+                "qty": line["qty"],
+                "amount": line["amount"],
+                "missing": line["missing"],
             }
-            for line in cost.lines
+            for line in result["lines"]
         ],
-        "costMissing": cost.cost_missing,
-        "missingItems": cost.missing_items,
-        "canSchedule": not cost.cost_missing,
+        "costMissing": result["costMissing"],
+        "missingItems": result["missingItems"],
+        "canSchedule": result["canSchedule"],
     }
 
 
@@ -367,7 +386,7 @@ def weekly(principal, query: dict) -> dict:
 
     qs = (
         Activity.objects.filter(deleted_at__isnull=True, fy=fy, month=month)
-        .exclude(status__in=["cancelled", "rejected"])
+        .exclude(status__in=["cancelled", "rejected", "deferred"])
         .exclude(delivery_type="partner", planned_date__isnull=True)
     )
     if not scope.country_scope:
@@ -386,9 +405,24 @@ def weekly(principal, query: dict) -> dict:
     total_cents = 0
     cost_missing_count = 0
 
-    # Weeks rollup: weeks 1 to 5
-    week_amounts = {w: 0 for w in range(1, 6)}
-    week_counts = {w: 0 for w in range(1, 6)}
+    # Weeks rollup, bucketed by the Monday-anchored week_start_date the cost
+    # lines themselves carry (the same anchor costing_service.apply_to_activity
+    # persists everywhere else). The old day-of-month formula
+    # min(5, (day-1)//7 + 1) disagreed with those stored weeks: e.g. a
+    # Wednesday-the-1st and the Monday before it are the same operational week
+    # but landed in different buckets.
+    week_amounts: dict[date, int] = {}
+    week_counts: dict[date, int] = {}
+
+    def _monday_for(a) -> date | None:
+        for line in a.schedule_cost_lines.all():
+            if line.week_start_date:
+                return line.week_start_date
+        if a.week_start_date:
+            return a.week_start_date
+        if a.planned_date:
+            return a.planned_date - timedelta(days=a.planned_date.weekday())
+        return None
 
     for a in activities:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
@@ -396,15 +430,10 @@ def weekly(principal, query: dict) -> dict:
         if a.cost_missing:
             cost_missing_count += 1
 
-        # planned_week is only populated when a caller happens to pass
-        # plannedWeek explicitly (same reliability gap as planned_month) —
-        # derive the week-of-month from the reliably-set planned_date instead,
-        # using the same formula the rest of the app already uses for this
-        # (see apps.activities.services / apps.my_plan.services).
-        w = min(5, (a.planned_date.day - 1) // 7 + 1) if a.planned_date else 1
-        if w in week_amounts:
-            week_amounts[w] += amount
-            week_counts[w] += 1
+        monday = _monday_for(a)
+        if monday is not None:
+            week_amounts[monday] = week_amounts.get(monday, 0) + amount
+            week_counts[monday] = week_counts.get(monday, 0) + 1
 
         # Serialize cost lines
         cost_lines = [
@@ -412,7 +441,7 @@ def weekly(principal, query: dict) -> dict:
                 "label": line.label,
                 "key": line.cost_setting_key,
                 "unit": line.unit_cost,
-                "qty": line.qty,
+                "qty": line.quantity,
                 "amount": line.amount,
                 "missing": False,
             }
@@ -426,7 +455,7 @@ def weekly(principal, query: dict) -> dict:
                 "deliveryType": a.delivery_type,
                 "status": a.status,
                 "month": a.month,
-                "week": w,
+                "weekStart": monday.isoformat() if monday else None,
                 "scheduledDate": a.scheduled_date.isoformat()
                 if a.scheduled_date
                 else None,
@@ -446,16 +475,25 @@ def weekly(principal, query: dict) -> dict:
             }
         )
 
+    ordered_mondays = sorted(week_amounts)
+    week_index = {monday: i + 1 for i, monday in enumerate(ordered_mondays)}
     weeks = [
         {
-            "key": f"W{w}",
+            "key": monday.isoformat(),
+            "label": f"Week of {monday:%d %b}",
+            "weekStart": monday.isoformat(),
             "month": month,
-            "week": w,
-            "amount": week_amounts[w],
-            "count": week_counts[w],
+            "week": week_index[monday],
+            "amount": week_amounts[monday],
+            "count": week_counts[monday],
         }
-        for w in range(1, 6)
+        for monday in ordered_mondays
     ]
+    for entry in lines:
+        monday_iso = entry["weekStart"]
+        entry["week"] = (
+            week_index.get(date.fromisoformat(monday_iso)) if monday_iso else None
+        )
 
     return {
         "fy": fy,
@@ -499,11 +537,12 @@ def board(principal, query: dict) -> dict:
     month_data = {}
     category_data = {}
 
-    import datetime
-
-    today = datetime.date.today()
-    this_week_num = today.isocalendar()[1]
-    next_week_num = this_week_num + 1
+    # Monday-anchored week windows in local time — ISO week numbers gated on
+    # the calendar year broke across the 52/53-week year boundary, and raw-UTC
+    # .date() could shift an evening activity into the wrong week.
+    today = timezone.localdate()
+    this_week_start = today - timedelta(days=today.weekday())
+    next_week_start = this_week_start + timedelta(days=7)
 
     this_week_total = 0
     next_week_total = 0
@@ -548,34 +587,22 @@ def board(principal, query: dict) -> dict:
         category_data[cat] = category_data.get(cat, 0) + amount
 
         if a.scheduled_date:
-            act_date = a.scheduled_date.date()
-            if act_date.year == today.year:
-                act_wk = act_date.isocalendar()[1]
-                if act_wk == this_week_num:
-                    this_week_total += amount
-                elif act_wk == next_week_num:
-                    next_week_total += amount
+            act_date = timezone.localtime(a.scheduled_date).date()
+            act_week_start = act_date - timedelta(days=act_date.weekday())
+            if act_week_start == this_week_start:
+                this_week_total += amount
+            elif act_week_start == next_week_start:
+                next_week_total += amount
 
         if a.month:
             if a.month == today.month:
                 this_month_total += amount
 
-            q_map = {
-                1: "Q1",
-                2: "Q1",
-                3: "Q1",
-                4: "Q2",
-                5: "Q2",
-                6: "Q2",
-                7: "Q3",
-                8: "Q3",
-                9: "Q3",
-                10: "Q4",
-                11: "Q4",
-                12: "Q4",
-            }
-            this_q = q_map.get(today.month, "Q1")
-            if q_map.get(a.month) == this_q:
+            # Fiscal quarters (Oct-start FY, matching apps/core/fy.py and the
+            # period_total map below) — the old calendar map here contradicted
+            # the fiscal one a few lines down.
+            this_q = _FISCAL_QUARTER_BY_MONTH.get(today.month, "Q1")
+            if _FISCAL_QUARTER_BY_MONTH.get(a.month) == this_q:
                 this_quarter_total += amount
 
         if cat not in category_groups:
@@ -1259,10 +1286,13 @@ def budget_workspace(principal, query: dict) -> dict:
 
 # ── Program + admin budget aggregation (monthly / quarterly / FY) ────────────
 def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
-    """Sum CD admin budget lines for a period (FY or a month_key 'YYYY-MM')."""
+    """Sum CD admin budget lines for a period (FY or a month_key 'YYYY-MM').
+
+    Only status="active" lines count — matching budget_workspace() above;
+    removed/superseded admin lines must not inflate the period totals."""
     from apps.monthly_work_plan.models import AdminBudgetLine
 
-    qs = AdminBudgetLine.objects.filter(monthly_budget__fy=fy)
+    qs = AdminBudgetLine.objects.filter(monthly_budget__fy=fy, status="active")
     if month_key:
         qs = qs.filter(monthly_budget__month_key=month_key)
     return int(qs.aggregate(total=Sum("total_cost"))["total"] or 0)

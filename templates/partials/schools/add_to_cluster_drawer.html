@@ -1,290 +1,166 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Add School to Cluster{% endblock %}
-{% block drawer_subtitle %}Link this school to a geographical cluster structure for monitoring, costing, and field training eligibility.{% endblock %}
+{% block drawer_subtitle %}Confirm the cluster for this school. Its assigned owner will automatically remain responsible.{% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-6 ">
-{% if validation_error %}
-<!-- Validation Error Message -->
-<div class="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-surface text-[12px] font-bold shadow-sm">
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> {{ validation_error }}
-</div>
-{% endif %}
+<div class="cluster-assignment-drawer space-y-5 bg-white">
+  {% if validation_error %}
+  <div role="alert" class="flex items-start gap-2 rounded-surface border border-rose-200 bg-white p-3.5 text-[12px] font-bold text-rose-700">
+    <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>
+    </svg>
+    <span>{{ validation_error }}</span>
+  </div>
+  {% endif %}
 
-<!-- School Summary Card -->
-<div class="bg-slate-50 border border-slate-200 rounded-surface p-4 space-y-3 shadow-sm">
-<div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
-<h3 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">School Details</h3>
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide border {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif school.data_quality_status == 'Needs Review' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}">
-Quality: {{ school.data_quality_status }} ({{ school.data_quality_score }}%)
-</span>
-</div>
-<div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-[12px]">
-<div>
-<span class="text-slate-400 font-semibold edify-text-caption">School ID:</span>
-<span class="font-bold text-slate-700 block mt-0.5">{{ school.school_id }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold edify-text-caption">School Name:</span>
-<span class="font-bold text-slate-700 block mt-0.5 text-[12px]">{{ school.name }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold edify-text-caption">District:</span>
-<span class="font-bold text-slate-700 block mt-0.5">{{ school.district.name }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold edify-text-caption">Sub-county:</span>
-<span class="font-bold text-slate-700 block mt-0.5">{{ school.sub_county.name|default:"—" }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold edify-text-caption">School Type:</span>
-<span class="font-bold text-slate-700 block mt-0.5 uppercase">{{ school.get_school_type_display }}</span>
-</div>
-<div>
-<span class="text-slate-400 font-semibold edify-text-caption">Enrolment:</span>
-<span class="font-bold text-slate-700 block mt-0.5">{{ school.enrollment|default:"Missing" }}</span>
-</div>
-<div class="col-span-2 border-t border-slate-200/60 pt-2 mt-1">
-<span class="text-slate-400 font-semibold edify-text-caption">School Contact:</span>
-<span class="font-bold text-slate-700 block mt-0.5">{{ school_contact }}</span>
-</div>
-</div>
-</div>
+  <section class="rounded-surface border border-slate-200 bg-white p-4" aria-labelledby="cluster-school-heading">
+    <h3 id="cluster-school-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">School</h3>
+    <p class="mt-1 text-[14px] font-extrabold text-slate-800">{{ school.name }}</p>
+    <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-[12px]">
+      <div>
+        <dt class="font-semibold text-slate-400">School ID</dt>
+        <dd class="mt-0.5 font-bold text-slate-700">{{ school.school_id }}</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-slate-400">District</dt>
+        <dd class="mt-0.5 font-bold text-slate-700">{{ school.district.name }}</dd>
+      </div>
+      <div class="col-span-2">
+        <dt class="font-semibold text-slate-400">Sub-county</dt>
+        <dd class="mt-0.5 font-bold text-slate-700">{{ school.sub_county.name|default:"Not assigned" }}</dd>
+      </div>
+    </dl>
+  </section>
 
-<!-- Form Segment -->
-<form
-hx-post="/schools/{{ school.id }}/add-to-cluster"
-hx-target="#drawer-container"
-class="space-y-5 text-[12px] font-bold text-slate-600"
-x-data="{ actionType: 'existing', selectedClusterId: '{{ existing_covering_cluster.id|default:'' }}' }"
->
-{% csrf_token %}
-<input type="hidden" name="cluster_action_type" :value="actionType">
-<input type="hidden" name="existing_cluster_id" x-model="selectedClusterId">
+  <form
+    hx-post="/schools/{{ school.id }}/add-to-cluster"
+    hx-target="#drawer-container"
+    class="space-y-5 bg-white text-[12px] text-slate-600"
+    x-data="{
+      actionType: '{% if existing_covering_cluster or show_cluster_directory %}existing{% else %}new{% endif %}',
+      selectedClusterId: '{{ existing_covering_cluster.id|default:"" }}'
+    }"
+  >
+    {% csrf_token %}
+    <input type="hidden" name="cluster_action_type" :value="actionType">
+    <input type="hidden" name="existing_cluster_id" x-model="selectedClusterId">
 
-{% if existing_covering_cluster %}
-<!-- Existing Cluster Claim Notice -->
-<div class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-surface text-[12px] font-bold shadow-sm flex items-start gap-2">
-<svg class="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-</svg>
-<div>
-<p class="font-semibold text-emerald-900">Sub-county already clustered</p>
-<p class="font-medium edify-text-caption text-emerald-700/90 mt-0.5 leading-normal">
-This school's sub-county is already covered by <span class="font-semibold text-emerald-900">{{ existing_covering_cluster.name }}</span>.
-Assignment has been locked to this cluster to maintain geographic consistency.
-</p>
-</div>
-</div>
-{% endif %}
+    {% if existing_covering_cluster %}
+    <section class="rounded-surface border border-slate-200 bg-white p-4" aria-labelledby="automatic-cluster-heading">
+      <div class="flex items-start gap-3">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+        </svg>
+        <div>
+          <h3 id="automatic-cluster-heading" class="text-[13px] font-extrabold text-slate-800">Cluster selected automatically</h3>
+          <p class="mt-1 text-[12px] font-semibold leading-5 text-slate-500">
+            {{ school.sub_county.name }} is covered by <span class="font-extrabold text-slate-800">{{ existing_covering_cluster.name }}</span>.
+          </p>
+        </div>
+      </div>
+    </section>
+    {% else %}
+      {% if show_cluster_directory %}
+      <div class="grid grid-cols-2 gap-1 rounded-surface border border-slate-200 bg-white p-1" role="group" aria-label="Cluster assignment method">
+        <button
+          type="button"
+          @click="actionType = 'existing'"
+          :aria-pressed="actionType === 'existing'"
+          :class="actionType === 'existing' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
+          class="min-h-10 rounded-control border bg-white px-3 text-[12px] font-bold transition-all"
+        >
+          Select nearby
+        </button>
+        <button
+          type="button"
+          @click="actionType = 'new'"
+          :aria-pressed="actionType === 'new'"
+          :class="actionType === 'new' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
+          class="min-h-10 rounded-control border bg-white px-3 text-[12px] font-bold transition-all"
+        >
+          Create new
+        </button>
+      </div>
 
-<!-- Action Type Toggle Tab buttons -->
-<div class="flex p-1 bg-slate-100 rounded-surface">
-<button
-type="button"
-@click="actionType = 'existing'"
-:class="actionType === 'existing' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-class="flex-1 py-1.5 rounded-control font-bold text-[12px] text-center transition-all"
->
-Select Existing Cluster
-</button>
-{% if not existing_covering_cluster %}
-<button
-type="button"
-@click="actionType = 'new'"
-:class="actionType === 'new' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-class="flex-1 py-1.5 rounded-control font-bold text-[12px] text-center transition-all"
->
-Create New Cluster
-</button>
-{% else %}
-<button
-type="button"
-disabled
-class="flex-1 py-1.5 rounded-control font-bold text-[12px] text-center opacity-50 cursor-not-allowed text-slate-400"
-title="Sub-county is already clustered."
->
-Create New Cluster
-</button>
-{% endif %}
-</div>
+      <div x-show="actionType === 'existing'" class="space-y-2">
+        <label for="all_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Nearby clusters</label>
+        <select
+          id="all_cluster_id"
+          x-model="selectedClusterId"
+          class="w-full min-h-11 rounded-control border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-700 focus:border-[#2563eb] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
+        >
+          <option value="">Select a cluster</option>
+          {% for cluster in all_clusters %}
+          <option value="{{ cluster.id }}">{{ cluster.name }} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</option>
+          {% endfor %}
+        </select>
+        <p class="edify-text-caption font-semibold text-slate-400">Only active clusters in {{ school.district.name }} are shown.</p>
+      </div>
+      {% endif %}
 
-<!-- Case A: Select Existing Cluster -->
-<div x-show="actionType === 'existing'" class="space-y-4">
-<!-- Recommended Clusters -->
-{% if recommended_clusters %}
-<div class="space-y-2">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Recommended Clusters (Nearby)</label>
-<div class="grid grid-cols-1 gap-2.5">
-{% for rc in recommended_clusters %}
-<label
-class="relative flex items-start gap-3 p-3.5 edify-primary-soft-alpha-40 border rounded-surface cursor-pointer edify-primary-soft-hover transition-colors"
-:class="selectedClusterId === '{{ rc.id }}' ? 'edify-primary-border edify-primary-soft-alpha-80' : 'edify-primary-border'"
->
-<input
-type="radio"
-x-model="selectedClusterId"
-value="{{ rc.id }}"
-class="mt-0.5 rounded-pill edify-primary-border edify-primary-text edify-primary-focus"
->
-<div class="text-[12px]">
-<p class="font-semibold edify-primary-text">{{ rc.name }}</p>
-<p class="edify-primary-text-alpha-80 font-semibold edify-text-caption mt-0.5">
-{{ rc.district.name }} &bull; {{ rc.sub_county.name }} &bull; {{ rc.schools_count }} schools capacity
-</p>
-</div>
-</label>
-{% endfor %}
-</div>
-</div>
-{% endif %}
+      <div x-show="actionType === 'new'"{% if show_cluster_directory %} style="display: none;"{% endif %} class="space-y-4">
+        <div class="space-y-2">
+          <label for="new_cluster_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster name</label>
+          <input
+            type="text"
+            name="new_cluster_name"
+            id="new_cluster_name"
+            placeholder="e.g. {{ school.sub_county.name|default:school.district.name }} Cluster"
+            class="w-full min-h-11 rounded-control border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[#2563eb] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
+          >
+        </div>
 
-<!-- All Clusters Dropdown -->
-<div class="space-y-1">
-<label for="all_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">All Clusters Directory</label>
-<select
-id="all_cluster_id"
-x-model="selectedClusterId"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="">-- Choose from Directory --</option>
-{% for ac in all_clusters %}
-<option value="{{ ac.id }}">{{ ac.name }} ({{ ac.district.name }} &bull; {{ ac.schools_count }} schools)</option>
-{% endfor %}
-</select>
-</div>
-</div>
+        <input type="hidden" name="new_district_id" value="{{ school.district_id }}">
+        {% if school.sub_county_id %}
+        <input type="hidden" name="new_sub_county_ids" value="{{ school.sub_county_id }}">
+        {% endif %}
+        <dl class="grid grid-cols-2 gap-3 rounded-surface border border-slate-200 bg-white p-3 text-[12px]">
+          <div>
+            <dt class="font-semibold text-slate-400">District</dt>
+            <dd class="mt-0.5 font-bold text-slate-700">{{ school.district.name }}</dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-slate-400">Coverage</dt>
+            <dd class="mt-0.5 font-bold text-slate-700">{{ school.sub_county.name|default:"District level" }}</dd>
+          </div>
+        </dl>
+      </div>
+    {% endif %}
 
-<!-- Case B: Create New Cluster -->
-<div x-show="actionType === 'new'" class="space-y-4" style="display: none;">
-<!-- New Cluster Name -->
-<div class="space-y-1">
-<label for="new_cluster_name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">New Cluster Name</label>
-<input
-type="text"
-name="new_cluster_name"
-id="new_cluster_name"
-placeholder="e.g. Gulu Central Cluster"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold focus:outline-none focus:ring-2 edify-primary-focus edify-surface"
->
-</div>
+    <section class="rounded-surface border border-slate-200 bg-white p-4" aria-labelledby="responsible-staff-heading">
+      <h3 id="responsible-staff-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Field Staff</h3>
+      {% if responsible_staff %}
+      <div class="mt-2 flex items-center gap-3">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[12px] font-extrabold text-[var(--edify-primary)]">
+          {{ responsible_staff.user.name|slice:":1"|upper }}
+        </span>
+        <div>
+          <p class="text-[13px] font-extrabold text-slate-800">{{ responsible_staff.user.name }}</p>
+          <p class="mt-0.5 edify-text-caption font-semibold text-slate-400">{{ responsible_staff.title|default:responsible_staff.user.active_role }}</p>
+        </div>
+      </div>
+      <p class="mt-2 edify-text-caption font-semibold text-slate-400">Automatic from the school owner.</p>
+      {% else %}
+      <p class="mt-2 text-[12px] font-bold text-amber-700">No school owner is assigned. Update the School Profile to set one.</p>
+      {% endif %}
+    </section>
 
-<!-- District & Sub-counties list preset to match school -->
-<div class="space-y-3">
-<div class="space-y-1">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
-<!-- Display district name as read-only and pass via hidden input -->
-<input type="hidden" name="new_district_id" value="{{ school.district_id }}">
-<div class="w-full h-10 px-3 rounded-surface border border-slate-200 text-[12px] font-semibold bg-slate-50 text-slate-600 flex items-center shadow-inner">
-{{ school.district.name }}
-</div>
-</div>
-
-<div class="space-y-1.5">
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Covered Sub-counties</label>
-<p class="edify-text-caption text-slate-400 font-semibold mb-2">The school's home sub-county is locked. Select additional sub-counties to extend cluster coverage.</p>
-
-<!-- Hidden input ensuring the school's sub-county is always submitted -->
-<input type="hidden" name="new_sub_county_ids" value="{{ school.sub_county_id }}">
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-2 bg-slate-50 border border-slate-200/60 p-3 rounded-surface max-h-48 overflow-y-auto">
-{% for sc in sub_counties %}
-{% if sc.id == school.sub_county_id %}
-<!-- Locked Home Sub-county -->
-<div class="flex items-center justify-between p-2 rounded-surface bg-emerald-50/50 border border-emerald-100/80">
-<label class="flex items-center gap-2 text-[12px] font-bold text-emerald-800 cursor-not-allowed">
-<input
-type="checkbox"
-checked
-disabled
-class="rounded-control border-emerald-300 text-emerald-600 focus:ring-emerald-500 cursor-not-allowed"
->
-<span>{{ sc.name }} (Home)</span>
-</label>
-<span class="edify-text-caption bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-pill font-semibold">{{ sc.unclustered_schools_count }} schools</span>
-</div>
-{% else %}
-{% if sc.covering_cluster_name %}
-<!-- Claimed/Covered Sub-county (Disabled) -->
-<div class="flex items-center justify-between p-2 rounded-surface bg-slate-50 border border-slate-200 opacity-65 " title="This sub-county is already covered by {{ sc.covering_cluster_name }}.">
-<label class="flex items-center gap-2 text-[12px] font-semibold text-slate-400 cursor-not-allowed">
-<input
-type="checkbox"
-disabled
-class="rounded-control border-slate-200 text-slate-300 focus:ring-slate-300 cursor-not-allowed"
->
-<span class="line-through">{{ sc.name }}</span>
-</label>
-<span class="edify-text-caption bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-pill font-semibold max-w-[120px] truncate" title="Covered by {{ sc.covering_cluster_name }}">
-{{ sc.covering_cluster_name }}
-</span>
-</div>
-{% else %}
-<!-- Optional Sub-counties in the same District -->
-<div class="flex items-center justify-between p-2 rounded-surface edify-surface border border-slate-200 hover:border-slate-300 transition-colors">
-<label class="flex items-center gap-2 text-[12px] font-semibold text-slate-700 cursor-pointer">
-<input
-type="checkbox"
-name="new_sub_county_ids"
-value="{{ sc.id }}"
-class="rounded-control border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)]"
->
-<span>{{ sc.name }}</span>
-</label>
-<span class="edify-text-caption bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-pill font-semibold">{{ sc.unclustered_schools_count }} schools</span>
-</div>
-{% endif %}
-{% endif %}
-{% endfor %}
-</div>
-</div>
-</div>
-</div>
-
-<!-- Responsible Staff (Common Field) -->
-<div class="space-y-1">
-<label for="responsible_staff_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Field Staff</label>
-<select
-name="responsible_staff_id"
-id="responsible_staff_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="">-- Select Staff Coordinator --</option>
-{% for st in staff_list %}
-<option value="{{ st.id }}">{{ st.user.name }} ({{ st.get_role_display }})</option>
-{% endfor %}
-</select>
-</div>
-
-<!-- Notes (Common Field) -->
-<div class="space-y-1">
-<label for="notes" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assignment Notes / Comments</label>
-<textarea
-name="notes"
-id="notes"
-rows="2.5"
-placeholder="Add context for this assignment, boundary constraints, or coordinator notes..."
-class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
-></textarea>
-</div>
-
-<!-- Footer Actions -->
-<div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
-<button
-type="button"
-@click="$dispatch('close-drawer')"
-class="px-5 h-9 rounded-control bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
->
-Cancel
-</button>
-<button
-type="submit"
-class="px-6 h-9 rounded-control btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
->
-<span>Assign & Complete</span>
-</button>
-</div>
-</form>
+    <div class="flex items-center justify-end gap-2 border-t border-slate-100 bg-white pt-4">
+      <button
+        type="button"
+        @click="$dispatch('close-drawer')"
+        class="min-h-11 rounded-control border border-slate-200 bg-white px-5 text-[12px] font-bold text-slate-700 transition-colors hover:border-slate-300"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="btn-premium-primary min-h-11 rounded-control px-6 text-[12px] font-bold text-white transition-colors"
+      >
+        {% if existing_covering_cluster %}Add to {{ existing_covering_cluster.name }}{% else %}Add to cluster{% endif %}
+      </button>
+    </div>
+  </form>
 </div>
 {% endblock %}

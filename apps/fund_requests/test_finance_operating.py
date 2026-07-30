@@ -623,12 +623,45 @@ class FinanceOperatingSystemTest(TestCase):
         Budget Utilization toward 100%. The KPI block now shares
         disbursement_dashboard_service.weekly_status_buckets() with the
         Disbursement Dashboard so the two "current budget status" surfaces
-        cannot diverge."""
+        cannot diverge.
+
+        The FY money totals have since moved to the AdvanceRequest ledger
+        (fy_totals_all_fund_types no longer sums the weekly/monthly request
+        snapshots, which double-counted shared cost lines), so each weekly
+        request here carries its mirroring child advance — the rows
+        weekly_service creates at generation time. The KPI contract under
+        test is unchanged: a confirmed advance counts in the approved
+        denominator, giving 33% rather than 100%."""
         from django.utils import timezone
         from apps.core.fy import get_operational_fy
         from apps.fund_requests.models import WeeklyFundRequest
 
         fy = get_operational_fy()
+        now = timezone.now()
+
+        def _mirrored_advance(amount, status, disbursed_amount=None):
+            line = ActivityScheduleCostLine.objects.create(
+                activity=self.staff_activity,
+                # distinct per fixture line — one component per key per
+                # activity is now a database constraint
+                cost_setting_key=f"transport_allowance_{status}_{amount}",
+                label=f"Util fixture {status}",
+                unit_cost=amount,
+                quantity=1,
+                amount=amount,
+            )
+            AdvanceRequest.objects.create(
+                activity=self.staff_activity,
+                budget_line=line,
+                responsible_user_id="cceo_user",
+                fy=fy,
+                quarter="Q3",
+                amount=amount,
+                status=status,
+                disbursed_amount=disbursed_amount,
+                disbursed_at=now if disbursed_amount else None,
+            )
+
         # Approved, not yet disbursed — must count toward "approved".
         WeeklyFundRequest.objects.create(
             fy=fy,
@@ -638,6 +671,7 @@ class FinanceOperatingSystemTest(TestCase):
             status="confirmed_for_advance",
             total_amount=100_000,
         )
+        _mirrored_advance(100_000, AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE)
         # Disbursed — counts toward both "approved" and "disbursed".
         WeeklyFundRequest.objects.create(
             fy=fy,
@@ -647,7 +681,10 @@ class FinanceOperatingSystemTest(TestCase):
             status="disbursed",
             total_amount=50_000,
             disbursed_amount=50_000,
-            disbursed_at=timezone.now(),
+            disbursed_at=now,
+        )
+        _mirrored_advance(
+            50_000, AdvanceRequestStatus.DISBURSED, disbursed_amount=50_000
         )
         client = self._accountant_client()
         resp = client.get("/accounts/")

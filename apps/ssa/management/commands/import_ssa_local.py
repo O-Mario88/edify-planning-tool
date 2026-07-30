@@ -8,7 +8,7 @@ CSV columns:
   schoolId, dateOfSsa, christlike_behaviour, exposure_to_word_of_god,
   financial_health, leadership, learning_environment, government_requirement,
   teaching_environment, enrolment,
-  newEnrollment (optional), collectorType (optional, default staff)
+  collectorType (optional, default staff)
 
 Creates SsaRecord + 8 SsaScore rows, derives FY/quarter from the date, and
 recomputes the school's planning readiness. Tagged source=local_test_upload.
@@ -89,9 +89,6 @@ class Command(BaseCommand):
                             date_of_ssa=date,
                             fy=get_operational_fy(date),
                             quarter=get_quarter_for_date(date),
-                            new_enrollment=int(row["newEnrollment"])
-                            if row.get("newEnrollment")
-                            else None,
                             average_score=avg,
                             uploaded_by="local_import",
                             collector_type=collector,

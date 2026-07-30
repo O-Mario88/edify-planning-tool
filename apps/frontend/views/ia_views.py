@@ -601,8 +601,7 @@ def ia_dashboard_view(request):
     from django.db.models import Avg, Count
     from django.utils.timesince import timesince
 
-    from apps.activities.models import ReturnedReason
-    from apps.accounts.models import User
+    from apps.accounts.models import StaffProfile, User
     from apps.core.enums import EvidenceKind, SsaIntervention
     from apps.core.fy import get_operational_fy
     from apps.evidence.models import EvidenceRecord
@@ -760,82 +759,56 @@ def ia_dashboard_view(request):
         + EvidenceRecord.objects.filter(created_at__gte=today_start).count()
     )
 
-    kpi_items = [
-        {
-            "label": "Uploaded Today",
-            "value": f"{uploads_today:,}",
-            "helper": "Latest uploads",
-            "icon": "info",
-            "variant": "info",
-        },
-        {
-            "label": "Pending Verification",
-            "value": f"{waiting_cnt:,}",
-            "helper": "Awaiting review",
-            "icon": "clock",
-            "variant": "warning",
-        },
-        {
-            "label": "Verified This Week",
-            "value": f"{verified_week:,}",
-            "helper": "Completed verifications",
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Returned",
-            "value": f"{returned_open:,}",
-            "helper": "Awaiting correction",
-            "icon": "danger",
-            "variant": "danger",
-        },
-        {
-            "label": "Data Quality Score",
-            "value": f"{quality_pct}%",
-            "helper": "Average quality",
-            "icon": "check",
-            "variant": "success",
-        },
-    ]
-
-    # ── Verification work queue (5 most recent pending) ─────────────────────
+    # ── Verification work queue (oldest first, so SLA risk is visible) ──────
     queue_activities = list(
-        waiting_qs.select_related("school", "school__district").order_by("-updated_at")[
-            :5
-        ]
+        waiting_qs.select_related("school", "school__district")
+        .order_by(F("submitted_to_ia_at").asc(nulls_last=True), "updated_at")[:6]
     )
     staff_ids = {
         a.responsible_staff_id for a in queue_activities if a.responsible_staff_id
     }
-    staff_names = (
+    user_names = (
         dict(User.objects.filter(id__in=staff_ids).values_list("id", "name"))
         if staff_ids
         else {}
     )
-    status_classes = {
-        "awaiting_ia_verification": "bg-amber-50 text-amber-700 border-amber-200",
-    }
-    queue_items = [
-        {
-            "record_id": str(a.id)[-8:].upper(),
-            "school": a.school.name if a.school else "Cluster",
-            "district": a.school.district.name
-            if a.school and a.school.district_id
-            else "—",
-            "activity_type": a.get_activity_type_display(),
-            "submitted_by": staff_names.get(
-                a.responsible_staff_id, a.responsible_staff_id or "—"
-            ),
-            "submission_date": timezone.localtime(a.updated_at).strftime(
-                "%d %b %Y %I:%M %p"
-            ),
-            "status": a.get_status_display(),
-            "status_class": status_classes.get(
-                a.status, "bg-slate-50 text-slate-700 border-slate-200"
-            ),
-        }
-        for a in queue_activities
-    ]
+    staff_profile_names = (
+        dict(
+            StaffProfile.objects.filter(id__in=staff_ids).values_list(
+                "id", "user__name"
+            )
+        )
+        if staff_ids
+        else {}
+    )
+    staff_names = {**user_names, **staff_profile_names}
+    queue_items = []
+    for activity in queue_activities:
+        submitted_at = activity.submitted_to_ia_at or activity.updated_at
+        age_hours = (now - submitted_at).total_seconds() / 3600
+        queue_items.append(
+            {
+                "id": str(activity.id),
+                "record_id": str(activity.id)[-8:].upper(),
+                "review_url": f"/ia/verification/{activity.id}/",
+                "school": activity.school.name if activity.school else "Cluster-wide",
+                "district": (
+                    activity.school.district.name
+                    if activity.school and activity.school.district_id
+                    else "No district"
+                ),
+                "activity_type": activity.get_activity_type_display(),
+                "submitted_by": staff_names.get(
+                    activity.responsible_staff_id,
+                    activity.responsible_staff_id or "Unassigned",
+                ),
+                "submission_date": timezone.localtime(submitted_at).strftime(
+                    "%d %b %Y, %I:%M %p"
+                ),
+                "submitted_relative": f"{timesince(submitted_at, now)} ago",
+                "is_overdue": age_hours > 24,
+            }
+        )
 
     # ── District SSA completion stats (shared by exceptions + leaderboard) ──
     district_stats = list(
@@ -869,31 +842,37 @@ def ia_dashboard_view(request):
                 "count": missing_sf_id,
                 "text": "completed/verified activities missing Salesforce IDs",
                 "severity": "error",
+                "href": "/completed-activities",
             },
             {
                 "count": duplicate_risk_cnt,
                 "text": "activities flagged as potential duplicates",
                 "severity": "warning",
+                "href": "/ia/duplicates/",
             },
             {
                 "count": dup_school_cnt,
                 "text": "schools flagged as potential duplicates",
                 "severity": "warning",
+                "href": "/data-quality/duplicates",
             },
             {
                 "count": districts_below_target,
                 "text": "districts below 50% SSA completion",
                 "severity": "info",
+                "href": "/analytics",
             },
             {
                 "count": overdue_returns,
                 "text": "activities returned for correction over 7 days ago",
                 "severity": "warning",
+                "href": "/ia/returned/",
             },
             {
                 "count": failed_uploads,
                 "text": "bulk uploads failed validation",
                 "severity": "error",
+                "href": "/ssa/upload/",
             },
         ]
         if e["count"] > 0
@@ -1165,35 +1144,6 @@ def ia_dashboard_view(request):
         ],
     }
 
-    # ── Charts: verified/returned per last 5 weekdays + return reasons ──────
-    weekday_starts = []
-    cursor = today_start
-    while len(weekday_starts) < 5:
-        if cursor.weekday() < 5:
-            weekday_starts.append(cursor)
-        cursor -= timedelta(days=1)
-    weekday_starts.reverse()
-    verification_trend = [
-        {
-            "date": day.strftime("%A"),
-            "verified": VerificationHistory.objects.filter(
-                verified_at__gte=day, verified_at__lt=day + timedelta(days=1)
-            ).count(),
-            "returned": VerificationDecision.objects.filter(
-                decision="RETURN",
-                decided_at__gte=day,
-                decided_at__lt=day + timedelta(days=1),
-            ).count(),
-        }
-        for day in weekday_starts
-    ]
-    return_reasons = [
-        {"reason": r["reason"], "count": r["c"]}
-        for r in ReturnedReason.objects.values("reason")
-        .annotate(c=Count("id"))
-        .order_by("-c")[:5]
-    ]
-
     # ── Upload intake status ────────────────────────────────────────────────
     last_batch = UploadBatch.objects.order_by("-created_at").first()
     upload_status = {
@@ -1222,7 +1172,6 @@ def ia_dashboard_view(request):
             "evidence_pending": evidence_pending,
         },
         "date_range": f"{week_start.strftime('%b')} {week_start.day} – {week_end.strftime('%b')} {week_end.day}, {week_end.year}",
-        "kpi_strip_items": kpi_items,
         "queue_items": queue_items,
         "exceptions": exceptions,
         "dq_metrics": dq_metrics,
@@ -1238,10 +1187,6 @@ def ia_dashboard_view(request):
         "returned_open_school_cnt": returned_open_school_cnt,
         "avg_resolution_days": avg_resolution_days,
         "verification_sla": verification_sla,
-        "charts": {
-            "verification_trend": verification_trend,
-            "return_reasons": return_reasons,
-        },
         "field_debrief_intel": field_debrief_intel,
     }
     return render(request, "pages/ia/analytics_dashboard.html", context)

@@ -33,6 +33,20 @@ def upload_ssa_file(file, principal) -> dict:
     if not raw_headers:
         raise BadRequest("The uploaded file is empty — no header row found.")
 
+    normalized_headers = {M.normalize_header(header) for header in raw_headers}
+    legacy_headcount_headers = {
+        "new enrolment",
+        "new enrollment",
+        "enrolment count",
+        "enrollment count",
+    }
+    if normalized_headers & legacy_headcount_headers:
+        raise BadRequest(
+            "Pupil enrolment is not part of the SSA upload. In SSA, Enrolment "
+            "is a score from 0 to 10. Update pupil headcount through the School "
+            "Upload file or the School Profile."
+        )
+
     field_index = M.build_field_index(raw_headers, M.SSA_HEADER_MAP)
     missing = M.missing_required(field_index, M.SSA_REQUIRED_FIELDS)
     missing_interventions = [i for i in M.ALL_INTERVENTIONS if i not in field_index]
@@ -109,17 +123,6 @@ def upload_ssa_file(file, principal) -> dict:
                 bad_score = f"Score for {interv} ({score_val}) is out of range 0–10."
                 break
             scores[interv] = score_val
-
-        # Read optional learner enrollment count (student headcount, NOT a score).
-        # Stored under a special key in the scores dict so it flows through the
-        # batch row to the import step without a model migration.
-        if "new_enrollment" in field_index:
-            enr_raw = _value(field_index, "new_enrollment", cells).strip()
-            if enr_raw:
-                try:
-                    scores["_enrollment_count"] = int(float(enr_raw))
-                except ValueError:
-                    pass  # non-numeric enrollment count — ignore silently
 
         # Read optional "School Name" / "District" columns the SAME way —
         # SSAImportRow has no columns for these, so they flow through the
@@ -389,10 +392,6 @@ def import_ssa_batch(batch, user) -> dict:
                 datetime.combine(ssa_date, timezone.datetime.min.time()), tz
             )
 
-            # Separate enrollment count (headcount) from intervention scores.
-            enrollment_count = (
-                r.scores.pop("_enrollment_count", None) if r.scores else None
-            )
             scores_list = [
                 {"intervention": k, "score": v}
                 for k, v in r.scores.items()
@@ -403,8 +402,6 @@ def import_ssa_batch(batch, user) -> dict:
                 "dateOfSsa": aware.isoformat(),
                 "scores": scores_list,
             }
-            if enrollment_count is not None:
-                defaults["newEnrollment"] = enrollment_count
             try:
                 with transaction.atomic():
                     services.upload(defaults, user)
@@ -415,17 +412,14 @@ def import_ssa_batch(batch, user) -> dict:
                 r.save()
         else:
             # Create UnmatchedSSARecord. Pop the pass-through-only keys
-            # (school_name/district/enrollment ride in `scores` because
+            # (school_name/district ride in `scores` because
             # SSAImportRow has no columns for them — see the comment where
             # they're written above) before storing `scores`: the "match" /
             # "create_school" actions later average every value in it, and a
-            # raw name string there would TypeError, an enrollment count
-            # would silently skew the SSA average.
+            # a raw name string there would TypeError.
             row_scores = dict(r.scores or {})
             school_name_raw = row_scores.pop("_school_name_raw", None)
             district_raw = row_scores.pop("_district_raw", None)
-            row_scores.pop("_enrollment_count", None)
-
             suggested_id, confidence = unmatched_service.compute_suggested_match(
                 school_name_raw, district_raw
             )

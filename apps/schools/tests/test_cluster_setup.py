@@ -550,6 +550,11 @@ class ClusterSetupTest(APITestCase):
             url,
             {
                 "name": school.name,
+                # The edit drawer now validates the classification on every
+                # save; submit the school's current type unchanged.
+                "school_type": "client",
+                # …and requires an account owner on every save.
+                "account_owner_id": self.profile.id,
                 "school_phone": "",
                 "primary_contact_name": "",
                 "director_name": "",

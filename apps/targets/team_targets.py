@@ -1047,6 +1047,28 @@ class PLTeamTargetsService:
         if is_current_fy:
             PLTeamTargetsService._notify_risk(pl_user, high_risk, fy, month_of_fy)
 
+        from apps.hr.milestone_allocations import (
+            strategic_priority_overview,
+            team_milestone_targets,
+        )
+
+        strategic_milestones = team_milestone_targets(
+            users=team,
+            fy=fy,
+            month_of_fy=month_of_fy,
+        )
+        strategic_priorities = strategic_priority_overview(
+            fy=fy,
+            staff_ids=[
+                user.staff_profile_id
+                for user in team
+                if getattr(user, "staff_profile_id", None)
+            ],
+        )
+        from apps.projects.staff_priorities import team_project_priorities
+
+        project_priorities = team_project_priorities(users=team, fy=fy)
+
         return {
             "fy": fy,
             "fy_label": f"FY {int(fy) - 1}/{str(fy)[-2:]}",
@@ -1121,6 +1143,9 @@ class PLTeamTargetsService:
                 {"value": mm, "label": Cal.month_label(fy, mm)} for mm in range(1, 13)
             ],
             "last_refreshed": timezone.now(),
+            "strategic_milestones": strategic_milestones,
+            "strategic_priorities": strategic_priorities,
+            "project_priorities": project_priorities,
         }
 
     # ── blocker classification (§19) ─────────────────────────────────────────

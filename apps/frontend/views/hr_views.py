@@ -1697,6 +1697,9 @@ def my_performance_view(request, tab=None):
     show_priority_button = True
     has_priorities = bool(priorities and len(priorities) > 0)
     priority_button_label = "Update priorities" if has_priorities else "Create Priority"
+    from apps.projects.staff_priorities import staff_project_priorities
+
+    project_priorities = staff_project_priorities(user=request.user, fy=fy)
 
     context = {
         "cycle": cycle,
@@ -1714,6 +1717,7 @@ def my_performance_view(request, tab=None):
         "show_priority_button": show_priority_button,
         "has_priorities": has_priorities,
         "priority_button_label": priority_button_label,
+        "project_priorities": project_priorities,
         "active_window_label": (
             WINDOW_LABELS.get(cycle.active_window) if cycle else None
         ),

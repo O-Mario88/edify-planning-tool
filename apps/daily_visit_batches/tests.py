@@ -464,9 +464,9 @@ class DailyVisitBatchSystemHealthTestCase(TestCase):
                 "scheduledDate": "2026-08-20T09:00:00+03:00",
                 "activityPurposeText": "Direct create bypassing batch service",
                 "focusIntervention": "leadership",
-                "_skip_cost_snapshot": True,
             },
             self.staff_user,
+            skip_cost_snapshot=True,
         )
 
         health = _workflow_issues()

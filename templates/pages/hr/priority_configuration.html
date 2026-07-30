@@ -1,0 +1,89 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Strategic Priorities · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="mx-auto max-w-[1400px] space-y-5 px-4 py-5 sm:px-6">
+  <header class="edify-page-header">
+    <p class="edify-page-eyebrow">RVP strategy cascade</p>
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div><h1 class="edify-page-title">{{ cycle.title|default:"Strategic Priorities" }}</h1><p>Source milestones remain unchanged until an authorized owner defines an auditable metric and allocation.</p></div>
+      {% if cycle %}<span class="pill {% if cycle.status == 'approved' or cycle.status == 'active' %}pill-success{% else %}pill-neutral{% endif %}">{{ cycle.get_status_display }}</span>{% endif %}
+    </div>
+  </header>
+
+  {% if cycle %}
+  <section class="grid gap-3 sm:grid-cols-3">
+    <div class="card p-4"><p class="text-xs text-[var(--edify-text-muted)]">Priority groups</p><p class="mt-1 text-2xl font-bold">{{ priorities|length }}</p></div>
+    <div class="card p-4"><p class="text-xs text-[var(--edify-text-muted)]">Needs Definition</p><p class="mt-1 text-2xl font-bold">{{ undefined|length }}</p></div>
+    <div class="card p-4"><p class="text-xs text-[var(--edify-text-muted)]">Financial year</p><p class="mt-1 text-2xl font-bold">FY{{ cycle.financial_year }}</p></div>
+  </section>
+
+  {% if undefined %}
+  <section class="card p-4 space-y-3" aria-labelledby="undefined-title">
+    <div><h2 id="undefined-title" class="text-base font-semibold">Undefined Milestones Queue</h2><p class="text-sm text-[var(--edify-text-muted)]">These rows do not populate targets, risk indicators or performance scores.</p></div>
+    {% for milestone in undefined %}
+    <details class="rounded-control border border-[var(--border-card)] p-3">
+      <summary class="cursor-pointer"><span class="font-semibold">{{ milestone.source_text }}</span><span class="pill pill-neutral ml-2">Needs Definition</span></summary>
+      <p class="mt-2 text-xs text-[var(--edify-text-muted)]">{{ milestone.priority.title }} · source order {{ milestone.source_order }}</p>
+      {% if can_define %}
+      <form method="post" action="/strategic-priorities/milestones/{{ milestone.id }}/define" class="mt-3 grid gap-3 sm:grid-cols-2">
+        {% csrf_token %}
+        <label class="text-sm font-semibold">Canonical title<input name="canonicalTitle" required value="{{ milestone.title }}" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+        <label class="text-sm font-semibold">Metric key<input name="metricKey" required placeholder="stable_metric_key" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+        <label class="text-sm font-semibold">Measurement type<select name="measurementType" required class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"><option value="count">Count</option><option value="percentage">Percentage</option><option value="currency">Currency</option><option value="date">Date</option><option value="boolean">Boolean</option><option value="ratio">Ratio</option><option value="score">Score</option><option value="manual_assessment">Manual assessment</option></select></label>
+        <label class="text-sm font-semibold">Target and unit<span class="mt-1 flex gap-2"><input type="number" step="0.01" min="0.01" name="targetValue" required value="{{ milestone.target_value|default:'' }}" class="min-w-0 flex-1 rounded-control border border-[var(--border-card)] px-3 py-2"><input name="targetUnit" required placeholder="Schools, %, UGX…" class="min-w-0 flex-1 rounded-control border border-[var(--border-card)] px-3 py-2"></span></label>
+        <label class="text-sm font-semibold">Progress source<select name="dataSource" required class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"><option value="school_directory">School Directory</option><option value="core_school">Core School</option><option value="ssa">SSA</option><option value="activity_catalogue">Activity Catalogue</option><option value="special_project">Special Project</option><option value="partner">Partner</option><option value="loan_or_capital">Loan or Capital</option><option value="finance">Finance</option><option value="professional_development">Professional Development</option><option value="leave_or_hr">Leave or HR</option><option value="manual_evidence">Manual Evidence</option><option value="external_system">External System</option></select></label>
+        <label class="text-sm font-semibold">Canonical Python service<input name="canonicalService" required placeholder="apps.domain.service.function" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+        <label class="text-sm font-semibold">Quality gate<input name="qualityGate" required placeholder="Verified / approved state" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+        <label class="text-sm font-semibold">Due date<input type="date" name="dueDate" required class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+        <label class="text-sm font-semibold sm:col-span-2">Denominator definition<textarea name="denominatorDefinition" class="mt-1 block min-h-16 w-full rounded-control border border-[var(--border-card)] px-3 py-2" placeholder="Required for percentages and ratios"></textarea></label>
+        <label class="text-sm font-semibold sm:col-span-2">Responsible roles<input name="responsibleRoles" required placeholder="CCEO, Program Lead" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+        <div class="sm:col-span-2"><button type="submit" class="btn btn-primary">Save definition for RVP approval</button></div>
+      </form>
+      {% endif %}
+    </details>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section class="space-y-3" aria-label="Priority groups">
+    {% for priority in priorities %}
+    <article class="card p-4">
+      <h2 class="text-base font-semibold">{{ priority.sequence }}. {{ priority.title }}</h2>
+      <div class="mt-3 overflow-x-auto"><table class="w-full min-w-[900px] text-sm"><thead><tr class="border-b border-[var(--border-card)] text-left text-xs uppercase tracking-wider text-[var(--edify-text-muted)]"><th class="px-2 py-2">Milestone</th><th class="px-2 py-2">Source</th><th class="px-2 py-2">Target</th><th class="px-2 py-2">Definition</th><th class="px-2 py-2">Allocations</th><th class="px-2 py-2">Action</th></tr></thead><tbody class="divide-y divide-[var(--border-card)]">
+      {% for milestone in priority.milestones.all|slice:":60" %}<tr><td class="px-2 py-2 font-semibold">{{ milestone.title }}</td><td class="px-2 py-2">{{ milestone.progress_source }}</td><td class="px-2 py-2">{{ milestone.target_value|default:"—" }} {{ milestone.target_unit }}</td><td class="px-2 py-2"><span class="pill {% if milestone.definition_status == 'approved' %}pill-success{% else %}pill-neutral{% endif %}">{{ milestone.get_definition_status_display }}</span></td><td class="px-2 py-2">{{ milestone.allocations.count }}</td><td class="px-2 py-2">
+        {% if can_approve and milestone.definition_status == 'defined' %}<form method="post" action="/strategic-priorities/milestones/{{ milestone.id }}/approve">{% csrf_token %}<button class="btn" type="submit">Approve</button></form>{% endif %}
+        {% if can_allocate and milestone.active %}
+        <details>
+          <summary class="cursor-pointer font-semibold text-[var(--color-edify-primary)]">Allocate</summary>
+          <form method="post" action="/strategic-priorities/milestones/{{ milestone.id }}/allocate" class="mt-2 grid gap-2" x-data="{ scope: 'employee' }">
+            {% csrf_token %}
+            <select name="allocatedToType" x-model="scope" required class="rounded-control border border-[var(--border-card)] px-2 py-1">
+              <option value="country">Country target</option><option value="team">Team target</option><option value="employee">Employee target</option><option value="project">Project target</option>
+            </select>
+            <select name="countryId" x-show="scope === 'country'" x-bind:required="scope === 'country'" class="rounded-control border border-[var(--border-card)] px-2 py-1"><option value="">Country…</option>{% for country in countries %}<option value="{{ country }}">{{ country }}</option>{% endfor %}</select>
+            <select name="teamId" x-show="scope === 'team'" x-bind:required="scope === 'team'" class="rounded-control border border-[var(--border-card)] px-2 py-1"><option value="">Supervised team…</option>{% for person in teams %}<option value="{{ person.id }}">{{ person.user.name }}’s team</option>{% endfor %}</select>
+            <select name="employeeId" x-show="scope === 'employee'" x-bind:required="scope === 'employee'" class="rounded-control border border-[var(--border-card)] px-2 py-1"><option value="">Employee…</option>{% for person in staff %}<option value="{{ person.id }}">{{ person.user.name }}</option>{% endfor %}</select>
+            <select name="projectId" x-show="scope === 'project'" x-bind:required="scope === 'project'" class="rounded-control border border-[var(--border-card)] px-2 py-1"><option value="">Project…</option>{% for project in projects %}<option value="{{ project.id }}">{{ project.name }}</option>{% endfor %}</select>
+            <input type="number" step="0.01" min="0.01" name="allocatedTarget" required placeholder="FY target" class="rounded-control border border-[var(--border-card)] px-2 py-1">
+            <input type="number" step="0.01" min="0.01" name="denominator" placeholder="Denominator, if applicable" class="rounded-control border border-[var(--border-card)] px-2 py-1">
+            <input type="number" step="0.01" min="0" max="100" name="weight" placeholder="Weight %" class="rounded-control border border-[var(--border-card)] px-2 py-1">
+            <input type="date" name="effectiveDate" required class="rounded-control border border-[var(--border-card)] px-2 py-1">
+            <input name="allocationReason" required placeholder="Allocation rationale and cascade source" class="rounded-control border border-[var(--border-card)] px-2 py-1">
+            <input type="hidden" name="approve" value="yes">
+            <button class="btn btn-primary" type="submit">Allocate and approve</button>
+          </form>
+        </details>
+        {% endif %}
+      </td></tr>{% endfor %}
+      </tbody></table></div>
+    </article>
+    {% endfor %}
+  </section>
+  {% if can_approve and cycle.status == 'draft' %}<form method="post" action="/strategic-priorities/cycles/{{ cycle.id }}/approve">{% csrf_token %}<button type="submit" class="btn btn-primary">Approve FY{{ cycle.financial_year }} priority cycle</button></form>{% endif %}
+  {% else %}
+  <div class="card p-8 text-center">No strategic priority cycle exists for this financial year.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -118,8 +118,121 @@ class ClientEntitlementHoldsTest(TestCase):
             "core_visit",
             self.school,
             get_operational_fy(_next_monday()),
-            {"coreSlotVerified": True},
+            {},
+            core_slot_verified=True,
         )
+
+
+class CatalogueEntitlementOwnershipTest(TestCase):
+    """The Activity Catalogue owns what consumes a client entitlement.
+
+    The catalogue migration retired the generic ``school_visit`` in favour of
+    ``follow_up_visit`` (CLIENT_SCHOOL_FOLLOWUP_VISIT), but the guard's family
+    map still keyed on ``school_visit`` only — so the one-visit/FY cap no
+    longer bound catalogue follow-up visits at all. And
+    ``counts_toward_entitlement`` was written by seeding but read nowhere.
+    Both are wired here: the item flags pick the pool, the eligibility rule is
+    the governance exemption switch, and the legacy type map remains only as
+    the fallback for catalogue-less rows.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        from apps.activity_catalogue.seeding import seed_activity_catalogue
+
+        seed_activity_catalogue(actor_id="test")
+        cls.region = Region.objects.create(name="Catalogue Entitlement Region")
+        cls.district = District.objects.create(
+            name="Catalogue Entitlement District", region=cls.region
+        )
+        cls.school = School.objects.create(
+            school_id="SCH-ENTITLE-CAT-1",
+            name="Catalogue Entitlement Primary",
+            region=cls.region,
+            district=cls.district,
+            school_type="client",
+        )
+
+    @property
+    def fy(self):
+        return get_operational_fy(_next_monday())
+
+    def _item(self, stable_code):
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        return ActivityCatalogueItem.objects.get(stable_code=stable_code)
+
+    def _activity(self, activity_type, catalogue_item=None):
+        return Activity.objects.create(
+            activity_type=activity_type,
+            catalogue_item=catalogue_item,
+            delivery_type="staff",
+            status="scheduled",
+            fy=self.fy,
+            school=self.school,
+            planned_date=_next_monday(),
+            scheduled_date=_next_monday(),
+        )
+
+    def _assert(self, activity_type, catalogue_item=None):
+        from apps.activities.services import _assert_schedule_entitlement
+
+        _assert_schedule_entitlement(
+            activity_type,
+            self.school,
+            self.fy,
+            {},
+            catalogue_item=catalogue_item,
+        )
+
+    def test_a_follow_up_visit_consumes_the_visit_entitlement(self):
+        """The reported gap: follow_up_visit bypassed the one-visit/FY cap."""
+        self._activity("follow_up_visit")
+        with self.assertRaises(BadRequest):
+            self._assert("follow_up_visit")
+
+    def test_visit_and_follow_up_visit_share_one_pool(self):
+        self._activity("school_visit")
+        with self.assertRaises(BadRequest):
+            self._assert("follow_up_visit")
+
+    def test_catalogue_follow_up_visit_is_capped_by_the_item_flag(self):
+        item = self._item("CLIENT_SCHOOL_FOLLOWUP_VISIT")
+        self._activity("follow_up_visit", catalogue_item=item)
+        with self.assertRaises(BadRequest):
+            self._assert(item.workflow_kind, catalogue_item=item)
+
+    def test_flagless_catalogue_training_neither_blocks_nor_consumes(self):
+        """Student camps carry workflow_kind ``training`` with both client
+        flags off. The old type map wrongly drew them from the training pool
+        in both directions."""
+        camp = self._item("STUDENT_TRAINING_YOUTH_CAMPS")
+        edtech = self._item("EDTECH_FOUNDATIONS")
+        # A used training entitlement must not block a camp…
+        self._activity("in_school_training", catalogue_item=edtech)
+        self._assert(camp.workflow_kind, catalogue_item=camp)  # must not raise
+        # …and a scheduled camp must not consume the entitlement.
+        Activity.objects.all().delete()
+        self._activity("training", catalogue_item=camp)
+        self._assert(edtech.workflow_kind, catalogue_item=edtech)  # must not raise
+
+    def test_counts_toward_entitlement_is_the_governance_exemption_switch(self):
+        item = self._item("CLIENT_SCHOOL_FOLLOWUP_VISIT")
+        self._activity("school_visit")
+        rule = item.eligibility_rule
+        rule.counts_toward_entitlement = False
+        rule.save(update_fields=["counts_toward_entitlement"])
+        item.refresh_from_db()
+        self._assert(item.workflow_kind, catalogue_item=item)  # must not raise
+
+    def test_health_detector_sees_follow_up_visit_duplicates(self):
+        """Prevention and detection must share one definition of 'counts'."""
+        from apps.system_health.services import _workflow_issues
+
+        self._activity("school_visit")
+        self._activity("follow_up_visit")
+        issues = _workflow_issues()
+        self.assertEqual(issues["clientDuplicateActiveEntitlements"], 1)
 
 
 class ScheduleCostLandsInTheRightWeekTest(TestCase):

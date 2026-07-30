@@ -141,6 +141,78 @@ def double_funded_budget_lines() -> dict:
     }
 
 
+def partner_lines_in_staff_funding() -> dict:
+    """Partner-delivered cost lines sitting in a staff funding channel.
+
+    The one payable path for partner work is the post-IA PartnerPayment
+    workflow. A partner activity's cost line carried in a WeeklyFundRequest
+    line or mirrored as an AdvanceRequest is the double-funding seam the
+    2026-07-30 audit closed: the same cost would be advanced to the managing
+    staff member AND paid to the partner."""
+    from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequestLine
+
+    in_weekly = set(
+        WeeklyFundRequestLine.objects.filter(
+            activity_budget_line__activity__delivery_type="partner"
+        )
+        .exclude(weekly_fund_request__status__in=_DEAD_REQUEST_STATUSES)
+        .values_list("activity_budget_line_id", flat=True)
+    )
+    in_advance = set(
+        AdvanceRequest.objects.filter(activity__delivery_type="partner").values_list(
+            "budget_line_id", flat=True
+        )
+    )
+    offenders = sorted(in_weekly | in_advance)
+    return {
+        **_issue(
+            "partner_lines_in_staff_funding",
+            "critical",
+            len(offenders),
+            f"{len(offenders)} partner-delivered cost line(s) sit in a staff "
+            "weekly fund request or advance — partner work must be paid only "
+            "through the Partner Payment workflow.",
+            "Run repair_costing_pipeline (or re-sync the activity) so the "
+            "staff channels drop the partner lines.",
+        ),
+        "samples": offenders[:10],
+    }
+
+
+def dangling_fund_request_items() -> dict:
+    """Monthly FundRequestItems whose source cost line no longer exists.
+
+    FundRequestItem references its ActivityScheduleCostLine by a bare
+    CharField, so a re-price's delete+rebuild orphans the payable item row
+    silently (no CASCADE)."""
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.fund_requests.models import FundRequestItem
+
+    item_line_ids = set(
+        FundRequestItem.objects.exclude(activity_schedule_cost_line_id=None)
+        .exclude(activity_schedule_cost_line_id="")
+        .values_list("activity_schedule_cost_line_id", flat=True)
+    )
+    live = set(
+        ActivityScheduleCostLine.objects.filter(id__in=item_line_ids).values_list(
+            "id", flat=True
+        )
+    )
+    dangling = sorted(item_line_ids - live)
+    return {
+        **_issue(
+            "dangling_fund_request_items",
+            "high",
+            len(dangling),
+            f"{len(dangling)} monthly fund-request item(s) reference a cost "
+            "line that no longer exists — a payable amount with no source.",
+            "Regenerate the affected monthly draft requests; submitted ones "
+            "need accountant review before correction.",
+        ),
+        "samples": dangling[:10],
+    }
+
+
 # There was a `duplicate_weekly_requests` check here. It is gone because it
 # could never fire: WeeklyFundRequest carries a database UniqueConstraint on
 # (responsible_user, week_start_date) named `uniq_weekly_request_owner_week`,
@@ -159,6 +231,8 @@ def finance_integrity_health() -> dict:
         cost_line_period_drift,
         split_week_cost_lines,
         double_funded_budget_lines,
+        partner_lines_in_staff_funding,
+        dangling_fund_request_items,
     ):
         try:
             checks.append(check())

@@ -21,7 +21,9 @@ def get_one(budget_id: str) -> dict:
     if not b:
         raise NotFoundError("Monthly work-plan budget not found.")
     data = _serialize(b)
-    data["adminLines"] = [_serialize_line(line) for line in b.admin_lines.all()]
+    data["adminLines"] = [
+        _serialize_line(line) for line in b.admin_lines.filter(status="active")
+    ]
     return data
 
 
@@ -94,7 +96,15 @@ def recompute_totals(b: MonthlyWorkPlanBudget) -> MonthlyWorkPlanBudget:
     the auto-aggregated activity-budget-line sum (set by recompute_program_total)."""
     from django.db.models import Sum
 
-    agg = b.admin_lines.aggregate(total=Sum("total_cost"))["total"] or 0
+    # M2 — only *active* admin lines are money. Counting every row regardless
+    # of status let a soft-removed line keep inflating the envelope while the
+    # budget workspace (which filters status="active") showed a smaller figure.
+    agg = (
+        b.admin_lines.filter(status="active").aggregate(total=Sum("total_cost"))[
+            "total"
+        ]
+        or 0
+    )
     b.admin_total = int(agg)
     b.total_amount = (b.program_total or 0) + b.admin_total
     b.save(update_fields=["admin_total", "total_amount"])
@@ -132,13 +142,18 @@ def recompute_program_total(b: MonthlyWorkPlanBudget) -> MonthlyWorkPlanBudget:
 
 
 def submit_to_rvp(budget_id: str, principal) -> dict:
-    return _transition(
-        budget_id,
-        MonthlyWorkPlanBudgetStatus.SUBMITTED_TO_RVP,
-        principal,
-        field="submitted_at",
-        actor_field="submitted_by_user_id",
-    )
+    """Submit a month to the RVP through the ONE guarded submission path.
+
+    This used to flip the status via ``_transition`` — which skipped the
+    recompute, the integrity checks and (critically) the immutable
+    ``MonthlyBudgetSubmissionSnapshot``, leaving submitted months with zero
+    snapshots. Every submission now routes through
+    ``country_budget_service.send_to_rvp``.
+    """
+    from apps.monthly_work_plan import country_budget_service
+
+    b = country_budget_service.send_to_rvp(principal, budget_id)
+    return _serialize(b)
 
 
 def _rvp_country_scope() -> str:
@@ -428,6 +443,31 @@ def mark_sent_to_accountant(budget_id: str, principal) -> dict:
     )
 
 
+# M8 — the legal lifecycle map for the transitions this helper may perform.
+# Target status → the set of statuses it may legally be reached from.
+#
+# Deliberately ABSENT targets:
+#   * submitted_to_rvp — the only legal submit path is
+#     country_budget_service.send_to_rvp (recompute → integrity checks →
+#     status flip → immutable snapshot, all under select_for_update).
+#   * draft_generated / cd_review / admin_plan_added — draft-side statuses are
+#     managed by the draft workflows (generation, add_admin_line), never by a
+#     raw transition call.
+#   * disbursed / closed — reconciliation_service.mark_disbursed/close_month
+#     own those, with their own settlement guards.
+_LEGAL_TRANSITIONS: dict[str, tuple[str, ...]] = {
+    MonthlyWorkPlanBudgetStatus.APPROVED_BY_RVP: (
+        MonthlyWorkPlanBudgetStatus.SUBMITTED_TO_RVP,
+    ),
+    MonthlyWorkPlanBudgetStatus.RETURNED_BY_RVP: (
+        MonthlyWorkPlanBudgetStatus.SUBMITTED_TO_RVP,
+    ),
+    MonthlyWorkPlanBudgetStatus.SENT_TO_ACCOUNTANT: (
+        MonthlyWorkPlanBudgetStatus.APPROVED_BY_RVP,
+    ),
+}
+
+
 def _transition(
     budget_id: str,
     status: str,
@@ -436,16 +476,40 @@ def _transition(
     field: str | None = None,
     actor_field: str | None = None,
 ) -> MonthlyWorkPlanBudget:
-    b = MonthlyWorkPlanBudget.objects.filter(id=budget_id).first()
-    if not b:
-        raise NotFoundError("Monthly work-plan budget not found.")
-    b.status = status
-    now = timezone.now()
-    if field:
-        setattr(b, field, now)
-    if actor_field:
-        setattr(b, actor_field, principal.user_id)
-    b.save()
+    """Move a budget to ``status`` — but ONLY along a legal lifecycle edge.
+
+    Any status used to be settable from any status with no lock, which let a
+    draft_generated envelope jump straight to sent_to_accountant without RVP
+    approval and without a submission snapshot ever existing. The row is now
+    locked (select_for_update) and the jump validated against
+    ``_LEGAL_TRANSITIONS`` inside one transaction, so a concurrent second
+    request serialises and then fails the guard instead of double-writing.
+    """
+    from django.db import transaction
+
+    with transaction.atomic():
+        b = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if not b:
+            raise NotFoundError("Monthly work-plan budget not found.")
+        allowed_from = _LEGAL_TRANSITIONS.get(status)
+        if allowed_from is None:
+            raise BadRequest(
+                f"Status '{status}' cannot be set through this path — "
+                "use its dedicated workflow."
+            )
+        if b.status not in allowed_from:
+            raise BadRequest(f"Illegal budget transition: '{b.status}' → '{status}'.")
+        b.status = status
+        now = timezone.now()
+        if field:
+            setattr(b, field, now)
+        if actor_field:
+            setattr(b, actor_field, principal.user_id)
+        b.save()
     return b
 
 

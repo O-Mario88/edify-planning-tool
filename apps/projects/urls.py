@@ -7,6 +7,11 @@ urlpatterns = [
     path("<str:project_id>", views.ProjectDetailView.as_view(), name="detail"),
     path("<str:project_id>/impact", views.ProjectImpactView.as_view(), name="impact"),
     path(
+        "<str:project_id>/eligible-activities",
+        views.ProjectEligibleActivitiesView.as_view(),
+        name="eligible-activities",
+    ),
+    path(
         "<str:project_id>/partners",
         views.ProjectPartnersView.as_view(),
         name="partners",
@@ -20,6 +25,16 @@ urlpatterns = [
         "<str:project_id>/schools",
         views.ProjectSchoolsAssignView.as_view(),
         name="assign-school",
+    ),
+    path(
+        "<str:project_id>/staff",
+        views.ProjectStaffAssignmentsView.as_view(),
+        name="staff-assignments",
+    ),
+    path(
+        "<str:project_id>/staff/<str:staff_id>",
+        views.ProjectStaffAssignmentDetailView.as_view(),
+        name="remove-staff-assignment",
     ),
     path(
         "<str:project_id>/schools/<str:school_id>",

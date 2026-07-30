@@ -15,7 +15,6 @@ from urllib.parse import urlencode
 
 from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
-from apps.partners.services import mark_assignment_scheduled
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
@@ -73,6 +72,48 @@ def _scoped_project_assignments(request, raw_ids):
     )
 
 
+def _common_project_recommendations(assignments, *, principal, executor_type):
+    """Only Activities eligible for every selected project-school pair."""
+    from apps.activity_catalogue.services import recommend_activities
+
+    by_assignment = {}
+    common_ids = None
+    representative = {}
+    for assignment in assignments:
+        result = recommend_activities(
+            school=assignment.school,
+            principal=principal,
+            project=assignment.project,
+            executor_type=executor_type,
+            limit=100,
+        )
+        rows = result["primary"]
+        keyed = {row["catalogueItemId"]: row for row in rows}
+        by_assignment[assignment.id] = keyed
+        representative.update(keyed)
+        common_ids = (
+            set(keyed)
+            if common_ids is None
+            else common_ids.intersection(keyed)
+        )
+    common = [
+        {
+            **representative[item_id],
+            "recommendationReason": (
+                f"Eligible for all {len(assignments)} selected Project School(s)."
+            ),
+        }
+        for item_id in sorted(
+            common_ids or set(),
+            key=lambda item_id: (
+                representative[item_id]["rank"],
+                representative[item_id]["displayName"].casefold(),
+            ),
+        )
+    ]
+    return common, by_assignment
+
+
 @require_page_permission("projects")
 def special_projects_bulk_schedule_view(request):
     """Schedule the same dated visit for selected project-school pairs."""
@@ -91,6 +132,11 @@ def special_projects_bulk_schedule_view(request):
         return HttpResponse("No in-scope project schools were selected.", status=400)
 
     if request.method == "GET":
+        catalogue_items, _ = _common_project_recommendations(
+            assignments,
+            principal=request.user,
+            executor_type="staff",
+        )
         return render(
             request,
             "partials/projects/bulk_schedule_drawer.html",
@@ -99,12 +145,12 @@ def special_projects_bulk_schedule_view(request):
                 "assignment_ids": ",".join(item.id for item in assignments),
                 "interventions": SsaIntervention.choices,
                 "drawer_size": "md",
+                "catalogue_items": catalogue_items,
             },
         )
 
     scheduled_date = request.POST.get("scheduled_date", "").strip()
-    activity_type = request.POST.get("activity_type", "school_visit").strip()
-    focus = request.POST.get("focus_intervention", "").strip()
+    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     if not scheduled_date:
         return HttpResponse(
             '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a delivery date.</div>',
@@ -112,22 +158,34 @@ def special_projects_bulk_schedule_view(request):
         )
 
     try:
+        common, by_assignment = _common_project_recommendations(
+            assignments,
+            principal=request.user,
+            executor_type="staff",
+        )
+        if catalogue_item_id not in {
+            row["catalogueItemId"] for row in common
+        }:
+            raise ValueError(
+                "Select a Catalogue Activity eligible for every selected Project School."
+            )
         with transaction.atomic():
             for assignment in assignments:
+                recommendation = by_assignment[assignment.id][catalogue_item_id]
                 payload = {
                     "schoolId": assignment.school.school_id,
                     "projectId": assignment.project_id,
-                    "activityType": activity_type,
                     "scheduledDate": scheduled_date,
                     "deliveryType": "staff",
-                    "ssaCollectionExpected": activity_type
-                    in {"baseline_ssa_visit", "school_visit_ssa_collection"},
+                    "catalogueItemId": catalogue_item_id,
+                    "requireCatalogue": True,
+                    "focusIntervention": recommendation["targetIntervention"],
+                    "recommendationReason": recommendation[
+                        "recommendationReason"
+                    ],
                     "activityPurposeText": f"Special project support: {assignment.project.name}",
                     "expectedOutcome": "Complete the planned project support and record evidence.",
                 }
-                if focus:
-                    payload["focusIntervention"] = focus
-                    payload["purposeIntervention"] = focus
                 schedule_school_visit(payload, request.user)
         messages.success(
             request, f"Scheduled {len(assignments)} project school activities."
@@ -164,6 +222,11 @@ def special_projects_bulk_partner_view(request):
         deleted_at__isnull=True, active_status=True
     ).order_by("name")
     if request.method == "GET":
+        catalogue_items, _ = _common_project_recommendations(
+            assignments,
+            principal=request.user,
+            executor_type="partner",
+        )
         return render(
             request,
             "partials/projects/bulk_partner_drawer.html",
@@ -174,27 +237,15 @@ def special_projects_bulk_partner_view(request):
                 "interventions": SsaIntervention.choices,
                 "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
                 "drawer_size": "md",
+                "catalogue_items": catalogue_items,
             },
         )
 
     from datetime import date
-    from apps.activities.models import Activity
-    from apps.activities.services import create as create_activity
-
     partner = get_object_or_404(partners, id=request.POST.get("partner_id"))
     scheduled_date = request.POST.get("scheduled_date", "").strip()
-    activity_type = request.POST.get("activity_type", "school_visit").strip()
+    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
-    focus = request.POST.get("focus_intervention", "").strip() or None
-    try:
-        purpose_of_visit = normalise_visit_purpose(
-            purpose_of_visit,
-            for_partner=True,
-            fallback_activity_type=activity_type,
-        )
-    except Exception as exc:
-        return error_fragment(exc, status=400)
-    activity_type = purpose_activity_type(purpose_of_visit, activity_type)
     if not scheduled_date:
         return HttpResponse(
             '<div class="p-3 text-rose-700 bg-rose-50 rounded-lg">Choose a partner delivery date.</div>',
@@ -209,20 +260,42 @@ def special_projects_bulk_partner_view(request):
         )
 
     try:
+        common, by_assignment = _common_project_recommendations(
+            assignments,
+            principal=request.user,
+            executor_type="partner",
+        )
+        if catalogue_item_id not in {
+            row["catalogueItemId"] for row in common
+        }:
+            raise ValueError(
+                "Select a Catalogue Activity eligible for every selected Project School."
+            )
+        from apps.activity_catalogue.services import get_selectable_item
+        from apps.ssa.services import latest_applicable_record
+
+        catalogue_item = get_selectable_item(catalogue_item_id)
+        # The purpose fallback is the catalogue item's workflow kind, so it
+        # can only be normalised once the item is resolved.
+        purpose_of_visit = normalise_visit_purpose(
+            purpose_of_visit,
+            for_partner=True,
+            fallback_activity_type=catalogue_item.workflow_kind,
+        )
         created = 0
         with transaction.atomic():
             for assignment in assignments:
-                duplicate = Activity.objects.filter(
-                    deleted_at__isnull=True,
-                    project_id=assignment.project_id,
+                recommendation = by_assignment[assignment.id][catalogue_item_id]
+                duplicate = PartnerAssignment.objects.filter(
                     school=assignment.school,
-                    assigned_partner_id=partner.id,
-                    planned_date=parsed_date,
-                    activity_type=activity_type,
+                    partner=partner,
+                    project_id=assignment.project_id,
+                    catalogue_item=catalogue_item,
+                    status="pending_scheduling",
                 ).exists()
                 if duplicate:
                     continue
-                pa = PartnerAssignment.objects.create(
+                PartnerAssignment.objects.create(
                     school=assignment.school,
                     partner=partner,
                     assigning_staff_id=(
@@ -230,31 +303,22 @@ def special_projects_bulk_partner_view(request):
                         or request.user.user_id
                         or request.user.id
                     ),
+                    assignment_mode="specific_activity",
+                    catalogue_item=catalogue_item,
+                    project=assignment.project,
+                    source_ssa=latest_applicable_record(assignment.school),
+                    recommendation_reason=recommendation[
+                        "recommendationReason"
+                    ],
+                    catalogue_snapshot=catalogue_item.snapshot(),
                     purpose=f"Special project support: {assignment.project.name}",
                     purpose_of_visit=purpose_of_visit,
-                    focus_intervention=focus,
-                    expected_activity_type=activity_type,
+                    focus_intervention=recommendation["targetIntervention"],
+                    expected_activity_type=catalogue_item.workflow_kind,
                     scheduled_date=parsed_date,
-                    status="partner_scheduled",
+                    status="pending_scheduling",
                     notes=f"Project: {assignment.project.name}",
                 )
-                payload = {
-                    "schoolId": assignment.school.school_id,
-                    "projectId": assignment.project_id,
-                    "activityType": activity_type,
-                    "scheduledDate": scheduled_date,
-                    "deliveryType": "partner",
-                    "assignedPartnerId": partner.id,
-                    "ssaCollectionExpected": activity_type
-                    in {"baseline_ssa_visit", "school_visit_ssa_collection"},
-                    "activityPurposeText": pa.purpose,
-                    "purposeType": purpose_of_visit,
-                    "expectedOutcome": "Partner completes delivery and submits project evidence.",
-                }
-                if focus:
-                    payload["focusIntervention"] = focus
-                    payload["purposeIntervention"] = focus
-                create_activity(payload, principal=request.user)
                 created += 1
         messages.success(
             request, f"Assigned {created} project school activities to {partner.name}."
@@ -514,6 +578,21 @@ def schedule_modal_view(request):
     school = get_scoped_object_or_404(
         School, request.user, Q(id=school_id) | Q(school_id=school_id)
     )
+    project_id = request.GET.get("project_id", "")
+    from apps.activity_catalogue.services import recommend_activities
+
+    catalogue_recommendations = recommend_activities(
+        school=school,
+        principal=request.user,
+        project=project_id or None,
+        executor_type="staff",
+        limit=3,
+    )
+    primary_catalogue_items = catalogue_recommendations["primary"]
+    other_catalogue_items = catalogue_recommendations["otherEligible"]
+    first_catalogue_item = (
+        primary_catalogue_items[0] if primary_catalogue_items else None
+    )
 
     # Resolve focus recommendations
     recommendations = []
@@ -562,8 +641,10 @@ def schedule_modal_view(request):
         ActivityType.SCHOOL_VISIT_SSA_COLLECTION,
         ActivityType.SCHOOL_VISIT,
     }
-    recommended_activity_type = request.GET.get(
-        "recommended_activity_type", ActivityType.SCHOOL_VISIT
+    recommended_activity_type = (
+        first_catalogue_item["workflowKind"]
+        if first_catalogue_item
+        else request.GET.get("recommended_activity_type", ActivityType.SCHOOL_VISIT)
     )
     if recommended_activity_type not in school_activity_types:
         recommended_activity_type = ActivityType.SCHOOL_VISIT
@@ -573,8 +654,10 @@ def schedule_modal_view(request):
         ActivityType.SCHOOL_VISIT,
     }:
         recommended_activity_type = ActivityType.BASELINE_SSA_VISIT
-    recommended_activity_label = dict(ActivityType.choices).get(
-        recommended_activity_type, "School Visit"
+    recommended_activity_label = (
+        first_catalogue_item["displayName"]
+        if first_catalogue_item
+        else dict(ActivityType.choices).get(recommended_activity_type, "School Visit")
     )
     # The chooser is derived from the same enum accepted by the scheduling
     # service.  Do not let a recommendation title drift from the form value:
@@ -592,7 +675,11 @@ def schedule_modal_view(request):
         for value, label in ActivityType.choices
         if value in selectable_activity_types
     ]
-    recommended_focus_intervention = request.GET.get("focus_intervention", "")
+    recommended_focus_intervention = (
+        first_catalogue_item["targetIntervention"]
+        if first_catalogue_item
+        else request.GET.get("focus_intervention", "")
+    )
     recommended_visit_purpose = normalise_visit_purpose(
         None,
         for_partner=False,
@@ -611,9 +698,13 @@ def schedule_modal_view(request):
         "recommended_focus_intervention": recommended_focus_intervention,
         "staff_visit_purposes": STAFF_VISIT_PURPOSES,
         "recommended_visit_purpose": recommended_visit_purpose,
+        "catalogue_recommendations": catalogue_recommendations,
+        "primary_catalogue_items": primary_catalogue_items,
+        "other_catalogue_items": other_catalogue_items,
+        "selected_catalogue_item": first_catalogue_item,
         # Optional project context — stamps the scheduled activity so it flows
         # into the Special Projects dashboard / analytics / My Plan.
-        "project_id": request.GET.get("project_id", ""),
+        "project_id": project_id,
     }
     return render(request, "partials/planning/schedule_drawer.html", context)
 
@@ -645,6 +736,16 @@ def schedule_action_view(request):
     delivery_type = request.POST.get("delivery_type", "staff")
     partner_id = request.POST.get("assigned_partner_id", "").strip()
     project_id = request.POST.get("project_id", "").strip()
+    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
+    recommendation_reason = request.POST.get("recommendation_reason", "").strip()
+    override_reason = request.POST.get("override_reason", "").strip()
+    source_activity_id = request.POST.get("source_activity_id", "").strip() or None
+    source_activity_id = request.POST.get("source_activity_id", "").strip()
+    if request.POST.get("require_catalogue") == "yes" and not catalogue_item_id:
+        return error_fragment(
+            ValueError("Select an approved Activity Catalogue item."),
+            status=400,
+        )
 
     from datetime import date
 
@@ -682,7 +783,13 @@ def schedule_action_view(request):
         "expectedOutcome": expected_outcome,
         "deliveryType": delivery_type,
         "ssaCollectionExpected": is_ssa_expected,
+        "catalogueItemId": catalogue_item_id,
+        "requireCatalogue": True,
+        "recommendationReason": recommendation_reason,
+        "overrideReason": override_reason,
     }
+    if source_activity_id:
+        payload["sourceActivityId"] = source_activity_id
 
     if scheduled_date:
         try:
@@ -759,6 +866,28 @@ def assign_partner_modal_view(request):
     partners = Partner.objects.filter(
         deleted_at__isnull=True, active_status=True
     ).order_by("name")
+    project_id = request.GET.get("project_id", "")
+    partner_catalogue_recommendations = None
+    if school:
+        from apps.activity_catalogue.services import recommend_activities
+
+        partner_catalogue_recommendations = recommend_activities(
+            school=school,
+            principal=request.user,
+            project=project_id or None,
+            executor_type="partner",
+            limit=3,
+        )
+    elif cluster:
+        from apps.activity_catalogue.services import recommend_cluster_activities
+
+        partner_catalogue_recommendations = recommend_cluster_activities(
+            cluster=cluster,
+            principal=request.user,
+            project=project_id or None,
+            executor_type="partner",
+            limit=3,
+        )
 
     context = {
         "school": school,
@@ -768,9 +897,20 @@ def assign_partner_modal_view(request):
         "drawer_size": "md",
         "drawer_type": "center",
         # Optional project context — stamps the partner activity for the loop.
-        "project_id": request.GET.get("project_id", ""),
+        "project_id": project_id,
         "recommended_focus_intervention": request.GET.get("focus_intervention", ""),
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
+        "catalogue_recommendations": partner_catalogue_recommendations,
+        "primary_catalogue_items": (
+            partner_catalogue_recommendations["primary"]
+            if partner_catalogue_recommendations
+            else []
+        ),
+        "other_catalogue_items": (
+            partner_catalogue_recommendations["otherEligible"]
+            if partner_catalogue_recommendations
+            else []
+        ),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
 
@@ -794,6 +934,10 @@ def assign_partner_action_view(request):
     purpose = request.POST.get("purpose", "").strip()
     notes = request.POST.get("notes", "").strip() or None
     project_id = request.POST.get("project_id", "").strip() or None
+    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
+    recommendation_reason = request.POST.get("recommendation_reason", "").strip()
+    override_reason = request.POST.get("override_reason", "").strip()
+    source_activity_id = request.POST.get("source_activity_id", "").strip() or None
 
     from datetime import date as _date
 
@@ -806,14 +950,142 @@ def assign_partner_action_view(request):
             pass
     if project_id and not expected_date:
         return HttpResponse(
-            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Choose a delivery date so the partner activity can be costed and linked to this project.</div>',
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Choose an assignment due date for this special-project handoff. Final cost is calculated only after the Partner schedules.</div>',
             status=400,
         )
 
     try:
         partner = get_object_or_404(Partner, id=partner_id)
+        catalogue_item = None
+        source_ssa = None
+        source_activity = None
+        if school_id or cluster_id:
+            if not catalogue_item_id:
+                raise ValueError("Select an approved Activity Catalogue item.")
+            from apps.activity_catalogue.services import (
+                get_selectable_item,
+                resolve_activity_intervention,
+                validate_context,
+            )
+            from apps.projects.models import Project
+            from apps.ssa.services import latest_applicable_record
 
-        from apps.activities.services import create as create_activity
+            catalogue_item = get_selectable_item(catalogue_item_id)
+            project = (
+                Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+                if project_id
+                else None
+            )
+            school_for_validation = (
+                get_scoped_object_or_404(
+                    School, request.user, Q(id=school_id) | Q(school_id=school_id)
+                )
+                if school_id
+                else None
+            )
+            cluster_for_validation = (
+                get_scoped_object_or_404(
+                    Cluster, request.user, id=cluster_id
+                )
+                if cluster_id
+                else None
+            )
+            validate_context(
+                catalogue_item,
+                school=school_for_validation,
+                cluster=cluster_for_validation,
+                project=project,
+                executor_type="partner",
+            )
+            source_ssa = (
+                latest_applicable_record(school_for_validation)
+                if school_for_validation
+                else None
+            )
+            if source_activity_id:
+                from apps.activities.models import Activity
+
+                source_activity = Activity.objects.filter(
+                    id=source_activity_id,
+                    school=school_for_validation,
+                    cluster=cluster_for_validation,
+                    deleted_at__isnull=True,
+                ).first()
+                if source_activity is None:
+                    raise ValueError(
+                        "Choose a valid prior Activity for this School to follow up."
+                    )
+            if (
+                catalogue_item.requires_current_ssa
+                and school_for_validation
+                and source_ssa is None
+            ):
+                raise ValueError(
+                    "Complete the School SSA first. Intervention-specific support "
+                    "cannot be assigned without an applicable SSA."
+                )
+            focus_intervention = resolve_activity_intervention(
+                catalogue_item,
+                requested_intervention=focus_intervention,
+                source_activity=source_activity,
+            )
+            from apps.activity_catalogue.models import MappingMode
+            from apps.activity_catalogue.services import (
+                recommend_activities,
+                recommend_cluster_activities,
+            )
+
+            recommendation_result = (
+                recommend_activities(
+                    school=school_for_validation,
+                    principal=request.user,
+                    project=project,
+                    executor_type="partner",
+                    limit=3,
+                )
+                if school_for_validation
+                else recommend_cluster_activities(
+                    cluster=cluster_for_validation,
+                    principal=request.user,
+                    project=project,
+                    executor_type="partner",
+                    limit=3,
+                )
+            )
+            rows = [
+                *recommendation_result["primary"],
+                *recommendation_result["otherEligible"],
+            ]
+            match = next(
+                (
+                    row
+                    for row in rows
+                    if row["catalogueItemId"] == catalogue_item.id
+                ),
+                None,
+            )
+            primary_ids = {
+                row["catalogueItemId"]
+                for row in recommendation_result["primary"]
+            }
+            dynamic = catalogue_item.intervention_mappings.filter(
+                active=True,
+                mapping_mode=MappingMode.INHERIT_FROM_SOURCE_ACTIVITY,
+            ).exists()
+            if (
+                catalogue_item.id not in primary_ids
+                and not dynamic
+                and not override_reason
+            ):
+                raise ValueError(
+                    "Record an authorized reason for selecting a non-primary "
+                    "Partner Activity."
+                )
+            recommendation_reason = (
+                match["recommendationReason"]
+                if match
+                else "Authorized alternative Catalogue Activity."
+            )
 
         # PartnerAssignment and Activity.monitor fields use the StaffProfile
         # CUID when one exists.  Falling back to the User id keeps Admins
@@ -822,44 +1094,6 @@ def assign_partner_action_view(request):
         monitored_by_staff_id = (
             request.user.staff_profile_id or request.user.user_id or request.user.id
         )
-
-        def _finalize(pa, *, school=None, cluster=None, act_type, extra_fields=None):
-            """Convert a freshly-created PartnerAssignment into a properly
-            validated + costed Activity via activities.services.create() —
-            the SAME funnel every other scheduling path goes through
-            (SSA-justification check, structured-purpose validation, the
-            assert_schedulable() cost-catalogue gate), instead of writing
-            the Activity via raw ORM. Only runs once a target date is
-            already known — partner_schedule() (used by Core Schools) is
-            what later lazily creates the Activity for a still-unscheduled
-            PartnerAssignment once a date IS picked (e.g. the partner's own
-            self-schedule endpoint), so no un-costed activity is ever
-            persisted either way."""
-            if not expected_date:
-                return
-            data = {
-                "activityType": act_type,
-                "deliveryType": "partner",
-                "assignedPartnerId": partner.id,
-                "focusIntervention": focus_intervention,
-                "activityPurposeText": pa.purpose,
-                "scheduledDate": expected_date_raw,
-            }
-            if school is not None:
-                data["schoolId"] = school.school_id
-            if cluster is not None:
-                data["clusterId"] = cluster.id
-            if extra_fields:
-                data.update(extra_fields)
-            create_activity(data, principal=request.user)
-            # activities.services.create() records the monitor using the
-            # canonical StaffProfile/User owner id used by My Plan.  Do not
-            # overwrite it with this view's raw User id: that creates a
-            # second identity scheme and can hide partner work from its
-            # assigned monitor.
-            # Keep the PartnerAssignment in sync with the Activity it now
-            # owns instead of leaving it stuck at pending_scheduling.
-            mark_assignment_scheduled(pa, scheduled_date=expected_date)
 
         # Idempotency guard: a double-click or a retried htmx POST must not
         # create a second PartnerAssignment (and, worse, a second costed
@@ -891,8 +1125,8 @@ def assign_partner_action_view(request):
                 for_partner=True,
                 fallback_activity_type=activity_type,
             )
-            assignment_purpose = purpose or f"Assigned for {activity_type}"
-            normalized_type = purpose_activity_type(purpose_of_visit, activity_type)
+            assignment_purpose = purpose or catalogue_item.display_name
+            normalized_type = catalogue_item.workflow_kind
             dup = _recent_duplicate(school=school, act_type=normalized_type)
             if dup:
                 target = "/projects/my-plan" if project_id else None
@@ -904,10 +1138,18 @@ def assign_partner_action_view(request):
                 response["HX-Trigger"] = "close-drawer"
                 return response
             with transaction.atomic():
-                pa = PartnerAssignment.objects.create(
+                PartnerAssignment.objects.create(
                     school=school,
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
+                    assignment_mode="specific_activity",
+                    catalogue_item=catalogue_item,
+                    source_ssa=source_ssa,
+                    source_activity=source_activity,
+                    project_id=project_id,
+                    recommendation_reason=recommendation_reason,
+                    override_reason=override_reason,
+                    catalogue_snapshot=catalogue_item.snapshot(),
                     purpose=assignment_purpose,
                     purpose_of_visit=purpose_of_visit,
                     focus_intervention=focus_intervention,
@@ -916,31 +1158,11 @@ def assign_partner_action_view(request):
                     notes=notes,
                     status="pending_scheduling",
                 )
-                _finalize(
-                    pa,
-                    school=school,
-                    act_type=normalized_type,
-                    extra_fields={
-                        **({"projectId": project_id} if project_id else {}),
-                        "purposeType": purpose_of_visit,
-                    },
-                )
-                # Update status
-                school.current_fy_ssa_status = "partner_assigned"
-                school.save(
-                    update_fields=[
-                        "current_fy_ssa_status",
-                        "planning_readiness",
-                        "updated_at",
-                    ]
-                )
 
         if cluster_id:
             cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
-            assignment_purpose = purpose or f"Cluster assignment: {cluster.name}"
-            act_type = (
-                "cluster_meeting" if activity_type == "meeting" else "cluster_training"
-            )
+            assignment_purpose = purpose or catalogue_item.display_name
+            act_type = catalogue_item.workflow_kind
             dup = _recent_duplicate(cluster=cluster, act_type=act_type)
             if dup:
                 response = HttpResponse("<script>window.location.reload();</script>")
@@ -948,10 +1170,17 @@ def assign_partner_action_view(request):
                 return response
             with transaction.atomic():
                 # Create PartnerAssignment for cluster
-                pa = PartnerAssignment.objects.create(
+                PartnerAssignment.objects.create(
                     cluster=cluster,
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
+                    assignment_mode="specific_activity",
+                    catalogue_item=catalogue_item,
+                    source_activity=source_activity,
+                    project_id=project_id,
+                    recommendation_reason=recommendation_reason,
+                    override_reason=override_reason,
+                    catalogue_snapshot=catalogue_item.snapshot(),
                     purpose=assignment_purpose,
                     focus_intervention=focus_intervention,
                     expected_activity_type=act_type,
@@ -959,32 +1188,6 @@ def assign_partner_action_view(request):
                     notes=notes,
                     status="pending_scheduling",
                 )
-                _finalize(pa, cluster=cluster, act_type=act_type)
-
-                # Assign all schools in the cluster
-                for school in School.objects.filter(
-                    cluster_id=cluster.id, deleted_at__isnull=True
-                ):
-                    PartnerAssignment.objects.create(
-                        school=school,
-                        partner=partner,
-                        assigning_staff_id=monitored_by_staff_id,
-                        purpose=assignment_purpose,
-                        purpose_of_visit=purpose_of_visit,
-                        focus_intervention=focus_intervention,
-                        expected_activity_type=activity_type,
-                        scheduled_date=expected_date,
-                        notes=notes,
-                        status="pending_scheduling",
-                    )
-                    school.current_fy_ssa_status = "partner_assigned"
-                    school.save(
-                        update_fields=[
-                            "current_fy_ssa_status",
-                            "planning_readiness",
-                            "updated_at",
-                        ]
-                    )
 
         # Return refresh trigger and close drawer
         response = HttpResponse(
@@ -1138,28 +1341,9 @@ def bulk_action_view(request):
                 status=400,
             )
         partner = get_object_or_404(Partner, id=partner_id)
-        raw_bulk_purpose = request.POST.get("purpose_of_visit", "").strip()
-        try:
-            bulk_purpose_of_visit = normalise_visit_purpose(
-                raw_bulk_purpose,
-                for_partner=True,
-                fallback_activity_type="school_visit",
-            )
-        except Exception as exc:
-            return error_fragment(exc, status=400)
-        # Preserve the legacy bulk submission contract until this compact
-        # toolbar receives its own purpose picker. New callers that do send a
-        # purpose receive its exact operational type; older callers stay on
-        # School Visit while still gaining a partner-safe purpose record.
-        bulk_activity_type = (
-            purpose_activity_type(bulk_purpose_of_visit, "school_visit")
-            if raw_bulk_purpose
-            else "school_visit"
-        )
-
         from datetime import date as _date
-
-        from apps.activities.services import create as create_activity
+        from apps.activity_catalogue.services import recommend_activities
+        from apps.ssa.services import latest_applicable_record
 
         bulk_date_raw = request.POST.get("scheduled_date", "").strip()
         bulk_date = None
@@ -1174,70 +1358,60 @@ def bulk_action_view(request):
         )
         dedup_window = timezone.timedelta(seconds=15)
 
-        for s in schools:
-            if PartnerAssignment.objects.filter(
-                school=s,
-                partner=partner,
-                assigning_staff_id=monitored_by_staff_id,
-                expected_activity_type=bulk_activity_type,
-                created_at__gte=timezone.now() - dedup_window,
-            ).exists():
-                continue
+        try:
             with transaction.atomic():
-                pa = PartnerAssignment.objects.create(
-                    school=s,
-                    partner=partner,
-                    assigning_staff_id=monitored_by_staff_id,
-                    purpose="Bulk Partner Assignment",
-                    purpose_of_visit=bulk_purpose_of_visit,
-                    expected_activity_type=bulk_activity_type,
-                    scheduled_date=bulk_date,
-                    notes="Bulk Partner Assignment",
-                    status="pending_scheduling",
-                )
-                # Same funnel as the single-item assign action
-                # (activities.services.create — the SSA-justification,
-                # structured-purpose, and assert_schedulable cost-catalogue
-                # gates every other creation path goes through): create the
-                # Activity immediately, atomically, with a real cost
-                # snapshot, when a date is already known, so this handoff is
-                # visible on both the partner's My Plan feed and the
-                # assigning staff's Partner Monitoring bucket. No bulk date
-                # collected yet? Correctly defer Activity creation to
-                # schedule-time — apps.activities.services.partner_schedule
-                # (used by Core Schools) is what lazily creates it off this
-                # same PartnerAssignment once a date IS picked — instead of
-                # ever persisting an un-costed activity.
-                if bulk_date:
-                    create_activity(
-                        {
-                            "activityType": bulk_activity_type,
-                            "schoolId": s.school_id,
-                            "deliveryType": "partner",
-                            "assignedPartnerId": partner.id,
-                            "activityPurposeText": pa.purpose,
-                            "purposeType": bulk_purpose_of_visit,
-                            "scheduledDate": bulk_date_raw,
-                        },
+                for s in schools:
+                    result = recommend_activities(
+                        school=s,
                         principal=request.user,
+                        executor_type="partner",
+                        limit=1,
                     )
-                    mark_assignment_scheduled(pa, scheduled_date=bulk_date)
-                s.current_fy_ssa_status = "partner_assigned"
-                s.save(
-                    update_fields=[
-                        "current_fy_ssa_status",
-                        "planning_readiness",
-                        "updated_at",
-                    ]
-                )
+                    if not result["primary"]:
+                        raise ValueError(
+                            f"No Partner-deliverable Catalogue Activity is eligible for {s.name}."
+                        )
+                    recommendation = result["primary"][0]
+                    if PartnerAssignment.objects.filter(
+                        school=s,
+                        partner=partner,
+                        assigning_staff_id=monitored_by_staff_id,
+                        catalogue_item_id=recommendation["catalogueItemId"],
+                        created_at__gte=timezone.now() - dedup_window,
+                    ).exists():
+                        continue
+                    from apps.activity_catalogue.models import ActivityCatalogueItem
 
-        return HttpResponse("<script>window.location.reload();</script>")
+                    item = ActivityCatalogueItem.objects.get(
+                        id=recommendation["catalogueItemId"]
+                    )
+                    PartnerAssignment.objects.create(
+                        school=s,
+                        partner=partner,
+                        assigning_staff_id=monitored_by_staff_id,
+                        assignment_mode="specific_activity",
+                        catalogue_item=item,
+                        source_ssa=latest_applicable_record(s),
+                        recommendation_reason=recommendation[
+                            "recommendationReason"
+                        ],
+                        catalogue_snapshot=item.snapshot(),
+                        purpose=item.display_name,
+                        purpose_of_visit="ssa_support",
+                        focus_intervention=recommendation["targetIntervention"],
+                        expected_activity_type=item.workflow_kind,
+                        scheduled_date=bulk_date,
+                        notes=(
+                            "Bulk Partner Assignment · final schedule and cost pending"
+                        ),
+                        status="pending_scheduling",
+                    )
+            return HttpResponse("<script>window.location.reload();</script>")
+        except Exception as exc:
+            return error_fragment(exc, status=400)
 
     elif action == "schedule":
-        # Bulk school visits use the same direct scheduling path as an
-        # individual visit.  This deliberately avoids daily-target, grouping,
-        # and reason rules while still creating a real cost snapshot and
-        # budget line for every selected school immediately.
+        # Each School uses its own top eligible Catalogue recommendation.
         if not RolePermissionService.can_schedule_activity(request.user):
             return HttpResponseForbidden(
                 "Access Denied: You do not have permission to schedule activities."
@@ -1259,22 +1433,39 @@ def bulk_action_view(request):
                 status=400,
             )
 
+        from apps.activity_catalogue.services import recommend_activities
         from apps.activities.services import create as create_activity
         from apps.core.exceptions import BadRequest
 
         try:
             with transaction.atomic():
                 for school in schools:
+                    result = recommend_activities(
+                        school=school,
+                        principal=request.user,
+                        executor_type="staff",
+                        limit=1,
+                    )
+                    if not result["primary"]:
+                        raise BadRequest(
+                            f"No staff-deliverable Catalogue Activity is eligible for {school.name}."
+                        )
+                    recommendation = result["primary"][0]
                     create_activity(
                         {
-                            "activityType": "school_visit",
+                            "catalogueItemId": recommendation["catalogueItemId"],
+                            "requireCatalogue": True,
                             "schoolId": school.school_id,
                             "scheduledDate": scheduled_date_raw,
                             "activityPurposeText": request.POST.get(
                                 "activity_goal", "Bulk-scheduled visit"
                             ),
-                            "focusIntervention": request.POST.get("focus_intervention")
-                            or None,
+                            "focusIntervention": recommendation[
+                                "targetIntervention"
+                            ],
+                            "recommendationReason": recommendation[
+                                "recommendationReason"
+                            ],
                             "deliveryType": "staff",
                         },
                         principal=request.user,

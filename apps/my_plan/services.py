@@ -1011,12 +1011,14 @@ def get_frontend_context(principal, query: dict) -> dict:
                 returned_by = "Project Leader"
 
         # Budget Total — always the real scheduled budget, never invented rates.
-        # est_cost_cents stores whole UGX (despite the name; the costing engine
-        # writes cost.amount straight into it), so no /100. Zero means the
-        # activity genuinely has no budget lines yet.
-        budget_total = a.est_cost_cents or sum(
+        # The canonical figure is the sum of the persisted schedule cost lines;
+        # est_cost_cents (whole UGX despite the name — the costing engine
+        # writes cost.amount straight into it, so no /100) is only a fallback
+        # for activities that have no lines. Preferring the estimate first let
+        # a stale est_cost_cents mask the authoritative line total.
+        budget_total = sum(
             line.amount or 0 for line in a.schedule_cost_lines.all()
-        )
+        ) or (a.est_cost_cents or 0)
 
         # Construct final dict
         activity_data = {

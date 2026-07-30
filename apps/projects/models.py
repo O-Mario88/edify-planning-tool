@@ -31,6 +31,12 @@ class ProjectStatus(models.TextChoices):
     CLOSED = "closed", "Closed"
 
 
+class ProjectSchoolFocus(models.TextChoices):
+    ALL = "all", "Client and Core Schools"
+    CLIENT = "client", "Client Schools"
+    CORE = "core", "Core Schools"
+
+
 # Statuses that still accept new school assignments and new planned work.
 OPEN_PROJECT_STATUSES = {
     ProjectStatus.PROPOSED,
@@ -77,6 +83,11 @@ class Project(SoftDeleteModel):
     measurement_start_fy = models.CharField(max_length=16, null=True, blank=True)
     measurement_end_fy = models.CharField(max_length=16, null=True, blank=True)
     manager_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    school_focus = models.CharField(
+        max_length=16,
+        choices=ProjectSchoolFocus.choices,
+        default=ProjectSchoolFocus.ALL,
+    )
 
     class Meta:
         db_table = "project"
@@ -134,6 +145,44 @@ class ProjectSchoolAssignment(TimeStampedModel):
         ]
 
 
+class ProjectStaffAssignment(TimeStampedModel):
+    """A Project assigned as an operational priority to one staff member."""
+
+    id = CuidField()
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="staff_assignments"
+    )
+    staff = models.ForeignKey(
+        "accounts.StaffProfile",
+        on_delete=models.PROTECT,
+        related_name="project_priority_assignments",
+        db_column="staff_id",
+    )
+    fy = models.CharField(max_length=16)
+    responsibility = models.CharField(
+        max_length=24,
+        choices=[
+            ("execute", "Execute"),
+            ("supervise", "Supervise"),
+        ],
+        default="execute",
+    )
+    is_active = models.BooleanField(default=True)
+    assigned_by = models.CharField(max_length=30, null=True, blank=True)
+    assigned_by_role = models.CharField(max_length=64, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "project_staff_assignment"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "staff", "fy"], name="uniq_project_staff_fy"
+            )
+        ]
+
+
 class ProjectPartnerAssignment(TimeStampedModel):
     id = CuidField()
     project = models.ForeignKey(
@@ -167,10 +216,12 @@ class ProjectImpactSnapshot(TimeStampedModel):
 __all__ = [
     "ProjectCategory",
     "ProjectStatus",
+    "ProjectSchoolFocus",
     "OPEN_PROJECT_STATUSES",
     "LIVE_PROJECT_STATUSES",
     "Project",
     "ProjectSchoolAssignment",
+    "ProjectStaffAssignment",
     "ProjectPartnerAssignment",
     "ProjectImpactSnapshot",
 ]

@@ -68,7 +68,37 @@ def report() -> dict:
     data["evidenceStorage"] = _evidence_storage()
     data["documentationCoverage"] = _documentation_coverage()
     data["referentialIntegrity"] = _referential_integrity()
+    data["activityCatalogue"] = _activity_catalogue()
+    data["strategicPriorities"] = _strategic_priorities()
+    data["projectPriorities"] = _project_priorities()
     return data
+
+
+def _activity_catalogue() -> dict:
+    try:
+        from apps.activity_catalogue.health import catalogue_health
+
+        return catalogue_health()
+    except Exception:  # noqa: BLE001 — health must remain inspectable
+        return {"healthy": False, "checks": []}
+
+
+def _strategic_priorities() -> dict:
+    try:
+        from apps.hr.priority_health import priority_health
+
+        return priority_health()
+    except Exception:  # noqa: BLE001 — health must remain inspectable
+        return {"healthy": False, "checks": []}
+
+
+def _project_priorities() -> dict:
+    try:
+        from apps.projects.health import project_priority_health
+
+        return project_priority_health()
+    except Exception:  # noqa: BLE001 — health must remain inspectable
+        return {"healthy": False, "checks": []}
 
 
 def _platform() -> dict:
@@ -851,22 +881,32 @@ def _workflow_issues() -> dict:
         .count()
     )
 
-    # Client support is a fixed annual entitlement: one school visit and one
-    # school-improvement training per school/FY.  The scheduling service now
-    # prevents a new duplicate, but historic/imported rows can bypass that
-    # service.  Keep a health detector so data repair is explicit rather than
-    # quietly distorting cost, budget and support-coverage analytics.
-    client_duplicate_active_entitlements = (
-        active.filter(
-            school__school_type="client",
-            activity_type__in=["school_visit", "school_improvement_training"],
+    # Client support is a fixed annual entitlement: one visit and one training
+    # per school/FY.  The scheduling service now prevents a new duplicate, but
+    # historic/imported rows can bypass that service.  Keep a health detector
+    # so data repair is explicit rather than quietly distorting cost, budget
+    # and support-coverage analytics.  What "counts" is the same canonical
+    # filter the guard uses — catalogue-governed flags with the legacy
+    # activity_type fallback — so a duplicate the guard would refuse is
+    # exactly what this detector surfaces.
+    from apps.activities.services import client_entitlement_consumers_q
+
+    def _duplicate_entitlement_slots(pool: str) -> int:
+        return (
+            active.filter(
+                client_entitlement_consumers_q(pool),
+                school__school_type="client",
+            )
+            .exclude(status__in=["cancelled", "rejected", "deferred", "not_planned"])
+            .values("school_id", "fy")
+            .annotate(_n=Count("id"))
+            .filter(_n__gt=1)
+            .count()
         )
-        .exclude(status__in=["cancelled", "rejected", "deferred", "not_planned"])
-        .values("school_id", "fy", "activity_type")
-        .annotate(_n=Count("id"))
-        .filter(_n__gt=1)
-        .count()
-    )
+
+    client_duplicate_active_entitlements = _duplicate_entitlement_slots(
+        "visit"
+    ) + _duplicate_entitlement_slots("training")
 
     blockers = []
     if unclustered_schools:

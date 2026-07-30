@@ -8,7 +8,7 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.core.enums import SsaIntervention
 from apps.core.rbac import EdifyRole
-from apps.geography.models import District, Region
+from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord
 
@@ -19,6 +19,10 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         self.district = District.objects.create(
             name="Manual Entry District",
             region=self.region,
+        )
+        self.sub_county = SubCounty.objects.create(
+            name="Manual Entry Sub-county",
+            district=self.district,
         )
         self.ia = User.objects.create_user(
             email="ia-manual-entry@example.org",
@@ -34,6 +38,11 @@ class ManualSchoolAndSsaEntryTest(TestCase):
             active_role=EdifyRole.CCEO.value,
             password="test-password",
         )
+        # Manual school entry now requires naming an active CCEO/Program
+        # Lead as the school's account owner.
+        from apps.accounts.models import StaffProfile
+
+        self.cceo_staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
 
     def _school_payload(self, **overrides):
         payload = {
@@ -42,6 +51,7 @@ class ManualSchoolAndSsaEntryTest(TestCase):
             "district_id": self.district.id,
             "school_type": "client",
             "enrollment": "275",
+            "account_owner_id": self.cceo_staff.id,
         }
         payload.update(overrides)
         return payload
@@ -50,7 +60,6 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         payload = {
             "school_id": school_id,
             "date_of_ssa": timezone.localdate().isoformat(),
-            "new_enrollment": "280",
         }
         payload.update(
             {
@@ -77,6 +86,30 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         self.assertEqual(school.enrollment, 275)
         self.assertTrue(school.created_by_ia)
         self.assertFalse(School.objects.filter(school_id="S-1042").exists())
+
+    def test_manual_school_can_save_reference_sub_county(self):
+        self.client.force_login(self.ia)
+
+        response = self.client.post(
+            "/schools/add-school",
+            self._school_payload(sub_county_id=self.sub_county.id),
+        )
+
+        self.assertRedirects(response, "/schools", fetch_redirect_response=False)
+        school = School.objects.get(school_id="1042")
+        self.assertEqual(school.sub_county, self.sub_county)
+
+    def test_sub_county_options_are_loaded_for_selected_district(self):
+        self.client.force_login(self.ia)
+
+        response = self.client.get(
+            "/schools/sub-counties",
+            {"district_id": self.district.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.sub_county.name)
+        self.assertContains(response, f'value="{self.sub_county.id}"')
 
     def test_save_school_and_add_ssa_prefills_new_school(self):
         self.client.force_login(self.ia)
@@ -108,7 +141,7 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         self.assertEqual(record.scores.count(), 8)
         self.assertEqual(record.collector_type, "ia")
         self.assertEqual(record.verification_status, "confirmed")
-        self.assertEqual(record.new_enrollment, 280)
+        self.assertIsNone(record.new_enrollment)
         self.assertEqual(record.average_score, 4.5)
         school.refresh_from_db()
         self.assertEqual(school.current_fy_ssa_status, "done")
@@ -126,8 +159,20 @@ class ManualSchoolAndSsaEntryTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'value="SSA-PREFILL"')
+        self.assertNotContains(response, 'name="new_enrollment"')
+        self.assertContains(response, "SSA Enrolment score out of 10")
         for code, _label in SsaIntervention.choices:
             self.assertContains(response, f'name="score_{code}"')
+
+    def test_ssa_template_uses_enrolment_only_as_a_score(self):
+        self.client.force_login(self.ia)
+
+        response = self.client.get("/ssa/upload/template")
+
+        self.assertEqual(response.status_code, 200)
+        header = response.content.decode("utf-8").splitlines()[0]
+        self.assertNotIn("New Enrolment", header)
+        self.assertIn("Enrolment (0-10)", header)
 
     def test_manual_ssa_rejects_duplicate_assessment_date(self):
         school = School.objects.create(

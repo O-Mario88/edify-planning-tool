@@ -88,6 +88,50 @@ class PartnerAssignment(TimeStampedModel):
         Partner, on_delete=models.CASCADE, related_name="school_assignments"
     )
     assigning_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    assignment_mode = models.CharField(
+        max_length=32,
+        choices=[
+            ("specific_activity", "Specific Activity"),
+            ("intervention_choice", "Intervention-based choice"),
+        ],
+        default="specific_activity",
+    )
+    catalogue_item = models.ForeignKey(
+        "activity_catalogue.ActivityCatalogueItem",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="partner_assignments",
+    )
+    allowed_catalogue_items = models.ManyToManyField(
+        "activity_catalogue.ActivityCatalogueItem",
+        blank=True,
+        related_name="partner_choice_assignments",
+    )
+    source_ssa = models.ForeignKey(
+        "ssa.SsaRecord",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="partner_assignments",
+    )
+    source_activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="derived_partner_assignments",
+    )
+    project = models.ForeignKey(
+        "projects.Project",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="activity_partner_assignments",
+    )
+    recommendation_reason = models.TextField(blank=True)
+    override_reason = models.TextField(blank=True)
+    catalogue_snapshot = models.JSONField(default=dict, blank=True)
     purpose = models.TextField(null=True, blank=True)
     focus_intervention = models.CharField(max_length=64, null=True, blank=True)
     # Plain-language reason selected when staff hand the work to a partner.

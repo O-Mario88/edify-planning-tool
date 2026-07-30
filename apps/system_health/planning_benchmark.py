@@ -252,7 +252,13 @@ def unsanctioned_required_inputs() -> list[dict]:
         except OSError:
             continue
         for tag in tag_pattern.findall(text):
-            if not re.search(r"\brequired\b", tag):
+            # A dynamically-bound requirement (x-bind:required="…" /
+            # :required="…") is optional at rest — the form only demands it
+            # in a specific state (e.g. an override reason when the user
+            # rejects the recommendation). Only a static `required` attribute
+            # is the platform unconditionally asking a person for input.
+            static_tag = re.sub(r'(?:x-bind:|:)required\s*=\s*"[^"]*"', "", tag)
+            if not re.search(r"\brequired\b", static_tag):
                 continue
             if 'type="hidden"' in tag:
                 # Hidden and required is context the page supplies, not a

@@ -20,6 +20,7 @@ Queue sources (all real, no fabrication):
 from __future__ import annotations
 
 from django.db import transaction
+from django.db.models import F, Q, Sum
 from django.utils import timezone
 
 from apps.core.donut import build_rings
@@ -53,6 +54,20 @@ M_RETURNED = {
     "returned_by_rvp",
     "returned_by_accountant",
 }
+
+# AdvanceRequest ledger buckets for the headline money totals. Each advance
+# mirrors exactly one ActivityScheduleCostLine (uniq_advance_per_budget_line),
+# so summing over these buckets counts every planned shilling exactly once —
+# unlike the FundRequest/WeeklyFundRequest snapshots, which each re-snapshot
+# the same cost lines per channel (see fy_totals_all_fund_types).
+A_PRE_APPROVAL = ("draft_from_schedule", "pending_responsible_confirmation")
+A_APPROVED_UNDISBURSED = (
+    "confirmed_for_advance",
+    "submitted_to_accountant",
+    # Committed money the staffer fronts personally; it still leaves the
+    # account at reimbursement, so it is approved-but-not-yet-disbursed.
+    "self_funded_pending_reimbursement",
+)
 
 STATUS_OPTIONS = [
     "Pending Approval",
@@ -278,14 +293,30 @@ def fy_totals_all_fund_types(fy) -> dict:
     functions the queue uses (`_monthly_status`, `_weekly_status`), so a stage
     means the same thing here as it does on the Disbursement Dashboard.
 
+    The MONEY totals come from the AdvanceRequest ledger rather than from
+    summing the request snapshots. A monthly FundRequest and a
+    WeeklyFundRequest are both snapshots of the SAME ActivityScheduleCostLines,
+    so adding their total_amounts counted every cost line once per channel that
+    requested it — the same shilling appeared as double the money the moment a
+    week's work also sat on a monthly plan. The ledger is 1:1 with cost lines
+    and channel-agnostic, so each shilling appears exactly once. The COUNTS
+    stay request-based: they feed "N requests" helpers that describe the queue,
+    which really does hold one record per channel.
+
     Partner payables and reimbursements are deliberately excluded: both are
     "due now" queues with no financial year of their own (see
     `_partner_items`), and folding a month-agnostic backlog into an FY total
-    would make the figure mean neither one thing nor the other.
+    would make the figure mean neither one thing nor the other. (The ledger
+    matches: partner-delivered activities never mirror into AdvanceRequest.)
 
     Returns raw integers; callers format them.
     """
-    from .models import FundRequest, WeeklyFundRequest
+    from .models import (
+        MONEY_MOVED_ADVANCE_STATUSES,
+        AdvanceRequest,
+        FundRequest,
+        WeeklyFundRequest,
+    )
 
     monthly = list(FundRequest.objects.filter(period="monthly", fy=fy))
     weekly = list(
@@ -295,48 +326,40 @@ def fy_totals_all_fund_types(fy) -> dict:
     )
     weekly_buckets = weekly_status_buckets(weekly)
 
-    staged: list[tuple[str, int, int, int]] = [
-        (
-            _monthly_status(f),
-            f.total_amount or 0,
-            f.disbursed_amount or 0,
-            f.accounted_amount or 0,
-        )
-        for f in monthly
-    ] + [
-        (
-            weekly_buckets[w.id],
-            w.total_amount or 0,
-            w.disbursed_amount or 0,
-            w.accounted_amount or 0,
-        )
-        for w in weekly
+    staged: list[str] = [_monthly_status(f) for f in monthly] + [
+        weekly_buckets[w.id] for w in weekly
     ]
 
-    def _sum(*labels):
-        return sum(total for status, total, _d, _a in staged if status in labels)
-
     def _count(*labels):
-        return sum(1 for status, _t, _d, _a in staged if status in labels)
+        return sum(1 for status in staged if status in labels)
 
+    ledger = AdvanceRequest.objects.filter(fy=fy).aggregate(
+        awaiting_approval=Sum("amount", filter=Q(status__in=A_PRE_APPROVAL)),
+        pending_disbursement=Sum("amount", filter=Q(status__in=A_APPROVED_UNDISBURSED)),
+        money_moved=Sum("amount", filter=Q(status__in=MONEY_MOVED_ADVANCE_STATUSES)),
+        disbursed=Sum(
+            "disbursed_amount", filter=Q(status__in=MONEY_MOVED_ADVANCE_STATUSES)
+        ),
+        accounted=Sum("accounted_amount"),
+        returned=Sum("amount", filter=Q(status="returned")),
+    )
+
+    pending_disbursement = ledger["pending_disbursement"] or 0
     # "Approved" = cleared approval and disbursable-or-beyond. Held belongs
     # here for the same reason it belongs in approved-not-disbursed: a hold
-    # pauses approved money rather than rejecting it.
-    approved = _sum(
-        "Pending Disbursement", "Held", "Disbursed", "Awaiting Reconciliation", "Closed"
-    )
-    disbursed = sum(d for _s, _t, d, _a in staged)
-    accounted = sum(a for _s, _t, _d, a in staged)
+    # pauses approved money rather than rejecting it (a held plan's advances
+    # are still in the approved-undisbursed statuses, so the ledger agrees).
+    approved = pending_disbursement + (ledger["money_moved"] or 0)
 
     return {
         "approved": approved,
-        "pending_disbursement": _sum("Pending Disbursement", "Held"),
+        "pending_disbursement": pending_disbursement,
         "pending_disbursement_count": _count("Pending Disbursement", "Held"),
-        "awaiting_approval": _sum("Pending Approval"),
+        "awaiting_approval": ledger["awaiting_approval"] or 0,
         "awaiting_approval_count": _count("Pending Approval"),
-        "disbursed": disbursed,
-        "accounted": accounted,
-        "returned": _sum("Returned"),
+        "disbursed": ledger["disbursed"] or 0,
+        "accounted": ledger["accounted"] or 0,
+        "returned": ledger["returned"] or 0,
         "disbursed_count": _count("Disbursed", "Awaiting Reconciliation", "Closed"),
         "accounted_count": _count("Closed"),
         "record_count": len(staged),
@@ -361,6 +384,12 @@ def month_overview_all_fund_types(fy, month) -> dict:
     money rather than rejecting it: `hold()` only accepts a request that has
     finished the approval chain, and `release()` puts it straight back.
 
+    Like `fy_totals_all_fund_types`, the money comes from the AdvanceRequest
+    ledger rather than from summing the monthly + weekly request snapshots —
+    both snapshot the same ActivityScheduleCostLines, so the old sums counted
+    a cost line once per channel that requested it. The queue LIST beside this
+    card still shows one row per request; only the period totals deduplicate.
+
     Returns raw integers; callers format them.
     """
     # Month-scoped fund types only. `_partner_items` describes itself as
@@ -369,52 +398,53 @@ def month_overview_all_fund_types(fy, month) -> dict:
     # them made rows 1-3 of this card cover any month while rows 4-5 (Disbursed,
     # Reconciled) covered this one -- one card, two periods. They remain in the
     # queue list beside it, which is a work list rather than a period total.
-    names: dict[str, str] = {}
-    queue = _monthly_items(fy, month, names) + _weekly_items(fy, month, names)
-
-    def _sum(status):
-        return sum(i["amount"] for i in queue if i["status"] == status)
-
-    from .models import FundRequest, WeeklyFundRequest
-
-    disbursed = sum(
-        f.disbursed_amount or f.total_amount
-        for f in FundRequest.objects.filter(
-            period="monthly",
-            fy=fy,
-            period_key=f"{fy}-M{month}",
-            status__in=["disbursed", "closed"],
-        )
-    ) + sum(
-        w.disbursed_amount or w.total_amount
-        for w in WeeklyFundRequest.objects.filter(
-            fy=fy,
-            week_start_date__month=month,
-            status__in=["disbursed", "accountability_pending", "accounted"],
-        )
+    # (The ledger matches: partner activities never mirror into AdvanceRequest.)
+    from .models import (
+        MONEY_MOVED_ADVANCE_STATUSES,
+        AdvanceRequest,
+        FundRequest,
+        FundRequestItem,
     )
-    reconciled = sum(
-        f.accounted_amount or 0
-        for f in FundRequest.objects.filter(
-            period="monthly",
-            fy=fy,
-            period_key=f"{fy}-M{month}",
-            accountability_reviewed_at__isnull=False,
+
+    advances = AdvanceRequest.objects.filter(fy=fy, month=month)
+    ledger = advances.aggregate(
+        waiting_for_approval=Sum("amount", filter=Q(status__in=A_PRE_APPROVAL)),
+        returned=Sum("amount", filter=Q(status="returned")),
+        approved_not_disbursed=Sum(
+            "amount", filter=Q(status__in=A_APPROVED_UNDISBURSED)
+        ),
+        disbursed=Sum(
+            "disbursed_amount", filter=Q(status__in=MONEY_MOVED_ADVANCE_STATUSES)
+        ),
+        reconciled=Sum(
+            "accounted_amount", filter=Q(accountability_reviewed_at__isnull=False)
+        ),
+    )
+
+    # Held is a monthly-FundRequest state with no ledger status of its own:
+    # the money of a held plan is the advances behind its items, still sitting
+    # in the approved-undisbursed statuses. Restricting to those statuses keeps
+    # Held a strict subset of approved_not_disbursed, whatever a sibling
+    # channel may have done to an individual line meanwhile.
+    held_line_ids = FundRequestItem.objects.filter(
+        fund_request__in=FundRequest.objects.filter(
+            period="monthly", fy=fy, period_key=f"{fy}-M{month}", status="held"
         )
-    ) + sum(
-        w.accounted_amount or 0
-        for w in WeeklyFundRequest.objects.filter(
-            fy=fy, week_start_date__month=month, status="accounted"
-        )
+    ).values_list("activity_schedule_cost_line_id", flat=True)
+    held = (
+        advances.filter(
+            budget_line_id__in=held_line_ids, status__in=A_APPROVED_UNDISBURSED
+        ).aggregate(s=Sum("amount"))["s"]
+        or 0
     )
 
     return {
-        "waiting_for_approval": _sum("Pending Approval"),
-        "returned": _sum("Returned"),
-        "approved_not_disbursed": _sum("Pending Disbursement") + _sum("Held"),
-        "held": _sum("Held"),
-        "disbursed": disbursed,
-        "reconciled": reconciled,
+        "waiting_for_approval": ledger["waiting_for_approval"] or 0,
+        "returned": ledger["returned"] or 0,
+        "approved_not_disbursed": ledger["approved_not_disbursed"] or 0,
+        "held": held,
+        "disbursed": ledger["disbursed"] or 0,
+        "reconciled": ledger["reconciled"] or 0,
     }
 
 
@@ -1445,11 +1475,55 @@ def disburse(principal, fund_request_id, data=None):
             ]
         )
 
+        # Post the release to the shared ledger FIRST, and remember which
+        # budget lines it actually flipped. Without the update the guard is
+        # one-directional: the weekly/advance queue would still see these lines
+        # as unpaid and release them a second time.
+        flipped_line_ids: set[str] = set()
+        stale_line_ids: set[str] = set()
+        if line_ids:
+            flipped_line_ids = set(
+                AdvanceRequest.objects.filter(budget_line_id__in=line_ids)
+                .exclude(status__in=MONEY_MOVED_ADVANCE_STATUSES)
+                .values_list("budget_line_id", flat=True)
+            )
+            # Lines whose advance exists but did NOT flip: their money already
+            # moved through another channel. The clash guard above refuses the
+            # whole release when any exist; this set backstops it so a stale
+            # item can never earn a second Disbursement audit row.
+            stale_line_ids = (
+                set(
+                    AdvanceRequest.objects.filter(
+                        budget_line_id__in=line_ids
+                    ).values_list("budget_line_id", flat=True)
+                )
+                - flipped_line_ids
+            )
+            if flipped_line_ids:
+                AdvanceRequest.objects.filter(
+                    budget_line_id__in=flipped_line_ids,
+                ).exclude(status__in=MONEY_MOVED_ADVANCE_STATUSES).update(
+                    status=AdvanceRequestStatus.DISBURSED,
+                    # Each advance mirrors one budget line, so its line amount
+                    # is what this release moves — without this every budget
+                    # rollup summing advance disbursed_amount reported UGX 0
+                    # disbursed for money released through this channel.
+                    disbursed_amount=F("amount"),
+                    disbursed_at=now,
+                    disbursed_by_user_id=principal.user_id,
+                    disburse_method=method,
+                    disburse_reference=reference,
+                    updated_at=now,
+                )
+
         # One DisbursementRecord per activity the plan actually funds — the same
         # audit trail apps.fund_requests.finance_services.AdvanceDisbursementService
         # writes for single-activity advances. Disbursement.activity is required,
         # so a month-level release still needs one row per activity it covers;
-        # split proportionally when a partial amount was released.
+        # split proportionally when a partial amount was released. Items whose
+        # ledger row was already money-moved are skipped (see stale_line_ids);
+        # items with no ledger row at all are still recorded, because this
+        # channel is the only one that can release their money.
         Disbursement.objects.bulk_create(
             [
                 Disbursement(
@@ -1463,20 +1537,9 @@ def disburse(principal, fund_request_id, data=None):
                     notes=f"Monthly fund plan {fr.period_key}",
                 )
                 for item in fr.items.all()
+                if item.activity_schedule_cost_line_id not in stale_line_ids
             ]
         )
-
-        # Post the release to the shared ledger too. Without this the guard is
-        # one-directional: the weekly/advance queue would still see these lines
-        # as unpaid and release them a second time.
-        if line_ids:
-            AdvanceRequest.objects.filter(
-                budget_line_id__in=line_ids,
-            ).exclude(status__in=MONEY_MOVED_ADVANCE_STATUSES).update(
-                status=AdvanceRequestStatus.DISBURSED,
-                disbursed_at=now,
-                updated_at=now,
-            )
 
     _audit(
         principal,

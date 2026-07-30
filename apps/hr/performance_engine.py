@@ -839,8 +839,45 @@ def take_snapshot(review, window: str):
                 "weight": p.weight,
             }
         )
+    from apps.hr.models import MilestoneAllocation
+
+    milestone_rows = []
+    staff_id = review.staff_id
+    allocations = (
+        MilestoneAllocation.objects.filter(
+            employee_id=staff_id,
+            status__in=["approved", "active"],
+            milestone__requires_definition=False,
+        )
+        .select_related("milestone__priority")
+        .prefetch_related("period_targets")
+    )
+    for allocation in allocations:
+        milestone_rows.append(
+            {
+                "allocationId": allocation.id,
+                "strategicPriority": allocation.milestone.priority.title,
+                "milestone": allocation.milestone.title,
+                "sourceText": allocation.milestone.source_text,
+                "target": float(allocation.allocated_target or 0),
+                "periods": [
+                    {
+                        "type": period.period_type,
+                        "start": period.period_start.isoformat(),
+                        "end": period.period_end.isoformat(),
+                        "plan": float(period.planned_value),
+                        "actual": float(period.actual_value),
+                        "pct": float(period.achievement_percentage),
+                        "source": period.actual_source,
+                    }
+                    for period in allocation.period_targets.all()
+                ],
+            }
+        )
     return PerformanceSnapshot.objects.create(
-        review=review, window=window, data={"priorities": rows}
+        review=review,
+        window=window,
+        data={"priorities": rows, "strategicMilestones": milestone_rows},
     )
 
 

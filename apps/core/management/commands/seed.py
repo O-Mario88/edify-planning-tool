@@ -543,12 +543,22 @@ class Command(BaseCommand):
             "group_training_facilitation_fee": "Facilitation fee",
             "group_training_venue_cost": "Venue fee",
         }
+        # get_or_create, never update_or_create: the CD's Cost Catalogue is
+        # the authoritative rate card, and a reseed must not silently reset a
+        # rate the CD changed (no version bump, no CostSettingHistory row —
+        # exactly the overwrite budget/reference.py promises never happens).
+        # New keys are seeded through the same canonical writer so version
+        # and history stay consistent.
+        from apps.budget.reference import ensure_active_catalogue
+
+        seed_catalogue = ensure_active_catalogue()
         for key, cost in rate_card.items():
-            CostSetting.objects.update_or_create(
+            CostSetting.objects.get_or_create(
                 key=key,
                 defaults={
                     "label": friendly_labels.get(key, key.replace("_", " ").title()),
                     "unit_cost": cost,
+                    "catalogue": seed_catalogue,
                 },
             )
         self.stdout.write(

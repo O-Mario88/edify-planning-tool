@@ -120,14 +120,6 @@ class Command(BaseCommand):
                     total_skipped += 1
                     continue
 
-                new_enrollment_raw = (raw.get("new_enrollment") or "").strip()
-                new_enrollment = None
-                if new_enrollment_raw:
-                    try:
-                        new_enrollment = int(float(new_enrollment_raw))
-                    except ValueError:
-                        pass
-
                 if dry_run:
                     self.stdout.write(
                         f"  [DRY RUN] Would create SSA for school_id={school_id} "
@@ -154,7 +146,6 @@ class Command(BaseCommand):
                                 ssa_date, datetime.min.time()
                             ).isoformat(),
                             "scores": scores_list,
-                            "newEnrollment": new_enrollment,
                             "collectorType": "staff",
                         }
                         ssa_upload_service(data, _P())

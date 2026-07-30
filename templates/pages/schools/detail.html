@@ -38,11 +38,11 @@ class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-h
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Region</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.region.name }}</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.region.name|default:"Not specified" }}</p>
 </div>
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">District</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.district.name }}</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.district.name|default:"Not specified" }}</p>
 </div>
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Sub-county</p>
@@ -67,12 +67,48 @@ Not specified
 </p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">School Type</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Current Partner Type</p>
 <p class="font-semibold text-slate-800 mt-0.5">{{ school.get_school_type_display }}</p>
 </div>
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Assigned Staff</p>
 <p class="font-semibold text-[var(--edify-accent)] mt-0.5">{{ school.assigned_staff }}</p>
+</div>
+</div>
+
+<div class="border-t border-slate-100 pt-5">
+<div class="flex items-center justify-between gap-3 mb-4">
+<h4 class="text-[13px] font-semibold text-slate-700">Contact &amp; operational details</h4>
+<p class="edify-text-caption font-medium text-slate-400">Optional fields can be completed through Edit Details.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">School Phone</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.school_phone|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Primary Contact</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.primary_contact_name|default:"Not specified" }}</p>
+{% if school.primary_contact_phone %}
+<p class="edify-text-caption font-medium text-slate-500 mt-0.5">{{ school.primary_contact_phone }}</p>
+{% endif %}
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Director</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.director_name|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Headteacher</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.headteacher_name|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Last Enrolment Date</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.last_enrollment_date|date:"d M Y"|default:"Not specified" }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Physical Address</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ school.shipping_address|default:"Not specified" }}</p>
+</div>
 </div>
 </div>
 </div>

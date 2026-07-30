@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 
 from apps.core.permissions import RequirePermissions
 from apps.core.rbac import Permission
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+from apps.core.scoping import resolve_user_scope
 
 from . import services
 
@@ -67,6 +69,64 @@ class PartnerMeScheduleView(APIView):
         return Response(
             services.schedule_activity(activity_id, request.data, request.user)
         )
+
+
+class PartnerAssignmentEligibleActivitiesView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.PLANNING_VIEW.value]
+
+    def get(self, request: Request, assignment_id: str) -> Response:
+        from apps.activity_catalogue.services import (
+            effective_items,
+            serialize_item,
+            validate_context,
+        )
+        from apps.partners.models import PartnerAssignment
+
+        assignment = (
+            PartnerAssignment.objects.select_related(
+                "school", "cluster", "project", "catalogue_item"
+            )
+            .prefetch_related("allowed_catalogue_items")
+            .filter(id=assignment_id)
+            .first()
+        )
+        if assignment is None:
+            raise NotFoundError("Partner assignment not found.")
+        scope = resolve_user_scope(request.user)
+        staff_id = getattr(request.user, "staff_profile_id", None)
+        if (
+            not scope.country_scope
+            and assignment.partner_id not in scope.partner_ids
+            and assignment.assigning_staff_id not in {
+                staff_id,
+                getattr(request.user, "user_id", None),
+            }
+        ):
+            raise NotFoundError("Partner assignment not found.")
+        ids = (
+            [assignment.catalogue_item_id]
+            if assignment.catalogue_item_id
+            else list(
+                assignment.allowed_catalogue_items.values_list("id", flat=True)
+            )
+        )
+        allowed = []
+        for item in effective_items().filter(id__in=ids).prefetch_related(
+            "intervention_mappings"
+        ):
+            try:
+                validate_context(
+                    item,
+                    school=assignment.school,
+                    cluster=assignment.cluster,
+                    project=assignment.project,
+                    executor_type="partner",
+                )
+            except (BadRequest, Forbidden):
+                continue
+            allowed.append(serialize_item(item))
+        return Response(allowed)
 
 
 class PartnerUpdateView(APIView):

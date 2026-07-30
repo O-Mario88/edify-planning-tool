@@ -4,8 +4,27 @@
     {
       "name": "edify-web",
       "runtimeExecutable": "/Users/omario/Developer/Edify Planning Tool/.venv/bin/python",
-      "runtimeArgs": ["manage.py", "runserver", "--noasgi", "--skip-checks", "0.0.0.0:8000"],
+      "runtimeArgs": [
+        "manage.py",
+        "runserver",
+        "--noasgi",
+        "--skip-checks",
+        "0.0.0.0:8000"
+      ],
       "port": 8000,
+      "autoPort": true
+    },
+    {
+      "name": "edify-cascade",
+      "runtimeExecutable": "/Users/omario/Developer/Edify Planning Tool/.venv/bin/python",
+      "runtimeArgs": [
+        "/Users/omario/Developer/edify-target-cascade/manage.py",
+        "runserver",
+        "--noasgi",
+        "--skip-checks",
+        "0.0.0.0:8010"
+      ],
+      "port": 8010,
       "autoPort": true
     }
   ]

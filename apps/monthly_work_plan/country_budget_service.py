@@ -488,7 +488,8 @@ def get_country_monthly_budget(principal, filters=None):
         staff_rows = [r for r in staff_rows if search in r["name"].lower()]
 
     # ── CD Admin Plan row — the ONLY non-activity budget item ────────────────
-    admin_lines = list(budget.admin_lines.all())
+    # M2 — count only status="active" admin lines, matching budget_workspace.
+    admin_lines = list(budget.admin_lines.filter(status="active"))
     admin_total = sum(a.total_cost for a in admin_lines)
     admin_status = "Admin Plan" if admin_lines else "Admin Plan Missing"
 
@@ -864,8 +865,64 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
     needs_review = [
         li for li in valid_lines if getattr(li.activity, "cost_missing", False)
     ]
+
+    # M7 — these checks must interrogate the month's RAW cost-line set, not
+    # the pre-filtered `lines` queryset: testing "no cancelled lines" against
+    # a queryset that already excluded cancelled lines is vacuously true.
+    # A bad line only fails the check when the stored program_total actually
+    # still carries money beyond the clean (fully valid) line set — i.e. the
+    # bad money is genuinely counted, not already excluded by a recompute.
+    from django.db.models import Q
+
+    from apps.activities.models import ActivityScheduleCostLine
+
+    raw_lines = []
+    try:
+        _month_num = int(str(budget.month_key).split("-")[1])
+    except (IndexError, ValueError, AttributeError):
+        _month_num = None
+    if _month_num is not None:
+        raw_lines = list(
+            ActivityScheduleCostLine.objects.filter(month=_month_num)
+            .filter(Q(activity__fy=budget.fy) | Q(fiscal_year=budget.fy))
+            .select_related("activity")
+        )
+
+    def _line_clean(li):
+        a = li.activity
+        return (
+            a is not None
+            and a.deleted_at is None
+            and a.status not in ("cancelled", "rejected", "deferred")
+            and not (a.delivery_type == "partner" and not a.planned_date)
+        )
+
+    clean_program_total = sum(
+        int(li.amount or 0) for li in raw_lines if _line_clean(li)
+    )
+    stored_program_total = int(budget.program_total or 0)
+    overcounted = stored_program_total > clean_program_total
+
+    orphan_lines = [
+        li
+        for li in raw_lines
+        if li.activity is None or li.activity.deleted_at is not None
+    ]
     cancelled_included = [
-        li for li in lines if li.activity.status in ("cancelled", "rejected")
+        li
+        for li in raw_lines
+        if li.activity is not None
+        and li.activity.deleted_at is None
+        and li.activity.status in ("cancelled", "rejected", "deferred")
+    ]
+    partner_precosted = [
+        li
+        for li in raw_lines
+        if li.activity is not None
+        and li.activity.deleted_at is None
+        and li.activity.delivery_type == "partner"
+        and li.activity.status == "assigned_to_partner"
+        and li.activity.planned_date is not None
     ]
     seen_lines = set()
     dupes = 0
@@ -875,11 +932,6 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
             dupes += 1
         seen_lines.add(key)
     missing_catalogue_version = [li for li in valid_lines if not li.catalogue_version]
-    partner_unscheduled = [
-        li
-        for li in lines
-        if li.activity.delivery_type == "partner" and not li.activity.planned_date
-    ]
     cluster_missing_counts = [
         li
         for li in valid_lines
@@ -936,9 +988,17 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 else "",
             },
             {
+                # M7 — was hardcoded "passed". A line whose activity is
+                # soft-deleted while its money still sits in the stored
+                # program_total is exactly the orphan this check exists for.
                 "label": "No orphan budget lines",
-                "status": "passed",
-                "detail": "",
+                "status": _status(orphan_lines and overcounted),
+                "detail": (
+                    f"{len(orphan_lines)} line(s) belong to deleted activities "
+                    "but their money is still in the stored program total."
+                )
+                if (orphan_lines and overcounted)
+                else "",
             },
             {
                 "label": "Admin budget sourced from CD Monthly Admin Plan",
@@ -950,10 +1010,18 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 else "Admin total set without admin lines.",
             },
             {
+                # M7 — previously tested a queryset that had already excluded
+                # cancelled lines (vacuous). Now fails when cancelled /
+                # rejected / deferred activity money is still counted in the
+                # stored program_total.
                 "label": "No cancelled activities included",
-                "status": _status(cancelled_included),
-                "detail": f"{len(cancelled_included)} cancelled activity(ies) excluded."
-                if cancelled_included
+                "status": _status(cancelled_included and overcounted),
+                "detail": (
+                    f"{len(cancelled_included)} cancelled/rejected/deferred "
+                    "activity line(s) are still counted in the stored program "
+                    "total."
+                )
+                if (cancelled_included and overcounted)
                 else "",
             },
             {
@@ -969,10 +1037,19 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 else "",
             },
             {
+                # M7 — previously tested lines the source queryset had already
+                # excluded (vacuous). The real anomaly: a partner-delivery
+                # line costed and counted while its activity is still only
+                # assigned_to_partner — money in the budget before the
+                # partner ever scheduled the work.
                 "label": "Partner activities are scheduled before included",
-                "status": _status(partner_unscheduled),
-                "detail": f"{len(partner_unscheduled)} unscheduled partner activity(ies) excluded."
-                if partner_unscheduled
+                "status": _status(partner_precosted),
+                "detail": (
+                    f"{len(partner_precosted)} partner line(s) costed while "
+                    "the activity is still assigned_to_partner (not yet "
+                    "scheduled by the partner)."
+                )
+                if partner_precosted
                 else "",
             },
             {
@@ -983,6 +1060,30 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 else "",
             },
         ]
+    )
+    # Locked-month snapshot invariant — a budget in any LOCKED status was, by
+    # definition, submitted; the guarded submit path always writes an
+    # immutable MonthlyBudgetSubmissionSnapshot. A locked month with zero
+    # snapshots reached its status through a hole (the old unguarded
+    # _transition) and its "approved" figures are unverifiable.
+    locked_without_snapshot = (
+        budget.status in LOCKED_STATUSES
+        and budget.pk is not None
+        and not budget.snapshots.exists()
+    )
+    checks.append(
+        {
+            "label": "Locked month has an immutable submission snapshot",
+            "status": "failed" if locked_without_snapshot else "passed",
+            "detail": (
+                f"Status is '{budget.status}' but no submission snapshot "
+                "exists — this month bypassed the guarded submit path. Run "
+                "`manage.py repair_monthly_budget_totals --apply` to revert "
+                "it to draft for a proper resubmission."
+            )
+            if locked_without_snapshot
+            else "",
+        }
     )
     return checks
 
@@ -1393,7 +1494,7 @@ def _create_snapshot(principal, budget, source):
             "total_cost": line.total_cost,
             "total_cost_fmt": _ugx(line.total_cost),
         }
-        for line in budget.admin_lines.all()
+        for line in budget.admin_lines.filter(status="active")
     ]
 
     version = budget.submission_version + 1
@@ -1449,7 +1550,10 @@ def send_to_rvp(principal, budget_id):
         source = _program_source(budget.fy, month_num)
         _recompute_if_live(budget, source)
         checks = _integrity_checks(
-            source["lines"], list(budget.admin_lines.all()), budget, source
+            source["lines"],
+            list(budget.admin_lines.filter(status="active")),
+            budget,
+            source,
         )
         failed = [c for c in checks if c["status"] == "failed"]
         if failed:

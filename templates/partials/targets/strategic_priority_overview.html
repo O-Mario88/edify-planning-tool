@@ -1,0 +1,51 @@
+{% if strategic_priorities %}
+<section class="bg-white border border-[var(--border-card)] rounded-overlay shadow-sm p-5 space-y-4"
+         aria-labelledby="{{ section_id }}">
+  <header class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <span class="edify-text-caption font-extrabold uppercase tracking-[0.16em] text-[var(--color-edify-primary)]">Strategy cascade</span>
+      <h2 id="{{ section_id }}" class="mt-1 text-[15px] font-extrabold tracking-tight text-slate-800">FY {{ fy }} Strategic Priorities</h2>
+      <p class="mt-1 max-w-3xl text-[12px] leading-5 text-slate-500">
+        The governed priority portfolio is shown for context. Only active, approved milestone allocations affect {{ scope_label }}.
+      </p>
+    </div>
+    <span class="mt-1 inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 edify-text-caption font-bold text-slate-500">
+      {{ strategic_priorities|length }} priorities
+    </span>
+  </header>
+
+  <ol class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="FY {{ fy }} strategic priority portfolio">
+    {% for priority in strategic_priorities %}
+    <li class="flex min-h-[142px] flex-col rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-4 transition-all hover:-translate-y-[1.5px] hover:bg-white hover:shadow-md">
+      <div class="flex items-center justify-between gap-2">
+        <span class="edify-text-caption font-extrabold uppercase tracking-[0.14em] text-slate-400">Priority {{ priority.sequence }}</span>
+        <span class="rounded-full px-2 py-1 edify-text-caption font-extrabold
+          {% if priority.tone == 'success' %}bg-emerald-50 text-emerald-700
+          {% elif priority.tone == 'info' %}edify-primary-soft edify-primary-text
+          {% else %}bg-slate-100 text-slate-500{% endif %}">
+          {{ priority.status }}
+        </span>
+      </div>
+      <h3 class="mt-3 text-[13px] font-extrabold leading-5 text-slate-800">{{ priority.title }}</h3>
+      <dl class="mt-auto grid grid-cols-2 gap-2 pt-4 edify-text-caption">
+        <div>
+          <dt class="font-semibold text-slate-400">Milestones</dt>
+          <dd class="mt-0.5 text-[13px] font-extrabold tabular-nums text-slate-700">{{ priority.milestoneCount }}</dd>
+        </div>
+        <div>
+          <dt class="font-semibold text-slate-400">In this scope</dt>
+          <dd class="mt-0.5 text-[13px] font-extrabold tabular-nums text-slate-700">{{ priority.allocatedCount }}</dd>
+        </div>
+      </dl>
+    </li>
+    {% endfor %}
+  </ol>
+
+  <p class="flex items-start gap-2 edify-text-caption leading-5 text-slate-500">
+    <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M12 9v4m0 4h.01M10.3 4.6 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.6a2 2 0 0 0-3.4 0Z" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Milestones still in definition remain visible here, but they do not create targets, reduce achievement, or generate risk.
+  </p>
+</section>
+{% endif %}

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from apps.activities.models import Activity
@@ -102,14 +102,17 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
                 "the approver to return it first if changes are needed."
             )
         fr, created = FundRequest.objects.update_or_create(
-            # Same reasoning: keying on scope turned a role switch into a new
-            # row rather than an update, which is how one period ended up with
-            # two live fund requests.
+            # The in-flight guard above stays scope-blind (that is what
+            # catches the role-switch case), but the upsert key itself must
+            # carry scope: the DB unique key is (user, period, period_key,
+            # scope), so a scope-blind lookup raised MultipleObjectsReturned
+            # the moment both an "own" and a "team" row existed — and when
+            # only one existed, silently rewrote its scope.
             submitted_by_user_id=principal.user_id,
             period=period,
             period_key=period_key,
+            scope=lens,
             defaults={
-                "scope": lens,
                 "fy": fy,
                 "submitted_by_role": principal.active_role,
                 "total_amount": total,
@@ -135,6 +138,10 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
 
 
 def _period_key(fy: str, period: str, data: dict) -> str:
+    # A weekly request without a week (or a monthly one without a month) used
+    # to fall back to the bare fy — and _filter_period then applied NO period
+    # filter, so one request silently swallowed the entire FY's planned spend
+    # (and disbursing it would flip every advance in the FY). Refuse instead.
     if period == FundRequestPeriod.WEEKLY:
         week = data.get("week")
         month = data.get("month")
@@ -142,10 +149,12 @@ def _period_key(fy: str, period: str, data: dict) -> str:
             return f"{fy}-M{int(month)}-W{int(week)}"
         if week:
             return f"{fy}-W{int(week)}"
-        return fy
+        raise BadRequest("A weekly fund request requires an explicit week.")
     if period == FundRequestPeriod.MONTHLY:
         month = data.get("month")
-        return f"{fy}-M{int(month)}" if month else fy
+        if not month:
+            raise BadRequest("A monthly fund request requires an explicit month.")
+        return f"{fy}-M{int(month)}"
     if period == FundRequestPeriod.QUARTERLY and data.get("quarter"):
         return f"{fy}-{data['quarter']}"
     return fy
@@ -163,18 +172,21 @@ def _filter_period(qs, period: str, period_key: str, data: dict):
         if not week:
             match = re.search(r"-W(\d+)$", period_key or "")
             week = int(match.group(1)) if match else None
-        if week:
-            week = int(week)
-            # planned_week (like planned_month) is only populated when a caller
-            # happens to pass it explicitly — derive week-of-month from the
-            # reliably-set planned_date instead (same formula used throughout
-            # the app, e.g. apps.my_plan.services / apps.activities.services).
-            matching_ids = [
-                a.id
-                for a in qs.only("id", "planned_date")
-                if a.planned_date and min(5, (a.planned_date.day - 1) // 7 + 1) == week
-            ]
-            qs = qs.filter(id__in=matching_ids)
+        if not week:
+            # A caller-supplied periodKey bypasses _period_key, so the same
+            # everything-matches hole must be closed here too.
+            raise BadRequest("A weekly fund request requires an explicit week.")
+        week = int(week)
+        # planned_week (like planned_month) is only populated when a caller
+        # happens to pass it explicitly — derive week-of-month from the
+        # reliably-set planned_date instead (same formula used throughout
+        # the app, e.g. apps.my_plan.services / apps.activities.services).
+        matching_ids = [
+            a.id
+            for a in qs.only("id", "planned_date")
+            if a.planned_date and min(5, (a.planned_date.day - 1) // 7 + 1) == week
+        ]
+        qs = qs.filter(id__in=matching_ids)
         month = data.get("month")
         if month:
             qs = qs.filter(month=int(month))
@@ -183,8 +195,9 @@ def _filter_period(qs, period: str, period_key: str, data: dict):
         if not month:
             match = re.search(r"-M(\d+)$", period_key or "")
             month = int(match.group(1)) if match else None
-        if month:
-            qs = qs.filter(month=int(month))
+        if not month:
+            raise BadRequest("A monthly fund request requires an explicit month.")
+        qs = qs.filter(month=int(month))
     elif period == FundRequestPeriod.QUARTERLY:
         quarter = data.get("quarter")
         if not quarter:
@@ -412,6 +425,11 @@ def disburse(request_id: str, data: dict, principal) -> dict:
                 ],
             ).update(
                 status="disbursed",
+                # Each advance mirrors exactly one budget line, so its full
+                # line amount is what this release moves. Without this the
+                # budget rollups (Sum of advance disbursed_amount) reported
+                # UGX 0 disbursed for money released through this channel.
+                disbursed_amount=F("amount"),
                 disbursed_at=fr.disbursed_at,
                 disbursed_by_user_id=principal.user_id,
                 disburse_method=fr.disburse_method,

@@ -63,7 +63,7 @@
           {% endfor %}
         </div>
 
-        <div>
+        <div class="sm:col-span-2">
           <label for="{{ form.date_of_ssa.id_for_label }}" class="block text-[12px] font-extrabold text-[var(--edify-text)]">
             {{ form.date_of_ssa.label }} <span class="text-rose-600" aria-hidden="true">*</span>
           </label>
@@ -76,18 +76,6 @@
           {% endfor %}
         </div>
 
-        <div>
-          <label for="{{ form.new_enrollment.id_for_label }}" class="block text-[12px] font-extrabold text-[var(--edify-text)]">
-            {{ form.new_enrollment.label }}
-          </label>
-          <div class="mt-2">{{ form.new_enrollment }}</div>
-          <p id="manual-ssa-enrollment-help" class="mt-1.5 text-[12px] font-semibold text-[var(--edify-text-muted)]">
-            Optional observation; this does not overwrite School Directory enrollment.
-          </p>
-          {% for error in form.new_enrollment.errors %}
-          <p class="mt-1 text-[12px] font-bold text-rose-700">{{ error }}</p>
-          {% endfor %}
-        </div>
       </div>
     </section>
 
@@ -105,6 +93,11 @@
             {{ field.label }} <span class="text-rose-600" aria-hidden="true">*</span>
           </label>
           <div class="mt-2">{{ field }}</div>
+          {% if field.name == "score_enrolment" %}
+          <p class="mt-1.5 text-[12px] font-semibold text-[var(--edify-text-muted)]">
+            This is the SSA Enrolment score out of 10, not the number of pupils. Update pupil enrolment through the School Profile or School Upload.
+          </p>
+          {% endif %}
           {% for error in field.errors %}
           <p class="mt-1 text-[12px] font-bold text-rose-700">{{ error }}</p>
           {% endfor %}

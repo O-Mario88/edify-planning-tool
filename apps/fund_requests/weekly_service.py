@@ -40,7 +40,13 @@ def generate_weekly_fund_request(
     week_start = week_start - timedelta(days=week_start.weekday())
     week_end = week_start + timedelta(days=6)
 
-    # 1. Find all scheduled activities for the selected week that are not cancelled
+    # 1. Find all scheduled activities for the selected week that are not
+    # cancelled/deferred. Partner-delivered work is EXCLUDED from the staff
+    # advance channel entirely: its one payable path is the post-IA-clearance
+    # PartnerPayment workflow, and carrying the same cost line here made it
+    # payable twice (once as the managing staff member's advance, once as the
+    # partner's payment). Partner costs still appear in every budget
+    # AGGREGATE — those are roll-ups, not payment channels.
     lines = (
         ActivityScheduleCostLine.objects.filter(
             responsible_user=responsible_user_id,
@@ -48,7 +54,8 @@ def generate_weekly_fund_request(
             planned_date__lte=week_end,
             activity__scheduled_date__isnull=False,
         )
-        .exclude(activity__status="cancelled")
+        .exclude(activity__status__in=("cancelled", "deferred", "rejected"))
+        .exclude(activity__delivery_type="partner")
         .select_related("activity")
     )
 

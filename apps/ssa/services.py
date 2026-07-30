@@ -180,16 +180,12 @@ def upload(data: dict, principal) -> dict:
         "partner" if partner_collected else "ia" if collector_type == "ia" else "staff"
     )
 
-    new_enrollment = data.get("newEnrollment")
-    if new_enrollment in ("", None):
-        new_enrollment = None
-    else:
-        try:
-            new_enrollment = int(new_enrollment)
-        except (TypeError, ValueError) as exc:
-            raise BadRequest("Assessment enrollment must be a whole number") from exc
-        if new_enrollment < 0:
-            raise BadRequest("Assessment enrollment cannot be negative")
+    if data.get("newEnrollment") not in ("", None):
+        raise BadRequest(
+            "Pupil enrolment is not part of an SSA score. In SSA, Enrolment is "
+            "scored from 0 to 10. Update pupil headcount through the School "
+            "Upload file or the School Profile."
+        )
 
     with transaction.atomic():
         # Serialize writes for one school so two simultaneous submissions
@@ -208,7 +204,6 @@ def upload(data: dict, principal) -> dict:
             date_of_ssa=date,
             fy=fy,
             quarter=quarter,
-            new_enrollment=new_enrollment,
             average_score=average,
             uploaded_by=principal.user_id,
             collector_type=stored_collector_type,
@@ -230,15 +225,9 @@ def upload(data: dict, principal) -> dict:
             ]
         )
 
-        # NOTE (2026-07-15 clarification): SSA import must NEVER overwrite the
-        # School Enrolment Count (School.enrollment) -- it is sourced only
-        # from School upload / School Directory. The optional "New Enrolment"
-        # CSV column is a per-assessment headcount observation and is stored
-        # on the record only (SsaRecord.new_enrollment, set above); it is
-        # deliberately never applied back to School.enrollment or
-        # SchoolEnrollmentHistory to avoid any risk of the SSA Enrolment
-        # Score (a 0-10 performance metric) being confused with, or
-        # overwriting, the actual child headcount.
+        # SSA import must NEVER overwrite School.enrollment. The Enrolment
+        # intervention above is only a 0-10 SSA performance score. Actual
+        # pupil headcount is sourced from School Upload / School Profile.
 
         # SSA done + verified -> school's current-FY SSA status becomes done,
         # but ONLY when the record actually belongs to the current operational
@@ -262,7 +251,6 @@ def _serialize_record(record: SsaRecord) -> dict:
         "fy": record.fy,
         "quarter": record.quarter,
         "averageScore": record.average_score,
-        "newEnrollment": record.new_enrollment,
         "collectorType": record.collector_type,
         "verificationStatus": record.verification_status,
         "verificationSource": record.verification_source,

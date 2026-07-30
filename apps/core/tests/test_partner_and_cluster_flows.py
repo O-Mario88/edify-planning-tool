@@ -4,10 +4,11 @@ Like the authenticated-workflow smoke test, every record lives in the isolated
 Django test database; the persistent/local DB keeps its honest empty-state
 behaviour. These two flows close the demo-readiness verification:
 
-  • Flow 4 — staff assigns a school visit to a partner → the partner sees it in
-            their queue → partner schedules → partner uploads evidence → staff
-            reviews (accepts) → staff enters the SV- Activity Code → the activity
-            leaves the partner's queue.
+  • Flow 4 — staff assigns a catalogue school visit to a partner (a
+            PartnerAssignment; cost starts at partner scheduling) → partner
+            schedules, creating the costed Activity in their queue → partner
+            uploads evidence → staff reviews (accepts) → staff enters the SVE-
+            Activity Code → the activity leaves the partner's queue.
   • Flow 6 — staff schedules cluster training (only through a cluster, with an
             exact date) → a cost line is created → the activity shows in My Plan
             → completion requires attendance + a TS- training code.
@@ -134,40 +135,42 @@ class PartnerAndClusterFlowTest(APITestCase):
         )
 
         self._as(self.cceo)
-        # Staff assigns the visit to a partner (deliveryType=partner).
+        # Staff assigns the visit to a partner. Under the mandatory Activity
+        # Catalogue this creates a PartnerAssignment locked to one approved
+        # catalogue item — no Activity and no cost exist yet ("cost starts at
+        # Partner scheduling"). CLIENT_SCHOOL_FOLLOWUP_VISIT is the successor
+        # of the retired generic school visit; a dynamic follow-up without a
+        # source activity must carry a canonical SSA intervention.
         assigned = self._post(
             "/api/planning/assign-school-visit-to-partner",
             {
                 "schoolId": school.school_id,
-                # 2026-07-13 is a Monday — 2026-07-12 (Sunday) previously
-                # slipped through here because partner-delivered activities
-                # had no responsible_staff_id and skipped the REG-02 gate
-                # entirely; that gap is now closed (create() always checks),
-                # so this fixture must use a schedulable date.
-                "scheduledDate": "2026-07-13T09:00:00+03:00",
-                "plannedMonth": 7,
-                "plannedWeek": 2,
-                "purposeIntervention": "enrolment",
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
+                "focusIntervention": "enrolment",
                 "assignedPartnerId": partner.id,
             },
             201,
         )
-        self.assertEqual(assigned["status"], "assigned_to_partner")
-        self.assertEqual(assigned["deliveryType"], "partner")
-        activity_id = assigned["id"]
+        self.assertEqual(assigned["status"], "pending_scheduling")
+        self.assertFalse(assigned["costCreated"])
+        assignment_id = assigned["id"]
 
-        # Partner sees the assigned activity in their queue.
+        # Partner self-schedules the assignment — the moment the costed
+        # canonical Activity is created. 2026-07-14 is a Tuesday: the REG-02
+        # gate (checked via the assigning staff member) blocks Sundays here.
         self._as(partner_user)
-        queue = self._get("/api/partners/me/activities", 200)
-        self.assertTrue(any(row["id"] == activity_id for row in queue))
-
-        # Partner self-schedules the activity.
         scheduled = self._post(
-            f"/api/partners/me/activities/{activity_id}/schedule",
+            f"/api/partners/me/activities/{assignment_id}/schedule",
             {"scheduledDate": "2026-07-14T09:00:00+03:00"},
             200,
         )
         self.assertEqual(scheduled["status"], "partner_scheduled")
+        self.assertEqual(scheduled["deliveryType"], "partner")
+        activity_id = scheduled["id"]
+
+        # The scheduled activity sits in the partner's queue.
+        queue = self._get("/api/partners/me/activities", 200)
+        self.assertTrue(any(row["id"] == activity_id for row in queue))
 
         # Partner unlocks completion + uploads evidence.
         self._post(f"/api/activities/{activity_id}/start-completion", {}, 200)
@@ -226,14 +229,19 @@ class PartnerAndClusterFlowTest(APITestCase):
         )
 
         # Schedule through the cluster, with an exact date + participants.
+        # Mandatory catalogue: GOVERNMENT_STATUTORY_REQUIREMENTS is a
+        # cluster_training item mapped to government_requirement — the member
+        # school's second-weakest verified SSA intervention (score 5), so it
+        # is a primary cluster recommendation and needs no override reason.
         scheduled = self._post(
             "/api/planning/schedule-cluster-training",
             {
                 "clusterId": cluster["id"],
+                "catalogueItemId": "GOVERNMENT_STATUTORY_REQUIREMENTS",
                 "scheduledDate": "2026-07-20T09:00:00+03:00",
                 "plannedMonth": 7,
                 "expectedParticipants": 12,
-                "purposeIntervention": "leadership",
+                "focusIntervention": "government_requirement",
             },
             201,
         )

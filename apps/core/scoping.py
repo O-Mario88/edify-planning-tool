@@ -268,9 +268,15 @@ def _resolve_user_scope_uncached(user) -> UserScope:
             from apps.projects.models import Project, ProjectSchoolAssignment
 
             project_ids = list(
-                Project.objects.filter(manager_staff_id=staff_id).values_list(
-                    "id", flat=True
+                Project.objects.filter(
+                    Q(manager_staff_id=staff_id)
+                    | Q(
+                        staff_assignments__staff_id=staff_id,
+                        staff_assignments__is_active=True,
+                    )
                 )
+                .distinct()
+                .values_list("id", flat=True)
             )
             own_school_ids = list(
                 ProjectSchoolAssignment.objects.filter(

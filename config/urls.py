@@ -97,6 +97,8 @@ urlpatterns = [
     *api("ssa", "apps.ssa.urls"),
     # Activities — the 21-state field-work lifecycle.
     *api("activities", "apps.activities.urls"),
+    # Governed Activity Catalogue master data + SSA-led suggestions.
+    *api("activity-catalogue", "apps.activity_catalogue.urls"),
     # Budget — the cost spine.
     *api("budget", "apps.budget.urls"),
     # Direct costing preview
@@ -105,6 +107,7 @@ urlpatterns = [
     *api("budgets", "apps.budget.budgets_urls"),
     # Partners — partner-org directory + self-service.
     *api("partners", "apps.partners.urls"),
+    *api("partner-assignments", "apps.partners.assignment_urls"),
     # Assignment — capacity + valid options.
     *api("assignment", "apps.assignment.urls"),
     # Filters — shared filter-bar options + counts.
@@ -143,6 +146,7 @@ urlpatterns = [
     *api("evidence", "apps.evidence.urls"),
     # Special projects.
     *api("special-projects", "apps.projects.urls"),
+    *api("projects", "apps.projects.urls"),
     # Messaging — in-app threads.
     *api("messages", "apps.messaging.urls"),
     # Notifications — per-user rail.

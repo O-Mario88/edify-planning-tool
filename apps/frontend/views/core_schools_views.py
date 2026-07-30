@@ -308,6 +308,22 @@ def core_schedule_visit_drawer(request):
 
     reco = CoreInterventionRecommendationService.recommend(school)
     recommendations = reco["rows"]
+    from apps.activity_catalogue.services import recommend_activities
+
+    catalogue_result = recommend_activities(
+        school=school,
+        principal=request.user,
+        executor_type="staff",
+        limit=3,
+    )
+    visit_catalogue_items = [
+        row
+        for row in [
+            *catalogue_result["primary"],
+            *catalogue_result["otherEligible"],
+        ]
+        if row["stableCode"] == "CORE_SCHOOL_FOLLOWUP_VISIT"
+    ]
 
     staff_members = (
         StaffProfile.objects.all().select_related("user").order_by("user__name")
@@ -330,6 +346,7 @@ def core_schedule_visit_drawer(request):
         else None,
         "available_visit_slots": available_visit_slots,
         "interventions": SsaIntervention.choices,
+        "catalogue_items": visit_catalogue_items,
     }
     return render(request, "partials/core_schools/schedule_visit_drawer.html", context)
 
@@ -347,6 +364,13 @@ def core_schedule_visit_action(request):
     expected_outcome = request.POST.get("expected_outcome", "").strip()
     responsible_staff_id = request.POST.get("responsible_staff_id")
     partner_id = request.POST.get("assigned_partner_id")
+    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
+    source_activity_id = request.POST.get("source_activity_id", "").strip()
+    if not catalogue_item_id:
+        return error_fragment(
+            BadRequest("Select an eligible approved Catalogue visit."),
+            status=400,
+        )
 
     try:
         visit_sequence = int(visit_seq)
@@ -366,6 +390,10 @@ def core_schedule_visit_action(request):
         "expectedOutcome": expected_outcome,
         "responsibleStaffId": responsible_staff_id,
         "deliveryType": "partner" if partner_id else "staff",
+        "catalogueItemId": catalogue_item_id,
+        "requireCatalogue": True,
+        "sourceActivityId": source_activity_id,
+        "recommendationReason": request.POST.get("recommendation_reason", ""),
         # Omit the key entirely for staff delivery — an empty string would be
         # stamped into the budget line's partner FK and violate the constraint.
         **({"assignedPartnerId": partner_id} if partner_id else {}),
@@ -402,8 +430,9 @@ def core_schedule_visit_action(request):
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
             # without it, closing the raw-POST bypass around the slot cap.
-            payload["coreSlotVerified"] = True
-            act_data = create_activity(payload, request.user)
+            act_data = create_activity(
+                payload, request.user, core_slot_verified=True
+            )
 
             # 2. Commit the policy-checked slot through the same service that
             # locked it, so the 4 + 4 guard and the state it protects share an
@@ -459,6 +488,20 @@ def core_schedule_training_drawer(request):
 
     reco = CoreInterventionRecommendationService.recommend(school)
     recommendations = reco["rows"]
+    from apps.activity_catalogue.services import recommend_activities
+
+    catalogue_result = recommend_activities(
+        school=school,
+        principal=request.user,
+        executor_type="staff",
+        limit=3,
+    )
+    training_catalogue_items = [
+        row
+        for row in catalogue_result["primary"]
+        if row["workflowKind"]
+        not in {"core_visit", "follow_up_visit", "baseline_ssa_visit"}
+    ]
 
     staff_members = (
         StaffProfile.objects.all().select_related("user").order_by("user__name")
@@ -482,6 +525,7 @@ def core_schedule_training_drawer(request):
         "available_training_slots": available_training_slots,
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "interventions": SsaIntervention.choices,
+        "catalogue_items": training_catalogue_items,
     }
     return render(
         request, "partials/core_schools/schedule_training_drawer.html", context
@@ -501,6 +545,12 @@ def core_schedule_training_action(request):
     expected_participants = request.POST.get("expected_participants", "10")
     responsible_staff_id = request.POST.get("responsible_staff_id")
     partner_id = request.POST.get("assigned_partner_id")
+    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
+    if not catalogue_item_id:
+        return error_fragment(
+            BadRequest("Select an eligible approved Catalogue Training."),
+            status=400,
+        )
 
     try:
         training_sequence = int(train_seq)
@@ -522,6 +572,9 @@ def core_schedule_training_action(request):
         else 10,
         "responsibleStaffId": responsible_staff_id,
         "deliveryType": "partner" if partner_id else "staff",
+        "catalogueItemId": catalogue_item_id,
+        "requireCatalogue": True,
+        "recommendationReason": request.POST.get("recommendation_reason", ""),
         # Omit the key entirely for staff delivery — an empty string would be
         # stamped into the budget line's partner FK and violate the constraint.
         **({"assignedPartnerId": partner_id} if partner_id else {}),
@@ -558,8 +611,9 @@ def core_schedule_training_action(request):
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
             # without it, closing the raw-POST bypass around the slot cap.
-            payload["coreSlotVerified"] = True
-            act_data = create_activity(payload, request.user)
+            act_data = create_activity(
+                payload, request.user, core_slot_verified=True
+            )
 
             # 2. Commit the policy-checked slot through the same service that
             # locked it, so the 4 + 4 guard and the state it protects share an
@@ -613,6 +667,22 @@ def core_assign_partner_drawer(request):
     available_training_slots = (
         CorePackageSchedulingService.available_options(plan, "training") if plan else []
     )
+    from apps.activity_catalogue.services import recommend_activities
+
+    catalogue_result = recommend_activities(
+        school=school,
+        principal=request.user,
+        executor_type="partner",
+        limit=3,
+    )
+    catalogue_items = [
+        *catalogue_result["primary"],
+        *[
+            row
+            for row in catalogue_result["otherEligible"]
+            if row["stableCode"] == "CORE_SCHOOL_FOLLOWUP_VISIT"
+        ],
+    ]
 
     context = {
         "school": school,
@@ -621,6 +691,7 @@ def core_assign_partner_drawer(request):
         "available_visit_slots": available_visit_slots,
         "available_training_slots": available_training_slots,
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
+        "catalogue_items": catalogue_items,
     }
     return render(request, "partials/core_schools/assign_partner_drawer.html", context)
 
@@ -663,11 +734,85 @@ def core_assign_partner_action(request):
     purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     focus_intervention = request.POST.get("focus_intervention")
     notes = request.POST.get("notes", "").strip()
+    catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
+    source_activity_id = request.POST.get("source_activity_id", "").strip() or None
 
     partner = get_object_or_404(Partner, id=partner_id)
 
     try:
         with transaction.atomic():
+            from apps.activity_catalogue.services import (
+                get_selectable_item,
+                recommend_activities,
+                resolve_activity_intervention,
+                validate_context,
+            )
+            from apps.ssa.services import latest_applicable_record
+
+            if not catalogue_item_id:
+                raise BadRequest("Select an eligible approved Catalogue Activity.")
+            catalogue_item = get_selectable_item(catalogue_item_id)
+            recommendation_result = recommend_activities(
+                school=school,
+                principal=request.user,
+                executor_type="partner",
+                limit=3,
+            )
+            recommendation_rows = [
+                *recommendation_result["primary"],
+                *recommendation_result["otherEligible"],
+            ]
+            recommendation = next(
+                (
+                    row
+                    for row in recommendation_rows
+                    if row["catalogueItemId"] == catalogue_item.id
+                ),
+                None,
+            )
+            override_reason = (request.POST.get("override_reason") or "").strip()
+            if recommendation is None and not override_reason:
+                raise BadRequest(
+                    "The selected Partner Activity is not eligible in the "
+                    "current Core School SSA context."
+                )
+            if (
+                recommendation
+                and focus_intervention != recommendation["targetIntervention"]
+                and not override_reason
+            ):
+                raise BadRequest(
+                    "The selected intervention does not match this Catalogue "
+                    "recommendation."
+                )
+            source_activity = (
+                Activity.objects.filter(
+                    id=source_activity_id,
+                    school=school,
+                    deleted_at__isnull=True,
+                ).first()
+                if source_activity_id
+                else None
+            )
+            validate_context(
+                catalogue_item,
+                school=school,
+                cluster=None,
+                project=None,
+                executor_type="partner",
+            )
+            focus_intervention = resolve_activity_intervention(
+                catalogue_item,
+                requested_intervention=focus_intervention,
+                source_activity=source_activity,
+            )
+            if (
+                support_type == "Visit"
+                and catalogue_item.core_slot_type != "VISIT"
+            ):
+                raise BadRequest("Choose the approved Core Visit Catalogue item.")
+            if support_type == "Training" and catalogue_item.activity_type != "training":
+                raise BadRequest("Choose an approved Training Catalogue item.")
             if support_type not in {"Visit", "Training"}:
                 raise BadRequest("Choose either a visit or training support slot.")
             from apps.partners.purposes import normalise_visit_purpose
@@ -704,11 +849,23 @@ def core_assign_partner_action(request):
                 school=school,
                 partner=partner,
                 assigning_staff_id=request.user.staff_profile_id,
+                assignment_mode="specific_activity",
+                catalogue_item=catalogue_item,
+                source_ssa=latest_applicable_record(school),
+                source_activity=source_activity,
+                recommendation_reason=request.POST.get(
+                    "recommendation_reason", ""
+                )
+                or (
+                    recommendation["recommendationReason"]
+                    if recommendation
+                    else "Authorized Core School alternative."
+                ),
+                override_reason=override_reason,
+                catalogue_snapshot=catalogue_item.snapshot(),
                 focus_intervention=focus_intervention,
                 purpose_of_visit=purpose_of_visit,
-                expected_activity_type="core_visit"
-                if support_type == "Visit"
-                else "core_training",
+                expected_activity_type=catalogue_item.workflow_kind,
                 notes=notes,
                 status="assigned",
                 visit_number=visit_training_number if support_type == "Visit" else "",

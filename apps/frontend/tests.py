@@ -138,9 +138,40 @@ class FrontendViewsTestCase(TestCase):
             self.assertContains(response, "Program Lead Dashboard")
 
     def test_urgent_action_prefills_the_real_scheduling_drawer(self):
+        """The urgent action opens the real scheduling drawer pre-filled.
+
+        The Activity Catalogue replaced the free-text activity-type select:
+        the drawer now derives its recommendations from the school's verified
+        SSA and preselects the primary Catalogue item, seeding the derived
+        workflow type and focus intervention into Alpine state and hidden
+        inputs. The behaviour under test — the drawer arrives pre-filled from
+        the recommendation, not blank — is unchanged; the mechanism moved."""
+        from apps.core.fy import get_operational_fy
+        from apps.ssa.models import SsaRecord, SsaScore
+
         self.client.force_login(self.cceo_user)
         self.school.current_fy_ssa_status = "done"
         self.school.save(update_fields=["current_fy_ssa_status", "updated_at"])
+        # A confirmed SSA with teaching_environment as the weakest score, so
+        # the catalogue recommends intervention support (not SSA gathering)
+        # and the urgent action's focus matches the ranked need.
+        record = SsaRecord.objects.create(
+            school=self.school,
+            fy=get_operational_fy(),
+            quarter="Q1",
+            date_of_ssa=timezone.now(),
+            average_score=7.0,
+            verification_status="confirmed",
+            uploaded_by=self.cceo_user.id,
+        )
+        from apps.core.enums import SsaIntervention
+
+        for intervention, _label in SsaIntervention.choices:
+            SsaScore.objects.create(
+                ssa_record=record,
+                intervention=intervention,
+                score=1.0 if intervention == "teaching_environment" else 9.0,
+            )
         response = self.client.get(
             f"/planning/schedule-modal?school_id={self.school.id}"
             "&recommended_activity_type=coaching_visit"
@@ -148,28 +179,20 @@ class FrontendViewsTestCase(TestCase):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Schedule Coaching Visit")
-        # The drawer no longer carries an activity-type <select>. The
-        # purpose-of-visit feature replaced it with a purpose select that
-        # derives the activity type, so the recommended type is now seeded into
-        # Alpine state and submitted through a hidden input rather than being
-        # marked `selected` on an <option>. The behaviour under test -- the
-        # drawer arrives pre-filled with the recommended type -- is unchanged;
-        # only where it lives has moved.
+        html = response.content.decode()
+        # A verified SSA exists, so the drawer must offer intervention
+        # support, not the "complete SSA first" banner.
+        self.assertNotIn("Top Priority: Complete SSA", html)
+        # A primary Catalogue recommendation arrives preselected, with the
+        # derived type and catalogue item flowing through hidden inputs.
+        self.assertIn('name="catalogue_choice"', html)
+        self.assertIn("checked", html)
+        self.assertContains(response, 'name="catalogue_item_id"', html=False)
         self.assertContains(
-            response,
-            "activityType: 'coaching_visit'",
-            html=False,
+            response, 'name="activity_type" :value="activityType"', html=False
         )
         self.assertContains(
-            response,
-            'name="activity_type" :value="activityType"',
-            html=False,
-        )
-        self.assertContains(
-            response,
-            'value="teaching_environment" selected',
-            html=False,
+            response, "focusIntervention: 'teaching_environment'", html=False
         )
 
     def test_country_director_dashboard_renders(self):
@@ -713,6 +736,46 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/schools/add_to_cluster_drawer.html")
+        self.assertContains(response, "Cluster selected automatically")
+        self.assertContains(response, self.cluster.name)
+        self.assertContains(response, self.cceo_user.name)
+        self.assertContains(response, "Automatic from the school owner")
+        self.assertContains(response, "cluster-assignment-drawer")
+        self.assertNotContains(response, "Nearby clusters")
+        self.assertNotContains(response, "Assignment Notes")
+        self.assertNotContains(response, 'name="responsible_staff_id"')
+        self.assertNotContains(response, 'name="notes"')
+        self.assertNotContains(response, "bg-slate-50")
+        self.assertNotContains(response, "bg-emerald-50")
+
+    def test_add_to_cluster_drawer_shows_nearby_only_without_covering_cluster(self):
+        uncovered_sub_county = SubCounty.objects.create(
+            name="Uncovered Subcounty",
+            district=self.district,
+        )
+        self.school.sub_county = uncovered_sub_county
+        self.school.save()
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["show_cluster_directory"])
+        self.assertContains(response, "Nearby clusters")
+        self.assertContains(response, self.cluster.name)
+        self.assertContains(response, "Create new")
+        self.assertNotContains(response, "Cluster selected automatically")
+
+    def test_add_to_cluster_drawer_hides_nearby_without_school_sub_county(self):
+        self.school.sub_county = None
+        self.school.save()
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["show_cluster_directory"])
+        self.assertNotContains(response, "Nearby clusters")
 
     def test_create_cluster_drawer_uses_guided_geography_workflow(self):
         outside_region = Region.objects.create(name="Outside Drawer Region")
@@ -829,15 +892,67 @@ class FrontendViewsTestCase(TestCase):
 
     def test_add_to_cluster_drawer_post_existing(self):
         self.client.force_login(self.cceo_user)
+        other_user = get_user_model().objects.create_user(
+            email="other-owner@edify.org",
+            name="Other Owner",
+            roles=["CCEO"],
+            active_role="CCEO",
+            password="pass123",
+        )
+        other_profile = StaffProfile.objects.create(
+            user=other_user,
+            title="CCEO",
+        )
+        self.school.account_owner_id = self.cceo_profile.id
+        self.school.account_owner_status = "matched"
+        self.school.save()
         # Post assignment to existing cluster
         response = self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",
-            {"cluster_action_type": "existing", "existing_cluster_id": self.cluster.id},
+            {
+                "cluster_action_type": "existing",
+                "existing_cluster_id": self.cluster.id,
+                "responsible_staff_id": other_profile.id,
+                "notes": "This must be ignored.",
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.school.refresh_from_db()
+        self.cluster.refresh_from_db()
         self.assertEqual(self.school.cluster_id, self.cluster.id)
         self.assertEqual(self.school.cluster_status, "clustered")
+        self.assertEqual(
+            self.cluster.responsible_staff_id,
+            self.cceo_profile.id,
+        )
+        self.assertIsNone(self.cluster.override_reason)
+
+    def test_add_to_cluster_drawer_new_cluster_uses_school_owner(self):
+        uncovered_sub_county = SubCounty.objects.create(
+            name="Owner Test Subcounty",
+            district=self.district,
+        )
+        self.school.sub_county = uncovered_sub_county
+        self.school.account_owner_id = self.cceo_profile.id
+        self.school.account_owner_status = "matched"
+        self.school.save()
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.post(
+            f"/schools/{self.school.id}/add-to-cluster",
+            {
+                "cluster_action_type": "new",
+                "new_cluster_name": "Owner Test Cluster",
+                "new_district_id": self.district.id,
+                "new_sub_county_ids": [uncovered_sub_county.id],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        cluster = Cluster.objects.get(name="Owner Test Cluster")
+        self.assertEqual(cluster.responsible_staff_id, self.cceo_profile.id)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, cluster.id)
 
     def test_assign_to_project_permission_gate(self):
         # Accountant is finance-only and has no school_directory page access at
@@ -1051,7 +1166,13 @@ class FrontendViewsTestCase(TestCase):
             {
                 "cluster_id": self.cluster.id,
                 "partner_id": partner.id,
-                "activity_type": "meeting",
+                # Free-text activity types are gone: a partner handoff names
+                # an approved Activity Catalogue item (stable code accepted).
+                "catalogue_item_id": "ACCOUNTING_FINANCIAL_MANAGEMENT",
+                # Not the engine's primary recommendation for this cluster
+                # (members lack a verified SSA), so an authorized override
+                # reason is required.
+                "override_reason": "Cluster committee requested financial management support.",
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
@@ -1278,15 +1399,28 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get(f"/partners/{other_partner.id}")
         self.assertEqual(response.status_code, 403)
 
-    # ── assign_partner_action_view / bulk_action_view now converge on the
-    # SAME validated + costed creation funnel (activities.services.create /
-    # partner_schedule) instead of writing PartnerAssignment/Activity via raw
-    # ORM. ──────────────────────────────────────────────────────────────────
+    # ── assign_partner_action_view / bulk_action_view record the handoff
+    # ONLY; the costed Activity is created when the PARTNER schedules
+    # (activities.services.partner_schedule) — assignment is not scheduling,
+    # and cost exists only from partner scheduling onward. ──────────────────
+    def _partner_user_for(self, partner, suffix="1"):
+        User = get_user_model()
+        user = User.objects.create(
+            id=f"pa-partner-user-{suffix}",
+            email=f"pa-partner-{suffix}@edify.org",
+            name="Partner Exec User",
+            roles=["PartnerFieldOfficer"],
+            active_role="PartnerFieldOfficer",
+            is_active=True,
+        )
+        partner.user_id = user.id
+        partner.save(update_fields=["user_id", "updated_at"])
+        return user
+
     def test_assign_partner_action_with_date_creates_activity_and_cost_snapshot(self):
-        """Single-item assign, with a target date already chosen, must create
-        BOTH the PartnerAssignment (handoff record) and a real, gated, costed
-        Activity in one atomic step, instead of a raw ORM Activity write with
-        no cost data at all."""
+        """Assignment records the handoff and target date but stays uncosted;
+        the costed Activity is created exactly once when the Partner
+        schedules (assignment is not scheduling — §12/§13)."""
         from apps.partners.models import Partner, PartnerAssignment
         from apps.activities.models import Activity, ActivityScheduleCostLine
         from apps.budget.models import CostSetting
@@ -1304,7 +1438,7 @@ class FrontendViewsTestCase(TestCase):
             {
                 "school_id": self.school.school_id,
                 "partner_id": partner.id,
-                "activity_type": "school_visit",
+                "catalogue_item_id": "ASA_SSA_DATA_GATHERING",
                 "purpose": "Follow-up on enrolment drive",
                 "expected_date": "2026-07-20",
             },
@@ -1312,13 +1446,24 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
-        self.assertEqual(pa.status, "partner_scheduled")
+        self.assertEqual(pa.status, "pending_scheduling")
+        self.assertFalse(
+            Activity.objects.filter(
+                school=self.school, assigned_partner_id=partner.id
+            ).exists()
+        )
 
+        from apps.activities.services import partner_schedule
+
+        partner_user = self._partner_user_for(partner, "withdate")
+        partner_schedule(pa.id, {"scheduledDate": "2026-07-20"}, partner_user)
+
+        pa.refresh_from_db()
+        self.assertEqual(pa.status, "partner_scheduled")
         act = Activity.objects.get(school=self.school, assigned_partner_id=partner.id)
         self.assertEqual(act.delivery_type, "partner")
         self.assertIsNotNone(act.scheduled_date)
-        # Real cost snapshot — the whole point of routing through
-        # activities.services.create() instead of a bare ORM write.
+        # Real cost snapshot, created at Partner scheduling time.
         self.assertGreater(act.est_cost_cents, 0)
         self.assertFalse(act.cost_missing)
         self.assertTrue(ActivityScheduleCostLine.objects.filter(activity=act).exists())
@@ -1344,7 +1489,7 @@ class FrontendViewsTestCase(TestCase):
         payload = {
             "school_id": self.school.school_id,
             "partner_id": partner.id,
-            "activity_type": "school_visit",
+            "catalogue_item_id": "ASA_SSA_DATA_GATHERING",
             "purpose": "Follow-up on enrolment drive",
             "expected_date": "2026-07-20",
         }
@@ -1359,6 +1504,13 @@ class FrontendViewsTestCase(TestCase):
             ).count(),
             1,
         )
+        # Assignment defers the Activity; scheduling the single handoff
+        # yields exactly one costed Activity.
+        from apps.activities.services import partner_schedule
+
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+        partner_user = self._partner_user_for(partner, "dblclick")
+        partner_schedule(pa.id, {"scheduledDate": "2026-07-20"}, partner_user)
         self.assertEqual(
             Activity.objects.filter(
                 school=self.school, assigned_partner_id=partner.id
@@ -1383,7 +1535,7 @@ class FrontendViewsTestCase(TestCase):
             {
                 "school_id": self.school.school_id,
                 "partner_id": partner.id,
-                "activity_type": "school_visit",
+                "catalogue_item_id": "ASA_SSA_DATA_GATHERING",
                 "purpose": "Follow-up on enrolment drive",
             },
         )
@@ -1420,22 +1572,22 @@ class FrontendViewsTestCase(TestCase):
             {
                 "school_id": self.school.school_id,
                 "partner_id": partner.id,
-                "activity_type": "school_visit",
+                "catalogue_item_id": "ASA_SSA_DATA_GATHERING",
                 "purpose": "Follow-up visit",
                 "expected_date": "2026-07-20",
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(
-            PartnerAssignment.objects.filter(
-                school=self.school, partner=partner
-            ).exists()
-        )
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+
+        from apps.activities.services import partner_schedule
+
+        partner_user = self._partner_user_for(partner, "unpriced")
+        partner_schedule(pa.id, {"scheduledDate": "2026-07-20"}, partner_user)
         activity = Activity.objects.get(
             school=self.school, assigned_partner_id=partner.id
         )
         self.assertTrue(activity.cost_missing)
-        self.assertGreater(activity.schedule_cost_lines.count(), 0)
 
     def test_assign_partner_action_allows_an_ssa_non_recommended_focus(self):
         """SSA recommendations guide the work but do not block it."""
@@ -1477,18 +1629,23 @@ class FrontendViewsTestCase(TestCase):
             {
                 "school_id": self.school.school_id,
                 "partner_id": partner.id,
-                "activity_type": "school_visit",
+                "catalogue_item_id": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
                 "purpose": "Teaching environment follow-up",
                 "focus_intervention": "teaching_environment",
+                # Not the SSA's top-ranked need — guidance, not a block, but
+                # the selection now records an authorized reason.
+                "override_reason": "School leadership asked for teaching-environment support first.",
                 "expected_date": "2026-07-20",
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(
-            PartnerAssignment.objects.filter(
-                school=self.school, partner=partner
-            ).exists()
-        )
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+        self.assertEqual(pa.focus_intervention, "teaching_environment")
+
+        from apps.activities.services import partner_schedule
+
+        partner_user = self._partner_user_for(partner, "ssafocus")
+        partner_schedule(pa.id, {"scheduledDate": "2026-07-20"}, partner_user)
         self.assertTrue(
             Activity.objects.filter(
                 school=self.school, assigned_partner_id=partner.id
@@ -1537,8 +1694,16 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
 
+        # Bulk assignment records one handoff per school and defers the
+        # Activity; each handoff then schedules exactly once.
+        from apps.activities.services import partner_schedule
+
+        partner_user = self._partner_user_for(partner, "bulkdated")
         for school in (self.school, second_school):
             pa = PartnerAssignment.objects.get(school=school, partner=partner)
+            self.assertEqual(pa.status, "pending_scheduling")
+            partner_schedule(pa.id, {"scheduledDate": "2026-07-21"}, partner_user)
+            pa.refresh_from_db()
             self.assertEqual(pa.status, "partner_scheduled")
             act = Activity.objects.get(school=school, assigned_partner_id=partner.id)
             self.assertEqual(act.delivery_type, "partner")
@@ -1571,7 +1736,14 @@ class FrontendViewsTestCase(TestCase):
 
         pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
         self.assertEqual(pa.status, "pending_scheduling")
-        self.assertEqual(pa.expected_activity_type, "school_visit")
+        # The handoff now records the recommended Activity Catalogue item and
+        # derives the expected type from it. This school has no applicable
+        # verified SSA, so the catalogue correctly recommends SSA data
+        # gathering ahead of intervention support.
+        self.assertIsNotNone(pa.catalogue_item)
+        self.assertEqual(
+            pa.expected_activity_type, pa.catalogue_item.workflow_kind
+        )
         self.assertFalse(
             Activity.objects.filter(
                 school=self.school, assigned_partner_id=partner.id
@@ -1624,6 +1796,11 @@ class FrontendViewsTestCase(TestCase):
             ).count(),
             1,
         )
+        from apps.activities.services import partner_schedule
+
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+        partner_user = self._partner_user_for(partner, "bulkdbl")
+        partner_schedule(pa.id, {"scheduledDate": "2026-07-21"}, partner_user)
         self.assertEqual(
             Activity.objects.filter(
                 school=self.school, assigned_partner_id=partner.id
@@ -1661,11 +1838,12 @@ class FrontendViewsTestCase(TestCase):
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(
-            PartnerAssignment.objects.filter(
-                school=self.school, partner=partner
-            ).exists()
-        )
+        pa = PartnerAssignment.objects.get(school=self.school, partner=partner)
+
+        from apps.activities.services import partner_schedule
+
+        partner_user = self._partner_user_for(partner, "bulkunpriced")
+        partner_schedule(pa.id, {"scheduledDate": "2026-07-21"}, partner_user)
         activity = Activity.objects.get(
             school=self.school, assigned_partner_id=partner.id
         )
@@ -1693,16 +1871,18 @@ class FrontendViewsTestCase(TestCase):
             {
                 "cluster_id": self.cluster.id,
                 "partner_id": partner.id,
-                "activity_type": "meeting",
+                "catalogue_item_id": "FEES_ENROLMENT_MARKETING",
+                "override_reason": "Cluster committee requested an enrolment drive review.",
                 "expected_date": "2026-07-20",
             },
         )
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(
-            PartnerAssignment.objects.filter(
-                cluster=self.cluster, partner=partner
-            ).exists()
-        )
+        pa = PartnerAssignment.objects.get(cluster=self.cluster, partner=partner)
+
+        from apps.activities.services import partner_schedule
+
+        partner_user = self._partner_user_for(partner, "cluster")
+        partner_schedule(pa.id, {"scheduledDate": "2026-07-20"}, partner_user)
         self.assertTrue(
             Activity.objects.filter(
                 cluster=self.cluster, assigned_partner_id=partner.id

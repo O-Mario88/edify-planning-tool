@@ -33,6 +33,20 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
     confirmed/disbursed requests for a line are preserved (a reschedule re-prices
     the line; we refresh amount but do not reset a confirmed/disbursed advance)."""
     responsible = responsible_user_id or activity.responsible_staff_id
+    # Partner-delivered work is paid through the PartnerPayment workflow after
+    # IA clearance — its cost lines must never mirror into the staff advance
+    # channel, or the same cost becomes payable twice (staff advance + partner
+    # payment). Drop any advances a previous sync created, except ones whose
+    # money already moved (those settle through accountability/return).
+    if activity.delivery_type == "partner":
+        AdvanceRequest.objects.filter(activity=activity).exclude(
+            status__in=[
+                AdvanceRequestStatus.DISBURSED,
+                AdvanceRequestStatus.ACCOUNTED,
+                AdvanceRequestStatus.REIMBURSED,
+            ]
+        ).delete()
+        return
     lines = list(activity.schedule_cost_lines.all())
     line_ids = {line.id for line in lines}
 
@@ -184,6 +198,33 @@ def disburse(advance_id: str, data: dict, principal) -> dict:
                 f"Cannot disburse an advance in status '{adv.status}'. The responsible "
                 "user must confirm the advance first."
             )
+        # Approval-chain guard: the owner's confirmation alone is a REQUEST,
+        # not an approval. The weekly fund request that carries this line
+        # routes CCEO→PL and PL→CD; disbursing the per-line advance directly
+        # used to skip that chain entirely. Money may only move once the
+        # governing weekly request has cleared approval (or was routed
+        # direct for CD/Admin owners, which also lands on confirmed_for_advance).
+        from .models import WeeklyFundRequest
+
+        bl = adv.budget_line
+        if bl is not None and bl.week_start_date:
+            wfr = WeeklyFundRequest.objects.filter(
+                responsible_user=adv.responsible_user_id,
+                week_start_date=bl.week_start_date,
+            ).first()
+            unapproved = wfr is None or wfr.status in (
+                "pending_responsible_confirmation",
+                "submitted_to_pl",
+                "submitted_to_cd",
+                "returned_by_pl",
+                "returned_by_cd",
+            )
+            if unapproved:
+                raise BadRequest(
+                    "Cannot disburse — this advance's weekly fund request has "
+                    "not been approved yet. Submit and approve the weekly "
+                    "request first."
+                )
         adv.disbursed_amount = int(data.get("amount", adv.amount))
         adv.disbursed_at = timezone.now()
         adv.disbursed_by_user_id = principal.user_id

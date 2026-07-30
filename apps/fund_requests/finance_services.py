@@ -8,6 +8,7 @@ from apps.activities.closure_services import (
 )
 from apps.activities.models import Activity
 from apps.fund_requests.models import (
+    MONEY_MOVED_ADVANCE_STATUSES,
     AdvanceRequestStatus,
     Disbursement,
     PartnerPayment,
@@ -133,6 +134,18 @@ class AdvanceDisbursementService:
                 )
             )
             if not pending:
+                # Distinguish "money already out" from "not confirmed yet":
+                # a repeat disbursement attempt used to surface as the
+                # confirmation message below, inviting a retry through
+                # another channel instead of stating the money moved.
+                if activity.advance_requests.filter(
+                    status__in=MONEY_MOVED_ADVANCE_STATUSES
+                ).exists():
+                    raise BadRequest(
+                        "Cannot disburse — this activity's advances already "
+                        "had money released. Disbursing again would pay the "
+                        "same work twice."
+                    )
                 raise BadRequest(
                     "Cannot disburse — the responsible user has not confirmed "
                     "this advance yet. The Accountant may not disburse before "
@@ -243,11 +256,22 @@ class PartnerPaymentService:
         if reasons:
             raise BadRequest(f"Partner payment is blocked: {', '.join(reasons)}")
 
+        # Clamp to the planned budget — the same contract weekly_service.
+        # disburse enforces. The caller-supplied amount used to be written
+        # verbatim, so a typo (or a hostile caller) could pay a partner any
+        # figure with no relation to the activity's costed lines.
+        planned_total = (
+            activity.schedule_cost_lines.aggregate(s=Sum("amount"))["s"] or 0
+        )
+        if amount <= 0 or amount > planned_total:
+            raise BadRequest(
+                "Partner payment must be positive and within the activity's "
+                f"planned budget of {planned_total} UGX."
+            )
+
         # Cross-channel guard: a partner activity whose staff advance already
         # moved money must not ALSO be partner-paid against the same cost
         # lines (the advance and partner channels had no mutual exclusion).
-        from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
-
         if activity.advance_requests.filter(
             status__in=MONEY_MOVED_ADVANCE_STATUSES
         ).exists():

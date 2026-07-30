@@ -965,6 +965,13 @@ class PerformanceCycle(TimeStampedModel):
     ]
 
     id = CuidField()
+    strategic_priority_cycle = models.OneToOneField(
+        "hr.StrategicPriorityCycle",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="performance_cycle",
+    )
     fy = models.CharField(max_length=16, unique=True)
     active_window = models.CharField(max_length=32, choices=WINDOWS, default="none")
     window_opened_at = models.DateTimeField(null=True, blank=True)
@@ -1227,6 +1234,43 @@ class PriorityAccountability(models.TextChoices):
     NOT_APPLICABLE = "not_applicable", "Not applicable"
 
 
+class StrategicPriorityCycle(TimeStampedModel):
+    """One versioned strategic planning cycle; PerformanceCycle remains HR's
+    conversation-window controller and links to this strategy source."""
+
+    id = CuidField()
+    financial_year = models.CharField(max_length=16, unique=True)
+    title = models.CharField(max_length=255)
+    scope_type = models.CharField(max_length=32, default="regional")
+    region_id = models.CharField(max_length=64, null=True, blank=True)
+    country_id = models.CharField(max_length=64, null=True, blank=True)
+    owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    status = models.CharField(
+        max_length=24,
+        choices=[
+            ("draft", "Draft"),
+            ("rvp_review", "RVP Review"),
+            ("approved", "Approved"),
+            ("allocated", "Allocated"),
+            ("active", "Active"),
+            ("closed", "Closed"),
+            ("archived", "Archived"),
+        ],
+        default="draft",
+    )
+    opened_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    locked_at = models.DateTimeField(null=True, blank=True)
+    version = models.PositiveIntegerField(default=1)
+    created_by = models.CharField(max_length=30, null=True, blank=True)
+    updated_by = models.CharField(max_length=30, null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_strategic_priority_cycle"
+
+
 class StrategicPriority(TimeStampedModel):
     """One strategic priority, authored by the RVP or the Country Director.
 
@@ -1242,6 +1286,14 @@ class StrategicPriority(TimeStampedModel):
     """
 
     id = CuidField()
+    cycle = models.ForeignKey(
+        StrategicPriorityCycle,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="priorities",
+    )
+    code = models.CharField(max_length=96, null=True, blank=True, db_index=True)
     fy = models.CharField(max_length=16, db_index=True)
     level = models.CharField(max_length=16, choices=StrategicPriorityLevel.choices)
     parent = models.ForeignKey(
@@ -1256,6 +1308,10 @@ class StrategicPriority(TimeStampedModel):
 
     # ── The published contract (spec §4) ──────────────────────────────────
     title = models.CharField(max_length=255)
+    source_title = models.CharField(max_length=255, blank=True)
+    source_document = models.CharField(max_length=255, blank=True)
+    source_reference = models.CharField(max_length=128, blank=True)
+    version = models.PositiveIntegerField(default=1)
     strategic_purpose = models.TextField()
     expected_result = models.TextField(null=True, blank=True)
     minimum_standard = models.CharField(max_length=255, null=True, blank=True)
@@ -1362,3 +1418,286 @@ class StrategicPriorityRoleRule(TimeStampedModel):
         from apps.hr.priority_cascade import manager_role_for
 
         return manager_role_for(self.role)
+
+
+class MilestoneType(models.TextChoices):
+    OUTCOME = "outcome", "Outcome"
+    OUTPUT = "output", "Output"
+    ACTIVITY = "activity", "Activity"
+    QUALITY = "quality", "Quality"
+    DEADLINE = "deadline", "Deadline"
+    COMPLIANCE = "compliance", "Compliance"
+    DEVELOPMENT = "development", "Development"
+    BEHAVIOUR = "behaviour", "Behaviour"
+    NARRATIVE = "narrative", "Narrative"
+    COMPOSITE = "composite", "Composite"
+
+
+class MilestoneMeasurementType(models.TextChoices):
+    COUNT = "count", "Count"
+    PERCENTAGE = "percentage", "Percentage"
+    CURRENCY = "currency", "Currency"
+    DATE = "date", "Date"
+    BOOLEAN = "boolean", "Boolean"
+    RATIO = "ratio", "Ratio"
+    SCORE = "score", "Score"
+    COMPOSITE = "composite", "Composite"
+    MANUAL_ASSESSMENT = "manual_assessment", "Manual assessment"
+
+
+class MilestoneDefinitionStatus(models.TextChoices):
+    NEEDS_DEFINITION = "needs_definition", "Needs Definition"
+    DRAFT = "draft", "Draft"
+    DEFINED = "defined", "Defined"
+    APPROVED = "approved", "Approved"
+
+
+class MilestoneMetricDefinition(TimeStampedModel):
+    id = CuidField()
+    metric_key = models.CharField(max_length=128, unique=True)
+    canonical_label = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    source_models = models.JSONField(default=list, blank=True)
+    canonical_service = models.CharField(max_length=255, blank=True)
+    numerator_definition = models.TextField(blank=True)
+    denominator_definition = models.TextField(blank=True)
+    included_states = models.JSONField(default=list, blank=True)
+    excluded_states = models.JSONField(default=list, blank=True)
+    date_basis = models.CharField(max_length=64, blank=True)
+    financial_year_basis = models.CharField(max_length=64, blank=True)
+    counting_basis = models.CharField(max_length=64, blank=True)
+    quality_gate = models.CharField(max_length=128, blank=True)
+    rounding_rule = models.CharField(max_length=128, blank=True)
+    null_behavior = models.CharField(max_length=128, blank=True)
+    provisional_behavior = models.CharField(max_length=128, blank=True)
+    verified_behavior = models.CharField(max_length=128, blank=True)
+
+    class Meta:
+        db_table = "hr_milestone_metric_definition"
+
+
+class PriorityMilestone(TimeStampedModel):
+    id = CuidField()
+    priority = models.ForeignKey(
+        StrategicPriority, on_delete=models.CASCADE, related_name="milestones"
+    )
+    code = models.CharField(max_length=128)
+    title = models.CharField(max_length=255)
+    source_text = models.TextField()
+    description = models.TextField(blank=True)
+    milestone_type = models.CharField(max_length=24, choices=MilestoneType.choices)
+    measurement_type = models.CharField(
+        max_length=24, choices=MilestoneMeasurementType.choices
+    )
+    progress_source = models.CharField(max_length=64)
+    metric_definition = models.ForeignKey(
+        MilestoneMetricDefinition,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="milestones",
+    )
+    target_value = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    target_unit = models.CharField(max_length=64, blank=True)
+    target_source_text = models.CharField(max_length=255, blank=True)
+    denominator_definition = models.TextField(blank=True)
+    quality_gate = models.CharField(max_length=128, blank=True)
+    role_applicability = models.JSONField(default=list, blank=True)
+    country_applicability = models.JSONField(default=list, blank=True)
+    project_applicability = models.JSONField(default=list, blank=True)
+    activity_catalogue_rules = models.JSONField(default=list, blank=True)
+    requires_definition = models.BooleanField(default=False)
+    definition_status = models.CharField(
+        max_length=24,
+        choices=MilestoneDefinitionStatus.choices,
+        default=MilestoneDefinitionStatus.NEEDS_DEFINITION,
+    )
+    owner = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    weight = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    start_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    active = models.BooleanField(default=False)
+    version = models.PositiveIntegerField(default=1)
+    source_order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        db_table = "hr_priority_milestone"
+        ordering = ["priority", "source_order"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["priority", "code"], name="uniq_priority_milestone_code"
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(active=True)
+                | models.Q(
+                    definition_status=MilestoneDefinitionStatus.APPROVED,
+                    requires_definition=False,
+                    metric_definition__isnull=False,
+                ),
+                name="active_milestone_must_be_defined",
+            ),
+        ]
+
+
+class MilestoneAllocation(TimeStampedModel):
+    id = CuidField()
+    milestone = models.ForeignKey(
+        PriorityMilestone, on_delete=models.PROTECT, related_name="allocations"
+    )
+    allocated_to_type = models.CharField(max_length=32)
+    country_id = models.CharField(max_length=64, null=True, blank=True)
+    team_id = models.CharField(max_length=64, null=True, blank=True)
+    employee = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="milestone_allocations",
+    )
+    project = models.ForeignKey(
+        "projects.Project",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="milestone_allocations",
+    )
+    allocated_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    denominator = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    weight = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    allocation_reason = models.TextField()
+    allocated_by = models.CharField(max_length=30)
+    approved_by = models.CharField(max_length=30, null=True, blank=True)
+    effective_date = models.DateField()
+    status = models.CharField(max_length=24, default="draft")
+    version = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        db_table = "hr_milestone_allocation"
+
+
+class MilestonePeriodTarget(TimeStampedModel):
+    id = CuidField()
+    milestone = models.ForeignKey(
+        PriorityMilestone, on_delete=models.PROTECT, related_name="period_targets"
+    )
+    allocation = models.ForeignKey(
+        MilestoneAllocation,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="period_targets",
+    )
+    scope = models.CharField(max_length=32)
+    country_id = models.CharField(max_length=64, null=True, blank=True)
+    team_id = models.CharField(max_length=64, null=True, blank=True)
+    employee = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="milestone_period_targets",
+    )
+    period_type = models.CharField(max_length=16)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    planned_value = models.DecimalField(max_digits=18, decimal_places=2)
+    actual_value = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    actual_source = models.CharField(max_length=128, blank=True)
+    achievement_percentage = models.DecimalField(
+        max_digits=8, decimal_places=2, default=0
+    )
+    status = models.CharField(max_length=24, default="not_started")
+    snapshot_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_milestone_period_target"
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "milestone",
+                    "allocation",
+                    "period_type",
+                    "period_start",
+                ],
+                name="uniq_milestone_period_target",
+            )
+        ]
+
+
+class MilestoneActivityRule(TimeStampedModel):
+    id = CuidField()
+    milestone = models.ForeignKey(
+        PriorityMilestone, on_delete=models.CASCADE, related_name="activity_rules"
+    )
+    catalogue_item = models.ForeignKey(
+        "activity_catalogue.ActivityCatalogueItem",
+        on_delete=models.PROTECT,
+        related_name="milestone_rules",
+    )
+    counting_basis = models.CharField(max_length=64)
+    required_delivery_method = models.CharField(max_length=32, blank=True)
+    required_executor_type = models.CharField(max_length=16, blank=True)
+    project = models.ForeignKey(
+        "projects.Project", on_delete=models.PROTECT, null=True, blank=True
+    )
+    school_type = models.CharField(max_length=32, blank=True)
+    school_level = models.CharField(max_length=64, blank=True)
+    target_intervention = models.CharField(max_length=64, blank=True)
+    minimum_completion_state = models.CharField(
+        max_length=32, default="ia_verified"
+    )
+    weight = models.DecimalField(max_digits=6, decimal_places=2, default=1)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "hr_milestone_activity_rule"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["milestone", "catalogue_item", "project"],
+                name="uniq_milestone_catalogue_project_rule",
+            )
+        ]
+
+
+class MilestoneProgressCredit(TimeStampedModel):
+    """One completion credit for one underlying Activity and rule.
+
+    Project, Partner, target and strategy are dimensions of this credit, never
+    separate completions.
+    """
+
+    id = CuidField()
+    rule = models.ForeignKey(
+        MilestoneActivityRule, on_delete=models.PROTECT, related_name="credits"
+    )
+    activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.PROTECT,
+        related_name="milestone_credits",
+    )
+    allocation = models.ForeignKey(
+        MilestoneAllocation,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="progress_credits",
+    )
+    credited_value = models.DecimalField(max_digits=18, decimal_places=2, default=1)
+    source_snapshot = models.JSONField(default=dict)
+    credited_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "hr_milestone_progress_credit"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["rule", "activity"], name="uniq_milestone_activity_credit"
+            )
+        ]

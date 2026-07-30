@@ -8,8 +8,10 @@ import calendar
 import re
 from collections import defaultdict
 
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
@@ -1434,6 +1436,7 @@ def _projects_context(request):
     context["can_create_projects"] = request.user.active_role in (
         "Admin",
         "CountryDirector",
+        "ImpactAssessment",
     )
     return context
 
@@ -1450,6 +1453,63 @@ def projects_list_view(request):
     if request.headers.get("HX-Target") == "project-list":
         return render(request, "partials/projects/portfolio_list.html", context)
     return render(request, "pages/projects/index.html", context)
+
+
+@require_page_permission("projects")
+def project_create_drawer_view(request):
+    if request.user.active_role not in (
+        "Admin",
+        "CountryDirector",
+        "ImpactAssessment",
+    ):
+        return HttpResponseForbidden(
+            "Only Impact Assessment, the Country Director, or Admin may create Projects."
+        )
+    from apps.activity_catalogue.services import effective_items
+    from apps.core.enums import SsaIntervention
+    from apps.projects.models import ProjectCategory, ProjectSchoolFocus
+
+    return render(
+        request,
+        "partials/projects/create_project_drawer.html",
+        {
+            "categories": ProjectCategory.choices,
+            "school_focuses": ProjectSchoolFocus.choices,
+            "interventions": SsaIntervention.choices,
+            "catalogue_items": effective_items()
+            .filter(project_delivery_allowed=True)
+            .order_by("display_name"),
+        },
+    )
+
+
+@require_POST
+@require_page_permission("projects")
+def project_create_action_view(request):
+    if request.user.active_role not in (
+        "Admin",
+        "CountryDirector",
+        "ImpactAssessment",
+    ):
+        return HttpResponseForbidden(
+            "Only Impact Assessment, the Country Director, or Admin may create Projects."
+        )
+    from apps.projects.services import create_project
+
+    payload = request.POST.dict()
+    payload["targetInterventions"] = request.POST.getlist("targetInterventions")
+    payload["catalogueItemIds"] = request.POST.getlist("catalogueItemIds")
+    try:
+        project = create_project(payload, request.user)
+        response = HttpResponse(
+            f'<script>window.location.href="/projects/{project["id"]}";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(exc, status=400)
 
 
 @require_page_permission("projects")
@@ -1892,10 +1952,16 @@ def pl_fund_action_view(request):
 @require_page_permission("projects")
 def project_detail_view(request, project_id):
     """Project detail."""
-    project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
+    from apps.projects.scoping import get_scoped_project
+    from apps.projects.models import OPEN_PROJECT_STATUSES
+
+    project = get_scoped_project(project_id, request.user)
     school_assignments = ProjectSchoolAssignment.objects.filter(
         project=project
-    ).select_related("school")
+    ).select_related("school").order_by("school__name")
+    staff_assignments = project.staff_assignments.filter(
+        is_active=True
+    ).select_related("staff__user").order_by("staff__user__name")
     assigned_count = school_assignments.count()
     # NOTE: Project has no status field in the schema — the fake "Project
     # Status: Active" / "Progress Status: Ongoing" tiles that used to sit here
@@ -1910,13 +1976,120 @@ def project_detail_view(request, project_id):
             "icon": "school",
             "variant": "primary",
         },
+        {
+            "label": "Assigned Staff",
+            "value": str(staff_assignments.count()),
+            "raw_value": staff_assignments.count(),
+            "helper": "Project priorities",
+            "icon": "users",
+            "variant": "primary",
+        },
     ]
+    can_assign_staff = request.user.active_role in (
+        "ImpactAssessment",
+        "CountryDirector",
+        "Admin",
+    )
+    staff_options = []
+    if can_assign_staff:
+        staff_options = list(
+            StaffProfile.objects.filter(
+                deleted_at__isnull=True,
+                user__status="active",
+                user__deleted_at__isnull=True,
+            )
+            .select_related("user")
+            .order_by("user__name")
+        )
+    scope = resolve_user_scope(request.user)
+    eligible_schools = school_queryset(scope)
+    if eligible_schools is not None:
+        eligible_schools = list(
+            eligible_schools.filter(deleted_at__isnull=True)
+            .annotate(
+                active_project_count=Count(
+                    "project_assignments",
+                    filter=Q(
+                        project_assignments__project__deleted_at__isnull=True,
+                        project_assignments__project__status__in=[
+                            status.value for status in OPEN_PROJECT_STATUSES
+                        ],
+                    ),
+                )
+            )
+            .order_by("name")[:300]
+        )
+    else:
+        eligible_schools = []
     context = {
         "project": project,
         "school_assignments": school_assignments,
+        "staff_assignments": staff_assignments,
+        "staff_options": staff_options,
+        "eligible_schools": eligible_schools,
+        "can_assign_staff": can_assign_staff,
+        "assignment_fy": (
+            project.measurement_start_fy or get_operational_fy()
+        ),
+        "can_add_schools": (
+            can_assign_staff
+            or str(project.manager_staff_id or "")
+            == str(getattr(request.user, "staff_profile_id", None) or "")
+            or project.staff_assignments.filter(
+                staff_id=getattr(request.user, "staff_profile_id", None),
+                is_active=True,
+            ).exists()
+        ),
         "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/projects/detail.html", context)
+
+
+@require_POST
+@require_page_permission("projects")
+def project_assign_staff_action_view(request, project_id):
+    from django.contrib import messages
+
+    from apps.projects.services import assign_staff
+
+    payload = request.POST.dict()
+    payload["staffIds"] = request.POST.getlist("staffIds")
+    payload["roleGroups"] = request.POST.getlist("roleGroups")
+    try:
+        result = assign_staff(project_id, payload, request.user)
+        messages.success(
+            request,
+            f"Project assigned to {result['assigned']} staff member(s) as a priority.",
+        )
+    except Exception as exc:
+        messages.error(request, str(exc))
+    return redirect("frontend:project_detail", project_id=project_id)
+
+
+@require_POST
+@require_page_permission("projects")
+def project_assign_school_action_view(request, project_id):
+    from django.contrib import messages
+
+    from apps.projects.services import assign_school
+
+    try:
+        result = assign_school(
+            project_id,
+            {
+                "schoolId": request.POST.get("schoolId"),
+                "reason": request.POST.get("reason"),
+                "notes": request.POST.get("reason"),
+            },
+            request.user,
+        )
+        messages.success(
+            request,
+            f"School {result['schoolId']} added to this Project priority.",
+        )
+    except Exception as exc:
+        messages.error(request, str(exc))
+    return redirect("frontend:project_detail", project_id=project_id)
 
 
 @require_page_permission("completed_activities")

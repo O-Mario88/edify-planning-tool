@@ -74,7 +74,93 @@
     </form>
   </section>
 
+  {% include "partials/targets/strategic_priority_overview.html" with strategic_priorities=strategic_priorities fy=fy section_id="team-strategic-priorities" scope_label="the selected supervised-team target ledger" only %}
+
   {% include "partials/targets/team/body.html" %}
+
+  <section class="tt-panel" aria-labelledby="team-project-priorities">
+    <div class="tt-panel__header">
+      <div>
+        <span class="tt-eyebrow">Assigned execution portfolio</span>
+        <h2 id="team-project-priorities">Supervised-Team Project Priorities</h2>
+        <p>Projects assigned by IA, the Country Director, or Admin. Manager personal Project work remains on My Targets.</p>
+      </div>
+    </div>
+    {% if project_priorities %}
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[1050px] text-left text-xs">
+        <caption class="sr-only">Projects assigned as priorities to the selected supervised team</caption>
+        <thead><tr><th class="p-3">Team member</th><th class="p-3">Project priority</th><th class="p-3">Interventions</th><th class="p-3 text-right">Schools</th><th class="p-3 text-right">Activities</th><th class="p-3 text-right">Completed</th><th class="p-3">Planning state</th><th class="p-3">Action</th></tr></thead>
+        <tbody>
+          {% for row in project_priorities|slice:":60" %}
+          <tr class="border-t border-[var(--border-card)]">
+            <td class="p-3 font-semibold">{{ row.teamMember }}</td>
+            <td class="p-3"><strong class="block">{{ row.projectName }}</strong><span class="text-[var(--edify-text-muted)]">{{ row.responsibility }} · {{ row.schoolFocus }}</span></td>
+            <td class="p-3">{% for intervention in row.targetInterventions %}{{ intervention }}{% if not forloop.last %} · {% endif %}{% empty %}—{% endfor %}</td>
+            <td class="p-3 text-right tabular-nums">
+              <strong class="block">{{ row.schoolCount }}</strong>
+              <span class="mt-0.5 block edify-text-caption text-[var(--edify-text-muted)]">
+                {% for category in row.schoolTypeBreakdown %}{{ category.count }} {{ category.label }}{% if not forloop.last %} · {% endif %}{% empty %}No schools assigned{% endfor %}
+              </span>
+            </td>
+            <td class="p-3 text-right tabular-nums">{{ row.activityCount }}</td>
+            <td class="p-3 text-right tabular-nums">{{ row.completedActivityCount }}</td>
+            <td class="p-3">{{ row.status }}</td>
+            <td class="p-3"><a href="{{ row.planningUrl }}" class="tt-link-button">Open Project planning</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="tt-empty tt-empty--compact">
+      <h3>No Projects assigned to this team scope</h3>
+      <p>Assigned Projects will appear here automatically and remain separate from the manager’s personal priorities.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="tt-panel" aria-labelledby="team-strategic-milestones">
+    <div class="tt-panel__header"><div><span class="tt-eyebrow">Strategy cascade</span><h2 id="team-strategic-milestones">Supervised-Team Milestone Allocations</h2><p>Manager personal targets remain on My Targets. This table contains only the selected supervised team’s approved allocations and canonical actuals.</p></div></div>
+    {% if strategic_milestones %}
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[1120px] text-left text-xs">
+        <caption class="sr-only">Approved supervised-team strategic milestone allocations and progress</caption>
+        <thead>
+          <tr>
+            <th class="p-3">Team member</th>
+            <th class="p-3">Source milestone</th>
+            <th class="p-3 text-right">Allocated target</th>
+            <th class="p-3 text-right">Actual</th>
+            <th class="p-3 text-right">Progress</th>
+            <th class="p-3">Risk</th>
+            <th class="p-3 text-right">Linked Activities</th>
+            <th class="p-3">Activity or data source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in strategic_milestones|slice:":60" %}
+          <tr class="border-t border-[var(--border-card)]">
+            <td class="p-3 font-semibold">{{ row.teamMember }}</td>
+            <td class="p-3"><strong class="block">{{ row.milestone }}</strong><span class="text-[var(--edify-text-muted)]">{{ row.priority }}</span></td>
+            <td class="p-3 text-right tabular-nums">{{ row.allocatedTarget }}</td>
+            <td class="p-3 text-right tabular-nums">{{ row.fyActual }}</td>
+            <td class="p-3 text-right font-bold tabular-nums">{{ row.progress }}%</td>
+            <td class="p-3"><span class="tt-status" data-tone="{{ row.riskTone }}">{{ row.risk }}</span></td>
+            <td class="p-3 text-right tabular-nums">{{ row.linkedActivities }}</td>
+            <td class="p-3">{{ row.dataSource }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="tt-empty tt-empty--compact">
+      <h3>No approved supervised-team milestone allocations</h3>
+      <p>The FY priorities remain visible above, but they do not affect team achievement or risk until their milestones are defined, approved, and allocated.</p>
+    </div>
+    {% endif %}
+  </section>
 
   <div x-show="showCatchup" x-cloak @keydown.escape.window="showCatchup = false" @click.self="showCatchup = false"
        class="tt-modal" role="dialog" aria-modal="true" aria-labelledby="tt-catchup-title">

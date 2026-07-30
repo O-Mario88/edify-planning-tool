@@ -176,6 +176,46 @@
   overflow-y: auto;
 }
 
+/* The completion drawer scrolls and the centered surface clips overflow.
+   Promote the school checklist to the browser top layer so it remains
+   tethered to its trigger without being cropped by either ancestor. */
+.attendance-checklist-popover {
+  position: fixed;
+  inset: auto;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  box-shadow: var(--edify-shadow-lg);
+}
+
+.attendance-checklist-popover:popover-open {
+  animation: attendance-checklist-popover-in 140ms var(--drawer-ease) both;
+}
+
+@keyframes attendance-checklist-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attendance-checklist-popover:popover-open {
+    animation: none;
+  }
+}
+
 /* ═══ DRAWER CONTENT OVERRIDES ════════════════════════════════════════════
    Force token-driven styling inside drawers so all 45+ drawer templates
    automatically get premium styling + dark mode — without editing each one.
@@ -199,6 +239,32 @@
   border: 1px solid var(--edify-border) !important;
   border-radius: var(--edify-radius-md) !important;
   box-shadow: none !important;
+}
+
+/* Add-to-cluster is intentionally a single-plane confirmation form. Keep its
+   elevated surface, header, controls, and cards white in every theme; nearby
+   selection only appears when the school's sub-county has no covering cluster. */
+.drawer-surface:has(.cluster-assignment-drawer) {
+  --edify-surface: #ffffff;
+  --edify-surface-muted: #ffffff;
+  --edify-surface-raised: #ffffff;
+  --edify-surface-hover: #f8fafb;
+  --edify-text: #17232b;
+  --edify-text-body: #324650;
+  --edify-text-muted: #526570;
+  background: #ffffff !important;
+}
+
+.drawer-surface:has(.cluster-assignment-drawer) :where(
+  .drawer-header,
+  .drawer-body,
+  .cluster-assignment-drawer,
+  .cluster-assignment-drawer form,
+  .cluster-assignment-drawer section,
+  .cluster-assignment-drawer dl
+) {
+  background-color: #ffffff !important;
+  background-image: none !important;
 }
 
 /* Table styling inside drawers */

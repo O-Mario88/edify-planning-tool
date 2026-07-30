@@ -123,7 +123,7 @@ def create_one(data: dict, principal) -> School:
 
     school_type = data.get("schoolType", SchoolType.CLIENT)
     if school_type not in {value for value, _label in SchoolType.choices}:
-        raise BadRequest("Select a valid school classification.")
+        raise BadRequest("Select a valid current partner type.")
 
     enrollment = data.get("enrollment")
     if enrollment in ("", None):
@@ -194,8 +194,12 @@ def bulk_upload(rows: list[dict], principal) -> dict:
 
 # ── Type change ──────────────────────────────────────────────────────────────
 def set_type(principal, school_id: str, school_type: str) -> dict:
-    """Change a school's type (client → core → champion). Service re-checks
-    the role (the view gates on SCHOOL_VIEW; only IA/CD/Admin may change type)."""
+    """Change a school's current partner type.
+
+    Every directory, dashboard, and Project-capacity query reads this canonical
+    field, so saving the new value moves the school into that category
+    immediately.
+    """
     valid = {c[0] for c in SchoolType.choices}
     if school_type not in valid:
         raise BadRequest(f"Invalid school type '{school_type}'.")
@@ -280,13 +284,15 @@ def triage_data_quality_issue(issue_id: str, action: str, principal):
 
 # ── Proposals / workflow (stubs refined as SSA + activities land) ────────────
 def proposals(principal, limit: int = 10) -> list[dict]:
-    """Best-SSA schools → potential core/champion candidates."""
+    """Best-SSA Client and Core Trained schools → Core candidates."""
     scope = resolve_user_scope(principal)
     base = school_queryset(scope)
     if base is None:
         return []
     # Candidate = a client school with the best current SSA standing.
-    qs = base.filter(school_type__in=["client", "potential_core"]).order_by(
+    qs = base.filter(
+        school_type__in=[SchoolType.CLIENT, SchoolType.CORE_TRAINED]
+    ).order_by(
         "-current_fy_ssa_status", "name"
     )[:limit]
     return [

@@ -50,6 +50,9 @@ class SsaRecord(SoftDeleteModel):
     date_of_ssa = models.DateTimeField()
     fy = models.CharField(max_length=16)
     quarter = models.CharField(max_length=8)  # Q1..Q4
+    # Legacy-only column retained so historical databases remain compatible.
+    # New SSA flows neither write nor expose pupil headcount; School.enrollment
+    # is the sole authoritative field and is edited via School Upload/Profile.
     new_enrollment = models.IntegerField(null=True, blank=True)
     average_score = models.FloatField(null=True, blank=True)
 

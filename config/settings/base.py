@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "apps.schools",
     "apps.clusters",
     "apps.ssa",
+    "apps.activity_catalogue",
     "apps.activities",
     "apps.budget",
     "apps.partners",

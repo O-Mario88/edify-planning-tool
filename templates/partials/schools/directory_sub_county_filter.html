@@ -1,0 +1,14 @@
+<div id="directory-sub-county-filter" {% if oob %}hx-swap-oob="outerHTML"{% endif %}>
+<span class="edify-filter-label">Sub-county</span>
+<select
+aria-label="Sub-county"
+name="sub_county"
+{% if not selected_district %}disabled{% endif %}
+class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none disabled:text-slate-400"
+>
+<option value="">{% if selected_district %}All in district{% else %}Choose district first{% endif %}</option>
+{% for sc in sub_counties %}
+<option value="{{ sc.id }}" {% if selected_sub_county == sc.id|stringformat:"s" %}selected{% endif %}>{{ sc.name }}</option>
+{% endfor %}
+</select>
+</div>

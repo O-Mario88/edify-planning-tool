@@ -29,7 +29,11 @@ def _fundable_lines(owner_id: str, fy: str, month: int):
             activity__scheduled_date__isnull=False,
             activity__cost_missing=False,
         )
-        .exclude(activity__status__in=["cancelled", "rejected"])
+        .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
+        # Partner-delivered costs are paid through the PartnerPayment
+        # workflow, never through a staff monthly/advance request — including
+        # them here made the same line payable in two channels.
+        .exclude(activity__delivery_type="partner")
         .select_related("activity")
     )
 

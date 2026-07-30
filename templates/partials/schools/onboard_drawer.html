@@ -6,8 +6,13 @@
 {% block drawer_body %}
 <div class="space-y-6 ">
 <form
+method="post"
+action="/schools/create-drawer"
 hx-post="/schools/create-drawer"
 hx-target="#drawer-container"
+@focusout.capture="if ($event.target.matches('[required]')) $event.target.toggleAttribute('aria-invalid', !$event.target.checkValidity())"
+@input.capture="if ($event.target.matches('[required]') && $event.target.checkValidity()) $event.target.removeAttribute('aria-invalid')"
+@submit="Array.from($el.querySelectorAll('[required]')).forEach((field) => field.toggleAttribute('aria-invalid', !field.checkValidity()))"
 class="space-y-4 text-[12px] font-bold text-slate-600"
 >
 {% csrf_token %}
@@ -55,6 +60,10 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 <select
 name="district_id"
 id="district_id"
+hx-get="/schools/sub-counties"
+hx-trigger="change"
+hx-target="#onboard-school-sub-county"
+hx-swap="innerHTML"
 required
 class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus cursor-pointer"
 >
@@ -65,22 +74,53 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 </select>
 </div>
 
-<!-- School Type -->
+<!-- Sub-county Selection -->
 <div>
-<label for="school_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Classification</label>
+<label for="onboard-school-sub-county" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Sub-county <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<select
+name="sub_county_id"
+id="onboard-school-sub-county"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 edify-primary-focus cursor-pointer"
+>
+<option value="">Choose a district first</option>
+</select>
+</div>
+
+<!-- Staff owner -->
+<div>
+<label for="account_owner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Staff Name <span class="text-rose-500">*</span></label>
+<select
+name="account_owner_id"
+id="account_owner_id"
+required
+aria-describedby="staff-name-help"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 edify-primary-focus cursor-pointer"
+>
+<option value="" disabled selected>Select a CCEO or Program Lead</option>
+{% for member in staff %}
+<option value="{{ member.id }}">{{ member.user.name }} ({{ member.user.active_role }})</option>
+{% endfor %}
+</select>
+<p id="staff-name-help" class="edify-text-caption text-slate-400 mt-1">Required. The selected staff member becomes the school’s account owner.</p>
+</div>
+
+<!-- Current Partner Type -->
+<div>
+<label for="school_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Current Partner Type <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <select
 name="school_type"
 id="school_type"
 class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus cursor-pointer"
 >
-<option value="client" selected>Client School</option>
-<option value="core">Core School</option>
+{% for value, label in school_types %}
+<option value="{{ value }}" {% if value == "client" %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
 </select>
 </div>
 
 <!-- Enrollment -->
 <div>
-<label for="enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment headcount</label>
+<label for="enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment headcount <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <input
 type="number"
 name="enrollment"
@@ -99,7 +139,7 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 </div>
 {% else %}
 <div>
-<label for="cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Assignment</label>
+<label for="cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Assignment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <select
 name="cluster_id"
 id="cluster_id"

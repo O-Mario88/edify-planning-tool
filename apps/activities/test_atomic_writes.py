@@ -13,6 +13,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.activities import services as asvc
+from apps.core.exceptions import BadRequest
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.core.enums import ActivityType
@@ -84,10 +85,6 @@ class ActivitySchedulingAtomicityTest(TestCase):
         # focused on the specific 3-write sequence under test.
         data = {
             "activityType": ActivityType.CORE_VISIT,
-            # These tests exercise the 3-write transaction, not slot policy —
-            # create() now refuses core types that skipped the Core Schools
-            # slot lock, so mark the payload as slot-verified.
-            "coreSlotVerified": True,
             "schoolId": self.school.school_id,
             "scheduledDate": scheduled_date,
             "activityPurposeText": "Routine visit",
@@ -108,7 +105,7 @@ class ActivitySchedulingAtomicityTest(TestCase):
             side_effect=RuntimeError("simulated crash mid-write"),
         ):
             with self.assertRaises(RuntimeError):
-                asvc.create(self._create_data(), self.admin)
+                asvc.create(self._create_data(), self.admin, core_slot_verified=True)
 
         self.assertEqual(Activity.objects.count(), acts_before)
         self.assertFalse(
@@ -119,7 +116,7 @@ class ActivitySchedulingAtomicityTest(TestCase):
 
     def test_successful_create_still_writes_activity_and_lines(self):
         """Sanity check: the happy path still works after wrapping in atomic()."""
-        result = asvc.create(self._create_data(), self.admin)
+        result = asvc.create(self._create_data(), self.admin, core_slot_verified=True)
         activity = Activity.objects.get(id=result["id"])
         self.assertGreater(activity.schedule_cost_lines.count(), 0)
         self.assertGreater(activity.est_cost_cents, 0)
@@ -130,7 +127,7 @@ class ActivitySchedulingAtomicityTest(TestCase):
         cost lines) must roll back the earlier scheduled_date/status save too
         — never leaving the Activity's persisted schedule out of sync with
         its own budget lines."""
-        result = asvc.create(self._create_data(), self.admin)
+        result = asvc.create(self._create_data(), self.admin, core_slot_verified=True)
         activity_id = result["id"]
         before = Activity.objects.get(id=activity_id)
         old_date = before.scheduled_date
@@ -163,7 +160,7 @@ class ActivitySchedulingAtomicityTest(TestCase):
 
     def test_successful_reschedule_still_updates_schedule_and_lines(self):
         """Sanity check: the happy path still works after wrapping in atomic()."""
-        result = asvc.create(self._create_data(), self.admin)
+        result = asvc.create(self._create_data(), self.admin, core_slot_verified=True)
         activity_id = result["id"]
         old_date = Activity.objects.get(id=activity_id).scheduled_date
 
@@ -183,22 +180,22 @@ class ActivitySchedulingAtomicityTest(TestCase):
         self.assertGreater(activity.schedule_cost_lines.count(), 0)
 
     # ── create(): permissive scheduling ─────────────────────────────────────
-    def test_identical_schedules_are_allowed_and_each_is_costed(self):
-        """The scheduler no longer applies duplicate business-policy blocks.
-
-        Each saved activity must still receive its own complete cost snapshot.
-        """
+    def test_identical_schedule_is_rejected_as_duplicate(self):
+        """An exactly identical second submission (same school, type, day and
+        owner) is a double-click, not a second piece of work — it must be
+        rejected instead of drawing budget twice (financial-integrity audit
+        §20: required duplicate Activities = 0)."""
         data = self._create_data()
-        first = asvc.create(data, self.admin)
-        second = asvc.create(data, self.admin)
+        asvc.create(data, self.admin, core_slot_verified=True)
+        with self.assertRaises(BadRequest):
+            asvc.create(data, self.admin, core_slot_verified=True)
 
         acts = Activity.objects.filter(
             school=self.school,
             activity_type=ActivityType.CORE_VISIT,
             scheduled_date__date="2026-07-20",
         )
-        self.assertEqual(acts.count(), 2)
-        self.assertNotEqual(first["id"], second["id"])
+        self.assertEqual(acts.count(), 1)
         self.assertTrue(all(a.schedule_cost_lines.exists() for a in acts))
 
     def test_undated_activity_via_skip_cost_snapshot_is_not_blocked(self):
@@ -210,9 +207,12 @@ class ActivitySchedulingAtomicityTest(TestCase):
         field and simply not match a prior row via ORM equality."""
         data = self._create_data()
         del data["scheduledDate"]
-        data["_skip_cost_snapshot"] = True
-        first = asvc.create(data, self.admin)
-        second = asvc.create(data, self.admin)
+        first = asvc.create(
+            data, self.admin, skip_cost_snapshot=True, core_slot_verified=True
+        )
+        second = asvc.create(
+            data, self.admin, skip_cost_snapshot=True, core_slot_verified=True
+        )
 
         self.assertNotEqual(first["id"], second["id"])
         self.assertEqual(
@@ -226,6 +226,14 @@ class ActivitySchedulingAtomicityTest(TestCase):
         """A genuinely different day for the same school/type/staff must
         still be allowed -- the guard matches on the full combination, not
         just school+type."""
-        first = asvc.create(self._create_data(scheduled_date="2026-07-20"), self.admin)
-        second = asvc.create(self._create_data(scheduled_date="2026-07-21"), self.admin)
+        first = asvc.create(
+            self._create_data(scheduled_date="2026-07-20"),
+            self.admin,
+            core_slot_verified=True,
+        )
+        second = asvc.create(
+            self._create_data(scheduled_date="2026-07-21"),
+            self.admin,
+            core_slot_verified=True,
+        )
         self.assertNotEqual(first["id"], second["id"])

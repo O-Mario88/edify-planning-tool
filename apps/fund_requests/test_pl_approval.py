@@ -133,10 +133,17 @@ class PLFundApprovalTest(TestCase):
             fy=FY,
         )
 
-    def _cost_line(self, activity, amount, month=MONTH, catalogue_id="cat-v1"):
+    def _cost_line(
+        self,
+        activity,
+        amount,
+        month=MONTH,
+        catalogue_id="cat-v1",
+        key="transport_allowance",
+    ):
         return ActivityScheduleCostLine.objects.create(
             activity=activity,
-            cost_setting_key="transport_allowance",
+            cost_setting_key=key,
             label="Transport",
             unit_cost=amount,
             quantity=1,
@@ -209,7 +216,9 @@ class PLFundApprovalTest(TestCase):
 
     # ── validation gates ─────────────────────────────────────────────────────
     def test_missing_cost_catalogue_version_blocks_approval(self):
-        self._cost_line(self.act_a1, 50_000, catalogue_id=None)  # no catalogue version
+        self._cost_line(
+            self.act_a1, 50_000, catalogue_id=None, key="meal_allowance"
+        )  # no catalogue version
         with self.assertRaises(BadRequest):
             svc.approve(self.pl1_principal, self.cceo_a.id, FY, MONTH)
 

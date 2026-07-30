@@ -166,6 +166,9 @@
 
   {# ── Agreed Priorities ─────────────────────────────────────────────── #}
   <section x-show="tab === 'priorities'" x-cloak>
+    <div class="mb-4">
+      {% include "partials/targets/project_priorities.html" with project_priorities=project_priorities section_id="performance-project-priorities" only %}
+    </div>
     <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
       <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <h2 class="text-[14px] font-bold text-slate-800">Agreed Priorities ({{ priorities|length }})</h2>
@@ -182,7 +185,7 @@
           <th class="px-3 py-2.5">Weight</th>
         </tr></thead>
         <tbody>
-        {% for row in priorities %}
+        {% for row in priorities|slice:":60" %}
         <tr class="border-t border-slate-50 align-top">
           <td class="px-5 py-3 font-bold text-slate-400">{{ row.p.sequence }}</td>
           <td class="px-3 py-3">
@@ -271,7 +274,7 @@
           <th class="px-3 py-2.5">Achievement</th>
         </tr></thead>
         <tbody>
-        {% for row in priorities %}{% if row.p.metric_key %}
+        {% for row in priorities|slice:":60" %}{% if row.p.metric_key %}
         <tr class="border-t border-slate-50">
           <td class="px-5 py-3 font-bold text-slate-800">{{ row.p.outcome_statement|truncatechars:64 }}</td>
           <td class="px-3 py-3 text-slate-500">{{ row.p.metric_key }}</td>

@@ -305,7 +305,6 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         label = {
             "school_id": "School ID",
             "name": "School Name",
-            "district": "District",
         }
         raise BadRequest(
             "Missing required column(s): "
@@ -362,40 +361,30 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
             if school_id_raw:
                 counts["failed"] += 1
 
-        # Check location (district and sub_county) — inferring district from
-        # sub_county when district_name is blank, rather than silently
-        # falling through to an arbitrary district at import time.
+        # Geography is optional during intake. Resolve it when supplied, but
+        # preserve unmatched text as a non-blocking warning so the school can
+        # still be created and corrected from its profile.
         district, _sub_county_preview, ambiguous_district_names = _resolve_geography(
             district_name, sub_county_name
         )
 
         if not district_name and not sub_county_name:
-            validation_errors.append("No usable location at all")
-            status = "blocked"
-            if school_id_raw:
-                counts["failed"] += 1
+            validation_errors.append(
+                "District not provided; complete it in the School Profile"
+            )
         elif district_name and not district:
             validation_errors.append(f"District '{district_name}' could not be matched")
-            status = "blocked"
-            if school_id_raw:
-                counts["failed"] += 1
         elif not district_name and ambiguous_district_names:
             validation_errors.append(
                 f"Sub-county '{sub_county_name}' exists in multiple districts "
-                f"({', '.join(ambiguous_district_names)}) — a District column "
-                "value is required to disambiguate."
+                f"({', '.join(ambiguous_district_names)}); complete the location "
+                "in the School Profile."
             )
-            status = "blocked"
-            if school_id_raw:
-                counts["failed"] += 1
         elif not district_name and sub_county_name and not district:
             validation_errors.append(
                 f"Sub-county '{sub_county_name}' could not be matched to any "
-                "district."
+                "district; complete the location in the School Profile."
             )
-            status = "blocked"
-            if school_id_raw:
-                counts["failed"] += 1
 
         # C. Non-blocking warnings / updates
         if status != "blocked":
@@ -612,11 +601,8 @@ def import_school_batch(batch, user) -> dict:
             district, sub_county, _ambiguous = _resolve_geography(
                 r.district_name, r.sub_county_name
             )
-            if district is None and (r.district_name or r.sub_county_name):
-                # Re-validated at import time defensively — should already
-                # have been staged as "blocked" and excluded above, but a
-                # row must never silently land on a fabricated geography.
-                continue
+            # Unmatched optional geography is deliberately left null. The raw
+            # uploaded text is preserved below for correction in the profile.
 
             owner_id = None
             owner_status = "pending"
@@ -703,22 +689,19 @@ def import_school_batch(batch, user) -> dict:
                 updated_count += 1
                 saved_school = existing
             else:
-                # `district` is guaranteed non-None here: the only way to
-                # reach this branch with an unresolved district is a row
-                # with no district_name AND no sub_county_name, which is
-                # already staged as "blocked" and excluded from `rows`
-                # above — District.region is a required (non-nullable) FK,
-                # so no separate Region fallback is needed either. No more
-                # falling back to an arbitrary alphabetically-first
-                # District/Region for a school whose actual location just
-                # couldn't be resolved.
+                # A school may enter the directory with only its official ID
+                # and name. Missing/unmatched geography remains null and its
+                # uploaded text is retained for profile completion—never
+                # replaced by an arbitrary district.
                 saved_school = School.objects.create(
                     school_id=r.school_id,
                     name=r.name,
                     school_type=school_type,
-                    region=district.region,
+                    region=district.region if district else None,
                     district=district,
                     sub_county=sub_county,
+                    uploaded_district_text=r.district_name or None,
+                    uploaded_sub_county_text=r.sub_county_name or None,
                     enrollment=r.enrollment,
                     last_enrollment_date=last_enroll_date,
                     school_phone=r.phone,

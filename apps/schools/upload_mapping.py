@@ -44,6 +44,9 @@ SCHOOL_HEADER_MAP: dict[str, str] = {
     "name": "name",
     # District
     "district": "district",
+    # Sub-county / division
+    "subcounty": "sub_county",
+    "sub county": "sub_county",
     # Current Partner Type → school_type
     "current partner type": "school_type",
     "partner type": "school_type",
@@ -78,15 +81,17 @@ SCHOOL_HEADER_MAP: dict[str, str] = {
     "address": "shipping_address",
 }
 
-SCHOOL_REQUIRED_FIELDS = ("school_id", "name", "district")
+SCHOOL_REQUIRED_FIELDS = ("school_id", "name")
 
-# Human-friendly expected headers (for error messages). "Staff Name" is the
-# preferred owner column; "Account Owner" remains accepted as a fallback.
+# Human-friendly accepted headers (for error messages). Only School ID and
+# School Name are required; every other column may be completed later through
+# the School Profile.
 SCHOOL_EXPECTED_HEADERS = [
-    "Staff Name",
     "School ID",
     "School Name",
     "District",
+    "Sub County",
+    "Staff Name",
     "Current Partner Type",
     "Enrolment",
     "Last Date of Enrolment",
@@ -98,12 +103,14 @@ SCHOOL_EXPECTED_HEADERS = [
 
 # Current Partner Type label → SchoolType enum value. Normalized for matching.
 SCHOOL_TYPE_MAP: dict[str, str] = {
+    "champion": SchoolType.CHAMPION.value,
     "client": SchoolType.CLIENT.value,
     "core": SchoolType.CORE.value,
-    "potential core": SchoolType.POTENTIAL_CORE.value,
-    "champion": SchoolType.CHAMPION.value,
-    "potential champion": SchoolType.POTENTIAL_CHAMPION.value,
-    "other": SchoolType.OTHER.value,
+    "core graduate": SchoolType.CORE_GRADUATE.value,
+    "core trained": SchoolType.CORE_TRAINED.value,
+    # Compatibility for spreadsheets prepared with the retired labels.
+    "potential core": SchoolType.CORE_TRAINED.value,
+    "potential champion": SchoolType.CHAMPION.value,
 }
 
 
@@ -138,11 +145,6 @@ SSA_HEADER_MAP: dict[str, str] = {
     "ssa year": "ssa_year",
     "fy": "ssa_year",
     "year": "ssa_year",
-    # Optional enrolment COUNT (students, NOT a score)
-    "new enrolment": "new_enrollment",
-    "new enrollment": "new_enrollment",
-    "enrolment count": "new_enrollment",
-    "enrollment count": "new_enrollment",
     # Optional geography
     "district": "district",
     "subcounty": "sub_county",
@@ -151,29 +153,42 @@ SSA_HEADER_MAP: dict[str, str] = {
     # Enrolment — see apps.core.enums.SsaIntervention).
     "christlike behaviour": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
     "christlike behavior": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
+    "christlike behaviour (0 10)": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
+    "christlike behavior (0 10)": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
     "exposure to the word of god": SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value,
     "exposure to word of god": SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value,
+    "exposure to the word of god (0 10)": SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value,
+    "exposure to word of god (0 10)": SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value,
     "financial health": SsaIntervention.FINANCIAL_HEALTH.value,
+    "financial health (0 10)": SsaIntervention.FINANCIAL_HEALTH.value,
     "leadership": SsaIntervention.LEADERSHIP.value,
+    "leadership (0 10)": SsaIntervention.LEADERSHIP.value,
     "learning environment": SsaIntervention.LEARNING_ENVIRONMENT.value,
+    "learning environment (0 10)": SsaIntervention.LEARNING_ENVIRONMENT.value,
     "government requirement": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
     "government requirements": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
+    "government requirement (0 10)": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
+    "government requirements (0 10)": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
     "government requirements and compliance": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
     "government requirements compliance": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
     "teaching environment": SsaIntervention.TEACHING_ENVIRONMENT.value,
     "teacher's environment": SsaIntervention.TEACHING_ENVIRONMENT.value,
     "teachers environment": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "teaching environment (0 10)": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "teacher's environment (0 10)": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "teachers environment (0 10)": SsaIntervention.TEACHING_ENVIRONMENT.value,
     "teaching and learning": SsaIntervention.TEACHING_ENVIRONMENT.value,
     "teaching & learning": SsaIntervention.TEACHING_ENVIRONMENT.value,
     # The canonical CSV column for the enrolment SCORE is the bare
-    # "Enrolment" header (2026-07-15 clarification) — distinct from the
-    # "new enrolment"/"enrolment count" COUNT aliases above. The explicit
-    # "... score" variants remain accepted for uploaders who disambiguate
-    # in the header themselves.
+    # "Enrolment" header. Pupil headcount is owned by School.enrollment and
+    # may only be changed through School Upload or the School Profile.
+    # Explicit "... score" variants remain accepted for clarity.
     "enrolment": SsaIntervention.ENROLMENT.value,
     "enrollment": SsaIntervention.ENROLMENT.value,
     "enrolment score": SsaIntervention.ENROLMENT.value,
     "enrollment score": SsaIntervention.ENROLMENT.value,
+    "enrolment (0 10)": SsaIntervention.ENROLMENT.value,
+    "enrollment (0 10)": SsaIntervention.ENROLMENT.value,
     "enrolment (0-10)": SsaIntervention.ENROLMENT.value,
     "enrollment (0-10)": SsaIntervention.ENROLMENT.value,
 }

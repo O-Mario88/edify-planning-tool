@@ -4,6 +4,7 @@ from apps.geography.models import Region, District
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.accounts.models import User
+from apps.core.exceptions import BadRequest
 from apps.ssa import services as ssa_services
 from apps.ssa.services import get_ssa_progress_by_fy
 
@@ -67,6 +68,32 @@ class SsaSequentialValidationTest(APITestCase):
         # Should succeed — no previous FY record exists, so this is the baseline
         result = ssa_services.upload(data, self.user)
         self.assertEqual(result["fy"], "2026")
+
+    def test_ssa_service_rejects_pupil_headcount(self):
+        data = {
+            "schoolId": "SCH-VAL-99",
+            "dateOfSsa": "2026-06-15T00:00:00Z",
+            "newEnrollment": 450,
+            "scores": [
+                {"intervention": intervention, "score": 7.0}
+                for intervention in (
+                    "teaching_environment",
+                    "financial_health",
+                    "christlike_behaviour",
+                    "exposure_to_word_of_god",
+                    "government_requirement",
+                    "leadership",
+                    "enrolment",
+                    "learning_environment",
+                )
+            ],
+        }
+
+        with self.assertRaisesMessage(
+            BadRequest, "Update pupil headcount through the School Upload file"
+        ):
+            ssa_services.upload(data, self.user)
+        self.assertFalse(SsaRecord.objects.exists())
 
     def test_current_fy_ssa_succeeds_when_previous_fy_exists(self):
         """Uploading current FY assessment succeeds when the previous year's SSA exists and is confirmed."""

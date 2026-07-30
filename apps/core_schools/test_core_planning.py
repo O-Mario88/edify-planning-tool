@@ -23,6 +23,7 @@ from apps.accounts.models import (
     StaffSupervisorAssignment,
 )
 from apps.activities.models import Activity
+from apps.activity_catalogue.models import ActivityCatalogueItem
 from apps.budget.models import CostCatalogue, CostSetting
 from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy
@@ -101,6 +102,12 @@ class CoreSchoolsPlanningTest(TestCase):
 
         self.plan = self._plan(self.school)
         self._plan(self.other_school)
+        self.core_visit_item = ActivityCatalogueItem.objects.get(
+            stable_code="CORE_SCHOOL_FOLLOWUP_VISIT"
+        )
+        self.core_training_item = ActivityCatalogueItem.objects.get(
+            stable_code="EARLY_CHILDHOOD_EDUCATION_PROJECT"
+        )
 
         # Verified annual SSA with all eight interventions.
         self.ssa = SsaRecord.objects.create(
@@ -209,6 +216,10 @@ class CoreSchoolsPlanningTest(TestCase):
             "visit_purpose": "Core package recovery visit",
             "expected_outcome": "Slot fulfilled",
             "responsible_staff_id": self.cceo_sp.id,
+            "catalogue_item_id": self.core_visit_item.id,
+            "recommendation_reason": (
+                "Current unresolved Teacher's Environment SSA need."
+            ),
         }
         if partner_id:
             payload["assigned_partner_id"] = partner_id
@@ -421,23 +432,17 @@ class CoreSchoolsPlanningTest(TestCase):
             f"/planning/schedule-modal?school_id={self.school.school_id}",
         )
 
-    def test_general_school_schedule_lists_everyday_visit_and_training_types(self):
+    def test_general_school_schedule_lists_backend_catalogue_recommendations(self):
         response = self._client(self.cceo).get(
             f"/planning/schedule-modal?school_id={self.school.school_id}"
         )
         self.assertEqual(response.status_code, 200)
-        # The drawer used to expose the raw ActivityType list. The
-        # purpose-of-visit feature replaced that with a purpose select whose
-        # choice derives the activity type (apps/partners/purposes.py), so the
-        # question this test asks -- can a CCEO schedule everyday support work
-        # from the general schedule modal -- is now answered by the purposes on
-        # offer rather than by the activity-type labels.
-        from apps.partners.purposes import STAFF_VISIT_PURPOSES
+        self.assertContains(response, "Recommended Activities")
+        self.assertContains(response, "Early Childhood Education Project")
+        self.assertContains(response, "Teacher&#x27;s Environment")
+        self.assertNotContains(response, 'name="activity_name"')
 
-        for _value, label in STAFF_VISIT_PURPOSES:
-            self.assertContains(response, label)
-
-    def test_general_visit_type_saves_with_a_cost_snapshot(self):
+    def test_general_free_text_visit_type_is_rejected(self):
         response = self._client(self.cceo).post(
             "/planning/schedule-action",
             {
@@ -448,11 +453,12 @@ class CoreSchoolsPlanningTest(TestCase):
                 "activity_purpose_text": "Introduce a donor to the school.",
             },
         )
-        self.assertIn(response.status_code, (200, 302), response.content[:200])
-        activity = Activity.objects.get(school=self.school, activity_type="donor_visit")
-        self.assertEqual(activity.status, "scheduled")
-        self.assertGreater(activity.est_cost_cents, 0)
-        self.assertGreater(activity.schedule_cost_lines.count(), 0)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(
+            Activity.objects.filter(
+                school=self.school, activity_type="donor_visit"
+            ).exists()
+        )
 
     def test_staff_core_support_is_limited_per_current_quarter_but_partner_is_not(self):
         first = self._schedule_visit(seq="1")
@@ -511,6 +517,7 @@ class CoreSchoolsPlanningTest(TestCase):
                 "visit_training_number": "1",
                 "partner_id": self.partner.id,
                 "focus_intervention": "teaching_environment",
+                "catalogue_item_id": self.core_visit_item.id,
             },
         )
         self.assertEqual(blocked_assignment.status_code, 400)
@@ -549,6 +556,10 @@ class CoreSchoolsPlanningTest(TestCase):
                 "visit_training_number": "2",
                 "partner_id": self.partner.id,
                 "focus_intervention": "teaching_environment",
+                "catalogue_item_id": self.core_visit_item.id,
+                "recommendation_reason": (
+                    "Current unresolved Teacher's Environment SSA need."
+                ),
                 "notes": "core support",
             },
         )
@@ -566,9 +577,9 @@ class CoreSchoolsPlanningTest(TestCase):
         result = asvc.create(
             {
                 "activityType": "core_visit",
-                # Slot policy is covered by test_verification_criticals /
-                # test_production_gates; these tests exercise My Plan routing.
-                "coreSlotVerified": True,
+                "catalogueItemId": self.core_visit_item.id,
+                "requireCatalogue": True,
+                "focusIntervention": "teaching_environment",
                 "schoolId": self.school.school_id,
                 "deliveryType": "partner",
                 "assignedPartnerId": self.partner.id,
@@ -577,6 +588,7 @@ class CoreSchoolsPlanningTest(TestCase):
                 "activityPurposeText": "Partner core coaching",
             },
             principal=self.cceo,
+            core_slot_verified=True,
         )
         act = Activity.objects.get(id=result["id"])
         self.assertEqual(act.delivery_type, "partner")
@@ -591,9 +603,9 @@ class CoreSchoolsPlanningTest(TestCase):
         result = asvc.create(
             {
                 "activityType": "core_visit",
-                # Slot policy is covered by test_verification_criticals /
-                # test_production_gates; these tests exercise My Plan routing.
-                "coreSlotVerified": True,
+                "catalogueItemId": self.core_visit_item.id,
+                "requireCatalogue": True,
+                "focusIntervention": "teaching_environment",
                 "schoolId": self.school.school_id,
                 "deliveryType": "partner",
                 "assignedPartnerId": self.partner.id,
@@ -602,6 +614,7 @@ class CoreSchoolsPlanningTest(TestCase):
                 "activityPurposeText": "Partner core coaching",
             },
             principal=self.cceo,
+            core_slot_verified=True,
         )
         act = Activity.objects.get(id=result["id"])
         na = compute_next_action(act, date(2026, 7, 23))
@@ -809,13 +822,20 @@ class CoreSchoolsPlanningTest(TestCase):
                 "training_number": "1",
                 "scheduled_date": "2026-07-21",
                 "focus_intervention": "teaching_environment",
+                "catalogue_item_id": self.core_training_item.id,
+                "recommendation_reason": (
+                    "Current unresolved Teacher's Environment SSA need."
+                ),
                 "training_purpose": "Core package recovery training",
                 "expected_participants": "15",
                 "responsible_staff_id": self.cceo_sp.id,
             },
         )
         self.assertIn(resp.status_code, (200, 302), resp.content[:200])
-        act = Activity.objects.get(school=self.school, activity_type="core_training")
+        act = Activity.objects.get(
+            school=self.school,
+            catalogue_item=self.core_training_item,
+        )
         self._complete_core_activity(
             act, "TS-CORE1", extra={"teachersAttended": 5, "leadersAttended": 2}
         )

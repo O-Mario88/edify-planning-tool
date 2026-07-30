@@ -7,7 +7,7 @@ ScheduledJobExecution row, and retries per the job's registry spec — so
 locking/idempotency-tracking/health-visibility apply uniformly instead of
 being reimplemented per job.
 
-  • weekly_fund_request            — Fri 06:00 — upserts weekly draft FundRequest.
+  • weekly_fund_request            — Fri 06:00 — retired to a no-op (see below).
   • monthly_work_plan              — 25th 06:00 — generates next-month envelope.
   • notification_escalation        — hourly — escalates stale action-required notifications.
   • daily_digest                   — 07:30 — one digest notification per user with unreads.
@@ -54,10 +54,17 @@ def _enabled() -> bool:
 
 # ── 1. Weekly fund request ───────────────────────────────────────────────────
 def _do_weekly_fund_request() -> int:
-    from apps.fund_requests.services import regenerate
-
-    regenerate("weekly", _system_principal(), strict=False)
-    return 1
+    # Deliberately a no-op. This job used to call
+    # fund_requests.services.regenerate("weekly", ...) with no week, which —
+    # before submit() learned to refuse a weekly period without an explicit
+    # week — filed ONE country-scope FundRequest whose total was the entire
+    # FY's national planned spend, sitting one Accountant click away from
+    # flipping every advance in the FY to disbursed. The weekly money the job
+    # was meant to produce never needed it: draft WeeklyFundRequests are
+    # already auto-generated per owner at scheduling time (see
+    # apps.fund_requests.advance_service / weekly_service). The registry entry
+    # is kept so the schedule/health tooling still sees the slot.
+    return 0
 
 
 def weekly_fund_request_job():

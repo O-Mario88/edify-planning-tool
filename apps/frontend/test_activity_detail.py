@@ -21,6 +21,10 @@ from apps.schools.models import School
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "templates" / "pages" / "my_plan" / "detail.html"
+COMPLETE_DRAWER = (
+    ROOT / "templates" / "partials" / "my_plan" / "complete_drawer.html"
+)
+DRAWER_CSS = ROOT / "static" / "css" / "drawers.css"
 
 
 class ActivityDetailLayoutTest(TestCase):
@@ -50,6 +54,28 @@ class ActivityDetailLayoutTest(TestCase):
         """One upload path, not a second one bolted onto this page."""
         self.assertIn("complete-drawer", self.src)
         self.assertNotIn("enctype=", self.src)
+
+
+class AttendanceChecklistDropdownLayoutTest(TestCase):
+    def setUp(self):
+        self.template = COMPLETE_DRAWER.read_text()
+        self.css = DRAWER_CSS.read_text()
+
+    def test_checklist_uses_the_top_layer_instead_of_a_clipped_absolute_panel(self):
+        self.assertIn('popover="auto"', self.template)
+        self.assertIn('popovertarget="school-attendance-checklist-', self.template)
+        self.assertIn("attendance-checklist-popover", self.template)
+        self.assertNotIn('x-show="openDropdown"', self.template)
+        self.assertIn(".attendance-checklist-popover {", self.css)
+        self.assertIn("position: fixed;", self.css)
+
+    def test_checklist_repositions_with_the_scrollable_drawer(self):
+        self.assertIn("getBoundingClientRect()", self.template)
+        self.assertIn(
+            "this.scrollContainer?.addEventListener('scroll'",
+            self.template,
+        )
+        self.assertIn(':aria-expanded="openDropdown"', self.template)
 
 
 class ActivityTimelineTest(TestCase):

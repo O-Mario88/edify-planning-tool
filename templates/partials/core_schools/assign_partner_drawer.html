@@ -8,12 +8,32 @@
 hx-post="/core-schools/assign-partner/action"
 hx-target="#partner-form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600 "
+x-data="{
+  sourceActivityId: '{% if catalogue_items %}{{ catalogue_items.0.sourceActivityId|default:'' }}{% endif %}',
+  recommendationReason: '{% if catalogue_items %}{{ catalogue_items.0.recommendationReason|escapejs }}{% endif %}',
+  focusIntervention: '{% if catalogue_items %}{{ catalogue_items.0.targetIntervention|default:'' }}{% endif %}',
+  supportType: '{% if catalogue_items and catalogue_items.0.stableCode == "CORE_SCHOOL_FOLLOWUP_VISIT" %}Visit{% else %}Training{% endif %}'
+}"
 >
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
+<input type="hidden" name="source_activity_id" :value="sourceActivityId">
+<input type="hidden" name="recommendation_reason" :value="recommendationReason">
 
 <!-- Form Error Container -->
 <div id="partner-form-errors"></div>
+
+<fieldset class="space-y-2">
+  <legend class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Partner Activity</legend>
+  {% for item in catalogue_items %}
+  <label class="block cursor-pointer rounded-control border border-slate-200 bg-white p-3">
+    <span class="flex items-start gap-3">
+      <input type="radio" name="catalogue_item_id" value="{{ item.catalogueItemId }}" required {% if forloop.first %}checked{% endif %} @change="sourceActivityId='{{ item.sourceActivityId|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; supportType='{% if item.stableCode == "CORE_SCHOOL_FOLLOWUP_VISIT" %}Visit{% else %}Training{% endif %}'">
+      <span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span>
+    </span>
+  </label>
+  {% empty %}<div class="rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No Partner-deliverable Catalogue Activity is currently eligible.</div>{% endfor %}
+</fieldset>
 
 <!-- Core School Name (Read Only) -->
 <div>
@@ -24,7 +44,6 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <div
   class="grid grid-cols-2 gap-4"
   x-data="{
-    supportType: 'Visit',
     visitSlots: [{% for slot in available_visit_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}],
     trainingSlots: [{% for slot in available_training_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}]
   }"
@@ -32,7 +51,8 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <!-- Support Type -->
 <div>
 <label for="support_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Support Type</label>
-<select name="support_type" id="support_type" x-model="supportType" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<input type="hidden" name="support_type" :value="supportType">
+<select id="support_type" x-model="supportType" disabled class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-not-allowed">
 <option value="Visit">Core Visit</option>
 <option value="Training">Core Training</option>
 </select>
@@ -64,7 +84,8 @@ class="space-y-4 text-[12px] font-bold text-slate-600 "
 <!-- Focus Intervention -->
 <div>
 <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Focus Intervention</label>
-<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<input type="hidden" name="focus_intervention" :value="focusIntervention">
+<select id="focus_intervention" x-model="focusIntervention" disabled class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-not-allowed">
 <option value="">Select Intervention...</option>
 {% for code, label in interventions %}
 <option value="{{ code }}">{{ label }}</option>

@@ -524,21 +524,176 @@ def schedule_school_visit(data: dict, principal) -> dict:
     from apps.activities.services import create as create_activity
 
     act_type = data.get("activityType", "school_visit")
-    return create_activity({**data, "activityType": act_type}, principal)
+    return create_activity(
+        {**data, "activityType": act_type, "requireCatalogue": True}, principal
+    )
 
 
 def assign_school_visit_to_partner(data: dict, principal) -> dict:
-    from apps.activities.services import create as create_activity
+    """Create only the Partner handoff; cost starts at Partner scheduling."""
+    from django.db import transaction
 
-    return create_activity(
-        {**data, "activityType": "school_visit", "deliveryType": "partner"}, principal
+    from apps.activity_catalogue.services import (
+        get_selectable_item,
+        recommend_activities,
+        resolve_activity_intervention,
+        validate_context,
     )
+    from apps.activity_catalogue.models import MappingMode
+    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+    from apps.partners.models import Partner, PartnerAssignment
+    from apps.ssa.services import latest_applicable_record
+
+    item_id = data.get("catalogueItemId")
+    if not item_id:
+        raise BadRequest("Select an approved Activity Catalogue item.")
+    item = get_selectable_item(str(item_id))
+    partner = Partner.objects.filter(
+        id=data.get("assignedPartnerId"),
+        deleted_at__isnull=True,
+        active_status=True,
+    ).first()
+    school = scoped_school_queryset(resolve_user_scope(principal)).filter(
+        school_id=data.get("schoolId")
+    ).first()
+    if not partner or not school:
+        raise BadRequest("Choose a valid in-scope School and active Partner.")
+    validate_context(
+        item,
+        school=school,
+        project=None,
+        executor_type="partner",
+    )
+    source_activity = None
+    if data.get("sourceActivityId"):
+        from apps.activities.models import Activity
+
+        source_activity = Activity.objects.filter(
+            id=data["sourceActivityId"],
+            school=school,
+            deleted_at__isnull=True,
+        ).first()
+        if source_activity is None:
+            raise BadRequest(
+                "Choose a completed source Activity from the same School."
+            )
+        if source_activity.status not in {
+            "completed",
+            "ia_verified",
+            "accountant_confirmed",
+            "closed",
+        }:
+            raise BadRequest(
+                "Follow-up requires a completed source Training or support Activity."
+            )
+    source_ssa = latest_applicable_record(school)
+    mapping_modes = set(
+        item.intervention_mappings.filter(active=True).values_list(
+            "mapping_mode", flat=True
+        )
+    )
+    prerequisite_or_admin = bool(
+        mapping_modes.intersection(
+            {
+                MappingMode.ADMINISTRATIVE,
+                MappingMode.SSA_COMPLETION_PREREQUISITE,
+            }
+        )
+    )
+    if item.requires_current_ssa and source_ssa is None and not prerequisite_or_admin:
+        raise BadRequest(
+            "Complete the School SSA first. Intervention-specific Partner "
+            "support cannot be assigned without an applicable SSA."
+        )
+    recommendation_reason = ""
+    if not prerequisite_or_admin:
+        recommendations = recommend_activities(
+            school=school,
+            principal=principal,
+            executor_type="partner",
+            limit=3,
+        )
+        rows = [
+            *recommendations["primary"],
+            *recommendations["otherEligible"],
+        ]
+        match = next(
+            (row for row in rows if row["catalogueItemId"] == item.id),
+            None,
+        )
+        primary_ids = {
+            row["catalogueItemId"] for row in recommendations["primary"]
+        }
+        is_dynamic_followup = (
+            MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
+        )
+        override_reason = (data.get("overrideReason") or "").strip()
+        if item.id not in primary_ids and not is_dynamic_followup and not override_reason:
+            raise BadRequest(
+                "This is not a primary SSA recommendation. Record the "
+                "authorized alternative-selection reason before assigning it."
+            )
+        if (
+            is_dynamic_followup
+            and source_activity is None
+            and match
+            and data.get("focusIntervention") != match["targetIntervention"]
+            and not override_reason
+        ):
+            raise BadRequest(
+                "Without a source Training, this dynamic Partner Activity must "
+                "use the current unresolved SSA recommendation or record an "
+                "authorized override reason."
+            )
+        recommendation_reason = (
+            match["recommendationReason"]
+            if match
+            else "Authorized alternative Catalogue Activity."
+        )
+    intervention = resolve_activity_intervention(
+        item,
+        requested_intervention=data.get("focusIntervention"),
+        source_activity=source_activity,
+    )
+    with transaction.atomic():
+        assignment = PartnerAssignment.objects.create(
+            school=school,
+            partner=partner,
+            assigning_staff_id=(
+                principal.staff_profile_id or principal.user_id
+            ),
+            assignment_mode="specific_activity",
+            catalogue_item=item,
+            source_ssa=source_ssa,
+            source_activity=source_activity,
+            recommendation_reason=recommendation_reason,
+            override_reason=data.get("overrideReason", ""),
+            catalogue_snapshot=item.snapshot(),
+            purpose=item.display_name,
+            focus_intervention=intervention,
+            expected_activity_type=item.workflow_kind,
+            scheduled_date=None,
+            status="pending_scheduling",
+        )
+    return {
+        "id": assignment.id,
+        "status": assignment.status,
+        "catalogueItemId": assignment.catalogue_item_id,
+        "costCreated": False,
+    }
 
 
 def schedule_cluster_training(data: dict, principal) -> dict:
     from apps.activities.services import create as create_activity
 
-    return create_activity({**data, "activityType": "cluster_training"}, principal)
+    return create_activity(
+        {
+            **data,
+            "activityType": "cluster_training",
+            "requireCatalogue": True,
+        },
+        principal,
+    )
 
 
 # The two cluster-activity kinds the spec requires the user to choose between.
@@ -566,7 +721,9 @@ def schedule_cluster_activity(data: dict, principal) -> dict:
         )
     if not data.get("clusterId"):
         raise BadRequest("A cluster is required for a cluster activity.")
-    return create_activity({**data, "activityType": kind}, principal)
+    return create_activity(
+        {**data, "activityType": kind, "requireCatalogue": True}, principal
+    )
 
 
 def _serialize_plan(p: MonthlyPlan, include_activities: bool = False) -> dict:

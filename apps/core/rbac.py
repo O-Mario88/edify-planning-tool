@@ -66,6 +66,22 @@ class Permission(str, Enum):
     PLANNING_CREATE = "planning.create"
     ACTIVITY_ASSIGN = "activity.assign"
     ACTIVITY_COMPLETE = "activity.complete"
+    ACTIVITY_CATALOGUE_VIEW = "activityCatalogue.view"
+    ACTIVITY_CATALOGUE_MANAGE = "activityCatalogue.manage"
+    ACTIVITY_CATALOGUE_MAP_INTERVENTIONS = (
+        "activityCatalogue.mapInterventions"
+    )
+    ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES = (
+        "activityCatalogue.manageProjectRules"
+    )
+    STRATEGIC_PRIORITIES_VIEW = "strategicPriorities.view"
+    STRATEGIC_PRIORITIES_CREATE = "strategicPriorities.create"
+    STRATEGIC_PRIORITIES_EDIT = "strategicPriorities.edit"
+    STRATEGIC_PRIORITIES_APPROVE = "strategicPriorities.approve"
+    STRATEGIC_PRIORITIES_ALLOCATE = "strategicPriorities.allocate"
+    MILESTONES_DEFINE = "milestones.define"
+    MILESTONES_ALLOCATE = "milestones.allocate"
+    MILESTONES_VIEW_PROGRESS = "milestones.viewProgress"
     EVIDENCE_REVIEW = "evidence.review"
     IA_VERIFY = "ia.verify"
     PAYMENT_ACT = "payment.act"
@@ -92,6 +108,7 @@ class Permission(str, Enum):
     PARTNER_VIEW = "partner.view"
     PARTNER_MANAGE = "partner.manage"
     PROJECT_MANAGE = "project.manage"
+    PROJECT_CONFIGURE_PRIORITIES = "project.configurePriorities"
     # Assign a school to a project. Distinct from PROJECT_MANAGE (which gates
     # setting a project's manager) — broader set of operational roles work
     # schools day-to-day and need this without gaining manager-assignment rights.
@@ -146,10 +163,8 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         # registry -- upload, edit, duplicate resolution, delete, geography
         # setup. Scheduling a cluster *meeting* is execution and stays out via
         # PLANNING_CREATE / ACTIVITY_ASSIGN above.
-        # PROJECT_MANAGE stays out: creating and running a project, and
-        # scheduling its work, is programme work. PROJECT_ASSIGN_SCHOOL is not
-        # excluded -- which project a school participates in is registry data,
-        # the same call as cluster membership above.
+        # Admin configures Project definitions and staff-priority membership
+        # through PROJECT_CONFIGURE_PRIORITIES, but does not run delivery.
         P.PROJECT_MANAGE,
         # Evidence and verification
         P.EVIDENCE_REVIEW,
@@ -167,6 +182,12 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         # Admin keeps the VIEW permissions for diagnostics).
         P.LEADERSHIP_DECISION_REVIEW,
         P.BUDGET_DECISION_REVIEW,
+        P.STRATEGIC_PRIORITIES_CREATE,
+        P.STRATEGIC_PRIORITIES_EDIT,
+        P.STRATEGIC_PRIORITIES_APPROVE,
+        P.STRATEGIC_PRIORITIES_ALLOCATE,
+        P.MILESTONES_DEFINE,
+        P.MILESTONES_ALLOCATE,
     }
 )
 
@@ -194,6 +215,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PLANNING_RECALC,
         P.SSA_VIEW,
         P.PLANNING_VIEW,
+        P.ACTIVITY_CATALOGUE_VIEW,
         P.EVIDENCE_REVIEW,
         P.BUDGET_VIEW_SUMMARY,
         P.BUDGET_VIEW_DETAIL,
@@ -210,6 +232,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PARTNER_VIEW,
         P.PARTNER_MANAGE,
         P.PROJECT_MANAGE,
+        P.PROJECT_CONFIGURE_PRIORITIES,
         P.PROJECT_ASSIGN_SCHOOL,
         P.ANALYTICS_VIEW,
         P.EXPORT,
@@ -220,6 +243,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # Full country financial intelligence + reallocation decision authority.
         P.BUDGET_INTELLIGENCE_VIEW,
         P.BUDGET_DECISION_REVIEW,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.STRATEGIC_PRIORITIES_ALLOCATE,
+        P.MILESTONES_ALLOCATE,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.REGIONAL_VICE_PRESIDENT: [
         # May author and publish policy within its scope, and sees regional
@@ -247,6 +274,14 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # Region-level oversight reporting. can_export already listed the RVP;
         # the matrix disagreed, so the SSA export silently 403'd.
         P.EXPORT,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.STRATEGIC_PRIORITIES_CREATE,
+        P.STRATEGIC_PRIORITIES_EDIT,
+        P.STRATEGIC_PRIORITIES_APPROVE,
+        P.STRATEGIC_PRIORITIES_ALLOCATE,
+        P.MILESTONES_DEFINE,
+        P.MILESTONES_ALLOCATE,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
         # Sees their own evidence and PD certificates in the Upload Center.
@@ -258,9 +293,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.CLUSTER_ASSIGN,
         P.SSA_VIEW,
         P.PLANNING_VIEW,
+        P.ACTIVITY_CATALOGUE_VIEW,
         P.PLANNING_CREATE,
         P.ACTIVITY_ASSIGN,
         P.ACTIVITY_COMPLETE,
+        P.ACTIVITY_CATALOGUE_VIEW,
         # PL approves the monthly fund request + plan rolled up from the CCEOs
         # they supervise (the top of the field approval chain).
         P.EVIDENCE_REVIEW,
@@ -277,6 +314,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.STAFF_PERFORMANCE_VIEW,  # supervised-team roster only (scoped)
         # PL works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_ALLOCATE,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.CCEO: [
         # Sees their own evidence and PD certificates in the Upload Center.
@@ -291,6 +331,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PLANNING_CREATE,
         P.ACTIVITY_ASSIGN,
         P.ACTIVITY_COMPLETE,
+        P.ACTIVITY_CATALOGUE_VIEW,
         P.EVIDENCE_REVIEW,
         P.PARTNER_VIEW,
         # CCEO approves the fund requests of the staff they supervise, then
@@ -302,6 +343,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_INTELLIGENCE_VIEW,  # own planned/funded activities view
         # CCEO works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
         # Training manuals and presentations are IA's; organisational policy
@@ -319,11 +362,15 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SSA_UPLOAD,
         P.EVIDENCE_REVIEW,
         P.IA_VERIFY,
+        P.ACTIVITY_CATALOGUE_VIEW,
+        P.ACTIVITY_CATALOGUE_MAP_INTERVENTIONS,
+        P.PROJECT_CONFIGURE_PRIORITIES,
         # IA reads the country budget as part of verification (it sits in the
         # country_budget page set and the service's READ_ROLES); the matrix
         # previously recorded no budget right at all.
         P.BUDGET_VIEW_SUMMARY,
         P.ANALYTICS_VIEW,
+        P.ACTIVITY_CATALOGUE_VIEW,
         P.EXPORT,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
         P.PARTNER_VIEW,
@@ -331,6 +378,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.LEADERSHIP_ENGINE_VIEW,
         # IA works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
@@ -348,6 +397,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # Finance execution + accountability + finance-decision review.
         P.BUDGET_INTELLIGENCE_VIEW,
         P.BUDGET_DECISION_REVIEW,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.HUMAN_RESOURCES: [
         # Policies and organisational manuals are HR's to write, publish and
@@ -371,6 +422,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # Staff & HR decision board + review.
         P.LEADERSHIP_ENGINE_VIEW,
         P.LEADERSHIP_DECISION_REVIEW,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.PROJECT_COORDINATOR: [
         # Explicitly granted directory access — assigns project schools.
@@ -384,19 +437,25 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PLANNING_VIEW,
         P.PLANNING_CREATE,
         P.ACTIVITY_ASSIGN,
+        P.ACTIVITY_CATALOGUE_VIEW,
+        P.ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES,
         P.EVIDENCE_REVIEW,
         P.PROJECT_MANAGE,
         P.PROJECT_ASSIGN_SCHOOL,
         P.PARTNER_VIEW,
         P.ANALYTICS_VIEW,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.PARTNER_ADMIN: [
         P.ACTIVITY_COMPLETE,
         P.PLANNING_VIEW,
+        P.ACTIVITY_CATALOGUE_VIEW,
     ],
     EdifyRole.PARTNER_FIELD_OFFICER: [
         P.ACTIVITY_COMPLETE,
         P.PLANNING_VIEW,
+        P.ACTIVITY_CATALOGUE_VIEW,
     ],
 }
 

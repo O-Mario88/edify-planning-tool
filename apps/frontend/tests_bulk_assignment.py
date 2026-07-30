@@ -75,21 +75,17 @@ class BulkAssignmentTests(TestCase):
             cluster=self.cluster, sub_county=self.sub_county_1
         )
 
-    def test_add_to_cluster_drawer_sub_counties_scoping(self):
+    def test_add_to_cluster_drawer_nearby_directory_is_district_scoped(self):
+        """The drawer's successor to the sub-county picker: an uncovered
+        school gets a directory of nearby clusters, and it must only offer
+        clusters from the school's own district."""
         self.client.force_login(self.user)
-        response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
+        # self.school_other sits in sc-2, which no cluster covers.
+        response = self.client.get(f"/schools/{self.school_other.id}/add-to-cluster")
         self.assertEqual(response.status_code, 200)
-
-        sub_counties = response.context["sub_counties"]
-        # Should only contain sub-counties in Mukono District (sc-1 and sc-2, NOT sc-3)
-        sub_county_ids = [sc.id for sc in sub_counties]
-        self.assertIn("sc-1", sub_county_ids)
-        self.assertIn("sc-2", sub_county_ids)
-        self.assertNotIn("sc-3", sub_county_ids)
-
-        # Verify counts are attached
-        sc_1_obj = next(sc for sc in sub_counties if sc.id == "sc-1")
-        self.assertEqual(sc_1_obj.unclustered_schools_count, 1)
+        self.assertTrue(response.context["show_cluster_directory"])
+        for cluster in response.context["all_clusters"]:
+            self.assertEqual(cluster.district_id, self.district.id)
 
     def test_create_new_cluster_multi_sub_counties(self):
         self.client.force_login(self.user)
@@ -176,19 +172,24 @@ class BulkAssignmentTests(TestCase):
             response.context["existing_covering_cluster"].id, self.cluster.id
         )
 
-    def test_add_to_cluster_drawer_sub_counties_claimed_flag(self):
+    def test_add_to_cluster_drawer_resolves_coverage_per_school(self):
+        """Successor to the per-sub-county claimed flag: a school in a
+        covered sub-county resolves its covering cluster (no directory);
+        a school in an uncovered one gets the directory instead."""
         self.client.force_login(self.user)
-        response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
-        self.assertEqual(response.status_code, 200)
-        sub_counties = response.context["sub_counties"]
+        covered = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
+        self.assertEqual(covered.status_code, 200)
+        self.assertEqual(
+            covered.context["existing_covering_cluster"].id, self.cluster.id
+        )
+        self.assertFalse(covered.context["show_cluster_directory"])
 
-        # sc-1 is covered by self.cluster
-        sc_1_obj = next(sc for sc in sub_counties if sc.id == "sc-1")
-        self.assertEqual(sc_1_obj.covering_cluster_name, self.cluster.name)
-
-        # sc-2 is not covered
-        sc_2_obj = next(sc for sc in sub_counties if sc.id == "sc-2")
-        self.assertIsNone(sc_2_obj.covering_cluster_name)
+        uncovered = self.client.get(
+            f"/schools/{self.school_other.id}/add-to-cluster"
+        )
+        self.assertEqual(uncovered.status_code, 200)
+        self.assertIsNone(uncovered.context["existing_covering_cluster"])
+        self.assertTrue(uncovered.context["show_cluster_directory"])
 
     def test_create_new_cluster_routing_safeguard(self):
         self.client.force_login(self.user)

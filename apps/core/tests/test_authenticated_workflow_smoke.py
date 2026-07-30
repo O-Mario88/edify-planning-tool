@@ -140,6 +140,8 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
             "/api/planning/schedule-school-visit",
             {
                 "schoolId": school.school_id,
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
+                "focusIntervention": "enrolment",
                 "scheduledDate": "2026-07-10T09:00:00+03:00",
                 "plannedMonth": 7,
                 "plannedWeek": 2,

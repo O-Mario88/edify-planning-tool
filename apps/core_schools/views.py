@@ -75,7 +75,9 @@ class CoreSlotActionView(APIView):
     """Polymorphic slot action: POST /core/slots/:slotId/:action."""
 
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = VIEW
+    # All 11 slot actions mutate package state (assign/schedule/complete/
+    # accountantConfirm/...) — they are CREATE-level operations, not views.
+    required_permissions = CREATE
 
     def post(self, request: Request, slot_id: str, action: str) -> Response:
         return Response(

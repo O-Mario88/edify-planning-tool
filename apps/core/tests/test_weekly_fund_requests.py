@@ -107,6 +107,37 @@ class WeeklyFundRequestsTest(APITestCase):
 
         StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
 
+        # The mandatory Activity Catalogue gates scheduling on a current
+        # confirmed SSA. Enrolment (2) is the weakest intervention and
+        # financial_health (3) the second-weakest, which makes
+        # FEES_ENROLMENT_MARKETING (cluster_meeting) and
+        # ACCOUNTING_FINANCIAL_MANAGEMENT (cluster_training) primary cluster
+        # recommendations for this suite's member school.
+        from django.utils import timezone
+
+        from apps.core.enums import SsaIntervention
+        from apps.ssa.models import SsaRecord, SsaScore
+
+        record = SsaRecord.objects.create(
+            school=self.school,
+            date_of_ssa=timezone.now(),
+            fy=get_operational_fy(),
+            quarter="Q1",
+            average_score=7,
+            verification_status="confirmed",
+            uploaded_by="test",
+        )
+        scores = {
+            SsaIntervention.ENROLMENT: 2,
+            SsaIntervention.FINANCIAL_HEALTH: 3,
+        }
+        for intervention, _label in SsaIntervention.choices:
+            SsaScore.objects.create(
+                ssa_record=record,
+                intervention=intervention,
+                score=scores.get(intervention, 8),
+            )
+
     def _as(self, user):
         self.client.credentials(
             HTTP_AUTHORIZATION=f"Bearer {issue_access_token(user.id, user.active_role)}"
@@ -127,12 +158,17 @@ class WeeklyFundRequestsTest(APITestCase):
 
         # 1. Schedule a school visit (Primary district rate)
         # Week start: 2026-07-06 (Monday), Date: 2026-07-08 (Wednesday)
+        # Catalogue-mandatory: a dated staff school visit is the
+        # CLIENT_SCHOOL_FOLLOWUP_VISIT item (workflow_kind follow_up_visit).
+        # Without a source training, a dynamic follow-up must target the
+        # school's current weakest unresolved SSA intervention (enrolment).
         sv = self._post(
             "/api/activities/schedule-school-visit",
             {
                 "schoolId": "S-123",
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
                 "scheduledDate": "2026-07-08T09:00:00+03:00",
-                "purposeIntervention": "leadership",
+                "focusIntervention": "enrolment",
             },
             201,
         )
@@ -143,11 +179,15 @@ class WeeklyFundRequestsTest(APITestCase):
         self.assertEqual(lines[0].amount, 50000)
         self.assertEqual(lines[0].week_start_date.isoformat(), "2026-07-06")
 
-        # 2. Schedule a Cluster Meeting (10 participants, rate = 8000 each)
+        # 2. Schedule a Cluster Meeting (10 participants, rate = 8000 each).
+        # FEES_ENROLMENT_MARKETING is the cluster_meeting item for enrolment,
+        # the member school's weakest verified intervention → primary
+        # recommendation, no override reason needed.
         cm = self._post(
             "/api/activities/schedule-cluster-activity",
             {
                 "activityType": "cluster_meeting",
+                "catalogueItemId": "FEES_ENROLMENT_MARKETING",
                 "clusterId": "some-cluster",
                 "scheduledDate": "2026-07-09T10:00:00+03:00",
                 "expectedParticipants": 10,
@@ -161,10 +201,14 @@ class WeeklyFundRequestsTest(APITestCase):
 
         # 3. Schedule a Group Training (15 participants: meals=15*12000=180000, venue=200000, facilitation=150000)
         # Total = 530,000
+        # ACCOUNTING_FINANCIAL_MANAGEMENT is the cluster_training item for
+        # financial_health, the second-weakest verified intervention →
+        # also a primary cluster recommendation.
         gt = self._post(
             "/api/activities/schedule-cluster-activity",
             {
                 "activityType": "cluster_training",
+                "catalogueItemId": "ACCOUNTING_FINANCIAL_MANAGEMENT",
                 "clusterId": "some-cluster",
                 "scheduledDate": "2026-07-10T09:00:00+03:00",
                 "expectedParticipants": 15,

@@ -561,7 +561,8 @@ class PlanningRoutePreviewService:
         *, school_ids: list[str], responsible_user: str, visit_date=None
     ) -> dict:
         from apps.budget.costing_service import active_catalogue
-        from apps.daily_visit_batches.pricing import compute_daily_pool
+        from apps.core.fy import get_operational_fy
+        from apps.daily_visit_batches.pricing import allocate_pool, compute_daily_pool
         from apps.schools.models import School
 
         schools = list(
@@ -576,7 +577,10 @@ class PlanningRoutePreviewService:
         if not schools:
             return {"ok": False, "error": "No valid schools selected."}
 
-        catalogue = active_catalogue()
+        # Price against the catalogue of the FY the route is planned FOR —
+        # an FY-less lookup priced next year's routes from this year's rates.
+        fy = get_operational_fy(visit_date)
+        catalogue = active_catalogue(fy)
         target = catalogue.required_school_visits_per_day if catalogue else 5
         comp = RouteComputation.compute(schools, target=target)
         issues = RouteValidationService.validate(
@@ -617,7 +621,12 @@ class PlanningRoutePreviewService:
 
                 rates, _ = _rate_card(catalogue)
                 pool = compute_daily_pool(rates, next(iter(dtypes)))
-                cost_per_school = sum(pool.values()) // max(1, len(schools))
+                # Split with the same exact-allocation math the Daily Visit
+                # Batch pricing engine uses (sum of shares == pool; remainder
+                # shillings go to the first schools) instead of floor division,
+                # which silently dropped up to n-1 shillings per component.
+                shares = allocate_pool(pool, len(schools))
+                cost_per_school = sum(shares[0].values()) if shares else None
             except Exception:  # noqa: BLE001 — missing rates → no fake price
                 cost_per_school = None
 

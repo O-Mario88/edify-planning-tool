@@ -7,8 +7,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.enums import SsaIntervention
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
+from apps.core.scoping import resolve_user_scope
 from apps.core.calendar_policy import SchedulingPolicyService, resolve_scheduling_user
 from apps.schools.models import School
 
@@ -87,17 +88,10 @@ def create_package_slots(
 
 
 def list_candidates(principal) -> list[dict]:
-    """Best-SSA client/potential-core/potential-champion schools → candidate
-    for core onboarding. potential_champion is included here (not on a
-    separate Champion-candidates pipeline) because ChampionEligibilityService
-    only evaluates schools that already have a CoreSchoolProfile, which is
-    only created through this same Core onboarding path — a "potential
-    champion" school's actual next step is identical to a "potential core"
-    school's, and it used to be invisible to every workflow (not client-only,
-    not core, no CoreSchoolProfile) until it went through here."""
+    """Best-SSA Client and Core Trained schools → Core onboarding candidates."""
     qs = School.objects.filter(
         deleted_at__isnull=True,
-        school_type__in=["client", "potential_core", "potential_champion"],
+        school_type__in=["client", "core_trained"],
     )
     out = []
     for s in qs:
@@ -147,7 +141,7 @@ def verify_candidate(school_id: str, data: dict, principal) -> dict:
         comments=data.get("comments"),
     )
     if data.get("status", "Verified Potential Core") != "Rejected":
-        school.school_type = "potential_core"
+        school.school_type = "core_trained"
         school.save(update_fields=["school_type"])
     return {"id": verification.id, "schoolId": school_id, "status": verification.status}
 
@@ -257,13 +251,38 @@ def get_detail(school_id: str, principal) -> dict:
 
 
 def slot_action(slot_id: str, action: str, data: dict, principal) -> dict:
-    """Polymorphic slot action (11-action allowlist)."""
+    """Polymorphic slot action (11-action allowlist).
+
+    Every branch here mutates package state, so the whole action runs under a
+    row lock inside one transaction, the slot must be in the caller's scope
+    (the bare id lookup previously let any authenticated planner mutate any
+    country's slots), and the plan's completion counters are resynced before
+    returning (they otherwise only refresh via Activity.save())."""
     if action not in SLOT_ACTIONS:
         raise BadRequest(f"Unknown slot action '{action}'.")
-    slot = CoreActivitySlot.objects.filter(id=slot_id).first()
-    if not slot:
-        raise NotFoundError("Slot not found.")
+    with transaction.atomic():
+        slot = (
+            CoreActivitySlot.objects.select_for_update()
+            .select_related("core_plan")
+            .filter(id=slot_id)
+            .first()
+        )
+        if not slot:
+            raise NotFoundError("Slot not found.")
+        scope = resolve_user_scope(principal)
+        if not scope.country_scope:
+            # slot.school_id holds the public school code; scope carries pks.
+            school_pk = (
+                School.objects.filter(school_id=slot.school_id)
+                .values_list("id", flat=True)
+                .first()
+            )
+            if not (school_pk and scope.school_ids and school_pk in scope.school_ids):
+                raise Forbidden("Core slot outside your scope.")
+        return _apply_slot_action(slot, action, data)
 
+
+def _apply_slot_action(slot: CoreActivitySlot, action: str, data: dict) -> dict:
     if action == "assign":
         slot.assigned_staff_id = data.get("assignedStaffId")
         slot.assigned_staff_name = data.get("assignedStaffName")
@@ -330,6 +349,10 @@ def slot_action(slot_id: str, action: str, data: dict, principal) -> dict:
         slot.accountant_status = "confirmed"
 
     slot.save()
+    # Slot status changes affect the package's completion counters, which
+    # otherwise only refresh when a linked Activity is saved.
+    if slot.core_plan_id:
+        resync_plan_completion(slot.core_plan)
     return _serialize_slot(slot)
 
 

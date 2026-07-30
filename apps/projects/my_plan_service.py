@@ -50,8 +50,21 @@ def _project_queryset(principal, scope):
     qs = Project.objects.filter(deleted_at__isnull=True)
     if scope.country_scope:
         return qs
-    if principal.active_role == "ProjectCoordinator" and principal.staff_profile_id:
-        return qs.filter(manager_staff_id=principal.staff_profile_id)
+    if principal.staff_profile_id:
+        assigned = Q(
+            staff_assignments__staff_id=principal.staff_profile_id,
+            staff_assignments__is_active=True,
+        )
+        if principal.active_role == "ProjectCoordinator":
+            return qs.filter(
+                Q(manager_staff_id=principal.staff_profile_id) | assigned
+            ).distinct()
+        if scope.school_ids:
+            return qs.filter(
+                assigned
+                | Q(school_assignments__school_id__in=scope.school_ids)
+            ).distinct()
+        return qs.filter(assigned).distinct()
     if scope.school_ids:
         return qs.filter(school_assignments__school_id__in=scope.school_ids).distinct()
     return qs.none()

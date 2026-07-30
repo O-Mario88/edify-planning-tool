@@ -12,6 +12,7 @@ from django.db.models import Q, Count
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.html import escape
+from django.utils.dateparse import parse_date
 from urllib.parse import urlencode
 
 from apps.schools.models import School
@@ -23,6 +24,7 @@ from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
+from apps.accounts.staff_matching import OWNER_ROLES
 from apps.clusters.models import Cluster
 from apps.clusters.services import (
     assign_school as assign_school_to_cluster,
@@ -49,6 +51,19 @@ def _may_upload_ssa(request) -> bool:
     return has_permission(request.user, Permission.SSA_UPLOAD.value)
 
 
+def _school_owner_queryset():
+    """Active CCEO/Program Lead profiles eligible to own a school."""
+    return (
+        StaffProfile.objects.filter(
+            deleted_at__isnull=True,
+            user__is_active=True,
+            user__roles__overlap=list(OWNER_ROLES),
+        )
+        .select_related("user")
+        .order_by("user__name")
+    )
+
+
 def _create_manual_school(request) -> School:
     """Validate and persist one school through the canonical school service."""
     district_id = request.POST.get("district_id", "").strip()
@@ -60,6 +75,21 @@ def _create_manual_school(request) -> School:
     if district is None:
         raise BadRequest("Select a valid district.")
 
+    sub_county_id = request.POST.get("sub_county_id", "").strip()
+    sub_county = None
+    if sub_county_id:
+        sub_county = SubCounty.objects.filter(
+            id=sub_county_id,
+            district_id=district.id,
+        ).first()
+        if sub_county is None:
+            raise BadRequest("Select a valid sub-county within the district.")
+
+    owner_id = request.POST.get("account_owner_id", "").strip()
+    owner = _school_owner_queryset().filter(id=owner_id).first() if owner_id else None
+    if owner is None:
+        raise BadRequest("Select a valid CCEO or Program Lead as Staff Name.")
+
     with transaction.atomic():
         school = create_school(
             {
@@ -67,10 +97,27 @@ def _create_manual_school(request) -> School:
                 "name": request.POST.get("name", ""),
                 "regionId": district.region_id,
                 "districtId": district.id,
+                "subCountyId": sub_county.id if sub_county else None,
                 "schoolType": request.POST.get("school_type", SchoolType.CLIENT),
                 "enrollment": request.POST.get("enrollment", ""),
+                "accountOwnerName": owner.user.name,
             },
             request.user,
+        )
+        school.account_owner_id = owner.id
+        school.account_owner_name_raw = owner.user.name
+        school.account_owner_status = "matched"
+        school.save(
+            update_fields=[
+                "account_owner_id",
+                "account_owner_name_raw",
+                "account_owner_status",
+                "updated_at",
+            ]
+        )
+        StaffSchoolAssignment.objects.get_or_create(
+            staff=owner,
+            school_id=school.id,
         )
 
         cluster_id = request.POST.get("cluster_id", "").strip()
@@ -183,6 +230,16 @@ def school_directory_view(request):
     region_id = request.GET.get("region", "").strip()
     district_id = request.GET.get("district", "").strip()
     sub_county_id = request.GET.get("sub_county", "").strip()
+    # Sub-county is a dependent filter. If the district changes, discard a
+    # stale sub-county value from the previous district before querying.
+    if sub_county_id and (
+        not district_id
+        or not SubCounty.objects.filter(
+            id=sub_county_id,
+            district_id=district_id,
+        ).exists()
+    ):
+        sub_county_id = ""
     school_type = request.GET.get("school_type", "").strip()
     cluster_status = request.GET.get("cluster_status", "").strip()
     project_status = request.GET.get("project_status", "").strip()
@@ -491,38 +548,65 @@ def school_directory_view(request):
         default_school = page_obj.object_list[0]
         selected_school_data = _get_school_intelligence_data(default_school)
 
-    # Populating filter options
+    # Populating filter and data-entry options.
     #
-    # Only places that actually hold schools this user can see. District listed
-    # all 139 UBOS districts while the directory's schools sat in two of them,
-    # so more than 130 options were dead ends: pick one, get an empty table,
-    # with nothing to distinguish "no schools here" from "filter is broken".
-    #
-    # This matters more since Region was removed, because Region was what used
-    # to narrow this list. Deriving the options from the scoped school set
-    # replaces that narrowing with something stricter — the options are the
-    # places the results can actually come from — and it stays correct per role
-    # without a second control to maintain.
+    # Once schools exist, directory filters remain scoped to places that can
+    # produce a result. After a school-data purge, however, that rule used to
+    # make the geography reference data appear deleted. Fall back to the full
+    # district reference list in the empty state, then reveal sub-counties for
+    # the selected district.
     scoped_district_ids = base_qs.values("district_id")
     scoped_sub_county_ids = base_qs.exclude(sub_county__isnull=True).values(
         "sub_county_id"
     )
     regions = Region.objects.all().order_by("name")
-    districts = (
-        District.objects.filter(id__in=scoped_district_ids).distinct().order_by("name")
-    )
-    sub_counties = (
-        SubCounty.objects.filter(id__in=scoped_sub_county_ids)
-        .distinct()
-        .order_by("name")
-    )
+    reference_districts = District.objects.select_related("region").order_by("name")
+    has_scoped_schools = base_qs.exists()
+    if has_scoped_schools:
+        districts = (
+            District.objects.filter(id__in=scoped_district_ids)
+            .distinct()
+            .order_by("name")
+        )
+    else:
+        districts = reference_districts
+    if district_id:
+        sub_counties = SubCounty.objects.filter(district_id=district_id).order_by(
+            "name"
+        )
+    elif has_scoped_schools:
+        sub_counties = (
+            SubCounty.objects.filter(id__in=scoped_sub_county_ids)
+            .distinct()
+            .order_by("name")
+        )
+    else:
+        sub_counties = SubCounty.objects.none()
     staff_profiles = (
         StaffProfile.objects.filter(deleted_at__isnull=True)
         .select_related("user")
         .order_by("user__name")
     )
+    school_owners = _school_owner_queryset()
     clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
-    projects = Project.objects.filter(deleted_at__isnull=True).order_by("name")
+    from apps.projects.scoping import scoped_projects
+
+    projects = scoped_projects(user).filter(
+        status__in=[status.value for status in OPEN_PROJECT_STATUSES],
+    )
+    if user.active_role not in (
+        "ImpactAssessment",
+        "CountryDirector",
+        "Admin",
+    ):
+        projects = projects.filter(
+            Q(manager_staff_id=getattr(user, "staff_profile_id", None))
+            | Q(
+                staff_assignments__staff_id=getattr(user, "staff_profile_id", None),
+                staff_assignments__is_active=True,
+            )
+        )
+    projects = projects.distinct().order_by("name")
 
     context = {
         "page_obj": page_obj,
@@ -533,7 +617,9 @@ def school_directory_view(request):
         "regions": regions,
         "districts": districts,
         "sub_counties": sub_counties,
+        "reference_districts": reference_districts,
         "staff_profiles": staff_profiles,
+        "school_owners": school_owners,
         "clusters": clusters,
         "projects": projects,
         "school_types": SchoolType.choices,
@@ -600,6 +686,38 @@ def school_directory_view(request):
 
 
 @require_page_permission("school_directory")
+def school_sub_county_options_view(request):
+    """Return native select options for a district-dependent school form."""
+    district_id = request.GET.get("district_id", "").strip()
+    sub_counties = (
+        SubCounty.objects.filter(district_id=district_id).order_by("name")
+        if district_id
+        else SubCounty.objects.none()
+    )
+    return render(
+        request,
+        "partials/schools/sub_county_options.html",
+        {"sub_counties": sub_counties},
+    )
+
+
+@require_page_permission("school_directory")
+def school_parish_options_view(request):
+    """Return native select options for a sub-county-dependent school form."""
+    sub_county_id = request.GET.get("sub_county_id", "").strip()
+    parishes = (
+        Parish.objects.filter(sub_county_id=sub_county_id).order_by("name")
+        if sub_county_id
+        else Parish.objects.none()
+    )
+    return render(
+        request,
+        "partials/schools/parish_options.html",
+        {"parishes": parishes},
+    )
+
+
+@require_page_permission("school_directory")
 def add_to_cluster_drawer_view(request, school_id):
     school = get_scoped_object_or_404(
         School, request.user, id=school_id, deleted_at__isnull=True
@@ -615,143 +733,130 @@ def add_to_cluster_drawer_view(request, school_id):
             {"error": "You do not have permission to assign clusters."},
         )
 
-    from apps.accounts.models import StaffProfile
-    from apps.geography.models import District, SubCounty
-    from apps.clusters.models import Cluster, ClusterSubCounty
-
-    # Helper to fetch sub-counties scoped to the school's district with unclustered school counts & covering cluster claims
-    def get_scoped_sub_counties(sch):
-        if not sch.district_id:
-            return SubCounty.objects.none()
-        scs = list(
-            SubCounty.objects.filter(district_id=sch.district_id).order_by("name")
-        )
-        for sc in scs:
-            sc.unclustered_schools_count = School.objects.filter(
-                sub_county=sc, cluster_status="unclustered", deleted_at__isnull=True
-            ).count()
-
-            # Find if this sub-county is already claimed by any active cluster
-            claim = (
-                ClusterSubCounty.objects.filter(
-                    sub_county=sc, cluster__deleted_at__isnull=True
-                )
-                .select_related("cluster")
-                .first()
-            )
-            if claim:
-                sc.covering_cluster_name = claim.cluster.name
-                sc.covering_cluster_id = claim.cluster.id
-            else:
-                sc.covering_cluster_name = None
-                sc.covering_cluster_id = None
-        return scs
-
-    # Helper to check if school's sub-county is already covered
     def get_existing_covering_cluster(sch):
+        """Resolve both primary and multi-sub-county cluster coverage."""
         if not sch.sub_county_id:
             return None
-        claim = (
-            ClusterSubCounty.objects.filter(
-                sub_county_id=sch.sub_county_id, cluster__deleted_at__isnull=True
+        return (
+            Cluster.objects.filter(
+                district_id=sch.district_id,
+                deleted_at__isnull=True,
+                status="active",
             )
-            .select_related("cluster")
+            .filter(
+                Q(sub_county_id=sch.sub_county_id)
+                | Q(covered_sub_counties__sub_county_id=sch.sub_county_id)
+            )
+            .select_related("district", "sub_county")
+            .distinct()
+            .order_by("name")
             .first()
         )
-        return claim.cluster if claim else None
+
+    def get_responsible_staff(sch):
+        """Use the school's owner; fall back to its portfolio assignment."""
+        if sch.account_owner_id:
+            owner = (
+                StaffProfile.objects.filter(
+                    Q(id=sch.account_owner_id) | Q(user_id=sch.account_owner_id),
+                    deleted_at__isnull=True,
+                    user__is_active=True,
+                )
+                .select_related("user")
+                .first()
+            )
+            if owner:
+                return owner
+        assigned_profiles = list(
+            StaffProfile.objects.filter(
+                school_links__school_id=sch.id,
+                deleted_at__isnull=True,
+                user__is_active=True,
+            )
+            .select_related("user")
+            .order_by("user__name", "id")[:2]
+        )
+        return assigned_profiles[0] if len(assigned_profiles) == 1 else None
+
+    existing_covering_cluster = get_existing_covering_cluster(school)
+    responsible_staff = get_responsible_staff(school)
+    show_cluster_directory = bool(
+        school.sub_county_id and existing_covering_cluster is None
+    )
+
+    def drawer_context(validation_error=None):
+        nearby_clusters = Cluster.objects.none()
+        if show_cluster_directory:
+            nearby_clusters = (
+                Cluster.objects.filter(
+                    district_id=school.district_id,
+                    deleted_at__isnull=True,
+                    status="active",
+                )
+                .select_related("district", "sub_county")
+                .annotate(schools_count=Count("assignments", distinct=True))
+                .order_by("name")
+            )
+        return {
+            "school": school,
+            "responsible_staff": responsible_staff,
+            "all_clusters": nearby_clusters,
+            "existing_covering_cluster": existing_covering_cluster,
+            "show_cluster_directory": show_cluster_directory,
+            "validation_error": validation_error,
+            "drawer_type": "center",
+            "drawer_size": "md",
+        }
 
     # 1. Enforce Minimum Data Needed for Clustering
     # Minimum data gate: school_id, name, and district are required.
     # Sub-county is NOT required — staff can cluster at district level.
     if not school.school_id or not school.name or not school.district_id:
-        districts = District.objects.all().order_by("name")
-        sub_counties = get_scoped_sub_counties(school)
-        all_clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
-        for ac in all_clusters:
-            ac.schools_count = ac.assignments.count()
-        staff_list = (
-            StaffProfile.objects.filter(user__is_active=True)
-            .select_related("user")
-            .order_by("user__name")
-        )
         return render(
             request,
             "partials/schools/add_to_cluster_drawer.html",
-            {
-                "school": school,
-                "school_contact": school.primary_contact_name or "—",
-                "recommended_clusters": [],
-                "all_clusters": all_clusters,
-                "districts": districts,
-                "sub_counties": sub_counties,
-                "staff_list": staff_list,
-                "existing_covering_cluster": None,
-                "validation_error": "This school needs a School ID, Name, and District before it can be clustered. Sub-county is optional.",
-                "drawer_type": "center",
-                "drawer_size": "md",
-            },
+            drawer_context(
+                "This school needs a School ID, Name, and District before it can "
+                "be clustered. Sub-county is optional."
+            ),
         )
 
     if request.method == "POST":
-        action_type = request.POST.get("cluster_action_type", "existing")
-        cluster_id = None
+        action_type = request.POST.get(
+            "cluster_action_type",
+            "existing" if show_cluster_directory else "new",
+        )
+        cluster = existing_covering_cluster
 
-        responsible_staff_id = request.POST.get("responsible_staff_id")
-        notes = request.POST.get("notes", "").strip()
-
-        # Check if the school's sub-county is already covered
-        existing_covering_cluster = get_existing_covering_cluster(school)
-
-        if action_type == "existing" or existing_covering_cluster:
-            cluster_id = request.POST.get("existing_cluster_id")
-            if existing_covering_cluster:
-                # Force existing covering cluster ID
-                cluster_id = existing_covering_cluster.id
-
-            if not cluster_id:
-                districts = District.objects.all().order_by("name")
-                sub_counties = get_scoped_sub_counties(school)
-                recommended_clusters = Cluster.objects.filter(
-                    district_id=school.district_id,
-                    sub_county_id=school.sub_county_id,
-                    deleted_at__isnull=True,
-                ).order_by("name")
-                for rc in recommended_clusters:
-                    rc.schools_count = rc.assignments.count()
-                all_clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by(
-                    "name"
-                )
-                for ac in all_clusters:
-                    ac.schools_count = ac.assignments.count()
-                staff_list = (
-                    StaffProfile.objects.filter(user__is_active=True)
-                    .select_related("user")
-                    .order_by("user__name")
-                )
+        if cluster is None and action_type == "existing":
+            if not show_cluster_directory:
                 return render(
                     request,
                     "partials/schools/add_to_cluster_drawer.html",
-                    {
-                        "school": school,
-                        "school_contact": school.primary_contact_name or "—",
-                        "recommended_clusters": recommended_clusters,
-                        "all_clusters": all_clusters,
-                        "districts": districts,
-                        "sub_counties": sub_counties,
-                        "staff_list": staff_list,
-                        "existing_covering_cluster": existing_covering_cluster,
-                        "validation_error": "Please select an existing cluster.",
-                        "drawer_type": "center",
-                        "drawer_size": "md",
-                    },
+                    drawer_context(
+                        "Add a sub-county to the school before selecting a nearby "
+                        "cluster."
+                    ),
                 )
-            cluster = get_object_or_404(Cluster, id=cluster_id, deleted_at__isnull=True)
-            if responsible_staff_id:
-                cluster.responsible_staff_id = responsible_staff_id
-            if notes:
-                cluster.override_reason = notes
-            cluster.save()
-        else:
+            cluster_id = request.POST.get("existing_cluster_id")
+            cluster = (
+                Cluster.objects.filter(
+                    id=cluster_id,
+                    district_id=school.district_id,
+                    deleted_at__isnull=True,
+                    status="active",
+                )
+                .select_related("district")
+                .first()
+            )
+            if cluster is None:
+                return render(
+                    request,
+                    "partials/schools/add_to_cluster_drawer.html",
+                    drawer_context("Select a nearby cluster."),
+                )
+
+        if cluster is None:
             # Create new cluster
             cluster_name = request.POST.get("new_cluster_name", "").strip()
             district_id = request.POST.get("new_district_id")
@@ -764,48 +869,17 @@ def add_to_cluster_drawer_view(request, school_id):
                 if school_sub_county_id_str not in new_sub_county_ids:
                     new_sub_county_ids.append(school_sub_county_id_str)
 
-            # Sub-county is optional — only name + district are required.
-            if not cluster_name or not district_id:
-                districts = District.objects.all().order_by("name")
-                sub_counties = get_scoped_sub_counties(school)
-                recommended_clusters = Cluster.objects.filter(
-                    district_id=school.district_id, deleted_at__isnull=True
-                ).order_by("name")
-                for rc in recommended_clusters:
-                    rc.schools_count = School.objects.filter(
-                        cluster_id=rc.id, deleted_at__isnull=True
-                    ).count()
-                all_clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by(
-                    "name"
-                )
-                for ac in all_clusters:
-                    ac.schools_count = School.objects.filter(
-                        cluster_id=ac.id, deleted_at__isnull=True
-                    ).count()
-                staff_list = (
-                    StaffProfile.objects.filter(user__is_active=True)
-                    .select_related("user")
-                    .order_by("user__name")
-                )
+            if (
+                not cluster_name
+                or not district_id
+                or str(district_id) != str(school.district_id)
+            ):
                 return render(
                     request,
                     "partials/schools/add_to_cluster_drawer.html",
-                    {
-                        "school": school,
-                        "school_contact": school.primary_contact_name or "—",
-                        "recommended_clusters": recommended_clusters,
-                        "all_clusters": all_clusters,
-                        "districts": districts,
-                        "sub_counties": sub_counties,
-                        "staff_list": staff_list,
-                        "existing_covering_cluster": existing_covering_cluster,
-                        "validation_error": "Please fill in all fields for the new cluster.",
-                        "drawer_type": "center",
-                        "drawer_size": "md",
-                    },
+                    drawer_context("Enter a cluster name to continue."),
                 )
 
-            district = get_object_or_404(District, id=district_id)
             # Route through the real create_cluster() service instead of the
             # ORM directly — it enforces the sub-county-uniqueness rule (one
             # active cluster per sub-county unless the caller holds
@@ -817,52 +891,30 @@ def add_to_cluster_drawer_view(request, school_id):
                 cluster_data = create_cluster_service(
                     {
                         "name": cluster_name,
-                        "regionId": district.region_id,
+                        "regionId": school.region_id,
                         "districtId": district_id,
                         "subCountyIds": new_sub_county_ids,
-                        "responsibleStaffId": responsible_staff_id or None,
-                        "overrideReason": notes or None,
+                        "responsibleStaffId": responsible_staff.id
+                        if responsible_staff
+                        else None,
                     },
                     user,
                 )
             except (BadRequest, Forbidden) as e:
-                districts = District.objects.all().order_by("name")
-                sub_counties = get_scoped_sub_counties(school)
-                recommended_clusters = Cluster.objects.filter(
-                    district_id=school.district_id, deleted_at__isnull=True
-                ).order_by("name")
-                for rc in recommended_clusters:
-                    rc.schools_count = rc.assignments.count()
-                all_clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by(
-                    "name"
-                )
-                for ac in all_clusters:
-                    ac.schools_count = ac.assignments.count()
-                staff_list = (
-                    StaffProfile.objects.filter(user__is_active=True)
-                    .select_related("user")
-                    .order_by("user__name")
-                )
                 return render(
                     request,
                     "partials/schools/add_to_cluster_drawer.html",
-                    {
-                        "school": school,
-                        "school_contact": school.primary_contact_name or "—",
-                        "recommended_clusters": recommended_clusters,
-                        "all_clusters": all_clusters,
-                        "districts": districts,
-                        "sub_counties": sub_counties,
-                        "staff_list": staff_list,
-                        "existing_covering_cluster": existing_covering_cluster,
-                        "validation_error": str(e),
-                        "drawer_type": "center",
-                        "drawer_size": "md",
-                    },
+                    drawer_context(str(e)),
                 )
-            cluster_id = cluster_data["id"]
+            cluster = get_object_or_404(
+                Cluster, id=cluster_data["id"], deleted_at__isnull=True
+            )
 
-        cluster = get_object_or_404(Cluster, id=cluster_id, deleted_at__isnull=True)
+        # Responsible staff is always derived from the school's owner. Posted
+        # staff ids and assignment notes are deliberately ignored.
+        if responsible_staff and cluster.responsible_staff_id != responsible_staff.id:
+            cluster.responsible_staff_id = responsible_staff.id
+            cluster.save(update_fields=["responsible_staff_id", "updated_at"])
         # Audited inside set_school_cluster_membership() (the canonical
         # service assign_school_to_cluster delegates to) — not duplicated
         # here.
@@ -876,58 +928,10 @@ def add_to_cluster_drawer_view(request, school_id):
         response["HX-Trigger"] = "schools-updated"
         return response
 
-    districts = District.objects.all().order_by("name")
-    sub_counties = get_scoped_sub_counties(school)
-
-    # Update recommended clusters query to search both primary sub-county and covers
-    # Recommend clusters in the same district. If the school has a sub-county,
-    # prefer clusters that cover it. If not, show all district-level clusters.
-    if school.sub_county_id:
-        recommended_clusters = (
-            Cluster.objects.filter(
-                district_id=school.district_id, deleted_at__isnull=True
-            )
-            .filter(
-                Q(sub_county_id=school.sub_county_id)
-                | Q(covered_sub_counties__sub_county_id=school.sub_county_id)
-            )
-            .distinct()
-            .order_by("name")
-        )
-    else:
-        recommended_clusters = Cluster.objects.filter(
-            district_id=school.district_id, deleted_at__isnull=True
-        ).order_by("name")
-
-    for rc in recommended_clusters:
-        rc.schools_count = rc.assignments.count()
-
-    all_clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
-    for ac in all_clusters:
-        ac.schools_count = ac.assignments.count()
-
-    staff_list = (
-        StaffProfile.objects.filter(user__is_active=True)
-        .select_related("user")
-        .order_by("user__name")
-    )
-    school_contact = school.primary_contact_name or "—"
-
     return render(
         request,
         "partials/schools/add_to_cluster_drawer.html",
-        {
-            "school": school,
-            "school_contact": school_contact,
-            "recommended_clusters": recommended_clusters,
-            "all_clusters": all_clusters,
-            "districts": districts,
-            "sub_counties": sub_counties,
-            "staff_list": staff_list,
-            "existing_covering_cluster": get_existing_covering_cluster(school),
-            "drawer_type": "center",
-            "drawer_size": "md",
-        },
+        drawer_context(),
     )
 
 
@@ -961,15 +965,29 @@ def assign_to_project_drawer_view(request, school_id):
             )
         except Exception:  # noqa: BLE001
             coordinators = []
+        from apps.projects.scoping import scoped_projects
+
+        projects = scoped_projects(user).filter(
+            status__in=[s.value for s in OPEN_PROJECT_STATUSES],
+        )
+        if user.active_role not in (
+            "ImpactAssessment",
+            "CountryDirector",
+            "Admin",
+        ):
+            projects = projects.filter(
+                Q(manager_staff_id=getattr(user, "staff_profile_id", None))
+                | Q(
+                    staff_assignments__staff_id=getattr(user, "staff_profile_id", None),
+                    staff_assignments__is_active=True,
+                )
+            )
         ctx = {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
             # Only projects still accepting work are offerable — a paused or
             # closed project should not be selectable in the first place.
-            "projects": Project.objects.filter(
-                deleted_at__isnull=True,
-                status__in=[s.value for s in OPEN_PROJECT_STATUSES],
-            ).order_by("name"),
+            "projects": projects.distinct().order_by("name"),
             "interventions": SsaIntervention.choices,
             "coordinators": coordinators,
         }
@@ -1032,42 +1050,30 @@ def assign_to_project_drawer_view(request, school_id):
             except ValueError:
                 pass
 
-        # Ecosystem rule: assignment must use verified SSA need, or carry an
-        # explicit override reason (same gate as apps.projects.services).
-        from apps.projects.services import evaluate_school_need
+        # One canonical service enforces SSA need, Project staff scope, school
+        # focus, and the Client=1/Core=4 Project portfolio limit.
+        from apps.projects.services import assign_school as assign_project_school
 
-        matched_intervention = evaluate_school_need(project, school)
-        if (
-            project.target_intervention_list()
-            and not matched_intervention
-            and not notes
-        ):
+        try:
+            assign_project_school(
+                project.id,
+                {
+                    "schoolId": school.school_id,
+                    "projectType": project_type,
+                    "participationType": participation_type,
+                    "startDate": start_date,
+                    "supportArea": support_area,
+                    "notes": notes,
+                    "reason": notes,
+                },
+                user,
+            )
+        except (BadRequest, Forbidden) as exc:
             return render(
                 request,
                 "partials/schools/assign_to_project_drawer.html",
-                _drawer_context(
-                    {
-                        "validation_error": (
-                            "This school's confirmed SSA shows no weakness in "
-                            "the project's target interventions. Add a note "
-                            "explaining why it should join anyway."
-                        )
-                    }
-                ),
+                _drawer_context({"validation_error": str(exc)}),
             )
-
-        ProjectSchoolAssignment.objects.create(
-            project=project,
-            school=school,
-            assigned_by=user.user_id,
-            project_type=project_type,
-            participation_type=participation_type,
-            start_date=start_date,
-            support_area=support_area,
-            notes=notes,
-            assignment_reason=notes if not matched_intervention else "",
-            matched_intervention=matched_intervention or "",
-        )
 
         # Set the project's coordinator if one was chosen and none is set yet
         # (a per-school action shouldn't silently reassign an owned project).
@@ -1149,7 +1155,7 @@ def school_template_download_view(request):
         'attachment; filename="school_upload_template.csv"'
     )
     writer = csv.writer(response)
-    # Headers — required + optional, matching SCHOOL_HEADER_MAP
+    # Required columns first, followed by optional profile fields.
     writer.writerow(
         [
             "School ID",
@@ -1165,20 +1171,20 @@ def school_template_download_view(request):
             "School Shipping Address",
         ]
     )
-    # Sample row
+    # Minimal valid sample row: every field after School Name is optional.
     writer.writerow(
         [
             "SCH-0001",
             "St. Mary's Primary School",
-            "Kampala",
-            "Central Division",
-            "Client",
-            "James Okello",
-            "320",
-            "2025-10-15",
-            "+256700123456",
-            "John Smith",
-            "Plot 12, Main Street, Kampala",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
         ]
     )
     return response
@@ -1371,13 +1377,11 @@ def bulk_assign_project_view(request):
                 return redirect("/schools")
             schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
 
-            from apps.projects.services import evaluate_school_need
-
-            requires_need = bool(project.target_intervention_list())
+            from apps.projects.services import assign_school as assign_project_school
 
             count = 0
             duplicates = 0
-            skipped_no_need = []
+            skipped_errors = []
             for s in schools:
                 already_assigned = ProjectSchoolAssignment.objects.filter(
                     project=project, school=s
@@ -1386,22 +1390,19 @@ def bulk_assign_project_view(request):
                     duplicates += 1
                     continue
 
-                matched_intervention = evaluate_school_need(project, s)
-                if requires_need and not matched_intervention and not override_reason:
-                    skipped_no_need.append(s.name)
-                    continue
-
-                ProjectSchoolAssignment.objects.create(
-                    project=project,
-                    school=s,
-                    assigned_by=request.user.user_id,
-                    notes=override_reason,
-                    assignment_reason=(
-                        override_reason if not matched_intervention else ""
-                    ),
-                    matched_intervention=matched_intervention or "",
-                )
-                count += 1
+                try:
+                    assign_project_school(
+                        project.id,
+                        {
+                            "schoolId": s.school_id,
+                            "notes": override_reason,
+                            "reason": override_reason,
+                        },
+                        request.user,
+                    )
+                    count += 1
+                except (BadRequest, Forbidden) as exc:
+                    skipped_errors.append((s.name, str(exc)))
 
             if count:
                 from apps.audit.services import log as audit_log
@@ -1416,7 +1417,7 @@ def bulk_assign_project_view(request):
                     payload={
                         "projectName": project.name,
                         "assigned": count,
-                        "skippedNoNeed": len(skipped_no_need),
+                        "skipped": len(skipped_errors),
                         "duplicates": duplicates,
                     },
                 )
@@ -1426,25 +1427,25 @@ def bulk_assign_project_view(request):
                     request,
                     f"Skipped {duplicates} school(s) already assigned to this project.",
                 )
-            if skipped_no_need:
-                shown = ", ".join(skipped_no_need[:3])
+            if skipped_errors:
+                shown = "; ".join(
+                    f"{name}: {reason}" for name, reason in skipped_errors[:3]
+                )
                 more = (
-                    f" and {len(skipped_no_need) - 3} more"
-                    if len(skipped_no_need) > 3
+                    f" and {len(skipped_errors) - 3} more"
+                    if len(skipped_errors) > 3
                     else ""
                 )
                 messages.error(
                     request,
-                    f"Skipped {len(skipped_no_need)} school(s) with no confirmed SSA "
-                    f"need in this project's target interventions ({shown}{more}). "
-                    "Add an override reason to assign them anyway.",
+                    f"Skipped {len(skipped_errors)} school(s): {shown}{more}.",
                 )
             if count > 0:
                 messages.success(
                     request,
                     f"Successfully assigned {count} school(s) to project '{project.name}'.",
                 )
-            elif not skipped_no_need:
+            elif not skipped_errors:
                 messages.error(request, "No new project assignments were made.")
         else:
             messages.error(request, "Failed to perform assignment: missing fields.")
@@ -1522,9 +1523,10 @@ def school_change_type_view(request, school_id):
     from apps.schools.services import set_type
 
     try:
-        set_type(user, school.id, new_type)
+        set_type(user, school.school_id, new_type)
+        type_label = dict(SchoolType.choices)[new_type]
         messages.success(
-            request, f"School type changed to {new_type.title()} successfully."
+            request, f"Current partner type changed to {type_label} successfully."
         )
     except Exception as e:
         messages.error(request, f"Error: {str(e)}")
@@ -1596,25 +1598,27 @@ def school_edit_drawer_view(request, school_id):
         id=school_id,
         deleted_at__isnull=True,
     )
+    selected_district_id = (
+        (request.POST.get("district_id") or "").strip()
+        if request.method == "POST"
+        else school.district_id
+    )
+    districts = District.objects.select_related("region").order_by("name")
     clusters = (
         Cluster.objects.filter(
             deleted_at__isnull=True,
             status="active",
-            district_id=school.district_id,
+            district_id=selected_district_id,
         )
         .select_related("district")
         .order_by("name")
     )
-    staff = (
-        StaffProfile.objects.filter(user__is_active=True)
-        .select_related("user")
-        .order_by("user__name")
-    )
-    sub_counties = SubCounty.objects.filter(district_id=school.district_id).order_by(
+    staff = _school_owner_queryset()
+    sub_counties = SubCounty.objects.filter(district_id=selected_district_id).order_by(
         "name"
     )
     parishes = (
-        Parish.objects.filter(sub_county__district_id=school.district_id)
+        Parish.objects.filter(sub_county__district_id=selected_district_id)
         .select_related("sub_county")
         .order_by("sub_county__name", "name")
     )
@@ -1622,8 +1626,10 @@ def school_edit_drawer_view(request, school_id):
     def drawer_context(validation_error=None):
         return {
             "school": school,
+            "districts": districts,
             "clusters": clusters,
             "staff": staff,
+            "school_types": SchoolType.choices,
             "sub_counties": sub_counties,
             "parishes": parishes,
             "validation_error": validation_error,
@@ -1649,6 +1655,19 @@ def school_edit_drawer_view(request, school_id):
             if not name:
                 raise BadRequest("School name is required.")
 
+            school_type = (request.POST.get("school_type") or "").strip()
+            if school_type not in {value for value, _label in SchoolType.choices}:
+                raise BadRequest("Select a valid current partner type.")
+
+            district_id = (request.POST.get("district_id") or "").strip()
+            district = (
+                District.objects.select_related("region").filter(id=district_id).first()
+                if district_id
+                else None
+            )
+            if district is None:
+                raise BadRequest("District is required. Select a valid district.")
+
             enroll_raw = (request.POST.get("enrollment") or "").strip()
             enrollment = None
             if enroll_raw:
@@ -1660,6 +1679,17 @@ def school_edit_drawer_view(request, school_id):
                     raise BadRequest("Enrolment must be greater than zero.")
                 if enrollment > 2_147_483_647:
                     raise BadRequest("Enrolment is too large.")
+
+            last_enrollment_date_raw = (
+                request.POST.get("last_enrollment_date") or ""
+            ).strip()
+            last_enrollment_date = None
+            if last_enrollment_date_raw:
+                last_enrollment_date = parse_date(last_enrollment_date_raw)
+                if last_enrollment_date is None:
+                    raise BadRequest(
+                        "Last enrolment date must use the YYYY-MM-DD format."
+                    )
 
             latitude = optional_float("latitude", "Latitude", -90, 90)
             longitude = optional_float("longitude", "Longitude", -180, 180)
@@ -1673,12 +1703,10 @@ def school_edit_drawer_view(request, school_id):
             if sub_county_id:
                 sub_county = SubCounty.objects.filter(
                     id=sub_county_id,
-                    district_id=school.district_id,
+                    district_id=district.id,
                 ).first()
                 if sub_county is None:
-                    raise BadRequest(
-                        "Select a sub-county within the school's district."
-                    )
+                    raise BadRequest("Select a sub-county within the district.")
 
             parish_id = (request.POST.get("parish_id") or "").strip()
             parish = None
@@ -1697,7 +1725,7 @@ def school_edit_drawer_view(request, school_id):
             if cluster_id:
                 new_cluster = Cluster.objects.filter(
                     id=cluster_id,
-                    district_id=school.district_id,
+                    district_id=district.id,
                     deleted_at__isnull=True,
                     status="active",
                 ).first()
@@ -1705,6 +1733,17 @@ def school_edit_drawer_view(request, school_id):
                     raise BadRequest(
                         "Select an active cluster within the school's district."
                     )
+
+            owner_id = (request.POST.get("account_owner_id") or "").strip()
+            staff_owner = (
+                _school_owner_queryset().filter(id=owner_id).first()
+                if owner_id
+                else None
+            )
+            if staff_owner is None:
+                raise BadRequest(
+                    "Staff Name is required. Select an active CCEO or Program Lead."
+                )
         except BadRequest as exc:
             return render(
                 request,
@@ -1713,17 +1752,33 @@ def school_edit_drawer_view(request, school_id):
             )
 
         previous = {
+            "name": school.name,
+            "school_type": school.school_type,
             "enrollment": school.enrollment,
+            "last_enrollment_date": school.last_enrollment_date,
+            "school_phone": school.school_phone,
+            "primary_contact_name": school.primary_contact_name,
+            "primary_contact_phone": school.primary_contact_phone,
+            "director_name": school.director_name,
+            "headteacher_name": school.headteacher_name,
+            "shipping_address": school.shipping_address,
+            "district_id": school.district_id,
+            "region_id": school.region_id,
             "sub_county_id": school.sub_county_id,
             "parish_id": school.parish_id,
             "latitude": school.latitude,
             "longitude": school.longitude,
+            "account_owner_id": school.account_owner_id,
         }
 
         school.name = name
+        school.school_type = school_type
         school.school_phone = (request.POST.get("school_phone") or "").strip() or None
         school.primary_contact_name = (
             request.POST.get("primary_contact_name") or ""
+        ).strip() or None
+        school.primary_contact_phone = (
+            request.POST.get("primary_contact_phone") or ""
         ).strip() or None
         school.director_name = (request.POST.get("director_name") or "").strip() or None
         school.headteacher_name = (
@@ -1732,49 +1787,35 @@ def school_edit_drawer_view(request, school_id):
         school.shipping_address = (
             request.POST.get("shipping_address") or ""
         ).strip() or None
-        if school.enrollment != enrollment:
+        if last_enrollment_date is not None:
+            school.last_enrollment_date = last_enrollment_date
+        elif school.enrollment != enrollment and enrollment is not None:
             from django.utils import timezone
 
-            school.last_enrollment_date = (
-                timezone.localdate() if enrollment is not None else None
-            )
+            school.last_enrollment_date = timezone.localdate()
+        elif enrollment is None:
+            school.last_enrollment_date = None
         school.enrollment = enrollment
+        school.district = district
+        school.region = district.region
         school.sub_county = sub_county
         school.parish = parish
         school.latitude = latitude
         school.longitude = longitude
 
-        owner_id = (request.POST.get("account_owner_id") or "").strip()
-        if owner_id:
-            staff_owner = (
-                StaffProfile.objects.filter(
-                    id=owner_id,
-                    user__is_active=True,
-                )
-                .select_related("user")
-                .first()
-            )
-            if staff_owner is None:
-                return render(
-                    request,
-                    "partials/schools/edit_drawer.html",
-                    drawer_context("Select a valid active account owner."),
-                )
-            school.account_owner_id = owner_id
-            school.account_owner_name_raw = staff_owner.user.name
-            school.account_owner_status = "matched"
-        else:
-            school.account_owner_id = None
-            school.account_owner_name_raw = None
-            school.account_owner_status = "pending"
+        school.account_owner_id = owner_id
+        school.account_owner_name_raw = staff_owner.user.name
+        school.account_owner_status = "matched"
 
         with transaction.atomic():
             school.save()
-            if owner_id:
-                StaffSchoolAssignment.objects.get_or_create(
-                    school_id=school.id,
-                    staff_id=owner_id,
-                )
+            StaffSchoolAssignment.objects.filter(school_id=school.id).exclude(
+                staff_id=owner_id
+            ).delete()
+            StaffSchoolAssignment.objects.get_or_create(
+                school_id=school.id,
+                staff_id=owner_id,
+            )
             school = set_school_cluster_membership(
                 school,
                 new_cluster,
@@ -1782,11 +1823,23 @@ def school_edit_drawer_view(request, school_id):
             )
 
         current = {
+            "name": school.name,
+            "school_type": school.school_type,
             "enrollment": school.enrollment,
+            "last_enrollment_date": school.last_enrollment_date,
+            "school_phone": school.school_phone,
+            "primary_contact_name": school.primary_contact_name,
+            "primary_contact_phone": school.primary_contact_phone,
+            "director_name": school.director_name,
+            "headteacher_name": school.headteacher_name,
+            "shipping_address": school.shipping_address,
+            "district_id": school.district_id,
+            "region_id": school.region_id,
             "sub_county_id": school.sub_county_id,
             "parish_id": school.parish_id,
             "latitude": school.latitude,
             "longitude": school.longitude,
+            "account_owner_id": school.account_owner_id,
         }
         from apps.audit.services import log as audit_log
 
@@ -1826,8 +1879,9 @@ def school_onboard_drawer_view(request):
             "Only Impact Assessment and administrators may add schools.",
         )
 
-    districts = District.objects.all().order_by("name")
+    districts = District.objects.select_related("region").order_by("name")
     clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
+    staff = _school_owner_queryset()
 
     # Pre-populated cluster if any
     cluster_id = request.GET.get("cluster_id", "").strip()
@@ -1860,6 +1914,8 @@ def school_onboard_drawer_view(request):
     context = {
         "districts": districts,
         "clusters": clusters,
+        "staff": staff,
+        "school_types": SchoolType.choices,
         "pre_cluster_id": cluster_id,
         "can_add_ssa": _may_upload_ssa(request),
     }

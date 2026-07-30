@@ -207,6 +207,17 @@ def sf_kind(activity_type: str) -> str:
     return "training" if activity_type in SALESFORCE_TRAINING_KINDS else "visit"
 
 
+def sf_kind_for_activity(activity: Activity) -> str | None:
+    configured = (activity.salesforce_record_type_snapshot or "").upper()
+    if configured in {"NONE", "SSA_DATA_GATHERING"}:
+        return None
+    if configured == "TRAINING":
+        return "training"
+    if configured == "VISIT":
+        return "visit"
+    return sf_kind(activity.activity_type)
+
+
 # ── List ─────────────────────────────────────────────────────────────────────
 def list_activities(query: dict, principal) -> list[Activity]:
     """Scope-constrained activity list. Supports the FE filter bar (status,
@@ -301,6 +312,21 @@ def _serialize(a: Activity) -> dict:
     return {
         "id": a.id,
         "activityType": a.activity_type,
+        "catalogueItemId": a.catalogue_item_id,
+        "catalogueVersion": a.catalogue_version,
+        "activityName": a.activity_name_snapshot or a.get_activity_type_display(),
+        "catalogueActivityType": a.activity_type_snapshot,
+        "deliveryMethod": a.delivery_method_snapshot,
+        "evidenceProfile": a.evidence_profile_snapshot,
+        "salesforceRecordType": a.salesforce_record_type_snapshot,
+        "costingProfile": a.costing_profile_snapshot,
+        "sourceSsaId": a.source_ssa_id,
+        "sourceSsaVerificationState": a.source_ssa_verification_state,
+        "sourceScore": float(a.source_score) if a.source_score is not None else None,
+        "sourceClassification": a.source_classification,
+        "recommendationReason": a.recommendation_reason,
+        "followUpOfActivityId": a.follow_up_of_activity_id,
+        "overrideReason": a.override_reason,
         "schoolId": a.school.school_id if a.school_id else None,
         "schoolName": a.school.name if a.school_id else None,
         "clusterId": a.cluster_id,
@@ -344,8 +370,19 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         posted = data.get(name)
         return saved_value if posted is None else posted
 
+    # The district classification drives which rate family prices the work
+    # (secondary-district visits carry accommodation/dinner components).
+    # Only create() used to inject it from the school; reschedule/reassign/
+    # partner_schedule passed the raw POST dict, so any re-price silently
+    # degraded a secondary-district activity to primary rates. Resolve it
+    # from the activity's own school here so every path prices identically.
+    district_type = data.get("districtType")
+    if not district_type and activity.school_id and activity.school.district_id:
+        district_type = activity.school.district.district_type
+
     return {
         "activityType": activity.activity_type,
+        "costingProfile": activity.costing_profile_snapshot,
         "deliveryType": activity.delivery_type,
         "teachersAttended": value("teachersAttended", activity.teachers_attended),
         "leadersAttended": value("leadersAttended", activity.leaders_attended),
@@ -353,7 +390,7 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "expectedParticipants": value(
             "expectedParticipants", activity.expected_participants
         ),
-        "districtType": data.get("districtType"),
+        "districtType": district_type,
         "nights": data.get("nights"),
         "projectId": activity.project_id,
         "fy": activity.fy,
@@ -413,7 +450,46 @@ def _apply_schedule_cost_snapshot(
     sync_monthly_drafts_for_activity(activity, prior_buckets=prior_buckets)
 
 
-def _assert_schedule_entitlement(activity_type, school, fy, data):
+# A client school's package is one visit and one training per fiscal year.
+# For catalogue-governed scheduling the catalogue decides which pool (if any)
+# an item draws from; these type tuples remain the fallback for legacy rows
+# and non-catalogue scheduling paths. The Activity Catalogue retired the
+# generic ``school_visit`` in favour of ``follow_up_visit``, so both spell
+# "client visit" here.
+CLIENT_VISIT_LEGACY_TYPES = ("school_visit", "follow_up_visit")
+CLIENT_TRAINING_LEGACY_TYPES = (
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+)
+
+
+def client_entitlement_consumers_q(pool: str) -> Q:
+    """Filter for the Activities that have consumed a client entitlement pool.
+
+    Canonical for both the scheduling guard and the system-health duplicate
+    detector, so "what counts as the visit/training" cannot drift between the
+    prevention and the detection. Catalogue-linked rows count by their item's
+    governed flag; catalogue-less rows count by legacy activity_type.
+    """
+    if pool == "visit":
+        return Q(catalogue_item__counts_toward_client_visit=True) | Q(
+            catalogue_item__isnull=True, activity_type__in=CLIENT_VISIT_LEGACY_TYPES
+        )
+    return Q(catalogue_item__counts_toward_client_training=True) | Q(
+        catalogue_item__isnull=True, activity_type__in=CLIENT_TRAINING_LEGACY_TYPES
+    )
+
+
+def _assert_schedule_entitlement(
+    activity_type,
+    school,
+    fy,
+    data,
+    *,
+    core_slot_verified: bool = False,
+    catalogue_item=None,
+):
     """The annual entitlement gates that scheduling must enforce.
 
     Verification-audit findings C3 and the core-bypass HIGH:
@@ -425,11 +501,18 @@ def _assert_schedule_entitlement(activity_type, school, fy, data):
       to the generic endpoint, skipping CorePackageSchedulingService — no
       slot, no quarter window, no staff cap. Core types must arrive through
       the slot machinery, which sets coreSlotVerified after locking a slot.
+
+    When a catalogue item is given, its governed flags decide the pool: the
+    ``counts_toward_client_visit``/``counts_toward_client_training`` flags pick
+    visit or training, and the eligibility rule's ``counts_toward_entitlement``
+    is the governance switch that can exempt an item outright. Student camps
+    and conferences carry workflow_kind ``training`` with both flags off — they
+    must neither consume nor be blocked by the school's training entitlement.
     """
     if not school:
         return
     if activity_type in ("core_visit", "core_training"):
-        if not data.get("coreSlotVerified"):
+        if not core_slot_verified:
             raise BadRequest(
                 "Core support must be scheduled from the Core Schools page, "
                 "which reserves one of the package's slots."
@@ -437,27 +520,26 @@ def _assert_schedule_entitlement(activity_type, school, fy, data):
         return
     if getattr(school, "school_type", None) != "client":
         return
-    ENTITLEMENT_TYPES = {
-        "school_visit": ("school_visit",),
-        "training": ("training", "in_school_training", "school_improvement_training"),
-        "in_school_training": (
-            "training",
-            "in_school_training",
-            "school_improvement_training",
-        ),
-        "school_improvement_training": (
-            "training",
-            "in_school_training",
-            "school_improvement_training",
-        ),
-    }
-    family = ENTITLEMENT_TYPES.get(activity_type)
-    if not family:
+    if catalogue_item is not None:
+        rule = getattr(catalogue_item, "eligibility_rule", None)
+        if rule is not None and not rule.counts_toward_entitlement:
+            return
+        if catalogue_item.counts_toward_client_visit:
+            pool = "visit"
+        elif catalogue_item.counts_toward_client_training:
+            pool = "training"
+        else:
+            return
+    elif activity_type in CLIENT_VISIT_LEGACY_TYPES:
+        pool = "visit"
+    elif activity_type in CLIENT_TRAINING_LEGACY_TYPES:
+        pool = "training"
+    else:
         return
     live = (
         Activity.objects.filter(
+            client_entitlement_consumers_q(pool),
             school=school,
-            activity_type__in=family,
             fy=fy,
             deleted_at__isnull=True,
         )
@@ -465,9 +547,8 @@ def _assert_schedule_entitlement(activity_type, school, fy, data):
         .count()
     )
     if live >= 1:
-        kind = "visit" if family == ("school_visit",) else "training"
         raise BadRequest(
-            f"This client school's {kind} entitlement for FY{fy} is already "
+            f"This client school's {pool} entitlement for FY{fy} is already "
             "used. Reschedule the existing activity instead of creating a "
             "second one."
         )
@@ -496,16 +577,55 @@ def _cluster_member_school_ids(activity, raw_ids) -> list[str]:
 
 
 # ── Create ───────────────────────────────────────────────────────────────────
-def create(data: dict, principal) -> dict:
-    """Create and cost a scheduled activity without business-policy blocks.
+def create(
+    data: dict,
+    principal,
+    *,
+    skip_cost_snapshot: bool = False,
+    core_slot_verified: bool = False,
+) -> dict:
+    """Create and cost one governed Activity.
 
-    Scheduling is intentionally permissive: once the caller has permission,
-    provides a real target, and supplies a date, a visit, training, or cluster
-    meeting is saved immediately. SSA recommendations, annual quotas,
-    calendars, duplicate heuristics, and catalogue completeness remain useful
-    reporting signals, but no longer prevent field teams from scheduling work.
+    Catalogue eligibility, SSA recommendation lineage, frequency, scope,
+    scheduling policy, duplicate prevention, and Cost Catalogue readiness are
+    authoritative gates. A dated Activity is persisted only when its cost
+    snapshot can be written in the same transaction.
+
+    ``skip_cost_snapshot`` and ``core_slot_verified`` are trusted,
+    internal-caller flags (the Daily Visit Batch service and the Core Schools
+    slot machinery respectively). They were previously read from ``data`` —
+    i.e. from the raw API payload — which let any caller of POST /api/activities
+    create a money-bearing activity with zero cost lines, or a core activity
+    outside the slot cap. They are keyword-only now and the corresponding keys
+    are stripped from ``data`` before use.
     """
-    activity_type = data.get("activityType")
+    # Defense-in-depth: these keys must never be honoured from request data.
+    data = {
+        k: v
+        for k, v in data.items()
+        if k not in ("_skip_cost_snapshot", "coreSlotVerified")
+    }
+    catalogue_item = None
+    catalogue_item_id = data.get("catalogueItemId") or data.get("catalogue_item_id")
+    if data.get("requireCatalogue") and not catalogue_item_id:
+        raise BadRequest(
+            "Select an approved Activity Catalogue item. Free-text or generic "
+            "Activity creation is not available in Planning."
+        )
+    if catalogue_item_id:
+        from apps.activity_catalogue.services import get_selectable_item
+
+        catalogue_item = get_selectable_item(
+            str(catalogue_item_id),
+            on_date=(
+                _parse_date(data["scheduledDate"]).date()
+                if data.get("scheduledDate")
+                else None
+            ),
+        )
+    activity_type = (
+        catalogue_item.workflow_kind if catalogue_item else data.get("activityType")
+    )
     school_id_str = data.get("schoolId")
     cluster_id = data.get("clusterId")
 
@@ -554,7 +674,14 @@ def create(data: dict, principal) -> dict:
     if not school and not cluster_id:
         raise BadRequest("Activity must reference a school or cluster")
     _assert_target_in_scope(school=school, cluster_id=cluster_id, principal=principal)
-    _assert_schedule_entitlement(activity_type, school, fy, data)
+    _assert_schedule_entitlement(
+        activity_type,
+        school,
+        fy,
+        data,
+        core_slot_verified=core_slot_verified,
+        catalogue_item=catalogue_item,
+    )
 
     is_partner = data.get("deliveryType") == "partner" or bool(
         data.get("assignedPartnerId")
@@ -588,6 +715,7 @@ def create(data: dict, principal) -> dict:
     # school-assignment paths left this funnel open, so a closed project could
     # still accrue activities and, through costing, real spend.
     project_id = data.get("projectId")
+    project = None
     if project_id:
         from apps.projects.models import Project
         from apps.projects.services import assert_accepts_new_work
@@ -596,6 +724,255 @@ def create(data: dict, principal) -> dict:
         if project is None:
             raise BadRequest("Unknown project.")
         assert_accepts_new_work(project)
+
+    source_ssa = None
+    source_activity = None
+    catalogue_cluster = _catalogue_cluster(cluster_id) if cluster_id else None
+    governed_recommendation_reason = data.get("recommendationReason", "")
+    governed_recommendation_source = {}
+    if catalogue_item:
+        from apps.activity_catalogue.models import MappingMode
+        from apps.activity_catalogue.services import (
+            validate_context,
+            validate_frequency,
+        )
+        from apps.ssa.services import latest_applicable_record
+
+        if data.get("sourceActivityId"):
+            source_activity = Activity.objects.filter(
+                id=data.get("sourceActivityId"), deleted_at__isnull=True
+            ).first()
+            if source_activity is None:
+                raise BadRequest("The selected source Activity does not exist.")
+            if school is not None and source_activity.school_id != school.id:
+                raise BadRequest("The source Activity must belong to the same School.")
+            if (
+                catalogue_cluster is not None
+                and source_activity.cluster_id != catalogue_cluster.id
+            ):
+                raise BadRequest("The source Activity must belong to the same Cluster.")
+            if project and source_activity.project_id not in {None, project.id}:
+                raise BadRequest(
+                    "The source Activity belongs to a different Special Project."
+                )
+            if source_activity.status not in (
+                "completed",
+                "ia_verified",
+                "accountant_confirmed",
+                "closed",
+            ):
+                raise BadRequest(
+                    "Follow-up requires a completed source Training or support Activity."
+                )
+        source_ssa = latest_applicable_record(school) if school is not None else None
+        mapping_modes = set(
+            catalogue_item.intervention_mappings.filter(active=True).values_list(
+                "mapping_mode", flat=True
+            )
+        )
+        if (
+            school is not None
+            and catalogue_item.requires_current_ssa
+            and source_ssa is None
+            and MappingMode.ADMINISTRATIVE not in mapping_modes
+            and MappingMode.SSA_COMPLETION_PREREQUISITE not in mapping_modes
+        ):
+            raise BadRequest(
+                "Complete the School SSA first. Intervention-specific support "
+                "cannot be recommended or scheduled without an applicable SSA."
+            )
+        validate_context(
+            catalogue_item,
+            school=school,
+            cluster=(None if cluster_id is None else catalogue_cluster),
+            project=project,
+            executor_type="partner" if is_partner else "staff",
+        )
+        validate_frequency(
+            catalogue_item,
+            school=school,
+            cluster=catalogue_cluster,
+            fy=fy,
+            on_date=scheduled_date.date() if scheduled_date else None,
+        )
+        mapping_modes = set(mapping_modes)
+        if school is not None and not mapping_modes.intersection(
+            {
+                MappingMode.ADMINISTRATIVE,
+                MappingMode.SSA_COMPLETION_PREREQUISITE,
+            }
+        ):
+            from apps.activity_catalogue.services import recommend_activities
+
+            recommendation_result = recommend_activities(
+                school=school,
+                principal=principal,
+                project=project,
+                cluster=catalogue_cluster,
+                executor_type="partner" if is_partner else "staff",
+                limit=3,
+            )
+            all_rows = [
+                *recommendation_result["primary"],
+                *recommendation_result["otherEligible"],
+            ]
+            matching = next(
+                (
+                    row
+                    for row in all_rows
+                    if row["catalogueItemId"] == catalogue_item.id
+                ),
+                None,
+            )
+            primary_ids = {
+                row["catalogueItemId"] for row in recommendation_result["primary"]
+            }
+            override_reason = (data.get("overrideReason") or "").strip()
+            is_dynamic_followup = (
+                MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
+            )
+            if (
+                catalogue_item.id not in primary_ids
+                and not is_dynamic_followup
+                and not override_reason
+            ):
+                raise BadRequest(
+                    "This is not a primary recommendation in the current "
+                    "School context. Record the authorized alternative-selection "
+                    "reason before scheduling."
+                )
+            if (
+                is_dynamic_followup
+                and source_activity is None
+                and matching
+                and (focus or data.get("purposeIntervention"))
+                != matching["targetIntervention"]
+                and not override_reason
+            ):
+                raise BadRequest(
+                    "Without a source Training, this dynamic Activity must use "
+                    "the current unresolved SSA recommendation or record an "
+                    "authorized override reason."
+                )
+            governed_recommendation_reason = (
+                matching["recommendationReason"]
+                if matching
+                else "Authorized alternative Catalogue Activity."
+            )
+            governed_recommendation_source = {
+                "engine": "apps.ssa.recommendation_engine",
+                "sourceSsaId": recommendation_result["sourceSsaId"],
+                "verificationState": recommendation_result["verificationState"],
+                "catalogueItemId": catalogue_item.id,
+                "recommended": catalogue_item.id in primary_ids,
+                "projectId": project.id if project else None,
+                "executorType": "partner" if is_partner else "staff",
+                "context": "cluster" if cluster_id else "school",
+            }
+        elif catalogue_cluster is not None and not mapping_modes.intersection(
+            {
+                MappingMode.ADMINISTRATIVE,
+                MappingMode.SSA_COMPLETION_PREREQUISITE,
+            }
+        ):
+            from apps.activity_catalogue.services import (
+                recommend_cluster_activities,
+            )
+
+            recommendation_result = recommend_cluster_activities(
+                cluster=catalogue_cluster,
+                principal=principal,
+                project=project,
+                executor_type="partner" if is_partner else "staff",
+                limit=3,
+            )
+            if (
+                catalogue_item.requires_current_ssa
+                and not recommendation_result["hasApplicableSsa"]
+            ):
+                raise BadRequest(
+                    "Complete verified SSA records for Cluster member Schools "
+                    "before scheduling intervention support."
+                )
+            all_rows = [
+                *recommendation_result["primary"],
+                *recommendation_result["otherEligible"],
+            ]
+            matching = next(
+                (
+                    row
+                    for row in all_rows
+                    if row["catalogueItemId"] == catalogue_item.id
+                ),
+                None,
+            )
+            primary_ids = {
+                row["catalogueItemId"] for row in recommendation_result["primary"]
+            }
+            dynamic = MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
+            override_reason = (data.get("overrideReason") or "").strip()
+            if (
+                catalogue_item.id not in primary_ids
+                and not dynamic
+                and not override_reason
+            ):
+                raise BadRequest(
+                    "This is not a primary Cluster recommendation. Record the "
+                    "authorized alternative-selection reason before scheduling."
+                )
+            governed_recommendation_reason = (
+                matching["recommendationReason"]
+                if matching
+                else "Authorized alternative Catalogue Activity."
+            )
+            governed_recommendation_source = {
+                "engine": "apps.ssa.recommendation_engine",
+                "sourceSsaIds": [
+                    context["ssaId"]
+                    for context in (
+                        matching.get("schoolContexts", []) if matching else []
+                    )
+                ],
+                "verificationState": recommendation_result["verificationState"],
+                "catalogueItemId": catalogue_item.id,
+                "recommended": catalogue_item.id in primary_ids,
+                "projectId": project.id if project else None,
+                "executorType": "partner" if is_partner else "staff",
+                "context": "cluster",
+            }
+
+    # Funded-scheduling gate: a dated activity must be priceable from the CD
+    # Cost Catalogue BEFORE it is persisted. Previously a missing rate wrote
+    # 0-amount lines and set cost_missing=True — a scheduled activity with a
+    # fake cost. (Daily Visit Batch members are pool-priced after creation;
+    # that path validates its own pool keys and raises with the exact missing
+    # rate names, so it is exempt here.)
+    if scheduled_date and not skip_cost_snapshot:
+        from apps.budget.costing_service import preview as _cost_preview
+
+        _check = _cost_preview(
+            {
+                "activityType": activity_type,
+                "costingProfile": (
+                    catalogue_item.costing_profile if catalogue_item else None
+                ),
+                "deliveryType": "partner" if is_partner else "staff",
+                "districtType": data.get("districtType"),
+                "teachersAttended": data.get("teachersAttended"),
+                "leadersAttended": data.get("leadersAttended"),
+                "otherParticipants": data.get("otherParticipants"),
+                "expectedParticipants": data.get("expectedParticipants"),
+                "projectId": data.get("projectId"),
+                "fy": fy,
+            }
+        )
+        if _check["blockers"]:
+            raise BadRequest(
+                "Cannot schedule — "
+                + " · ".join(_check["blockers"])
+                + " Ask the Country Director to set the missing rate in the "
+                "Cost Catalogue first."
+            )
 
     status = (
         "assigned_to_partner"
@@ -615,7 +992,52 @@ def create(data: dict, principal) -> dict:
         # behind the school row lock, so the loser sees the winner's row.
         if school is not None:
             School.objects.select_for_update().filter(pk=school.pk).first()
-            _assert_schedule_entitlement(activity_type, school, fy, data)
+            _assert_schedule_entitlement(
+                activity_type,
+                school,
+                fy,
+                data,
+                core_slot_verified=core_slot_verified,
+                catalogue_item=catalogue_item,
+            )
+        elif cluster_id:
+            # Serialise concurrent cluster scheduling the same way the school
+            # row lock serialises school scheduling, so the duplicate guard
+            # below cannot be raced past by two simultaneous submissions.
+            from apps.clusters.models import Cluster
+
+            Cluster.objects.select_for_update().filter(pk=cluster_id).first()
+        # §F partner allowance: one non-core partner activity per school per
+        # FY unless the CD granted more. Checked inside the row lock so two
+        # concurrent partner assignments cannot both pass.
+        if is_partner and school is not None:
+            from apps.partners.services import assert_partner_activity_allowance
+
+            assert_partner_activity_allowance(
+                data.get("assignedPartnerId"), school.pk, activity_type, fy
+            )
+        # Double-click / double-submit guard: an identical live activity
+        # (same target, type, day, and owner/partner) is a duplicate, not a
+        # second piece of work. The row lock above serialises this check.
+        if planned_date:
+            dup_q = Activity.objects.filter(
+                activity_type=activity_type,
+                planned_date=planned_date,
+                deleted_at__isnull=True,
+                responsible_staff_id=responsible_staff_id,
+                assigned_partner_id=data.get("assignedPartnerId"),
+            ).exclude(status__in=("cancelled", "rejected", "deferred"))
+            dup_q = (
+                dup_q.filter(school=school)
+                if school is not None
+                else dup_q.filter(cluster_id=cluster_id, school__isnull=True)
+            )
+            if dup_q.exists():
+                raise BadRequest(
+                    "An identical activity is already scheduled for this "
+                    "target on this date. Reschedule or edit the existing "
+                    "activity instead of creating a duplicate."
+                )
         activity = Activity.objects.create(
             activity_type=activity_type,
             school=school,
@@ -646,12 +1068,54 @@ def create(data: dict, principal) -> dict:
             salesforce_activity_type=sf_kind(activity_type),
             ssa_collection_expected=is_ssa_activity,
         )
+        if catalogue_item:
+            from apps.activity_catalogue.services import apply_catalogue_snapshot
+
+            apply_catalogue_snapshot(
+                activity,
+                item=catalogue_item,
+                source_ssa=source_ssa,
+                recommendation_reason=governed_recommendation_reason,
+                requested_intervention=focus or data.get("purposeIntervention"),
+                source_activity=source_activity,
+                override_reason=data.get("overrideReason", ""),
+                recommendation_source=governed_recommendation_source,
+            )
         # Daily Visit Batch scheduling (apps.daily_visit_batches.services) creates
         # each school's Activity via this function, then prices the whole batch in
         # one pass afterward — skip the single-activity cost snapshot here so a
         # school is never priced twice (once alone, once as part of its batch).
-        if not data.get("_skip_cost_snapshot"):
-            _apply_schedule_cost_snapshot(activity, data, principal=principal)
+        if not skip_cost_snapshot:
+            # Staff school visits are pool-priced: the whole day's transport/
+            # meal pool is split across that day's schools. The UI scheduling
+            # paths used to price each visit alone here — billing every school
+            # the FULL day pool (5 schools on one day = 5× the real daily
+            # cost) while a later reschedule re-priced the same visit at the
+            # pooled 1/N share. Attach the new visit to its day batch so
+            # creation and reschedule price identically; anything that cannot
+            # be pooled (unclassified district, mixed district types) falls
+            # back to solo pricing and is surfaced by the
+            # scheduled_visits_missing_batch health check.
+            pooled = False
+            if activity.scheduled_date and activity.delivery_type == "staff":
+                from apps.daily_visit_batches.pricing import (
+                    DAILY_BATCH_ELIGIBLE_TYPES,
+                )
+
+                if activity.activity_type in DAILY_BATCH_ELIGIBLE_TYPES and (
+                    activity.school_id
+                ):
+                    from apps.daily_visit_batches.services import (
+                        attach_activity_to_batch,
+                    )
+
+                    pooled = attach_activity_to_batch(
+                        activity,
+                        responsible_user_id=_funding_owner_id(activity, principal),
+                        reason=data.get("reason"),
+                    )
+            if not pooled:
+                _apply_schedule_cost_snapshot(activity, data, principal=principal)
     # Scheduling is the moment planning becomes money-bearing work — it must
     # be on the tamper-evident audit chain (previously the single largest
     # unaudited workflow event; every scheduling path funnels through here).
@@ -667,6 +1131,8 @@ def create(data: dict, principal) -> dict:
             success=True,
             payload={
                 "activity_type": activity.activity_type,
+                "catalogue_item": activity.catalogue_item_id,
+                "catalogue_version": activity.catalogue_version,
                 "school_id": activity.school_id,
                 "cluster_id": activity.cluster_id,
                 "fy": activity.fy,
@@ -677,6 +1143,16 @@ def create(data: dict, principal) -> dict:
     except Exception:  # pragma: no cover — audit must never break scheduling
         pass
     return _serialize(activity)
+
+
+def _catalogue_cluster(cluster_id):
+    """Resolve a Catalogue scheduling context without dynamic imports."""
+    from apps.clusters.models import Cluster
+
+    cluster = Cluster.objects.filter(id=cluster_id).first()
+    if cluster is None:
+        raise BadRequest("Unknown cluster.")
+    return cluster
 
 
 def _parse_date(value) -> datetime:
@@ -752,7 +1228,9 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         evidence_count = EvidenceRecord.objects.filter(
             activity_id=a.id, quarantined=False
         ).count()
-    if evidence_count == 0:
+    from apps.evidence.requirements import evidence_optional
+
+    if evidence_count == 0 and not evidence_optional(a):
         raise BadRequest("Upload evidence before submitting completion.")
 
     # Per-activity-type evidence requirements (EvidenceRequirementService):
@@ -778,7 +1256,7 @@ def complete(activity_id: str, data: dict, principal) -> dict:
             "Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction."
         )
 
-    kind = sf_kind(a.activity_type)
+    kind = sf_kind_for_activity(a)
     sf_id = (data.get("salesforceId") or "").strip()
 
     # Trainings require attendance.
@@ -804,14 +1282,15 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         if a.delivery_type == "partner"
         else ENTRY_SOURCE_STAFF_SELF
     )
-    reserve_salesforce_id(
-        activity=a,
-        raw_value=sf_id,
-        kind=kind,
-        principal=principal,
-        entry_source=entry_source,
-    )
-    a.refresh_from_db(fields=["salesforce_activity_id", "salesforce_activity_type"])
+    if kind is not None:
+        reserve_salesforce_id(
+            activity=a,
+            raw_value=sf_id,
+            kind=kind,
+            principal=principal,
+            entry_source=entry_source,
+        )
+        a.refresh_from_db(fields=["salesforce_activity_id", "salesforce_activity_type"])
 
     is_cceo = principal.active_role == "CCEO"
     next_status = "submitted_to_pl" if is_cceo else "awaiting_ia_verification"
@@ -872,7 +1351,11 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
 
     from apps.evidence.models import EvidenceRecord
 
-    if not EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False).exists():
+    from apps.evidence.requirements import evidence_optional
+
+    if not EvidenceRecord.objects.filter(
+        activity_id=a.id, quarantined=False
+    ).exists() and not evidence_optional(a):
         raise BadRequest("Upload evidence before submitting completion.")
 
     import sys as _sys
@@ -895,9 +1378,10 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
                 "Upload each required document before submitting completion."
             )
 
-    if not a.salesforce_activity_id:
+    kind = sf_kind_for_activity(a)
+    if kind is not None and not a.salesforce_activity_id:
         raise BadRequest("Enter the Salesforce Activity ID before submitting.")
-    if sf_kind(a.activity_type) == "training" and not (
+    if kind == "training" and not (
         (a.teachers_attended or 0) > 0 or (a.leaders_attended or 0) > 0
     ):
         raise BadRequest(
@@ -1081,6 +1565,9 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
                 "updated_at",
             ]
         )
+        from apps.hr.milestone_progress import record_activity_progress
+
+        transaction.on_commit(lambda: record_activity_progress(a))
     return _serialize(a)
 
 
@@ -1151,6 +1638,11 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # land or all roll back — a crash mid-sequence otherwise leaves the
     # activity's saved schedule out of sync with its budget lines.
     with transaction.atomic():
+        # Serialise concurrent reschedules of the same activity: without the
+        # row lock two simultaneous submissions interleave their cost-line
+        # rebuilds and fund-request syncs, and one reschedule_count increment
+        # is lost.
+        Activity.objects.select_for_update().filter(pk=a.pk).first()
         a.save(
             update_fields=[
                 "scheduled_date",
@@ -1234,50 +1726,88 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
 
 def reassign(activity_id: str, data: dict, principal) -> dict:
     a = _get_in_scope(activity_id, principal)
-    delivery = data.get("deliveryType", a.delivery_type)
-    a.delivery_type = delivery
-    a.assigned_partner_id = data.get("assignedPartnerId")
-    a.responsible_staff_id = data.get("responsibleStaffId") or a.responsible_staff_id
-    if "expectedParticipants" in data:
-        a.expected_participants = data.get("expectedParticipants")
-    if delivery == "partner":
-        a.status = "assigned_to_partner"
-    a.save(
-        update_fields=[
-            "delivery_type",
-            "assigned_partner_id",
-            "responsible_staff_id",
-            "expected_participants",
-            "status",
-            "updated_at",
-        ]
-    )
-    # Assignment changes the person responsible for both delivery and money.
-    # Rebuild the draft cost/request buckets immediately so My Budget and the
-    # correct staff member's weekly request stay in sync with this activity.
-    if a.scheduled_date and a.status not in ("cancelled", "rejected"):
-        _apply_schedule_cost_snapshot(a, data, principal=principal)
+    # The ownership flip and the cost/request rebuild must land together — a
+    # costing failure otherwise leaves the activity reassigned while the money
+    # still sits with the previous owner. The row lock serialises concurrent
+    # reassignments of the same activity.
+    with transaction.atomic():
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        delivery = data.get("deliveryType", a.delivery_type)
+        was_partner = a.delivery_type == "partner"
+        a.delivery_type = delivery
+        # Only overwrite the partner link when the caller actually sent one —
+        # a payload that omits the key used to null the partner while
+        # delivery_type stayed "partner", producing partner-priced cost lines
+        # attached to no partner.
+        if "assignedPartnerId" in data:
+            a.assigned_partner_id = data.get("assignedPartnerId")
+        a.responsible_staff_id = (
+            data.get("responsibleStaffId") or a.responsible_staff_id
+        )
+        if "expectedParticipants" in data:
+            a.expected_participants = data.get("expectedParticipants")
+        if delivery == "partner":
+            if not a.assigned_partner_id:
+                raise BadRequest(
+                    "Reassigning to partner delivery requires assignedPartnerId."
+                )
+            # §F partner allowance also applies to work moved onto a partner,
+            # not only to work created for one. (Skipped when the activity was
+            # already partner-delivered — it would count itself as "used".)
+            if a.school_id and not was_partner:
+                from apps.partners.services import (
+                    assert_partner_activity_allowance,
+                )
+
+                assert_partner_activity_allowance(
+                    a.assigned_partner_id, a.school_id, a.activity_type, a.fy
+                )
+            a.status = "assigned_to_partner"
+        elif a.status == "assigned_to_partner":
+            # Partner → staff: the activity is no longer awaiting a partner.
+            a.status = "scheduled" if a.scheduled_date else "planned"
+        a.save(
+            update_fields=[
+                "delivery_type",
+                "assigned_partner_id",
+                "responsible_staff_id",
+                "expected_participants",
+                "status",
+                "updated_at",
+            ]
+        )
+        # Assignment changes the person responsible for both delivery and money.
+        # Rebuild the draft cost/request buckets immediately so My Budget and the
+        # correct staff member's weekly request stay in sync with this activity.
+        if a.scheduled_date and a.status not in ("cancelled", "rejected"):
+            _apply_schedule_cost_snapshot(a, data, principal=principal)
     return _serialize(a)
 
 
-def partner_schedule(activity_id: str, data: dict, principal) -> dict:
-    from apps.partners.models import PartnerAssignment
-    from apps.core_schools.models import CoreActivitySlot, cslot_id
+def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -> dict:
+    """Turn one locked PartnerAssignment into one costed canonical Activity."""
 
-    pa = PartnerAssignment.objects.filter(id=activity_id).first()
-    if pa:
-        # Lock the assignment and refuse a second scheduling. Unlocked, two
-        # simultaneous POSTs each created a costed Activity for one
-        # assignment: two money-bearing rows, and the core slot pointed at
-        # whichever committed last, orphaning the other.
+    from apps.core_schools.models import CoreActivitySlot, cslot_id
+    from apps.partners.models import PartnerAssignment
+
+    with transaction.atomic():
         pa = (
-            PartnerAssignment.objects.select_for_update().filter(id=activity_id).first()
+            PartnerAssignment.objects.select_for_update(of=("self",))
+            .select_related(
+                "school",
+                "cluster",
+                "catalogue_item",
+                "source_ssa",
+                "source_activity",
+                "project",
+            )
+            .filter(id=activity_id)
+            .first()
         )
-        if pa and pa.status in ("partner_scheduled", "scheduled", "completed"):
+        if not pa:
+            raise NotFoundError("Partner assignment not found.")
+        if pa.status in ("partner_scheduled", "scheduled", "completed"):
             raise BadRequest("This assignment is already scheduled.")
-        # Scope: a partner principal may only schedule its OWN assignment —
-        # the id-only lookup previously let any partner schedule another
-        # partner's assignment. Staff callers pass through the shared scope.
         scope = resolve_user_scope(principal)
         if not scope.country_scope:
             if scope.partner_ids:
@@ -1288,119 +1818,170 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             ):
                 raise Forbidden("Assignment outside your scope.")
 
-        # Create a new Activity for this partner assignment. The multi-step
-        # write (Activity + PartnerAssignment + optional CoreActivitySlot +
-        # cost snapshot) is wrapped in a transaction so a failure midway
-        # cannot leave a partially-created Activity with an inconsistent
-        # PartnerAssignment or un-synced slot.
-        from apps.activities.models import Activity
-
         scheduled_date = _parse_date(data["scheduledDate"])
-
-        # REG-02 gate (restored; deleted from this module by b4fc9570). A
-        # partner-delivered activity has no responsible staff member, so the
-        # assigning staff member's calendar is the one that governs -- without
-        # this, partner scheduling bypassed the policy entirely.
-        _avail = _SchedulingPolicyService.check(
+        avail = _SchedulingPolicyService.check(
             _user_for_staff_identity(pa.assigning_staff_id)
             if pa.assigning_staff_id
             else None,
             scheduled_date,
         )
-        if _avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
+        if avail["status"] == "blocked":
+            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
+        catalogue_item = pa.catalogue_item
+        selected_catalogue_id = data.get("catalogueItemId")
+        if selected_catalogue_id:
+            from apps.activity_catalogue.services import get_selectable_item
+
+            selected = get_selectable_item(str(selected_catalogue_id))
+            if (
+                pa.assignment_mode == "specific_activity"
+                and pa.catalogue_item_id
+                and selected.id != pa.catalogue_item_id
+            ):
+                raise Forbidden(
+                    "This assignment requires the exact approved Catalogue Activity."
+                )
+            if (
+                pa.assignment_mode == "intervention_choice"
+                and not pa.allowed_catalogue_items.filter(id=selected.id).exists()
+            ):
+                raise Forbidden(
+                    "The selected Activity is outside this assignment's approved choice set."
+                )
+            catalogue_item = selected
+        if pa.catalogue_item_id and catalogue_item is None:
+            catalogue_item = pa.catalogue_item
+
+        if catalogue_item:
+            from apps.activity_catalogue.services import validate_context
+
+            validate_context(
+                catalogue_item,
+                school=pa.school,
+                cluster=pa.cluster,
+                project=pa.project,
+                executor_type="partner",
+            )
+        elif data.get("requireCatalogue"):
+            raise BadRequest(
+                "This assignment has no approved Activity Catalogue item. "
+                "Ask the managing staff member to repair the assignment."
+            )
 
         fy = get_operational_fy(scheduled_date)
         quarter = get_quarter_for_date(scheduled_date)
-        planned_date, planned_month, planned_week = _schedule_period(
-            scheduled_date, data
-        )
-        with transaction.atomic():
-            monitored_by_staff_id = _canonical_staff_identity(pa.assigning_staff_id)
-            a = Activity.objects.create(
-                activity_type=pa.expected_activity_type or "core_visit",
+        if catalogue_item:
+            from apps.activity_catalogue.services import validate_frequency
+
+            validate_frequency(
+                catalogue_item,
                 school=pa.school,
                 cluster=pa.cluster,
                 fy=fy,
-                quarter=quarter,
-                # responsible_staff_id holds a StaffProfile id everywhere else
-                # in the system (see create()'s principal_owner_id convention)
-                # — principal here is the partner's own User, which has no
-                # StaffProfile. Partner-delivered activities leave this unset,
-                # same as activities.services.create() does for
-                # deliveryType="partner" (the field is reserved for
-                # staff-conducted work; assigned_partner_id is the partner
-                # link).
-                responsible_staff_id=None,
-                monitored_by_staff_id=monitored_by_staff_id,
-                assigned_partner_id=pa.partner_id,
-                delivery_type="partner",
-                focus_intervention=pa.focus_intervention,
-                purpose_intervention=pa.focus_intervention,
-                activity_purpose_text=pa.notes or "Scheduled partner core support",
-                purpose_type=pa.purpose_of_visit,
-                expected_participants=data.get("expectedParticipants"),
-                scheduled_date=scheduled_date,
-                planned_date=planned_date,
-                planned_month=planned_month,
-                planned_week=planned_week,
-                status="partner_scheduled",
+                on_date=scheduled_date.date(),
+            )
+        planned_date, planned_month, planned_week = _schedule_period(
+            scheduled_date, data
+        )
+        # §F partner allowance — the moment the assignment becomes a costed
+        # Activity is the last gate before partner money exists. Checked
+        # inside the assignment row lock so two concurrent schedules cannot
+        # both pass.
+        _sched_activity_type = (
+            catalogue_item.workflow_kind
+            if catalogue_item
+            else (pa.expected_activity_type or "core_visit")
+        )
+        if pa.school_id:
+            from apps.partners.services import assert_partner_activity_allowance
+
+            assert_partner_activity_allowance(
+                pa.partner_id, pa.school_id, _sched_activity_type, fy
+            )
+        monitored_by_staff_id = _canonical_staff_identity(pa.assigning_staff_id)
+        activity = Activity.objects.create(
+            activity_type=_sched_activity_type,
+            school=pa.school,
+            cluster=pa.cluster,
+            project_id=pa.project_id,
+            fy=fy,
+            quarter=quarter,
+            responsible_staff_id=None,
+            monitored_by_staff_id=monitored_by_staff_id,
+            assigned_partner_id=pa.partner_id,
+            delivery_type="partner",
+            focus_intervention=pa.focus_intervention,
+            purpose_intervention=pa.focus_intervention,
+            activity_purpose_text=pa.notes or pa.purpose or "Scheduled partner support",
+            purpose_type=pa.purpose_of_visit,
+            expected_participants=data.get("expectedParticipants"),
+            scheduled_date=scheduled_date,
+            planned_date=planned_date,
+            planned_month=planned_month,
+            planned_week=planned_week,
+            status="partner_scheduled",
+        )
+        if catalogue_item:
+            from apps.activity_catalogue.services import apply_catalogue_snapshot
+
+            apply_catalogue_snapshot(
+                activity,
+                item=catalogue_item,
+                source_ssa=pa.source_ssa,
+                recommendation_reason=pa.recommendation_reason,
+                requested_intervention=pa.focus_intervention,
+                source_activity=pa.source_activity,
+                override_reason=pa.override_reason,
             )
 
-            pa.status = "partner_scheduled"
+        pa.status = "partner_scheduled"
+        pa.scheduled_date = scheduled_date.date()
+        if monitored_by_staff_id:
+            pa.assigning_staff_id = monitored_by_staff_id
+        pa.save(
+            update_fields=[
+                "assigning_staff_id",
+                "status",
+                "scheduled_date",
+                "updated_at",
+            ]
+        )
+
+        if pa.school and pa.school.school_type == "core":
+            kind_prefix = "v" if pa.support_type == "Visit" else "t"
             try:
-                from apps.notifications.services import resolve_condition
+                seq_num = int(pa.visit_number or pa.training_number or 1)
+            except ValueError:
+                seq_num = 1
+            slot = CoreActivitySlot.objects.filter(
+                id=cslot_id(pa.school.school_id, kind_prefix, seq_num, fy=fy)
+            ).first()
+            if slot:
+                slot.status = "Scheduled"
+                slot.activity_id = activity.id
+                slot.scheduled_for = scheduled_date
+                slot.scheduled_month = str(scheduled_date.month)
+                slot.scheduled_week = min(5, (scheduled_date.day - 1) // 7 + 1)
+                slot.save()
 
-                resolve_condition(
-                    "partner_scheduled_activity", "partner_assignment", pa.id
-                )
-            except Exception:  # noqa: BLE001 - bookkeeping never blocks scheduling
-                pass
-            pa.scheduled_date = scheduled_date
-            # Normalise historic User-id assignments as they are activated,
-            # so future read paths have one staff identity source of truth.
-            if monitored_by_staff_id and pa.assigning_staff_id != monitored_by_staff_id:
-                pa.assigning_staff_id = monitored_by_staff_id
-                pa.save(
-                    update_fields=[
-                        "assigning_staff_id",
-                        "status",
-                        "scheduled_date",
-                        "updated_at",
-                    ]
-                )
-            else:
-                pa.save(update_fields=["status", "scheduled_date", "updated_at"])
+        _apply_schedule_cost_snapshot(activity, data, principal=principal)
+        activity.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+        try:
+            from apps.notifications.services import resolve_condition
 
-            if pa.school and pa.school.school_type == "core":
-                kind_prefix = "v" if pa.support_type == "Visit" else "t"
-                try:
-                    seq_num = (
-                        int(pa.visit_number)
-                        if pa.visit_number
-                        else (int(pa.training_number) if pa.training_number else 1)
-                    )
-                except ValueError:
-                    seq_num = 1
-                slot_id = cslot_id(pa.school.school_id, kind_prefix, seq_num, fy=fy)
-                slot = CoreActivitySlot.objects.filter(id=slot_id).first()
-                if slot:
-                    slot.status = "Scheduled"
-                    slot.activity_id = a.id
-                    slot.scheduled_for = scheduled_date
-                    slot.scheduled_month = (
-                        str(scheduled_date.month) if scheduled_date else None
-                    )
-                    slot.scheduled_week = (
-                        min(5, (scheduled_date.day - 1) // 7 + 1)
-                        if scheduled_date
-                        else None
-                    )
-                    slot.save()
+            resolve_condition("partner_scheduled_activity", "partner_assignment", pa.id)
+        except Exception:  # noqa: BLE001 - bookkeeping never blocks scheduling
+            pass
+        return _serialize(activity)
 
-            _apply_schedule_cost_snapshot(a, data, principal=principal)
-            a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
-        return _serialize(a)
+
+def partner_schedule(activity_id: str, data: dict, principal) -> dict:
+    from apps.partners.models import PartnerAssignment
+    from apps.core_schools.models import CoreActivitySlot
+
+    if PartnerAssignment.objects.filter(id=activity_id).exists():
+        return _partner_schedule_from_assignment(activity_id, data, principal)
 
     with transaction.atomic():
         a = _get_in_scope(activity_id, principal)
@@ -1496,22 +2077,53 @@ def _detach_from_daily_visit_batch(a: Activity) -> None:
         pass
 
 
-def cancel(activity_id: str, data: dict, principal) -> dict:
+def _cancel_or_defer(activity_id: str, data: dict, principal, new_status: str) -> dict:
+    """Cancel/defer an activity AND withdraw its money from every draft
+    funding surface, atomically.
+
+    Previously this only flipped the status: the cost lines, the draft
+    weekly/monthly fund requests, and the pending AdvanceRequests all kept the
+    cancelled work's amounts — a cancelled activity remained fully fundable
+    and disbursable. The cost lines themselves are retained as the historical
+    snapshot (every aggregate excludes cancelled/deferred activities), but the
+    draft requests are regenerated without them and un-moved advances are
+    removed. Advances whose money already moved (disbursed/accounted/…) are
+    deliberately preserved — those settle through the return/accountability
+    workflow, never by silent deletion."""
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.fund_requests.models import (
+        MONEY_MOVED_ADVANCE_STATUSES,
+        AdvanceRequest,
+    )
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
+    from apps.fund_requests.weekly_service import sync_weekly_requests_for_activity
+
     a = _get_in_scope(activity_id, principal)
-    a.status = "cancelled"
-    a.last_reason = data.get("reason")
-    a.save(update_fields=["status", "last_reason", "updated_at"])
-    _detach_from_daily_visit_batch(a)
+    with transaction.atomic():
+        a = Activity.objects.select_for_update().get(pk=a.pk)
+        prior_buckets = list(
+            ActivityScheduleCostLine.objects.filter(activity=a).values_list(
+                "responsible_user", "fiscal_year", "month", "week_start_date"
+            )
+        )
+        a.status = new_status
+        a.last_reason = data.get("reason")
+        a.save(update_fields=["status", "last_reason", "updated_at"])
+        _detach_from_daily_visit_batch(a)
+        AdvanceRequest.objects.filter(activity=a).exclude(
+            status__in=MONEY_MOVED_ADVANCE_STATUSES
+        ).delete()
+        sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
+        sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
     return _serialize(a)
+
+
+def cancel(activity_id: str, data: dict, principal) -> dict:
+    return _cancel_or_defer(activity_id, data, principal, "cancelled")
 
 
 def defer(activity_id: str, data: dict, principal) -> dict:
-    a = _get_in_scope(activity_id, principal)
-    a.status = "deferred"
-    a.last_reason = data.get("reason")
-    a.save(update_fields=["status", "last_reason", "updated_at"])
-    _detach_from_daily_visit_batch(a)
-    return _serialize(a)
+    return _cancel_or_defer(activity_id, data, principal, "deferred")
 
 
 # ── Payment queue + clear-payment ────────────────────────────────────────────
@@ -1571,6 +2183,17 @@ def get_activity(activity_id: str, principal) -> dict:
     return _serialize(a)
 
 
+#: PATCH fields that drive the cost formula (per-participant meal/snack
+#: components). Changing one MUST re-price the activity — otherwise budget
+#: lines silently diverge from the participant counts they were priced on.
+_COST_DRIVER_PATCH_FIELDS = (
+    "teachers_attended",
+    "leaders_attended",
+    "other_participants",
+    "expected_participants",
+)
+
+
 def patch_activity(activity_id: str, data: dict, principal) -> dict:
     a = _get_in_scope(activity_id, principal)
     update_fields = []
@@ -1606,7 +2229,24 @@ def patch_activity(activity_id: str, data: dict, principal) -> dict:
         update_fields.append("expected_participants")
 
     if update_fields:
-        a.save(update_fields=update_fields + ["updated_at"])
+        cost_drivers_changed = any(
+            f in _COST_DRIVER_PATCH_FIELDS for f in update_fields
+        )
+        with transaction.atomic():
+            a.save(update_fields=update_fields + ["updated_at"])
+            # A participant-count change re-prices per-head components. Batch
+            # members are pool-priced (participants don't affect the pool), and
+            # locked finance states make apply_to_activity raise — which is
+            # correct: a confirmed/disbursed cost changes via amendment, not
+            # via PATCH.
+            if (
+                cost_drivers_changed
+                and a.scheduled_date
+                and not a.daily_visit_batch_id
+                and a.status not in ("cancelled", "rejected", "deferred")
+            ):
+                _apply_schedule_cost_snapshot(a, {}, principal=principal)
+                a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
     return _serialize(a)
 
 

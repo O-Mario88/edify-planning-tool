@@ -931,12 +931,19 @@ def _build_fund_requests_context(request):
     }
 
     # 8. Period Breakdown
-    def get_wfr_stats(start_d, end_d):
+    def get_wfr_stats(start_d, end_d, *, inclusive_end=False):
+        """get_quarter_date_range/get_fy_date_range return HALF-OPEN ranges
+        ([start, end)) — comparing with lte counted a request starting exactly
+        on the next period's first day in BOTH periods. The single-week call
+        passes the same Monday twice and needs the inclusive comparison."""
         qs = WeeklyFundRequest.objects.filter(fy=fy)
         if start_d:
             qs = qs.filter(week_start_date__gte=start_d)
         if end_d:
-            qs = qs.filter(week_start_date__lte=end_d)
+            if inclusive_end:
+                qs = qs.filter(week_start_date__lte=end_d)
+            else:
+                qs = qs.filter(week_start_date__lt=end_d)
         # Narrow unconditionally for non-country roles — see the note on
         # `_scoped_base_querysets`; gating on a truthy staff_ids failed open.
         if not scope.country_scope:
@@ -954,7 +961,9 @@ def _build_fund_requests_context(request):
     month_stats = month_wfr_qs.aggregate(total=Sum("total_amount"), count=Count("id"))
 
     breakdown = {
-        "week": get_wfr_stats(selected_week_start, selected_week_start),
+        "week": get_wfr_stats(
+            selected_week_start, selected_week_start, inclusive_end=True
+        ),
         "month": {
             "total": month_stats["total"] or 0,
             "count": month_stats["count"] or 0,

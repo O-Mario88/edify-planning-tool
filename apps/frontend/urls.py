@@ -29,6 +29,8 @@ from .views import (
     debrief_views,
     escalation_views,
     decision_views,
+    catalogue_views,
+    priority_views,
 )
 
 app_name = "frontend"
@@ -47,6 +49,46 @@ urlpatterns = [
     path("login/verify", auth_views.mfa_verify_view, name="mfa_verify"),
     path("login/resend-code", auth_views.mfa_resend_view, name="mfa_resend"),
     path("settings/two-step", auth_views.mfa_settings_view, name="mfa_settings"),
+    path(
+        "settings/activity-catalogue/",
+        catalogue_views.activity_catalogue_page,
+        name="activity_catalogue",
+    ),
+    path(
+        "settings/activity-catalogue/<str:item_id>/lifecycle",
+        catalogue_views.activity_catalogue_lifecycle_action,
+        name="activity_catalogue_lifecycle",
+    ),
+    path(
+        "settings/activity-catalogue/reviews/<str:review_id>/resolve",
+        catalogue_views.activity_catalogue_review_resolve_action,
+        name="activity_catalogue_review_resolve",
+    ),
+    path(
+        "strategic-priorities",
+        priority_views.priority_configuration_page,
+        name="strategic_priorities",
+    ),
+    path(
+        "strategic-priorities/milestones/<str:milestone_id>/define",
+        priority_views.milestone_define_action,
+        name="milestone_define",
+    ),
+    path(
+        "strategic-priorities/milestones/<str:milestone_id>/approve",
+        priority_views.milestone_approve_action,
+        name="milestone_approve",
+    ),
+    path(
+        "strategic-priorities/milestones/<str:milestone_id>/allocate",
+        priority_views.milestone_allocate_action,
+        name="milestone_allocate",
+    ),
+    path(
+        "strategic-priorities/cycles/<str:cycle_id>/approve",
+        priority_views.cycle_approve_action,
+        name="priority_cycle_approve",
+    ),
     path("logout", auth_views.logout_view, name="logout"),
     path("auth/switch-role", auth_views.switch_role_view, name="switch_role"),
     path(
@@ -140,6 +182,21 @@ urlpatterns = [
     ),
     path("schools/add-school", school_views.add_school_view, name="add_school"),
     path(
+        "schools/sub-counties",
+        school_views.school_sub_county_options_view,
+        name="school_sub_county_options",
+    ),
+    path(
+        "schools/parishes",
+        school_views.school_parish_options_view,
+        name="school_parish_options",
+    ),
+    path(
+        "schools/create-drawer",
+        school_views.school_onboard_drawer_view,
+        name="school_onboard_drawer",
+    ),
+    path(
         "schools/partial-intelligence/<str:school_id>",
         school_views.school_intelligence_partial,
         name="school_intelligence_partial",
@@ -166,11 +223,6 @@ urlpatterns = [
         "schools/<str:school_id>/edit-drawer",
         school_views.school_edit_drawer_view,
         name="school_edit_drawer",
-    ),
-    path(
-        "schools/create-drawer",
-        school_views.school_onboard_drawer_view,
-        name="school_onboard_drawer",
     ),
     path(
         "schools/<str:school_id>/assign-to-project",
@@ -1223,6 +1275,16 @@ urlpatterns = [
         name="partner_activities",
     ),
     path(
+        "partner/assignments/<str:assignment_id>/schedule-drawer",
+        partner_views.partner_schedule_assignment_drawer,
+        name="partner_schedule_assignment_drawer",
+    ),
+    path(
+        "partner/assignments/<str:assignment_id>/schedule-action",
+        partner_views.partner_schedule_assignment_action,
+        name="partner_schedule_assignment_action",
+    ),
+    path(
         "partner/evidence", partner_views.partner_evidence_view, name="partner_evidence"
     ),
     path("partner/my-plan", partner_views.partner_my_plan_view, name="partner_my_plan"),
@@ -1478,6 +1540,16 @@ urlpatterns = [
     ),
     path("projects", extended_views.projects_list_view, name="projects_list"),
     path(
+        "projects/create",
+        extended_views.project_create_drawer_view,
+        name="project_create_drawer",
+    ),
+    path(
+        "projects/create/action",
+        extended_views.project_create_action_view,
+        name="project_create_action",
+    ),
+    path(
         "projects/filter",
         extended_views.projects_filtered_view,
         name="projects_filtered",
@@ -1511,6 +1583,16 @@ urlpatterns = [
         "projects/my-plan",
         extended_views.special_projects_my_plan_view,
         name="special_projects_my_plan",
+    ),
+    path(
+        "projects/<str:project_id>/staff/assign",
+        extended_views.project_assign_staff_action_view,
+        name="project_assign_staff_action",
+    ),
+    path(
+        "projects/<str:project_id>/schools/assign",
+        extended_views.project_assign_school_action_view,
+        name="project_assign_school_action",
     ),
     path(
         "projects/<str:project_id>",

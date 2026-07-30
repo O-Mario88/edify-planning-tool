@@ -29,22 +29,19 @@ class="absolute left-4 right-4 mt-2 p-3 edify-surface border border-slate-200 ro
 style="display: none;"
 @click.outside="editing = false"
 >
-<p class="edify-text-caption font-semibold uppercase text-slate-400">Change School Type</p>
+<p class="edify-text-caption font-semibold uppercase text-slate-400">Change Partner Type</p>
 <form
 hx-post="/schools/{{ intelligence.school.id }}/change-type"
 class="flex items-center gap-2"
 >
 {% csrf_token %}
-<select aria-label="School type"
+<select aria-label="Current partner type"
 name="school_type"
 class="h-8 px-2 edify-surface border border-slate-200 rounded-control text-[12px] font-bold focus:outline-none flex-1"
 >
-<option value="client" {% if intelligence.school.school_type == 'client' %}selected{% endif %}>Client School</option>
-<option value="core" {% if intelligence.school.school_type == 'core' %}selected{% endif %}>Core School</option>
-<option value="potential_core" {% if intelligence.school.school_type == 'potential_core' %}selected{% endif %}>Potential Core</option>
-<option value="champion" {% if intelligence.school.school_type == 'champion' %}selected{% endif %}>Champion</option>
-<option value="potential_champion" {% if intelligence.school.school_type == 'potential_champion' %}selected{% endif %}>Potential Champion</option>
-<option value="other" {% if intelligence.school.school_type == 'other' %}selected{% endif %}>Other</option>
+{% for value, label in school_types %}
+<option value="{{ value }}" {% if intelligence.school.school_type == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
 </select>
 <button
 type="submit"
@@ -70,7 +67,7 @@ Save
 </div>
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">District</p>
-<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.district.name }}</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.district.name|default:"Not specified" }}</p>
 </div>
 </div>
 

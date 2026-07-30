@@ -12,12 +12,11 @@ from django.db import models
 
 # ── Schools ───────────────────────────────────────────────────────────────────
 class SchoolType(models.TextChoices):
+    CHAMPION = "champion", "Champion"
     CLIENT = "client", "Client"
     CORE = "core", "Core"
-    POTENTIAL_CORE = "potential_core", "Potential Core"
-    CHAMPION = "champion", "Champion"
-    POTENTIAL_CHAMPION = "potential_champion", "Potential Champion"
-    OTHER = "other", "Other"
+    CORE_GRADUATE = "core_graduate", "Core Graduate"
+    CORE_TRAINED = "core_trained", "Core Trained"
 
 
 class AccountOwnerStatus(models.TextChoices):

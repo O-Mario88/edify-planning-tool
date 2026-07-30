@@ -38,19 +38,6 @@ class ManualSsaEntryForm(forms.Form):
             }
         ),
     )
-    new_enrollment = forms.IntegerField(
-        label="Enrollment observed at assessment",
-        required=False,
-        min_value=0,
-        widget=forms.NumberInput(
-            attrs={
-                "class": CONTROL_CLASS,
-                "inputmode": "numeric",
-                "placeholder": "Optional headcount",
-                "aria-describedby": "manual-ssa-enrollment-help",
-            }
-        ),
-    )
 
     def __init__(self, *args, school_queryset, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,7 +79,6 @@ class ManualSsaEntryForm(forms.Form):
         return {
             "schoolId": self.cleaned_data["school_id"],
             "dateOfSsa": self.cleaned_data["date_of_ssa"].isoformat(),
-            "newEnrollment": self.cleaned_data.get("new_enrollment"),
             "collectorType": collector_type,
             "scores": [
                 {

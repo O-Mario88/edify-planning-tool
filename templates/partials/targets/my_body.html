@@ -35,6 +35,48 @@
     <button type="button" @click="showRollup = true" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">How roll-up works</button>
   </div>
 
+  {% include "partials/targets/strategic_priority_overview.html" with strategic_priorities=strategic_priorities fy=fy section_id="my-strategic-priorities" scope_label="your personal target ledger" only %}
+
+  {% include "partials/targets/project_priorities.html" with project_priorities=project_priorities section_id="my-project-priorities" only %}
+
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="strategic-targets-title">
+    <div>
+      <h2 id="strategic-targets-title" class="text-[13px] font-bold text-slate-800">My Strategic Milestone Allocations</h2>
+      <p class="edify-text-caption text-slate-400">Only approved allocations appear here. Actuals come from canonical source records and cannot be typed.</p>
+    </div>
+    {% if strategic_milestones %}
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[1320px] text-left edify-text-caption">
+        <caption class="sr-only">Approved strategic milestone allocations, plans, actuals, status, linked Activities, and source data</caption>
+        <thead><tr class="border-b border-slate-100 uppercase tracking-wider text-slate-400">
+          <th class="px-3 py-2">Strategic Priority / Milestone</th><th class="px-3 py-2">Target source</th><th class="px-3 py-2 text-right">Month plan / actual</th><th class="px-3 py-2 text-right">Quarter target / actual</th><th class="px-3 py-2 text-right">FY target / actual</th><th class="px-3 py-2 text-right">Progress</th><th class="px-3 py-2 text-right">Remaining</th><th class="px-3 py-2">Status</th><th class="px-3 py-2 text-right">Linked Activities</th><th class="px-3 py-2">Data source</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for row in strategic_milestones|slice:":60" %}
+          <tr>
+            <td class="px-3 py-2.5"><span class="block font-bold text-slate-800">{{ row.milestone }}</span><span class="text-slate-400">{{ row.priority }}</span></td>
+            <td class="px-3 py-2.5 text-slate-500">{{ row.targetSource }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.monthPlan }} / {{ row.monthActual }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.quarterPlan }} / {{ row.quarterActual }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.fyPlan }} / {{ row.fyActual }}</td>
+            <td class="px-3 py-2.5 text-right font-bold tabular-nums">{{ row.progress }}%</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.remaining }}</td>
+            <td class="px-3 py-2.5"><span class="pill {% if row.status == 'Achieved' %}pill-success{% else %}pill-neutral{% endif %}">{{ row.status }}</span></td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.linkedActivities }}</td>
+            <td class="px-3 py-2.5 text-slate-500">{{ row.dataSource }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-4 py-5">
+      <p class="text-[12px] font-bold text-slate-700">No approved milestone allocations yet</p>
+      <p class="mt-1 edify-text-caption leading-5 text-slate-500">Your existing operational targets remain unchanged. Strategic milestones will appear here automatically after definition, approval, and allocation.</p>
+    </div>
+    {% endif %}
+  </section>
+
   {# ── Five target-area cards ─────────────────────────────────────────────── #}
   <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Target area summary">
     {% for a in area_cards %}
@@ -68,7 +110,7 @@
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
             <th class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">Target Area</th>
-            {% for h in matrix_heads %}
+            {% for h in matrix_heads|slice:":30" %}
             <th class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}edify-primary-soft-alpha-40{% endif %}" colspan="3">
               <span class="block text-slate-600 font-bold">{{ h.label }}</span>
               <span class="block edify-text-caption text-slate-400 normal-case">{{ h.sub }}</span>
@@ -77,7 +119,7 @@
           </tr>
           <tr class="border-b border-slate-100 text-slate-400 font-bold edify-text-caption uppercase">
             <th class="py-1 px-3 sticky left-0 edify-surface z-10"></th>
-            {% for h in matrix_heads %}
+            {% for h in matrix_heads|slice:":30" %}
             <th class="py-1 text-center border-l border-slate-100">Tgt</th><th class="py-1 text-center">Ach</th><th class="py-1 text-center">%</th>
             {% endfor %}
           </tr>
@@ -212,7 +254,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-          {% for c in core_tracker_data.rows %}
+          {% for c in core_tracker_data.rows|slice:":60" %}
           <tr class="hover:bg-slate-50/50">
             <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.school }}</td>
             <td class="py-2.5 px-3 text-center tabular-nums {% if c.average_ssa_score == None %}text-slate-300{% else %}text-slate-700{% endif %}">{% if c.average_ssa_score != None %}{{ c.average_ssa_score|floatformat:1 }}/10{% else %}—{% endif %}</td>

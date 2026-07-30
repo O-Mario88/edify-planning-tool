@@ -1,0 +1,55 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Schedule Approved Activity{% endblock %}
+{% block drawer_subtitle %}{% if assignment.school %}{{ assignment.school.name }}{% elif assignment.cluster %}{{ assignment.cluster.name }}{% endif %} · assigned by your managing staff{% endblock %}
+
+{% block drawer_body %}
+<form method="post"
+      action="/partner/assignments/{{ assignment.id }}/schedule-action"
+      hx-post="/partner/assignments/{{ assignment.id }}/schedule-action"
+      hx-target="#partner-schedule-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="partner-schedule-errors" aria-live="polite"></div>
+
+  <div class="rounded-overlay border border-[var(--border-card)] bg-white p-4 shadow-sm">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assignment context</p>
+    <p class="mt-2 text-[14px] font-bold text-slate-800">{% if assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Choose one approved Activity below{% endif %}</p>
+    {% if assignment.focus_intervention %}<p class="mt-1 text-slate-500">Intervention: {{ assignment.focus_intervention|cut:"_"|title }}</p>{% endif %}
+    {% if assignment.recommendation_reason %}<p class="mt-2 font-medium text-slate-600">{{ assignment.recommendation_reason }}</p>{% endif %}
+    {% if assignment.source_ssa %}<p class="mt-2 edify-text-caption text-slate-500">SSA: {{ assignment.source_ssa.date_of_ssa }} · {{ assignment.source_ssa.verification_status|title }}</p>{% endif %}
+  </div>
+
+  <fieldset class="space-y-2">
+    <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Activity</legend>
+    {% for item in catalogue_choices %}
+    <label class="flex cursor-pointer items-start gap-3 rounded-control border border-slate-200 p-3 hover:bg-slate-50">
+      <input type="radio" name="catalogue_item_id" value="{{ item.id }}" required {% if catalogue_choices|length == 1 %}checked{% endif %} class="mt-1 h-4 w-4 edify-primary-text edify-primary-focus">
+      <span><strong class="text-slate-800">{{ item.display_name }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.get_delivery_method_display }} · {{ item.target_audience }}</span><span class="mt-1 block edify-text-caption text-slate-500">Evidence: {{ item.evidence_profile|title }}</span></span>
+    </label>
+    {% empty %}
+    <div class="rounded-surface border border-rose-200 bg-rose-50 p-3 text-rose-800" role="alert">This assignment has no approved Catalogue choice. Ask the managing staff member to repair it.</div>
+    {% endfor %}
+  </fieldset>
+
+  <div>
+    <label for="partner-scheduled-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery date</label>
+    <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[#2563eb] focus:ring-4 edify-primary-focus">
+  </div>
+  <div>
+    <label for="partner-expected-participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected participants</label>
+    <input id="partner-expected-participants" name="expected_participants" type="number" min="1" inputmode="numeric" class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[#2563eb] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div class="rounded-surface border border-sky-200 bg-sky-50 p-3 text-sky-900">
+    <p class="font-bold">Cost calculation happens now—not at assignment.</p>
+    <p class="mt-1 font-medium">The effective Partner rate from the CD Cost Catalogue will create the Activity budget lines after this date is confirmed.</p>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="px-5 h-10 rounded-control border border-[var(--border-strong)] bg-white text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" {% if not catalogue_choices %}disabled{% endif %} class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)] disabled:cursor-not-allowed disabled:opacity-50">Schedule Activity</button>
+  </div>
+</form>
+{% endblock %}

@@ -220,9 +220,10 @@ def schedule_visits(
                 **activity_common_fields,
                 "schoolId": s.school_id,
                 "scheduledDate": scheduled_date.isoformat(),
-                "_skip_cost_snapshot": True,
             }
-            new_activities.append(create_activity(act_data, principal))
+            new_activities.append(
+                create_activity(act_data, principal, skip_cost_snapshot=True)
+            )
 
         Activity.objects.filter(id__in=[a["id"] for a in new_activities]).update(
             daily_visit_batch=batch
@@ -231,6 +232,94 @@ def schedule_visits(
         _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
 
         return {"batchId": batch.id, "activities": new_activities}
+
+
+def attach_activity_to_batch(
+    activity, *, responsible_user_id: str, reason: str | None = None
+) -> bool:
+    """Pool-price a just-created staff school visit by joining it to that
+    day's DailyVisitBatch (creating one if needed), then recomputing the
+    pooled split for every member.
+
+    This is the create-time twin of ``reschedule_within_batch`` with the
+    scheduling-policy rules deliberately relaxed: the generic scheduling
+    funnel is permissive by design (no daily-target cap, no reason
+    requirement), but the FINANCIAL treatment must still be the pooled 1/N
+    share — otherwise each visit bills the entire day's transport/meal pool.
+
+    Returns True when the activity was pooled. Returns False (caller falls
+    back to solo pricing) when pooling is impossible: unclassified district,
+    a same-day batch of the other district type, an unapproved secondary
+    district mix, a locked (post-draft) day, or missing pool rates.
+    Must be called inside the caller's transaction.
+    """
+    school = activity.school
+    if not school or not school.district_id:
+        return False
+    district_type = school.district.district_type
+    if district_type not in ("primary", "secondary"):
+        return False
+
+    batch = (
+        DailyVisitBatch.objects.select_for_update()
+        .filter(
+            responsible_user=responsible_user_id,
+            visit_date=activity.planned_date,
+        )
+        .first()
+    )
+    if batch and batch.district_type != district_type:
+        return False
+    if _is_locked(responsible_user_id, activity.planned_date):
+        return False
+
+    existing_activities = (
+        list(
+            batch.activities.filter(deleted_at__isnull=True)
+            .exclude(status="cancelled")
+            .select_related("school")
+        )
+        if batch
+        else []
+    )
+    all_district_ids = {
+        a.school.district_id
+        for a in existing_activities
+        if a.school_id and a.school.district_id
+    } | {school.district_id}
+    if district_type == "secondary" and len(all_district_ids) > 1:
+        if _resolve_group(all_district_ids) is None:
+            return False
+
+    catalogue = _catalogue_for_batch_date(activity.planned_date)
+    from apps.budget.costing_service import _rate_card
+
+    rates, _by_key = _rate_card(catalogue)
+    try:
+        compute_daily_pool(rates, district_type)
+    except BadRequest:
+        return False
+
+    if not batch:
+        batch = DailyVisitBatch.objects.create(
+            responsible_user=responsible_user_id,
+            visit_date=activity.planned_date,
+            district_type=district_type,
+            secondary_district_group=(
+                _resolve_group(all_district_ids)
+                if district_type == "secondary" and len(all_district_ids) > 1
+                else None
+            ),
+        )
+    effective_reason = (reason or "").strip()
+    if effective_reason and effective_reason != batch.reason:
+        batch.reason = effective_reason
+        batch.save(update_fields=["reason", "updated_at"])
+
+    activity.daily_visit_batch = batch
+    activity.save(update_fields=["daily_visit_batch", "updated_at"])
+    _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
+    return True
 
 
 def remove_school(*, activity_id: str) -> dict:
@@ -372,6 +461,7 @@ def _recalculate_and_write_lines(
         _rate_card,
         apply_to_activity,
     )
+    from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
     from apps.fund_requests.weekly_service import trigger_generate_for_activity
 
     catalogue = catalogue or _catalogue_for_batch_date(batch.visit_date)
@@ -426,6 +516,10 @@ def _recalculate_and_write_lines(
             precomputed_cost=cost,
         )
         trigger_generate_for_activity(activity, responsible_user_id=responsible_user_id)
+        # The weekly request is only half the funding picture — the monthly
+        # draft FundRequest must follow the re-priced lines too, exactly as
+        # _apply_schedule_cost_snapshot does on the solo-pricing path.
+        sync_monthly_drafts_for_activity(activity)
 
     _sync_route_batch(batch)
 
@@ -443,4 +537,9 @@ def _sync_route_batch(batch: DailyVisitBatch) -> None:
         pass
 
 
-__all__ = ["schedule_visits", "remove_school", "reschedule_within_batch"]
+__all__ = [
+    "schedule_visits",
+    "attach_activity_to_batch",
+    "remove_school",
+    "reschedule_within_batch",
+]

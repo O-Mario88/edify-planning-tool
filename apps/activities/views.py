@@ -43,7 +43,13 @@ class ActivityListCreateView(APIView):
         return paginator.get_paginated_response([services._serialize(a) for a in page])
 
     def post(self, request: Request) -> Response:
-        return Response(services.create(request.data, request.user), status=201)
+        return Response(
+            services.create(
+                {**request.data, "requireCatalogue": True},
+                request.user,
+            ),
+            status=201,
+        )
 
 
 class ActivityPaymentQueueView(APIView):

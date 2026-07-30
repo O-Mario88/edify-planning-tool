@@ -117,6 +117,17 @@ class ProjectCreationTests(TestCase):
     def setUp(self):
         self.cd = _user("cd-create@t.org", "Cody", EdifyRole.COUNTRY_DIRECTOR.value)
         StaffProfile.objects.create(user=self.cd, title="CD", country="Uganda")
+        # The mandatory Activity Catalogue requires every new Project to
+        # declare at least one approved, project-deliverable catalogue item
+        # (ActivityProjectMapping rows are created from them). The service
+        # accepts item ids, not stable codes.
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        self.catalogue_item_ids = [
+            ActivityCatalogueItem.objects.get(
+                stable_code="LITERACY_NUMERACY_PROJECT"
+            ).id
+        ]
 
     def test_creates_a_proposed_project(self):
         result = project_services.create_project(
@@ -125,6 +136,7 @@ class ProjectCreationTests(TestCase):
                 "category": ProjectCategory.PILOT.value,
                 "targetInterventions": ["teaching_environment"],
                 "budgetCeilingUgx": 50_000_000,
+                "catalogueItemIds": self.catalogue_item_ids,
             },
             self.cd,
         )
@@ -168,6 +180,7 @@ class ProjectCreationTests(TestCase):
                 "code": "SP-1",
                 "category": ProjectCategory.PILOT.value,
                 "targetInterventions": ["leadership"],
+                "catalogueItemIds": self.catalogue_item_ids,
             },
             self.cd,
         )
@@ -178,6 +191,7 @@ class ProjectCreationTests(TestCase):
                     "code": "SP-1",
                     "category": ProjectCategory.PILOT.value,
                     "targetInterventions": ["leadership"],
+                    "catalogueItemIds": self.catalogue_item_ids,
                 },
                 self.cd,
             )
@@ -190,6 +204,7 @@ class ProjectCreationTests(TestCase):
                 "name": "SP-AUDITED",
                 "category": ProjectCategory.PILOT.value,
                 "targetInterventions": ["leadership"],
+                "catalogueItemIds": self.catalogue_item_ids,
             },
             self.cd,
         )

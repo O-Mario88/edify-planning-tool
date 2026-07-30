@@ -41,10 +41,18 @@ class School(SoftDeleteModel):
 
     # Geography — enforced FKs to the geography app.
     region = models.ForeignKey(
-        "geography.Region", on_delete=models.RESTRICT, related_name="schools"
+        "geography.Region",
+        on_delete=models.RESTRICT,
+        null=True,
+        blank=True,
+        related_name="schools",
     )
     district = models.ForeignKey(
-        "geography.District", on_delete=models.RESTRICT, related_name="schools"
+        "geography.District",
+        on_delete=models.RESTRICT,
+        null=True,
+        blank=True,
+        related_name="schools",
     )
     sub_county = models.ForeignKey(
         "geography.SubCounty",
@@ -379,24 +387,6 @@ def create_data_quality_issues(school):
                 severity="warning",
                 field_name="school_type",
                 suggested_fix="Specify whether school is Core, Client, or Partner",
-            )
-        )
-    # school_type="other" has no actionable workflow anywhere in the
-    # platform (not Client Planning, not Core Planning/Dashboard, not the
-    # Core/Champion candidate pipelines) — it used to silently disappear
-    # from the School Directory's filters with no signal that it needed
-    # human triage.
-    if school.school_type == "other":
-        issues.append(
-            DataQualityIssue(
-                school=school,
-                issue_type="unclassified_school_type",
-                severity="critical",
-                field_name="school_type",
-                current_value="other",
-                suggested_fix="Reclassify as Client, Core, Potential Core, "
-                "Champion, or Potential Champion so this school enters an "
-                "actionable planning workflow.",
             )
         )
     # Missing Sub-county

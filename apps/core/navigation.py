@@ -289,7 +289,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "partner_evidence": {PARTNER, ADMIN},
     "partner_my_plan": {PARTNER, ADMIN},
     # Feature pages that previously had no key of their own
-    "projects": {PROJECT_COORDINATOR, CD, PL, CCEO, ADMIN},
+    "projects": {PROJECT_COORDINATOR, CD, PL, CCEO, IA, ADMIN},
     "analytics_publishing": {CD, IA, ADMIN},
     "evidence_center": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, CD, ADMIN},
     "cost_settings": {CD, ADMIN},

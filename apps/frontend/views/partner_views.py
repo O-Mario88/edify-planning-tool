@@ -634,12 +634,90 @@ def partner_activities_view(request):
     if status_filter:
         activities = activities.filter(status=status_filter)
     activities = list(activities[:60])
+    assignments = list(
+        PartnerAssignment.objects.filter(
+            partner_id__in=partner_ids,
+            status__in=["assigned", "pending_scheduling"],
+        )
+        .select_related(
+            "school",
+            "cluster",
+            "catalogue_item",
+            "source_ssa",
+        )
+        .prefetch_related("allowed_catalogue_items")
+        .order_by("scheduled_date", "created_at")[:60]
+    )
     context = {
         "activities": activities,
+        "assignments": assignments,
         "total": len(activities),
         "status_filter": status_filter,
     }
     return render(request, "pages/partner/activities.html", context)
+
+
+@require_page_permission("partner_activities")
+def partner_schedule_assignment_drawer(request, assignment_id):
+    partner_ids = resolve_partner_ids(request.user)
+    assignment = get_object_or_404(
+        PartnerAssignment.objects.select_related(
+            "school", "cluster", "catalogue_item", "source_ssa"
+        ).prefetch_related("allowed_catalogue_items"),
+        id=assignment_id,
+        partner_id__in=partner_ids,
+        status__in=["assigned", "pending_scheduling"],
+    )
+    choices = (
+        [assignment.catalogue_item]
+        if assignment.catalogue_item_id
+        else list(assignment.allowed_catalogue_items.all())
+    )
+    return render(
+        request,
+        "partials/partners/schedule_assignment_drawer.html",
+        {
+            "assignment": assignment,
+            "catalogue_choices": choices,
+            "drawer_size": "md",
+        },
+    )
+
+
+@require_page_permission("partner_activities")
+def partner_schedule_assignment_action(request, assignment_id):
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    partner_ids = resolve_partner_ids(request.user)
+    assignment = get_object_or_404(
+        PartnerAssignment,
+        id=assignment_id,
+        partner_id__in=partner_ids,
+        status__in=["assigned", "pending_scheduling"],
+    )
+    try:
+        from apps.partners.services import schedule_activity
+
+        schedule_activity(
+            assignment.id,
+            {
+                "scheduledDate": request.POST.get("scheduled_date"),
+                "expectedParticipants": request.POST.get("expected_participants")
+                or None,
+                "catalogueItemId": request.POST.get("catalogue_item_id"),
+                "requireCatalogue": True,
+            },
+            request.user,
+        )
+        response = HttpResponse(
+            '<script>window.location.href="/partner/activities";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(exc, status=400)
 
 
 @require_page_permission("partner_evidence")

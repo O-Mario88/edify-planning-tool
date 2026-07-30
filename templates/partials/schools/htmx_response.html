@@ -17,6 +17,8 @@ hx-swap-oob="outerHTML"
 {% include "partials/schools/tabs.html" %}
 </div>
 
+{% include "partials/schools/directory_sub_county_filter.html" with oob=True %}
+
 {% if intelligence %}
 <div id="directory-intelligence-container" hx-swap-oob="true">
 {% include "partials/schools/directory_intelligence.html" %}

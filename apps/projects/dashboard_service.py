@@ -138,7 +138,13 @@ def get_dashboard(
     if not scope.country_scope:
         staff_id = getattr(principal, "staff_profile_id", None)
         projects_qs = (
-            projects_qs.filter(manager_staff_id=staff_id)
+            projects_qs.filter(
+                Q(manager_staff_id=staff_id)
+                | Q(
+                    staff_assignments__staff_id=staff_id,
+                    staff_assignments__is_active=True,
+                )
+            ).distinct()
             if staff_id
             else projects_qs.none()
         )

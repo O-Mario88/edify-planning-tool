@@ -283,13 +283,17 @@ class Reg02CalendarPolicyTest(TestCase):
         service_message = str(ctx.exception)
         self.assertIn("Sunday", service_message)
 
-        # DRF API surface — POST /api/activities
+        # DRF API surface — POST /api/activities. The catalogue is mandatory
+        # on this surface (requireCatalogue is forced server-side), so a
+        # valid item id must accompany the payload for the calendar gate —
+        # not the missing-catalogue gate — to be the thing that rejects it.
+        # The REG-02 check runs before the item's SSA/recommendation gates.
         client = Client()
         client.force_login(self.cceo)
         api_resp = client.post(
             "/api/activities",
             {
-                "activityType": "school_visit",
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
                 "schoolId": self.school.school_id,
                 "scheduledDate": SUNDAY,
                 "responsibleStaffId": self.staff.id,
@@ -301,10 +305,11 @@ class Reg02CalendarPolicyTest(TestCase):
         self.assertIn("Sunday", str(api_resp.json().get("message", "")))
 
         # HTMX server-rendered surface — POST /planning/schedule-action
+        # (also catalogue-mandatory; same item, same Sunday block).
         htmx_resp = client.post(
             "/planning/schedule-action",
             {
-                "activity_type": "school_visit",
+                "catalogue_item_id": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
                 "school_id": self.school.school_id,
                 "scheduled_date": SUNDAY,
                 "delivery_type": "staff",

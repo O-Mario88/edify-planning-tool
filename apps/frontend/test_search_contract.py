@@ -384,12 +384,50 @@ class FilterOptionsContractTest(TestCase):
     def test_district_options_are_only_places_that_hold_schools(self):
         self.client.force_login(self.admin)
         body = self.client.get("/schools").content.decode()
-        self.assertIn("Mityana", body)
+        district_filter = re.search(
+            r'<select aria-label="District".*?</select>',
+            body,
+            re.DOTALL,
+        )
+        self.assertIsNotNone(district_filter)
+        district_filter_html = district_filter.group(0)
+        self.assertIn("Mityana", district_filter_html)
         self.assertNotIn(
             "Amudat",
-            body,
+            district_filter_html,
             "a district with no schools in scope is offered as a filter option",
         )
+
+    def test_empty_directory_keeps_reference_districts_available(self):
+        School.objects.all().delete()
+        self.client.force_login(self.admin)
+
+        body = self.client.get("/schools").content.decode()
+        district_filter = re.search(
+            r'<select aria-label="District".*?</select>',
+            body,
+            re.DOTALL,
+        )
+
+        self.assertIsNotNone(district_filter)
+        self.assertIn("Mityana", district_filter.group(0))
+        self.assertIn("Amudat", district_filter.group(0))
+        self.assertIn("Choose district first", body)
+
+    def test_selected_district_reveals_its_reference_sub_counties(self):
+        School.objects.all().delete()
+        self.client.force_login(self.admin)
+
+        response = self.client.get(
+            "/schools",
+            {"district": str(self.populated.id)},
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.sub_county.name)
+        self.assertContains(response, 'id="directory-sub-county-filter"')
+        self.assertContains(response, 'hx-swap-oob="outerHTML"')
 
     def test_every_offered_district_returns_at_least_one_school(self):
         """The property that matters, stated directly."""

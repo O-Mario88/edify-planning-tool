@@ -42,6 +42,18 @@ REQUIRED_EVIDENCE: dict[str, tuple[str, ...]] = {
     "project_activity": (EvidenceKind.PROJECT_REPORT,),
 }
 
+PROFILE_REQUIRED_EVIDENCE: dict[str, tuple[str, ...]] = {
+    "TRAINING_ATTENDANCE": (EvidenceKind.ATTENDANCE_FORM,),
+    "SCHOOL_VISIT_FORM": (EvidenceKind.VISIT_FORM,),
+    "FOLLOW_UP_MEETING": (EvidenceKind.MEETING_MINUTES,),
+    "YOUTH_CAMP_SAFEGUARDING": (
+        EvidenceKind.ATTENDANCE_FORM,
+        EvidenceKind.PROJECT_REPORT,
+    ),
+    "SSA_DATA_GATHERING": (EvidenceKind.ASSESSMENT_FORM,),
+    "ADMIN_NONE": (),
+}
+
 _LABELS = dict(EvidenceKind.choices)
 
 
@@ -49,11 +61,22 @@ def required_kinds(activity_type: str) -> tuple[str, ...]:
     return REQUIRED_EVIDENCE.get(activity_type, ())
 
 
+def required_kinds_for_activity(activity) -> tuple[str, ...]:
+    profile = getattr(activity, "evidence_profile_snapshot", None)
+    if profile in PROFILE_REQUIRED_EVIDENCE:
+        return PROFILE_REQUIRED_EVIDENCE[profile]
+    return required_kinds(activity.activity_type)
+
+
+def evidence_optional(activity) -> bool:
+    return getattr(activity, "evidence_profile_snapshot", None) == "ADMIN_NONE"
+
+
 def missing_evidence_kinds(activity) -> list[dict]:
     """Which required kinds are absent (non-quarantined) for this activity.
     Empty list = requirement satisfied. Types with no specific requirement
     fall back to the baseline any-file rule enforced by the caller."""
-    needed = required_kinds(activity.activity_type)
+    needed = required_kinds_for_activity(activity)
     if not needed:
         return []
     present = set(
@@ -68,7 +91,7 @@ def missing_evidence_kinds(activity) -> list[dict]:
 
 def checklist(activity) -> list[dict]:
     """Full checklist for the frontend: every required kind with its state."""
-    needed = required_kinds(activity.activity_type)
+    needed = required_kinds_for_activity(activity)
     present = set(
         activity.evidence.filter(quarantined=False).values_list("kind", flat=True)
     )

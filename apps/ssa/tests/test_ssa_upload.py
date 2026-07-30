@@ -25,6 +25,13 @@ SSA_HEADERS = (
     "Enrolment Score,Learning Environment"
 )
 SCORES = "last,7,6,8,7,5,6,4,7"
+SSA_TEMPLATE_HEADERS = (
+    "School ID,Assessment Date,SSA Year,Christlike Behaviour (0-10),"
+    "Exposure to the Word of God (0-10),Financial Health (0-10),"
+    "Leadership (0-10),Government Requirements (0-10),"
+    "Learning Environment (0-10),Teacher's Environment (0-10),"
+    "Enrolment (0-10)"
+)
 
 
 class SsaUploadTest(APITestCase):
@@ -74,6 +81,17 @@ class SsaUploadTest(APITestCase):
         self.school.refresh_from_db()
         self.assertEqual(self.school.current_fy_ssa_status, "done")
         self.assertEqual(self.school.planning_readiness, "requires_cluster")
+
+    def test_download_template_score_headers_are_accepted(self):
+        body = (
+            f"{SSA_TEMPLATE_HEADERS}\n"
+            "SSA-SCH-1,2025-06-15,last,6,6.5,5.5,7,6,5,6.5,6\n"
+        )
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        record = SsaRecord.objects.get(school=self.school)
+        self.assertEqual(record.scores.count(), 8)
 
     def test_invalid_school_id_fails_row(self):
         body = f"{SSA_HEADERS}\nGHOST-SCHOOL,2026-07-01,{SCORES}\n"
@@ -208,10 +226,8 @@ class SchoolEnrolmentCountVsSsaScoreTest(APITestCase):
         self.school.refresh_from_db()
         self.assertEqual(self.school.enrollment, 450)
 
-    def test_new_enrollment_column_does_not_overwrite_school_record(self):
-        """Even the optional "New Enrolment" headcount column (distinct from
-        the SSA score) must not flow into School.enrollment -- SSA import is
-        never a write path for the school's enrolment count."""
+    def test_pupil_enrollment_column_is_rejected_from_ssa_upload(self):
+        """Pupil headcount belongs to School Upload/Profile, never SSA."""
         headers = (
             "School ID,Assessment Date,SSA Year,New Enrolment,Christlike Behaviour,"
             "Exposure to the Word of God,Financial Health,Leadership,"
@@ -219,13 +235,14 @@ class SchoolEnrolmentCountVsSsaScoreTest(APITestCase):
             "Enrolment"
         )
         body = f"{headers}\nENR-SCH-1,2026-07-03,last,999,7,6,8,7,5,6,4,7\n"
-        res = self._post_and_import(self._csv(body))
-        self.assertEqual(res.status_code, 200, res.content)
+        res = self.client.post(
+            "/api/ssa/upload", {"file": self._csv(body)}, format="multipart"
+        )
+        self.assertEqual(res.status_code, 400, res.content)
+        self.assertIn("not part of the SSA upload", str(res.content))
         self.school.refresh_from_db()
-        # School.enrollment must remain exactly what School Directory set —
-        # never the CSV's "New Enrolment" value (999).
         self.assertEqual(self.school.enrollment, 450)
-        self.assertNotEqual(self.school.enrollment, 999)
+        self.assertEqual(SsaRecord.objects.count(), 0)
 
     def test_ssa_score_stored_separately_from_school_enrollment(self):
         body = f"{SSA_HEADERS}\nENR-SCH-1,2026-07-04,{SCORES}\n"

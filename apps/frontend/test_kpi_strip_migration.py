@@ -33,7 +33,10 @@ class KpiStripMigrationTests(SimpleTestCase):
             "templates/pages/dashboards/special_projects.html",
             "templates/pages/finance/fund_allocation.html",
             "templates/pages/hr/my_performance.html",
-            "templates/pages/ia/analytics_dashboard.html",
+            # ia/analytics_dashboard.html graduated off the legacy strip: the
+            # 2026-07-30 redesign gave it its own designed metric system,
+            # held to account by test_ia_dashboard_design.py (which forbids
+            # the legacy marker on that page).
             "templates/pages/notifications/index.html",
             "templates/pages/reports/index.html",
             "templates/pages/schools/upload_preview.html",

@@ -35,6 +35,48 @@ class Activity(SoftDeleteModel):
 
     id = CuidField()
     activity_type = models.CharField(max_length=48, choices=ActivityType.choices)
+    # Governed master-data provenance.  This is deliberately a FK on the
+    # existing canonical Activity, not a second transactional activity model.
+    catalogue_item = models.ForeignKey(
+        "activity_catalogue.ActivityCatalogueItem",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
+    catalogue_version = models.PositiveIntegerField(null=True, blank=True)
+    activity_name_snapshot = models.CharField(max_length=255, null=True, blank=True)
+    activity_type_snapshot = models.CharField(max_length=32, null=True, blank=True)
+    delivery_method_snapshot = models.CharField(max_length=32, null=True, blank=True)
+    evidence_profile_snapshot = models.CharField(max_length=64, null=True, blank=True)
+    salesforce_record_type_snapshot = models.CharField(
+        max_length=32, null=True, blank=True
+    )
+    costing_profile_snapshot = models.CharField(max_length=64, null=True, blank=True)
+    source_ssa = models.ForeignKey(
+        "ssa.SsaRecord",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="recommended_activities",
+    )
+    source_ssa_verification_state = models.CharField(
+        max_length=32, null=True, blank=True
+    )
+    source_score = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True
+    )
+    source_classification = models.CharField(max_length=32, null=True, blank=True)
+    recommendation_reason = models.TextField(blank=True)
+    recommendation_source = models.JSONField(default=dict, blank=True)
+    follow_up_of_activity = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="follow_up_activities",
+    )
+    override_reason = models.TextField(blank=True)
     school = models.ForeignKey(
         "schools.School",
         on_delete=models.SET_NULL,
@@ -172,6 +214,8 @@ class Activity(SoftDeleteModel):
         indexes = [
             models.Index(fields=["school"]),
             models.Index(fields=["cluster"]),
+            models.Index(fields=["catalogue_item", "fy", "status"]),
+            models.Index(fields=["catalogue_item", "focus_intervention"]),
             models.Index(fields=["fy", "quarter"]),
             models.Index(fields=["responsible_staff_id"]),
             # The exact filter TargetAchievementService.rebuild() runs once
@@ -189,6 +233,12 @@ class Activity(SoftDeleteModel):
         constraints = [
             models.CheckConstraint(
                 check=~models.Q(status="closed")
+                | models.Q(
+                    salesforce_record_type_snapshot__in=[
+                        "NONE",
+                        "SSA_DATA_GATHERING",
+                    ]
+                )
                 | (
                     models.Q(salesforce_activity_id__isnull=False)
                     & ~models.Q(salesforce_activity_id="")
@@ -260,13 +310,21 @@ class ActivityScheduleCostLine(TimeStampedModel):
     )
     cost_setting_key = models.CharField(max_length=128)
     label = models.CharField(max_length=255)
-    unit_cost = models.IntegerField()  # UGX, integer
+    # BigInteger like CostSetting.unit_cost and total_cost — the 32-bit
+    # columns overflowed at ~UGX 2.1bn/line, reachable for a large
+    # training × participants (2026-07-30 audit M-14).
+    unit_cost = models.BigIntegerField()  # UGX, integer
     quantity = models.IntegerField(default=1)
-    amount = models.IntegerField()  # UGX, integer
+    amount = models.BigIntegerField()  # UGX, integer
     cost_setting_version = models.IntegerField(default=1)
     # Catalogue provenance — the catalogue + version this line was priced from.
     catalogue_id = models.CharField(max_length=30, null=True, blank=True)
     catalogue_version = models.IntegerField(null=True, blank=True)
+    activity_catalogue_item_id = models.CharField(
+        max_length=30, null=True, blank=True
+    )
+    activity_catalogue_version = models.PositiveIntegerField(null=True, blank=True)
+    costing_profile = models.CharField(max_length=64, null=True, blank=True)
     # Itemized line type (transport / breakfast / lunch / dinner / accommodation
     # / venue / facilitation / participant_meals / mobilisation / lump_sum ...).
     line_item_type = models.CharField(max_length=64, null=True, blank=True)
@@ -353,6 +411,21 @@ class ActivityScheduleCostLine(TimeStampedModel):
     class Meta:
         db_table = "activity_schedule_cost_line"
         indexes = [models.Index(fields=["activity"])]
+        constraints = [
+            # One cost component per activity per catalogue key — the writer
+            # (apply_to_activity) already guarantees this via delete+rebuild;
+            # the constraint makes the database enforce it against any future
+            # second writer (2026-07-30 audit M-15).
+            models.UniqueConstraint(
+                fields=["activity", "cost_setting_key"],
+                name="uniq_cost_component_per_activity",
+                # Empty-key rows are already their own violation (a cost line
+                # without a catalogue source) surfaced by the health checks —
+                # excluding them keeps this constraint applyable on legacy
+                # data without weakening the real invariant.
+                condition=~models.Q(cost_setting_key=""),
+            )
+        ]
 
 
 class SalesforceEntrySource(models.TextChoices):

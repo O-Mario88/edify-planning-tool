@@ -164,6 +164,25 @@ class MyTargetsPageTest(TestCase):
         self.assertEqual(page["period_cards"][0]["kind"], "month")
         self.assertTrue(page["period_cards"][0]["current"])
 
+    def test_fy2027_governed_priorities_are_visible_before_allocation(self):
+        client = Client()
+        client.force_login(self.user)
+
+        response = client.get("/my-targets", {"fy": "2027", "month": 1})
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        for title in (
+            "Program Growth and Expansion",
+            "Program Quality",
+            "Business Transformation",
+            "Education Technology",
+            "Governance and People Management",
+        ):
+            self.assertIn(title, html)
+        self.assertIn("No approved milestone allocations yet", html)
+        self.assertIn("do not create targets, reduce achievement, or generate risk", html)
+
     def test_quarter_derived_from_fy_configuration(self):
         self.assertEqual(Cal.month_of_fy_for(date(2025, 10, 1), FY), 1)  # FY starts Oct
         self.assertEqual(Cal.quarter_of_month(1), "Q1")

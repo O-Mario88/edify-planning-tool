@@ -181,6 +181,16 @@ def approve_amendment(amendment_id: str, data: dict, principal) -> BudgetAmendme
         week_start = new_day - timedelta(days=new_day.weekday())
         week_end = week_start + timedelta(days=6)
 
+        # B4 — capture the OLD period buckets before the cost lines move so
+        # the weekly/monthly draft fund requests can be resynced afterwards:
+        # without this, the vacated draft week kept the money and the
+        # destination week never gained it.
+        prior_buckets = list(
+            activity.schedule_cost_lines.values_list(
+                "responsible_user", "fiscal_year", "month", "week_start_date"
+            )
+        )
+
         activity.scheduled_date = new_dt
         activity.planned_date = new_day
         activity.fy = amendment.new_fy or activity.fy
@@ -210,6 +220,16 @@ def approve_amendment(amendment_id: str, data: dict, principal) -> BudgetAmendme
             quarter=amendment.new_quarter or activity.quarter,
             fiscal_year=amendment.new_fy or activity.fy,
         )
+
+        # B4 — resync the weekly and monthly DRAFT fund requests for both the
+        # vacated and the destination periods, inside this same transaction.
+        # Both sync services no-op on any request that has left draft, so
+        # locked/submitted/disbursed requests stay untouched by contract.
+        from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
+        from apps.fund_requests.weekly_service import sync_weekly_requests_for_activity
+
+        sync_weekly_requests_for_activity(activity, prior_buckets=prior_buckets)
+        sync_monthly_drafts_for_activity(activity, prior_buckets=prior_buckets)
 
         amendment.status = BudgetAmendmentStatus.APPLIED
         amendment.reviewed_by = principal.user_id

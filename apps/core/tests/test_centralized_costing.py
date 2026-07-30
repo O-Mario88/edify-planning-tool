@@ -92,9 +92,34 @@ class CentralizedCostingTest(APITestCase):
             region=self.region,
             district=self.district,
             sub_county=self.sub_county,
+            school_type="client",
             current_fy_ssa_status="done",
             planning_readiness="ready",
         )
+        # The mandatory Activity Catalogue prices visits through
+        # CLIENT_SCHOOL_FOLLOWUP_VISIT, which needs a client school with an
+        # applicable confirmed SSA; leadership is the weakest need so it is a
+        # valid dynamic follow-up focus.
+        from django.utils import timezone as _tz
+
+        from apps.core.enums import SsaIntervention
+        from apps.ssa.models import SsaRecord, SsaScore
+
+        _ssa = SsaRecord.objects.create(
+            school=self.school,
+            fy="2026",
+            quarter="Q3",
+            date_of_ssa=_tz.now(),
+            average_score=7.0,
+            verification_status="confirmed",
+            uploaded_by="test",
+        )
+        for _intervention, _label in SsaIntervention.choices:
+            SsaScore.objects.create(
+                ssa_record=_ssa,
+                intervention=_intervention,
+                score=2.0 if _intervention == "leadership" else 8.0,
+            )
         StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
         # Cluster for cluster activities.
         from apps.clusters.models import Cluster
@@ -154,6 +179,8 @@ class CentralizedCostingTest(APITestCase):
             "/api/planning/schedule-school-visit",
             {
                 "schoolId": "COST-SCH",
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
+                "focusIntervention": "leadership",
                 "scheduledDate": "2026-07-10T09:00:00+03:00",
                 "plannedMonth": 7,
                 "plannedWeek": 2,
@@ -294,6 +321,10 @@ class CentralizedCostingTest(APITestCase):
             "/api/planning/schedule-cluster-activity",
             {
                 "activityType": "cluster_meeting",
+                "catalogueItemId": "FEES_ENROLMENT_MARKETING",
+                # Not the member-need-ranked primary recommendation for this
+                # cluster, so the authorized alternative reason is required.
+                "overrideReason": "Cluster committee scheduled the enrolment review meeting.",
                 "clusterId": self.cluster.id,
                 "scheduledDate": "2026-07-10T09:00:00+03:00",
                 "plannedMonth": 7,
@@ -361,12 +392,19 @@ class CentralizedCostingTest(APITestCase):
         self.assertEqual(r.status_code, 200, r.content)
         self.assertFalse(r.json()["canSchedule"])
         self.assertTrue(r.json()["blockers"])
-        # Scheduling stays permissive, but a missing rate is visible on the
-        # activity and prevents it becoming fundable work.
+        # A missing CD Catalogue rate BLOCKS staff scheduling outright (the
+        # permissive schedule-with-costMissing era is over): the response
+        # names the missing rates and the Country Director as the fix, and
+        # no Activity or cost line is committed.
+        from apps.activities.models import Activity
+
+        before = Activity.objects.count()
         sched = self.client.post(
             "/api/planning/schedule-school-visit",
             {
                 "schoolId": "COST-SCH",
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
+                "focusIntervention": "leadership",
                 "scheduledDate": "2026-07-10T09:00:00+03:00",
                 "plannedMonth": 7,
                 "purposeIntervention": "leadership",
@@ -374,8 +412,11 @@ class CentralizedCostingTest(APITestCase):
             },
             format="json",
         )
-        self.assertEqual(sched.status_code, 201, sched.content)
-        self.assertTrue(sched.json()["costMissing"])
+        self.assertEqual(sched.status_code, 400, sched.content)
+        message = sched.json()["message"]
+        self.assertIn("Cost Catalogue", message)
+        self.assertIn("Country Director", message)
+        self.assertEqual(Activity.objects.count(), before)
 
     # ── G. Advance auto-created; Accountant gated on confirmation ────────────
     def test_advance_auto_created_and_accountant_gated_on_confirmation(self):
@@ -384,6 +425,8 @@ class CentralizedCostingTest(APITestCase):
             "/api/planning/schedule-school-visit",
             {
                 "schoolId": "COST-SCH",
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
+                "focusIntervention": "leadership",
                 "scheduledDate": "2026-07-10T09:00:00+03:00",
                 "plannedMonth": 7,
                 "plannedWeek": 2,
@@ -424,6 +467,18 @@ class CentralizedCostingTest(APITestCase):
         # Responsible user confirms → Accountant CAN disburse.
         self._as(self.cceo)
         self._post(f"/api/fund-requests/advances/{adv.id}/confirm-advance", {}, 200)
+        # The per-line disbursement also requires the governing WEEKLY fund
+        # request to have cleared its approval chain (2026-07-30 audit:
+        # owner confirmation is a request, not an approval). The chain
+        # itself is exercised in test_pl_approval; here we stamp the weekly
+        # request approved so THIS test keeps its own point — the
+        # responsible-confirmation gate.
+        from apps.fund_requests.models import WeeklyFundRequest
+
+        WeeklyFundRequest.objects.filter(
+            responsible_user=self.cceo.id,
+            week_start_date=adv.budget_line.week_start_date,
+        ).update(status="confirmed_for_advance")
         self._as(accountant)
         disbursed = self._post(
             f"/api/fund-requests/advances/{adv.id}/disburse",
@@ -440,6 +495,8 @@ class CentralizedCostingTest(APITestCase):
             "/api/planning/schedule-school-visit",
             {
                 "schoolId": "COST-SCH",
+                "catalogueItemId": "CLIENT_SCHOOL_FOLLOWUP_VISIT",
+                "focusIntervention": "leadership",
                 "scheduledDate": "2026-07-10T09:00:00+03:00",
                 "plannedMonth": 7,
                 "purposeIntervention": "leadership",

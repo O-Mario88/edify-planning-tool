@@ -1467,6 +1467,17 @@ class ClusterPlanningService:
 class ClusterActionPlannerService:
     @staticmethod
     def schedule_activity(data: dict, user) -> dict:
+        from django.db import transaction
+
+        # The Activity (with its cost snapshot) and the PartnerAssignment must
+        # land together — previously they were two separate transactions, so a
+        # crash after create_activity left a partner-delivered activity with
+        # no assignment for the partner to ever see or schedule.
+        with transaction.atomic():
+            return ClusterActionPlannerService._schedule_activity_locked(data, user)
+
+    @staticmethod
+    def _schedule_activity_locked(data: dict, user) -> dict:
         from apps.activities.services import create as create_activity
 
         act_dict = create_activity(data, user)
@@ -1593,6 +1604,18 @@ class ClusterMyPlanSyncService:
 
         if changed:
             activity.save(update_fields=["responsible_staff_id"])
+            # Re-owning an activity re-owns its money. The cost lines carry
+            # responsible_user and the weekly/monthly draft requests are
+            # bucketed per owner — without a resync the previous owner's
+            # draft requests keep this activity's amounts forever.
+            if activity.scheduled_date and activity.status not in (
+                "cancelled",
+                "rejected",
+                "deferred",
+            ):
+                from apps.activities.services import _apply_schedule_cost_snapshot
+
+                _apply_schedule_cost_snapshot(activity, {}, principal=user)
         return changed
 
 

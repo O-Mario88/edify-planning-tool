@@ -104,19 +104,19 @@ def ssa_template_download_view(request):
 
     writer = csv.writer(response)
     # Header row
-    headers = ["School ID", "Assessment Date", "SSA Year", "New Enrolment"]
+    headers = ["School ID", "Assessment Date", "SSA Year"]
     for _code, label in SsaIntervention.choices:
         headers.append(f"{label} (0-10)")
     writer.writerow(headers)
 
     # Sample row 1: last FY baseline
-    sample_prev = ["SCH-0001", f"{prev_fy}-06-15", prev_fy, "320"]
+    sample_prev = ["SCH-0001", f"{prev_fy}-06-15", prev_fy]
     for _code, _label in SsaIntervention.choices:
         sample_prev.append("6.0")
     writer.writerow(sample_prev)
 
     # Sample row 2: current FY
-    sample_curr = ["SCH-0001", f"{current_fy}-07-01", current_fy, "340"]
+    sample_curr = ["SCH-0001", f"{current_fy}-07-01", current_fy]
     for _code, _label in SsaIntervention.choices:
         sample_curr.append("7.5")
     writer.writerow(sample_curr)

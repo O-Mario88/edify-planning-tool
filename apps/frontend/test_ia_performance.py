@@ -117,6 +117,24 @@ class IAPerformanceTestBase(TestCase):
 
 
 class IADashboardQueryBudgetTest(IAPerformanceTestBase):
+    def test_dashboard_prioritizes_oldest_queue_work_and_links_to_review(self):
+        now = timezone.now()
+        older = self._pending_activity(self._school("oldest"))
+        newer = self._pending_activity(self._school("newest"))
+        Activity.objects.filter(id=older.id).update(
+            submitted_to_ia_at=now - timezone.timedelta(hours=30)
+        )
+        Activity.objects.filter(id=newer.id).update(
+            submitted_to_ia_at=now - timezone.timedelta(hours=2)
+        )
+
+        response = self.client.get("/ia/dashboard/")
+
+        first = response.context["queue_items"][0]
+        self.assertEqual(first["id"], str(older.id))
+        self.assertEqual(first["review_url"], f"/ia/verification/{older.id}/")
+        self.assertTrue(first["is_overdue"])
+
     def test_ia_dashboard_sla_is_empty_until_a_real_cycle_is_measured(self):
         response = self.client.get("/ia/dashboard/")
 
@@ -152,15 +170,13 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
 
         self.assertEqual(response.context["verification_sla"]["pct"], 50.0)
         self.assertEqual(response.context["verification_sla"]["sample_size"], 2)
-        # The figure and its unit are separate elements in the donut's centre
-        # — the "%" is set as a superscript — so the page is checked for the
-        # measured value and the drawn ring rather than for one glued string.
+        # The dashboard presents the measured value in its SLA action card.
         self.assertContains(response, "50.0")
-        self.assertContains(response, "edify-donut--gauge")
+        self.assertContains(response, "Within 24-hour SLA")
         self.assertEqual(
             response.context["verification_sla"]["gauge"]["rings"][0].percent, 50.0
         )
-        self.assertContains(response, "n=2")
+        self.assertContains(response, "2 measured cycles")
 
     # ── 1. /ia/dashboard/ documented, bounded, not O(rows) ───────────────────
     def test_ia_dashboard_query_count_is_bounded(self):
